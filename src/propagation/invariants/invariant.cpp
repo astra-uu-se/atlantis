@@ -5,6 +5,7 @@
 namespace atlantis::propagation {
 
 void Invariant::registerDefinedVar(VarId id) {
+  assert(id.idType == VarIdType::var);
   if (_primaryDefinedVar == NULL_ID) {
     _primaryDefinedVar = id;
   } else {

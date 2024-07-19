@@ -26,11 +26,13 @@ class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
   explicit GlobalCardinalityLowUpNode(std::vector<VarNodeId>&& x,
                                       std::vector<Int>&& cover,
                                       std::vector<Int>&& low,
-                                      std::vector<Int>&& up, bool shouldHold);
+                                      std::vector<Int>&& up,
+                                      bool shouldHold = true);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 };
 }  // namespace atlantis::invariantgraph

@@ -3,24 +3,111 @@
 namespace atlantis::invariantgraph::fzn {
 
 std::string to_string(const std::type_info& t, bool isVar) {
-  if (t == typeid(fznparser::BoolVar)) {
-    return "var bool";
-  } else if (t == typeid(fznparser::IntVar)) {
-    return "var int";
-  } else if (t == typeid(fznparser::IntVarArray)) {
+  // Arg:
+  if (t == typeid(fznparser::BoolArg) ||
+      t == typeid(std::shared_ptr<fznparser::BoolArg>) ||
+      t == typeid(std::shared_ptr<const fznparser::BoolArg>)) {
+    if (isVar) {
+      return "{var bool, bool}";
+    } else {
+      return "bool";
+    }
+  } else if (t == typeid(fznparser::IntArg) ||
+             t == typeid(std::shared_ptr<fznparser::IntArg>) ||
+             t == typeid(std::shared_ptr<const fznparser::IntArg>)) {
+    if (isVar) {
+      return "{var int, int}";
+    } else {
+      return "int";
+    }
+  } else if (t == typeid(fznparser::FloatArg) ||
+             t == typeid(std::shared_ptr<fznparser::FloatArg>) ||
+             t == typeid(std::shared_ptr<const fznparser::FloatArg>)) {
+    if (isVar) {
+      return "{var float, float}";
+    } else {
+      return "float";
+    }
+  } else if (t == typeid(fznparser::IntSetArg) ||
+             t == typeid(std::shared_ptr<fznparser::IntSetArg>) ||
+             t == typeid(std::shared_ptr<const fznparser::IntSetArg>)) {
+    if (isVar) {
+      return "{var set of int, set of int}";
+    } else {
+      return "set of int";
+    }
+  } else if (t == typeid(fznparser::FloatSet) ||
+             t == typeid(std::shared_ptr<fznparser::FloatSet>) ||
+             t == typeid(std::shared_ptr<const fznparser::FloatSet>)) {
+    return "set of float";
+  } else if (t == typeid(fznparser::BoolVarArray) ||
+             t == typeid(std::shared_ptr<fznparser::BoolVarArray>) ||
+             t == typeid(std::shared_ptr<const fznparser::BoolVarArray>)) {
     if (isVar) {
       return "array[int] of var bool";
     } else {
       return "array[int] of bool";
     }
-  } else if (t == typeid(fznparser::IntVarArray)) {
+  } else if (t == typeid(fznparser::IntVarArray) ||
+             t == typeid(std::shared_ptr<fznparser::IntVarArray>) ||
+             t == typeid(std::shared_ptr<const fznparser::IntVarArray>)) {
     if (isVar) {
       return "array[int] of var int";
     } else {
       return "array[int] of int";
     }
-  } else if (t == typeid(fznparser::IntSet)) {
+  } else if (t == typeid(fznparser::FloatVarArray) ||
+             t == typeid(std::shared_ptr<fznparser::FloatVarArray>) ||
+             t == typeid(std::shared_ptr<const fznparser::FloatVarArray>)) {
+    if (isVar) {
+      return "array[int] of var float";
+    } else {
+      return "array[int] of float";
+    }
+  } else if (t == typeid(fznparser::SetVarArray) ||
+             t == typeid(std::shared_ptr<fznparser::SetVarArray>) ||
+             t == typeid(std::shared_ptr<const fznparser::SetVarArray>)) {
+    if (isVar) {
+      return "array[int] of set of var int";
+    } else {
+      return "array[int] of set of int";
+    }
+  } else if (t == typeid(fznparser::FloatSetArray) ||
+             t == typeid(std::shared_ptr<fznparser::FloatSetArray>) ||
+             t == typeid(std::shared_ptr<const fznparser::FloatSetArray>)) {
+    return "array[int] of set of float";
+  } else if (t == typeid(fznparser::IntSet) ||
+             t == typeid(std::shared_ptr<fznparser::IntSet>) ||
+             t == typeid(std::shared_ptr<const fznparser::IntSet>)) {
     return "set of int";
+  } else if (t == typeid(fznparser::BoolVar) ||
+             t == typeid(std::shared_ptr<fznparser::BoolVar>) ||
+             t == typeid(std::shared_ptr<const fznparser::BoolVar>)) {  // Vars:
+    return "var bool";
+  } else if (t == typeid(fznparser::IntVar) ||
+             t == typeid(std::shared_ptr<fznparser::IntVar>) ||
+             t == typeid(std::shared_ptr<const fznparser::IntVar>)) {
+    return "var int";
+  } else if (t == typeid(fznparser::FloatVar) ||
+             t == typeid(std::shared_ptr<fznparser::FloatVar>) ||
+             t == typeid(std::shared_ptr<const fznparser::FloatVar>)) {
+    return "var float";
+  } else if (t == typeid(fznparser::SetVar) ||
+             t == typeid(std::shared_ptr<fznparser::SetVar>) ||
+             t == typeid(std::shared_ptr<const fznparser::SetVar>)) {
+    return "set of var int";
+  } else if (t == typeid(bool)) {
+    return "bool";
+  } else if (t == typeid(Int)) {
+    return "int";
+  } else if (t == typeid(double)) {
+    return "float";
+  } else if (t == typeid(fznparser::IntSet) ||
+             t == typeid(std::shared_ptr<fznparser::IntSet>)) {
+    return "set of int";
+  } else if (t == typeid(fznparser::FloatSet) ||
+             t == typeid(std::shared_ptr<fznparser::FloatSet>)) {
+    return "set of float";
   }
   return "[unknown type]";
 }
@@ -62,12 +149,12 @@ std::vector<Int> getFixedValues(
   return values;
 }
 
-std::vector<bool> getFixedBoolValues(const InvariantGraph& invariantGraph,
+std::vector<bool> getFixedBoolValues(const InvariantGraph& graph,
                                      const std::vector<VarNodeId>& varNodeIds) {
   std::vector<bool> values;
   values.reserve(varNodeIds.size());
   for (VarNodeId varNodeId : varNodeIds) {
-    const VarNode& varNode = invariantGraph.varNodeConst(varNodeId);
+    const VarNode& varNode = graph.varNodeConst(varNodeId);
     if (varNode.isFixed()) {
       values.emplace_back(varNode.lowerBound() == 0);
     }
@@ -92,6 +179,56 @@ std::vector<bool> getFixedValues(
     }
   }
   return values;
+}
+
+std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+    FznInvariantGraph& graph,
+    const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
+  std::vector<VarNodeId> vars;
+  vars.reserve(intVarArray->size());
+  for (size_t i = 0; i < intVarArray->size(); ++i) {
+    if (std::holds_alternative<Int>(intVarArray->at(i))) {
+      continue;
+    }
+    const auto& var =
+        std::get<std::shared_ptr<const fznparser::IntVar>>(intVarArray->at(i));
+
+    if (!var->isFixed()) {
+      vars.emplace_back(graph.retrieveVarNode(var));
+    }
+  }
+  return vars;
+}
+
+std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+    FznInvariantGraph& graph,
+    const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray) {
+  std::vector<VarNodeId> vars;
+  vars.reserve(boolVarArray->size());
+  for (size_t i = 0; i < boolVarArray->size(); ++i) {
+    if (std::holds_alternative<bool>(boolVarArray->at(i))) {
+      continue;
+    }
+    const auto& var = std::get<std::shared_ptr<const fznparser::BoolVar>>(
+        boolVarArray->at(i));
+
+    if (!var->isFixed()) {
+      vars.emplace_back(graph.retrieveVarNode(var));
+    }
+  }
+  return vars;
+}
+
+std::vector<VarNodeId> getUnfixedVarNodeIds(
+    const InvariantGraph& graph, const std::vector<VarNodeId>& varNodeIds) {
+  std::vector<VarNodeId> unfixed;
+  unfixed.reserve(varNodeIds.size());
+  for (VarNodeId varNodeId : varNodeIds) {
+    if (!graph.varNodeConst(varNodeId).isFixed()) {
+      unfixed.emplace_back(varNodeId);
+    }
+  }
+  return unfixed;
 }
 
 void verifyAllDifferent(
@@ -120,38 +257,36 @@ void verifyAllDifferent(
   return false;
 }
 
-VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
+VarNodeId createCountNode(FznInvariantGraph& graph,
                           const std::shared_ptr<fznparser::IntVarArray>& inputs,
                           const fznparser::IntArg& needle) {
-  VarNodeId countVarNodeId = invariantGraph.retrieveIntVarNode(
+  VarNodeId countVarNodeId = graph.retrieveIntVarNode(
       SearchDomain(0, static_cast<Int>(inputs->size())));
 
   if (needle.isFixed()) {
-    invariantGraph.addInvariantNode(
-        std::make_unique<IntCountNode>(invariantGraph.retrieveVarNodes(inputs),
-                                       needle.toParameter(), countVarNodeId));
+    graph.addInvariantNode(std::make_unique<IntCountNode>(
+        graph.retrieveVarNodes(inputs), needle.toParameter(), countVarNodeId));
   } else {
-    invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        invariantGraph.retrieveVarNodes(inputs),
-        invariantGraph.retrieveVarNode(needle.var()), countVarNodeId));
+    graph.addInvariantNode(std::make_unique<VarIntCountNode>(
+        graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle.var()),
+        countVarNodeId));
   }
   return countVarNodeId;
 }
 
-VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
+VarNodeId createCountNode(FznInvariantGraph& graph,
                           const std::shared_ptr<fznparser::IntVarArray>& inputs,
                           const fznparser::IntArg& needle,
                           const fznparser::IntArg& count) {
-  VarNodeId countVarNodeId = invariantGraph.retrieveVarNode(count);
+  VarNodeId countVarNodeId = graph.retrieveVarNode(count);
 
   if (needle.isFixed()) {
-    invariantGraph.addInvariantNode(
-        std::make_unique<IntCountNode>(invariantGraph.retrieveVarNodes(inputs),
-                                       needle.toParameter(), countVarNodeId));
+    graph.addInvariantNode(std::make_unique<IntCountNode>(
+        graph.retrieveVarNodes(inputs), needle.toParameter(), countVarNodeId));
   } else {
-    invariantGraph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        invariantGraph.retrieveVarNodes(inputs),
-        invariantGraph.retrieveVarNode(needle.var()), countVarNodeId));
+    graph.addInvariantNode(std::make_unique<VarIntCountNode>(
+        graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle.var()),
+        countVarNodeId));
   }
   return countVarNodeId;
 }

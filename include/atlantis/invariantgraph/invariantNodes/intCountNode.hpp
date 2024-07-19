@@ -11,17 +11,20 @@
 namespace atlantis::invariantgraph {
 class IntCountNode : public InvariantNode {
  private:
+  propagation::VarId _intermediate{propagation::NULL_ID};
+  Int _offset{0};
   Int _needle;
 
  public:
   IntCountNode(std::vector<VarNodeId>&& vars, Int needle, VarNodeId count);
 
-  ~IntCountNode() override = default;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] const std::vector<VarNodeId>& haystack() const;
 

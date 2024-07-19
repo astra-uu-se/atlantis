@@ -15,14 +15,25 @@ class ArrayBoolAndNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
+  ArrayBoolAndNode(VarNodeId a, VarNodeId b, VarNodeId output);
+
+  ArrayBoolAndNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
+
   ArrayBoolAndNode(std::vector<VarNodeId>&& as, VarNodeId output);
 
-  ArrayBoolAndNode(std::vector<VarNodeId>&& as, bool shouldHold);
+  ArrayBoolAndNode(std::vector<VarNodeId>&& as, bool shouldHold = true);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
+
+  bool canBeReplaced(const InvariantGraph&) const override;
+
+  bool replace(InvariantGraph&) override;
+
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 };
 
 }  // namespace atlantis::invariantgraph

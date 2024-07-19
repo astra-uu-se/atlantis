@@ -7,17 +7,16 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool array_int_element(FznInvariantGraph& invariantGraph,
-                       const fznparser::IntArg& idx,
+bool array_int_element(FznInvariantGraph& graph, const fznparser::IntArg& idx,
                        std::vector<Int>&& parArray,
                        const fznparser::IntArg& output, Int offset) {
-  invariantGraph.addInvariantNode(std::make_unique<ArrayElementNode>(
-      std::move(parArray), invariantGraph.retrieveVarNode(idx),
-      invariantGraph.retrieveVarNode(output), offset));
+  graph.addInvariantNode(std::make_unique<ArrayElementNode>(
+      std::move(parArray), graph.retrieveVarNode(idx),
+      graph.retrieveVarNode(output), offset));
   return true;
 }
 
-bool array_int_element(FznInvariantGraph& invariantGraph,
+bool array_int_element(FznInvariantGraph& graph,
                        const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "array_int_element" &&
       constraint.identifier() != "array_int_element_offset") {
@@ -43,9 +42,8 @@ bool array_int_element(FznInvariantGraph& invariantGraph,
   }
 
   return array_int_element(
-      invariantGraph, idx,
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(1))
+      graph, idx,
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1))
           ->toParVector(),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)), offset);
 }

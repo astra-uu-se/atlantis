@@ -7,13 +7,12 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool set_in(FznInvariantGraph&, VarNodeId varNodeId, std::vector<Int>&& values,
-            VarNodeId reified);
+bool set_in(FznInvariantGraph&, const fznparser::IntArg&,
+            const fznparser::IntSet&);
 
 bool set_in(FznInvariantGraph&, const fznparser::IntArg&,
-            const fznparser::IntSetArg&);
+            const fznparser::IntSet&, const fznparser::BoolArg& reified);
 
-bool set_in(FznInvariantGraph& invariantGraph,
-            const fznparser::Constraint& constraint);
+bool set_in(FznInvariantGraph&, const fznparser::Constraint&);
 
 }  // namespace atlantis::invariantgraph::fzn

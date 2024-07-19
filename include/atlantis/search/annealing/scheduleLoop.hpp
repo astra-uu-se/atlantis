@@ -25,8 +25,6 @@ class ScheduleLoop : public AnnealingSchedule {
       : _schedule(std::move(schedule)),
         _maximumConsecutiveFutileRounds(maximumConsecutiveFutileRounds) {}
 
-  ~ScheduleLoop() override = default;
-
   void start(double initialTemperature) override;
   void nextRound(const RoundStatistics& statistics) override;
   double temperature() override;

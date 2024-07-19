@@ -1,39 +1,33 @@
-
-
 #include "atlantis/invariantgraph/fzn/fzn_count_geq.hpp"
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/fzn_count_lt.hpp"
-#include "atlantis/invariantgraph/fzn/int_le.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLeNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
-bool fzn_count_geq(FznInvariantGraph& invariantGraph,
+bool fzn_count_geq(FznInvariantGraph& graph,
                    const std::shared_ptr<fznparser::IntVarArray>& inputs,
                    const fznparser::IntArg& needle,
                    const fznparser::IntArg& count) {
-  VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  return int_le(invariantGraph, invariantGraph.retrieveVarNode(count), output);
+  VarNodeId output = createCountNode(graph, inputs, needle);
+  graph.addInvariantNode(
+      std::make_unique<IntLeNode>(graph.retrieveVarNode(count), output));
+  return true;
 }
 
-bool fzn_count_geq(FznInvariantGraph& invariantGraph,
+bool fzn_count_geq(FznInvariantGraph& graph,
                    const std::shared_ptr<fznparser::IntVarArray>& inputs,
                    const fznparser::IntArg& needle,
                    const fznparser::IntArg& count,
                    const fznparser::BoolArg& reified) {
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return fzn_count_geq(invariantGraph, inputs, needle, count);
-    }
-    return fzn_count_lt(invariantGraph, inputs, needle, count);
-  }
-  VarNodeId output = createCountNode(invariantGraph, inputs, needle);
-  return int_le(invariantGraph, invariantGraph.retrieveVarNode(count), output,
-                reified);
+  VarNodeId output = createCountNode(graph, inputs, needle);
+  graph.addInvariantNode(std::make_unique<IntLeNode>(
+      graph.retrieveVarNode(count), output, graph.retrieveVarNode(reified)));
+  return true;
 }
 
-bool fzn_count_geq(FznInvariantGraph& invariantGraph,
+bool fzn_count_geq(FznInvariantGraph& graph,
                    const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "fzn_count_geq" &&
       constraint.identifier() != "fzn_count_geq_reif") {
@@ -48,17 +42,14 @@ bool fzn_count_geq(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true)
   if (!isReified) {
     return fzn_count_geq(
-        invariantGraph,
-        std::get<std::shared_ptr<fznparser::IntVarArray>>(
-            constraint.arguments().at(0)),
+        graph,
+        getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
         std::get<fznparser::IntArg>(constraint.arguments().at(1)),
         std::get<fznparser::IntArg>(constraint.arguments().at(2)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
   return fzn_count_geq(
-      invariantGraph,
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(0)),
+      graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)));
 }

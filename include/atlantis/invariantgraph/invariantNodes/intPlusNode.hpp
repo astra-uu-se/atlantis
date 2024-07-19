@@ -10,15 +10,24 @@
 namespace atlantis::invariantgraph {
 
 class IntPlusNode : public InvariantNode {
+ private:
+  Int _offset{0};
+  propagation::VarId _intermediate{propagation::NULL_ID};
+
  public:
   IntPlusNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
-  ~IntPlusNode() override = default;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+
+  bool canBeReplaced(const InvariantGraph&) const override;
+
+  bool replace(InvariantGraph&) override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

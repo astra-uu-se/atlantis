@@ -12,17 +12,32 @@ namespace atlantis::invariantgraph {
 
 class IntAllEqualNode : public ViolationInvariantNode {
  private:
+  bool _breaksCycle{false};
   propagation::VarId _allDifferentViolationVarId{propagation::NULL_ID};
 
  public:
-  explicit IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r);
+  explicit IntAllEqualNode(VarNodeId a, VarNodeId b, VarNodeId r,
+                           bool breaksCycle = false);
+
+  explicit IntAllEqualNode(VarNodeId a, VarNodeId b, bool shouldHold = true,
+                           bool breaksCycle = false);
+
+  explicit IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
+                           bool breaksCycle = false);
 
   explicit IntAllEqualNode(std::vector<VarNodeId>&& vars,
-                           bool shouldHold = true);
+                           bool shouldHold = true, bool breaksCycle = false);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
+
+  bool canBeReplaced(const InvariantGraph&) const override;
+
+  bool replace(InvariantGraph&) override;
+
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 };
 }  // namespace atlantis::invariantgraph

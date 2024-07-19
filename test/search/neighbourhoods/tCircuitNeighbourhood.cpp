@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "../testHelper.hpp"
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/annealing/annealerContainer.hpp"
 #include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
@@ -44,18 +45,6 @@ class CircuitNeighbourhoodTest : public ::testing::Test {
 
     EXPECT_EQ(count, next.size());
   }
-};
-
-class AlwaysAcceptingAnnealer : public search::Annealer {
- public:
-  AlwaysAcceptingAnnealer(const search::Assignment& assignment,
-                          search::RandomProvider& random,
-                          search::AnnealingSchedule& schedule)
-      : Annealer(assignment, random, schedule) {}
-  ~AlwaysAcceptingAnnealer() override = default;
-
- protected:
-  [[nodiscard]] bool accept(Int) override { return true; }
 };
 
 TEST_F(CircuitNeighbourhoodTest, all_values_are_initialised) {

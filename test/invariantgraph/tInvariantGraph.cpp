@@ -36,6 +36,7 @@ TEST(InvariantGraphTest, apply_result) {
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
+  invariantGraph.close(solver);
 
   EXPECT_NE(invariantGraph.varNode(a).varId(), propagation::NULL_ID);
   EXPECT_NE(invariantGraph.varNode(b).varId(), propagation::NULL_ID);
@@ -66,6 +67,7 @@ TEST(InvariantGraphTest, ApplyGraph) {
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
+  invariantGraph.close(solver);
 
   // 7 variables
   EXPECT_GE(solver.numVars(), 7);
@@ -106,6 +108,7 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
+  invariantGraph.close(solver);
 
   // a, b, c, d, output
   // x_copy
@@ -155,13 +158,14 @@ TEST(InvariantGraphTest, SplitGraph) {
 
   std::vector<Int> coeffs(numInputs, 1);
   for (const auto& identifierArray : varNodeIdMatrix) {
-    std::vector<VarNodeId> inputs(identifierArray);
+    std::vector<VarNodeId> inputVarNodeIds(identifierArray);
     invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-        std::vector<Int>(coeffs), std::move(inputs), output));
+        std::vector<Int>{coeffs}, std::move(inputVarNodeIds), output));
   }
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
+  invariantGraph.close(solver);
 
   // Each invariant has numInputs inputs
   // Each invariant has 1 output
@@ -205,6 +209,7 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
+  invariantGraph.close(solver);
 
   // x1, x2, output1, output2
   // the pivot
@@ -252,6 +257,7 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
+  invariantGraph.close(solver);
 
   // x11, x12, x21, x22, output1, output1
   // the pivot
@@ -300,6 +306,7 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
+  invariantGraph.close(solver);
 
   // idx1, x1, idx2, x2, output1, output2
   EXPECT_GE(solver.numVars(), 6);

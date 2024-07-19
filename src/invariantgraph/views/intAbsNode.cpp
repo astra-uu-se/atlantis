@@ -10,17 +10,49 @@ namespace atlantis::invariantgraph {
 IntAbsNode::IntAbsNode(VarNodeId staticInput, VarNodeId output)
     : InvariantNode({output}, {staticInput}) {}
 
-void invariantgraph::IntAbsNode::registerOutputVars(
-    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
-  if (invariantGraph.varId(outputVarNodeIds().front()) ==
-      propagation::NULL_ID) {
-    invariantGraph.varNode(outputVarNodeIds().front())
-        .setVarId(solver.makeIntView<propagation::IntAbsView>(
-            solver, invariantGraph.varId(input())));
+void IntAbsNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  InvariantNode::init(graph, id);
+  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(graph.varNodeConst(staticInputVarNodeIds().front()).isIntVar());
+}
+
+void IntAbsNode::updateState(InvariantGraph& graph) {
+  if (graph.varNodeConst(staticInputVarNodeIds().front()).isFixed()) {
+    graph.varNode(outputVarNodeIds().front())
+        .fixToValue(std::abs(
+            graph.varNodeConst(staticInputVarNodeIds().front()).lowerBound()));
+    setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-void invariantgraph::IntAbsNode::registerNode(InvariantGraph&,
-                                              propagation::SolverBase&) {}
+bool IntAbsNode::canBeReplaced(const InvariantGraph& graph) const {
+  return state() == InvariantNodeState::ACTIVE &&
+         graph.varNodeConst(staticInputVarNodeIds().front()).lowerBound() >= 0;
+}
+
+bool IntAbsNode::replace(InvariantGraph& graph) {
+  if (!canBeReplaced(graph)) {
+    return false;
+  }
+  graph.replaceVarNode(outputVarNodeIds().front(),
+                       staticInputVarNodeIds().front());
+  return true;
+}
+
+void IntAbsNode::registerOutputVars(InvariantGraph& graph,
+                                    propagation::SolverBase& solver) {
+  if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+    graph.varNode(outputVarNodeIds().front())
+        .setVarId(solver.makeIntView<propagation::IntAbsView>(
+            solver, graph.varId(input())));
+  }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
+}
+
+void IntAbsNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
 }  // namespace atlantis::invariantgraph

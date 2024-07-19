@@ -6,16 +6,14 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool bool_not(FznInvariantGraph& invariantGraph,
-              const fznparser::BoolArg& boolVar,
+bool bool_not(FznInvariantGraph& graph, const fznparser::BoolArg& boolVar,
               const fznparser::BoolArg& negatedBoolVar) {
-  invariantGraph.addInvariantNode(std::make_unique<BoolNotNode>(
-      invariantGraph.retrieveVarNode(boolVar),
-      invariantGraph.retrieveVarNode(negatedBoolVar)));
+  graph.addInvariantNode(std::make_unique<BoolNotNode>(
+      graph.retrieveVarNode(boolVar), graph.retrieveVarNode(negatedBoolVar)));
   return true;
 }
 
-bool bool_not(FznInvariantGraph& invariantGraph,
+bool bool_not(FznInvariantGraph& graph,
               const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "bool_not") {
     return false;
@@ -24,7 +22,7 @@ bool bool_not(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::BoolArg, true)
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
 
-  return bool_not(invariantGraph,
+  return bool_not(graph,
                   std::get<fznparser::BoolArg>(constraint.arguments().at(0)),
                   std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
 }

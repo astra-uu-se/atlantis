@@ -8,17 +8,16 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool array_var_bool_element(
-    FznInvariantGraph& invariantGraph, const fznparser::IntArg& index,
+    FznInvariantGraph& graph, const fznparser::IntArg& index,
     const std::shared_ptr<fznparser::BoolVarArray>& inputs,
     const fznparser::BoolArg& output, Int offset) {
-  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
-      invariantGraph.retrieveVarNode(index),
-      invariantGraph.retrieveVarNodes(inputs),
-      invariantGraph.retrieveVarNode(output), offset));
+  graph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
+      graph.retrieveVarNode(index), graph.retrieveVarNodes(inputs),
+      graph.retrieveVarNode(output), offset));
   return true;
 }
 
-bool array_var_bool_element(FznInvariantGraph& invariantGraph,
+bool array_var_bool_element(FznInvariantGraph& graph,
                             const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "array_var_bool_element" &&
       constraint.identifier() != "array_var_bool_element_nonshifted") {
@@ -30,17 +29,20 @@ bool array_var_bool_element(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
 
   const auto& index = std::get<fznparser::IntArg>(constraint.arguments().at(0));
-
-  // Compute offset if nonshifted variant:
-  Int offset = constraint.identifier() != "array_var_bool_element_nonshifted"
-                   ? 1
-                   : (index.isParameter() ? index.parameter()
-                                          : index.var()->lowerBound());
+  Int offset = 1;
+  if (constraint.identifier() != "array_var_bool_element_nonshifted") {
+    FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, false)
+    offset =
+        std::get<fznparser::IntArg>(constraint.arguments().at(3)).toParameter();
+  } else {
+    // Compute offset if nonshifted variant:
+    offset =
+        index.isParameter() ? index.parameter() : index.var()->lowerBound();
+  }
 
   return array_var_bool_element(
-      invariantGraph, index,
-      std::get<std::shared_ptr<fznparser::BoolVarArray>>(
-          constraint.arguments().at(1)),
+      graph, index,
+      getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(2)), offset);
 }
 

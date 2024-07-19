@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
 #include "atlantis/invariantgraph/types.hpp"
@@ -10,22 +8,24 @@
 namespace atlantis::invariantgraph {
 
 class IntTimesNode : public InvariantNode {
+ private:
+  Int _scalar{1};
+  propagation::VarId _intermediate{propagation::NULL_ID};
+
  public:
   IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output);
 
-  ~IntTimesNode() override = default;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  bool canBeReplaced(const InvariantGraph&) const override;
 
-  [[nodiscard]] VarNodeId a() const noexcept {
-    return staticInputVarNodeIds().front();
-  }
-  [[nodiscard]] VarNodeId b() const noexcept {
-    return staticInputVarNodeIds().back();
-  }
+  bool replace(InvariantGraph&) override;
+
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 };
 
 }  // namespace atlantis::invariantgraph

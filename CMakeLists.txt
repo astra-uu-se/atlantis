@@ -107,7 +107,7 @@ include(FetchContent)
 FetchContent_Declare(
   fznparser
   GIT_REPOSITORY git@github.com:astra-uu-se/fznparser.git
-  GIT_TAG v1.0.0
+  GIT_TAG v1.0.1
 )
 FetchContent_Declare(
   cxxopts
@@ -168,6 +168,7 @@ endif()
 
 if(BUILD_TESTS)
   add_compile_definitions(FZN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fzn-models")
+  add_compile_definitions(FZN_CHALLENGE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fzn-challanges")
 
   # ###############################
   # Testing

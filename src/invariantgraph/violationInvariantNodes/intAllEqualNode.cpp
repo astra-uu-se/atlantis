@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
@@ -10,40 +11,128 @@
 
 namespace atlantis::invariantgraph {
 
-IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r)
-    : ViolationInvariantNode(std::move(vars), r) {}
+IntAllEqualNode::IntAllEqualNode(VarNodeId a, VarNodeId b, VarNodeId r,
+                                 bool breaksCycle)
+    : IntAllEqualNode(std::vector<VarNodeId>{a, b}, r, breaksCycle) {}
 
-IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, bool shouldHold)
-    : ViolationInvariantNode(std::move(vars), shouldHold) {}
+IntAllEqualNode::IntAllEqualNode(VarNodeId a, VarNodeId b, bool shouldHold,
+                                 bool breaksCycle)
+    : IntAllEqualNode(std::vector<VarNodeId>{a, b}, shouldHold, breaksCycle) {}
 
-void IntAllEqualNode::registerOutputVars(InvariantGraph& invariantGraph,
-                                         propagation::SolverBase& solver) {
-  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
-    _allDifferentViolationVarId = solver.makeIntVar(0, 0, 0);
-    if (shouldHold()) {
-      setViolationVarId(invariantGraph,
-                        solver.makeIntView<propagation::EqualConst>(
-                            solver, _allDifferentViolationVarId,
-                            staticInputVarNodeIds().size() - 1));
-    } else {
-      assert(!isReified());
-      setViolationVarId(invariantGraph,
-                        solver.makeIntView<propagation::NotEqualConst>(
-                            solver, _allDifferentViolationVarId,
-                            staticInputVarNodeIds().size() - 1));
+IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
+                                 bool breaksCycle)
+    : ViolationInvariantNode(std::move(vars), r), _breaksCycle(breaksCycle) {}
+
+IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, bool shouldHold,
+                                 bool breaksCycle)
+    : ViolationInvariantNode(std::move(vars), shouldHold),
+      _breaksCycle(breaksCycle) {}
+
+void IntAllEqualNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
+  ViolationInvariantNode::init(graph, id);
+  assert(!isReified() ||
+         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
+void IntAllEqualNode::updateState(InvariantGraph& graph) {
+  ViolationInvariantNode::updateState(graph);
+  if (staticInputVarNodeIds().size() < 2) {
+    if (!shouldHold()) {
+      throw InconsistencyException(
+          "IntAllEqualNode::updateState constraint is violated");
     }
+    if (isReified()) {
+      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+    }
+    setState(InvariantNodeState::SUBSUMED);
+  }
+  size_t numFixed = 0;
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+    const VarNode& iNode = graph.varNodeConst(staticInputVarNodeIds().at(i));
+    if (!iNode.isFixed()) {
+      continue;
+    }
+    ++numFixed;
+    const Int iVal = iNode.lowerBound();
+    for (size_t j = i + 1; j < staticInputVarNodeIds().size(); ++j) {
+      const VarNode& jNode = graph.varNodeConst(staticInputVarNodeIds().at(j));
+      if (!jNode.isFixed()) {
+        continue;
+      }
+      const Int jVal = jNode.lowerBound();
+      if (iVal != jVal) {
+        if (isReified()) {
+          graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
+        } else if (shouldHold()) {
+          throw InconsistencyException(
+              "IntAllEqualNode::updateState constraint is violated");
+        }
+      }
+    }
+  }
+  if (numFixed == staticInputVarNodeIds().size()) {
+    setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-void IntAllEqualNode::registerNode(InvariantGraph& invariantGraph,
+bool IntAllEqualNode::canBeReplaced(const InvariantGraph&) const {
+  return state() == InvariantNodeState::ACTIVE && !_breaksCycle &&
+         (!isReified() &&
+          (shouldHold() || staticInputVarNodeIds().size() <= 2));
+}
+
+bool IntAllEqualNode::replace(InvariantGraph& graph) {
+  if (!canBeReplaced(graph)) {
+    return false;
+  }
+  if (!shouldHold()) {
+    assert(staticInputVarNodeIds().size() == 2);
+    graph.addInvariantNode(std::make_unique<AllDifferentNode>(
+        std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
+  } else if (!staticInputVarNodeIds().empty()) {
+    const VarNodeId firstVar = staticInputVarNodeIds().front();
+    for (size_t i = 1; i < staticInputVarNodeIds().size(); ++i) {
+      graph.replaceVarNode(staticInputVarNodeIds().at(i), firstVar);
+    }
+  }
+  return true;
+}
+
+void IntAllEqualNode::registerOutputVars(InvariantGraph& graph,
+                                         propagation::SolverBase& solver) {
+  if (violationVarId(graph) == propagation::NULL_ID) {
+    _allDifferentViolationVarId = solver.makeIntVar(0, 0, 0);
+    if (shouldHold()) {
+      setViolationVarId(graph, solver.makeIntView<propagation::EqualConst>(
+                                   solver, _allDifferentViolationVarId,
+                                   staticInputVarNodeIds().size() - 1));
+    } else {
+      assert(!isReified());
+      setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
+                                   solver, _allDifferentViolationVarId,
+                                   staticInputVarNodeIds().size() - 1));
+    }
+  }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
+}
+
+void IntAllEqualNode::registerNode(InvariantGraph& graph,
                                    propagation::SolverBase& solver) {
   assert(_allDifferentViolationVarId != propagation::NULL_ID);
-  assert(violationVarId(invariantGraph) != propagation::NULL_ID);
+  assert(violationVarId(graph) != propagation::NULL_ID);
 
   std::vector<propagation::VarId> inputVarIds;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputVarIds),
-                 [&](const auto& id) { return invariantGraph.varId(id); });
+                 [&](const auto& id) { return graph.varId(id); });
 
   solver.makeViolationInvariant<propagation::AllDifferent>(
       solver, _allDifferentViolationVarId, std::move(inputVarIds));

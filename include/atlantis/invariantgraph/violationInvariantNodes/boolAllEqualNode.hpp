@@ -11,18 +11,32 @@
 namespace atlantis::invariantgraph {
 class BoolAllEqualNode : public ViolationInvariantNode {
  private:
+  bool _breaksCycle{false};
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r);
+  explicit BoolAllEqualNode(VarNodeId a, VarNodeId b, VarNodeId r,
+                            bool breaksCycle = false);
+
+  explicit BoolAllEqualNode(VarNodeId a, VarNodeId b, bool shouldHold = true,
+                            bool breaksCycle = false);
+
+  explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
+                            bool breaksCycle = false);
 
   explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars,
-                            bool shouldHold = true);
-  bool prune(InvariantGraph&) override;
+                            bool shouldHold = true, bool breaksCycle = false);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
+
+  bool canBeReplaced(const InvariantGraph&) const override;
+
+  bool replace(InvariantGraph&) override;
+
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 };
 }  // namespace atlantis::invariantgraph

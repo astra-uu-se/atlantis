@@ -19,10 +19,8 @@ class InvariantGraph;  // Forward declaration
 
 class InvariantNode {
  private:
-  std::vector<VarNodeId> _outputVarNodeIds;
-  std::vector<VarNodeId> _staticInputVarNodeIds;
-  std::vector<VarNodeId> _dynamicInputVarNodeIds;
   InvariantNodeId _id{NULL_NODE_ID};
+  InvariantNodeState _state{InvariantNodeState::UNINITIALIZED};
 
  public:
   explicit InvariantNode(std::vector<VarNodeId>&& outputIds,
@@ -31,13 +29,23 @@ class InvariantNode {
 
   virtual ~InvariantNode() = default;
 
-  void init(InvariantGraph&, const InvariantNodeId&);
+  virtual void init(InvariantGraph&, const InvariantNodeId&);
 
   [[nodiscard]] InvariantNodeId id() const { return _id; }
 
   [[nodiscard]] virtual bool isReified() const;
 
-  virtual bool prune(InvariantGraph&);
+  [[nodiscard]] virtual bool canBeReplaced(const InvariantGraph&) const;
+
+  [[nodiscard]] virtual bool replace(InvariantGraph&);
+
+  [[nodiscard]] virtual bool canBeMadeImplicit(const InvariantGraph&) const;
+
+  [[nodiscard]] virtual bool makeImplicit(InvariantGraph&);
+
+  [[nodiscard]] InvariantNodeState state() const { return _state; }
+
+  void deactivate(InvariantGraph&);
 
   /**
    * Creates as all the variables the node defines in @p solver.
@@ -79,9 +87,13 @@ class InvariantNode {
   [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds()
       const noexcept;
 
+  virtual void updateState(InvariantGraph&) {};
+
   void replaceDefinedVar(VarNode& oldOutputVarNode, VarNode& newOutputVarNode);
 
   void removeStaticInputVarNode(VarNode&);
+
+  void removeDynamicInputVarNode(VarNode&);
 
   void removeOutputVarNode(VarNode&);
 
@@ -95,6 +107,23 @@ class InvariantNode {
   friend class ReifiedConstraint;
 
  protected:
+  std::vector<VarNodeId> _outputVarNodeIds;
+  std::vector<VarNodeId> _staticInputVarNodeIds;
+  std::vector<VarNodeId> _dynamicInputVarNodeIds;
+
+  void eraseStaticInputVarNode(size_t index);
+
+  void eraseDynamicInputVarNode(size_t index);
+
+  /**
+   * Splits the unfixed output variable nodes of the current node into multiple
+   * nodes.
+   * @return A vector where an element (i, j) means that VarNode with VarNodeId
+   * i has been replaced by the VarNode with VarNodeId j.
+   */
+  std::vector<std::pair<VarNodeId, VarNodeId>> splitOutputVarNodes(
+      InvariantGraph&);
+
   static propagation::VarId makeSolverVar(propagation::SolverBase&, VarNode&,
                                           Int initialValue = 0);
 
@@ -103,5 +132,7 @@ class InvariantNode {
   void markStaticInputTo(VarNode& node, bool registerHere = true);
 
   void markDynamicInputTo(VarNode& node, bool registerHere = true);
+
+  void setState(InvariantNodeState state) { _state = state; }
 };
 }  // namespace atlantis::invariantgraph

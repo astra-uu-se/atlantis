@@ -2,56 +2,27 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/bool_eq.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolXorNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
-bool bool_xor(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
-  invariantGraph.addInvariantNode(std::make_unique<BoolXorNode>(a, b, true));
-  return true;
-}
-
-bool bool_xor(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
+bool bool_xor(FznInvariantGraph& graph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b) {
-  return bool_xor(invariantGraph, invariantGraph.retrieveVarNode(a),
-                  invariantGraph.retrieveVarNode(b));
-}
-
-bool bool_xor(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
-              VarNodeId reified) {
-  const auto& reifiedVarNode = invariantGraph.varNode(reified);
-  if (reifiedVarNode.isFixed()) {
-    if (reifiedVarNode.lowerBound() == 0) {
-      return bool_xor(invariantGraph, a, b);
-    }
-    // !(a xor b) == (x == b)
-    return bool_eq(invariantGraph, a, b);
-  }
-
-  invariantGraph.addInvariantNode(std::make_unique<BoolXorNode>(a, b, reified));
-
+  graph.addInvariantNode(std::make_unique<ArrayBoolXorNode>(
+      graph.retrieveVarNode(a), graph.retrieveVarNode(b)));
   return true;
 }
 
-bool bool_xor(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
+bool bool_xor(FznInvariantGraph& graph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return bool_xor(invariantGraph, a, b);
-    }
-    // !(a xor b) == (x == b)
-    return bool_eq(invariantGraph, a, b);
-  }
-
-  invariantGraph.addInvariantNode(std::make_unique<BoolXorNode>(
-      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
-      invariantGraph.retrieveVarNode(reified.var())));
+  graph.addInvariantNode(std::make_unique<ArrayBoolXorNode>(
+      graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+      graph.retrieveVarNode(reified.var())));
 
   return true;
 }
 
-bool bool_xor(FznInvariantGraph& invariantGraph,
+bool bool_xor(FznInvariantGraph& graph,
               const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "bool_xor") {
     return false;
@@ -63,12 +34,12 @@ bool bool_xor(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
 
   if (!isReified) {
-    return bool_xor(invariantGraph,
+    return bool_xor(graph,
                     std::get<fznparser::BoolArg>(constraint.arguments().at(0)),
                     std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
-  return bool_xor(invariantGraph,
+  return bool_xor(graph,
                   std::get<fznparser::BoolArg>(constraint.arguments().at(0)),
                   std::get<fznparser::BoolArg>(constraint.arguments().at(1)),
                   std::get<fznparser::BoolArg>(constraint.arguments().at(2)));

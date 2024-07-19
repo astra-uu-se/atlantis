@@ -19,8 +19,6 @@ class NeighbourhoodCombinator : public Neighbourhood {
   explicit NeighbourhoodCombinator(
       std::vector<std::shared_ptr<Neighbourhood>>&& neighbourhoods);
 
-  ~NeighbourhoodCombinator() override = default;
-
   void initialise(RandomProvider& random,
                   AssignmentModifier& modifications) override;
   bool randomMove(RandomProvider& random, Assignment& assignment,

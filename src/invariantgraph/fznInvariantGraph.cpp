@@ -3,7 +3,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "atlantis/invariantgraph/fzn/allDifferentImplicitNode.hpp"
 #include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
 #include "atlantis/invariantgraph/fzn/array_bool_element.hpp"
 #include "atlantis/invariantgraph/fzn/array_bool_element2d.hpp"
@@ -28,9 +27,9 @@
 #include "atlantis/invariantgraph/fzn/bool_not.hpp"
 #include "atlantis/invariantgraph/fzn/bool_or.hpp"
 #include "atlantis/invariantgraph/fzn/bool_xor.hpp"
-#include "atlantis/invariantgraph/fzn/circuitImplicitNode.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_equal_int.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_circuit.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_eq.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_geq.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_gt.hpp"
@@ -48,7 +47,6 @@
 #include "atlantis/invariantgraph/fzn/int_lin_eq.hpp"
 #include "atlantis/invariantgraph/fzn/int_lin_le.hpp"
 #include "atlantis/invariantgraph/fzn/int_lin_ne.hpp"
-#include "atlantis/invariantgraph/fzn/int_linear.hpp"
 #include "atlantis/invariantgraph/fzn/int_lt.hpp"
 #include "atlantis/invariantgraph/fzn/int_max.hpp"
 #include "atlantis/invariantgraph/fzn/int_min.hpp"
@@ -58,8 +56,6 @@
 #include "atlantis/invariantgraph/fzn/int_pow.hpp"
 #include "atlantis/invariantgraph/fzn/int_times.hpp"
 #include "atlantis/invariantgraph/fzn/set_in.hpp"
-#include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intNeNode.hpp"
 #include "atlantis/utils/fznAst.hpp"
 
 namespace atlantis::invariantgraph {
@@ -82,8 +78,8 @@ VarNode::DomainType domainType(const fznparser::IntVar& var) {
   return domainType(var.annotations());
 }
 
-FznInvariantGraph::FznInvariantGraph()
-    : InvariantGraph(),
+FznInvariantGraph::FznInvariantGraph(bool breakDynamicCycles)
+    : InvariantGraph(breakDynamicCycles),
       _outputIdentifiers(),
       _outputBoolVars(),
       _outputIntVars(),
@@ -234,7 +230,7 @@ std::vector<FznOutputVar> FznInvariantGraph::outputBoolVars() const noexcept {
   outputVars.reserve(_outputBoolVars.size());
   for (const auto& [identifier, nId] : _outputBoolVars) {
     const VarNode node = varNodeConst(nId);
-    if (node.isFixed()) {
+    if (node.isFixed() || node.varId() == propagation::NULL_ID) {
       outputVars.emplace_back(identifier, node.lowerBound());
     } else {
       outputVars.emplace_back(identifier, node.varId());
@@ -248,7 +244,7 @@ std::vector<FznOutputVar> FznInvariantGraph::outputIntVars() const noexcept {
   outputVars.reserve(_outputIntVars.size());
   for (const auto& [identifier, nId] : _outputIntVars) {
     const VarNode node = varNodeConst(nId);
-    if (node.isFixed()) {
+    if (node.isFixed() || node.varId() == propagation::NULL_ID) {
       outputVars.emplace_back(identifier, node.lowerBound());
     } else {
       outputVars.emplace_back(identifier, node.varId());
@@ -268,8 +264,8 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays()
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId& nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
-      if (node.isFixed()) {
-        fznArray.vars.emplace_back(node.constantValue().value());
+      if (node.isFixed() || node.varId() == propagation::NULL_ID) {
+        fznArray.vars.emplace_back(node.lowerBound());
       } else {
         fznArray.vars.emplace_back(node.varId());
       }
@@ -289,8 +285,8 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays()
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId& nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
-      if (node.isFixed()) {
-        fznArray.vars.emplace_back(node.constantValue().value());
+      if (node.isFixed() || node.varId() == propagation::NULL_ID) {
+        fznArray.vars.emplace_back(node.lowerBound());
       } else {
         fznArray.vars.emplace_back(node.varId());
       }
@@ -305,9 +301,6 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
 
   std::vector<std::function<bool(const fznparser::Constraint&)>>
       invariantNodeCreators{
-          [&](const fznparser::Constraint& c) {
-            return makeImplicitConstraintNode(c);
-          },
           [&](const fznparser::Constraint& c) { return makeInvariantNode(c); },
           [&](const fznparser::Constraint& c) {
             return makeViolationInvariantNode(c);
@@ -357,16 +350,10 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
 }
 
 bool FznInvariantGraph::makeInvariantNode(
-    const fznparser::Constraint& constraint, bool guessDefinedVar) {
+    const fznparser::Constraint& constraint) {
 #define MAKE_INVARIANT(fznConstraintName)     \
   if (fznConstraintName(*this, constraint)) { \
     return true;                              \
-  }
-
-  if (!guessDefinedVar) {
-    // For the linear node, we need to know up front what variable is
-    // defined.
-    MAKE_INVARIANT(fzn::int_linear)
   }
 
   MAKE_INVARIANT(fzn::array_bool_and)
@@ -391,6 +378,7 @@ bool FznInvariantGraph::makeInvariantNode(
   MAKE_INVARIANT(fzn::bool_or)
   MAKE_INVARIANT(fzn::bool_xor)
   MAKE_INVARIANT(fzn::fzn_count_eq)
+  MAKE_INVARIANT(fzn::fzn_circuit)
   MAKE_INVARIANT(fzn::fzn_global_cardinality)
   MAKE_INVARIANT(fzn::fzn_global_cardinality_closed)
   MAKE_INVARIANT(fzn::int_abs)
@@ -412,20 +400,6 @@ bool FznInvariantGraph::makeInvariantNode(
 
   return false;
 #undef MAKE_INVARIANT
-}
-
-bool FznInvariantGraph::makeImplicitConstraintNode(
-    const fznparser::Constraint& constraint) {
-#define MAKE_IMPLICIT_CONSTRAINT(fznConstraintName) \
-  if (fznConstraintName(*this, constraint)) {       \
-    return true;                                    \
-  }
-
-  MAKE_IMPLICIT_CONSTRAINT(fzn::makeAllDifferentImplicitNode);
-  MAKE_IMPLICIT_CONSTRAINT(fzn::makeCircuitImplicitNode);
-
-  return false;
-#undef MAKE_IMPLICIT_CONSTRAINT
 }
 
 bool FznInvariantGraph::makeViolationInvariantNode(

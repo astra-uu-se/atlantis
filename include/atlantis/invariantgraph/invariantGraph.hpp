@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <stack>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -19,6 +20,10 @@ namespace atlantis::invariantgraph {
 
 class InvariantGraph {
  private:
+  struct Edge {
+    InvariantNodeId invariantNodeId;
+    VarNodeId varNodeId;
+  };
   std::vector<VarNode> _varNodes;
   std::unordered_map<std::string, VarNodeId> _namedVarNodeIndices;
   std::unordered_map<Int, VarNodeId> _intVarNodeIndices;
@@ -26,6 +31,7 @@ class InvariantGraph {
 
   std::vector<std::unique_ptr<InvariantNode>> _invariantNodes;
   std::vector<std::unique_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
+  bool _breakDynamicCycles;
 
   void populateRootNode();
 
@@ -34,7 +40,7 @@ class InvariantGraph {
   VarNodeId _objectiveVarNodeId;
 
  public:
-  InvariantGraph();
+  InvariantGraph(bool breakDynamicCycles = false);
   virtual ~InvariantGraph() = default;
 
   InvariantGraph(const InvariantGraph&) = delete;
@@ -93,6 +99,16 @@ class InvariantGraph {
 
   InvariantNodeId addInvariantNode(std::unique_ptr<InvariantNode>&&);
 
+  /**
+   * @brief replaces the given old VarNode with the new VarNode in
+   * all Invariants.
+   */
+  void replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId);
+
+  void replaceFixedVars();
+
+  void replaceInvariantNodes();
+
   InvariantNodeId addImplicitConstraintNode(
       std::unique_ptr<ImplicitConstraintNode>&&);
 
@@ -108,6 +124,8 @@ class InvariantGraph {
 
   void apply(propagation::SolverBase&);
 
+  void close(propagation::SolverBase&);
+
  private:
   std::unordered_set<VarNodeId, VarNodeIdHash> dynamicVarNodeFrontier(
       VarNodeId node,
@@ -117,20 +135,22 @@ class InvariantGraph {
       VarNodeId varNodeId,
       const std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal,
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedLocal,
-      std::unordered_map<VarNodeId, VarNodeId, VarNodeIdHash>& path);
+      std::unordered_map<VarNodeId, Edge, VarNodeIdHash>& path);
 
-  std::pair<VarNodeId, InvariantNodeId> findPivotInCycle(
-      const std::vector<VarNodeId>& cycle);
+  Edge findPivotInCycle(const std::vector<Edge>& cycle);
+
+  void breakSelfCycles();
 
   std::vector<VarNodeId> breakCycles(
       VarNodeId node,
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal);
-  VarNodeId breakCycle(const std::vector<VarNodeId>& cycle);
+  VarNodeId breakCycle(const std::vector<Edge>& cycle);
 
   void createVars(propagation::SolverBase&);
   void createImplicitConstraints(propagation::SolverBase&);
   void createInvariants(propagation::SolverBase&);
   propagation::VarId createViolations(propagation::SolverBase&);
+  void sanity(bool);
 };
 
 }  // namespace atlantis::invariantgraph

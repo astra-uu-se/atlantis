@@ -32,10 +32,10 @@ class VarNode {
   propagation::VarId _varId{propagation::NULL_ID};
   propagation::VarId _domainViolationId{propagation::NULL_ID};
 
-  std::vector<InvariantNodeId> _inputTo;
   std::vector<InvariantNodeId> _staticInputTo;
   std::vector<InvariantNodeId> _dynamicInputTo;
   std::unordered_set<InvariantNodeId, InvariantNodeIdHash> _outputOf;
+  bool _isViolationVar{false};
 
  public:
   /**
@@ -72,10 +72,12 @@ class VarNode {
   [[nodiscard]] const SearchDomain& constDomain() const noexcept;
 
   [[nodiscard]] SearchDomain& domain() noexcept;
+  [[nodiscard]] const SearchDomain& domainConst() const noexcept;
 
   [[nodiscard]] bool isFixed() const noexcept;
 
   [[nodiscard]] bool isIntVar() const noexcept;
+  [[nodiscard]] bool isViolationVar() const noexcept;
 
   [[nodiscard]] Int lowerBound() const;
   [[nodiscard]] Int upperBound() const;
@@ -84,9 +86,17 @@ class VarNode {
   [[nodiscard]] bool inDomain(Int) const;
   [[nodiscard]] bool inDomain(bool) const;
 
+  void setIsViolationVar(bool isViolVar);
+
+  /**
+   * @brief removes the given value from the domain of the variable.
+   */
   void removeValue(Int);
 
-  void fixValue(Int);
+  /**
+   * @brief fixes the variable to the given value.
+   */
+  void fixToValue(Int);
 
   /**
    * @brief removes all values that are strictly less than the given value from
@@ -106,10 +116,21 @@ class VarNode {
    */
   void removeValues(const std::vector<Int>&);
 
+  /**
+   * @brief removes all values that are not in the given vector from the domain
+   * from the domain of the variable.
+   */
   void removeAllValuesExcept(const std::vector<Int>&);
 
+  /**
+   * @brief fixes the variable to the given value.
+   */
   void removeValue(bool);
-  void fixValue(bool);
+
+  /**
+   * @brief fixes the variable to the given value.
+   */
+  void fixToValue(bool);
 
   DomainType domainType() const noexcept;
 
@@ -127,11 +148,6 @@ class VarNode {
   propagation::VarId postDomainConstraint(propagation::SolverBase&);
 
   [[nodiscard]] std::pair<Int, Int> bounds() const;
-
-  /**
-   * @return The variable defining nodes for which this node is an input.
-   */
-  [[nodiscard]] const std::vector<InvariantNodeId>& inputTo() const noexcept;
 
   /**
    * @return The variable defining nodes for which this node is an input.

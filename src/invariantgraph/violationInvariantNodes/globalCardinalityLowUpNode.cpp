@@ -28,31 +28,50 @@ GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
       _low(std::move(low)),
       _up(std::move(up)) {}
 
+void GlobalCardinalityLowUpNode::init(InvariantGraph& graph,
+                                      const InvariantNodeId& id) {
+  ViolationInvariantNode::init(graph, id);
+  assert(!isReified() ||
+         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+  assert(std::all_of(staticInputVarNodeIds().begin(),
+                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).isIntVar();
+                     }));
+}
+
 void GlobalCardinalityLowUpNode::registerOutputVars(
-    InvariantGraph& invariantGraph, propagation::SolverBase& solver) {
-  if (violationVarId(invariantGraph) == propagation::NULL_ID) {
+    InvariantGraph& graph, propagation::SolverBase& solver) {
+  if (violationVarId(graph) == propagation::NULL_ID) {
     if (!shouldHold()) {
       _intermediate = solver.makeIntVar(
           0, 0, static_cast<Int>(staticInputVarNodeIds().size()));
-      setViolationVarId(invariantGraph,
-                        solver.makeIntView<propagation::NotEqualConst>(
-                            solver, _intermediate, 0));
+      setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
+                                   solver, _intermediate, 0));
     } else {
-      registerViolation(invariantGraph, solver);
+      registerViolation(graph, solver);
     }
   }
+  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                     [&](const VarNodeId& vId) {
+                       return graph.varNodeConst(vId).varId() !=
+                              propagation::NULL_ID;
+                     }));
 }
 
-void GlobalCardinalityLowUpNode::registerNode(InvariantGraph& invariantGraph,
+void GlobalCardinalityLowUpNode::registerNode(InvariantGraph& graph,
                                               propagation::SolverBase& solver) {
   std::vector<propagation::VarId> inputVarIds;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputVarIds),
-                 [&](const auto& id) { return invariantGraph.varId(id); });
+                 [&](const auto& id) { return graph.varId(id); });
 
   if (shouldHold()) {
     solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
-        solver, violationVarId(invariantGraph), std::move(inputVarIds),
+        solver, violationVarId(graph), std::move(inputVarIds),
         std::vector<Int>(_cover), std::vector<Int>(_low),
         std::vector<Int>(_up));
   } else {

@@ -22,12 +22,13 @@ class ImplicitConstraintNode : public InvariantNode {
       nullptr};
 
  public:
+  void init(InvariantGraph& graph, const InvariantNodeId& id) override;
+
   explicit ImplicitConstraintNode(std::vector<VarNodeId>&& outputVarNodeIds);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   /**
    * Take the neighbourhood which is constructed in the registerNode
@@ -50,7 +51,6 @@ class ImplicitConstraintNode : public InvariantNode {
 
  protected:
   virtual std::shared_ptr<search::neighbourhoods::Neighbourhood>
-  createNeighbourhood(propagation::SolverBase& solver,
-                      std::vector<search::SearchVar>&& vars) = 0;
+  createNeighbourhood(InvariantGraph&, propagation::SolverBase&) = 0;
 };
 }  // namespace atlantis::invariantgraph

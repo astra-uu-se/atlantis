@@ -2,6 +2,8 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rapidcheck/gen/Numeric.h>
+#include <rapidcheck/gtest.h>
 
 #include <deque>
 #include <fznparser/constraint.hpp>
@@ -20,6 +22,16 @@ namespace atlantis::testing {
 using namespace fznparser;
 using namespace atlantis::invariantgraph;
 
+enum struct BoolArgState : unsigned char {
+  PAR_FALSE = 0,
+  PAR_TRUE = 1,
+  FIXED_FALSE = 2,
+  FIXED_TRUE = 3,
+  VAR = 4
+};
+
+enum struct IntArgState : unsigned char { PAR = 0, FIXED = 1, VAR = 2 };
+
 class FznTestBase : public ::testing::Test {
  public:
   std::unique_ptr<Model> _model;
@@ -29,7 +41,7 @@ class FznTestBase : public ::testing::Test {
 
   void SetUp() override {
     _model = std::make_unique<Model>();
-    _invariantGraph = std::make_unique<FznInvariantGraph>();
+    _invariantGraph = std::make_unique<FznInvariantGraph>(true);
     _solver = std::make_unique<propagation::Solver>();
   }
 
@@ -57,36 +69,174 @@ class FznTestBase : public ::testing::Test {
     return _solver->currentValue(totalViolationVarId());
   }
 
+  [[nodiscard]] std::vector<propagation::VarId> getVarIds(
+      const std::vector<std::string>& varIdentifiers) const {
+    std::vector<propagation::VarId> varIds;
+    varIds.reserve(varIdentifiers.size());
+    for (const std::string& identifier : varIdentifiers) {
+      EXPECT_TRUE(_invariantGraph->containsVarNode(identifier));
+      const VarNode& vNode = _invariantGraph->varNode(identifier);
+      const propagation::VarId vId = vNode.varId();
+      if (!vNode.isFixed() && vId != propagation::NULL_ID) {
+        varIds.emplace_back(vId);
+      }
+    }
+    return varIds;
+  }
+
   [[nodiscard]] std::vector<Int> makeInputVals(
-      const std::vector<std::string>& inputIdentifiers) const {
+      const std::vector<propagation::VarId>& varIds) const {
     std::vector<Int> inputVals;
-    inputVals.reserve(inputIdentifiers.size());
-    for (const std::string& identifier : inputIdentifiers) {
-      inputVals.emplace_back(_solver->lowerBound(varId(identifier)));
+    inputVals.reserve(varIds.size());
+    for (const propagation::VarId& vId : varIds) {
+      EXPECT_NE(vId, propagation::NULL_ID);
+      inputVals.emplace_back(_solver->lowerBound(vId));
     }
     return inputVals;
   }
 
-  bool increaseNextVal(const std::vector<std::string>& inputIdentifiers,
+  bool increaseNextVal(const std::vector<propagation::VarId>& varIds,
                        std::vector<Int>& inputVals) const {
-    EXPECT_EQ(inputIdentifiers.size(), inputVals.size());
+    EXPECT_EQ(varIds.size(), inputVals.size());
     for (Int i = static_cast<Int>(inputVals.size() - 1); i >= 0; --i) {
-      if (inputVals.at(i) <
-          _solver->upperBound(varId(inputIdentifiers.at(i)))) {
+      if (varIds.at(i) == propagation::NULL_ID) {
+        continue;
+      }
+      if (inputVals.at(i) < _solver->upperBound(varIds.at(i))) {
         ++inputVals.at(i);
         return true;
       }
-      inputVals.at(i) = _solver->lowerBound(varId(inputIdentifiers.at(i)));
+      inputVals.at(i) = _solver->lowerBound(varIds.at(i));
     }
     return false;
   }
 
-  void setVarVals(const std::vector<std::string>& inputIdentifiers,
+  void setVarVals(const std::vector<propagation::VarId>& varIds,
                   const std::vector<Int>& vals) const {
-    EXPECT_EQ(inputIdentifiers.size(), vals.size());
-    for (size_t i = 0; i < inputIdentifiers.size(); ++i) {
-      _solver->setValue(varId(inputIdentifiers.at(i)), vals.at(i));
+    EXPECT_EQ(varIds.size(), vals.size());
+    for (size_t i = 0; i < varIds.size(); ++i) {
+      if (varIds.at(i) != propagation::NULL_ID) {
+        _solver->setValue(varIds.at(i), vals.at(i));
+      }
     }
+  }
+
+  IntArgState genIntArgState() {
+    return static_cast<IntArgState>(*rc::gen::inRange<unsigned char>(0, 2));
+  }
+
+  std::shared_ptr<fznparser::IntVar> genIntVar(
+      Int lb, Int ub, const std::string& identifier = "i") {
+    return std::get<std::shared_ptr<fznparser::IntVar>>(
+        _model->addVar(std::make_shared<IntVar>(lb, ub, identifier)));
+  }
+
+  fznparser::IntArg genIntArg(IntArgState state, Int lb, Int ub,
+                              const std::string& identifier = "i") {
+    switch (state) {
+      case IntArgState::PAR:
+        return fznparser::IntArg{*rc::gen::inRange<Int>(lb, ub + 1)};
+      case IntArgState::FIXED: {
+        const Int val = *rc::gen::inRange<Int>(lb, ub + 1);
+        return fznparser::IntArg{genIntVar(val, val, identifier)};
+      }
+      case IntArgState::VAR:
+        return fznparser::IntArg{genIntVar(lb, ub, identifier)};
+      default:
+        throw std::invalid_argument("Invalid IntArgState");
+    }
+  }
+
+  fznparser::IntArg genIntArg(Int lb, Int ub,
+                              const std::string& identifier = "b") {
+    return genIntArg(genIntArgState(), lb, ub, identifier);
+  }
+
+  std::shared_ptr<fznparser::IntVarArray> genIntVarArray(
+      size_t numVars, Int lb, Int ub, const std::string& identifier = "i_arr",
+      const std::string& varPrefix = "i_") {
+    auto vars = std::make_shared<fznparser::IntVarArray>(identifier);
+    std::vector<unsigned char> argStates =
+        *rc::gen::container<std::vector<unsigned char>>(
+            numVars, rc::gen::inRange<unsigned char>(0, 3));
+    for (size_t i = 0; i < numVars; ++i) {
+      const auto state = static_cast<IntArgState>(argStates.at(i));
+      switch (state) {
+        case IntArgState::PAR:
+          vars->append(*rc::gen::inRange<Int>(lb, ub + 1));
+          break;
+        case IntArgState::FIXED: {
+          const Int val = *rc::gen::inRange<Int>(lb, ub + 1);
+          vars->append(genIntVar(val, val, varPrefix + std::to_string(i)));
+          break;
+        }
+        case IntArgState::VAR:
+          vars->append(genIntVar(lb, ub, varPrefix + std::to_string(i)));
+          break;
+        default:
+          throw std::invalid_argument("Invalid IntArgState");
+      }
+    }
+    return vars;
+  }
+
+  BoolArgState genBoolArgState() {
+    return static_cast<BoolArgState>(*rc::gen::inRange<unsigned char>(0, 5));
+  }
+
+  std::shared_ptr<fznparser::BoolVar> genBoolVar(
+      BoolArgState state, const std::string& identifier = "b") {
+    switch (state) {
+      case BoolArgState::FIXED_FALSE:
+        return std::get<std::shared_ptr<fznparser::BoolVar>>(
+            _model->addVar(std::make_shared<BoolVar>(false, identifier)));
+      case BoolArgState::FIXED_TRUE:
+        return std::get<std::shared_ptr<fznparser::BoolVar>>(
+            _model->addVar(std::make_shared<BoolVar>(true, identifier)));
+      case BoolArgState::VAR:
+        return std::get<std::shared_ptr<fznparser::BoolVar>>(
+            _model->addVar(std::make_shared<BoolVar>(identifier)));
+      default:
+        throw std::invalid_argument("Invalid BoolArgState");
+    }
+  }
+
+  fznparser::BoolArg genBoolArg(BoolArgState state,
+                                const std::string& identifier = "b") {
+    switch (state) {
+      case BoolArgState::PAR_FALSE:
+        return fznparser::BoolArg{false};
+      case BoolArgState::PAR_TRUE:
+        return fznparser::BoolArg{true};
+      default:
+        return genBoolVar(state, identifier);
+    }
+  }
+
+  fznparser::BoolArg genBoolArg(const std::string& identifier = "b") {
+    return genBoolArg(genBoolArgState(), identifier);
+  }
+
+  std::shared_ptr<fznparser::BoolVarArray> genBoolVarArray(
+      size_t numVars, const std::string& identifier = "b_arr",
+      const std::string& varPrefix = "b_") {
+    std::vector<unsigned char> argStates =
+        *rc::gen::container<std::vector<unsigned char>>(
+            numVars, rc::gen::inRange<unsigned char>(0, 5));
+    auto vars = std::make_shared<fznparser::BoolVarArray>(identifier);
+    for (size_t i = 0; i < numVars; ++i) {
+      const auto state = static_cast<BoolArgState>(argStates.at(i));
+      switch (state) {
+        case BoolArgState::PAR_FALSE:
+        case BoolArgState::PAR_TRUE:
+          vars->append(state == BoolArgState::PAR_TRUE);
+          break;
+        default:
+          vars->append(genBoolVar(state, varPrefix + std::to_string(i)));
+          break;
+      }
+    }
+    return vars;
   }
 };
 

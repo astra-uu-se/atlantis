@@ -14,8 +14,6 @@ class CircuitNeighbourhood : public Neighbourhood {
  public:
   explicit CircuitNeighbourhood(std::vector<search::SearchVar>&&);
 
-  ~CircuitNeighbourhood() override = default;
-
   void initialise(RandomProvider& random,
                   AssignmentModifier& modifications) override;
   bool randomMove(RandomProvider& random, Assignment& assignment,
@@ -26,8 +24,8 @@ class CircuitNeighbourhood : public Neighbourhood {
   }
 
  private:
-  [[nodiscard]] static Int getNode(size_t nodeIdx) noexcept;
-  [[nodiscard]] static size_t getNodeIdx(Int node) noexcept;
+  [[nodiscard]] static Int idx2Node(size_t nodeIdx) noexcept;
+  [[nodiscard]] static size_t node2Idx(Int node) noexcept;
 };
 
 }  // namespace atlantis::search::neighbourhoods

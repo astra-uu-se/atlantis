@@ -1,5 +1,3 @@
-
-
 #include "atlantis/invariantgraph/fzn/array_bool_xor.hpp"
 
 #include "../parseHelper.hpp"
@@ -9,23 +7,15 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool array_bool_xor(FznInvariantGraph& invariantGraph,
+bool array_bool_xor(FznInvariantGraph& graph,
                     const std::shared_ptr<fznparser::BoolVarArray>& vars,
                     const fznparser::BoolArg& reified) {
-  if (reified.isFixed()) {
-    invariantGraph.addInvariantNode(
-        std::make_unique<invariantgraph::ArrayBoolXorNode>(
-            invariantGraph.retrieveVarNodes(vars), reified.toParameter()));
-    return true;
-  }
-  invariantGraph.addInvariantNode(
-      std::make_unique<invariantgraph::ArrayBoolXorNode>(
-          invariantGraph.retrieveVarNodes(vars),
-          invariantGraph.retrieveVarNode(reified.var())));
+  graph.addInvariantNode(std::make_unique<invariantgraph::ArrayBoolXorNode>(
+      graph.retrieveVarNodes(vars), graph.retrieveVarNode(reified)));
   return true;
 }
 
-bool array_bool_xor(FznInvariantGraph& invariantGraph,
+bool array_bool_xor(FznInvariantGraph& graph,
                     const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "array_bool_xor") {
     return false;
@@ -33,9 +23,7 @@ bool array_bool_xor(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true)
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
   return array_bool_xor(
-      invariantGraph,
-      std::get<std::shared_ptr<fznparser::BoolVarArray>>(
-          constraint.arguments().at(0)),
+      graph, getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
 }
 

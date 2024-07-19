@@ -15,7 +15,7 @@ using namespace atlantis::invariantgraph::fzn;
 
 class array_bool_elementTest : public ::testing::Test {
  public:
-  std::vector<VarNodeId> inputs{};
+  std::vector<VarNodeId> inputVarNodeIds{};
   Int numInputs = 3;
 
   void SetUp() override {}

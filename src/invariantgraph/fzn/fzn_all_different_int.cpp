@@ -7,45 +7,23 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool fzn_all_different_int(
-    FznInvariantGraph& invariantGraph,
+    FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs) {
-  if (inputs->size() <= 1) {
-    return true;
-  }
-
-  verifyAllDifferent(inputs);
-
-  if (inputs->isParArray()) {
-    return true;
-  }
-
-  std::vector<VarNodeId> varNodeIds = pruneAllDifferentFree(
-      invariantGraph, invariantGraph.retrieveVarNodes(inputs));
-
-  invariantGraph.addInvariantNode(
-      std::make_unique<AllDifferentNode>(std::move(varNodeIds), true));
+  graph.addInvariantNode(
+      std::make_unique<AllDifferentNode>(graph.retrieveVarNodes(inputs), true));
   return true;
 }
 
 bool fzn_all_different_int(
-    FznInvariantGraph& invariantGraph,
+    FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     const fznparser::BoolArg& reified) {
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return fzn_all_different_int(invariantGraph, inputs);
-    }
-    invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-        invariantGraph.retrieveVarNodes(inputs), reified.toParameter()));
-    return true;
-  }
-  invariantGraph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      invariantGraph.retrieveVarNodes(inputs),
-      invariantGraph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_unique<AllDifferentNode>(
+      graph.retrieveVarNodes(inputs), graph.retrieveVarNode(reified)));
   return true;
 }
 
-bool fzn_all_different_int(FznInvariantGraph& invariantGraph,
+bool fzn_all_different_int(FznInvariantGraph& graph,
                            const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "fzn_all_different_int" &&
       constraint.identifier() != "fzn_all_different_int_reif") {
@@ -57,15 +35,12 @@ bool fzn_all_different_int(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
 
   if (!isReified) {
-    return fzn_all_different_int(
-        invariantGraph, std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                            constraint.arguments().at(0)));
+    return fzn_all_different_int(graph, getArgArray<fznparser::IntVarArray>(
+                                            constraint.arguments().at(0)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
   return fzn_all_different_int(
-      invariantGraph,
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(0)),
+      graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
 }
 

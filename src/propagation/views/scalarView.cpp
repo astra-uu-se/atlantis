@@ -2,22 +2,26 @@
 
 namespace atlantis::propagation {
 
+ScalarView::ScalarView(SolverBase& solver, VarId parentId, Int factor,
+                       Int offset)
+    : IntView(solver, parentId), _factor(factor), _offset(offset) {}
+
 Int ScalarView::value(Timestamp ts) {
-  return _scalar * _solver.value(ts, _parentId);
+  return _factor * _solver.value(ts, _parentId) + _offset;
 }
 
 Int ScalarView::committedValue() {
-  return _scalar * _solver.committedValue(_parentId);
+  return _factor * _solver.committedValue(_parentId) + _offset;
 }
 
 Int ScalarView::lowerBound() const {
-  return std::min(_scalar * _solver.lowerBound(_parentId),
-                  _scalar * _solver.upperBound(_parentId));
+  return std::min(_factor * _solver.lowerBound(_parentId) + _offset,
+                  _factor * _solver.upperBound(_parentId) + _offset);
 }
 
 Int ScalarView::upperBound() const {
-  return std::max(_scalar * _solver.lowerBound(_parentId),
-                  _scalar * _solver.upperBound(_parentId));
+  return std::max(_factor * _solver.lowerBound(_parentId) + _offset,
+                  _factor * _solver.upperBound(_parentId) + _offset);
 }
 
 }  // namespace atlantis::propagation

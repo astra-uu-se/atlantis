@@ -13,12 +13,19 @@ class BoolLtNode : public ViolationInvariantNode {
  public:
   BoolLtNode(VarNodeId a, VarNodeId b, VarNodeId r);
 
-  BoolLtNode(VarNodeId a, VarNodeId b, bool shouldHold);
+  BoolLtNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
+
+  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+
+  [[nodiscard]] bool replace(InvariantGraph&) override;
+
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

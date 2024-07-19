@@ -12,18 +12,21 @@ namespace atlantis::invariantgraph {
 class BoolLinearNode : public InvariantNode {
  private:
   std::vector<Int> _coeffs;
+  Int _offset{0};
+  propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
   BoolLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-                 VarNodeId output);
+                 VarNodeId output, Int offset = 0);
 
-  ~BoolLinearNode() override = default;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
-  [[nodiscard]] const std::vector<Int>& coeffs() const { return _coeffs; }
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+
+  [[nodiscard]] const std::vector<Int>& coeffs() const;
 };
 }  // namespace atlantis::invariantgraph

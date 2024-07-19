@@ -1,5 +1,3 @@
-
-
 #include "atlantis/invariantgraph/fzn/array_bool_element2d.hpp"
 
 #include "../parseHelper.hpp"
@@ -9,7 +7,7 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool array_bool_element2d(FznInvariantGraph& invariantGraph,
+bool array_bool_element2d(FznInvariantGraph& graph,
                           const fznparser::IntArg& idx1,
                           const fznparser::IntArg& idx2,
                           std::vector<bool>&& parVector,
@@ -44,14 +42,13 @@ bool array_bool_element2d(FznInvariantGraph& invariantGraph,
     }
   }
 
-  invariantGraph.addInvariantNode(std::make_unique<ArrayElement2dNode>(
-      invariantGraph.retrieveVarNode(idx1),
-      invariantGraph.retrieveVarNode(idx2), std::move(parMatrix),
-      invariantGraph.retrieveVarNode(output), offset1, offset2));
+  graph.addInvariantNode(std::make_unique<ArrayElement2dNode>(
+      graph.retrieveVarNode(idx1), graph.retrieveVarNode(idx2),
+      std::move(parMatrix), graph.retrieveVarNode(output), offset1, offset2));
   return true;
 }
 
-bool array_bool_element2d(FznInvariantGraph& invariantGraph,
+bool array_bool_element2d(FznInvariantGraph& graph,
                           const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "array_bool_element2d" &&
       constraint.identifier() != "array_bool_element2d_nonshifted_flat") {
@@ -66,10 +63,9 @@ bool array_bool_element2d(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 6, fznparser::IntArg, false)
 
   return array_bool_element2d(
-      invariantGraph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
+      graph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),
-      std::get<std::shared_ptr<fznparser::BoolVarArray>>(
-          constraint.arguments().at(2))
+      getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(2))
           ->toParVector(),
       std::get<fznparser::BoolArg>(constraint.arguments().at(3)),
       std::get<fznparser::IntArg>(constraint.arguments().at(4)).toParameter(),

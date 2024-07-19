@@ -34,14 +34,32 @@ void AllDifferent::close(Timestamp ts) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
+  Int overlapLb = lb;
+  Int overlapUb = ub;
+
   for (const auto& var : _vars) {
-    lb = std::min(lb, _solver.lowerBound(var));
-    ub = std::max(ub, _solver.upperBound(var));
+    if (_solver.lowerBound(var) < lb) {
+      assert(lb <= overlapLb);
+      overlapLb = lb;
+      lb = _solver.lowerBound(var);
+    } else if (_solver.lowerBound(var) < overlapLb) {
+      overlapLb = _solver.lowerBound(var);
+    }
+    if (_solver.upperBound(var) >= ub) {
+      assert(ub >= overlapUb);
+      overlapUb = ub;
+      ub = _solver.upperBound(var);
+    } else if (_solver.upperBound(var) > overlapUb) {
+      overlapUb = _solver.upperBound(var);
+    }
   }
-  assert(ub >= lb);
-  _counts.resize(static_cast<unsigned long>(ub - lb + 1),
-                 CommittableInt(ts, 0));
-  _offset = lb;
+  if (overlapUb < overlapLb) {
+    _counts.clear();
+  } else {
+    _counts.resize(static_cast<unsigned long>(overlapUb - overlapLb + 1),
+                   CommittableInt(ts, 0));
+  }
+  _offset = overlapLb;
 }
 
 void AllDifferent::recompute(Timestamp ts) {

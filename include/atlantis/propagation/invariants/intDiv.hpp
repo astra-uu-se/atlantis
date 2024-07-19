@@ -8,7 +8,7 @@
 namespace atlantis::propagation {
 
 /**
- * Invariant for output <- nominator div denominator (integer division)
+ * Invariant for output <- numerator div denominator (integer division)
  * If y = 0, then divides by 1 or -1 (depending on the domain of y)
  *
  */
@@ -19,7 +19,7 @@ class IntDiv : public Invariant {
   Int _zeroReplacement{1};
 
  public:
-  explicit IntDiv(SolverBase&, VarId output, VarId nominator,
+  explicit IntDiv(SolverBase&, VarId output, VarId numerator,
                   VarId denominator);
   void registerVars() override;
   void updateBounds(bool widenOnly) override;

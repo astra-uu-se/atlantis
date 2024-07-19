@@ -7,12 +7,9 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool array_bool_and(FznInvariantGraph&, std::vector<VarNodeId>&&,
-                    const fznparser::BoolArg& reified);
-
 bool array_bool_and(FznInvariantGraph&,
                     const std::shared_ptr<fznparser::BoolVarArray>&,
-                    const fznparser::BoolVar& reified);
+                    const fznparser::BoolArg& reified);
 
 bool array_bool_and(FznInvariantGraph&, const fznparser::Constraint&);
 

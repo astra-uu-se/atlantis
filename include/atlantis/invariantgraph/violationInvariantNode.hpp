@@ -16,11 +16,11 @@ class ViolationInvariantNode : public InvariantNode {
  private:
   // Bounds will be recomputed by the solver.
   propagation::VarId _violationVarId{propagation::NULL_ID};
-  VarNodeId _reifiedViolationNodeId;
+  bool _isReified;
 
   // If the violation invariant is not reified, then this boolean indicates if
   // the violation invariant should hold or not:
-  const bool _shouldHold;
+  bool _shouldHold;
 
   explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
@@ -38,6 +38,8 @@ class ViolationInvariantNode : public InvariantNode {
   explicit ViolationInvariantNode(std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId);
 
+  void init(InvariantGraph&, const InvariantNodeId&) override;
+
   /**
    * @brief Construct a new violation invariant node object
    *
@@ -51,14 +53,14 @@ class ViolationInvariantNode : public InvariantNode {
   explicit ViolationInvariantNode(std::vector<VarNodeId>&& staticInputIds,
                                   bool shouldHold);
 
-  ~ViolationInvariantNode() override = default;
-
   [[nodiscard]] bool isReified() const override;
 
   [[nodiscard]] propagation::VarId violationVarId(
       const InvariantGraph&) const override;
 
   VarNodeId reifiedViolationNodeId();
+
+  virtual void updateState(InvariantGraph&) override;
 
  protected:
   propagation::VarId setViolationVarId(InvariantGraph&, propagation::VarId);

@@ -13,19 +13,15 @@ class IntModNode : public InvariantNode {
  public:
   IntModNode(VarNodeId numerator, VarNodeId denominator, VarNodeId remainder);
 
-  ~IntModNode() override = default;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
-  [[nodiscard]] VarNodeId numerator() const noexcept {
-    return staticInputVarNodeIds().front();
-  }
-  [[nodiscard]] VarNodeId denominator() const noexcept {
-    return staticInputVarNodeIds().back();
-  }
+  [[nodiscard]] VarNodeId numerator() const;
+  [[nodiscard]] VarNodeId denominator() const;
+  [[nodiscard]] VarNodeId remainder() const;
 };
 
 }  // namespace atlantis::invariantgraph

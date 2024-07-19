@@ -44,6 +44,7 @@ void VarNode::setVarId(propagation::VarId varId) {
 const SearchDomain& VarNode::constDomain() const noexcept { return _domain; }
 
 SearchDomain& VarNode::domain() noexcept { return _domain; }
+const SearchDomain& VarNode::domainConst() const noexcept { return _domain; }
 
 bool VarNode::isFixed() const noexcept {
   if (isIntVar()) {
@@ -54,13 +55,23 @@ bool VarNode::isFixed() const noexcept {
 
 bool VarNode::isIntVar() const noexcept { return _isIntVar; }
 
+bool VarNode::isViolationVar() const noexcept { return _isViolationVar; }
+
+void VarNode::setIsViolationVar(bool isViolVar) {
+  if (_isIntVar && isViolVar) {
+    throw std::runtime_error("Cannot set violation var on IntVar");
+  }
+  _isViolationVar = isViolVar;
+}
+
 propagation::VarId VarNode::postDomainConstraint(
     propagation::SolverBase& solver) {
   if (_domainViolationId != propagation::NULL_ID) {
     return _domainViolationId;
   }
   if (_domainType == DomainType::NONE ||
-      (inputTo().empty() && definingNodes().empty())) {
+      ((staticInputTo().empty() || dynamicInputTo().empty()) &&
+       definingNodes().empty())) {
     return propagation::NULL_ID;
   }
   if (_domainType == DomainType::FIXED && !isFixed()) {
@@ -76,7 +87,7 @@ propagation::VarId VarNode::postDomainConstraint(
 
   if (_domainType == DomainType::FIXED || _domain.isFixed()) {
     if (lowerBound() < solverLb || solverUb < lowerBound()) {
-      throw std::runtime_error("Solver var domain range is" +
+      throw std::runtime_error("Solver var domain range is " +
                                std::to_string(solverLb) + ".." +
                                std::to_string(solverUb) +
                                " but invariant graph var node is fixed to " +
@@ -120,7 +131,7 @@ propagation::VarId VarNode::postDomainConstraint(
   if (_domainType == DomainType::RANGE) {
     if (solverUb < lowerBound() || solverLb > upperBound()) {
       throw std::runtime_error(
-          "Solver var domain range is" + std::to_string(solverLb) + ".." +
+          "Solver var domain range is " + std::to_string(solverLb) + ".." +
           std::to_string(solverUb) +
           " but invariant graph var node domain range is " +
           std::to_string(lowerBound()) + ".." + std::to_string(upperBound()));
@@ -137,7 +148,8 @@ propagation::VarId VarNode::postDomainConstraint(
       _domain.relativeComplementIfIntersects(solverLb, solverUb);
 
   if (domain.empty()) {
-    assert(solverLb <= lowerBound() && solverUb <= upperBound());
+    // The node domain contains the solver domain:
+    assert(lowerBound() <= solverLb && solverUb <= upperBound());
     return _domainViolationId;
   }
 
@@ -190,8 +202,8 @@ bool VarNode::inDomain(Int val) const {
 }
 
 bool VarNode::inDomain(bool val) const {
-  if (!isIntVar()) {
-    throw std::runtime_error("inDomain(Int) called on BoolVar");
+  if (isIntVar()) {
+    throw std::runtime_error("inDomain(bool) called on IntVar");
   }
   return val ? lowerBound() == 0 : upperBound() > 0;
 }
@@ -207,14 +219,14 @@ void VarNode::removeValuesBelow(Int newLowerBound) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesBelow(Int) called on BoolVar");
   }
-  _domain.removeBelow(newLowerBound);
+  return _domain.removeBelow(newLowerBound);
 }
 
 void VarNode::removeValuesAbove(Int newUpperBound) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesAbove(Int) called on BoolVar");
   }
-  _domain.removeAbove(newUpperBound);
+  return _domain.removeAbove(newUpperBound);
 }
 
 void VarNode::removeValues(const std::vector<Int>& values) {
@@ -222,10 +234,9 @@ void VarNode::removeValues(const std::vector<Int>& values) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  if (values.empty()) {
-    return;
+  if (!values.empty()) {
+    return _domain.remove(values);
   }
-  _domain.remove(values);
 }
 
 void VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
@@ -233,15 +244,12 @@ void VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  if (values.empty()) {
-    throw std::runtime_error("removeAllValuesExcept called with empty values");
-  }
-  _domain.intersectWith(values);
+  _domain.intersect(values);
 }
 
-void VarNode::fixValue(Int val) {
+void VarNode::fixToValue(Int val) {
   if (!isIntVar()) {
-    throw std::runtime_error("fixValue(Int) called on BoolVar");
+    throw std::runtime_error("fixToValue(Int) called on BoolVar");
   }
   _domain.fix(val);
 }
@@ -253,9 +261,9 @@ void VarNode::removeValue(bool val) {
   _domain.fix(val ? 0 : 1);
 }
 
-void VarNode::fixValue(bool val) {
-  if (!isIntVar()) {
-    throw std::runtime_error("fixValue(bool) called on IntVar");
+void VarNode::fixToValue(bool val) {
+  if (isIntVar()) {
+    throw std::runtime_error("fixToValue(bool) called on IntVar");
   }
   _domain.fix(val ? 0 : 1);
 }
@@ -265,10 +273,6 @@ std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) {
 }
 
 std::pair<Int, Int> VarNode::bounds() const { return _domain.bounds(); }
-
-const std::vector<InvariantNodeId>& VarNode::inputTo() const noexcept {
-  return _inputTo;
-}
 
 const std::vector<InvariantNodeId>& VarNode::staticInputTo() const noexcept {
   return _staticInputTo;
@@ -294,11 +298,10 @@ InvariantNodeId VarNode::outputOf() const {
 
 void VarNode::markAsInputFor(InvariantNodeId listeningInvNodeId,
                              bool isStaticInput) {
-  _inputTo.push_back(listeningInvNodeId);
   if (isStaticInput) {
-    _staticInputTo.push_back(listeningInvNodeId);
+    _staticInputTo.emplace_back(listeningInvNodeId);
   } else {
-    _dynamicInputTo.push_back(listeningInvNodeId);
+    _dynamicInputTo.emplace_back(listeningInvNodeId);
   }
 }
 
@@ -309,21 +312,15 @@ void VarNode::unmarkOutputTo(InvariantNodeId definingInvNodeId) {
 void VarNode::unmarkAsInputFor(InvariantNodeId listeningInvNodeId,
                                bool isStaticInput) {
   if (isStaticInput) {
-    auto it = _staticInputTo.begin();
-    while (it != _staticInputTo.end()) {
-      if (*it == listeningInvNodeId) {
-        it = _staticInputTo.erase(it);
-      } else {
-        it++;
+    for (Int i = static_cast<Int>(_staticInputTo.size()) - 1; i >= 0; --i) {
+      if (_staticInputTo[i] == listeningInvNodeId) {
+        _staticInputTo.erase(_staticInputTo.begin() + i);
       }
     }
   } else {
-    auto it = _dynamicInputTo.begin();
-    while (it != _dynamicInputTo.end()) {
-      if (*it == listeningInvNodeId) {
-        it = _dynamicInputTo.erase(it);
-      } else {
-        it++;
+    for (Int i = static_cast<Int>(_dynamicInputTo.size()) - 1; i >= 0; --i) {
+      if (_dynamicInputTo[i] == listeningInvNodeId) {
+        _dynamicInputTo.erase(_dynamicInputTo.begin() + i);
       }
     }
   }

@@ -15,15 +15,94 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
+class UnitInvariantNode : public InvariantNode {
+ public:
+  explicit UnitInvariantNode(std::vector<VarNodeId>&& defVarNodes)
+      : InvariantNode(std::move(defVarNodes)) {}
+
+  void registerOutputVars(InvariantGraph& graph,
+                          propagation::SolverBase& solver) override {
+    for (const auto& varNodeId : outputVarNodeIds()) {
+      makeSolverVar(solver, graph.varNode(varNodeId));
+    }
+  }
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override {}
+};
+
+enum class InvariantNodeAction : unsigned char {
+  NONE = 0,
+  SUBSUME = 1,
+  REPLACE = 2,
+  MAKE_IMPLICIT = 3
+};
+
+enum class ViolationInvariantType : unsigned char {
+  CONSTANT_TRUE = 0,
+  CONSTANT_FALSE = 1,
+  REIFIED = 2
+};
+
+struct ParamData {
+  InvariantNodeAction action;
+  ViolationInvariantType violType;
+  int data;
+  explicit ParamData(InvariantNodeAction a, ViolationInvariantType vt, int d)
+      : action(a), violType(vt), data(d) {}
+  explicit ParamData(InvariantNodeAction a, ViolationInvariantType vt)
+      : action(a), violType(vt), data(0) {}
+  explicit ParamData(InvariantNodeAction a, int d)
+      : action(a), violType(ViolationInvariantType::CONSTANT_TRUE), data(d) {}
+  explicit ParamData(InvariantNodeAction a)
+      : action(a), violType(ViolationInvariantType::CONSTANT_TRUE), data(0) {}
+
+  explicit ParamData(ViolationInvariantType vt, int d)
+      : action(InvariantNodeAction::NONE), violType(vt), data(d) {}
+  explicit ParamData(ViolationInvariantType vt)
+      : action(InvariantNodeAction::NONE), violType(vt) {}
+
+  explicit ParamData(int d)
+      : action(InvariantNodeAction::NONE),
+        violType(ViolationInvariantType::CONSTANT_TRUE),
+        data(d) {}
+
+  explicit ParamData()
+      : action(InvariantNodeAction::NONE),
+        violType(ViolationInvariantType::CONSTANT_TRUE),
+        data(0) {}
+};
+
 template <class InvNode>
-class NodeTestBase : public ::testing::Test {
+class NodeTestBase : public ::testing::TestWithParam<ParamData> {
  protected:
+  ParamData _paramData{0};
+
+  bool shouldBeSubsumed() const {
+    return _paramData.action == InvariantNodeAction::SUBSUME;
+  }
+  bool shouldBeReplaced() const {
+    return _paramData.action == InvariantNodeAction::REPLACE;
+  }
+  bool shouldBeMadeImplicit() const {
+    return _paramData.action == InvariantNodeAction::MAKE_IMPLICIT;
+  }
+  bool shouldHold() const {
+    return _paramData.violType == ViolationInvariantType::CONSTANT_TRUE;
+  }
+  bool shouldFail() const {
+    return _paramData.violType == ViolationInvariantType::CONSTANT_FALSE;
+  }
+  bool isReified() const {
+    return _paramData.violType == ViolationInvariantType::REIFIED;
+  }
+
   std::unique_ptr<InvariantGraph> _invariantGraph;
 
   InvariantNodeId _invNodeId = InvariantNodeId(NULL_NODE_ID);
 
   void SetUp() override {
     _invariantGraph = std::make_unique<InvariantGraph>();
+    _paramData = GetParam();
   }
 
   template <typename... Args>
@@ -52,6 +131,13 @@ class NodeTestBase : public ::testing::Test {
 
   VarNodeId retrieveIntVarNode(Int lb, Int ub, const std::string& identifier) {
     return _invariantGraph->retrieveIntVarNode(SearchDomain(lb, ub),
+                                               identifier);
+  }
+
+  VarNodeId retrieveIntVarNode(std::vector<Int>&& vals,
+                               const std::string& identifier) {
+    assert(!vals.empty());
+    return _invariantGraph->retrieveIntVarNode(SearchDomain(std::move(vals)),
                                                identifier);
   }
 
@@ -89,20 +175,39 @@ class NodeTestBase : public ::testing::Test {
 
   void addInputVarsToSolver(propagation::Solver& solver) {
     EXPECT_EQ(solver.numVars(), 0);
-    for (const auto& varNodeId : invNode().staticInputVarNodeIds()) {
-      EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
-      const auto& [lb, ub] = varNode(varNodeId).bounds();
-      varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+    std::unordered_set<size_t> visited;
+    visited.reserve(invNode().staticInputVarNodeIds().size() +
+                    invNode().dynamicInputVarNodeIds().size());
+    for (const VarNodeId& varNodeId : invNode().staticInputVarNodeIds()) {
+      if (visited.contains(varNodeId.id)) {
+        EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
+      } else {
+        if (!varNode(varNodeId).isFixed()) {
+          EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
+        }
+        visited.emplace(varNodeId.id);
+      }
+      if (varId(varNodeId) == propagation::NULL_ID) {
+        const auto& [lb, ub] = varNode(varNodeId).bounds();
+        varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+      }
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
-    for (const auto& varNodeId : invNode().dynamicInputVarNodeIds()) {
-      EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
-      const auto& [lb, ub] = varNode(varNodeId).bounds();
-      varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+    for (const VarNodeId& varNodeId : invNode().dynamicInputVarNodeIds()) {
+      if (visited.contains(varNodeId.id)) {
+        EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
+      } else {
+        if (!varNode(varNodeId).isFixed()) {
+          EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
+        }
+        visited.emplace(varNodeId.id);
+      }
+      if (varId(varNodeId) == propagation::NULL_ID) {
+        const auto& [lb, ub] = varNode(varNodeId).bounds();
+        varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+      }
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
-    EXPECT_EQ(solver.numVars(), invNode().staticInputVarNodeIds().size() +
-                                    invNode().dynamicInputVarNodeIds().size());
     expectInputsRegistered(invNode(), solver);
   }
 
@@ -113,17 +218,19 @@ class NodeTestBase : public ::testing::Test {
 
   void expectInputsRegistered(const InvariantNode& invNode,
                               const propagation::Solver& solver) {
-    EXPECT_EQ(solver.numVars(), invNode.staticInputVarNodeIds().size() +
-                                    invNode.dynamicInputVarNodeIds().size());
     std::vector<bool> registered(solver.numVars(), false);
     for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
-      EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+      if (!varNode(varNodeId).isFixed()) {
+        EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+      }
       registered.at(solverVarId(varNodeId) - 1) = true;
     }
     for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
-      EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+      if (!varNode(varNodeId).isFixed()) {
+        EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+      }
       registered.at(solverVarId(varNodeId) - 1) = true;
     }
     for (const bool r : registered) {
@@ -135,7 +242,7 @@ class NodeTestBase : public ::testing::Test {
     for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
       bool found = false;
       for (const auto& invNodeId :
-           _invariantGraph->varNode(varNodeId).inputTo()) {
+           _invariantGraph->varNode(varNodeId).staticInputTo()) {
         if (invNodeId == invNode.id()) {
           found = true;
           break;
@@ -146,7 +253,7 @@ class NodeTestBase : public ::testing::Test {
     for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
       bool found = false;
       for (const auto& invNodeId :
-           _invariantGraph->varNode(varNodeId).inputTo()) {
+           _invariantGraph->varNode(varNodeId).dynamicInputTo()) {
         if (invNodeId == invNode.id()) {
           found = true;
           break;
@@ -178,6 +285,9 @@ class NodeTestBase : public ::testing::Test {
                        std::vector<Int>& inputVals) {
     EXPECT_EQ(inputVars.size(), inputVals.size());
     for (Int i = static_cast<Int>(inputVals.size()) - 1; i >= 0; --i) {
+      if (inputVars.at(i) == propagation::NULL_ID) {
+        continue;
+      }
       if (inputVals.at(i) < solver.upperBound(inputVars.at(i))) {
         ++inputVals.at(i);
         return true;
@@ -192,7 +302,20 @@ class NodeTestBase : public ::testing::Test {
                   const std::vector<Int>& vals) {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
-      solver.setValue(inputVars.at(i), vals.at(i));
+      if (inputVars.at(i) != propagation::NULL_ID) {
+        solver.setValue(inputVars.at(i), vals.at(i));
+      }
+    }
+  }
+
+  void expectVarVals(propagation::Solver& solver,
+                     const std::vector<propagation::VarId>& inputVars,
+                     const std::vector<Int>& vals) {
+    EXPECT_EQ(inputVars.size(), vals.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      if (inputVars.at(i) != propagation::NULL_ID) {
+        EXPECT_EQ(solver.currentValue(inputVars.at(i)), vals.at(i));
+      }
     }
   }
 
@@ -206,9 +329,4 @@ class NodeTestBase : public ::testing::Test {
   }
 };
 
-enum class ViolationInvariantType : unsigned char {
-  REIFIED = 0,
-  CONSTANT_FALSE = 1,
-  CONSTANT_TRUE = 2
-};
 }  // namespace atlantis::testing

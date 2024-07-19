@@ -6,22 +6,22 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
+bool int_linear(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 std::vector<VarNodeId>&& inputVarNodeIds,
                 VarNodeId outputVarNodeId, Int sum) {
   if (sum != 0) {
     // The negative sum is the sum of the defined variable:
     coeffs.emplace_back(1);
-    inputVarNodeIds.emplace_back(invariantGraph.retrieveVarNode(-sum));
+    inputVarNodeIds.emplace_back(graph.retrieveVarNode(-sum));
   }
 
-  invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
+  graph.addInvariantNode(std::make_unique<IntLinearNode>(
       std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId));
 
   return true;
 }
 
-bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
+bool int_linear(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& vars,
                 const fznparser::Var& definedVar, const Int sum) {
   Int definedVarIndex = -1;
@@ -58,13 +58,13 @@ bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
 
         std::holds_alternative<Int>(vars->at(i))
             ? (i == definedVarIndex
-                   ? invariantGraph.retrieveVarNode(std::get<Int>(vars->at(i)))
-                   : invariantGraph.retrieveVarNode(std::get<Int>(vars->at(i))))
+                   ? graph.retrieveVarNode(std::get<Int>(vars->at(i)))
+                   : graph.retrieveVarNode(std::get<Int>(vars->at(i))))
             : (i == definedVarIndex
-                   ? invariantGraph.retrieveVarNode(
+                   ? graph.retrieveVarNode(
                          std::get<std::shared_ptr<const fznparser::IntVar>>(
                              vars->at(i)))
-                   : invariantGraph.retrieveVarNode(
+                   : graph.retrieveVarNode(
                          std::get<std::shared_ptr<const fznparser::IntVar>>(
                              vars->at(i))));
 
@@ -75,11 +75,11 @@ bool int_linear(FznInvariantGraph& invariantGraph, std::vector<Int>&& coeffs,
     }
   }
 
-  return int_linear(invariantGraph, std::move(coeffs),
-                    std::move(inputVarNodeIds), outputVarNodeId, sum);
+  return int_linear(graph, std::move(coeffs), std::move(inputVarNodeIds),
+                    outputVarNodeId, sum);
 }
 
-bool int_linear(FznInvariantGraph& invariantGraph,
+bool int_linear(FznInvariantGraph& graph,
                 const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "int_lin_eq" &&
       constraint.identifier() != "int_lin_eq_reif") {
@@ -107,14 +107,13 @@ bool int_linear(FznInvariantGraph& invariantGraph,
     return false;
   }
 
-  std::vector<Int> coeffs = std::get<std::shared_ptr<fznparser::IntVarArray>>(
-                                constraint.arguments().at(0))
-                                ->toParVector();
+  std::vector<Int> coeffs =
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0))
+          ->toParVector();
 
   return int_linear(
-      invariantGraph, std::move(coeffs),
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(1)),
+      graph, std::move(coeffs),
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
       constraint.definedVar().value(),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter());
 }

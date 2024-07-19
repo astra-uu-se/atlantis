@@ -6,146 +6,175 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-static bool isViolating(const std::vector<Int>& values) {
-  return values.at(0) >= values.at(1);
-}
-
-template <ViolationInvariantType Type>
-class AbstractIntLtNodeTest : public NodeTestBase<IntLtNode> {
+class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
  public:
-  VarNodeId a{NULL_NODE_ID};
-  VarNodeId b{NULL_NODE_ID};
-  VarNodeId reified{NULL_NODE_ID};
+  VarNodeId aVarNodeId{NULL_NODE_ID};
+  std::string aIdentifier{"a"};
+  VarNodeId bVarNodeId{NULL_NODE_ID};
+  std::string bIdentifier{"b"};
+  VarNodeId reifiedVarNodeId{NULL_NODE_ID};
+  std::string reifiedIdentifier{"reified"};
+
+  bool isViolating() {
+    return varNode(aIdentifier).lowerBound() >=
+           varNode(bIdentifier).lowerBound();
+  }
+
+  bool isViolating(propagation::Solver& solver) {
+    const Int aVal = varNode(aIdentifier).isFixed()
+                         ? varNode(aIdentifier).lowerBound()
+                         : solver.currentValue(varId(aIdentifier));
+    const Int bVal = varNode(bIdentifier).isFixed()
+                         ? varNode(bIdentifier).lowerBound()
+                         : solver.currentValue(varId(bIdentifier));
+
+    return aVal >= bVal;
+  }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    a = retrieveIntVarNode(5, 10, "a");
-    b = retrieveIntVarNode(2, 7, "b");
-    if constexpr (Type == ViolationInvariantType::REIFIED) {
-      reified = retrieveBoolVarNode("reified");
-      createInvariantNode(a, b, reified);
-    } else if constexpr (Type == ViolationInvariantType::CONSTANT_TRUE) {
-      createInvariantNode(a, b, true);
-    } else {
-      createInvariantNode(a, b, false);
-    }
-  }
-
-  void construction() {
-    expectInputTo(invNode());
-    expectOutputOf(invNode());
-
-    EXPECT_EQ(invNode().a(), a);
-    EXPECT_EQ(invNode().b(), b);
-
-    if constexpr (Type != ViolationInvariantType::REIFIED) {
-      EXPECT_FALSE(invNode().isReified());
-      EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-    } else {
-      EXPECT_TRUE(invNode().isReified());
-      EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-      EXPECT_EQ(invNode().reifiedViolationNodeId(), reified);
-    }
-  }
-
-  void application() {
-    propagation::Solver solver;
-    solver.open();
-    addInputVarsToSolver(solver);
-    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-    }
-    EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerOutputVars(*_invariantGraph, solver);
-    for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-      EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-    }
-    EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    invNode().registerNode(*_invariantGraph, solver);
-    solver.close();
-
-    // a and b
-    EXPECT_EQ(solver.searchVars().size(), 2);
-
-    // a, b and the violation
-    EXPECT_EQ(solver.numVars(), 3);
-
-    // less equal
-    EXPECT_EQ(solver.numInvariants(), 1);
-
-    EXPECT_EQ(solver.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
-    EXPECT_GT(solver.upperBound(invNode().violationVarId(*_invariantGraph)), 0);
-  }
-
-  void propagation() {
-    propagation::Solver solver;
-    solver.open();
-    addInputVarsToSolver(solver);
-    invNode().registerOutputVars(*_invariantGraph, solver);
-    invNode().registerNode(*_invariantGraph, solver);
-
-    std::vector<propagation::VarId> inputVars;
-    EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 2);
-    for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
-      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVars.emplace_back(varId(inputVarNodeId));
-    }
-
-    EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-    const propagation::VarId violationId =
-        invNode().violationVarId(*_invariantGraph);
-    EXPECT_EQ(inputVars.size(), 2);
-
-    solver.close();
-
-    std::vector<Int> inputVals = makeInputVals(solver, inputVars);
-
-    while (increaseNextVal(solver, inputVars, inputVals)) {
-      solver.beginMove();
-      setVarVals(solver, inputVars, inputVals);
-      solver.endMove();
-
-      solver.beginProbe();
-      solver.query(violationId);
-      solver.endProbe();
-
-      const Int actual = solver.currentValue(violationId) > 0;
-      const Int expected = isViolating(inputVals);
-
-      if constexpr (Type != ViolationInvariantType::CONSTANT_FALSE) {
-        EXPECT_EQ(actual, expected);
+    aVarNodeId = retrieveIntVarNode(-5, 5, aIdentifier);
+    bVarNodeId = retrieveIntVarNode(-5, 5, bIdentifier);
+    if (shouldBeSubsumed()) {
+      if (shouldHold() || _paramData.data > 0) {
+        // varNode(aVarNodeId).removeValuesAbove(0);
+        // varNode(bVarNodeId).removeValuesBelow(1);
       } else {
-        EXPECT_NE(actual, expected);
+        // varNode(aVarNodeId).removeValuesBelow(0);
+        // varNode(bVarNodeId).removeValuesAbove(0);
       }
+    }
+    if (isReified()) {
+      reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
+      createInvariantNode(aVarNodeId, bVarNodeId, reifiedVarNodeId);
+    } else {
+      createInvariantNode(aVarNodeId, bVarNodeId, shouldHold());
     }
   }
 };
 
-class IntLtReifNodeTest
-    : public AbstractIntLtNodeTest<ViolationInvariantType::REIFIED> {};
+TEST_P(IntLtNodeTestFixture, construction) {
+  expectInputTo(invNode());
+  expectOutputOf(invNode());
 
-TEST_F(IntLtReifNodeTest, Construction) { construction(); }
+  EXPECT_EQ(invNode().a(), aVarNodeId);
+  EXPECT_EQ(invNode().b(), bVarNodeId);
 
-TEST_F(IntLtReifNodeTest, Application) { application(); }
+  if (!isReified()) {
+    EXPECT_FALSE(invNode().isReified());
+    EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
+  } else {
+    EXPECT_TRUE(invNode().isReified());
+    EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
+    EXPECT_EQ(invNode().reifiedViolationNodeId(), reifiedVarNodeId);
+  }
+}
 
-TEST_F(IntLtReifNodeTest, Propagation) { propagation(); }
+TEST_P(IntLtNodeTestFixture, application) {
+  propagation::Solver solver;
+  solver.open();
+  addInputVarsToSolver(solver);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
+  }
+  EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
+  invNode().registerOutputVars(*_invariantGraph, solver);
+  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
+  }
+  EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
+  invNode().registerNode(*_invariantGraph, solver);
+  solver.close();
 
-class IntLinLtFalseNodeTest
-    : public AbstractIntLtNodeTest<ViolationInvariantType::CONSTANT_FALSE> {};
+  EXPECT_EQ(solver.searchVars().size(), 2);
 
-TEST_F(IntLinLtFalseNodeTest, Construction) { construction(); }
+  EXPECT_EQ(solver.numVars(), 3);
 
-TEST_F(IntLinLtFalseNodeTest, Application) { application(); }
+  EXPECT_EQ(solver.numInvariants(), 1);
 
-TEST_F(IntLinLtFalseNodeTest, Propagation) { propagation(); }
+  EXPECT_GE(solver.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
+}
 
-class IntLinLtTrueNodeTest
-    : public AbstractIntLtNodeTest<ViolationInvariantType::CONSTANT_TRUE> {};
+TEST_P(IntLtNodeTestFixture, propagation) {
+  if (shouldBeMadeImplicit()) {
+    return;
+  }
+  propagation::Solver solver;
+  _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
-TEST_F(IntLinLtTrueNodeTest, Construction) { construction(); }
+  if (shouldBeSubsumed()) {
+    const bool expected = isViolating();
+    if (isReified()) {
+      // TODO: disabled for the MZN challange. This should be computed by
+      // Gecode.
+      // EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
+      const bool actual = varNode(reifiedIdentifier).inDomain({false});
+      EXPECT_EQ(expected, actual);
+    }
+    if (shouldHold()) {
+      // TODO: disabled for the MZN challange. This should be computed by
+      // Gecode.
+      // EXPECT_FALSE(expected);
+    }
+    if (shouldFail()) {
+      EXPECT_TRUE(expected);
+    }
+    return;
+  }
 
-TEST_F(IntLinLtTrueNodeTest, Application) { application(); }
+  std::vector<propagation::VarId> inputVarIds;
+  for (const auto& inputVarNodeId :
+       std::array<std::string, 2>{aIdentifier, bIdentifier}) {
+    if (!varNode(inputVarNodeId).isFixed()) {
+      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(inputVarNodeId));
+    }
+  }
 
-TEST_F(IntLinLtTrueNodeTest, Propagation) { propagation(); }
+  const propagation::VarId violVarId =
+      isReified() ? varId(reifiedIdentifier)
+                  : _invariantGraph->totalViolationVarId();
+
+  EXPECT_NE(violVarId, propagation::NULL_ID);
+  EXPECT_EQ(inputVarIds.size(), 2);
+
+  std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
+
+  while (increaseNextVal(solver, inputVarIds, inputVals)) {
+    solver.beginMove();
+    setVarVals(solver, inputVarIds, inputVals);
+    solver.endMove();
+
+    solver.beginProbe();
+    solver.query(violVarId);
+    solver.endProbe();
+
+    expectVarVals(solver, inputVarIds, inputVals);
+
+    const bool actual = solver.currentValue(violVarId) > 0;
+    const bool expected = isViolating(solver);
+
+    if (!shouldFail()) {
+      EXPECT_EQ(actual, expected);
+    } else {
+      EXPECT_NE(actual, expected);
+    }
+  }
+}
+
+INSTANTIATE_TEST_CASE_P(
+    IntLtNodeTest, IntLtNodeTestFixture,
+    ::testing::Values(ParamData{},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_TRUE},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_FALSE},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::REIFIED, 0},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::REIFIED, 1},
+                      ParamData{ViolationInvariantType::CONSTANT_FALSE},
+                      ParamData{ViolationInvariantType::REIFIED}));
 
 }  // namespace atlantis::testing

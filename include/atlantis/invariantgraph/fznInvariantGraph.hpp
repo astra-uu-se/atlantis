@@ -18,6 +18,8 @@ class FznInvariantGraph : public InvariantGraph {
   std::vector<InvariantGraphOutputVarArray> _outputIntVarArrays;
 
  public:
+  FznInvariantGraph(bool breakDynamicCycles = false);
+
   VarNodeId retrieveVarNode(const fznparser::BoolVar&);
   VarNodeId retrieveVarNode(const std::shared_ptr<const fznparser::BoolVar>&);
   VarNodeId retrieveVarNode(const fznparser::BoolArg&);
@@ -39,15 +41,12 @@ class FznInvariantGraph : public InvariantGraph {
   [[nodiscard]] std::vector<FznOutputVarArray> outputIntVarArrays()
       const noexcept;
 
-  FznInvariantGraph();
-
   void build(const fznparser::Model&);
 
  private:
   void createNodes(const fznparser::Model&);
 
-  bool makeInvariantNode(const fznparser::Constraint& constraint,
-                         bool guessDefinedVar = false);
+  bool makeInvariantNode(const fznparser::Constraint& constraint);
   bool makeImplicitConstraintNode(const fznparser::Constraint& constraint);
   bool makeViolationInvariantNode(const fznparser::Constraint& constraint);
 };

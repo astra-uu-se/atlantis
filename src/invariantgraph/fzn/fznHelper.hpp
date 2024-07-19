@@ -37,17 +37,26 @@ std::vector<bool> getFixedBoolValues(const InvariantGraph&,
 std::vector<bool> getFixedValues(
     const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray);
 
+std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+    FznInvariantGraph&, const std::shared_ptr<fznparser::IntVarArray>&);
+
+std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+    FznInvariantGraph&, const std::shared_ptr<fznparser::BoolVarArray>&);
+
+std::vector<VarNodeId> getUnfixedVarNodeIds(const InvariantGraph&,
+                                            const std::vector<VarNodeId>&);
+
 void verifyAllDifferent(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray);
 
 [[nodiscard]] bool violatesAllEqual(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray);
 
-VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
+VarNodeId createCountNode(FznInvariantGraph& graph,
                           const std::shared_ptr<fznparser::IntVarArray>& inputs,
                           const fznparser::IntArg& needle);
 
-VarNodeId createCountNode(FznInvariantGraph& invariantGraph,
+VarNodeId createCountNode(FznInvariantGraph& graph,
                           const std::shared_ptr<fznparser::IntVarArray>& inputs,
                           const fznparser::IntArg& needle,
                           const fznparser::IntArg& count);
@@ -62,6 +71,14 @@ std::pair<Int, Int> linBounds(const std::vector<Int>&,
 
 std::pair<Int, Int> linBounds(FznInvariantGraph&, const std::vector<Int>&,
                               const std::vector<VarNodeId>&);
+
+template <typename T>
+std::shared_ptr<T> getArgArray(const fznparser::Arg& argArray) {
+  if (argArray.isEmptyArray()) {
+    return std::make_shared<T>(std::string(""));
+  }
+  return std::get<std::shared_ptr<T>>(argArray);
+}
 
 #define FZN_CONSTRAINT_TYPE_CHECK(constraint, index, type, isVar)            \
   do {                                                                       \
@@ -85,14 +102,17 @@ std::pair<Int, Int> linBounds(FznInvariantGraph&, const std::vector<Int>&,
       throw FznArgumentException("Constraint " + constraint.identifier() +   \
                                  " has too few arguments.");                 \
     }                                                                        \
+    if (constraint.arguments().at(index).isEmptyArray()) {                   \
+      return true;                                                           \
+    }                                                                        \
     if (!std::holds_alternative<std::shared_ptr<arrayType>>(                 \
             constraint.arguments().at(index))) {                             \
       throw FznArgumentException(                                            \
           "Invalid argument for constraint " + constraint.identifier() +     \
-          " at position" + std::to_string(index) + ": expected \"" +         \
+          " at position " + std::to_string(index) + ": expected \"" +        \
           to_string(typeid(arrayType), isVarArray) + "\" but got \"" +       \
           to_string(typeid(constraint.arguments().at(index)), isVarArray) +  \
-          '.');                                                              \
+          "\".");                                                            \
     }                                                                        \
     const auto& array = std::get<std::shared_ptr<arrayType>>(                \
         constraint.arguments().at(index));                                   \
@@ -102,7 +122,7 @@ std::pair<Int, Int> linBounds(FznInvariantGraph&, const std::vector<Int>&,
           " at position" + std::to_string(index) + ": expected \"" +         \
           to_string(typeid(arrayType), isVarArray) + "\" but got \"" +       \
           to_string(typeid(constraint.arguments().at(index)), !isVarArray) + \
-          '.');                                                              \
+          "\".");                                                            \
     }                                                                        \
   } while (false);
 

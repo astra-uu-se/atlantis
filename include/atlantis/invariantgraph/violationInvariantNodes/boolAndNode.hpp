@@ -17,12 +17,13 @@ class BoolAndNode : public ViolationInvariantNode {
  public:
   BoolAndNode(VarNodeId a, VarNodeId b, VarNodeId r);
 
-  BoolAndNode(VarNodeId a, VarNodeId b, bool shouldHold);
+  BoolAndNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

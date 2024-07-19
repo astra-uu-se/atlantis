@@ -7,16 +7,15 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool array_int_minimum(FznInvariantGraph& invariantGraph,
+bool array_int_minimum(FznInvariantGraph& graph,
                        const fznparser::IntArg& output,
                        const std::shared_ptr<fznparser::IntVarArray>& inputs) {
-  invariantGraph.addInvariantNode(std::make_unique<ArrayIntMinimumNode>(
-      invariantGraph.retrieveVarNodes(inputs),
-      invariantGraph.retrieveVarNode(output)));
+  graph.addInvariantNode(std::make_unique<ArrayIntMinimumNode>(
+      graph.retrieveVarNodes(inputs), graph.retrieveVarNode(output)));
   return true;
 }
 
-bool array_int_minimum(FznInvariantGraph& invariantGraph,
+bool array_int_minimum(FznInvariantGraph& graph,
                        const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "array_int_minimum") {
     return false;
@@ -25,9 +24,8 @@ bool array_int_minimum(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true)
 
   return array_int_minimum(
-      invariantGraph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
-      std::get<std::shared_ptr<fznparser::IntVarArray>>(
-          constraint.arguments().at(1)));
+      graph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

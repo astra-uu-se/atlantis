@@ -19,8 +19,6 @@ class RandomNeighbourhood : public Neighbourhood {
                       const propagation::SolverBase& solver)
       : _vars(std::move(vars)), _solver(solver) {}
 
-  ~RandomNeighbourhood() override = default;
-
   void initialise(RandomProvider& random,
                   AssignmentModifier& modifications) override;
   bool randomMove(RandomProvider& random, Assignment& assignment,

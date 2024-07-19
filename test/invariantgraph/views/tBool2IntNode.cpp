@@ -6,31 +6,49 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class Bool2IntNodeTest : public NodeTestBase<Bool2IntNode> {
+class Bool2IntNodeTestFixture : public NodeTestBase<Bool2IntNode> {
  public:
-  VarNodeId input{NULL_NODE_ID};
-  VarNodeId output{NULL_NODE_ID};
+  VarNodeId inputVarNodeId{NULL_NODE_ID};
+  VarNodeId outputVarNodeId{NULL_NODE_ID};
+  std::string inputIdentifier{"input"};
+  std::string outputIdentifier{"output"};
+
+  Int computeOutput() {
+    return varNode(inputVarNodeId).inDomain(bool{true}) ? 1 : 0;
+  }
+
+  Int computeOutput(propagation::Solver& solver) {
+    return solver.currentValue(varId(inputVarNodeId)) == 0 ? 1 : 0;
+  }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    input = retrieveBoolVarNode("input");
-    output = retrieveIntVarNode(0, 1, "output");
+    inputVarNodeId = retrieveBoolVarNode(inputIdentifier);
+    outputVarNodeId = retrieveIntVarNode(0, 1, outputIdentifier);
 
-    createInvariantNode(input, output);
+    if (shouldBeSubsumed()) {
+      if (_paramData.data == 0) {
+        varNode(inputVarNodeId).fixToValue(bool{true});
+      } else {
+        varNode(outputVarNodeId).fixToValue(Int{0});
+      }
+    }
+
+    createInvariantNode(inputVarNodeId, outputVarNodeId);
   }
 };
 
-TEST_F(Bool2IntNodeTest, construction) {
+TEST_P(Bool2IntNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().input(), input);
+  EXPECT_EQ(invNode().input(), inputVarNodeId);
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), output);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
 }
 
-TEST_F(Bool2IntNodeTest, application) {
+TEST_P(Bool2IntNodeTestFixture, application) {
   propagation::Solver solver;
   solver.open();
   addInputVarsToSolver(solver);
@@ -44,45 +62,63 @@ TEST_F(Bool2IntNodeTest, application) {
   invNode().registerNode(*_invariantGraph, solver);
   solver.close();
 
-  // input
+  // inputVarNodeId
   EXPECT_EQ(solver.searchVars().size(), 1);
 
-  // input
+  // inputVarNodeId
   EXPECT_EQ(solver.numVars(), 1);
 }
 
-TEST_F(Bool2IntNodeTest, propagation) {
+TEST_P(Bool2IntNodeTestFixture, updateState) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  invNode().updateState(*_invariantGraph);
+  if (shouldBeSubsumed()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+    EXPECT_TRUE(varNode(inputVarNodeId).isFixed());
+    EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
+    const Int expected = computeOutput();
+    const Int actual = varNode(outputVarNodeId).lowerBound();
+    EXPECT_EQ(expected, actual);
+  } else {
+    EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
+    EXPECT_FALSE(varNode(outputVarNodeId).isFixed());
+  }
+}
+
+TEST_P(Bool2IntNodeTestFixture, propagation) {
+  if (shouldBeSubsumed()) {
+    return;
+  }
   propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
-  invNode().registerOutputVars(*_invariantGraph, solver);
-  invNode().registerNode(*_invariantGraph, solver);
-  solver.close();
+  _invariantGraph->apply(solver);
+  _invariantGraph->close(solver);
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), 1);
-  EXPECT_NE(varId(invNode().staticInputVarNodeIds().front()),
-            propagation::NULL_ID);
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
+  const propagation::VarId inputId = varId(inputIdentifier);
+  EXPECT_NE(inputId, propagation::NULL_ID);
 
-  const propagation::VarId inputVar =
-      varId(invNode().staticInputVarNodeIds().front());
-  const propagation::VarId outputId =
-      varId(invNode().outputVarNodeIds().front());
+  const propagation::VarId outputId = varId(outputIdentifier);
+  EXPECT_NE(outputId, propagation::NULL_ID);
 
-  for (Int inputVal = solver.lowerBound(inputVar);
-       inputVal <= solver.upperBound(inputVar); ++inputVal) {
+  for (Int inputVal = solver.lowerBound(inputId);
+       inputVal <= solver.upperBound(inputId); ++inputVal) {
     solver.beginMove();
-    solver.setValue(inputVar, inputVal);
+    solver.setValue(inputId, inputVal);
     solver.endMove();
 
     solver.beginProbe();
     solver.query(outputId);
     solver.endProbe();
 
-    const Int expected = (inputVal == 0);
+    const Int expected = computeOutput(solver);
     const Int actual = solver.currentValue(outputId);
     EXPECT_EQ(expected, actual);
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    Bool2IntNodeTest, Bool2IntNodeTestFixture,
+    ::testing::Values(ParamData{},
+                      ParamData{InvariantNodeAction::REPLACE, int{0}},
+                      ParamData{InvariantNodeAction::REPLACE, int{1}}));
 
 }  // namespace atlantis::testing

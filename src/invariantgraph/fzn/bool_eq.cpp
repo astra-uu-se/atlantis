@@ -2,57 +2,27 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/bool_xor.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolEqNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
-bool bool_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b) {
-  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(a, b, true));
-  return true;
-}
-
-bool bool_eq(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
+bool bool_eq(FznInvariantGraph& graph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b) {
-  return bool_eq(invariantGraph, invariantGraph.retrieveVarNode(a),
-                 invariantGraph.retrieveVarNode(b));
-}
-
-bool bool_eq(FznInvariantGraph& invariantGraph, VarNodeId a, VarNodeId b,
-             VarNodeId reifiedVarNodeId) {
-  const VarNode& reifiedVarNode = invariantGraph.varNode(reifiedVarNodeId);
-  if (reifiedVarNode.isFixed()) {
-    if (reifiedVarNode.lowerBound() == 0) {
-      return bool_eq(invariantGraph, a, b);
-    }
-    // (a xor b) == (x != b)
-    return bool_xor(invariantGraph, a, b);
-  }
-
-  invariantGraph.addInvariantNode(
-      std::make_unique<BoolEqNode>(a, b, reifiedVarNodeId));
-
+  graph.addInvariantNode(std::make_unique<BoolAllEqualNode>(
+      graph.retrieveVarNode(a), graph.retrieveVarNode(b)));
   return true;
 }
 
-bool bool_eq(FznInvariantGraph& invariantGraph, const fznparser::BoolArg& a,
+bool bool_eq(FznInvariantGraph& graph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  if (reified.isFixed()) {
-    if (reified.toParameter()) {
-      return bool_eq(invariantGraph, a, b);
-    }
-    // (a xor b) == (x != b)
-    return bool_xor(invariantGraph, a, b);
-  }
-
-  invariantGraph.addInvariantNode(std::make_unique<BoolEqNode>(
-      invariantGraph.retrieveVarNode(a), invariantGraph.retrieveVarNode(b),
-      invariantGraph.retrieveVarNode(reified.var())));
+  graph.addInvariantNode(std::make_unique<BoolAllEqualNode>(
+      graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+      graph.retrieveVarNode(reified)));
 
   return true;
 }
 
-bool bool_eq(FznInvariantGraph& invariantGraph,
+bool bool_eq(FznInvariantGraph& graph,
              const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "bool_and" &&
       constraint.identifier() != "bool_and_reif") {
@@ -64,12 +34,12 @@ bool bool_eq(FznInvariantGraph& invariantGraph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
 
   if (!isReified) {
-    return bool_eq(invariantGraph,
+    return bool_eq(graph,
                    std::get<fznparser::BoolArg>(constraint.arguments().at(0)),
                    std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
-  return bool_eq(invariantGraph,
+  return bool_eq(graph,
                  std::get<fznparser::BoolArg>(constraint.arguments().at(0)),
                  std::get<fznparser::BoolArg>(constraint.arguments().at(1)),
                  std::get<fznparser::BoolArg>(constraint.arguments().at(2)));

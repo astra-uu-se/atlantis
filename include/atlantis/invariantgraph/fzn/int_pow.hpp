@@ -10,7 +10,6 @@ namespace atlantis::invariantgraph::fzn {
 bool int_pow(FznInvariantGraph&, const fznparser::IntArg& base,
              const fznparser::IntArg& exponent, const fznparser::IntArg& power);
 
-bool int_pow(FznInvariantGraph& invariantGraph,
-             const fznparser::Constraint& constraint);
+bool int_pow(FznInvariantGraph&, const fznparser::Constraint& constraint);
 
 }  // namespace atlantis::invariantgraph::fzn

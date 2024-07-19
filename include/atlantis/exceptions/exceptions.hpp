@@ -3,6 +3,14 @@
 
 namespace atlantis {
 
+class VarException : public std::runtime_error {
+ public:
+  /**
+   * @param msg The error message
+   */
+  explicit VarException(const std::string& msg) : std::runtime_error(msg) {}
+};
+
 class VarAlreadyDefinedException : public std::runtime_error {
  public:
   /**
@@ -36,6 +44,15 @@ class SolverStateException : public std::runtime_error {
    * @param msg The error message
    */
   explicit SolverStateException(const std::string& msg)
+      : std::runtime_error(msg) {}
+};
+
+class InvariantGraphException : public std::runtime_error {
+ public:
+  /**
+   * @param msg The error message
+   */
+  explicit InvariantGraphException(const std::string& msg)
       : std::runtime_error(msg) {}
 };
 
@@ -86,6 +103,23 @@ class OutOfOrderIndexRegistration : public std::exception {
 class FznArgumentException : public std::runtime_error {
  public:
   explicit FznArgumentException(const std::string& msg)
+      : std::runtime_error(msg) {}
+};
+
+class InfeasibleException : public std::runtime_error {
+ public:
+  explicit InfeasibleException(const std::string& msg)
+      : std::runtime_error(msg) {}
+};
+
+class DomainException : public std::runtime_error {
+ public:
+  explicit DomainException(const std::string& msg) : std::runtime_error(msg) {}
+};
+
+class InconsistencyException : public std::runtime_error {
+ public:
+  explicit InconsistencyException(const std::string& msg)
       : std::runtime_error(msg) {}
 };
 

@@ -59,3 +59,6 @@ benchmark-data.json
 # Ignore the solver binary
 atlantis
 !atlantis/
+
+#Ignore mzn challange files
+/fzn-challanges/*

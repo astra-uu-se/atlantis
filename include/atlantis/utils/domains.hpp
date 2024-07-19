@@ -7,6 +7,9 @@
 
 namespace atlantis {
 
+class SetDomain;
+class IntervalDomain;
+
 /**
  * Models the domain of a variable. Since this might be a large object managing
  * heap memory, the copy constructor is deleted.
@@ -86,11 +89,14 @@ class IntervalDomain : public Domain {
 
   void fix(Int value) override;
 
-  void intersectWith(Int lb, Int ub);
+  void intersect(Int lb, Int ub);
 
-  bool operator==(const IntervalDomain& other) const;
+  [[nodiscard]] bool isDisjoint(const SetDomain&) const;
+  [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
 
-  bool operator!=(const IntervalDomain& other) const;
+  bool operator==(const IntervalDomain&) const;
+
+  bool operator!=(const IntervalDomain&) const;
 };
 
 class SetDomain : public Domain {
@@ -138,13 +144,16 @@ class SetDomain : public Domain {
    *
    * @param values the values that are to be kept in the domain.
    */
-  void intersectWith(const std::vector<Int>&);
+  void intersect(const std::vector<Int>&);
+
+  [[nodiscard]] bool isDisjoint(const SetDomain&) const;
+  [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
 
   void fix(Int value) override;
 
-  bool operator==(const SetDomain& other) const;
+  bool operator==(const SetDomain&) const;
 
-  bool operator!=(const SetDomain& other) const;
+  bool operator!=(const SetDomain&) const;
 };
 
 class SearchDomain : public Domain {
@@ -200,13 +209,21 @@ class SearchDomain : public Domain {
    *
    * @param values the values that are to be kept in the domain.
    */
-  void intersectWith(const std::vector<Int>&);
+  void intersect(const std::vector<Int>&);
+
+  void intersect(Int lb, Int ub);
+
+  void intersect(const SearchDomain& other);
+
+  [[nodiscard]] bool isDisjoint(const SetDomain&) const;
+  [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
+  [[nodiscard]] bool isDisjoint(const SearchDomain&) const;
 
   void fix(Int value) override;
 
-  bool operator==(const SearchDomain& other) const;
+  bool operator==(const SearchDomain&) const;
 
-  bool operator!=(const SearchDomain& other) const;
+  bool operator!=(const SearchDomain&) const;
 };
 
 }  // namespace atlantis

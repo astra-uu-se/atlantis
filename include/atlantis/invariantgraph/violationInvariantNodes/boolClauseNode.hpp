@@ -11,8 +11,7 @@
 namespace atlantis::invariantgraph {
 class BoolClauseNode : public ViolationInvariantNode {
  private:
-  std::vector<VarNodeId> _as;
-  std::vector<VarNodeId> _bs;
+  size_t _numAs;
   propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
@@ -20,15 +19,18 @@ class BoolClauseNode : public ViolationInvariantNode {
                           std::vector<VarNodeId>&& bs, VarNodeId r);
 
   explicit BoolClauseNode(std::vector<VarNodeId>&& as,
-                          std::vector<VarNodeId>&& bs, bool shouldHold);
+                          std::vector<VarNodeId>&& bs, bool shouldHold = true);
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
 
-  [[nodiscard]] const std::vector<VarNodeId>& as() { return _as; }
+  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
-  [[nodiscard]] const std::vector<VarNodeId>& bs() { return _bs; }
+  [[nodiscard]] bool replace(InvariantGraph&) override;
+
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 };
 }  // namespace atlantis::invariantgraph

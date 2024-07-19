@@ -12,17 +12,24 @@ namespace atlantis::invariantgraph {
 class IntLinearNode : public InvariantNode {
  private:
   std::vector<Int> _coeffs;
+  Int _offset;
+  propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
   IntLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-                VarNodeId output);
+                VarNodeId output, Int offset = 0);
 
-  ~IntLinearNode() override = default;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void updateState(InvariantGraph&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  [[nodiscard]] bool canBeMadeImplicit(const InvariantGraph&) const override;
+
+  [[nodiscard]] bool makeImplicit(InvariantGraph&) override;
+
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 };

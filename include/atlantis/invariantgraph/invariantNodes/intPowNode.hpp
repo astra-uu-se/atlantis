@@ -13,19 +13,15 @@ class IntPowNode : public InvariantNode {
  public:
   IntPowNode(VarNodeId base, VarNodeId exponent, VarNodeId power);
 
-  ~IntPowNode() override = default;
+  void init(InvariantGraph&, const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&,
-                          propagation::SolverBase& solver) override;
+  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase& solver) override;
+  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
-  [[nodiscard]] VarNodeId base() const noexcept {
-    return staticInputVarNodeIds().front();
-  }
-  [[nodiscard]] VarNodeId exponent() const noexcept {
-    return staticInputVarNodeIds().back();
-  }
+  [[nodiscard]] VarNodeId base() const;
+  [[nodiscard]] VarNodeId exponent() const;
+  [[nodiscard]] VarNodeId power() const;
 };
 
 }  // namespace atlantis::invariantgraph

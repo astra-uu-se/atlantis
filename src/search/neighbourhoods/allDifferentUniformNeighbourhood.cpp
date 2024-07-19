@@ -16,9 +16,11 @@ AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
   assert(_domain.size() >= _vars.size());
 
   std::sort(_domain.begin(), _domain.end());
+  _domain.erase(std::unique(_domain.begin(), _domain.end()), _domain.end());
 
   _domIndices.resize(_domain.size());
   _offset = _domain.front();
+
   for (auto i = 0u; i < _domain.size(); ++i) {
     _domIndices[_domain[i] - _offset] = i;
   }

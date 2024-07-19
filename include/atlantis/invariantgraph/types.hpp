@@ -109,4 +109,10 @@ struct InvariantGraphOutputVarArray {
         varNodeIds(varNodeIds) {}
 };
 
+enum struct InvariantNodeState : unsigned char {
+  UNINITIALIZED,
+  ACTIVE,
+  SUBSUMED
+};
+
 }  // namespace atlantis::invariantgraph
