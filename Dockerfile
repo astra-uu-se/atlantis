@@ -10,7 +10,7 @@ RUN apt-get update -y && \
 # Clone the Atlantis git repository.
 RUN ssh-keyscan github.com > /etc/ssh/ssh_known_hosts
 RUN --mount=type=ssh \
-    git clone git@github.com:astra-uu-se/cbls.git /src
+    git clone git@github.com:astra-uu-se/atlantis.git /src
 
 # Change directory to /src.
 WORKDIR /src
