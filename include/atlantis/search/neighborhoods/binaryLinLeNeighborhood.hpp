@@ -33,7 +33,10 @@ class BinaryLinLeNeighborhood : public Neighborhood {
   }
 };
 
-template class BinaryLinLeNeighborhood<true>;
-template class BinaryLinLeNeighborhood<false>;
+// The explicit instantiations live at the end of binaryLinLeNeighborhood.cpp,
+// where the member definitions are visible; instantiating here would emit no
+// code for them.
+extern template class BinaryLinLeNeighborhood<true>;
+extern template class BinaryLinLeNeighborhood<false>;
 
 }  // namespace atlantis::search::neighborhoods
