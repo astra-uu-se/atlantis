@@ -11,7 +11,7 @@ class AllDifferentUniformNeighbourhoodTest : public ::testing::Test {
   propagation::Solver solver;
   search::Assignment assignment{solver, propagation::NULL_ID,
                                 propagation::NULL_ID,
-                                propagation::ObjectiveDirection::NONE};
+                                propagation::ObjectiveDirection::NONE, Int{0}};
   search::RandomProvider random{123456789};
 
   std::vector<search::SearchVar> vars;

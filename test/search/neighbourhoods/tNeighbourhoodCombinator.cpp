@@ -77,7 +77,7 @@ TEST_F(NeighbourhoodCombinatorTest,
   search::RandomProvider random(123456789);
   search::Assignment assignment(solver, propagation::NULL_ID,
                                 propagation::NULL_ID,
-                                propagation::ObjectiveDirection::NONE);
+                                propagation::ObjectiveDirection::NONE, Int{0});
 
   auto schedule = search::AnnealerContainer::cooling(0.95, 4);
   search::Annealer annealer(assignment, random, *schedule);

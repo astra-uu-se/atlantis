@@ -8,12 +8,12 @@ Bool2IntView::Bool2IntView(SolverBase& solver, const VarId parentId)
     : IntView(solver, parentId) {}
 
 Int Bool2IntView::value(Timestamp ts) {
-  assert(0 >= _solver.lowerBound(_parentId));
+  assert(0 <= _solver.value(ts, _parentId));
   return convert(_solver.value(ts, _parentId));
 }
 
 Int Bool2IntView::committedValue() {
-  assert(0 >= _solver.lowerBound(_parentId));
+  assert(0 <= _solver.committedValue(_parentId));
   return convert(_solver.committedValue(_parentId));
 }
 

@@ -6,6 +6,7 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/boolAllEqual.hpp"
+#include "atlantis/propagation/violationInvariants/boolEqual.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -40,13 +41,13 @@ void BoolAllEqualNode::updateState(InvariantGraph& graph) {
   ViolationInvariantNode::updateState(graph);
   if (staticInputVarNodeIds().size() < 2) {
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+      fixReified(graph, true);
     } else if (!shouldHold()) {
       throw InconsistencyException(
           "BoolAllEqualNode::updateState constraint is violated");
     }
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+      fixReified(graph, true);
     }
     setState(InvariantNodeState::SUBSUMED);
   }
@@ -66,7 +67,7 @@ void BoolAllEqualNode::updateState(InvariantGraph& graph) {
       const bool jVal = jNode.inDomain(bool{true});
       if (iVal != jVal) {
         if (isReified()) {
-          graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
+          fixReified(graph, false);
         } else if (shouldHold()) {
           throw InconsistencyException(
               "BoolAllEqualNode::updateState constraint is violated");
@@ -133,6 +134,12 @@ void BoolAllEqualNode::registerNode(InvariantGraph& graph,
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(solverVars),
                  [&](const auto& id) { return graph.varId(id); });
+
+  if (solverVars.size() == 2) {
+    solver.makeViolationInvariant<propagation::BoolEqual>(
+        solver, violationVarId(graph), solverVars.front(), solverVars.back());
+    return;
+  }
 
   solver.makeViolationInvariant<propagation::BoolAllEqual>(
       solver, !shouldHold() ? _intermediate : violationVarId(graph),

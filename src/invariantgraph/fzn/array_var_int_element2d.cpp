@@ -38,7 +38,8 @@ bool array_var_int_element2d(
 
 bool array_var_int_element2d(FznInvariantGraph& graph,
                              const fznparser::Constraint& constraint) {
-  if (constraint.identifier() != "array_var_int_element2d_nonshifted_flat") {
+  if (constraint.identifier() != "array_var_int_element2d" &&
+      constraint.identifier() != "array_var_int_element2d_nonshifted_flat") {
     return false;
   }
   verifyNumArguments(constraint, 7);

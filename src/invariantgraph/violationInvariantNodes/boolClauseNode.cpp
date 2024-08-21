@@ -35,7 +35,7 @@ void BoolClauseNode::updateState(InvariantGraph& graph) {
     for (size_t j = _numAs; j < staticInputVarNodeIds().size(); ++j) {
       if (staticInputVarNodeIds().at(i) == staticInputVarNodeIds().at(j)) {
         if (isReified()) {
-          graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+          fixReified(graph, true);
         } else if (!shouldHold()) {
           throw InconsistencyException(
               "BoolClauseNode::updateState constraint is violated");
@@ -55,7 +55,7 @@ void BoolClauseNode::updateState(InvariantGraph& graph) {
       if (graph.varNodeConst(staticInputVarNodeIds().at(i))
               .inDomain(bool{true})) {
         if (isReified()) {
-          graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+          fixReified(graph, true);
         } else if (!shouldHold()) {
           throw InconsistencyException(
               "BoolClauseNode::updateState constraint is violated");
@@ -73,7 +73,7 @@ void BoolClauseNode::updateState(InvariantGraph& graph) {
       if (graph.varNodeConst(staticInputVarNodeIds().at(i))
               .inDomain(bool{false})) {
         if (isReified()) {
-          graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+          fixReified(graph, true);
         } else if (!shouldHold()) {
           throw InconsistencyException(
               "BoolClauseNode::updateState constraint is violated");
@@ -84,13 +84,13 @@ void BoolClauseNode::updateState(InvariantGraph& graph) {
       varsToRemove.emplace_back(staticInputVarNodeIds().at(i));
     }
   }
-  for (const auto& id : varsToRemove) {
-    removeStaticInputVarNode(graph.varNode(id));
+  for (const auto& input : varsToRemove) {
+    removeStaticInputVarNode(graph.varNode(input));
   }
   _numAs -= numAsRemoved;
   if (staticInputVarNodeIds().empty()) {
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
+      fixReified(graph, false);
     } else if (shouldHold()) {
       throw InconsistencyException(
           "BoolClauseNode::updateState constraint is violated");
@@ -99,11 +99,7 @@ void BoolClauseNode::updateState(InvariantGraph& graph) {
     return;
   } else if (staticInputVarNodeIds().size() == 1 && !isReified()) {
     auto& inputNode = graph.varNode(staticInputVarNodeIds().front());
-    if (_numAs > 0) {
-      inputNode.fixToValue(shouldHold());
-    } else {
-      inputNode.fixToValue(!shouldHold());
-    }
+    inputNode.fixToValue(_numAs > 0 ? shouldHold() : !shouldHold());
     removeStaticInputVarNode(inputNode);
     setState(InvariantNodeState::SUBSUMED);
   }
@@ -129,37 +125,30 @@ bool BoolClauseNode::replace(InvariantGraph& graph) {
         graph.addInvariantNode(std::make_unique<BoolNotNode>(
             staticInputVarNodeIds().front(), reifiedViolationNodeId()));
       }
-    }
-  } else if (_numAs == 0) {
-    if (isReified()) {
-      const VarNodeId& neg = graph.retrieveBoolVarNode();
-      graph.addInvariantNode(
-          std::make_unique<BoolNotNode>(reifiedViolationNodeId(), neg));
-      graph.addInvariantNode(std::make_unique<ArrayBoolAndNode>(
-          std::vector<VarNodeId>{staticInputVarNodeIds()}, neg));
     } else {
-      graph.addInvariantNode(std::make_unique<ArrayBoolAndNode>(
-          std::vector<VarNodeId>{staticInputVarNodeIds()}, !shouldHold()));
+      graph.varNode(staticInputVarNodeIds().front())
+          .fixToValue(_numAs > 0 ? shouldHold() : !shouldHold());
     }
-  } else {
-    std::vector<VarNodeId> boolOrInputs;
-    boolOrInputs.reserve(staticInputVarNodeIds().size());
-    for (size_t i = 0; i < _numAs; ++i) {
-      boolOrInputs.emplace_back(staticInputVarNodeIds().at(i));
-    }
-    for (size_t i = _numAs; i < staticInputVarNodeIds().size(); ++i) {
-      boolOrInputs.emplace_back(graph.retrieveBoolVarNode());
-      graph.addInvariantNode(std::make_unique<BoolNotNode>(
-          staticInputVarNodeIds().at(i), boolOrInputs.back()));
-    }
+    return true;
+  }
 
-    if (isReified()) {
-      graph.addInvariantNode(std::make_unique<ArrayBoolOrNode>(
-          std::move(boolOrInputs), reifiedViolationNodeId()));
-    } else {
-      graph.addInvariantNode(std::make_unique<ArrayBoolOrNode>(
-          std::move(boolOrInputs), shouldHold()));
-    }
+  std::vector<VarNodeId> boolOrInputs;
+  boolOrInputs.reserve(staticInputVarNodeIds().size());
+  for (size_t i = 0; i < _numAs; ++i) {
+    boolOrInputs.emplace_back(staticInputVarNodeIds().at(i));
+  }
+  for (size_t i = _numAs; i < staticInputVarNodeIds().size(); ++i) {
+    boolOrInputs.emplace_back(graph.retrieveBoolVarNode());
+    graph.addInvariantNode(std::make_unique<BoolNotNode>(
+        staticInputVarNodeIds().at(i), boolOrInputs.back()));
+  }
+
+  if (isReified()) {
+    graph.addInvariantNode(std::make_unique<ArrayBoolOrNode>(
+        std::move(boolOrInputs), reifiedViolationNodeId()));
+  } else {
+    graph.addInvariantNode(std::make_unique<ArrayBoolOrNode>(
+        std::move(boolOrInputs), shouldHold()));
   }
   return true;
 }

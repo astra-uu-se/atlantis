@@ -2,6 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/fzn/bool_eq.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
@@ -17,7 +18,7 @@ bool bool_xor(FznInvariantGraph& graph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
   graph.addInvariantNode(std::make_unique<ArrayBoolXorNode>(
       graph.retrieveVarNode(a), graph.retrieveVarNode(b),
-      graph.retrieveVarNode(reified.var())));
+      graph.retrieveVarNode(reified)));
 
   return true;
 }

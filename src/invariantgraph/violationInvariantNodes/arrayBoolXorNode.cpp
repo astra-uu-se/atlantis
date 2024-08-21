@@ -54,9 +54,8 @@ void ArrayBoolXorNode::updateState(InvariantGraph& graph) {
     } else {
       // Two or more inputs are fixed to true
       if (isReified()) {
-        graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
         // this violation invariant is no longer reified:
-        ViolationInvariantNode::updateState(graph);
+        fixReified(graph, false);
         assert(!isReified() && !shouldHold());
       } else if (shouldHold()) {
         throw InconsistencyException(
@@ -86,7 +85,7 @@ void ArrayBoolXorNode::updateState(InvariantGraph& graph) {
   if (staticInputVarNodeIds().empty()) {
     // array_bool_xor([]) == false
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
+      fixReified(graph, false);
     } else if (shouldHold()) {
       throw InconsistencyException(
           "ArrayBoolOrNode::updateState constraint is violated");

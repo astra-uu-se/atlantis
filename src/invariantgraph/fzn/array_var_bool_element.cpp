@@ -20,6 +20,7 @@ bool array_var_bool_element(
 bool array_var_bool_element(FznInvariantGraph& graph,
                             const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "array_var_bool_element" &&
+      constraint.identifier() != "array_var_bool_element_offset" &&
       constraint.identifier() != "array_var_bool_element_nonshifted") {
     return false;
   }

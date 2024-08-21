@@ -41,7 +41,8 @@ class AssignmentTest : public ::testing::Test {
 
 TEST_F(AssignmentTest, search_vars_are_identified) {
   search::Assignment assignment{solver, violation, a,
-                                propagation::ObjectiveDirection::MINIMIZE};
+                                propagation::ObjectiveDirection::MINIMIZE,
+                                solver.lowerBound(a)};
 
   std::vector<propagation::VarId> expectedSearchVars{a, b};
   EXPECT_EQ(assignment.searchVars(), expectedSearchVars);
@@ -49,7 +50,8 @@ TEST_F(AssignmentTest, search_vars_are_identified) {
 
 TEST_F(AssignmentTest, cost) {
   search::Assignment assignment{solver, violation, a,
-                                propagation::ObjectiveDirection::MINIMIZE};
+                                propagation::ObjectiveDirection::MINIMIZE,
+                                solver.lowerBound(a)};
 
   EXPECT_FALSE(assignment.cost().satisfiesConstraints());
 
@@ -69,7 +71,8 @@ TEST_F(AssignmentTest, cost) {
 
 TEST_F(AssignmentTest, assign_sets_values) {
   search::Assignment assignment{solver, violation, a,
-                                propagation::ObjectiveDirection::MINIMIZE};
+                                propagation::ObjectiveDirection::MINIMIZE,
+                                solver.lowerBound(a)};
 
   assignment.assign([&](auto& modifications) {
     modifications.set(a, 1);
@@ -82,7 +85,8 @@ TEST_F(AssignmentTest, assign_sets_values) {
 
 TEST_F(AssignmentTest, probe) {
   search::Assignment assignment{solver, violation, a,
-                                propagation::ObjectiveDirection::MINIMIZE};
+                                propagation::ObjectiveDirection::MINIMIZE,
+                                solver.lowerBound(a)};
 
   auto cost = assignment.probe([&](auto& modifications) {
     modifications.set(a, 1);
@@ -98,7 +102,8 @@ TEST_F(AssignmentTest, probe) {
 
 TEST_F(AssignmentTest, satisfies_constraints) {
   search::Assignment assignment{solver, violation, a,
-                                propagation::ObjectiveDirection::MINIMIZE};
+                                propagation::ObjectiveDirection::MINIMIZE,
+                                solver.lowerBound(a)};
 
   EXPECT_FALSE(assignment.satisfiesConstraints());
 

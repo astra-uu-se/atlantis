@@ -22,6 +22,43 @@ endif
 
 export MZN_SOLVER_PATH=${BUILD_DIR}
 
+define compile_mzn
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+		${MZN_MODEL_DIR}/$(1).mzn \
+		--fzn ${FZN_MODEL_DIR}/$(1).fzn \
+		--no-output-ozn
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c --use-gecode \
+		${MZN_MODEL_DIR}/$(1).mzn \
+		--fzn ${FZN_MODEL_DIR}/$(1)_gecode.fzn \
+		--no-output-ozn
+endef
+
+define compile_mzn_dzn
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+		${MZN_MODEL_DIR}/$(1).mzn \
+		${MZN_MODEL_DIR}/$(2).dzn \
+		--fzn ${FZN_MODEL_DIR}/$(1).fzn \
+		--no-output-ozn
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c --use-gecode \
+		${MZN_MODEL_DIR}/$(1).mzn \
+		${MZN_MODEL_DIR}/$(2).dzn \
+		--fzn ${FZN_MODEL_DIR}/$(1)_gecode.fzn \
+		--no-output-ozn
+endef
+
+define compile_mzn_param
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+		${MZN_MODEL_DIR}/$(1).mzn \
+		-D $(2) \
+		--fzn ${FZN_MODEL_DIR}/$(1).fzn \
+		--no-output-ozn
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c --use-gecode \
+		${MZN_MODEL_DIR}/$(1).mzn \
+		-D $(2) \
+		--fzn ${FZN_MODEL_DIR}/$(1)_gecode.fzn \
+		--no-output-ozn
+endef
+
 .PHONY: clean
 clean:
 	rm -rf ${BUILD_DIR}
@@ -79,30 +116,12 @@ all: clean build build-tests build-benchmarks
 
 .PHONY: fzn
 fzn:
-	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
-		${MZN_MODEL_DIR}/car_sequencing.mzn \
-		${MZN_MODEL_DIR}/car_sequencing.dzn \
-		--fzn ${FZN_MODEL_DIR}/car_sequencing.fzn \
-		--no-output-ozn
-	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
-		${MZN_MODEL_DIR}/magic_square.mzn \
-		-D n=3 \
-		--fzn ${FZN_MODEL_DIR}/magic_square.fzn \
-		--no-output-ozn
-	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
-		${MZN_MODEL_DIR}/tsp_alldiff.mzn \
-		${MZN_MODEL_DIR}/tsp_17.dzn \
-		--fzn ${FZN_MODEL_DIR}/tsp_alldiff.fzn \
-		--no-output-ozn
-	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
-		${MZN_MODEL_DIR}/n_queens.mzn \
-		-D n=32 \
-		--fzn ${FZN_MODEL_DIR}/n_queens.fzn \
-		--no-output-ozn
-	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
-		${MZN_MODEL_DIR}/comp_domain_ann.mzn \
-		--fzn ${FZN_MODEL_DIR}/comp_domain_ann.fzn \
-		--no-output-ozn
+	@$(call compile_mzn,comp_domain_ann)
+	@$(call compile_mzn,simple_minimize)
+	@$(call compile_mzn_dzn,car_sequencing,car_sequencing)
+	@$(call compile_mzn_dzn,tsp_alldiff,tsp_17)
+	@$(call compile_mzn_param,magic_square,n=3)
+	@$(call compile_mzn_param,n_queens,n=32)
 
 .PHONY: clang-format
 clang-format:

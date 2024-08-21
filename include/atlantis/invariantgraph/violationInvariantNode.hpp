@@ -22,13 +22,23 @@ class ViolationInvariantNode : public InvariantNode {
   // the violation invariant should hold or not:
   bool _shouldHold;
 
+  void updateReified(InvariantGraph&);
+
   explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId,
                                   bool shouldHold);
 
  protected:
+  propagation::VarId setViolationVarId(InvariantGraph&, propagation::VarId);
+
+  propagation::VarId registerViolation(InvariantGraph&,
+                                       propagation::SolverBase&,
+                                       Int initialValue = 0);
+
   [[nodiscard]] bool shouldHold() const noexcept;
+
+  void fixReified(InvariantGraph&, bool);
 
  public:
   explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
@@ -61,13 +71,6 @@ class ViolationInvariantNode : public InvariantNode {
   VarNodeId reifiedViolationNodeId();
 
   virtual void updateState(InvariantGraph&) override;
-
- protected:
-  propagation::VarId setViolationVarId(InvariantGraph&, propagation::VarId);
-
-  propagation::VarId registerViolation(InvariantGraph&,
-                                       propagation::SolverBase&,
-                                       Int initialValue = 0);
 };
 
 }  // namespace atlantis::invariantgraph

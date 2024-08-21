@@ -24,8 +24,8 @@ bool bool_eq(FznInvariantGraph& graph, const fznparser::BoolArg& a,
 
 bool bool_eq(FznInvariantGraph& graph,
              const fznparser::Constraint& constraint) {
-  if (constraint.identifier() != "bool_and" &&
-      constraint.identifier() != "bool_and_reif") {
+  if (constraint.identifier() != "bool_eq" &&
+      constraint.identifier() != "bool_eq_reif") {
     return false;
   }
   const bool isReified = constraintIdentifierIsReified(constraint);

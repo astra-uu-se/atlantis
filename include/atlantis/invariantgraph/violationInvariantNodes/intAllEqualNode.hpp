@@ -32,10 +32,6 @@ class IntAllEqualNode : public ViolationInvariantNode {
 
   void updateState(InvariantGraph&) override;
 
-  bool canBeReplaced(const InvariantGraph&) const override;
-
-  bool replace(InvariantGraph&) override;
-
   void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase&) override;

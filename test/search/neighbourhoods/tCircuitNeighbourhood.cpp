@@ -12,7 +12,7 @@ using namespace atlantis::search;
 class CircuitNeighbourhoodTest : public ::testing::Test {
  public:
   std::unique_ptr<propagation::Solver> solver;
-  std::unique_ptr<search::Assignment> assignment;
+  std::shared_ptr<search::Assignment> assignment;
   search::RandomProvider random{123456789};
 
   std::vector<search::SearchVar> next;
@@ -31,7 +31,8 @@ class CircuitNeighbourhoodTest : public ::testing::Test {
     solver->close();
 
     assignment = std::make_unique<search::Assignment>(
-        *solver, objective, violation, propagation::ObjectiveDirection::NONE);
+        *solver, objective, violation, propagation::ObjectiveDirection::NONE,
+        0);
   }
 
   void expectCycle() {

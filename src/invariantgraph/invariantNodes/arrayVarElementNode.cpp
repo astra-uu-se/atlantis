@@ -27,42 +27,41 @@ void ArrayVarElementNode::init(InvariantGraph& graph,
 
 void ArrayVarElementNode::updateState(InvariantGraph& graph) {
   VarNode& idxNode = graph.varNode(idx());
-  // idxNode.removeValuesBelow(_offset);
-  // idxNode.removeValuesAbove(
-  //     _offset + static_cast<Int>(dynamicInputVarNodeIds().size()) - 1);
+  /*
+  idxNode.removeValuesBelow(_offset);
+  idxNode.removeValuesAbove(
+      _offset + static_cast<Int>(dynamicInputVarNodeIds().size()) - 1);
+  */
+
+  const Int overflow =
+      _offset +
+      static_cast<Int>(static_cast<Int>(dynamicInputVarNodeIds().size())) -
+      idxNode.upperBound() - 1;
+
+  const Int underflow = idxNode.lowerBound() - _offset;
+
+  if (overflow <= 0 && underflow <= 0) {
+    return;
+  }
 
   std::vector<VarNodeId> varNodeIdsToRemove;
-  varNodeIdsToRemove.reserve(dynamicInputVarNodeIds().size());
+  varNodeIdsToRemove.reserve(overflow + underflow);
 
-  VarNodeId placeholder{NULL_NODE_ID};
-
-  for (Int val = _offset;
-       val < static_cast<Int>(_dynamicInputVarNodeIds.size()) + _offset;
-       ++val) {
-    assert(val - _offset < static_cast<Int>(dynamicInputVarNodeIds().size()));
-    if (idxNode.inDomain(val) ||
-        graph.varNodeConst(dynamicInputVarNodeIds().at(val - _offset))
-            .isFixed()) {
-      continue;
-    }
-
-    varNodeIdsToRemove.emplace_back(_dynamicInputVarNodeIds.at(val - _offset));
-
-    if (placeholder == NULL_NODE_ID) {
-      placeholder = graph.varNodeConst(outputVarNodeIds().front()).isIntVar()
-                        ? graph.retrieveIntVarNode(0)
-                        : graph.retrieveBoolVarNode(false);
-    }
-    _dynamicInputVarNodeIds.at(val - _offset) = placeholder;
+  for (Int i = static_cast<Int>(dynamicInputVarNodeIds().size()) - overflow;
+       i < static_cast<Int>(dynamicInputVarNodeIds().size()); ++i) {
+    varNodeIdsToRemove.emplace_back(dynamicInputVarNodeIds().at(i));
   }
 
-  if (placeholder != NULL_NODE_ID &&
-      std::none_of(
-          graph.varNodeConst(placeholder).dynamicInputTo().begin(),
-          graph.varNodeConst(placeholder).dynamicInputTo().end(),
-          [&](const InvariantNodeId& invId) { return invId == id(); })) {
-    graph.varNode(placeholder).markAsInputFor(id(), false);
+  for (Int i = 0; i < underflow; ++i) {
+    varNodeIdsToRemove.emplace_back(dynamicInputVarNodeIds().at(i));
   }
+
+  _offset += underflow;
+
+  _dynamicInputVarNodeIds.erase(_dynamicInputVarNodeIds.end() - overflow,
+                                _dynamicInputVarNodeIds.end());
+  _dynamicInputVarNodeIds.erase(_dynamicInputVarNodeIds.begin(),
+                                _dynamicInputVarNodeIds.begin() + underflow);
 
   for (const auto& vId : varNodeIdsToRemove) {
     if (std::none_of(dynamicInputVarNodeIds().begin(),

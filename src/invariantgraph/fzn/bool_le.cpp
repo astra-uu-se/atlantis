@@ -2,6 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/fzn/bool_lt.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolLeNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
@@ -15,9 +16,17 @@ bool bool_le(FznInvariantGraph& graph, const fznparser::BoolArg& a,
 
 bool bool_le(FznInvariantGraph& graph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
+  if (reified.isParameter()) {
+    if (reified.toParameter()) {
+      return bool_le(graph, a, b);
+    } else {
+      return bool_lt(graph, b, a);
+    }
+  }
+
   graph.addInvariantNode(std::make_unique<BoolLeNode>(
       graph.retrieveVarNode(a), graph.retrieveVarNode(b),
-      graph.retrieveVarNode(reified.var())));
+      graph.retrieveVarNode(reified)));
 
   return true;
 }

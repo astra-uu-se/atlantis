@@ -8,10 +8,9 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool array_bool_xor(FznInvariantGraph& graph,
-                    const std::shared_ptr<fznparser::BoolVarArray>& vars,
-                    const fznparser::BoolArg& reified) {
+                    const std::shared_ptr<fznparser::BoolVarArray>& vars) {
   graph.addInvariantNode(std::make_unique<invariantgraph::ArrayBoolXorNode>(
-      graph.retrieveVarNodes(vars), graph.retrieveVarNode(reified)));
+      graph.retrieveVarNodes(vars)));
   return true;
 }
 
@@ -21,10 +20,8 @@ bool array_bool_xor(FznInvariantGraph& graph,
     return false;
   }
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
-  return array_bool_xor(
-      graph, getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0)),
-      std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
+  return array_bool_xor(graph, getArgArray<fznparser::BoolVarArray>(
+                                   constraint.arguments().at(0)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

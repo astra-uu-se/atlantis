@@ -44,30 +44,30 @@ void IntLeNode::updateState(InvariantGraph& graph) {
   VarNode bNode = graph.varNode(b());
   if (a() == b()) {
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
-      ViolationInvariantNode::updateState(graph);
+      fixReified(graph, true);
     } else if (!shouldHold()) {
       throw InconsistencyException("IntLeNode neg: a == b");
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
+  /*
   if (!isReified()) {
     if (shouldHold()) {
-      // a <= b
-      // aNode.removeValuesAbove(bNode.upperBound());
-      // bNode.removeValuesBelow(aNode.lowerBound());
+      a <= b
+      aNode.removeValuesAbove(bNode.upperBound());
+      bNode.removeValuesBelow(aNode.lowerBound());
     } else {
-      // a > b
-      // aNode.removeValuesBelow(bNode.lowerBound() + 1);
-      // bNode.removeValuesAbove(aNode.upperBound() - 1);
+      a > b
+      aNode.removeValuesBelow(bNode.lowerBound() + 1);
+      bNode.removeValuesAbove(aNode.upperBound() - 1);
     }
   }
+  */
   if (aNode.upperBound() <= bNode.lowerBound()) {
     // always true
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
-      ViolationInvariantNode::updateState(graph);
+      fixReified(graph, true);
     } else if (!shouldHold()) {
       throw InconsistencyException("IntLeNode neg: a <= b");
     }
@@ -76,8 +76,7 @@ void IntLeNode::updateState(InvariantGraph& graph) {
   } else if (aNode.lowerBound() > bNode.upperBound()) {
     // always false
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
-      ViolationInvariantNode::updateState(graph);
+      fixReified(graph, false);
     } else if (shouldHold()) {
       throw InconsistencyException("IntLeNode: a > b");
     }

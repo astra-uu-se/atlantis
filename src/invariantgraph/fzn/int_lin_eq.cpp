@@ -58,13 +58,19 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   }
 
   if (definedVarCoeff == 1) {
-    // moving each non-defined variable to the other side of the equation
+    // swapping lhs and rhs, moving the defined variable to the rhs. Then
+    // reducing both lhs and rhs by all other variables, making the defined
+    // variable the only variable on the rhs.
     for (size_t i = 0; i < coeffs.size(); ++i) {
       coeffs.at(i) = -coeffs.at(i);
     }
-  }
+  }  // otherwise (with definedVarCoeff = -1), add the defined variable to both
+     // sides.
 
+  // If the defined variable constant is -1, then the sides have not been
+  // swapped, and the constant must be reduced from both sides:
   const Int lhsOffset = definedVarCoeff == 1 ? bound : -bound;
+
   graph.addInvariantNode(std::make_unique<IntLinearNode>(
       std::move(coeffs), std::move(inputVarNodes), definedVarNodeId,
       lhsOffset));
@@ -114,7 +120,9 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
     }
   }
 
-  const Int lhsOffset = -bound;
+  // If the defined variable constant is -1, then the sides have not been
+  // swapped, and the constant must be reduced from both sides:
+  const Int lhsOffset = definedVarCoeff == 1 ? bound : -bound;
   auto [lb, ub] = linBounds(coeffs, inputs);
   lb += lhsOffset;
   ub += lhsOffset;
