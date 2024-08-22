@@ -23,7 +23,7 @@ class AlwaysAcceptingAnnealer : public search::Annealer {
 class AllDifferentNonUniformNeighbourhoodTest : public ::testing::Test {
  public:
   std::unique_ptr<propagation::Solver> solver;
-  std::unique_ptr<search::Assignment> assignment;
+  std::shared_ptr<search::Assignment> assignment;
   search::RandomProvider random{123456789};
 
   std::vector<search::SearchVar> vars;
@@ -43,7 +43,7 @@ class AllDifferentNonUniformNeighbourhoodTest : public ::testing::Test {
     solver->open();
     assignment = std::make_unique<search::Assignment>(
         *solver, solver->makeIntVar(0, 0, 0), solver->makeIntVar(0, 0, 0),
-        propagation::ObjectiveDirection::NONE);
+        propagation::ObjectiveDirection::NONE, 0);
     for (const auto& domain : domains) {
       const auto& [lb, ub] = std::minmax_element(domain.begin(), domain.end());
 

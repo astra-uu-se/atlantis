@@ -38,6 +38,11 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
       });
     });
 
+    if (_assignment.satisfiesConstraints()) {
+      controller.onSolution(_assignment);
+      _objective.tighten();
+    }
+
     annealer.start();
 
     while (controller.shouldRun(_assignment) && !annealer.isFinished()) {

@@ -328,12 +328,29 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
   assert(std::all_of(constraintIsProcessed.begin(), constraintIsProcessed.end(),
                      [](bool b) { return b; }));
 
+  if (model.hasObjective()) {
+    if (std::holds_alternative<std::shared_ptr<fznparser::BoolVar>>(
+            model.objective())) {
+      retrieveVarNode(
+          *std::get<std::shared_ptr<fznparser::BoolVar>>(model.objective()));
+    } else if (std::holds_alternative<std::shared_ptr<fznparser::IntVar>>(
+                   model.objective())) {
+      retrieveVarNode(
+          *std::get<std::shared_ptr<fznparser::IntVar>>(model.objective()));
+    } else {
+      throw FznException("Objective variable is not a bool or int var");
+    }
+  }
+
   for (const auto& [identifier, var] : model.vars()) {
     assert(!identifier.empty());
     if (std::holds_alternative<std::shared_ptr<fznparser::IntVar>>(var)) {
       const auto& intVar = std::get<std::shared_ptr<fznparser::IntVar>>(var);
       if (intVar->isFixed()) {
         continue;
+      }
+      if (!containsVarNode(identifier)) {
+        retrieveVarNode(*intVar);
       }
       assert(varNode(identifier).varNodeId() != NULL_NODE_ID);
       assert(varNode(identifier).isIntVar());
@@ -343,8 +360,26 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
       if (boolVar->isFixed()) {
         continue;
       }
+      if (!containsVarNode(identifier)) {
+        retrieveVarNode(*boolVar);
+      }
       assert(varNode(identifier).varNodeId() != NULL_NODE_ID);
       assert(!varNode(identifier).isIntVar());
+    } else if (std::holds_alternative<std::shared_ptr<fznparser::IntVarArray>>(
+                   var)) {
+      const auto& intVarArray =
+          std::get<std::shared_ptr<fznparser::IntVarArray>>(var);
+      if (intVarArray->isOutput() && !_outputIdentifiers.contains(identifier)) {
+        retrieveVarNodes(intVarArray);
+      }
+    } else if (std::holds_alternative<std::shared_ptr<fznparser::BoolVarArray>>(
+                   var)) {
+      const auto& boolVarArray =
+          std::get<std::shared_ptr<fznparser::BoolVarArray>>(var);
+      if (boolVarArray->isOutput() &&
+          !_outputIdentifiers.contains(identifier)) {
+        retrieveVarNodes(boolVarArray);
+      }
     }
   }
 }

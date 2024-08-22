@@ -34,11 +34,13 @@ class Assignment {
   propagation::VarId _violation;
   propagation::VarId _objective;
   propagation::ObjectiveDirection _objectiveDirection;
+  Int _objectiveOptimalValue;
 
  public:
   explicit Assignment(propagation::Solver& solver, propagation::VarId violation,
                       propagation::VarId objective,
-                      propagation::ObjectiveDirection objectiveDirection);
+                      propagation::ObjectiveDirection objectiveDirection,
+                      Int objectiveOptimalValue);
 
   /**
    * Assign values to the variables in the assignment. This is supplied a
@@ -98,6 +100,8 @@ class Assignment {
    * otherwise.
    */
   [[nodiscard]] bool satisfiesConstraints() const noexcept;
+
+  [[nodiscard]] bool objectiveIsOptimal() const noexcept;
 
   /**
    * @return The cost of the current assignment.

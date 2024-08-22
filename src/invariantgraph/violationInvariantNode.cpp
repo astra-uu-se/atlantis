@@ -37,6 +37,14 @@ void ViolationInvariantNode::init(InvariantGraph& graph,
 
 bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
 
+void ViolationInvariantNode::fixReified(InvariantGraph& graph,
+                                        bool shouldHold) {
+  if (isReified()) {
+    graph.varNode(reifiedViolationNodeId()).fixToValue(shouldHold);
+    updateReified(graph);
+  }
+}
+
 ViolationInvariantNode::ViolationInvariantNode(
     std::vector<VarNodeId>&& outputIds, std::vector<VarNodeId>&& staticInputIds,
     VarNodeId reifiedId)
@@ -60,6 +68,24 @@ ViolationInvariantNode::ViolationInvariantNode(
 
 bool ViolationInvariantNode::isReified() const { return _isReified; }
 
+void ViolationInvariantNode::updateReified(InvariantGraph& graph) {
+  if (isReified() && graph.varNodeConst(reifiedViolationNodeId()).isFixed()) {
+    _shouldHold =
+        graph.varNodeConst(reifiedViolationNodeId()).inDomain(bool{true});
+    if (!outputVarNodeIds().empty()) {
+      assert(outputVarNodeIds().front() == reifiedViolationNodeId());
+      const bool isAlsoOutput = std::any_of(
+          outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+          [this](VarNodeId oId) { return oId == reifiedViolationNodeId(); });
+      if (!isAlsoOutput) {
+        removeOutputVarNode(graph.varNode(reifiedViolationNodeId()));
+      }
+    }
+    _isReified = false;
+  }
+  InvariantNode::updateState(graph);
+}
+
 propagation::VarId ViolationInvariantNode::violationVarId(
     const InvariantGraph& graph) const {
   if (isReified()) {
@@ -73,22 +99,7 @@ VarNodeId ViolationInvariantNode::reifiedViolationNodeId() {
 }
 
 void ViolationInvariantNode::updateState(InvariantGraph& graph) {
-  if (isReified() && graph.varNodeConst(outputVarNodeIds().front()).isFixed()) {
-    _shouldHold =
-        graph.varNodeConst(outputVarNodeIds().front()).inDomain(bool{true});
-    _isReified = false;
-    assert(outputVarNodeIds().front() != NULL_NODE_ID);
-    if (!outputVarNodeIds().empty()) {
-      assert(outputVarNodeIds().front() == outputVarNodeIds().front());
-      const bool isAlsoOutput = std::any_of(
-          outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-          [this](VarNodeId oId) { return oId == outputVarNodeIds().front(); });
-      if (!isAlsoOutput) {
-        removeOutputVarNode(graph.varNode(outputVarNodeIds().front()));
-      }
-    }
-  }
-  InvariantNode::updateState(graph);
+  updateReified(graph);
 }
 
 propagation::VarId ViolationInvariantNode::setViolationVarId(

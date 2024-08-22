@@ -35,10 +35,10 @@ bool array_bool_element2d(FznInvariantGraph& graph,
 
   const size_t numCols = parVector.size() / static_cast<size_t>(numRows);
 
-  std::vector<std::vector<Int>> parMatrix(numRows, std::vector<Int>(numCols));
+  std::vector<std::vector<bool>> parMatrix(numRows, std::vector<bool>(numCols));
   for (Int i = 0; i < numRows; ++i) {
     for (size_t j = 0; j < numCols; ++j) {
-      parMatrix.at(i).at(j) = parVector.at(i * numCols + j) ? 0 : 1;
+      parMatrix.at(i).at(j) = parVector.at(i * numCols + j);
     }
   }
 

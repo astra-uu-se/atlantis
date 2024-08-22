@@ -72,23 +72,23 @@ bool ArrayElement2dNode::replace(InvariantGraph& graph) {
     return false;
   }
   if (graph.varNode(idx1()).isFixed()) {
-    const Int row = graph.varNode(idx1()).lowerBound() - _offset1;
-    assert(row >= 0);
-    assert(row <= static_cast<Int>(_parMatrix.size()));
+    const Int rowIndex = graph.varNode(idx1()).lowerBound() - _offset1;
+    assert(rowIndex >= 0);
+    assert(rowIndex < static_cast<Int>(_parMatrix.size()));
 
     graph.addInvariantNode(std::make_unique<ArrayElementNode>(
-        std::move(_parMatrix.at(row)), idx2(), outputVarNodeIds().front(),
+        std::move(_parMatrix.at(rowIndex)), idx2(), outputVarNodeIds().front(),
         _offset2, _isIntMatrix));
     _parMatrix.clear();
     return true;
   }
   std::vector<Int> parMatrixRow;
-  const Int col = graph.varNode(idx2()).lowerBound() - _offset2;
-  assert(col >= 0);
-  assert(col < static_cast<Int>(_parMatrix.front().size()));
+  const Int colIndex = graph.varNode(idx2()).lowerBound() - _offset2;
+  assert(colIndex >= 0);
+  assert(colIndex < static_cast<Int>(_parMatrix.front().size()));
   parMatrixRow.reserve(_parMatrix.size());
   for (const std::vector<Int>& row : _parMatrix) {
-    parMatrixRow.emplace_back(row.at(col));
+    parMatrixRow.emplace_back(row.at(colIndex));
   }
   _parMatrix.clear();
   graph.addInvariantNode(std::make_unique<ArrayElementNode>(

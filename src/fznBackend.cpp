@@ -109,8 +109,8 @@ FznBackend::FznBackend(logging::Logger& logger,
                        std::filesystem::path&& modelFile)
     : FznBackend(logger.timed<fznparser::Model>("parsing FlatZinc", [&] {
         auto m = fznparser::parseFznFile(modelFile);
-        logger.debug("Found {:d} variables", m.vars().size());
-        logger.debug("Found {:d} constraints", m.constraints().size());
+        logger.debug("Found {:d} variable(s)", m.vars().size());
+        logger.debug("Found {:d} constraint(s)", m.constraints().size());
         return m;
       })) {}
 
@@ -139,17 +139,32 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   propagation::Solver solver;
   invariantGraph.apply(solver);
   auto neighbourhood = invariantGraph.neighbourhood();
+
   neighbourhood.printNeighbourhood(logger);
 
   search::Objective searchObjective(solver, problemType);
+
   auto violation = searchObjective.registerNode(
       invariantGraph.totalViolationVarId(), invariantGraph.objectiveVarId());
 
   invariantGraph.close(solver);
 
-  search::Assignment assignment(solver, violation,
-                                invariantGraph.objectiveVarId(),
-                                getObjectiveDirection(problemType));
+  const Int objectiveOptimalValue =
+      _model.isSatisfactionProblem()
+          ? 0
+          : (_model.isMinimisationProblem()
+                 ? invariantGraph.objectiveVarNode().lowerBound()
+                 : invariantGraph.objectiveVarNode().upperBound());
+
+  search::Assignment assignment(
+      solver, violation, invariantGraph.objectiveVarId(),
+      getObjectiveDirection(problemType), objectiveOptimalValue);
+
+  if (neighbourhood.coveredVars().empty()) {
+    _onSolution(invariantGraph, assignment);
+    _onFinish(true);
+    return search::SearchStatistics{};
+  }
 
   logger.debug("Using seed {}.", _seed);
   search::RandomProvider random(_seed);

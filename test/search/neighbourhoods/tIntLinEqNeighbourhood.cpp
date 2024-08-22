@@ -24,7 +24,7 @@ class IntLinEqNeighbourhoodTest : public ::testing::Test {
     solver.open();
     assignment = std::make_shared<search::Assignment>(
         solver, solver.makeIntVar(0, 0, 0), solver.makeIntVar(0, 0, 0),
-        propagation::ObjectiveDirection::NONE);
+        propagation::ObjectiveDirection::NONE, 0);
     for (Int i = 0; i < numVars; ++i) {
       vars.emplace_back(solver.makeIntVar(0, -10, 10), SearchDomain(-10, 10));
       coeffs.emplace_back(i % 2 == 0 ? 1 : -1);

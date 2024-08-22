@@ -117,6 +117,8 @@ class InvariantGraph {
 
   [[nodiscard]] propagation::VarId totalViolationVarId() const noexcept;
 
+  [[nodiscard]] const VarNode& objectiveVarNode() const;
+
   [[nodiscard]] propagation::VarId objectiveVarId() const noexcept;
 
   void splitMultiDefinedVars();

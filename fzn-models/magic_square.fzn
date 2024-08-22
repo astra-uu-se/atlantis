@@ -24,4 +24,4 @@ constraint int_lin_eq(X_INTRODUCED_30_,[X_INTRODUCED_20_,X_INTRODUCED_23_,X_INTR
 constraint int_lin_eq(X_INTRODUCED_30_,[X_INTRODUCED_18_,X_INTRODUCED_22_,X_INTRODUCED_26_,magicSum],0);
 constraint int_lin_eq(X_INTRODUCED_30_,[X_INTRODUCED_24_,X_INTRODUCED_22_,X_INTRODUCED_20_,magicSum],0);
 constraint int_lin_eq(X_INTRODUCED_43_,[magicSum],45);
-solve :: seq_search([int_search(X_INTRODUCED_45_,input_order,indomain_split,complete),int_search([X_INTRODUCED_18_,X_INTRODUCED_19_,X_INTRODUCED_20_,X_INTRODUCED_21_,X_INTRODUCED_22_,X_INTRODUCED_23_,X_INTRODUCED_24_,X_INTRODUCED_25_,X_INTRODUCED_26_],occurrence,indomain_split,complete)]) satisfy;
+solve :: seq_search([int_search(X_INTRODUCED_45_,input_order,indomain_split,complete),int_search(X_INTRODUCED_17_,occurrence,indomain_split,complete)]) satisfy;

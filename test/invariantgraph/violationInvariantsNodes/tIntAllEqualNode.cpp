@@ -82,7 +82,7 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    numInputs = !shouldBeReplaced() || shouldHold() ? 4 : 2;
+    numInputs = 4;
 
     for (Int i = 0; i < numInputs; ++i) {
       inputIdentifiers.emplace_back("input_" + std::to_string(i));
@@ -103,13 +103,11 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
     if (isReified()) {
       reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
       createInvariantNode(std::vector<VarNodeId>{inputVarNodeIds},
-                          reifiedVarNodeId, !shouldBeReplaced());
+                          reifiedVarNodeId, true);
     } else if (shouldHold()) {
-      createInvariantNode(std::vector<VarNodeId>{inputVarNodeIds}, true,
-                          !shouldBeReplaced());
+      createInvariantNode(std::vector<VarNodeId>{inputVarNodeIds}, true, true);
     } else {
-      createInvariantNode(std::vector<VarNodeId>{inputVarNodeIds}, false,
-                          !shouldBeReplaced());
+      createInvariantNode(std::vector<VarNodeId>{inputVarNodeIds}, false, true);
     }
   }
 };
@@ -172,20 +170,6 @@ TEST_P(IntAllEqualNodeTestFixture, updateState) {
     if (isReified()) {
       EXPECT_FALSE(varNode(reifiedVarNodeId).isFixed());
     }
-  }
-}
-
-TEST_P(IntAllEqualNodeTestFixture, replace) {
-  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  invNode().updateState(*_invariantGraph);
-  if (shouldBeReplaced()) {
-    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-    EXPECT_TRUE(invNode().replace(*_invariantGraph));
-    invNode().deactivate(*_invariantGraph);
-    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-  } else {
-    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
   }
 }
 
@@ -260,13 +244,9 @@ TEST_P(IntAllEqualNodeTestFixture, propagation) {
 INSTANTIATE_TEST_CASE_P(
     IntAllEqualNodeTest, IntAllEqualNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
-                      ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
-                      ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED},

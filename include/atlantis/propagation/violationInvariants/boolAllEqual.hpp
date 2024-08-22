@@ -14,6 +14,7 @@ class BoolAllEqual : public ViolationInvariant {
  protected:
   std::vector<VarId> _vars;
   CommittableInt _numTrue;
+  std::vector<CommittableInt> _varNotified;
 
  public:
   explicit BoolAllEqual(SolverBase&, VarId violationId,
@@ -21,7 +22,6 @@ class BoolAllEqual : public ViolationInvariant {
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
-  void close(Timestamp) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;

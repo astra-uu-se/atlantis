@@ -35,8 +35,7 @@ void BoolLeNode::updateState(InvariantGraph& graph) {
   VarNode& bNode = graph.varNode(b());
   if (a() == b()) {
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
-      ViolationInvariantNode::updateState(graph);
+      fixReified(graph, true);
     } else if (!shouldHold()) {
       throw InconsistencyException("BoolLeNode neg: a == b");
     }
@@ -53,8 +52,7 @@ void BoolLeNode::updateState(InvariantGraph& graph) {
     const bool isViolated =
         aNode.inDomain(bool{true}) && bNode.inDomain(bool{false});
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(!isViolated);
-      ViolationInvariantNode::updateState(graph);
+      fixReified(graph, !isViolated);
     } else if (isViolated == shouldHold()) {
       throw InconsistencyException(shouldHold() ? "BoolLeNode: a > b"
                                                 : "BoolLeNode neg: a <= b");
@@ -67,8 +65,7 @@ void BoolLeNode::updateState(InvariantGraph& graph) {
                              (bNode.isFixed() && bNode.inDomain(bool{true}));
     if (isSatisfied) {
       if (isReified()) {
-        graph.varNode(reifiedViolationNodeId()).fixToValue(isSatisfied);
-        ViolationInvariantNode::updateState(graph);
+        fixReified(graph, isSatisfied);
       } else if (!shouldHold()) {
         throw InconsistencyException("BoolLeNode neg: a <= b");
       }

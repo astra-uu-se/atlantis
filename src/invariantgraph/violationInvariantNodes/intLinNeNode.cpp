@@ -77,8 +77,7 @@ void IntLinNeNode::updateState(InvariantGraph& graph) {
 
   if (_bound < lb || ub < _bound) {
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
-      ViolationInvariantNode::updateState(graph);
+      fixReified(graph, true);
     }
     if (!shouldHold()) {
       throw InconsistencyException(
@@ -89,8 +88,7 @@ void IntLinNeNode::updateState(InvariantGraph& graph) {
   }
   if (lb == ub && lb == _bound) {
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
-      ViolationInvariantNode::updateState(graph);
+      fixReified(graph, false);
     }
     if (shouldHold()) {
       throw InconsistencyException("IntLinNeNode: Invariant is always false");

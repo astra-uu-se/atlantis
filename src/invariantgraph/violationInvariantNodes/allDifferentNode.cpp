@@ -38,16 +38,6 @@ void AllDifferentNode::updateState(InvariantGraph& graph) {
   if (isReified() || !shouldHold()) {
     return;
   }
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
-  for (const auto& id : staticInputVarNodeIds()) {
-    if (graph.varNodeConst(id).isFixed()) {
-      varsToRemove.push_back(id);
-    }
-  }
-  for (const auto& id : varsToRemove) {
-    removeStaticInputVarNode(graph.varNode(id));
-  }
   if (staticInputVarNodeIds().size() <= 1) {
     setState(InvariantNodeState::SUBSUMED);
   }

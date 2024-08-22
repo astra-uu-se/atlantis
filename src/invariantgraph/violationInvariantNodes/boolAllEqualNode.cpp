@@ -4,8 +4,10 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
+#include "atlantis/propagation/invariants/boolXor.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/boolAllEqual.hpp"
+#include "atlantis/propagation/violationInvariants/boolEqual.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -40,13 +42,13 @@ void BoolAllEqualNode::updateState(InvariantGraph& graph) {
   ViolationInvariantNode::updateState(graph);
   if (staticInputVarNodeIds().size() < 2) {
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+      fixReified(graph, true);
     } else if (!shouldHold()) {
       throw InconsistencyException(
           "BoolAllEqualNode::updateState constraint is violated");
     }
     if (isReified()) {
-      graph.varNode(reifiedViolationNodeId()).fixToValue(bool{true});
+      fixReified(graph, true);
     }
     setState(InvariantNodeState::SUBSUMED);
   }
@@ -66,7 +68,7 @@ void BoolAllEqualNode::updateState(InvariantGraph& graph) {
       const bool jVal = jNode.inDomain(bool{true});
       if (iVal != jVal) {
         if (isReified()) {
-          graph.varNode(reifiedViolationNodeId()).fixToValue(bool{false});
+          fixReified(graph, false);
         } else if (shouldHold()) {
           throw InconsistencyException(
               "BoolAllEqualNode::updateState constraint is violated");
@@ -105,9 +107,9 @@ bool BoolAllEqualNode::replace(InvariantGraph& graph) {
 void BoolAllEqualNode::registerOutputVars(InvariantGraph& graph,
                                           propagation::SolverBase& solver) {
   if (violationVarId(graph) == propagation::NULL_ID) {
-    if (shouldHold()) {
+    if (shouldHold() || staticInputVarNodeIds().size() == 2) {
       registerViolation(graph, solver);
-    } else {
+    } else if (!shouldHold()) {
       assert(!isReified());
       _intermediate = solver.makeIntVar(0, 0, 0);
       setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
@@ -127,12 +129,25 @@ void BoolAllEqualNode::registerNode(InvariantGraph& graph,
     return;
   }
   assert(violationVarId(graph) != propagation::NULL_ID);
-  assert(shouldHold() || _intermediate != propagation::NULL_ID);
 
   std::vector<propagation::VarId> solverVars;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(solverVars),
                  [&](const auto& id) { return graph.varId(id); });
+
+  if (solverVars.size() == 2) {
+    if (shouldHold()) {
+      solver.makeViolationInvariant<propagation::BoolEqual>(
+          solver, violationVarId(graph), solverVars.front(), solverVars.back());
+
+    } else {
+      solver.makeInvariant<propagation::BoolXor>(
+          solver, violationVarId(graph), solverVars.front(), solverVars.back());
+    }
+    return;
+  }
+
+  assert(shouldHold() || _intermediate != propagation::NULL_ID);
 
   solver.makeViolationInvariant<propagation::BoolAllEqual>(
       solver, !shouldHold() ? _intermediate : violationVarId(graph),
