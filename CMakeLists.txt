@@ -106,7 +106,7 @@ find_package(Threads REQUIRED)
 include(FetchContent)
 FetchContent_Declare(
   fznparser
-  GIT_REPOSITORY git@github.com:astra-uu-se/fznparser.git
+  GIT_REPOSITORY https://github.com/astra-uu-se/fznparser
   GIT_TAG v1.0.1
 )
 FetchContent_Declare(
