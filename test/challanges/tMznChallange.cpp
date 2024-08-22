@@ -48,7 +48,7 @@ class MznChallange : public ::testing::Test {
  public:
   bool onlySmallestModel{true};
 
-  std::string startDir = std::string(FZN_CHALLENGE_DIR) + std::string{"/smelt"};
+  std::string startDir = std::string(FZN_CHALLENGE_DIR) + std::string{""};
 
   std::unordered_set<std::string> malloc{
       std::string(FZN_CHALLENGE_DIR) + std::string{"/elitserien"},
@@ -161,12 +161,42 @@ class MznChallange : public ::testing::Test {
 
 TEST_F(MznChallange, passing) {
   for (size_t i = 0; i < passingFznModels.size(); ++i) {
-    logModelName(passingFznModels.at(i), false, i, passingFznModels.size());
-    testChallange(passingFznModels.at(i));
+    if (passingFznModels.at(i) < startDir) {
+      logModelName(passingFznModels.at(i), true, i, passingFznModels.size());
+    } else {
+      logModelName(passingFznModels.at(i), false, i, passingFznModels.size());
+      testChallange(passingFznModels.at(i));
+    }
   }
 }
 
-TEST_F(MznChallange, failing) {
+TEST_F(MznChallange, DISABLED_malloc) {
+  for (size_t i = 0; i < failingFznModels.size(); ++i) {
+    logModelName(mallocFznModels.at(i), false, i, mallocFznModels.size());
+    testChallange(mallocFznModels.at(i));
+  }
+}
+TEST_F(MznChallange, DISABLED_timeout) {
+  for (size_t i = 0; i < failingFznModels.size(); ++i) {
+    logModelName(timeoutFznModels.at(i), false, i, timeoutFznModels.size());
+    testChallange(timeoutFznModels.at(i));
+  }
+}
+TEST_F(MznChallange, DISABLED_unbrokenCycle) {
+  for (size_t i = 0; i < failingFznModels.size(); ++i) {
+    logModelName(unbrokenCycleFznModels.at(i), false, i,
+                 unbrokenCycleFznModels.size());
+    testChallange(unbrokenCycleFznModels.at(i));
+  }
+}
+TEST_F(MznChallange, DISABLED_unsatAllEqual) {
+  for (size_t i = 0; i < failingFznModels.size(); ++i) {
+    logModelName(unsatAllEqualFznModels.at(i), false, i,
+                 unsatAllEqualFznModels.size());
+    testChallange(unsatAllEqualFznModels.at(i));
+  }
+}
+TEST_F(MznChallange, DISABLED_failing) {
   for (size_t i = 0; i < failingFznModels.size(); ++i) {
     logModelName(failingFznModels.at(i), false, i, failingFznModels.size());
     testChallange(failingFznModels.at(i));

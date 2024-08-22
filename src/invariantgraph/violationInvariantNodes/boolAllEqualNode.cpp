@@ -4,6 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
+#include "atlantis/propagation/invariants/boolXor.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/boolAllEqual.hpp"
 #include "atlantis/propagation/violationInvariants/boolEqual.hpp"
@@ -106,9 +107,9 @@ bool BoolAllEqualNode::replace(InvariantGraph& graph) {
 void BoolAllEqualNode::registerOutputVars(InvariantGraph& graph,
                                           propagation::SolverBase& solver) {
   if (violationVarId(graph) == propagation::NULL_ID) {
-    if (shouldHold()) {
+    if (shouldHold() || staticInputVarNodeIds().size() == 2) {
       registerViolation(graph, solver);
-    } else {
+    } else if (!shouldHold()) {
       assert(!isReified());
       _intermediate = solver.makeIntVar(0, 0, 0);
       setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
@@ -128,7 +129,6 @@ void BoolAllEqualNode::registerNode(InvariantGraph& graph,
     return;
   }
   assert(violationVarId(graph) != propagation::NULL_ID);
-  assert(shouldHold() || _intermediate != propagation::NULL_ID);
 
   std::vector<propagation::VarId> solverVars;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
@@ -136,10 +136,18 @@ void BoolAllEqualNode::registerNode(InvariantGraph& graph,
                  [&](const auto& id) { return graph.varId(id); });
 
   if (solverVars.size() == 2) {
-    solver.makeViolationInvariant<propagation::BoolEqual>(
-        solver, violationVarId(graph), solverVars.front(), solverVars.back());
+    if (shouldHold()) {
+      solver.makeViolationInvariant<propagation::BoolEqual>(
+          solver, violationVarId(graph), solverVars.front(), solverVars.back());
+
+    } else {
+      solver.makeInvariant<propagation::BoolXor>(
+          solver, violationVarId(graph), solverVars.front(), solverVars.back());
+    }
     return;
   }
+
+  assert(shouldHold() || _intermediate != propagation::NULL_ID);
 
   solver.makeViolationInvariant<propagation::BoolAllEqual>(
       solver, !shouldHold() ? _intermediate : violationVarId(graph),
