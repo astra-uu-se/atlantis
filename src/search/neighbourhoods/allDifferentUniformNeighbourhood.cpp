@@ -6,49 +6,52 @@
 namespace atlantis::search::neighbourhoods {
 
 AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
-    std::vector<SearchVar>&& vars, std::vector<Int>&& domain,
-    const propagation::SolverBase& solver)
+    std::vector<SearchVar>&& vars, std::vector<Int>&& domain)
     : _vars(std::move(vars)),
       _domain(std::move(domain)),
-      _solver(solver),
-      _freeVars(_domain.size()) {
+      _hasFreeValues(_domain.size() > _vars.size()) {
   assert(_vars.size() > 1);
   assert(_domain.size() >= _vars.size());
 
   std::sort(_domain.begin(), _domain.end());
   _domain.erase(std::unique(_domain.begin(), _domain.end()), _domain.end());
-
-  _domIndices.resize(_domain.size());
-  _offset = _domain.front();
-
-  for (auto i = 0u; i < _domain.size(); ++i) {
-    _domIndices[_domain[i] - _offset] = i;
-  }
 }
 
 void AllDifferentUniformNeighbourhood::initialise(
     RandomProvider& random, AssignmentModifier& modifications) {
-  _freeVars = _domain.size();
+  /*
+  For each index in 0.._vars.size() - 1: _domain[i] is the value assigned to
+  _vars[i].
 
-  for (auto const& var : _vars) {
-    auto idx = random.intInRange(0, static_cast<Int>(_freeVars) - 1);
-    auto value = _domain[idx];
-    modifications.set(var.solverId(), value);
+  For each index in _vars.size().._domain.size() - 1: _domain[i] is
+  a value no variable currently takes
+  */
+  // Each value in 0..i-1 is assigned to a variable.
+  // Each value in i.._domain.size() - 1 is a free value.
+  for (size_t i = 0; i < _vars.size(); ++i) {
+    // Retrieve a free variable at index valIndex:
+    const size_t valIndex =
+        static_cast<size_t>(random.intInRange(i, _domain.size() - 1));
 
-    _domain[idx] = _domain[_freeVars - 1];
-    _domain[_freeVars - 1] = value;
-    --_freeVars;
+    // Assign variable _vars[i] the retrieved value:
+    modifications.set(_vars[i].solverId(), _domain[valIndex]);
+
+    // the value assigned to _vars[i] is no longer free:
+    std::swap(_domain[i], _domain[valIndex]);
   }
 }
 
 bool AllDifferentUniformNeighbourhood::randomMove(RandomProvider& random,
                                                   Assignment& assignment,
                                                   Annealer& annealer) {
-  if (_freeVars == 0) {
-    return swapValues(random, assignment, annealer);
+  if (_hasFreeValues) {
+    // A move is replacing the value of a variable with a free value:
+    return assignValue(random, assignment, annealer);
   }
 
-  return assignValue(random, assignment, annealer);
+  // There are no free variables, a move consists of swapping the values of
+  // two variables:
+  return swapValues(random, assignment, annealer);
 }
 
 bool AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
@@ -71,20 +74,33 @@ bool AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
 bool AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
                                                    Assignment& assignment,
                                                    Annealer& annealer) {
-  auto var = random.element(_vars).solverId();
-  Int oldValue = assignment.value(var);
-  size_t oldValueIdx = _domIndices[oldValue - _offset];
+  const size_t selectedVarIndex = static_cast<size_t>(
+      random.intInRange(0, static_cast<Int>(_vars.size()) - 1));
 
-  Int newValueIdx = random.intInRange(0, static_cast<Int>(_freeVars) - 1);
-  Int newValue = _domain[newValueIdx];
+  const size_t selectedValIndex = static_cast<size_t>(random.intInRange(
+      static_cast<Int>(_vars.size()), static_cast<Int>(_domain.size()) - 1));
 
-  if (maybeCommit(Move<1>({var}, {newValue}), assignment, annealer)) {
-    _domain[newValueIdx] = oldValue;
-    _domain[oldValueIdx] = newValue;
-
-    _domIndices[newValue - _offset] = oldValueIdx;
-    _domIndices[oldValue - _offset] = newValueIdx;
-
+  if (maybeCommit(Move<1>({_vars[selectedVarIndex].solverId()},
+                          {_domain[selectedValIndex]}),
+                  assignment, annealer)) {
+    std::swap(_domain[selectedVarIndex], _domain[selectedValIndex]);
+#ifndef NDEBUG
+    for (size_t i = 0; i < _vars.size(); ++i) {
+      assert(assignment.value(_vars[i].solverId()) == _domain[i]);
+      for (size_t j = i + 1; j < _vars.size(); ++j) {
+        assert(assignment.value(_vars[i].solverId()) !=
+               assignment.value(_vars[j].solverId()));
+      }
+      for (size_t j = _vars.size(); j < _domain.size(); ++j) {
+        assert(_domain[i] != _domain[j]);
+      }
+    }
+    for (size_t i = _vars.size(); i < _domain.size(); ++i) {
+      for (size_t j = 0; j < _vars.size(); ++j) {
+        assert(_domain[i] != _domain[j]);
+      }
+    }
+#endif
     return true;
   }
 

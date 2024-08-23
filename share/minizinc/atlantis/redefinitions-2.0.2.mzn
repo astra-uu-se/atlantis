@@ -38,3 +38,7 @@ predicate array_int_element_offset(var int: idx,
 predicate array_var_int_element_offset(var int: idx,
                                        array [int] of var int: x,
                                        var int: c, int: offset);
+
+
+predicate array_var_set_element_nonshifted(var int: idx, array[int] of var set of int: x, var set of int: c) =
+  array_var_set_element((idx-(min(index_set(x))-1))::domain,array1d(x),c);

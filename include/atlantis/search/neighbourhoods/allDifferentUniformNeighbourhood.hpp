@@ -11,31 +11,28 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
  private:
   std::vector<search::SearchVar> _vars;
   std::vector<Int> _domain;
-  const propagation::SolverBase& _solver;
+  bool _hasFreeValues;
 
-  std::vector<size_t> _domIndices{};
-  Int _offset{0};
-  size_t _freeVars{0};
+ private:
+  bool swapValues(RandomProvider& random, Assignment& assignment,
+                  Annealer& annealer);
+
+  bool assignValue(RandomProvider& random, Assignment& assignment,
+                   Annealer& annealer);
 
  public:
   AllDifferentUniformNeighbourhood(std::vector<search::SearchVar>&& vars,
-                                   std::vector<Int>&& domain,
-                                   const propagation::SolverBase& solver);
+                                   std::vector<Int>&& domain);
 
   void initialise(RandomProvider& random,
                   AssignmentModifier& modifications) override;
+
   bool randomMove(RandomProvider& random, Assignment& assignment,
                   Annealer& annealer) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;
   }
-
- private:
-  bool swapValues(RandomProvider& random, Assignment& assignment,
-                  Annealer& annealer);
-  bool assignValue(RandomProvider& random, Assignment& assignment,
-                   Annealer& annealer);
 };
 
 }  // namespace atlantis::search::neighbourhoods

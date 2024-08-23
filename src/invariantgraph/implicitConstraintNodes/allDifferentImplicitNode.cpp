@@ -62,7 +62,7 @@ AllDifferentImplicitNode::createNeighbourhood(InvariantGraph& graph,
 
     return std::make_shared<
         search::neighbourhoods::AllDifferentUniformNeighbourhood>(
-        std::move(searchVars), std::move(domainValues), solver);
+        std::move(searchVars), std::move(domainValues));
   } else {
     Int domainLb = std::numeric_limits<Int>::max();
     Int domainUb = std::numeric_limits<Int>::min();
