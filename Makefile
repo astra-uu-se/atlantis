@@ -122,7 +122,7 @@ fzn:
 	@$(call compile_mzn_dzn,car_sequencing,car_sequencing)
 	@$(call compile_mzn_dzn,tsp_alldiff,tsp_17)
 	@$(call compile_mzn_param,magic_square,n=3)
-	@$(call compile_mzn_param,n_queens,n=32)
+	@$(call compile_mzn_param,n_queens,n=16)
 
 .PHONY: clang-format
 clang-format:

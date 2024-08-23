@@ -11,6 +11,7 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
  private:
   std::vector<search::SearchVar> _vars;
   std::vector<Int> _domain;
+  bool _hasFreeValues;
 
  private:
   bool swapValues(RandomProvider& random, Assignment& assignment,

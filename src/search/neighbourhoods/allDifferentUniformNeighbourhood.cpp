@@ -7,7 +7,9 @@ namespace atlantis::search::neighbourhoods {
 
 AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
     std::vector<SearchVar>&& vars, std::vector<Int>&& domain)
-    : _vars(std::move(vars)), _domain(std::move(domain)) {
+    : _vars(std::move(vars)),
+      _domain(std::move(domain)),
+      _hasFreeValues(_domain.size() > _vars.size()) {
   assert(_vars.size() > 1);
   assert(_domain.size() >= _vars.size());
 
@@ -37,24 +39,19 @@ void AllDifferentUniformNeighbourhood::initialise(
     // the value assigned to _vars[i] is no longer free:
     std::swap(_domain[i], _domain[valIndex]);
   }
-
-  if (_domain.size() == _vars.size()) {
-    // There are no free variables, thus _domain is not needed:
-    _domain.clear();
-  }
 }
 
 bool AllDifferentUniformNeighbourhood::randomMove(RandomProvider& random,
                                                   Assignment& assignment,
                                                   Annealer& annealer) {
-  if (_domain.empty()) {
-    // There are no free variables, a move consists of swapping the values of
-    // two variables:
-    return swapValues(random, assignment, annealer);
+  if (_hasFreeValues) {
+    // A move is replacing the value of a variable with a free value:
+    return assignValue(random, assignment, annealer);
   }
 
-  // Otherwise, a move is replacing the value of a variable with a free value:
-  return assignValue(random, assignment, annealer);
+  // There are no free variables, a move consists of swapping the values of
+  // two variables:
+  return swapValues(random, assignment, annealer);
 }
 
 bool AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
