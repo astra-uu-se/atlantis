@@ -76,16 +76,16 @@ class ElementVarTree : public ::benchmark::Fixture {
 
   std::mt19937 gen;
 
-  std::uniform_int_distribution<size_t> decisionVarIndexDist;
-  std::uniform_int_distribution<size_t> varIndexDist;
-  std::uniform_int_distribution<size_t> indexDecisionVarIndexDist;
   std::uniform_int_distribution<Int> valueDist;
 
   size_t treeHeight{0};
   size_t elementSize{0};
 
-  void probe(::benchmark::State& st, size_t numMoves);
-  void commit(::benchmark::State& st, size_t numMoves);
+  void probe_index(::benchmark::State& st, size_t moveSize);
+  void probe_any(::benchmark::State& st, size_t moveSize);
+
+  void commit_index(::benchmark::State& st, size_t moveSize);
+  void commit_any(::benchmark::State& st, size_t moveSize);
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_unique<propagation::Solver>();
@@ -103,12 +103,6 @@ class ElementVarTree : public ::benchmark::Fixture {
     createTree();
 
     solver->close();
-
-    decisionVarIndexDist =
-        std::uniform_int_distribution<size_t>(0, decisionVars.size() - 1);
-    indexDecisionVarIndexDist =
-        std::uniform_int_distribution<size_t>(0, indexDecisionVars.size() - 1);
-    varIndexDist = std::uniform_int_distribution<size_t>(0, vars.size() - 1);
   }
 
   void TearDown(const ::benchmark::State&) override {
@@ -118,15 +112,18 @@ class ElementVarTree : public ::benchmark::Fixture {
   }
 };
 
-void ElementVarTree::probe(::benchmark::State& st, size_t numMoves) {
+void ElementVarTree::probe_index(::benchmark::State& st, size_t moveSize) {
   size_t probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
-    for (size_t i = 0; i < numMoves; ++i) {
-      solver->beginMove();
-      solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
-                       valueDist(gen));
-      solver->endMove();
+    st.PauseTiming();
+
+    std::shuffle(decisionVars.begin(), decisionVars.end(), gen);
+
+    solver->beginMove();
+    for (size_t i = 0; i < moveSize; ++i) {
+      solver->setValue(decisionVars.at(i), valueDist(gen));
     }
+    solver->endMove();
 
     solver->beginProbe();
     solver->query(output);
@@ -138,15 +135,42 @@ void ElementVarTree::probe(::benchmark::State& st, size_t numMoves) {
       static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
-void ElementVarTree::commit(::benchmark::State& st, size_t numMoves) {
+void ElementVarTree::probe_any(::benchmark::State& st, size_t moveSize) {
+  size_t probes = 0;
+  for ([[maybe_unused]] const auto& _ : st) {
+    st.PauseTiming();
+
+    std::shuffle(decisionVars.begin(), decisionVars.end(), gen);
+
+    solver->beginMove();
+    for (size_t i = 0; i < moveSize; ++i) {
+      solver->setValue(decisionVars.at(i), valueDist(gen));
+    }
+    solver->endMove();
+
+    solver->beginProbe();
+    solver->query(output);
+    solver->endProbe();
+    ++probes;
+  }
+
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+}
+
+void ElementVarTree::commit_index(::benchmark::State& st, size_t moveSize) {
   size_t commits = 0;
   for ([[maybe_unused]] const auto& _ : st) {
-    for (size_t i = 0; i < numMoves; ++i) {
-      solver->beginMove();
-      solver->setValue(indexDecisionVars.at(indexDecisionVarIndexDist(gen)),
-                       valueDist(gen));
-      solver->endMove();
+    st.PauseTiming();
+    std::shuffle(indexDecisionVars.begin(), indexDecisionVars.end(), gen);
+
+    solver->beginMove();
+    for (size_t i = 0; i < moveSize; ++i) {
+      solver->setValue(indexDecisionVars.at(i), valueDist(gen));
     }
+    solver->endMove();
+
+    st.ResumeTiming();
 
     // Commit last output var
     solver->beginCommit();
@@ -159,59 +183,87 @@ void ElementVarTree::commit(::benchmark::State& st, size_t numMoves) {
       static_cast<double>(commits), ::benchmark::Counter::kIsRate);
 }
 
-BENCHMARK_DEFINE_F(ElementVarTree, probe_single)
-(::benchmark::State& st) { probe(std::ref(st), 1); }
+void ElementVarTree::commit_any(::benchmark::State& st, size_t moveSize) {
+  size_t commits = 0;
+  for ([[maybe_unused]] const auto& _ : st) {
+    st.PauseTiming();
+    std::shuffle(decisionVars.begin(), decisionVars.end(), gen);
 
-BENCHMARK_DEFINE_F(ElementVarTree, probe_double)(::benchmark::State& st) {
-  probe(std::ref(st), 2);
-}
-
-BENCHMARK_DEFINE_F(ElementVarTree, probe_all)(::benchmark::State& st) {
-  probe(std::ref(st), indexDecisionVars.size());
-}
-
-BENCHMARK_DEFINE_F(ElementVarTree, commit_single)
-(::benchmark::State& st) { commit(std::ref(st), 1); }
-
-BENCHMARK_DEFINE_F(ElementVarTree, commit_double)(::benchmark::State& st) {
-  commit(std::ref(st), 2);
-}
-
-BENCHMARK_DEFINE_F(ElementVarTree, commit_all)(::benchmark::State& st) {
-  commit(std::ref(st), indexDecisionVars.size());
-}
-
-/*
-
-static void arguments(::benchmark::internal::Benchmark* benchmark) {
-  for (int treeHeight = 2; treeHeight <= 10; treeHeight += 2) {
-    for (int elementSize = 2;
-         elementSize <= 10 && std::pow(treeHeight, elementSize) <= 2048;
-         ++elementSize) {
-      for (Int mode = 0; mode <= 3; ++mode) {
-        benchmark->Args({treeHeight, elementSize, mode});
-      }
-#ifndef NDEBUG
-      return;
-#endif
+    solver->beginMove();
+    for (size_t i = 0; i < moveSize; ++i) {
+      solver->setValue(decisionVars.at(i), valueDist(gen));
     }
+    solver->endMove();
+
+    st.ResumeTiming();
+
+    // Commit last output var
+    solver->beginCommit();
+    solver->query(output);
+    solver->endCommit();
+    ++commits;
   }
+
+  st.counters["commits_per_second"] = ::benchmark::Counter(
+      static_cast<double>(commits), ::benchmark::Counter::kIsRate);
+}
+
+BENCHMARK_DEFINE_F(ElementVarTree, probe_index_single)
+(::benchmark::State& st) { probe_index(std::ref(st), 1); }
+
+BENCHMARK_DEFINE_F(ElementVarTree, probe_index_double)(::benchmark::State& st) {
+  probe_index(std::ref(st), 2);
+}
+
+BENCHMARK_DEFINE_F(ElementVarTree, probe_index_all)(::benchmark::State& st) {
+  probe_index(std::ref(st), indexDecisionVars.size());
+}
+
+BENCHMARK_DEFINE_F(ElementVarTree, probe_any_single)
+(::benchmark::State& st) { probe_any(std::ref(st), 1); }
+
+BENCHMARK_DEFINE_F(ElementVarTree, probe_any_double)(::benchmark::State& st) {
+  probe_any(std::ref(st), 2);
+}
+
+BENCHMARK_DEFINE_F(ElementVarTree, probe_any_all)(::benchmark::State& st) {
+  probe_any(std::ref(st), indexDecisionVars.size());
+}
+
+BENCHMARK_DEFINE_F(ElementVarTree, commit_index_single)
+(::benchmark::State& st) { commit_index(std::ref(st), 1); }
+
+BENCHMARK_DEFINE_F(ElementVarTree, commit_index_double)
+(::benchmark::State& st) { commit_index(std::ref(st), 2); }
+
+BENCHMARK_DEFINE_F(ElementVarTree, commit_index_all)(::benchmark::State& st) {
+  commit_index(std::ref(st), indexDecisionVars.size());
+}
+
+BENCHMARK_DEFINE_F(ElementVarTree, commit_any_single)
+(::benchmark::State& st) { commit_any(std::ref(st), 1); }
+
+BENCHMARK_DEFINE_F(ElementVarTree, commit_any_double)
+(::benchmark::State& st) { commit_any(std::ref(st), 2); }
+
+BENCHMARK_DEFINE_F(ElementVarTree, commit_any_all)(::benchmark::State& st) {
+  commit_any(std::ref(st), indexDecisionVars.size());
 }
 
 // -----------------------------------------
 // Probing
 // -----------------------------------------
 
-BENCHMARK_REGISTER_F(ElementVarTree, probe_single)
+BENCHMARK_REGISTER_F(ElementVarTree, probe_index_single)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
 /*
-BENCHMARK_REGISTER_F(ElementVarTree, probe_double)
+BENCHMARK_REGISTER_F(ElementVarTree, probe_index_double)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
-BENCHMARK_REGISTER_F(ElementVarTree, probe_all)
+    ->Apply(treeArguments);
+BENCHMARK_REGISTER_F(ElementVarTree, probe_index_all)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
 
 //*/
 
@@ -230,11 +282,11 @@ static void commitArguments(::benchmark::internal::Benchmark* benchmark) {
 }
 
 BENCHMARK_REGISTER_F(ElementVarTree,
-commit_single)->Unit(::benchmark::kMillisecond)->Apply(commitArguments);
+commit_index_single)->Unit(::benchmark::kMillisecond)->Apply(treeArguments);
 BENCHMARK_REGISTER_F(ElementVarTree,
-commit_double)->Unit(::benchmark::kMillisecond)->Apply(commitArguments);
+commit_index_double)->Unit(::benchmark::kMillisecond)->Apply(treeArguments);
 BENCHMARK_REGISTER_F(ElementVarTree,
-commit_all)->Unit(::benchmark::kMillisecond)->Apply(commitArguments);
+commit_index_all)->Unit(::benchmark::kMillisecond)->Apply(treeArguments);
 
 //*/
 }  // namespace atlantis::benchmark

@@ -152,30 +152,16 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, commit_single_swap)
       static_cast<double>(commits), ::benchmark::Counter::kIsRate);
 }
 
-/*
-
-static void arguments(::benchmark::internal::Benchmark* benchmark) {
-  for (int overlapping = 0; overlapping <= 1; ++overlapping) {
-    for (int varCount = 2; varCount <= 16; varCount *= 2) {
-      for (Int mode = 0; mode <= 3; ++mode) {
-        benchmark->Args({overlapping, varCount, mode});
-      }
-#ifndef NDEBUG
-      return;
-#endif
-    }
-  }
-}
-
 BENCHMARK_REGISTER_F(LinearAllDifferent, probe_single_swap)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
 
 /*
 BENCHMARK_REGISTER_F(LinearAllDifferent, probe_all_swap)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
 /*
-BENCHMARK_REGISTER_F(LinearAllDifferent, commit_single_swap)->Apply(arguments);
+BENCHMARK_REGISTER_F(LinearAllDifferent,
+commit_single_swap)->Apply(treeArguments);
 //*/
 }  // namespace atlantis::benchmark

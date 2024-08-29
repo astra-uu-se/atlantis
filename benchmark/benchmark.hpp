@@ -6,6 +6,14 @@
 
 namespace atlantis::benchmark {
 
+inline int int_pow(int base, int exponent) {
+  int power = 1;
+  for (int i = 0; i < exponent; ++i) {
+    power = power * base;
+  }
+  return power;
+}
+
 inline propagation::PropagationMode intToPropagationMode(int state) {
   switch (state) {
     case 3:
@@ -69,4 +77,26 @@ inline void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
 #endif
   }
 }
+
+inline void treeArguments(::benchmark::internal::Benchmark* benchmark) {
+  int outDegree = 2;
+  while (outDegree <= 10) {
+    int treeHeight = (outDegree >= 4 ? 1 : 2);
+    while (treeHeight <= 10) {
+      const int pow = int_pow(outDegree, treeHeight);
+      if (pow > 1024) {
+        break;
+      }
+      for (int mode = 0; mode <= 3; ++mode) {
+        benchmark->Args({outDegree, treeHeight, mode});
+      }
+#ifndef NDEBUG
+      return;
+#endif
+      treeHeight += (outDegree <= 4 ? 2 : 1);
+    }
+    outDegree += 2;
+  }
+}
+
 }  // namespace atlantis::benchmark

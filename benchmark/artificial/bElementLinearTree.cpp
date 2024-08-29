@@ -125,10 +125,6 @@ class ElementLinearTree : public ::benchmark::Fixture {
   }
 };
 
-// probe_single_non_index_var
-// probe_single_index_var
-// probe_single_move_index_input
-
 BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_non_index_var)
 (::benchmark::State& st) {
   size_t probes = 0;
@@ -167,29 +163,14 @@ BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_index_var)
       static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
-/*
-
-static void arguments(::benchmark::internal::Benchmark* benchmark) {
-  for (int treeCount = 2; treeCount <= 10; treeCount += 2) {
-    for (int treeHeight = 2;
-         treeHeight <= 10 && std::pow(treeHeight, 2) <= 2048; treeHeight += 2) {
-      for (Int mode = 0; mode <= 3; ++mode) {
-        benchmark->Args({treeCount, treeHeight, mode});
-      }
-#ifndef NDEBUG
-      return;
-#endif
-    }
-  }
-}
-
 BENCHMARK_REGISTER_F(ElementLinearTree, probe_single_non_index_var)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
 
 BENCHMARK_REGISTER_F(ElementLinearTree, probe_single_index_var)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
 
+/*
 //*/
 }  // namespace atlantis::benchmark

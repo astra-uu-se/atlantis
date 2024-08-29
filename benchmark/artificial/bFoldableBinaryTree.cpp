@@ -52,7 +52,7 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
   propagation::VarId queryVar;
   std::random_device rd;
 
-  std::mt19937 genValue;
+  std::mt19937 gen;
 
   std::uniform_int_distribution<Int> decisionVarValueDist;
 
@@ -61,9 +61,9 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
   Int ub{0};
 
   void probe(::benchmark::State& st, size_t moveCount);
-  void probeRnd(::benchmark::State& st, size_t moveCount);
+  void probe_query_rnd(::benchmark::State& st, size_t moveCount);
   void commit(::benchmark::State& st, size_t moveCount);
-  void commitRnd(::benchmark::State& st, size_t moveCount);
+  void commit_query_rnd(::benchmark::State& st, size_t moveCount);
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_unique<propagation::Solver>();
@@ -79,7 +79,7 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
 
     solver->close();
 
-    genValue = std::mt19937(rd());
+    gen = std::mt19937(rd());
     decisionVarValueDist = std::uniform_int_distribution<Int>(lb, ub);
   }
 
@@ -94,12 +94,12 @@ void FoldableBinaryTree::probe(::benchmark::State& st, size_t moveCount) {
   moveCount = std::min(moveCount, decisionVars.size());
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
-    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
+    std::shuffle(decisionVars.begin(), decisionVars.end(), gen);
     st.ResumeTiming();
 
     solver->beginMove();
     for (size_t i = 0; i < moveCount; ++i) {
-      solver->setValue(decisionVars.at(i), decisionVarValueDist(genValue));
+      solver->setValue(decisionVars.at(i), decisionVarValueDist(gen));
     }
     solver->endMove();
 
@@ -114,12 +114,13 @@ void FoldableBinaryTree::probe(::benchmark::State& st, size_t moveCount) {
       static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
-void FoldableBinaryTree::probeRnd(::benchmark::State& st, size_t moveCount) {
+void FoldableBinaryTree::probe_query_rnd(::benchmark::State& st,
+                                         size_t moveCount) {
   size_t probes = 0;
   moveCount = std::min(moveCount, decisionVars.size());
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
-    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
+    std::shuffle(decisionVars.begin(), decisionVars.end(), gen);
     st.ResumeTiming();
 
     solver->beginMove();
@@ -127,7 +128,7 @@ void FoldableBinaryTree::probeRnd(::benchmark::State& st, size_t moveCount) {
       if (i >= decisionVars.size()) {
         logWarning("i: " << i);
       }
-      solver->setValue(decisionVars.at(i), decisionVarValueDist(genValue));
+      solver->setValue(decisionVars.at(i), decisionVarValueDist(gen));
     }
     solver->endMove();
 
@@ -147,17 +148,17 @@ void FoldableBinaryTree::commit(::benchmark::State& st, size_t moveCount) {
   moveCount = std::min(moveCount, decisionVars.size());
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
-    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
+
+    std::shuffle(decisionVars.begin(), decisionVars.end(), gen);
 
     solver->beginMove();
     for (size_t i = 0; i < moveCount; ++i) {
-      solver->setValue(decisionVars.at(i), decisionVarValueDist(genValue));
+      solver->setValue(decisionVars.at(i), decisionVarValueDist(gen));
     }
     solver->endMove();
 
     st.ResumeTiming();
 
-    // Commit last queryVar var
     solver->beginCommit();
     solver->query(queryVar);
     solver->endCommit();
@@ -169,16 +170,17 @@ void FoldableBinaryTree::commit(::benchmark::State& st, size_t moveCount) {
       ::benchmark::Counter::kIsRate | ::benchmark::Counter::kInvert);
 }
 
-void FoldableBinaryTree::commitRnd(::benchmark::State& st, size_t moveCount) {
+void FoldableBinaryTree::commit_query_rnd(::benchmark::State& st,
+                                          size_t moveCount) {
   size_t commits = 0;
   moveCount = std::min(moveCount, decisionVars.size());
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
-    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
+    std::shuffle(decisionVars.begin(), decisionVars.end(), gen);
 
     solver->beginMove();
     for (size_t i = 0; i < moveCount; ++i) {
-      solver->setValue(decisionVars.at(i), decisionVarValueDist(genValue));
+      solver->setValue(decisionVars.at(i), decisionVarValueDist(gen));
     }
     solver->endMove();
 
@@ -200,75 +202,65 @@ BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_single)
 (::benchmark::State& st) { probe(std::ref(st), 1); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_single_query_rnd)
-(::benchmark::State& st) { probeRnd(std::ref(st), 1); }
+(::benchmark::State& st) { probe_query_rnd(std::ref(st), 1); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_double)
 (::benchmark::State& st) { probe(std::ref(st), 2); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_double_query_rnd)
-(::benchmark::State& st) { probeRnd(std::ref(st), 2); }
+(::benchmark::State& st) { probe_query_rnd(std::ref(st), 2); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_all)
 (::benchmark::State& st) { probe(std::ref(st), st.range(1) + 1); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, probe_all_query_rnd)
-(::benchmark::State& st) { probeRnd(std::ref(st), st.range(1) + 1); }
+(::benchmark::State& st) { probe_query_rnd(std::ref(st), st.range(1) + 1); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_single)
 (::benchmark::State& st) { commit(std::ref(st), 1); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_single_query_rnd)
-(::benchmark::State& st) { commitRnd(std::ref(st), 1); }
+(::benchmark::State& st) { commit_query_rnd(std::ref(st), 1); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_two)
 (::benchmark::State& st) { commit(std::ref(st), 2); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_two_query_rnd)
-(::benchmark::State& st) { commitRnd(std::ref(st), 2); }
+(::benchmark::State& st) { commit_query_rnd(std::ref(st), 2); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_all)
 (::benchmark::State& st) { commit(std::ref(st), decisionVars.size()); }
 
 BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_all_query_rnd)
-(::benchmark::State& st) { commitRnd(std::ref(st), decisionVars.size()); }
-
-/*
+(::benchmark::State& st) {
+  commit_query_rnd(std::ref(st), decisionVars.size());
+}
 
 // -----------------------------------------
 // Probing
 // ------------------------------------------
 
-static void arguments(::benchmark::internal::Benchmark* benchmark) {
-  for (int treeHeight = 2; treeHeight <= 10; treeHeight += 2) {
-    for (Int mode = 0; mode <= 3; ++mode) {
-      benchmark->Args({treeHeight, mode});
-    }
-#ifndef NDEBUG
-    return;
-#endif
-  }
-}
-
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_single)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
+
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_single_query_rnd)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
 
 /*
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_double)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_double_query_rnd)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_all)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_all_query_rnd)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(treeArguments);
 
 /*
 // -----------------------------------------

@@ -8,7 +8,7 @@ CMAKE=$(shell which cmake)
 
 BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
 NUM_BENCHMARK_REPETITIONS=5
-BENCHMARK_FILTER="^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|NQueens|TSP|TSPTW|VesselLoading)\/"
+BENCHMARK_FILTER=".*\/"#"^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|NQueens|TSP|TSPTW|VesselLoading)\/"
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 
 MZN_MODEL_DIR=${MKFILE_PATH}mzn-models
