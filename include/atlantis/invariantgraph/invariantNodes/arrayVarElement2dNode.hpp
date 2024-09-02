@@ -17,26 +17,30 @@ class ArrayVarElement2dNode : public InvariantNode {
   Int _offset2;
 
  public:
-  ArrayVarElement2dNode(VarNodeId idx1, VarNodeId idx2,
+  ArrayVarElement2dNode(InvariantGraph& graph,
+
+                        VarNodeId idx1, VarNodeId idx2,
                         std::vector<VarNodeId>&& flatVarMatrix,
                         VarNodeId output, size_t numRows, Int offset1,
                         Int offset2);
 
-  ArrayVarElement2dNode(VarNodeId idx1, VarNodeId idx2,
+  ArrayVarElement2dNode(InvariantGraph& graph,
+
+                        VarNodeId idx1, VarNodeId idx2,
                         std::vector<std::vector<VarNodeId>>&& varMatrix,
                         VarNodeId output, Int offset1, Int offset2);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+  [[nodiscard]] bool canBeReplaced() const override;
 
-  [[nodiscard]] bool replace(InvariantGraph&) override;
+  [[nodiscard]] bool replace() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId at(Int row, Int col);
 

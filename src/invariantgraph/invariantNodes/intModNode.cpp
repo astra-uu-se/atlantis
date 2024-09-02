@@ -9,15 +9,14 @@ IntModNode::IntModNode(VarNodeId numerator, VarNodeId denominator,
                        VarNodeId remainder)
     : InvariantNode({remainder}, {numerator, denominator}) {}
 
-void IntModNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void IntModNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(remainder()).isIntVar());
   assert(graph.varNodeConst(numerator()).isIntVar());
   assert(graph.varNodeConst(denominator()).isIntVar());
 }
 
-void IntModNode::registerOutputVars(InvariantGraph& graph,
-                                    propagation::SolverBase& solver) {
+void IntModNode::registerOutputVars() {
   makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
@@ -26,8 +25,7 @@ void IntModNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void IntModNode::registerNode(InvariantGraph& graph,
-                              propagation::SolverBase& solver) {
+void IntModNode::registerNode() {
   assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
   solver.makeInvariant<propagation::Mod>(
       solver, graph.varId(outputVarNodeIds().front()), graph.varId(numerator()),

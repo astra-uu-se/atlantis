@@ -4,19 +4,19 @@
 
 namespace atlantis::invariantgraph {
 
-IntScalarNode::IntScalarNode(VarNodeId staticInput, VarNodeId output,
-                             Int factor, Int offset)
-    : InvariantNode({output}, {staticInput}),
+IntScalarNode::IntScalarNode(InvariantGraph& graph, VarNodeId staticInput,
+                             VarNodeId output, Int factor, Int offset)
+    : InvariantNode(graph, {output}, {staticInput}),
       _factor(factor),
       _offset(offset) {}
 
-void IntScalarNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void IntScalarNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(graph.varNodeConst(staticInputVarNodeIds().front()).isIntVar());
 }
 
-void IntScalarNode::updateState(InvariantGraph& graph) {
+void IntScalarNode::updateState() {
   if (_factor == 0) {
     graph.varNode(outputVarNodeIds().front()).fixToValue(_offset);
     setState(InvariantNodeState::SUBSUMED);
@@ -30,8 +30,7 @@ void IntScalarNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void IntScalarNode::registerOutputVars(InvariantGraph& graph,
-                                       propagation::SolverBase& solver) {
+void IntScalarNode::registerOutputVars() {
   if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::ScalarView>(
@@ -44,6 +43,6 @@ void IntScalarNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void IntScalarNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
+void IntScalarNode::registerNode() {}
 
 }  // namespace atlantis::invariantgraph

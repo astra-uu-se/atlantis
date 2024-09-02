@@ -10,9 +10,8 @@ ArrayVarElementNode::ArrayVarElementNode(VarNodeId idx,
                                          VarNodeId output, Int offset)
     : InvariantNode({output}, {idx}, std::move(varVector)), _offset(offset) {}
 
-void ArrayVarElementNode::init(InvariantGraph& graph,
-                               const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void ArrayVarElementNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const VarNodeId& node) {
                        return graph.varNodeConst(node).isIntVar();
@@ -25,7 +24,7 @@ void ArrayVarElementNode::init(InvariantGraph& graph,
       }));
 }
 
-void ArrayVarElementNode::updateState(InvariantGraph& graph) {
+void ArrayVarElementNode::updateState() {
   VarNode& idxNode = graph.varNode(idx());
   /*
   idxNode.removeValuesBelow(_offset);
@@ -72,13 +71,13 @@ void ArrayVarElementNode::updateState(InvariantGraph& graph) {
   }
 }
 
-bool ArrayVarElementNode::canBeReplaced(const InvariantGraph& graph) const {
+bool ArrayVarElementNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
          graph.varNodeConst(idx()).isFixed();
 }
 
-bool ArrayVarElementNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool ArrayVarElementNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   auto& idxNode = graph.varNode(idx());
@@ -89,8 +88,7 @@ bool ArrayVarElementNode::replace(InvariantGraph& graph) {
   return true;
 }
 
-void ArrayVarElementNode::registerOutputVars(InvariantGraph& graph,
-                                             propagation::SolverBase& solver) {
+void ArrayVarElementNode::registerOutputVars() {
   makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()), _offset);
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
@@ -99,8 +97,7 @@ void ArrayVarElementNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void ArrayVarElementNode::registerNode(InvariantGraph& graph,
-                                       propagation::SolverBase& solver) {
+void ArrayVarElementNode::registerNode() {
   std::vector<propagation::VarId> varVector;
   std::transform(dynamicInputVarNodeIds().begin(),
                  dynamicInputVarNodeIds().end(), std::back_inserter(varVector),

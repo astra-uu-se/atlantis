@@ -9,15 +9,15 @@ namespace atlantis::invariantgraph::fzn {
 
 bool bool2int(FznInvariantGraph& graph, const fznparser::BoolArg& boolArg,
               const fznparser::IntArg& intArg) {
-  graph.addInvariantNode(std::make_unique<Bool2IntNode>(
-      graph.retrieveVarNode(boolArg), graph.retrieveVarNode(intArg)));
+  graph.addInvariantNode(std::make_shared<Bool2IntNode>(
+      graph, graph.retrieveVarNode(boolArg), graph.retrieveVarNode(intArg)));
   return true;
 }
 
 bool int2bool(FznInvariantGraph& graph, const fznparser::BoolArg& boolArg,
               const fznparser::IntArg& intArg) {
-  graph.addInvariantNode(std::make_unique<Int2BoolNode>(
-      graph.retrieveVarNode(intArg), graph.retrieveVarNode(boolArg)));
+  graph.addInvariantNode(std::make_shared<Int2BoolNode>(
+      graph, graph.retrieveVarNode(intArg), graph.retrieveVarNode(boolArg)));
   return true;
 }
 

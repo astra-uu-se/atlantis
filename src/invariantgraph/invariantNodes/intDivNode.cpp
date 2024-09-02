@@ -9,21 +9,21 @@ IntDivNode::IntDivNode(VarNodeId numerator, VarNodeId denominator,
                        VarNodeId quotient)
     : InvariantNode({quotient}, {numerator, denominator}) {}
 
-void IntDivNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void IntDivNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(quotient()).isIntVar());
   assert(graph.varNodeConst(numerator()).isIntVar());
   assert(graph.varNodeConst(denominator()).isIntVar());
 }
 
-bool IntDivNode::canBeReplaced(const InvariantGraph& graph) const {
+bool IntDivNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
          graph.varNodeConst(denominator()).isFixed() &&
          graph.varNodeConst(denominator()).lowerBound() == 1;
 }
 
-bool IntDivNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool IntDivNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   assert(graph.varNode(denominator()).isFixed() &&
@@ -42,8 +42,7 @@ void invariantgraph::IntDivNode::registerOutputVars(
                      }));
 }
 
-void invariantgraph::IntDivNode::registerNode(InvariantGraph& graph,
-                                              propagation::SolverBase& solver) {
+void invariantgraph::IntDivNode::registerNode() {
   assert(graph.varId(quotient()) != propagation::NULL_ID);
   solver.makeInvariant<propagation::IntDiv>(solver, graph.varId(quotient()),
                                             graph.varId(numerator()),

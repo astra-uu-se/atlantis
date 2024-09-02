@@ -16,24 +16,24 @@ class IntAllEqualNode : public ViolationInvariantNode {
   propagation::VarId _allDifferentViolationVarId{propagation::NULL_ID};
 
  public:
-  explicit IntAllEqualNode(VarNodeId a, VarNodeId b, VarNodeId r,
-                           bool breaksCycle = false);
+  explicit IntAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+                           VarNodeId r, bool breaksCycle = false);
 
-  explicit IntAllEqualNode(VarNodeId a, VarNodeId b, bool shouldHold = true,
-                           bool breaksCycle = false);
-
-  explicit IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
-                           bool breaksCycle = false);
-
-  explicit IntAllEqualNode(std::vector<VarNodeId>&& vars,
+  explicit IntAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                            bool shouldHold = true, bool breaksCycle = false);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  explicit IntAllEqualNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+                           VarNodeId r, bool breaksCycle = false);
 
-  void updateState(InvariantGraph&) override;
+  explicit IntAllEqualNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+                           bool shouldHold = true, bool breaksCycle = false);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void init(const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void updateState() override;
+
+  void registerOutputVars() override;
+
+  void registerNode() override;
 };
 }  // namespace atlantis::invariantgraph

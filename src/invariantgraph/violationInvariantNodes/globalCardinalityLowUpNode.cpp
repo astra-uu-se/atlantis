@@ -28,9 +28,8 @@ GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
       _low(std::move(low)),
       _up(std::move(up)) {}
 
-void GlobalCardinalityLowUpNode::init(InvariantGraph& graph,
-                                      const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void GlobalCardinalityLowUpNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
@@ -62,8 +61,7 @@ void GlobalCardinalityLowUpNode::registerOutputVars(
                      }));
 }
 
-void GlobalCardinalityLowUpNode::registerNode(InvariantGraph& graph,
-                                              propagation::SolverBase& solver) {
+void GlobalCardinalityLowUpNode::registerNode() {
   std::vector<propagation::VarId> inputVarIds;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputVarIds),

@@ -16,20 +16,22 @@ class IntLinearNode : public InvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  IntLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
+  IntLinearNode(InvariantGraph& graph,
+
+                std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                 VarNodeId output, Int offset = 0);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  [[nodiscard]] bool canBeMadeImplicit(const InvariantGraph&) const override;
+  [[nodiscard]] bool canBeMadeImplicit() const override;
 
-  [[nodiscard]] bool makeImplicit(InvariantGraph&) override;
+  [[nodiscard]] bool makeImplicit() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 };

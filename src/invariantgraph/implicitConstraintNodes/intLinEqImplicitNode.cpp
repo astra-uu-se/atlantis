@@ -8,16 +8,16 @@
 
 namespace atlantis::invariantgraph {
 
-IntLinEqImplicitNode::IntLinEqImplicitNode(std::vector<Int>&& coeffs,
+IntLinEqImplicitNode::IntLinEqImplicitNode(InvariantGraph& graph,
+                                           std::vector<Int>&& coeffs,
                                            std::vector<VarNodeId>&& inputVars,
                                            Int offset)
-    : ImplicitConstraintNode(std::move(inputVars)),
+    : ImplicitConstraintNode(graph, std::move(inputVars)),
       _coeffs(std::move(coeffs)),
       _offset(offset) {}
 
-void IntLinEqImplicitNode::init(InvariantGraph& graph,
-                                const InvariantNodeId& id) {
-  ImplicitConstraintNode::init(graph, id);
+void IntLinEqImplicitNode::init(const InvariantNodeId& id) {
+  ImplicitConstraintNode::init(id);
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
                        return graph.varNodeConst(vId).isIntVar();
@@ -25,8 +25,7 @@ void IntLinEqImplicitNode::init(InvariantGraph& graph,
 }
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
-IntLinEqImplicitNode::createNeighbourhood(InvariantGraph& graph,
-                                          propagation::SolverBase& solver) {
+IntLinEqImplicitNode::createNeighbourhood() {
   if (outputVarNodeIds().size() <= 1) {
     return nullptr;
   }

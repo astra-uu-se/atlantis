@@ -20,8 +20,8 @@ const std::vector<VarNodeId>& IntCountNode::haystack() const {
   return staticInputVarNodeIds();
 }
 
-void IntCountNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void IntCountNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
@@ -29,7 +29,7 @@ void IntCountNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void IntCountNode::updateState(InvariantGraph& graph) {
+void IntCountNode::updateState() {
   std::vector<VarNodeId> inputsToRemove;
   inputsToRemove.reserve(staticInputVarNodeIds().size());
   for (const auto& input : staticInputVarNodeIds()) {
@@ -59,8 +59,7 @@ void IntCountNode::updateState(InvariantGraph& graph) {
 
 Int IntCountNode::needle() const { return _needle; }
 
-void IntCountNode::registerOutputVars(InvariantGraph& graph,
-                                      propagation::SolverBase& solver) {
+void IntCountNode::registerOutputVars() {
   if (staticInputVarNodeIds().size() == 1) {
     graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::IfThenElseConst>(
@@ -83,8 +82,7 @@ void IntCountNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void IntCountNode::registerNode(InvariantGraph& graph,
-                                propagation::SolverBase& solver) {
+void IntCountNode::registerNode() {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }

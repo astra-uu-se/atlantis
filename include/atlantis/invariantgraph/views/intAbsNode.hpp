@@ -9,19 +9,21 @@ namespace atlantis::invariantgraph {
 
 class IntAbsNode : public InvariantNode {
  public:
-  IntAbsNode(VarNodeId staticInput, VarNodeId output);
+  IntAbsNode(InvariantGraph& graph,
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+             VarNodeId staticInput, VarNodeId output);
 
-  void updateState(InvariantGraph&) override;
+  void init(const InvariantNodeId&) override;
 
-  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+  void updateState() override;
 
-  [[nodiscard]] bool replace(InvariantGraph&) override;
+  [[nodiscard]] bool canBeReplaced() const override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  [[nodiscard]] bool replace() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
+
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId input() const noexcept {
     return staticInputVarNodeIds().front();

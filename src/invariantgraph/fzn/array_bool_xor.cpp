@@ -9,8 +9,8 @@ namespace atlantis::invariantgraph::fzn {
 
 bool array_bool_xor(FznInvariantGraph& graph,
                     const std::shared_ptr<fznparser::BoolVarArray>& vars) {
-  graph.addInvariantNode(std::make_unique<invariantgraph::ArrayBoolXorNode>(
-      graph.retrieveVarNodes(vars)));
+  graph.addInvariantNode(
+      std::make_shared<ArrayBoolXorNode>(graph, graph.retrieveVarNodes(vars)));
   return true;
 }
 

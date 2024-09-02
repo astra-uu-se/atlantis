@@ -16,21 +16,23 @@ class GlobalCardinalityNode : public InvariantNode {
   std::vector<propagation::VarId> _intermediate;
 
  public:
-  explicit GlobalCardinalityNode(std::vector<VarNodeId>&& inputs,
+  explicit GlobalCardinalityNode(InvariantGraph& graph,
+
+                                 std::vector<VarNodeId>&& inputs,
                                  std::vector<Int>&& cover,
                                  std::vector<VarNodeId>&& counts);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+  [[nodiscard]] bool canBeReplaced() const override;
 
-  [[nodiscard]] bool replace(InvariantGraph&) override;
+  [[nodiscard]] bool replace() override;
 };
 
 }  // namespace atlantis::invariantgraph

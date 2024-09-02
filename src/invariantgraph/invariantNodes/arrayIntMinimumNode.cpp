@@ -18,9 +18,8 @@ ArrayIntMinimumNode::ArrayIntMinimumNode(std::vector<VarNodeId>&& vars,
     : InvariantNode({output}, std::move(vars)),
       _ub(std::numeric_limits<Int>::max()) {}
 
-void ArrayIntMinimumNode::init(InvariantGraph& graph,
-                               const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void ArrayIntMinimumNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
@@ -28,7 +27,7 @@ void ArrayIntMinimumNode::init(InvariantGraph& graph,
                      }));
 }
 
-void ArrayIntMinimumNode::updateState(InvariantGraph& graph) {
+void ArrayIntMinimumNode::updateState() {
   Int lb = _ub;
   for (const auto& input : staticInputVarNodeIds()) {
     lb = std::min(lb, graph.varNodeConst(input).lowerBound());
@@ -53,7 +52,7 @@ void ArrayIntMinimumNode::updateState(InvariantGraph& graph) {
   }
 }
 
-bool ArrayIntMinimumNode::canBeReplaced(const InvariantGraph& graph) const {
+bool ArrayIntMinimumNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE ||
       staticInputVarNodeIds().size() > 1) {
     return false;
@@ -65,8 +64,8 @@ bool ArrayIntMinimumNode::canBeReplaced(const InvariantGraph& graph) const {
          graph.varNodeConst(staticInputVarNodeIds().front()).upperBound();
 }
 
-bool ArrayIntMinimumNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool ArrayIntMinimumNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   if (staticInputVarNodeIds().size() == 1) {
@@ -76,8 +75,7 @@ bool ArrayIntMinimumNode::replace(InvariantGraph& graph) {
   return true;
 }
 
-void ArrayIntMinimumNode::registerOutputVars(InvariantGraph& graph,
-                                             propagation::SolverBase& solver) {
+void ArrayIntMinimumNode::registerOutputVars() {
   if (staticInputVarNodeIds().size() == 1) {
     graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::IntMinView>(
@@ -92,8 +90,7 @@ void ArrayIntMinimumNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void ArrayIntMinimumNode::registerNode(InvariantGraph& graph,
-                                       propagation::SolverBase& solver) {
+void ArrayIntMinimumNode::registerNode() {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }

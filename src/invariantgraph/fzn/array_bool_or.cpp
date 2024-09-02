@@ -12,8 +12,9 @@ bool array_bool_or(FznInvariantGraph& graph,
                    const fznparser::BoolArg& reified) {
   std::vector<bool> fixedValues = getFixedValues(boolVarArray);
 
-  graph.addInvariantNode(std::make_unique<invariantgraph::ArrayBoolOrNode>(
-      graph.retrieveVarNodes(boolVarArray), graph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_shared<ArrayBoolOrNode>(
+      graph, graph.retrieveVarNodes(boolVarArray),
+      graph.retrieveVarNode(reified)));
   return true;
 }
 

@@ -78,8 +78,9 @@ VarNode::DomainType domainType(const fznparser::IntVar& var) {
   return domainType(var.annotations());
 }
 
-FznInvariantGraph::FznInvariantGraph(bool breakDynamicCycles)
-    : InvariantGraph(breakDynamicCycles),
+FznInvariantGraph::FznInvariantGraph(propagation::SolverBase& solver,
+                                     bool breakDynamicCycles)
+    : InvariantGraph(solver, breakDynamicCycles),
       _outputIdentifiers(),
       _outputBoolVars(),
       _outputIntVars(),

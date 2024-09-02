@@ -29,8 +29,8 @@ bool int_lin_le(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
         std::to_string(bound));
   }
 
-  graph.addInvariantNode(std::make_unique<IntLinLeNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
+  graph.addInvariantNode(std::make_shared<IntLinLeNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
 
   return true;
 }
@@ -40,8 +40,8 @@ bool int_lin_le(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
 
-  graph.addInvariantNode(std::make_unique<IntLinLeNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), bound,
+  graph.addInvariantNode(std::make_shared<IntLinLeNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound,
       graph.retrieveVarNode(reified)));
 
   return true;

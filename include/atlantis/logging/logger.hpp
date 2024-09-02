@@ -64,36 +64,58 @@ class Logger {
  public:
   Logger(FILE* location, Level level) : _ostream(location), _maxLevel(level) {}
 
+  template <typename Action>
+  void beginScopeProcedure(Level level, LogScopeWrapper& logScopeWrapper,
+                           Action&& action) {
+    action();
+    logScopeWrapper.end(*this, level);
+  }
+
   template <typename ReturnType, typename Action>
-  ReturnType beginScope(Level level, LogScopeWrapper& logScopeWrapper,
-                        Action action) {
+  ReturnType beginScopeFunction(Level level, LogScopeWrapper& logScopeWrapper,
+                                Action&& action) {
     logScopeWrapper.begin(*this, level);
+    assert(!std::is_void_v<ReturnType>);
+    ReturnType value = action();
+    logScopeWrapper.end(*this, level);
+    return value;
+  }
 
-    if constexpr (std::is_void_v<ReturnType>) {
-      action();
-      logScopeWrapper.end(*this, level);
-    } else {
-      ReturnType value = action();
-      logScopeWrapper.end(*this, level);
-      return value;
-    }
+  template <typename Action>
+  void timedProcedure(const char* title, Action&& action) {
+    timedProcedure<Action>(Level::INFO, title, std::move(action));
   }
 
   template <typename ReturnType, typename Action>
-  ReturnType timed(const char* title, Action action) {
-    return timed<ReturnType, Action>(Level::INFO, title, action);
+  ReturnType timedFunction(const char* title, Action action) {
+    return timedFunction<ReturnType, Action>(Level::INFO, title,
+                                             std::move(action));
   }
 
-  template <typename ReturnType, typename Action>
-  ReturnType timed(Level level, const char* title, Action action) {
+  template <typename Action>
+  void timedProcedure(Level level, const char* title, Action&& action) {
     TimedLogScopeWrapper wrapper(title);
-    return beginScope<ReturnType, Action>(level, wrapper, action);
+    beginScopeProcedure<Action>(level, wrapper, std::move(action));
   }
 
   template <typename ReturnType, typename Action>
-  ReturnType indented(Level level, const char* title, Action action) {
+  ReturnType timedFunction(Level level, const char* title, Action&& action) {
+    TimedLogScopeWrapper wrapper(title);
+    return beginScopeFunction<ReturnType, Action>(level, wrapper,
+                                                  std::move(action));
+  }
+
+  template <typename Action>
+  void indentedProcedure(Level level, const char* title, Action&& action) {
     IndentedLogScopeWrapper wrapper(title);
-    return beginScope<ReturnType, Action>(level, wrapper, action);
+    beginScopeProcedure<Action>(level, wrapper, std::move(action));
+  }
+
+  template <typename ReturnType, typename Action>
+  ReturnType indentedFunction(Level level, const char* title, Action&& action) {
+    IndentedLogScopeWrapper wrapper(title);
+    return beginScopeFunction<ReturnType, Action>(level, wrapper,
+                                                  std::move(action));
   }
 
   template <typename... T>

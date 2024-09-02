@@ -7,16 +7,17 @@
 
 namespace atlantis::invariantgraph {
 
-Int2BoolNode::Int2BoolNode(VarNodeId staticInput, VarNodeId output)
-    : InvariantNode({output}, {staticInput}) {}
+Int2BoolNode::Int2BoolNode(InvariantGraph& graph, VarNodeId staticInput,
+                           VarNodeId output)
+    : InvariantNode(graph, {output}, {staticInput}) {}
 
-void Int2BoolNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void Int2BoolNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(!graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(graph.varNodeConst(staticInputVarNodeIds().front()).isIntVar());
 }
 
-void Int2BoolNode::updateState(InvariantGraph& graph) {
+void Int2BoolNode::updateState() {
   graph.varNode(input()).domain().removeBelow(Int{0});
   graph.varNode(input()).domain().removeAbove(Int{1});
 
@@ -36,8 +37,7 @@ void Int2BoolNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void Int2BoolNode::registerOutputVars(InvariantGraph& graph,
-                                      propagation::SolverBase& solver) {
+void Int2BoolNode::registerOutputVars() {
   if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::Int2BoolView>(
@@ -50,6 +50,6 @@ void Int2BoolNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void Int2BoolNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
+void Int2BoolNode::registerNode() {}
 
 }  // namespace atlantis::invariantgraph

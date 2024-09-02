@@ -11,8 +11,8 @@ bool fzn_global_cardinality_closed(
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover,
     const std::shared_ptr<fznparser::IntVarArray>& counts) {
-  graph.addInvariantNode(std::make_unique<GlobalCardinalityClosedNode>(
-      graph.retrieveVarNodes(inputs), std::move(cover),
+  graph.addInvariantNode(std::make_shared<GlobalCardinalityClosedNode>(
+      graph, graph.retrieveVarNodes(inputs), std::move(cover),
       graph.retrieveVarNodes(counts)));
   return true;
 }
@@ -23,8 +23,8 @@ bool fzn_global_cardinality_closed(
     std::vector<Int>&& cover,
     const std::shared_ptr<fznparser::IntVarArray>& counts,
     const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_unique<GlobalCardinalityClosedNode>(
-      graph.retrieveVarNodes(inputs), std::move(cover),
+  graph.addInvariantNode(std::make_shared<GlobalCardinalityClosedNode>(
+      graph, graph.retrieveVarNodes(inputs), std::move(cover),
       graph.retrieveVarNodes(counts), graph.retrieveVarNode(reified)));
   return true;
 }

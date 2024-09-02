@@ -9,15 +9,17 @@ namespace atlantis::invariantgraph {
 
 class BoolNotNode : public InvariantNode {
  public:
-  BoolNotNode(VarNodeId staticInput, VarNodeId output);
+  BoolNotNode(InvariantGraph& graph,
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+              VarNodeId staticInput, VarNodeId output);
 
-  void updateState(InvariantGraph&) override;
+  void init(const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void updateState() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
+
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId input() const noexcept {
     return staticInputVarNodeIds().front();

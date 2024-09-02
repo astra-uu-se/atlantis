@@ -11,13 +11,14 @@ namespace atlantis::invariantgraph {
 
 class IntPowNode : public InvariantNode {
  public:
-  IntPowNode(VarNodeId base, VarNodeId exponent, VarNodeId power);
+  IntPowNode(InvariantGraph& graph, VarNodeId base, VarNodeId exponent,
+             VarNodeId power);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId base() const;
   [[nodiscard]] VarNodeId exponent() const;

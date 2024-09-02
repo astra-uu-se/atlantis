@@ -11,22 +11,24 @@
 namespace atlantis::invariantgraph {
 class CircuitNode : public ViolationInvariantNode {
  public:
-  explicit CircuitNode(std::vector<VarNodeId>&&);
+  explicit CircuitNode(InvariantGraph& graph,
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+                       std::vector<VarNodeId>&&);
 
-  void updateState(InvariantGraph&) override;
+  void init(const InvariantNodeId&) override;
 
-  [[nodiscard]] bool canBeMadeImplicit(const InvariantGraph&) const override;
+  void updateState() override;
 
-  [[nodiscard]] bool makeImplicit(InvariantGraph&) override;
+  [[nodiscard]] bool canBeMadeImplicit() const override;
 
-  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+  [[nodiscard]] bool makeImplicit() override;
 
-  [[nodiscard]] bool replace(InvariantGraph&) override;
+  [[nodiscard]] bool canBeReplaced() const override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  [[nodiscard]] bool replace() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
+
+  void registerNode() override;
 };
 }  // namespace atlantis::invariantgraph

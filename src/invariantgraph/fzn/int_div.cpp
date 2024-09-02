@@ -9,9 +9,9 @@ namespace atlantis::invariantgraph::fzn {
 bool int_div(FznInvariantGraph& graph, const fznparser::IntArg& numerator,
              const fznparser::IntArg& denominator,
              const fznparser::IntArg& quotient) {
-  graph.addInvariantNode(std::make_unique<IntDivNode>(
-      graph.retrieveVarNode(numerator), graph.retrieveVarNode(denominator),
-      graph.retrieveVarNode(quotient)));
+  graph.addInvariantNode(std::make_shared<IntDivNode>(
+      graph, graph.retrieveVarNode(numerator),
+      graph.retrieveVarNode(denominator), graph.retrieveVarNode(quotient)));
   return true;
 }
 

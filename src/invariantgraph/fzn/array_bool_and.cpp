@@ -11,8 +11,9 @@ bool array_bool_and(
     FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray,
     const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_unique<invariantgraph::ArrayBoolAndNode>(
-      graph.retrieveVarNodes(boolVarArray), graph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_shared<ArrayBoolAndNode>(
+      graph, graph.retrieveVarNodes(boolVarArray),
+      graph.retrieveVarNode(reified)));
   return true;
 }
 

@@ -20,14 +20,13 @@ class UnitInvariantNode : public InvariantNode {
   explicit UnitInvariantNode(std::vector<VarNodeId>&& defVarNodes)
       : InvariantNode(std::move(defVarNodes)) {}
 
-  void registerOutputVars(InvariantGraph& graph,
-                          propagation::SolverBase& solver) override {
+  void registerOutputVars() override {
     for (const auto& varNodeId : outputVarNodeIds()) {
       makeSolverVar(solver, graph.varNode(varNodeId));
     }
   }
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override {}
+  void registerNode() override {}
 };
 
 enum class InvariantNodeAction : unsigned char {

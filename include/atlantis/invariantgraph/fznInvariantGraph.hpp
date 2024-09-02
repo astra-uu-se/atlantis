@@ -18,7 +18,8 @@ class FznInvariantGraph : public InvariantGraph {
   std::vector<InvariantGraphOutputVarArray> _outputIntVarArrays;
 
  public:
-  FznInvariantGraph(bool breakDynamicCycles = false);
+  FznInvariantGraph(propagation::SolverBase& solver,
+                    bool breakDynamicCycles = false);
 
   VarNodeId retrieveVarNode(const fznparser::BoolVar&);
   VarNodeId retrieveVarNode(const std::shared_ptr<const fznparser::BoolVar>&);

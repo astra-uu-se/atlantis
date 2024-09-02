@@ -28,8 +28,8 @@ BoolAllEqualNode::BoolAllEqualNode(std::vector<VarNodeId>&& vars,
     : ViolationInvariantNode(std::move(vars), shouldHold),
       _breaksCycle(breaksCycle) {}
 
-void BoolAllEqualNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void BoolAllEqualNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::none_of(staticInputVarNodeIds().begin(),
@@ -38,7 +38,7 @@ void BoolAllEqualNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                       }));
 }
 
-void BoolAllEqualNode::updateState(InvariantGraph& graph) {
+void BoolAllEqualNode::updateState() {
   ViolationInvariantNode::updateState(graph);
   if (staticInputVarNodeIds().size() < 2) {
     if (isReified()) {
@@ -87,14 +87,14 @@ bool BoolAllEqualNode::canBeReplaced(const InvariantGraph&) const {
           (shouldHold() || staticInputVarNodeIds().size() <= 2));
 }
 
-bool BoolAllEqualNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool BoolAllEqualNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   if (!shouldHold()) {
     assert(staticInputVarNodeIds().size() == 2);
-    graph.addInvariantNode(std::make_unique<ArrayBoolXorNode>(
-        std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
+    graph.addInvariantNode(std::make_shared<ArrayBoolXorNode>(
+        graph, std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
   } else if (!staticInputVarNodeIds().empty()) {
     const VarNodeId firstVar = staticInputVarNodeIds().front();
     for (size_t i = 1; i < staticInputVarNodeIds().size(); ++i) {
@@ -104,8 +104,7 @@ bool BoolAllEqualNode::replace(InvariantGraph& graph) {
   return true;
 }
 
-void BoolAllEqualNode::registerOutputVars(InvariantGraph& graph,
-                                          propagation::SolverBase& solver) {
+void BoolAllEqualNode::registerOutputVars() {
   if (violationVarId(graph) == propagation::NULL_ID) {
     if (shouldHold() || staticInputVarNodeIds().size() == 2) {
       registerViolation(graph, solver);
@@ -123,8 +122,7 @@ void BoolAllEqualNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void BoolAllEqualNode::registerNode(InvariantGraph& graph,
-                                    propagation::SolverBase& solver) {
+void BoolAllEqualNode::registerNode() {
   if (staticInputVarNodeIds().empty()) {
     return;
   }

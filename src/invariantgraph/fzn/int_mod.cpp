@@ -9,9 +9,9 @@ namespace atlantis::invariantgraph::fzn {
 bool int_mod(FznInvariantGraph& graph, const fznparser::IntArg& numerator,
              const fznparser::IntArg& denominator,
              const fznparser::IntArg& remainder) {
-  graph.addInvariantNode(std::make_unique<IntModNode>(
-      graph.retrieveVarNode(numerator), graph.retrieveVarNode(denominator),
-      graph.retrieveVarNode(remainder)));
+  graph.addInvariantNode(std::make_shared<IntModNode>(
+      graph, graph.retrieveVarNode(numerator),
+      graph.retrieveVarNode(denominator), graph.retrieveVarNode(remainder)));
   return true;
 }
 

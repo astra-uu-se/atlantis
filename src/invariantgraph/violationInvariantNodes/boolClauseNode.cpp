@@ -19,8 +19,8 @@ BoolClauseNode::BoolClauseNode(std::vector<VarNodeId>&& as,
                                std::vector<VarNodeId>&& bs, bool shouldHold)
     : ViolationInvariantNode(concat(as, bs), shouldHold), _numAs(as.size()) {}
 
-void BoolClauseNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void BoolClauseNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::none_of(staticInputVarNodeIds().begin(),
@@ -29,7 +29,7 @@ void BoolClauseNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                       }));
 }
 
-void BoolClauseNode::updateState(InvariantGraph& graph) {
+void BoolClauseNode::updateState() {
   ViolationInvariantNode::updateState(graph);
   for (size_t i = 0; i < _numAs; ++i) {
     for (size_t j = _numAs; j < staticInputVarNodeIds().size(); ++j) {
@@ -109,8 +109,8 @@ bool BoolClauseNode::canBeReplaced(const InvariantGraph&) const {
   return state() == InvariantNodeState::ACTIVE;
 }
 
-bool BoolClauseNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool BoolClauseNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   if (staticInputVarNodeIds().empty()) {
@@ -122,8 +122,8 @@ bool BoolClauseNode::replace(InvariantGraph& graph) {
         graph.replaceVarNode(reifiedViolationNodeId(),
                              staticInputVarNodeIds().front());
       } else {
-        graph.addInvariantNode(std::make_unique<BoolNotNode>(
-            staticInputVarNodeIds().front(), reifiedViolationNodeId()));
+        graph.addInvariantNode(std::make_shared<BoolNotNode>(
+            graph, staticInputVarNodeIds().front(), reifiedViolationNodeId()));
       }
     } else {
       graph.varNode(staticInputVarNodeIds().front())
@@ -139,16 +139,16 @@ bool BoolClauseNode::replace(InvariantGraph& graph) {
   }
   for (size_t i = _numAs; i < staticInputVarNodeIds().size(); ++i) {
     boolOrInputs.emplace_back(graph.retrieveBoolVarNode());
-    graph.addInvariantNode(std::make_unique<BoolNotNode>(
-        staticInputVarNodeIds().at(i), boolOrInputs.back()));
+    graph.addInvariantNode(std::make_shared<BoolNotNode>(
+        graph, staticInputVarNodeIds().at(i), boolOrInputs.back()));
   }
 
   if (isReified()) {
-    graph.addInvariantNode(std::make_unique<ArrayBoolOrNode>(
-        std::move(boolOrInputs), reifiedViolationNodeId()));
+    graph.addInvariantNode(std::make_shared<ArrayBoolOrNode>(
+        graph, std::move(boolOrInputs), reifiedViolationNodeId()));
   } else {
-    graph.addInvariantNode(std::make_unique<ArrayBoolOrNode>(
-        std::move(boolOrInputs), shouldHold()));
+    graph.addInvariantNode(std::make_shared<ArrayBoolOrNode>(
+        graph, std::move(boolOrInputs), shouldHold()));
   }
   return true;
 }
@@ -159,7 +159,7 @@ void BoolClauseNode::registerOutputVars(InvariantGraph&,
       "BoolClauseNode::registerOutputVars not implemented");
 }
 
-void BoolClauseNode::registerNode(InvariantGraph&, propagation::SolverBase&) {
+void BoolClauseNode::registerNode() {
   throw std::runtime_error("BoolClauseNode::registerNode not implemented");
 }
 

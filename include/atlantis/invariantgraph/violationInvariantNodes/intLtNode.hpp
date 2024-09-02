@@ -9,17 +9,18 @@ namespace atlantis::invariantgraph {
 
 class IntLtNode : public ViolationInvariantNode {
  public:
-  IntLtNode(VarNodeId a, VarNodeId b, VarNodeId r);
+  IntLtNode(InvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
 
-  IntLtNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
+  IntLtNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+            bool shouldHold = true);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

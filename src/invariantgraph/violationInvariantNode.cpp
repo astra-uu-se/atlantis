@@ -19,9 +19,10 @@ static std::vector<invariantgraph::VarNodeId> combine(
  */
 
 ViolationInvariantNode::ViolationInvariantNode(
-    std::vector<VarNodeId>&& outputIds, std::vector<VarNodeId>&& staticInputIds,
-    VarNodeId reifiedId, bool shouldHold)
-    : InvariantNode(combine(reifiedId, std::move(outputIds)),
+    InvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
+    std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedId,
+    bool shouldHold)
+    : InvariantNode(graph, combine(reifiedId, std::move(outputIds)),
                     std::move(staticInputIds)),
       _isReified(reifiedId != NULL_NODE_ID),
       _shouldHold(shouldHold) {
@@ -30,9 +31,8 @@ ViolationInvariantNode::ViolationInvariantNode(
       (reifiedId != NULL_NODE_ID && outputVarNodeIds().front() == reifiedId));
 }
 
-void ViolationInvariantNode::init(InvariantGraph& graph,
-                                  const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void ViolationInvariantNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
 }
 
 bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
@@ -98,9 +98,7 @@ VarNodeId ViolationInvariantNode::reifiedViolationNodeId() {
   return isReified() ? outputVarNodeIds().front() : VarNodeId{NULL_NODE_ID};
 }
 
-void ViolationInvariantNode::updateState(InvariantGraph& graph) {
-  updateReified(graph);
-}
+void ViolationInvariantNode::updateState() { updateReified(graph); }
 
 propagation::VarId ViolationInvariantNode::setViolationVarId(
     InvariantGraph& graph, propagation::VarId varId) {

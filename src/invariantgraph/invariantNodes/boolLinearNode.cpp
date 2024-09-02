@@ -18,8 +18,8 @@ BoolLinearNode::BoolLinearNode(std::vector<Int>&& coeffs,
       _coeffs(std::move(coeffs)),
       _offset(offset) {}
 
-void BoolLinearNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void BoolLinearNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(std::none_of(staticInputVarNodeIds().begin(),
                       staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
@@ -27,7 +27,7 @@ void BoolLinearNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                       }));
 }
 
-void BoolLinearNode::updateState(InvariantGraph& graph) {
+void BoolLinearNode::updateState() {
   // Remove duplicates:
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
     for (Int j = static_cast<Int>(staticInputVarNodeIds().size()) - 1; j > i;
@@ -76,8 +76,7 @@ void BoolLinearNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void BoolLinearNode::registerOutputVars(InvariantGraph& graph,
-                                        propagation::SolverBase& solver) {
+void BoolLinearNode::registerOutputVars() {
   if (staticInputVarNodeIds().size() == 1) {
     graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::IfThenElseConst>(
@@ -100,8 +99,7 @@ void BoolLinearNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void BoolLinearNode::registerNode(InvariantGraph& graph,
-                                  propagation::SolverBase& solver) {
+void BoolLinearNode::registerNode() {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }

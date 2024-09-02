@@ -9,15 +9,15 @@ namespace atlantis::invariantgraph::fzn {
 bool fzn_all_equal_int(FznInvariantGraph& graph,
                        const std::shared_ptr<fznparser::IntVarArray>& inputs) {
   graph.addInvariantNode(
-      std::make_unique<IntAllEqualNode>(graph.retrieveVarNodes(inputs)));
+      std::make_shared<IntAllEqualNode>(graph, graph.retrieveVarNodes(inputs)));
   return true;
 }
 
 bool fzn_all_equal_int(FznInvariantGraph& graph,
                        const std::shared_ptr<fznparser::IntVarArray>& inputs,
                        const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_unique<IntAllEqualNode>(
-      graph.retrieveVarNodes(inputs), graph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_shared<IntAllEqualNode>(
+      graph, graph.retrieveVarNodes(inputs), graph.retrieveVarNode(reified)));
   return true;
 }
 

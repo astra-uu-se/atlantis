@@ -14,25 +14,33 @@ class AllDifferentNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit AllDifferentNode(VarNodeId a, VarNodeId b, VarNodeId r);
+  explicit AllDifferentNode(InvariantGraph& graph,
 
-  explicit AllDifferentNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
+                            VarNodeId a, VarNodeId b, VarNodeId r);
 
-  explicit AllDifferentNode(std::vector<VarNodeId>&& vars, VarNodeId r);
+  explicit AllDifferentNode(InvariantGraph& graph,
 
-  explicit AllDifferentNode(std::vector<VarNodeId>&& vars,
+                            VarNodeId a, VarNodeId b, bool shouldHold = true);
+
+  explicit AllDifferentNode(InvariantGraph& graph,
+
+                            std::vector<VarNodeId>&& vars, VarNodeId r);
+
+  explicit AllDifferentNode(InvariantGraph& graph,
+
+                            std::vector<VarNodeId>&& vars,
                             bool shouldHold = true);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  virtual void updateState(InvariantGraph&) override;
+  virtual void updateState() override;
 
-  [[nodiscard]] bool canBeMadeImplicit(const InvariantGraph&) const override;
+  [[nodiscard]] bool canBeMadeImplicit() const override;
 
-  [[nodiscard]] bool makeImplicit(InvariantGraph&) override;
+  [[nodiscard]] bool makeImplicit() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 };
 }  // namespace atlantis::invariantgraph

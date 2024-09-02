@@ -29,8 +29,8 @@ bool array_var_int_element2d(
         "Constraint array_var_int_element2d the second offset must be smaller "
         "than the lower bound of the second index var.");
   }
-  graph.addInvariantNode(std::make_unique<ArrayVarElement2dNode>(
-      graph.retrieveVarNode(idx1), graph.retrieveVarNode(idx2),
+  graph.addInvariantNode(std::make_shared<ArrayVarElement2dNode>(
+      graph, graph.retrieveVarNode(idx1), graph.retrieveVarNode(idx2),
       graph.retrieveVarNodes(inputs), graph.retrieveVarNode(output),
       static_cast<size_t>(numRows), offset1, offset2));
   return true;

@@ -12,14 +12,14 @@
 namespace atlantis::invariantgraph {
 
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
-    std::vector<VarNodeId>&& inputs, std::vector<Int>&& cover,
-    std::vector<VarNodeId>&& counts, bool shouldHold)
-    : ViolationInvariantNode(std::move(counts), std::move(inputs), shouldHold),
+    InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
+    std::vector<Int>&& cover, std::vector<VarNodeId>&& counts, bool shouldHold)
+    : ViolationInvariantNode(graph, std::move(counts), std::move(inputs),
+                             shouldHold),
       _cover(std::move(cover)) {}
 
-void GlobalCardinalityClosedNode::init(InvariantGraph& graph,
-                                       const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void GlobalCardinalityClosedNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
@@ -49,8 +49,8 @@ bool GlobalCardinalityClosedNode::canBeReplaced(const InvariantGraph&) const {
 
 bool GlobalCardinalityClosedNode::replace(InvariantGraph& invariantGraph) {
   if (!isReified() && shouldHold()) {
-    invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
-        std::vector<VarNodeId>{staticInputVarNodeIds()},
+    invariantGraph.addInvariantNode(std::make_shared<GlobalCardinalityNode>(
+        graph, std::vector<VarNodeId>{staticInputVarNodeIds()},
         std::vector<Int>{_cover}, std::vector<VarNodeId>{outputVarNodeIds()}));
     return true;
   }
@@ -69,28 +69,29 @@ bool GlobalCardinalityClosedNode::replace(InvariantGraph& invariantGraph) {
 
     violationVarNodeIds.emplace_back(invariantGraph.retrieveBoolVarNode());
 
-    invariantGraph.addInvariantNode(std::make_unique<IntAllEqualNode>(
-        countId, intermediateOutputNodeIds.back(), violationVarNodeIds.back()));
+    invariantGraph.addInvariantNode(std::make_shared<IntAllEqualNode>(
+        graph, countId, intermediateOutputNodeIds.back(),
+        violationVarNodeIds.back()));
   }
 
   for (VarNodeId inputId : staticInputVarNodeIds()) {
     violationVarNodeIds.emplace_back(invariantGraph.retrieveBoolVarNode());
 
-    invariantGraph.addInvariantNode(std::make_unique<SetInNode>(
-        inputId, std::vector<Int>(_cover), violationVarNodeIds.back()));
+    invariantGraph.addInvariantNode(std::make_shared<SetInNode>(
+        graph, inputId, std::vector<Int>(_cover), violationVarNodeIds.back()));
   }
 
-  invariantGraph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
-      std::vector<VarNodeId>{staticInputVarNodeIds()}, std::vector<Int>{_cover},
-      std::move(intermediateOutputNodeIds)));
+  invariantGraph.addInvariantNode(std::make_shared<GlobalCardinalityNode>(
+      graph, std::vector<VarNodeId>{staticInputVarNodeIds()},
+      std::vector<Int>{_cover}, std::move(intermediateOutputNodeIds)));
 
   if (isReified()) {
-    invariantGraph.addInvariantNode(std::make_unique<ArrayBoolAndNode>(
-        std::move(violationVarNodeIds), reifiedViolationNodeId()));
+    invariantGraph.addInvariantNode(std::make_shared<ArrayBoolAndNode>(
+        graph, std::move(violationVarNodeIds), reifiedViolationNodeId()));
     return true;
   } else {
-    invariantGraph.addInvariantNode(std::make_unique<ArrayBoolAndNode>(
-        std::move(violationVarNodeIds), false));
+    invariantGraph.addInvariantNode(std::make_shared<ArrayBoolAndNode>(
+        graph, std::move(violationVarNodeIds), false));
     return true;
   }
   return true;

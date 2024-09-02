@@ -13,20 +13,23 @@ class ArrayIntMaximumNode : public InvariantNode {
   Int _lb;
 
  public:
-  explicit ArrayIntMaximumNode(VarNodeId a, VarNodeId b, VarNodeId output);
+  explicit ArrayIntMaximumNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+                               VarNodeId output);
 
-  explicit ArrayIntMaximumNode(std::vector<VarNodeId>&& vars, VarNodeId output);
+  explicit ArrayIntMaximumNode(InvariantGraph& graph,
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+                               std::vector<VarNodeId>&& vars, VarNodeId output);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void init(const InvariantNodeId&) override;
 
-  void updateState(InvariantGraph&) override;
+  void registerOutputVars() override;
 
-  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+  void updateState() override;
 
-  [[nodiscard]] bool replace(InvariantGraph&) override;
+  [[nodiscard]] bool canBeReplaced() const override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  [[nodiscard]] bool replace() override;
+
+  void registerNode() override;
 };
 }  // namespace atlantis::invariantgraph

@@ -15,15 +15,16 @@ class BoolOrNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  BoolOrNode(VarNodeId a, VarNodeId b, VarNodeId r);
+  BoolOrNode(InvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
 
-  BoolOrNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
+  BoolOrNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+             bool shouldHold = true);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

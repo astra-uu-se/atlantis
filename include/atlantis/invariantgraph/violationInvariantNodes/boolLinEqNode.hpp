@@ -17,19 +17,23 @@ class BoolLinEqNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
+  BoolLinEqNode(InvariantGraph& graph,
+
+                std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                 Int bound, bool shouldHold = true);
 
-  BoolLinEqNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
+  BoolLinEqNode(InvariantGraph& graph,
+
+                std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                 Int bound, VarNodeId reified);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 };

@@ -8,8 +8,8 @@ namespace atlantis::invariantgraph::fzn {
 
 bool int_plus(FznInvariantGraph& graph, const fznparser::IntArg& a,
               const fznparser::IntArg& b, const fznparser::IntArg& sum) {
-  graph.addInvariantNode(std::make_unique<IntPlusNode>(
-      graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+  graph.addInvariantNode(std::make_shared<IntPlusNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
       graph.retrieveVarNode(sum)));
   return true;
 }

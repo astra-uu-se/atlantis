@@ -24,7 +24,8 @@ class ViolationInvariantNode : public InvariantNode {
 
   void updateReified(InvariantGraph&);
 
-  explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
+  explicit ViolationInvariantNode(InvariantGraph graph,
+                                  std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId,
                                   bool shouldHold);
@@ -48,7 +49,7 @@ class ViolationInvariantNode : public InvariantNode {
   explicit ViolationInvariantNode(std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
   /**
    * @brief Construct a new violation invariant node object
@@ -65,12 +66,11 @@ class ViolationInvariantNode : public InvariantNode {
 
   [[nodiscard]] bool isReified() const override;
 
-  [[nodiscard]] propagation::VarId violationVarId(
-      const InvariantGraph&) const override;
+  [[nodiscard]] propagation::VarId violationVarId() const override;
 
   VarNodeId reifiedViolationNodeId();
 
-  virtual void updateState(InvariantGraph&) override;
+  virtual void updateState() override;
 };
 
 }  // namespace atlantis::invariantgraph

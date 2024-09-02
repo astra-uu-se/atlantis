@@ -15,8 +15,9 @@ bool int_min(FznInvariantGraph& graph, const fznparser::IntArg& a,
         .fixToValue(std::min(a.toParameter(), b.toParameter()));
     return true;
   }
-  graph.addInvariantNode(std::make_unique<ArrayIntMinimumNode>(
-      graph.retrieveVarNode(a), graph.retrieveVarNode(b), outputVarNodeId));
+  graph.addInvariantNode(std::make_shared<ArrayIntMinimumNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+      outputVarNodeId));
   return true;
 }
 

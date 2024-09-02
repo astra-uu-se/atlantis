@@ -11,13 +11,15 @@ namespace atlantis::invariantgraph {
 
 class IntModNode : public InvariantNode {
  public:
-  IntModNode(VarNodeId numerator, VarNodeId denominator, VarNodeId remainder);
+  IntModNode(InvariantGraph& graph,
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+             VarNodeId numerator, VarNodeId denominator, VarNodeId remainder);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void init(const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
+
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId numerator() const;
   [[nodiscard]] VarNodeId denominator() const;

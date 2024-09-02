@@ -71,8 +71,8 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   // swapped, and the constant must be reduced from both sides:
   const Int lhsOffset = definedVarCoeff == 1 ? bound : -bound;
 
-  graph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), std::move(inputVarNodes), definedVarNodeId,
+  graph.addInvariantNode(std::make_shared<IntLinearNode>(
+      graph, std::move(coeffs), std::move(inputVarNodes), definedVarNodeId,
       lhsOffset));
   return true;
 }
@@ -129,10 +129,12 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   const VarNodeId outputVarNodeId =
       graph.retrieveIntVarNode(SearchDomain(lb, ub), VarNode::DomainType::NONE);
 
-  graph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), std::move(inputVarNodes), outputVarNodeId, lhsOffset));
-  graph.addInvariantNode(std::make_unique<IntAllEqualNode>(
-      outputVarNodeId, definedVarNodeId, graph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_shared<IntLinearNode>(
+      graph, std::move(coeffs), std::move(inputVarNodes), outputVarNodeId,
+      lhsOffset));
+  graph.addInvariantNode(std::make_shared<IntAllEqualNode>(
+      graph, outputVarNodeId, definedVarNodeId,
+      graph.retrieveVarNode(reified)));
   return true;
 }
 
@@ -148,8 +150,8 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
         "int_lin_eq constraint with empty arrays must have a total sum of 0");
   }
 
-  graph.addInvariantNode(std::make_unique<IntLinEqNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
+  graph.addInvariantNode(std::make_shared<IntLinEqNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
 
   return true;
 }
@@ -159,8 +161,8 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 Int bound, fznparser::BoolArg reified) {
   verifyInputs(coeffs, inputs);
 
-  graph.addInvariantNode(std::make_unique<IntLinEqNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), bound,
+  graph.addInvariantNode(std::make_shared<IntLinEqNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound,
       graph.retrieveVarNode(reified)));
 
   return true;

@@ -15,8 +15,8 @@ VarIntCountNode::VarIntCountNode(std::vector<VarNodeId>&& vars,
                                  VarNodeId needle, VarNodeId count)
     : InvariantNode({count}, append(std::move(vars), needle)) {}
 
-void VarIntCountNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void VarIntCountNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
@@ -36,25 +36,24 @@ VarNodeId VarIntCountNode::needle() const {
   return staticInputVarNodeIds().back();
 }
 
-bool VarIntCountNode::canBeReplaced(const InvariantGraph& graph) const {
+bool VarIntCountNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
          graph.varNodeConst(needle()).isFixed();
 }
 
-bool VarIntCountNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool VarIntCountNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
 
-  graph.addInvariantNode(std::make_unique<IntCountNode>(
-      haystack(), graph.varNodeConst(needle()).lowerBound(),
+  graph.addInvariantNode(std::make_shared<IntCountNode>(
+      graph, haystack(), graph.varNodeConst(needle()).lowerBound(),
       outputVarNodeIds().front()));
 
   return true;
 }
 
-void VarIntCountNode::registerOutputVars(InvariantGraph& graph,
-                                         propagation::SolverBase& solver) {
+void VarIntCountNode::registerOutputVars() {
   makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
@@ -63,8 +62,7 @@ void VarIntCountNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void VarIntCountNode::registerNode(InvariantGraph& graph,
-                                   propagation::SolverBase& solver) {
+void VarIntCountNode::registerNode() {
   assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
 
   std::vector<VarNodeId> h = haystack();

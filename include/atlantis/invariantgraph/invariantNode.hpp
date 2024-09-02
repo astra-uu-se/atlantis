@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "atlantis/invariantgraph/invariantNodeBase.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -17,122 +18,57 @@ namespace atlantis::invariantgraph {
 
 class InvariantGraph;  // Forward declaration
 
-class InvariantNode {
+class InvariantNode : public InvariantNodeBase {
  private:
-  InvariantNodeId _id{NULL_NODE_ID};
-  InvariantNodeState _state{InvariantNodeState::UNINITIALIZED};
+  InvariantGraph& _invariantGraph;
 
  public:
-  explicit InvariantNode(std::vector<VarNodeId>&& outputIds,
+  explicit InvariantNode(InvariantGraph& invariantGraph,
+                         std::vector<VarNodeId>&& outputIds,
                          std::vector<VarNodeId>&& staticInputIds = {},
                          std::vector<VarNodeId>&& dynamicInputIds = {});
 
   virtual ~InvariantNode() = default;
 
-  virtual void init(InvariantGraph&, const InvariantNodeId&);
+  InvariantGraph& invariantGraph();
 
-  [[nodiscard]] InvariantNodeId id() const { return _id; }
+  const InvariantGraph& invariantGraphConst() const;
 
-  [[nodiscard]] virtual bool isReified() const;
+  propagation::SolverBase& solver();
 
-  [[nodiscard]] virtual bool canBeReplaced(const InvariantGraph&) const;
+  const propagation::SolverBase& solver() const;
 
-  [[nodiscard]] virtual bool replace(InvariantGraph&);
+  virtual void init(const InvariantNodeId&) override;
 
-  [[nodiscard]] virtual bool canBeMadeImplicit(const InvariantGraph&) const;
+  virtual void deactivate() override;
 
-  [[nodiscard]] virtual bool makeImplicit(InvariantGraph&);
+  void replaceDefinedVar(VarNodeId oldOutputVarNodeId,
+                         VarNodeId newOutputVarNodeId) override;
 
-  [[nodiscard]] InvariantNodeState state() const { return _state; }
+  void removeStaticInputVarNode(VarNodeId) override;
 
-  void deactivate(InvariantGraph&);
+  void removeDynamicInputVarNode(VarNodeId) override;
 
-  /**
-   * Creates as all the variables the node defines in @p solver.
-   *
-   * @param solver The solver with which to register the variables, constraints
-   * and views.
-   */
-  virtual void registerOutputVars(InvariantGraph&,
-                                  propagation::SolverBase&) = 0;
+  void removeOutputVarNode(VarNodeId) override;
 
-  /**
-   * Registers the current node with the solver, as well as all the variables
-   * it defines.
-   *
-   * Note: This method assumes it is called after all the inputs to this node
-   * are already registered with the solver.
-   *
-   * @param solver The solver with which to register the variables, constraints
-   * and views.
-   */
-  virtual void registerNode(InvariantGraph&, propagation::SolverBase&) = 0;
+  void replaceStaticInputVarNode(VarNodeId oldInputVarNodeId,
+                                 VarNodeId newInputVarNodeId) override;
 
-  /**
-   * @return The variable nodes defined by this node.
-   */
-  [[nodiscard]] const std::vector<VarNodeId>& outputVarNodeIds() const noexcept;
+  void replaceDynamicInputVarNode(VarNodeId oldInputVarNodeId,
+                                  VarNodeId newInputVarNodeId) override;
 
-  /**
-   * @return The violation variable of this variable defining node. Only
-   * applicable if the current node is a violation invariant. If this node does
-   * not define a violation variable, this method returns propagation::NULL_ID.
-   */
-  [[nodiscard]] virtual propagation::VarId violationVarId(
-      const InvariantGraph&) const;
+  std::vector<std::pair<VarNodeId, VarNodeId>> splitOutputVarNodes() override;
 
-  [[nodiscard]] const std::vector<VarNodeId>& staticInputVarNodeIds()
-      const noexcept;
+  virtual propagation::VarId makeSolverVar(VarNodeId varNodeId) override;
 
-  [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds()
-      const noexcept;
+  virtual propagation::VarId makeSolverVar(VarNodeId varNodeId,
+                                           Int initialValue) override;
 
-  virtual void updateState(InvariantGraph&) {};
+  void markOutputTo(VarNodeId varNodeId, bool registerHere) override;
 
-  void replaceDefinedVar(VarNode& oldOutputVarNode, VarNode& newOutputVarNode);
+  void markStaticInputTo(VarNodeId varNodeId, bool registerHere) override;
 
-  void removeStaticInputVarNode(VarNode&);
-
-  void removeDynamicInputVarNode(VarNode&);
-
-  void removeOutputVarNode(VarNode&);
-
-  void replaceStaticInputVarNode(VarNode& oldInputVarNode,
-                                 VarNode& newInputVarNode);
-
-  void replaceDynamicInputVarNode(VarNode& oldInputVarNode,
-                                  VarNode& newInputVarNode);
-
-  // A hack in order to steal the _inputs from the nested constraint.
-  friend class ReifiedConstraint;
-
- protected:
-  std::vector<VarNodeId> _outputVarNodeIds;
-  std::vector<VarNodeId> _staticInputVarNodeIds;
-  std::vector<VarNodeId> _dynamicInputVarNodeIds;
-
-  void eraseStaticInputVarNode(size_t index);
-
-  void eraseDynamicInputVarNode(size_t index);
-
-  /**
-   * Splits the unfixed output variable nodes of the current node into multiple
-   * nodes.
-   * @return A vector where an element (i, j) means that VarNode with VarNodeId
-   * i has been replaced by the VarNode with VarNodeId j.
-   */
-  std::vector<std::pair<VarNodeId, VarNodeId>> splitOutputVarNodes(
-      InvariantGraph&);
-
-  static propagation::VarId makeSolverVar(propagation::SolverBase&, VarNode&,
-                                          Int initialValue = 0);
-
-  void markOutputTo(VarNode& node, bool registerHere = true);
-
-  void markStaticInputTo(VarNode& node, bool registerHere = true);
-
-  void markDynamicInputTo(VarNode& node, bool registerHere = true);
-
-  void setState(InvariantNodeState state) { _state = state; }
+  void markDynamicInputTo(VarNodeId varNodeId, bool registerHere) override;
 };
+
 }  // namespace atlantis::invariantgraph

@@ -14,8 +14,8 @@ BoolOrNode::BoolOrNode(VarNodeId a, VarNodeId b, VarNodeId r)
 BoolOrNode::BoolOrNode(VarNodeId a, VarNodeId b, bool shouldHold)
     : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, shouldHold) {}
 
-void BoolOrNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void BoolOrNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::none_of(staticInputVarNodeIds().begin(),
@@ -24,8 +24,7 @@ void BoolOrNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                       }));
 }
 
-void BoolOrNode::registerOutputVars(InvariantGraph& graph,
-                                    propagation::SolverBase& solver) {
+void BoolOrNode::registerOutputVars() {
   if (violationVarId(graph) == propagation::NULL_ID) {
     if (shouldHold()) {
       registerViolation(graph, solver);
@@ -43,8 +42,7 @@ void BoolOrNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void BoolOrNode::registerNode(InvariantGraph& graph,
-                              propagation::SolverBase& solver) {
+void BoolOrNode::registerNode() {
   assert(violationVarId(graph) != propagation::NULL_ID);
 
   solver.makeInvariant<propagation::BoolOr>(solver, violationVarId(graph),

@@ -10,23 +10,21 @@
 namespace atlantis::invariantgraph {
 
 ImplicitConstraintNode::ImplicitConstraintNode(
-    std::vector<VarNodeId>&& outputVarNodeIds)
-    : InvariantNode(std::move(outputVarNodeIds)) {}
+    InvariantGraph& graph, std::vector<VarNodeId>&& outputVarNodeIds)
+    : InvariantNode(graph, std::move(outputVarNodeIds)) {}
 
-void ImplicitConstraintNode::registerOutputVars(
-    InvariantGraph& graph, propagation::SolverBase& solver) {
+void ImplicitConstraintNode::registerOutputVars() {
   for (const auto& varNodeId : outputVarNodeIds()) {
-    auto& varNode = graph.varNode(varNodeId);
+    auto& varNode = invariantGraph().varNode(varNodeId);
     if (varNode.varId() == propagation::NULL_ID) {
       const auto& [lb, ub] = varNode.bounds();
-      varNode.setVarId(solver.makeIntVar(lb, lb, ub));
+      varNode.setVarId(invariantGraph().solver().makeIntVar(lb, lb, ub));
     }
   }
 }
 
-void ImplicitConstraintNode::init(InvariantGraph& graph,
-                                  const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void ImplicitConstraintNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
 }
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
@@ -34,12 +32,11 @@ ImplicitConstraintNode::neighbourhood() noexcept {
   return _neighbourhood;
 }
 
-void ImplicitConstraintNode::registerNode(InvariantGraph& graph,
-                                          propagation::SolverBase& solver) {
+void ImplicitConstraintNode::registerNode() {
   if (_neighbourhood != nullptr) {
     return;
   }
-  _neighbourhood = createNeighbourhood(graph, solver);
+  _neighbourhood = createNeighbourhood();
   assert(_neighbourhood);
 }
 

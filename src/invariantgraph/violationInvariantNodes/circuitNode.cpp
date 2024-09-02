@@ -14,8 +14,8 @@ namespace atlantis::invariantgraph {
 CircuitNode::CircuitNode(std::vector<VarNodeId>&& vars)
     : ViolationInvariantNode(std::move(vars), true) {}
 
-void CircuitNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void CircuitNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
@@ -24,7 +24,7 @@ void CircuitNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void CircuitNode::updateState(InvariantGraph& graph) {
+void CircuitNode::updateState() {
   if (staticInputVarNodeIds().size() == 1) {
     graph.varNode(staticInputVarNodeIds().front()).fixToValue(Int{1});
   } else if (staticInputVarNodeIds().size() == 2) {
@@ -46,21 +46,21 @@ bool CircuitNode::canBeMadeImplicit(const InvariantGraph& graph) const {
                      });
 }
 
-bool CircuitNode::makeImplicit(InvariantGraph& graph) {
-  if (!canBeMadeImplicit(graph)) {
+bool CircuitNode::makeImplicit() {
+  if (!canBeMadeImplicit()) {
     return false;
   }
-  graph.addImplicitConstraintNode(std::make_unique<CircuitImplicitNode>(
+  graph.addImplicitConstraintNode(std::make_shared<CircuitImplicitNode>(
       std::vector<VarNodeId>{staticInputVarNodeIds()}));
   return true;
 }
 
-bool CircuitNode::canBeReplaced(const InvariantGraph& graph) const {
-  return state() == InvariantNodeState::ACTIVE && !canBeMadeImplicit(graph);
+bool CircuitNode::canBeReplaced() const {
+  return state() == InvariantNodeState::ACTIVE && !canBeMadeImplicit();
 }
 
-bool CircuitNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool CircuitNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   /*
@@ -88,8 +88,8 @@ bool CircuitNode::replace(InvariantGraph& graph) {
         [if i != j then order[j] else 1 endif | j in S])
       } in sansI[x[i]] = modulo[i]) endif;
   */
-  graph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
+  graph.addInvariantNode(std::make_shared<AllDifferentNode>(
+      graph, std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
 
   std::vector<VarNodeId> orderVars;
   orderVars.reserve(staticInputVarNodeIds().size());
@@ -116,11 +116,12 @@ bool CircuitNode::replace(InvariantGraph& graph) {
         SearchDomain{0, static_cast<Int>(staticInputVarNodeIds().size()) - 1},
         VarNode::DomainType::NONE));
     // offset[i] = order[i] + 1
-    graph.addInvariantNode(std::make_unique<IntScalarNode>(
-        offsetVars.at(i), orderVars.at(i), 1, 1));
+    graph.addInvariantNode(std::make_shared<IntScalarNode>(
+        graph, offsetVars.at(i), orderVars.at(i), 1, 1));
     // modulo[i] = offset[i] mod n
-    graph.addInvariantNode(std::make_unique<IntModViewNode>(
-        modoluVars.at(i), offsetVars.at(i), staticInputVarNodeIds().size()));
+    graph.addInvariantNode(std::make_shared<IntModViewNode>(
+        graph, modoluVars.at(i), offsetVars.at(i),
+        staticInputVarNodeIds().size()));
   }
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
     std::vector<VarNodeId> orderSansI;
@@ -134,13 +135,13 @@ bool CircuitNode::replace(InvariantGraph& graph) {
       }
     }
     // sansI[x[i]] = modulo[i]
-    graph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
-        staticInputVarNodeIds().at(i), std::move(orderSansI), modoluVars.at(i),
-        1));
+    graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+        graph, staticInputVarNodeIds().at(i), std::move(orderSansI),
+        modoluVars.at(i), 1));
   }
 
   graph.addInvariantNode(
-      std::make_unique<AllDifferentNode>(std::move(orderVars), true));
+      std::make_shared<AllDifferentNode>(graph, std::move(orderVars), true));
 
   return true;
 }
@@ -150,7 +151,7 @@ void CircuitNode::registerOutputVars(InvariantGraph&,
   throw std::runtime_error("CircuitNode::registerOutputVars not implemented");
 }
 
-void CircuitNode::registerNode(InvariantGraph&, propagation::SolverBase&) {
+void CircuitNode::registerNode() {
   throw std::runtime_error("CircuitNode::registerOutputVars not implemented");
 }
 

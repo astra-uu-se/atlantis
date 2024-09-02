@@ -4,18 +4,18 @@
 
 namespace atlantis::invariantgraph {
 
-IntModViewNode::IntModViewNode(VarNodeId staticInput, VarNodeId output,
-                               Int denominator)
-    : InvariantNode({output}, {staticInput}),
+IntModViewNode::IntModViewNode(InvariantGraph& graph, VarNodeId staticInput,
+                               VarNodeId output, Int denominator)
+    : InvariantNode(graph, {output}, {staticInput}),
       _denominator(std::abs(denominator)) {}
 
-void IntModViewNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void IntModViewNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(graph.varNodeConst(staticInputVarNodeIds().front()).isIntVar());
 }
 
-void IntModViewNode::updateState(InvariantGraph& graph) {
+void IntModViewNode::updateState() {
   if (graph.varNodeConst(staticInputVarNodeIds().front()).isFixed()) {
     graph.varNode(outputVarNodeIds().front())
         .fixToValue(
@@ -25,8 +25,7 @@ void IntModViewNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void IntModViewNode::registerOutputVars(InvariantGraph& graph,
-                                        propagation::SolverBase& solver) {
+void IntModViewNode::registerOutputVars() {
   if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::ModView>(
@@ -39,6 +38,6 @@ void IntModViewNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void IntModViewNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
+void IntModViewNode::registerNode() {}
 
 }  // namespace atlantis::invariantgraph

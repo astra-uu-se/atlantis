@@ -10,8 +10,8 @@ namespace atlantis::invariantgraph::fzn {
 bool array_int_element(FznInvariantGraph& graph, const fznparser::IntArg& idx,
                        std::vector<Int>&& parArray,
                        const fznparser::IntArg& output, Int offset) {
-  graph.addInvariantNode(std::make_unique<ArrayElementNode>(
-      std::move(parArray), graph.retrieveVarNode(idx),
+  graph.addInvariantNode(std::make_shared<ArrayElementNode>(
+      graph, std::move(parArray), graph.retrieveVarNode(idx),
       graph.retrieveVarNode(output), offset));
   return true;
 }

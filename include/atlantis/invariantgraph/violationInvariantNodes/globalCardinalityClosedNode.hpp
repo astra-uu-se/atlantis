@@ -14,25 +14,29 @@ class GlobalCardinalityClosedNode : public ViolationInvariantNode {
   std::vector<Int> _cover;
 
  public:
-  explicit GlobalCardinalityClosedNode(std::vector<VarNodeId>&& inputs,
+  explicit GlobalCardinalityClosedNode(InvariantGraph& graph,
+
+                                       std::vector<VarNodeId>&& inputs,
                                        std::vector<Int>&& cover,
                                        std::vector<VarNodeId>&& counts,
                                        VarNodeId r);
 
-  explicit GlobalCardinalityClosedNode(std::vector<VarNodeId>&& inputs,
+  explicit GlobalCardinalityClosedNode(InvariantGraph& graph,
+
+                                       std::vector<VarNodeId>&& inputs,
                                        std::vector<Int>&& cover,
                                        std::vector<VarNodeId>&& counts,
                                        bool shouldHold = true);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
-  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+  [[nodiscard]] bool canBeReplaced() const override;
 
-  bool replace(InvariantGraph&) override;
+  bool replace() override;
 };
 
 }  // namespace atlantis::invariantgraph

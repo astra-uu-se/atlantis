@@ -18,25 +18,25 @@ class ArrayElement2dNode : public InvariantNode {
   bool _isIntMatrix;
 
  public:
-  ArrayElement2dNode(VarNodeId idx1, VarNodeId idx2,
+  ArrayElement2dNode(InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
                      std::vector<std::vector<Int>>&& parMatrix,
                      VarNodeId output, Int offset1, Int offset2);
 
-  ArrayElement2dNode(VarNodeId idx1, VarNodeId idx2,
+  ArrayElement2dNode(InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
                      std::vector<std::vector<bool>>&& parMatrix,
                      VarNodeId output, Int offset1, Int offset2);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+  [[nodiscard]] bool canBeReplaced() const override;
 
-  [[nodiscard]] bool replace(InvariantGraph&) override;
+  [[nodiscard]] bool replace() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId idx1() const noexcept {
     return staticInputVarNodeIds().front();

@@ -9,18 +9,19 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayIntMaximumNode::ArrayIntMaximumNode(VarNodeId a, VarNodeId b,
-                                         VarNodeId output)
-    : ArrayIntMaximumNode(std::vector<VarNodeId>{a, b}, output) {}
+ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph, VarNodeId a,
+                                         VarNodeId b, VarNodeId output)
+    : ArrayIntMaximumNode(graph, solver(), std::vector<VarNodeId>{a, b},
+                          output) {}
 
-ArrayIntMaximumNode::ArrayIntMaximumNode(std::vector<VarNodeId>&& vars,
+ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph,
+                                         std::vector<VarNodeId>&& vars,
                                          VarNodeId output)
-    : InvariantNode({output}, std::move(vars)),
+    : InvariantNode(graph, solver(), {output}, std::move(vars)),
       _lb{std::numeric_limits<Int>::min()} {}
 
-void ArrayIntMaximumNode::init(InvariantGraph& graph,
-                               const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void ArrayIntMaximumNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
@@ -28,7 +29,7 @@ void ArrayIntMaximumNode::init(InvariantGraph& graph,
                      }));
 }
 
-void ArrayIntMaximumNode::updateState(InvariantGraph& graph) {
+void ArrayIntMaximumNode::updateState() {
   Int ub = _lb;
   for (const auto& input : staticInputVarNodeIds()) {
     _lb = std::max(_lb, graph.varNodeConst(input).lowerBound());
@@ -53,7 +54,7 @@ void ArrayIntMaximumNode::updateState(InvariantGraph& graph) {
   }
 }
 
-bool ArrayIntMaximumNode::canBeReplaced(const InvariantGraph& graph) const {
+bool ArrayIntMaximumNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE ||
       staticInputVarNodeIds().size() > 1) {
     return false;
@@ -65,8 +66,8 @@ bool ArrayIntMaximumNode::canBeReplaced(const InvariantGraph& graph) const {
          graph.varNodeConst(staticInputVarNodeIds().front()).lowerBound();
 }
 
-bool ArrayIntMaximumNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool ArrayIntMaximumNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   if (staticInputVarNodeIds().size() == 1) {
@@ -76,14 +77,13 @@ bool ArrayIntMaximumNode::replace(InvariantGraph& graph) {
   return true;
 }
 
-void ArrayIntMaximumNode::registerOutputVars(InvariantGraph& graph,
-                                             propagation::SolverBase& solver) {
+void ArrayIntMaximumNode::registerOutputVars() {
   if (staticInputVarNodeIds().size() == 1) {
     graph.varNode(outputVarNodeIds().front())
-        .setVarId(solver.makeIntView<propagation::IntMaxView>(
-            solver, graph.varId(staticInputVarNodeIds().front()), _lb));
+        .setVarId(solver().makeIntView<propagation::IntMaxView>(
+            solver(), graph.varId(staticInputVarNodeIds().front()), _lb));
   } else if (!staticInputVarNodeIds().empty()) {
-    makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
+    makeSolverVar(solver(), graph.varNode(outputVarNodeIds().front()));
   }
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
@@ -92,8 +92,7 @@ void ArrayIntMaximumNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void ArrayIntMaximumNode::registerNode(InvariantGraph& graph,
-                                       propagation::SolverBase& solver) {
+void ArrayIntMaximumNode::registerNode() {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
@@ -103,8 +102,8 @@ void ArrayIntMaximumNode::registerNode(InvariantGraph& graph,
                  [&](const auto& node) { return graph.varId(node); });
 
   assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  solver.makeInvariant<propagation::MaxSparse>(
-      solver, graph.varId(outputVarNodeIds().front()), std::move(solverVars));
+  solver().makeInvariant<propagation::MaxSparse>(
+      solver(), graph.varId(outputVarNodeIds().front()), std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

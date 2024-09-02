@@ -10,21 +10,25 @@
 
 namespace atlantis::invariantgraph {
 
-AllDifferentNode::AllDifferentNode(VarNodeId a, VarNodeId b, VarNodeId r)
-    : AllDifferentNode(std::vector<VarNodeId>{a, b}, r) {}
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph, VarNodeId a,
+                                   VarNodeId b, VarNodeId r)
+    : AllDifferentNode(graph, std::vector<VarNodeId>{a, b}, r) {}
 
-AllDifferentNode::AllDifferentNode(VarNodeId a, VarNodeId b, bool shouldHold)
-    : AllDifferentNode(std::vector<VarNodeId>{a, b}, shouldHold) {}
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph, VarNodeId a,
+                                   VarNodeId b, bool shouldHold)
+    : AllDifferentNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
-AllDifferentNode::AllDifferentNode(std::vector<VarNodeId>&& vars, VarNodeId r)
-    : ViolationInvariantNode(std::move(vars), r) {}
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
+                                   std::vector<VarNodeId>&& vars, VarNodeId r)
+    : ViolationInvariantNode(graph, std::move(vars), r) {}
 
-AllDifferentNode::AllDifferentNode(std::vector<VarNodeId>&& vars,
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
+                                   std::vector<VarNodeId>&& vars,
                                    bool shouldHold)
-    : ViolationInvariantNode(std::move(vars), shouldHold) {}
+    : ViolationInvariantNode(graph, std::move(vars), shouldHold) {}
 
-void AllDifferentNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void AllDifferentNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
@@ -33,7 +37,7 @@ void AllDifferentNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void AllDifferentNode::updateState(InvariantGraph& graph) {
+void AllDifferentNode::updateState() {
   ViolationInvariantNode::updateState(graph);
   if (isReified() || !shouldHold()) {
     return;
@@ -43,7 +47,7 @@ void AllDifferentNode::updateState(InvariantGraph& graph) {
   }
 }
 
-bool AllDifferentNode::canBeMadeImplicit(const InvariantGraph& graph) const {
+bool AllDifferentNode::canBeMadeImplicit() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
          shouldHold() &&
          std::all_of(staticInputVarNodeIds().begin(),
@@ -52,17 +56,16 @@ bool AllDifferentNode::canBeMadeImplicit(const InvariantGraph& graph) const {
                      });
 }
 
-bool AllDifferentNode::makeImplicit(InvariantGraph& graph) {
-  if (!canBeMadeImplicit(graph)) {
+bool AllDifferentNode::makeImplicit() {
+  if (!canBeMadeImplicit()) {
     return false;
   }
-  graph.addImplicitConstraintNode(std::make_unique<AllDifferentImplicitNode>(
+  graph.addImplicitConstraintNode(std::make_shared<AllDifferentImplicitNode>(
       std::vector<VarNodeId>{staticInputVarNodeIds()}));
   return true;
 }
 
-void AllDifferentNode::registerOutputVars(InvariantGraph& graph,
-                                          propagation::SolverBase& solver) {
+void AllDifferentNode::registerOutputVars() {
   assert(state() == InvariantNodeState::ACTIVE);
   assert(!staticInputVarNodeIds().empty());
   if (!staticInputVarNodeIds().empty() &&
@@ -85,8 +88,7 @@ void AllDifferentNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void AllDifferentNode::registerNode(InvariantGraph& graph,
-                                    propagation::SolverBase& solver) {
+void AllDifferentNode::registerNode() {
   if (staticInputVarNodeIds().empty()) {
     return;
   }

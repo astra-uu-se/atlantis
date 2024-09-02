@@ -9,8 +9,8 @@ namespace atlantis::invariantgraph::fzn {
 bool bool_clause(FznInvariantGraph& graph,
                  const std::shared_ptr<fznparser::BoolVarArray>& as,
                  const std::shared_ptr<fznparser::BoolVarArray>& bs) {
-  graph.addInvariantNode(std::make_unique<invariantgraph::BoolClauseNode>(
-      graph.retrieveVarNodes(as), graph.retrieveVarNodes(bs), true));
+  graph.addInvariantNode(std::make_shared<BoolClauseNode>(
+      graph, graph.retrieveVarNodes(as), graph.retrieveVarNodes(bs), true));
   return true;
 }
 
@@ -18,8 +18,8 @@ bool bool_clause(FznInvariantGraph& graph,
                  const std::shared_ptr<fznparser::BoolVarArray>& as,
                  const std::shared_ptr<fznparser::BoolVarArray>& bs,
                  const fznparser::BoolArg& reif) {
-  graph.addInvariantNode(std::make_unique<invariantgraph::BoolClauseNode>(
-      graph.retrieveVarNodes(as), graph.retrieveVarNodes(bs),
+  graph.addInvariantNode(std::make_shared<BoolClauseNode>(
+      graph, graph.retrieveVarNodes(as), graph.retrieveVarNodes(bs),
       graph.retrieveVarNode(reif)));
   return true;
 }

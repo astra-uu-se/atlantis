@@ -14,8 +14,8 @@ IntLtNode::IntLtNode(VarNodeId a, VarNodeId b, VarNodeId r)
 IntLtNode::IntLtNode(VarNodeId a, VarNodeId b, bool shouldHold)
     : ViolationInvariantNode({a, b}, shouldHold) {}
 
-void IntLtNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void IntLtNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
@@ -24,7 +24,7 @@ void IntLtNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void IntLtNode::updateState(InvariantGraph& graph) {
+void IntLtNode::updateState() {
   ViolationInvariantNode::updateState(graph);
   if (staticInputVarNodeIds().size() < 2) {
     setState(InvariantNodeState::SUBSUMED);
@@ -73,8 +73,7 @@ void IntLtNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void IntLtNode::registerOutputVars(InvariantGraph& graph,
-                                   propagation::SolverBase& solver) {
+void IntLtNode::registerOutputVars() {
   registerViolation(graph, solver);
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
@@ -83,8 +82,7 @@ void IntLtNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void IntLtNode::registerNode(InvariantGraph& graph,
-                             propagation::SolverBase& solver) {
+void IntLtNode::registerNode() {
   assert(violationVarId(graph) != propagation::NULL_ID);
 
   if (shouldHold()) {

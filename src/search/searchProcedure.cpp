@@ -32,7 +32,7 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
   do {
     initialisations->increment();
 
-    logger.timed<void>(logging::Level::TRACE, "initialise assignment", [&] {
+    logger.timedProcedure(logging::Level::TRACE, "initialise assignment", [&] {
       _assignment.assign([&](auto& modifications) {
         _neighbourhood.initialise(_random, modifications);
       });
@@ -46,7 +46,7 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
     annealer.start();
 
     while (controller.shouldRun(_assignment) && !annealer.isFinished()) {
-      logger.timed<void>(logging::Level::TRACE, "round", [&] {
+      logger.timedProcedure(logging::Level::TRACE, "round", [&] {
         while (controller.shouldRun(_assignment) &&
                annealer.runMonteCarloSimulation()) {
           bool madeMove =

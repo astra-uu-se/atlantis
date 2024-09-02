@@ -8,8 +8,8 @@ namespace atlantis::invariantgraph::fzn {
 
 bool bool_or(FznInvariantGraph& graph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_unique<ArrayBoolOrNode>(
-      graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+  graph.addInvariantNode(std::make_shared<ArrayBoolOrNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
       graph.retrieveVarNode(reified)));
   return true;
 }

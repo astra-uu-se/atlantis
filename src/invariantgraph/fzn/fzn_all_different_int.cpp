@@ -9,8 +9,8 @@ namespace atlantis::invariantgraph::fzn {
 bool fzn_all_different_int(
     FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs) {
-  graph.addInvariantNode(
-      std::make_unique<AllDifferentNode>(graph.retrieveVarNodes(inputs), true));
+  graph.addInvariantNode(std::make_shared<AllDifferentNode>(
+      graph, graph.retrieveVarNodes(inputs), true));
   return true;
 }
 
@@ -18,8 +18,8 @@ bool fzn_all_different_int(
     FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      graph.retrieveVarNodes(inputs), graph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_shared<AllDifferentNode>(
+      graph, graph.retrieveVarNodes(inputs), graph.retrieveVarNode(reified)));
   return true;
 }
 

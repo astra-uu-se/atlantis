@@ -11,17 +11,19 @@ namespace atlantis::invariantgraph {
 
 class IntDivNode : public InvariantNode {
  public:
-  IntDivNode(VarNodeId numerator, VarNodeId denominator, VarNodeId quotient);
+  IntDivNode(InvariantGraph& graph,
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+             VarNodeId numerator, VarNodeId denominator, VarNodeId quotient);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void init(const InvariantNodeId&) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+  void registerNode() override;
 
-  [[nodiscard]] bool replace(InvariantGraph&) override;
+  [[nodiscard]] bool canBeReplaced() const override;
+
+  [[nodiscard]] bool replace() override;
 
   [[nodiscard]] VarNodeId numerator() const noexcept;
   [[nodiscard]] VarNodeId denominator() const noexcept;

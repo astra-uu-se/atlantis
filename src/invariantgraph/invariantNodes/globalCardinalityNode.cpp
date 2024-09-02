@@ -19,9 +19,8 @@ GlobalCardinalityNode::GlobalCardinalityNode(std::vector<VarNodeId>&& inputs,
       _countOffsets(_cover.size(), 0),
       _intermediate(_cover.size(), propagation::NULL_ID) {}
 
-void GlobalCardinalityNode::init(InvariantGraph& graph,
-                                 const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void GlobalCardinalityNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
                        return graph.varNodeConst(vId).isIntVar();
@@ -32,7 +31,7 @@ void GlobalCardinalityNode::init(InvariantGraph& graph,
                      }));
 }
 
-void GlobalCardinalityNode::updateState(InvariantGraph& graph) {
+void GlobalCardinalityNode::updateState() {
   // GCC can define the same output multiple times. Therefore, split all outputs
   // that are defined multiple times:
   std::vector<std::pair<VarNodeId, VarNodeId>> replacedOutputs =
@@ -40,8 +39,8 @@ void GlobalCardinalityNode::updateState(InvariantGraph& graph) {
   for (const auto& [oldVarNodeId, newVarNodeId] : replacedOutputs) {
     assert(graph.varNodeConst(oldVarNodeId).definingNodes().contains(id()));
     assert(graph.varNodeConst(newVarNodeId).definingNodes().contains(id()));
-    graph.addInvariantNode(std::make_unique<IntAllEqualNode>(
-        oldVarNodeId, newVarNodeId, true, true));
+    graph.addInvariantNode(std::make_shared<IntAllEqualNode>(
+        graph, oldVarNodeId, newVarNodeId, true, true));
   }
 
   std::vector<bool> coverIsFixed(_cover.size(), true);
@@ -88,13 +87,13 @@ bool GlobalCardinalityNode::canBeReplaced(const InvariantGraph&) const {
   return state() == InvariantNodeState::ACTIVE && _cover.size() <= 1;
 }
 
-bool GlobalCardinalityNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool GlobalCardinalityNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   assert(_cover.size() == 1);
-  graph.addInvariantNode(std::make_unique<IntCountNode>(
-      std::vector<VarNodeId>(staticInputVarNodeIds()), _cover.front(),
+  graph.addInvariantNode(std::make_shared<IntCountNode>(
+      graph, std::vector<VarNodeId>(staticInputVarNodeIds()), _cover.front(),
       outputVarNodeIds().front()));
   return true;
 }
@@ -137,8 +136,7 @@ void GlobalCardinalityNode::registerOutputVars(
                      }));
 }
 
-void GlobalCardinalityNode::registerNode(InvariantGraph& graph,
-                                         propagation::SolverBase& solver) {
+void GlobalCardinalityNode::registerNode() {
   std::vector<propagation::VarId> inputVarIds;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputVarIds),

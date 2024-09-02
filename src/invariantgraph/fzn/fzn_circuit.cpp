@@ -9,7 +9,7 @@ namespace atlantis::invariantgraph::fzn {
 bool fzn_circuit(FznInvariantGraph& graph,
                  const std::shared_ptr<fznparser::IntVarArray>& inputs) {
   graph.addInvariantNode(
-      std::make_unique<CircuitNode>(graph.retrieveVarNodes(inputs)));
+      std::make_shared<CircuitNode>(graph, graph.retrieveVarNodes(inputs)));
   return true;
 }
 

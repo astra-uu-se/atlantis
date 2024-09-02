@@ -11,21 +11,22 @@ namespace atlantis::invariantgraph {
 
 class BoolLeNode : public ViolationInvariantNode {
  public:
-  BoolLeNode(VarNodeId a, VarNodeId b, VarNodeId r);
+  BoolLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
 
-  BoolLeNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
+  BoolLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+             bool shouldHold = true);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+  [[nodiscard]] bool canBeReplaced() const override;
 
-  [[nodiscard]] bool replace(InvariantGraph&) override;
+  [[nodiscard]] bool replace() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

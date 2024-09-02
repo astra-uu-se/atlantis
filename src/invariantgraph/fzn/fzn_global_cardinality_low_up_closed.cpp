@@ -10,8 +10,8 @@ bool fzn_global_cardinality_low_up_closed(
     FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up) {
-  graph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpClosedNode>(
-      graph.retrieveVarNodes(inputs), std::move(cover), std::move(low),
+  graph.addInvariantNode(std::make_shared<GlobalCardinalityLowUpClosedNode>(
+      graph, graph.retrieveVarNodes(inputs), std::move(cover), std::move(low),
       std::move(up)));
   return true;
 }
@@ -21,8 +21,8 @@ bool fzn_global_cardinality_low_up_closed(
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
     const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_unique<GlobalCardinalityLowUpClosedNode>(
-      graph.retrieveVarNodes(inputs), std::move(cover), std::move(low),
+  graph.addInvariantNode(std::make_shared<GlobalCardinalityLowUpClosedNode>(
+      graph, graph.retrieveVarNodes(inputs), std::move(cover), std::move(low),
       std::move(up), graph.retrieveVarNode(reified)));
   return true;
 }

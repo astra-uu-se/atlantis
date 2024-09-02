@@ -15,16 +15,20 @@ class SetInNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit SetInNode(VarNodeId input, std::vector<Int>&& values, VarNodeId r);
+  explicit SetInNode(InvariantGraph& graph,
 
-  explicit SetInNode(VarNodeId input, std::vector<Int>&& values,
+                     VarNodeId input, std::vector<Int>&& values, VarNodeId r);
+
+  explicit SetInNode(InvariantGraph& graph,
+
+                     VarNodeId input, std::vector<Int>&& values,
                      bool shouldHold = true);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] const std::vector<Int>& values() { return _values; }
 };

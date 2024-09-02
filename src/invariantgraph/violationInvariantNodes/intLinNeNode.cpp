@@ -23,8 +23,8 @@ IntLinNeNode::IntLinNeNode(std::vector<Int>&& coeffs,
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
-void IntLinNeNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void IntLinNeNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
@@ -33,7 +33,7 @@ void IntLinNeNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void IntLinNeNode::updateState(InvariantGraph& graph) {
+void IntLinNeNode::updateState() {
   ViolationInvariantNode::updateState(graph);
   // Remove duplicates:
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
@@ -98,8 +98,7 @@ void IntLinNeNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void IntLinNeNode::registerOutputVars(InvariantGraph& graph,
-                                      propagation::SolverBase& solver) {
+void IntLinNeNode::registerOutputVars() {
   if (violationVarId(graph) == propagation::NULL_ID) {
     _intermediate = solver.makeIntVar(0, 0, 0);
     if (shouldHold()) {
@@ -118,8 +117,7 @@ void IntLinNeNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void IntLinNeNode::registerNode(InvariantGraph& graph,
-                                propagation::SolverBase& solver) {
+void IntLinNeNode::registerNode() {
   assert(violationVarId(graph) != propagation::NULL_ID);
 
   std::vector<propagation::VarId> solverVars;

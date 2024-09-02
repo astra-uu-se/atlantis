@@ -11,8 +11,8 @@ namespace atlantis::invariantgraph {
 IntPlusNode::IntPlusNode(VarNodeId a, VarNodeId b, VarNodeId output)
     : InvariantNode({output}, {a, b}) {}
 
-void IntPlusNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void IntPlusNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
@@ -20,7 +20,7 @@ void IntPlusNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void IntPlusNode::updateState(InvariantGraph& graph) {
+void IntPlusNode::updateState() {
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
 
@@ -46,8 +46,8 @@ bool IntPlusNode::canBeReplaced(const InvariantGraph&) const {
          staticInputVarNodeIds().size() <= 1 && _offset == 0;
 }
 
-bool IntPlusNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool IntPlusNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   if (staticInputVarNodeIds().size() == 1) {
@@ -57,8 +57,7 @@ bool IntPlusNode::replace(InvariantGraph& graph) {
   return true;
 }
 
-void IntPlusNode::registerOutputVars(InvariantGraph& graph,
-                                     propagation::SolverBase& solver) {
+void IntPlusNode::registerOutputVars() {
   if (!staticInputVarNodeIds().empty()) {
     if (_offset != 0) {
       if (staticInputVarNodeIds().size() == 1) {
@@ -82,8 +81,7 @@ void IntPlusNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void IntPlusNode::registerNode(InvariantGraph& graph,
-                               propagation::SolverBase& solver) {
+void IntPlusNode::registerNode() {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }

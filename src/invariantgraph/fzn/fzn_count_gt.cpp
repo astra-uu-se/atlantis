@@ -12,7 +12,7 @@ bool fzn_count_gt(FznInvariantGraph& graph,
                   const fznparser::IntArg& count) {
   const VarNodeId output = createCountNode(graph, inputs, needle);
   graph.addInvariantNode(
-      std::make_unique<IntLtNode>(graph.retrieveVarNode(count), output));
+      std::make_shared<IntLtNode>(graph, graph.retrieveVarNode(count), output));
   return true;
 }
 
@@ -22,8 +22,9 @@ bool fzn_count_gt(FznInvariantGraph& graph,
                   const fznparser::IntArg& count,
                   const fznparser::BoolArg& reified) {
   const VarNodeId output = createCountNode(graph, inputs, needle);
-  graph.addInvariantNode(std::make_unique<IntLtNode>(
-      graph.retrieveVarNode(count), output, graph.retrieveVarNode(reified)));
+  graph.addInvariantNode(
+      std::make_shared<IntLtNode>(graph, graph.retrieveVarNode(count), output,
+                                  graph.retrieveVarNode(reified)));
   return true;
 }
 

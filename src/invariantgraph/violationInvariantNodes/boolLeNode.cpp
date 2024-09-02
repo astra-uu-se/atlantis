@@ -15,8 +15,8 @@ BoolLeNode::BoolLeNode(VarNodeId a, VarNodeId b, VarNodeId r)
 BoolLeNode::BoolLeNode(VarNodeId a, VarNodeId b, bool shouldHold)
     : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, shouldHold) {}
 
-void BoolLeNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void BoolLeNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::none_of(staticInputVarNodeIds().begin(),
@@ -25,7 +25,7 @@ void BoolLeNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                       }));
 }
 
-void BoolLeNode::updateState(InvariantGraph& graph) {
+void BoolLeNode::updateState() {
   ViolationInvariantNode::updateState(graph);
   if (staticInputVarNodeIds().size() < 2) {
     setState(InvariantNodeState::SUBSUMED);
@@ -74,8 +74,8 @@ void BoolLeNode::updateState(InvariantGraph& graph) {
   }
 }
 
-bool BoolLeNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool BoolLeNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   assert(isReified());
@@ -86,20 +86,19 @@ bool BoolLeNode::replace(InvariantGraph& graph) {
     assert(graph.varNode(b()).isFixed() &&
            graph.varNode(b()).inDomain(bool{false}));
     graph.addInvariantNode(
-        std::make_unique<BoolNotNode>(a(), reifiedViolationNodeId()));
+        std::make_shared<BoolNotNode>(graph, a(), reifiedViolationNodeId()));
   }
   return true;
 }
 
-bool BoolLeNode::canBeReplaced(const InvariantGraph& graph) const {
+bool BoolLeNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
          staticInputVarNodeIds().size() == 2 &&
          (isReified() && graph.varNodeConst(a()).isFixed() !=
                              graph.varNodeConst(b()).isFixed());
 }
 
-void BoolLeNode::registerOutputVars(InvariantGraph& graph,
-                                    propagation::SolverBase& solver) {
+void BoolLeNode::registerOutputVars() {
   registerViolation(graph, solver);
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
@@ -108,8 +107,7 @@ void BoolLeNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void BoolLeNode::registerNode(InvariantGraph& graph,
-                              propagation::SolverBase& solver) {
+void BoolLeNode::registerNode() {
   assert(violationVarId(graph) != propagation::NULL_ID);
   assert(graph.varId(a()) != propagation::NULL_ID);
   assert(graph.varId(b()) != propagation::NULL_ID);

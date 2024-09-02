@@ -10,8 +10,8 @@ namespace atlantis::invariantgraph {
 IntPowNode::IntPowNode(VarNodeId base, VarNodeId exponent, VarNodeId power)
     : InvariantNode({power}, {base, exponent}) {}
 
-void IntPowNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void IntPowNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
@@ -19,8 +19,7 @@ void IntPowNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void IntPowNode::registerOutputVars(InvariantGraph& graph,
-                                    propagation::SolverBase& solver) {
+void IntPowNode::registerOutputVars() {
   makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
@@ -29,8 +28,7 @@ void IntPowNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void IntPowNode::registerNode(InvariantGraph& graph,
-                              propagation::SolverBase& solver) {
+void IntPowNode::registerNode() {
   assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
   solver.makeInvariant<propagation::Pow>(
       solver, graph.varId(outputVarNodeIds().front()), graph.varId(base()),

@@ -33,9 +33,8 @@ ArrayVarElement2dNode::ArrayVarElement2dNode(
     : ArrayVarElement2dNode(idx1, idx2, flatten(varMatrix), output,
                             varMatrix.size(), offset1, offset2) {}
 
-void ArrayVarElement2dNode::init(InvariantGraph& graph,
-                                 const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void ArrayVarElement2dNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const VarNodeId& node) {
                        return graph.varNodeConst(node).isIntVar();
@@ -58,7 +57,7 @@ VarNodeId ArrayVarElement2dNode::at(Int row, Int col) {
   return dynamicInputVarNodeIds().at(pos);
 }
 
-void ArrayVarElement2dNode::updateState(InvariantGraph& graph) {
+void ArrayVarElement2dNode::updateState() {
   VarNode& idx1Node = graph.varNode(idx1());
   // idx1Node.removeValuesBelow(_offset1);
   // idx1Node.removeValuesAbove(_offset1 + static_cast<Int>(_numRows) - 1);
@@ -127,14 +126,14 @@ void ArrayVarElement2dNode::registerOutputVars(
                      }));
 }
 
-bool ArrayVarElement2dNode::canBeReplaced(const InvariantGraph& graph) const {
+bool ArrayVarElement2dNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
          (graph.varNodeConst(idx1()).isFixed() ||
           graph.varNodeConst(idx2()).isFixed());
 }
 
-bool ArrayVarElement2dNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool ArrayVarElement2dNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   auto& idx1Node = graph.varNode(idx1());
@@ -149,8 +148,9 @@ bool ArrayVarElement2dNode::replace(InvariantGraph& graph) {
     for (Int i = 0; i < static_cast<Int>(_numRows); ++i) {
       column.emplace_back(at(idx1Node.lowerBound(), i + _offset2));
     }
-    graph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
-        idx2(), std::move(column), outputVarNodeIds().front(), _offset2));
+    graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+        graph, idx2(), std::move(column), outputVarNodeIds().front(),
+        _offset2));
   } else {
     assert(idx2Node.isFixed());
     const Int numCols = dynamicInputVarNodeIds().size() / _numRows;
@@ -159,14 +159,13 @@ bool ArrayVarElement2dNode::replace(InvariantGraph& graph) {
     for (Int i = 0; i < numCols; ++i) {
       row.emplace_back(at(i + _offset1, idx2Node.lowerBound()));
     }
-    graph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
-        idx1(), std::move(row), outputVarNodeIds().front(), _offset1));
+    graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+        graph, idx1(), std::move(row), outputVarNodeIds().front(), _offset1));
   }
   return true;
 }
 
-void ArrayVarElement2dNode::registerNode(InvariantGraph& graph,
-                                         propagation::SolverBase& solver) {
+void ArrayVarElement2dNode::registerNode() {
   const size_t numCols = dynamicInputVarNodeIds().size() / _numRows;
   std::vector<std::vector<propagation::VarId>> varMatrix(
       _numRows, std::vector<propagation::VarId>(numCols));

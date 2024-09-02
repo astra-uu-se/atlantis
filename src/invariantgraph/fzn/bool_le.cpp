@@ -9,8 +9,8 @@ namespace atlantis::invariantgraph::fzn {
 
 bool bool_le(FznInvariantGraph& graph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b) {
-  graph.addInvariantNode(std::make_unique<BoolLeNode>(
-      graph.retrieveVarNode(a), graph.retrieveVarNode(b), true));
+  graph.addInvariantNode(std::make_shared<BoolLeNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b), true));
   return true;
 }
 
@@ -24,8 +24,8 @@ bool bool_le(FznInvariantGraph& graph, const fznparser::BoolArg& a,
     }
   }
 
-  graph.addInvariantNode(std::make_unique<BoolLeNode>(
-      graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+  graph.addInvariantNode(std::make_shared<BoolLeNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
       graph.retrieveVarNode(reified)));
 
   return true;

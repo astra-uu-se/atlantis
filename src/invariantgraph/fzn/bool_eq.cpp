@@ -8,15 +8,15 @@ namespace atlantis::invariantgraph::fzn {
 
 bool bool_eq(FznInvariantGraph& graph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b) {
-  graph.addInvariantNode(std::make_unique<BoolAllEqualNode>(
-      graph.retrieveVarNode(a), graph.retrieveVarNode(b)));
+  graph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b)));
   return true;
 }
 
 bool bool_eq(FznInvariantGraph& graph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_unique<BoolAllEqualNode>(
-      graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+  graph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
       graph.retrieveVarNode(reified)));
 
   return true;

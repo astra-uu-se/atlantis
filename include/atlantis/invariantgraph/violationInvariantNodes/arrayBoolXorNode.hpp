@@ -15,29 +15,37 @@ class ArrayBoolXorNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  ArrayBoolXorNode(VarNodeId aVarNodeId, VarNodeId bNodeId,
+  ArrayBoolXorNode(InvariantGraph& graph,
+
+                   VarNodeId aVarNodeId, VarNodeId bNodeId,
                    VarNodeId reifiedVarNodeId);
 
-  ArrayBoolXorNode(VarNodeId aVarNodeId, VarNodeId bNodeId,
+  ArrayBoolXorNode(InvariantGraph& graph,
+
+                   VarNodeId aVarNodeId, VarNodeId bNodeId,
                    bool shouldHold = true);
 
-  ArrayBoolXorNode(std::vector<VarNodeId>&& inputVarNodeIds,
+  ArrayBoolXorNode(InvariantGraph& graph,
+
+                   std::vector<VarNodeId>&& inputVarNodeIds,
                    VarNodeId reifiedVarNodeId);
 
-  ArrayBoolXorNode(std::vector<VarNodeId>&& inputVarNodeIds,
+  ArrayBoolXorNode(InvariantGraph& graph,
+
+                   std::vector<VarNodeId>&& inputVarNodeIds,
                    bool shouldHold = true);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  bool canBeReplaced(const InvariantGraph&) const override;
+  bool canBeReplaced() const override;
 
-  bool replace(InvariantGraph&) override;
+  bool replace() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 };
 
 }  // namespace atlantis::invariantgraph

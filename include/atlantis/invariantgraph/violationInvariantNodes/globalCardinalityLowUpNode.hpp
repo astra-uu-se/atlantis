@@ -18,21 +18,25 @@ class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit GlobalCardinalityLowUpNode(std::vector<VarNodeId>&& x,
+  explicit GlobalCardinalityLowUpNode(InvariantGraph& graph,
+
+                                      std::vector<VarNodeId>&& x,
                                       std::vector<Int>&& cover,
                                       std::vector<Int>&& low,
                                       std::vector<Int>&& up, VarNodeId r);
 
-  explicit GlobalCardinalityLowUpNode(std::vector<VarNodeId>&& x,
+  explicit GlobalCardinalityLowUpNode(InvariantGraph& graph,
+
+                                      std::vector<VarNodeId>&& x,
                                       std::vector<Int>&& cover,
                                       std::vector<Int>&& low,
                                       std::vector<Int>&& up,
                                       bool shouldHold = true);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 };
 }  // namespace atlantis::invariantgraph

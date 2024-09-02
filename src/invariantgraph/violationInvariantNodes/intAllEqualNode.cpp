@@ -12,25 +12,29 @@
 
 namespace atlantis::invariantgraph {
 
-IntAllEqualNode::IntAllEqualNode(VarNodeId a, VarNodeId b, VarNodeId r,
-                                 bool breaksCycle)
-    : IntAllEqualNode(std::vector<VarNodeId>{a, b}, r, breaksCycle) {}
+IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, VarNodeId a,
+                                 VarNodeId b, VarNodeId r, bool breaksCycle)
+    : IntAllEqualNode(graph, std::vector<VarNodeId>{a, b}, r, breaksCycle) {}
 
-IntAllEqualNode::IntAllEqualNode(VarNodeId a, VarNodeId b, bool shouldHold,
-                                 bool breaksCycle)
-    : IntAllEqualNode(std::vector<VarNodeId>{a, b}, shouldHold, breaksCycle) {}
+IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, VarNodeId a,
+                                 VarNodeId b, bool shouldHold, bool breaksCycle)
+    : IntAllEqualNode(graph, std::vector<VarNodeId>{a, b}, shouldHold,
+                      breaksCycle) {}
 
-IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
+IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph,
+                                 std::vector<VarNodeId>&& vars, VarNodeId r,
                                  bool breaksCycle)
-    : ViolationInvariantNode(std::move(vars), r), _breaksCycle(breaksCycle) {}
-
-IntAllEqualNode::IntAllEqualNode(std::vector<VarNodeId>&& vars, bool shouldHold,
-                                 bool breaksCycle)
-    : ViolationInvariantNode(std::move(vars), shouldHold),
+    : ViolationInvariantNode(graph, std::move(vars), r),
       _breaksCycle(breaksCycle) {}
 
-void IntAllEqualNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph,
+                                 std::vector<VarNodeId>&& vars, bool shouldHold,
+                                 bool breaksCycle)
+    : ViolationInvariantNode(graph, std::move(vars), shouldHold),
+      _breaksCycle(breaksCycle) {}
+
+void IntAllEqualNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
@@ -39,7 +43,7 @@ void IntAllEqualNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void IntAllEqualNode::updateState(InvariantGraph& graph) {
+void IntAllEqualNode::updateState() {
   ViolationInvariantNode::updateState(graph);
   if (staticInputVarNodeIds().size() < 2) {
     if (!shouldHold()) {
@@ -80,8 +84,7 @@ void IntAllEqualNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void IntAllEqualNode::registerOutputVars(InvariantGraph& graph,
-                                         propagation::SolverBase& solver) {
+void IntAllEqualNode::registerOutputVars() {
   assert(staticInputVarNodeIds().size() >= 2);
   if (violationVarId(graph) == propagation::NULL_ID) {
     if (staticInputVarNodeIds().size() == 2) {
@@ -107,8 +110,7 @@ void IntAllEqualNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void IntAllEqualNode::registerNode(InvariantGraph& graph,
-                                   propagation::SolverBase& solver) {
+void IntAllEqualNode::registerNode() {
   assert(staticInputVarNodeIds().size() >= 2);
   assert(violationVarId(graph) != propagation::NULL_ID);
 

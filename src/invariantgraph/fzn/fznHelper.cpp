@@ -264,12 +264,13 @@ VarNodeId createCountNode(FznInvariantGraph& graph,
       SearchDomain(0, static_cast<Int>(inputs->size())));
 
   if (needle.isFixed()) {
-    graph.addInvariantNode(std::make_unique<IntCountNode>(
-        graph.retrieveVarNodes(inputs), needle.toParameter(), countVarNodeId));
+    graph.addInvariantNode(
+        std::make_shared<IntCountNode>(graph, graph.retrieveVarNodes(inputs),
+                                       needle.toParameter(), countVarNodeId));
   } else {
-    graph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle.var()),
-        countVarNodeId));
+    graph.addInvariantNode(std::make_shared<VarIntCountNode>(
+        graph, graph.retrieveVarNodes(inputs),
+        graph.retrieveVarNode(needle.var()), countVarNodeId));
   }
   return countVarNodeId;
 }
@@ -281,12 +282,13 @@ VarNodeId createCountNode(FznInvariantGraph& graph,
   VarNodeId countVarNodeId = graph.retrieveVarNode(count);
 
   if (needle.isFixed()) {
-    graph.addInvariantNode(std::make_unique<IntCountNode>(
-        graph.retrieveVarNodes(inputs), needle.toParameter(), countVarNodeId));
+    graph.addInvariantNode(
+        std::make_shared<IntCountNode>(graph, graph.retrieveVarNodes(inputs),
+                                       needle.toParameter(), countVarNodeId));
   } else {
-    graph.addInvariantNode(std::make_unique<VarIntCountNode>(
-        graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle.var()),
-        countVarNodeId));
+    graph.addInvariantNode(std::make_shared<VarIntCountNode>(
+        graph, graph.retrieveVarNodes(inputs),
+        graph.retrieveVarNode(needle.var()), countVarNodeId));
   }
   return countVarNodeId;
 }

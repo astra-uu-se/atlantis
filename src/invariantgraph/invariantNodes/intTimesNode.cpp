@@ -9,8 +9,8 @@ namespace atlantis::invariantgraph {
 IntTimesNode::IntTimesNode(VarNodeId a, VarNodeId b, VarNodeId output)
     : InvariantNode({output}, {a, b}) {}
 
-void IntTimesNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void IntTimesNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
@@ -18,7 +18,7 @@ void IntTimesNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void IntTimesNode::updateState(InvariantGraph& graph) {
+void IntTimesNode::updateState() {
   std::vector<VarNodeId> varNodeIdsToRemove;
   varNodeIdsToRemove.reserve(staticInputVarNodeIds().size());
 
@@ -62,8 +62,8 @@ bool IntTimesNode::canBeReplaced(const InvariantGraph&) const {
          staticInputVarNodeIds().size() <= 1 && _scalar == 1;
 }
 
-bool IntTimesNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool IntTimesNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
 
@@ -75,8 +75,7 @@ bool IntTimesNode::replace(InvariantGraph& graph) {
   return true;
 }
 
-void IntTimesNode::registerOutputVars(InvariantGraph& graph,
-                                      propagation::SolverBase& solver) {
+void IntTimesNode::registerOutputVars() {
   if (!staticInputVarNodeIds().empty()) {
     if (_scalar != 1) {
       if (staticInputVarNodeIds().size() == 1) {
@@ -100,8 +99,7 @@ void IntTimesNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void IntTimesNode::registerNode(InvariantGraph& graph,
-                                propagation::SolverBase& solver) {
+void IntTimesNode::registerNode() {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }

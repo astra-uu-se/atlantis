@@ -20,8 +20,10 @@ InvariantGraphRoot& InvariantGraph::root() {
   return dynamic_cast<InvariantGraphRoot&>(*_implicitConstraintNodes.front());
 }
 
-InvariantGraph::InvariantGraph(bool breakDynamicCycles)
-    : _varNodes{VarNode{VarNodeId{1}, false, SearchDomain({1})},
+InvariantGraph::InvariantGraph(propagation::SolverBase& solver,
+                               bool breakDynamicCycles)
+    : _solver(solver),
+      _varNodes{VarNode{VarNodeId{1}, false, SearchDomain({1})},
                 VarNode{VarNodeId{2}, false, SearchDomain({0})}},
       _namedVarNodeIndices(),
       _intVarNodeIndices(),
@@ -31,7 +33,13 @@ InvariantGraph::InvariantGraph(bool breakDynamicCycles)
       _breakDynamicCycles(breakDynamicCycles),
       _totalViolationVarId(propagation::NULL_ID),
       _objectiveVarNodeId(NULL_NODE_ID) {
-  addImplicitConstraintNode(std::make_unique<InvariantGraphRoot>());
+  addImplicitConstraintNode(std::make_shared<InvariantGraphRoot>(*this));
+}
+
+propagation::SolverBase& InvariantGraph::solver() { return _solver; }
+
+const propagation::SolverBase& InvariantGraph::solverConst() const {
+  return _solver;
 }
 
 VarNodeId InvariantGraph::nextVarNodeId() const noexcept {
@@ -332,10 +340,10 @@ InvariantNodeId InvariantGraph::nextImplicitNodeId() const noexcept {
 }
 
 InvariantNodeId InvariantGraph::addInvariantNode(
-    std::unique_ptr<InvariantNode>&& node) {
+    std::shared_ptr<InvariantNode>&& node) {
   const InvariantNodeId id = nextInvariantNodeId();
   auto& invNode = _invariantNodes.emplace_back(std::move(node));
-  invNode->init(*this, id);
+  invNode->init(id);
   return invNode->id();
 }
 
@@ -426,10 +434,10 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
 }
 
 InvariantNodeId InvariantGraph::addImplicitConstraintNode(
-    std::unique_ptr<ImplicitConstraintNode>&& node) {
+    std::shared_ptr<ImplicitConstraintNode>&& node) {
   const InvariantNodeId id = nextImplicitNodeId();
   auto& implNode = _implicitConstraintNodes.emplace_back(std::move(node));
-  implNode->init(*this, id);
+  implNode->init(id);
   return implNode->id();
 }
 
@@ -531,11 +539,11 @@ void InvariantGraph::splitMultiDefinedVars() {
 
     if (!isFixed) {
       if (_varNodes[i].isIntVar()) {
-        addInvariantNode(std::make_unique<IntAllEqualNode>(
-            std::move(splitNodes), true, true));
+        addInvariantNode(std::make_shared<IntAllEqualNode>(
+            graph, *this, std::move(splitNodes), true, true));
       } else {
-        addInvariantNode(std::make_unique<BoolAllEqualNode>(
-            std::move(splitNodes), true, true));
+        addInvariantNode(std::make_shared<BoolAllEqualNode>(
+            graph, *this, std::move(splitNodes), true, true));
       }
     }
   }
@@ -656,11 +664,11 @@ VarNodeId InvariantGraph::breakCycle(const std::vector<Edge>& cycle) {
   invariantNode(listeningInvariant)
       .replaceStaticInputVarNode(varNode(pivot), newInputNode);
   if (varNodeConst(pivot).isIntVar()) {
-    addInvariantNode(std::make_unique<IntAllEqualNode>(
-        pivot, newInputNode.varNodeId(), true, true));
+    addInvariantNode(std::make_shared<IntAllEqualNode>(
+        graph, *this, pivot, newInputNode.varNodeId(), true, true));
   } else {
-    addInvariantNode(std::make_unique<BoolAllEqualNode>(
-        pivot, newInputNode.varNodeId(), true, true));
+    addInvariantNode(std::make_shared<BoolAllEqualNode>(
+        graph, *this, pivot, newInputNode.varNodeId(), true, true));
   }
   root().addSearchVarNode(newInputNode);
   return newInputNode.varNodeId();
@@ -813,11 +821,11 @@ void InvariantGraph::breakSelfCycles() {
         _invariantNodes.at(i)->replaceDefinedVar(varNode(outputVarId),
                                                  varNode(newDefinedVar));
         if (varNodeConst(outputVarId).isIntVar()) {
-          addInvariantNode(std::make_unique<IntAllEqualNode>(
-              outputVarId, newDefinedVar, true, true));
+          addInvariantNode(std::make_shared<IntAllEqualNode>(
+              graph, *this, outputVarId, newDefinedVar, true, true));
         } else {
-          addInvariantNode(std::make_unique<BoolAllEqualNode>(
-              outputVarId, newDefinedVar, true, true));
+          addInvariantNode(std::make_shared<BoolAllEqualNode>(
+              graph, *this, outputVarId, newDefinedVar, true, true));
         }
         if (varNodeConst(outputVarId).definingNodes().empty()) {
           root().addSearchVarNode(varNode(outputVarId));

@@ -10,22 +10,26 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayBoolOrNode::ArrayBoolOrNode(VarNodeId a, VarNodeId b, VarNodeId reified)
-    : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, reified) {}
+ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, VarNodeId a,
+                                 VarNodeId b, VarNodeId reified)
+    : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, reified) {}
 
-ArrayBoolOrNode::ArrayBoolOrNode(VarNodeId a, VarNodeId b, bool shouldHold)
-    : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, shouldHold) {}
+ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, VarNodeId a,
+                                 VarNodeId b, bool shouldHold)
+    : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
-ArrayBoolOrNode::ArrayBoolOrNode(std::vector<VarNodeId>&& inputs,
+ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph,
+                                 std::vector<VarNodeId>&& inputs,
                                  VarNodeId reified)
-    : ViolationInvariantNode(std::move(inputs), reified) {}
+    : ViolationInvariantNode(graph, std::move(inputs), reified) {}
 
-ArrayBoolOrNode::ArrayBoolOrNode(std::vector<VarNodeId>&& inputs,
+ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph,
+                                 std::vector<VarNodeId>&& inputs,
                                  bool shouldHold)
-    : ViolationInvariantNode(std::move(inputs), shouldHold) {}
+    : ViolationInvariantNode(graph, std::move(inputs), shouldHold) {}
 
-void ArrayBoolOrNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void ArrayBoolOrNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::none_of(staticInputVarNodeIds().begin(),
@@ -34,7 +38,7 @@ void ArrayBoolOrNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                       }));
 }
 
-void ArrayBoolOrNode::updateState(InvariantGraph& graph) {
+void ArrayBoolOrNode::updateState() {
   ViolationInvariantNode::updateState(graph);
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
@@ -80,8 +84,8 @@ bool ArrayBoolOrNode::canBeReplaced(const InvariantGraph&) const {
          staticInputVarNodeIds().size() <= 1;
 }
 
-bool ArrayBoolOrNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool ArrayBoolOrNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   if (staticInputVarNodeIds().size() == 1) {
@@ -93,8 +97,7 @@ bool ArrayBoolOrNode::replace(InvariantGraph& graph) {
   return true;
 }
 
-void ArrayBoolOrNode::registerOutputVars(InvariantGraph& graph,
-                                         propagation::SolverBase& solver) {
+void ArrayBoolOrNode::registerOutputVars() {
   if (staticInputVarNodeIds().size() > 1 &&
       violationVarId(graph) == propagation::NULL_ID) {
     if (shouldHold()) {
@@ -113,8 +116,7 @@ void ArrayBoolOrNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void ArrayBoolOrNode::registerNode(InvariantGraph& graph,
-                                   propagation::SolverBase& solver) {
+void ArrayBoolOrNode::registerNode() {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }

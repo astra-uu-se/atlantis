@@ -15,8 +15,8 @@ bool int_linear(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
     inputVarNodeIds.emplace_back(graph.retrieveVarNode(-sum));
   }
 
-  graph.addInvariantNode(std::make_unique<IntLinearNode>(
-      std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId));
+  graph.addInvariantNode(std::make_shared<IntLinearNode>(
+      graph, std::move(coeffs), std::move(inputVarNodeIds), outputVarNodeId));
 
   return true;
 }

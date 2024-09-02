@@ -16,16 +16,18 @@ class BoolLinearNode : public InvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  BoolLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
+  BoolLinearNode(InvariantGraph& graph,
+
+                 std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                  VarNodeId output, Int offset = 0);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(const InvariantNodeId&) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 };

@@ -19,8 +19,8 @@ IntLinearNode::IntLinearNode(std::vector<Int>&& coeffs,
       _coeffs(std::move(coeffs)),
       _offset(offset) {}
 
-void IntLinearNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
+void IntLinearNode::init(const InvariantNodeId& id) {
+  InvariantNode::init(id);
   assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
@@ -28,7 +28,7 @@ void IntLinearNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void IntLinearNode::updateState(InvariantGraph& graph) {
+void IntLinearNode::updateState() {
   // Remove duplicates:
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
     for (Int j = static_cast<Int>(staticInputVarNodeIds().size()) - 1; j > i;
@@ -93,8 +93,8 @@ bool IntLinearNode::canBeMadeImplicit(const InvariantGraph& graph) const {
          graph.varNodeConst(outputVarNodeIds().front()).definingNodes().empty();
 }
 
-bool IntLinearNode::makeImplicit(InvariantGraph& graph) {
-  if (!canBeMadeImplicit(graph)) {
+bool IntLinearNode::makeImplicit() {
+  if (!canBeMadeImplicit()) {
     return false;
   }
 
@@ -103,14 +103,13 @@ bool IntLinearNode::makeImplicit(InvariantGraph& graph) {
   std::vector<VarNodeId> inputVarNodeIds(staticInputVarNodeIds());
   inputVarNodeIds.emplace_back(outputVarNodeIds().front());
 
-  graph.addImplicitConstraintNode(std::make_unique<IntLinEqImplicitNode>(
+  graph.addImplicitConstraintNode(std::make_shared<IntLinEqImplicitNode>(
       std::move(_coeffs), std::move(inputVarNodeIds), _offset));
 
   return true;
 }
 
-void IntLinearNode::registerOutputVars(InvariantGraph& graph,
-                                       propagation::SolverBase& solver) {
+void IntLinearNode::registerOutputVars() {
   if (staticInputVarNodeIds().size() == 1) {
     graph.varNode(outputVarNodeIds().front())
         .setVarId(solver.makeIntView<propagation::ScalarView>(
@@ -136,8 +135,7 @@ void IntLinearNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void IntLinearNode::registerNode(InvariantGraph& graph,
-                                 propagation::SolverBase& solver) {
+void IntLinearNode::registerNode() {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }

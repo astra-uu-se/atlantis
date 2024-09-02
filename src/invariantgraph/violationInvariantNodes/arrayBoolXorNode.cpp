@@ -25,8 +25,8 @@ ArrayBoolXorNode::ArrayBoolXorNode(std::vector<VarNodeId>&& inputs,
                                    bool shouldHold)
     : ViolationInvariantNode(std::move(inputs), shouldHold) {}
 
-void ArrayBoolXorNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void ArrayBoolXorNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::none_of(staticInputVarNodeIds().begin(),
@@ -35,7 +35,7 @@ void ArrayBoolXorNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                       }));
 }
 
-void ArrayBoolXorNode::updateState(InvariantGraph& graph) {
+void ArrayBoolXorNode::updateState() {
   ViolationInvariantNode::updateState(graph);
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
@@ -105,8 +105,8 @@ bool ArrayBoolXorNode::canBeReplaced(const InvariantGraph&) const {
            staticInputVarNodeIds().size() == 2));
 }
 
-bool ArrayBoolXorNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool ArrayBoolXorNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   if (staticInputVarNodeIds().size() == 1) {
@@ -116,14 +116,13 @@ bool ArrayBoolXorNode::replace(InvariantGraph& graph) {
   }
   if (staticInputVarNodeIds().size() == 2) {
     assert(!isReified() && !shouldHold());
-    graph.addInvariantNode(std::make_unique<BoolAllEqualNode>(
-        std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
+    graph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
+        graph, std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
   }
   return true;
 }
 
-void ArrayBoolXorNode::registerOutputVars(InvariantGraph& graph,
-                                          propagation::SolverBase& solver) {
+void ArrayBoolXorNode::registerOutputVars() {
   if (staticInputVarNodeIds().size() > 1 &&
       violationVarId(graph) == propagation::NULL_ID) {
     if (staticInputVarNodeIds().size() == 2) {
@@ -148,8 +147,7 @@ void ArrayBoolXorNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void ArrayBoolXorNode::registerNode(InvariantGraph& graph,
-                                    propagation::SolverBase& solver) {
+void ArrayBoolXorNode::registerNode() {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }

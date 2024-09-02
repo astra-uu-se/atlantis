@@ -15,8 +15,9 @@ bool int_max(FznInvariantGraph& graph, const fznparser::IntArg& a,
         .fixToValue(std::max(a.toParameter(), b.toParameter()));
     return true;
   }
-  graph.addInvariantNode(std::make_unique<ArrayIntMaximumNode>(
-      graph.retrieveVarNode(a), graph.retrieveVarNode(b), outputVarNodeId));
+  graph.addInvariantNode(std::make_shared<ArrayIntMaximumNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+      outputVarNodeId));
   return true;
 }
 

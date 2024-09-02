@@ -7,8 +7,9 @@
 
 namespace atlantis::invariantgraph {
 
-InvariantGraphRoot::InvariantGraphRoot(std::vector<VarNodeId>&& vars)
-    : ImplicitConstraintNode(std::move(vars)) {}
+InvariantGraphRoot::InvariantGraphRoot(InvariantGraph& graph,
+                                       std::vector<VarNodeId>&& vars)
+    : ImplicitConstraintNode(graph, std::move(vars)) {}
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
 InvariantGraphRoot::createNeighbourhood(InvariantGraph& graph,

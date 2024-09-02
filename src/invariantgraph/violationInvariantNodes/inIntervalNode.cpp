@@ -15,8 +15,8 @@ InIntervalNode::InIntervalNode(VarNodeId input, Int lb, Int ub, VarNodeId r)
 InIntervalNode::InIntervalNode(VarNodeId input, Int lb, Int ub, bool shouldHold)
     : ViolationInvariantNode({input}, shouldHold), _lb(lb), _ub(ub) {}
 
-void InIntervalNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
+void InIntervalNode::init(const InvariantNodeId& id) {
+  ViolationInvariantNode::init(id);
   assert(!isReified() ||
          !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::all_of(staticInputVarNodeIds().begin(),
@@ -25,8 +25,7 @@ void InIntervalNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
                      }));
 }
 
-void InIntervalNode::registerOutputVars(InvariantGraph& graph,
-                                        propagation::SolverBase& solver) {
+void InIntervalNode::registerOutputVars() {
   if (violationVarId(graph) == propagation::NULL_ID) {
     if (shouldHold()) {
       setViolationVarId(
@@ -48,6 +47,6 @@ void InIntervalNode::registerOutputVars(InvariantGraph& graph,
                      }));
 }
 
-void InIntervalNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
+void InIntervalNode::registerNode() {}
 
 }  // namespace atlantis::invariantgraph
