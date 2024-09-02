@@ -164,6 +164,8 @@ class InvariantGraph : public virtual IInvariantGraph {
   [[nodiscard]] search::neighbourhoods::NeighbourhoodCombinator neighbourhood()
       const;
 
+  void writeDotFile(std::ostream&) const;
+
  private:
   std::unordered_set<VarNodeId> dynamicVarNodeFrontier(
       VarNodeId node, const std::unordered_set<VarNodeId>& visitedGlobal);

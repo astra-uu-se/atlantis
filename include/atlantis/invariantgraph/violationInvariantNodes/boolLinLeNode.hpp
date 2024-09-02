@@ -27,6 +27,8 @@ class BoolLinLeNode : public ViolationInvariantNode {
   void registerNode() override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
+
+  virtual std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

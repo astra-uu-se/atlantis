@@ -54,4 +54,21 @@ void IntScalarNode::registerOutputVars() {
 
 void IntScalarNode::registerNode() {}
 
+std::ostream& IntScalarNode::dotLangEntry(std::ostream& o) const { return o; }
+
+std::ostream& IntScalarNode::dotLangEdges(std::ostream& o) const {
+  const std::string label =
+      (_factor == 1 ? "" : ("* " + std::to_string(_factor))) +
+      (_factor != 1 && _offset != 0 ? " " : "") +
+      (_offset == 0
+           ? ""
+           : ((_offset < 0 ? "- " : "+ ") + std::to_string(std::abs(_offset))));
+
+  return o << staticInputVarNodeIds().front() << " -> "
+           << outputVarNodeIds().front() << "[label=\"" << label << "\"];"
+           << std::endl;
+}
+
+std::string IntScalarNode::dotLangIdentifier() const { return ""; }
+
 }  // namespace atlantis::invariantgraph

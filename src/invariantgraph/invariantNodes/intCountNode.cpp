@@ -115,4 +115,8 @@ void IntCountNode::registerNode() {
       needle(), std::move(solverVars));
 }
 
+std::string IntCountNode::dotLangIdentifier() const {
+  return "int_count " + std::to_string(_needle);
+}
+
 }  // namespace atlantis::invariantgraph

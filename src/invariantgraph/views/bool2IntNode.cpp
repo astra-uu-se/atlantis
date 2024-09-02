@@ -70,4 +70,6 @@ void Bool2IntNode::registerOutputVars() {
 
 void Bool2IntNode::registerNode() {}
 
+std::string Bool2IntNode::dotLangIdentifier() const { return "bool2int"; }
+
 }  // namespace atlantis::invariantgraph

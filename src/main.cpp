@@ -51,6 +51,10 @@ int main(int argc, char* argv[]) {
         "Configures the log level. 0 = ERROR, 1 = WARNING, 2 = INFO, 3 = DEBUG, 4 = TRACE. If not specified, the WARN level is used.",
         cxxopts::value<uint8_t>()
       )
+      (
+        "dot-file", "A file path where a dot file format of the invariant graph is to be saved.",
+        cxxopts::value<std::filesystem::path>()
+      )
       ("help", "Print help");
 
     options.add_options("Positional")
@@ -59,6 +63,7 @@ int main(int argc, char* argv[]) {
         "Path to the flatzinc file which contains the model.",
         cxxopts::value<std::filesystem::path>()
       );
+
     // clang-format on
 
     options.parse_positional({"modelFile"});
@@ -90,6 +95,11 @@ int main(int argc, char* argv[]) {
       backend.setAnnealingScheduleFactory(
           atlantis::search::AnnealingScheduleFactory(
               result["annealing-schedule"].as<std::filesystem::path>()));
+    }
+
+    if (result.count("dot-file") == 1) {
+      auto dotFilePath = result["dot-file"].as<std::filesystem::path>();
+      backend.setDotFilePath(std::move(dotFilePath));
     }
 
     auto statistics = backend.solve(logger);

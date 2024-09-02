@@ -57,4 +57,6 @@ void BoolAndNode::registerNode() {
                                                invariantGraph().varId(b()));
 }
 
+std::string BoolAndNode::dotLangIdentifier() const { return "bool_and"; }
+
 }  // namespace atlantis::invariantgraph

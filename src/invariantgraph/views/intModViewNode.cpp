@@ -50,4 +50,8 @@ void IntModViewNode::registerOutputVars() {
 
 void IntModViewNode::registerNode() {}
 
+std::string IntModViewNode::dotLangIdentifier() const {
+  return "% " + std::to_string(_denominator);
+}
+
 }  // namespace atlantis::invariantgraph

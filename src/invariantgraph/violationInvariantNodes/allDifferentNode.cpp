@@ -119,4 +119,8 @@ void AllDifferentNode::registerNode() {
   }
 }
 
+std::string AllDifferentNode::dotLangIdentifier() const {
+  return "all_different";
+}
+
 }  // namespace atlantis::invariantgraph

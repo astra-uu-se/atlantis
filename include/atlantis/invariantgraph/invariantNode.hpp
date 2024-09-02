@@ -84,6 +84,8 @@ class InvariantNode : virtual public IInvariantNode {
   void removeDynamicInputVarNode(VarNodeId) override;
 
   void removeOutputVarNode(VarNodeId) override;
+  virtual std::ostream& dotLangEdges(std::ostream&) const;
+  virtual std::ostream& dotLangEntry(std::ostream&) const;
 
   void eraseStaticInputVarNode(size_t index);
 
@@ -109,6 +111,7 @@ class InvariantNode : virtual public IInvariantNode {
   void markStaticInputTo(VarNodeId varNodeId, bool registerHere) override;
 
   void markDynamicInputTo(VarNodeId varNodeId, bool registerHere) override;
+  virtual std::string dotLangIdentifier() const = 0;
 };
 
 }  // namespace atlantis::invariantgraph

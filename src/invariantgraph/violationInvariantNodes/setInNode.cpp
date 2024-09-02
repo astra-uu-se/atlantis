@@ -60,4 +60,6 @@ void SetInNode::registerOutputVars() {
 
 void SetInNode::registerNode() {}
 
+std::string SetInNode::dotLangIdentifier() const { return "set_in"; }
+
 }  // namespace atlantis::invariantgraph

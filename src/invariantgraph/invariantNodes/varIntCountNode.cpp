@@ -85,4 +85,8 @@ void VarIntCountNode::registerNode() {
       invariantGraph().varId(needle()), std::move(solverVars));
 }
 
+std::string VarIntCountNode::dotLangIdentifier() const {
+  return "var_int_count";
+}
+
 }  // namespace atlantis::invariantgraph

@@ -84,4 +84,8 @@ void GlobalCardinalityLowUpNode::registerNode() {
   }
 }
 
+std::string GlobalCardinalityLowUpNode::dotLangIdentifier() const {
+  return "global_cardinality_low_up";
+}
+
 }  // namespace atlantis::invariantgraph

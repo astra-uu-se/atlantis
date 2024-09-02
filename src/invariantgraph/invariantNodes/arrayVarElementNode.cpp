@@ -116,4 +116,8 @@ void ArrayVarElementNode::registerNode() {
       invariantGraph().varId(idx()), std::move(varVector), _offset);
 }
 
+std::string ArrayVarElementNode::dotLangIdentifier() const {
+  return "var_element";
+}
+
 }  // namespace atlantis::invariantgraph

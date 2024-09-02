@@ -22,5 +22,7 @@ class SetInNode : public ViolationInvariantNode {
   void registerNode() override;
 
   [[nodiscard]] const std::vector<Int>& values() { return _values; }
+
+  virtual std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

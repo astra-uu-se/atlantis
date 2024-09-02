@@ -142,4 +142,8 @@ void IntLinLeNode::registerNode() {
 
 const std::vector<Int>& IntLinLeNode::coeffs() const { return _coeffs; }
 
+std::string IntLinLeNode::dotLangIdentifier() const {
+  return "int_lin_le_node";
+}
+
 }  // namespace atlantis::invariantgraph

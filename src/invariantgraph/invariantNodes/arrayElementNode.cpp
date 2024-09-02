@@ -77,4 +77,6 @@ void ArrayElementNode::registerOutputVars() {
 
 void ArrayElementNode::registerNode() {}
 
+std::string ArrayElementNode::dotLangIdentifier() const { return "element"; }
+
 }  // namespace atlantis::invariantgraph

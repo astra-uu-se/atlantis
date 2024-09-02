@@ -105,4 +105,8 @@ void GlobalCardinalityClosedNode::registerNode() {
   throw std::runtime_error("Not implemented");
 }
 
+std::string GlobalCardinalityClosedNode::dotLangIdentifier() const {
+  return "global_cardinality_closed";
+}
+
 }  // namespace atlantis::invariantgraph

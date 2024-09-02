@@ -182,6 +182,24 @@ void InvariantNode::replaceDynamicInputVarNode(VarNodeId oldInputVarNodeId,
   _invariantGraph.varNode(newInputVarNodeId).markAsInputFor(_id, false);
 }
 
+std::ostream& InvariantNode::dotLangEntry(std::ostream& o) const {
+  return o << _id << "[shape=box,label=\"" << dotLangIdentifier() << "\"];"
+           << std::endl;
+}
+
+std::ostream& InvariantNode::dotLangEdges(std::ostream& o) const {
+  for (const auto& vId : staticInputVarNodeIds()) {
+    o << vId << " -> " << _id << "[style=solid];" << std::endl;
+  }
+  for (const auto& vId : dynamicInputVarNodeIds()) {
+    o << vId << " -> " << _id << "[style=dashed];" << std::endl;
+  }
+  for (const auto& vId : outputVarNodeIds()) {
+    o << _id << " -> " << vId << "[style = solid];" << std::endl;
+  }
+  return o;
+}
+
 std::vector<std::pair<VarNodeId, VarNodeId>>
 InvariantNode::splitOutputVarNodes() {
   std::vector<std::pair<VarNodeId, VarNodeId>> replaced;

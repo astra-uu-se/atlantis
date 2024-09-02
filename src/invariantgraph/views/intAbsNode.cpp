@@ -67,4 +67,6 @@ void IntAbsNode::registerOutputVars() {
 
 void IntAbsNode::registerNode() {}
 
+std::string IntAbsNode::dotLangIdentifier() const { return "abs"; }
+
 }  // namespace atlantis::invariantgraph

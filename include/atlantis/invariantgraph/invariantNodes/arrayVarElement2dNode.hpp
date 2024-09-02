@@ -49,6 +49,8 @@ class ArrayVarElement2dNode : public InvariantNode {
   size_t numCols() const noexcept {
     return dynamicInputVarNodeIds().size() / _numRows;
   }
+
+  virtual std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

@@ -25,5 +25,7 @@ class IntCountNode : public InvariantNode {
   [[nodiscard]] const std::vector<VarNodeId>& haystack() const;
 
   [[nodiscard]] Int needle() const;
+
+  virtual std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

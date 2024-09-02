@@ -103,4 +103,6 @@ void IntPlusNode::registerNode() {
       invariantGraph().varId(staticInputVarNodeIds().back()));
 }
 
+std::string IntPlusNode::dotLangIdentifier() const { return "int_plus"; }
+
 }  // namespace atlantis::invariantgraph

@@ -47,4 +47,8 @@ IntLinEqImplicitNode::createNeighbourhood() {
       std::vector<Int>{_coeffs}, std::move(searchVars), _offset);
 }
 
+std::string IntLinEqImplicitNode::dotLangIdentifier() const {
+  return "int_lin_eq";
+}
+
 }  // namespace atlantis::invariantgraph

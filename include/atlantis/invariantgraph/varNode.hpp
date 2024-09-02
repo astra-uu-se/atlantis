@@ -210,6 +210,9 @@ class VarNode {
    * otherwise.
    */
   [[nodiscard]] std::optional<Int> constantValue() const noexcept;
+
+  std::ostream& dotLangIdentifier(std::ostream&,
+                                  const std::string& identifier) const;
 };
 
 }  // namespace atlantis::invariantgraph

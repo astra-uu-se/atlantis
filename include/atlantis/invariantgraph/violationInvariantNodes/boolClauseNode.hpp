@@ -26,5 +26,6 @@ class BoolClauseNode : public ViolationInvariantNode {
   void registerOutputVars() override;
 
   void registerNode() override;
+  virtual std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

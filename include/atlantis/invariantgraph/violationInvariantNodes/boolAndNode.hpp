@@ -26,6 +26,8 @@ class BoolAndNode : public ViolationInvariantNode {
   [[nodiscard]] VarNodeId b() const noexcept {
     return staticInputVarNodeIds().back();
   }
+
+  virtual std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

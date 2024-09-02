@@ -53,4 +53,6 @@ void InIntervalNode::registerOutputVars() {
 
 void InIntervalNode::registerNode() {}
 
+std::string InIntervalNode::dotLangIdentifier() const { return "in_interval"; }
+
 }  // namespace atlantis::invariantgraph

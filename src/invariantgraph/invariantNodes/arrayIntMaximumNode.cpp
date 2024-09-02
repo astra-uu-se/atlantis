@@ -115,4 +115,6 @@ void ArrayIntMaximumNode::registerNode() {
       std::move(solverVars));
 }
 
+std::string ArrayIntMaximumNode::dotLangIdentifier() const { return "max"; }
+
 }  // namespace atlantis::invariantgraph

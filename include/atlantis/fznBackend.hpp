@@ -25,6 +25,7 @@ class FznBackend {
   search::AnnealingScheduleFactory _annealingScheduleFactory;
   std::optional<std::chrono::milliseconds> _timelimit;
   std::uint_fast32_t _seed;
+  std::optional<std::filesystem::path> _dotFilePath{};
 
   std::function<void(const invariantgraph::FznInvariantGraph&,
                      const search::Assignment&)>
@@ -54,6 +55,10 @@ class FznBackend {
                          const search::Assignment&)>
           onSolution) {
     _onSolution = onSolution;
+  }
+
+  void setDotFilePath(std::filesystem::path&& path) {
+    _dotFilePath = std::optional<std::filesystem::path>(std::move(path));
   }
 
   void setOnFinish(std::function<void(bool)> onFinish) { _onFinish = onFinish; }

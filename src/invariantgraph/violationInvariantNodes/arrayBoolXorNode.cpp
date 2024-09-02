@@ -185,4 +185,8 @@ void ArrayBoolXorNode::registerNode() {
                                                   std::move(inputNodeIds));
 }
 
+std::string ArrayBoolXorNode::dotLangIdentifier() const {
+  return "array_bool_xor";
+}
+
 }  // namespace atlantis::invariantgraph

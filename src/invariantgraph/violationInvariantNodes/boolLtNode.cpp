@@ -130,4 +130,6 @@ void BoolLtNode::registerNode() {
   }
 }
 
+std::string BoolLtNode::dotLangIdentifier() const { return "bool_lt"; }
+
 }  // namespace atlantis::invariantgraph

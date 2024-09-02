@@ -24,6 +24,12 @@ class IntScalarNode : public InvariantNode {
   [[nodiscard]] VarNodeId input() const noexcept {
     return staticInputVarNodeIds().front();
   }
+
+  std::ostream& dotLangEntry(std::ostream&) const override;
+
+  std::ostream& dotLangEdges(std::ostream&) const override;
+
+  std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

@@ -177,4 +177,6 @@ void IntLinearNode::registerNode() {
 
 const std::vector<Int>& IntLinearNode::coeffs() const { return _coeffs; }
 
+std::string IntLinearNode::dotLangIdentifier() const { return "int_linear"; }
+
 }  // namespace atlantis::invariantgraph

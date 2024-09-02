@@ -336,4 +336,10 @@ std::optional<Int> VarNode::constantValue() const noexcept {
   return lb == ub ? std::optional<Int>{lb} : std::optional<Int>{};
 }
 
+std::ostream& VarNode::dotLangIdentifier(std::ostream& o,
+                                         const std::string& identifier) const {
+  o << _varNodeId;
+  return o << " [label=\"" << identifier << "\"];" << std::endl;
+}
+
 }  // namespace atlantis::invariantgraph

@@ -167,4 +167,6 @@ void CircuitNode::registerNode() {
   throw std::runtime_error("CircuitNode::registerOutputVars not implemented");
 }
 
+std::string CircuitNode::dotLangIdentifier() const { return "circuit"; }
+
 }  // namespace atlantis::invariantgraph

@@ -132,4 +132,6 @@ void BoolLinearNode::registerNode() {
 
 const std::vector<Int>& BoolLinearNode::coeffs() const { return _coeffs; }
 
+std::string BoolLinearNode::dotLangIdentifier() const { return "bool_linear"; }
+
 }  // namespace atlantis::invariantgraph

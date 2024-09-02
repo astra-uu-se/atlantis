@@ -48,4 +48,6 @@ VarNodeId IntPowNode::exponent() const {
 }
 VarNodeId IntPowNode::power() const { return outputVarNodeIds().front(); }
 
+std::string IntPowNode::dotLangIdentifier() const { return "int_pow"; }
+
 }  // namespace atlantis::invariantgraph

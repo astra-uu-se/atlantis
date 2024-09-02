@@ -122,4 +122,6 @@ void IntTimesNode::registerNode() {
       invariantGraph().varId(staticInputVarNodeIds().back()));
 }
 
+std::string IntTimesNode::dotLangIdentifier() const { return "int_times"; }
+
 }  // namespace atlantis::invariantgraph

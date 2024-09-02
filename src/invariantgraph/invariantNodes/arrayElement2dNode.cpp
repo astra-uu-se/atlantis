@@ -125,4 +125,8 @@ void ArrayElement2dNode::registerNode() {
       std::vector<std::vector<Int>>(_parMatrix), _offset1, _offset2);
 }
 
+std::string ArrayElement2dNode::dotLangIdentifier() const {
+  return "element2d";
+}
+
 }  // namespace atlantis::invariantgraph

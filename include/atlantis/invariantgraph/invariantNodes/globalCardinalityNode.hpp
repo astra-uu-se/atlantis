@@ -27,6 +27,7 @@ class GlobalCardinalityNode : public InvariantNode {
   [[nodiscard]] bool canBeReplaced() const override;
 
   [[nodiscard]] bool replace() override;
+  virtual std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

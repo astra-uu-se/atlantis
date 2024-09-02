@@ -26,5 +26,6 @@ class ArrayIntMaximumNode : public InvariantNode {
   [[nodiscard]] bool replace() override;
 
   void registerNode() override;
+  virtual std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

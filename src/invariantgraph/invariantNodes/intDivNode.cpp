@@ -61,4 +61,6 @@ VarNodeId IntDivNode::quotient() const noexcept {
   return outputVarNodeIds().front();
 }
 
+std::string IntDivNode::dotLangIdentifier() const { return "int_div"; }
+
 }  // namespace atlantis::invariantgraph

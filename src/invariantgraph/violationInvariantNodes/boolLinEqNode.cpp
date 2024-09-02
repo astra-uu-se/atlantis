@@ -138,4 +138,6 @@ void BoolLinEqNode::registerNode() {
 
 const std::vector<Int>& BoolLinEqNode::coeffs() const { return _coeffs; }
 
+std::string BoolLinEqNode::dotLangIdentifier() const { return "bool_lin_eq"; }
+
 }  // namespace atlantis::invariantgraph
