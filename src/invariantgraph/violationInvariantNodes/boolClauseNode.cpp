@@ -163,4 +163,6 @@ void BoolClauseNode::registerNode(InvariantGraph&, propagation::SolverBase&) {
   throw std::runtime_error("BoolClauseNode::registerNode not implemented");
 }
 
+std::string BoolClauseNode::dotLangIdentifier() const { return "bool_clause"; }
+
 }  // namespace atlantis::invariantgraph

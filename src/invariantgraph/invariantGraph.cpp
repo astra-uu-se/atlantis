@@ -1277,4 +1277,76 @@ void InvariantGraph::sanity(bool oneDefInv) {
 #endif
 }
 
+void InvariantGraph::writeDotFile(std::ostream& o) const {
+  std::vector<bool> visitedVarNodes(_varNodes.size() + 1, false);
+
+  o << "digraph G {" << std::endl;
+
+  std::vector<std::string> varIdentifiers;
+  varIdentifiers.reserve(_namedVarNodeIndices.size());
+  for (const auto& [identifier, _] : _namedVarNodeIndices) {
+    varIdentifiers.push_back(identifier);
+  }
+
+  std::sort(varIdentifiers.begin(), varIdentifiers.end());
+
+  for (const std::string& identifier : varIdentifiers) {
+    const auto& vNode = varNodeConst(identifier);
+    visitedVarNodes.at(vNode.varNodeId().id) = true;
+    if (!vNode.staticInputTo().empty() || !vNode.dynamicInputTo().empty() ||
+        !vNode.definingNodes().empty()) {
+      vNode.dotLangIdentifier(o, identifier);
+    }
+  }
+
+  size_t n = 1;
+
+  for (size_t i = 1; i < _varNodes.size(); ++i) {
+    if (visitedVarNodes.at(i)) {
+      continue;
+    }
+    if (_varNodes.at(i).staticInputTo().empty() ||
+        _varNodes.at(i).dynamicInputTo().empty() ||
+        _varNodes.at(i).definingNodes().empty()) {
+      continue;
+    }
+    const std::string identifier =
+        _varNodes.at(i).isFixed()
+            ? (_varNodes.at(i).isIntVar()
+                   ? std::to_string(_varNodes.at(i).lowerBound())
+                   : (_varNodes.at(i).inDomain(bool{false}) ? "false" : "true"))
+            : ("ATLANTIS_" + std::to_string(n));
+    _varNodes.at(i).dotLangIdentifier(o, identifier);
+    if (!_varNodes.at(i).isFixed()) {
+      ++n;
+    }
+  }
+
+  for (const auto& impl : _implicitConstraintNodes) {
+    if (impl->state() == InvariantNodeState::ACTIVE) {
+      impl->dotLangEntry(o);
+    }
+  }
+
+  for (const auto& inv : _invariantNodes) {
+    if (inv->state() == InvariantNodeState::ACTIVE) {
+      inv->dotLangEntry(o);
+    }
+  }
+
+  for (const auto& impl : _implicitConstraintNodes) {
+    if (impl->state() == InvariantNodeState::ACTIVE) {
+      impl->dotLangEdges(o);
+    }
+  }
+
+  for (const auto& inv : _invariantNodes) {
+    if (inv->state() == InvariantNodeState::ACTIVE) {
+      inv->dotLangEdges(o);
+    }
+  }
+
+  o << '}' << std::endl;
+}
+
 }  // namespace atlantis::invariantgraph

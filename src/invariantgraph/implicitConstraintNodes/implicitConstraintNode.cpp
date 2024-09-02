@@ -43,4 +43,9 @@ void ImplicitConstraintNode::registerNode(InvariantGraph& graph,
   assert(_neighbourhood);
 }
 
+std::ostream& ImplicitConstraintNode::dotLangEntry(std::ostream& o) const {
+  return o << id() << "[shape=house,label=\"" << dotLangIdentifier() << "\"];"
+           << std::endl;
+}
+
 }  // namespace atlantis::invariantgraph

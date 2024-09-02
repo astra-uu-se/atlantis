@@ -50,4 +50,6 @@ void InIntervalNode::registerOutputVars(InvariantGraph& graph,
 
 void InIntervalNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
+std::string InIntervalNode::dotLangIdentifier() const { return "in_interval"; }
+
 }  // namespace atlantis::invariantgraph

@@ -135,4 +135,8 @@ void IntLinEqNode::registerNode(InvariantGraph& graph,
 
 const std::vector<Int>& IntLinEqNode::coeffs() const { return _coeffs; }
 
+std::string IntLinEqNode::dotLangIdentifier() const {
+  return "int_lin_eq_node";
+}
+
 }  // namespace atlantis::invariantgraph

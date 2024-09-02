@@ -41,4 +41,8 @@ void IntModViewNode::registerOutputVars(InvariantGraph& graph,
 
 void IntModViewNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
+std::string IntModViewNode::dotLangIdentifier() const {
+  return "% " + std::to_string(_denominator);
+}
+
 }  // namespace atlantis::invariantgraph

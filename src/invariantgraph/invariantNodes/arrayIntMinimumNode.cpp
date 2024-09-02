@@ -107,4 +107,6 @@ void ArrayIntMinimumNode::registerNode(InvariantGraph& graph,
       solver, graph.varId(outputVarNodeIds().front()), std::move(solverVars));
 }
 
+std::string ArrayIntMinimumNode::dotLangIdentifier() const { return "min"; }
+
 }  // namespace atlantis::invariantgraph

@@ -33,6 +33,8 @@ class ArrayVarElementNode : public InvariantNode {
   [[nodiscard]] VarNodeId idx() const noexcept {
     return staticInputVarNodeIds().front();
   }
+
+  virtual std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

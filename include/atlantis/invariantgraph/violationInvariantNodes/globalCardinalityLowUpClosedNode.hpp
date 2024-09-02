@@ -38,5 +38,7 @@ class GlobalCardinalityLowUpClosedNode : public ViolationInvariantNode {
   [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
 
   bool replace(InvariantGraph&) override;
+
+  virtual std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

@@ -42,4 +42,6 @@ VarNodeId IntModNode::denominator() const {
 }
 VarNodeId IntModNode::remainder() const { return outputVarNodeIds().front(); }
 
+std::string IntModNode::dotLangIdentifier() const { return "int_mod"; }
+
 }  // namespace atlantis::invariantgraph

@@ -28,5 +28,7 @@ class ArrayIntMinimumNode : public InvariantNode {
   [[nodiscard]] bool replace(InvariantGraph&) override;
 
   void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+
+  virtual std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

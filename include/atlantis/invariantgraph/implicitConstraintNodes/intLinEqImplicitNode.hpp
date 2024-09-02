@@ -22,6 +22,8 @@ class IntLinEqImplicitNode : public ImplicitConstraintNode {
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
       InvariantGraph&, propagation::SolverBase&) override;
+
+  virtual std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

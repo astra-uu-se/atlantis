@@ -52,4 +52,6 @@ void Int2BoolNode::registerOutputVars(InvariantGraph& graph,
 
 void Int2BoolNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
+std::string Int2BoolNode::dotLangIdentifier() const { return "int2bool"; }
+
 }  // namespace atlantis::invariantgraph

@@ -124,4 +124,6 @@ void BoolLeNode::registerNode(InvariantGraph& graph,
   }
 }
 
+std::string BoolLeNode::dotLangIdentifier() const { return "bool_le"; }
+
 }  // namespace atlantis::invariantgraph

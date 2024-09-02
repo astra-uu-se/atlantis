@@ -57,4 +57,6 @@ void SetInNode::registerOutputVars(InvariantGraph& graph,
 
 void SetInNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
+std::string SetInNode::dotLangIdentifier() const { return "set_in"; }
+
 }  // namespace atlantis::invariantgraph

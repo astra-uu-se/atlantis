@@ -154,4 +154,8 @@ void BoolAllEqualNode::registerNode(InvariantGraph& graph,
       std::move(solverVars));
 }
 
+std::string BoolAllEqualNode::dotLangIdentifier() const {
+  return "bool_all_equal";
+}
+
 }  // namespace atlantis::invariantgraph

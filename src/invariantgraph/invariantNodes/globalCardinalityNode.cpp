@@ -157,4 +157,16 @@ void GlobalCardinalityNode::registerNode(InvariantGraph& graph,
       std::vector<Int>(_cover));
 }
 
+std::string GlobalCardinalityNode::dotLangIdentifier() const {
+  std::string s{"global_cardinality ["};
+  for (size_t i = 0; i < _cover.size(); ++i) {
+    s += _cover.at(i);
+    if (i < _cover.size() - 1) {
+      s += ", ";
+    }
+  }
+  s += ']';
+  return s;
+}
+
 }  // namespace atlantis::invariantgraph

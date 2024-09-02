@@ -87,7 +87,7 @@ class InvariantNode {
   [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds()
       const noexcept;
 
-  virtual void updateState(InvariantGraph&) {};
+  virtual void updateState(InvariantGraph&){};
 
   void replaceDefinedVar(VarNode& oldOutputVarNode, VarNode& newOutputVarNode);
 
@@ -102,6 +102,10 @@ class InvariantNode {
 
   void replaceDynamicInputVarNode(VarNode& oldInputVarNode,
                                   VarNode& newInputVarNode);
+
+  virtual std::ostream& dotLangEdges(std::ostream&) const;
+
+  virtual std::ostream& dotLangEntry(std::ostream&) const;
 
   // A hack in order to steal the _inputs from the nested constraint.
   friend class ReifiedConstraint;
@@ -134,5 +138,7 @@ class InvariantNode {
   void markDynamicInputTo(VarNode& node, bool registerHere = true);
 
   void setState(InvariantNodeState state) { _state = state; }
+
+  virtual std::string dotLangIdentifier() const = 0;
 };
 }  // namespace atlantis::invariantgraph

@@ -136,4 +136,8 @@ void IntAllEqualNode::registerNode(InvariantGraph& graph,
       solver, _allDifferentViolationVarId, std::move(inputVarIds));
 }
 
+std::string IntAllEqualNode::dotLangIdentifier() const {
+  return "int_all_equal";
+}
+
 }  // namespace atlantis::invariantgraph

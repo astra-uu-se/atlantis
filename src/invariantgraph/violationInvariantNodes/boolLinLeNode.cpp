@@ -134,4 +134,6 @@ void BoolLinLeNode::registerNode(InvariantGraph& graph,
 
 const std::vector<Int>& BoolLinLeNode::coeffs() const { return _coeffs; }
 
+std::string BoolLinLeNode::dotLangIdentifier() const { return "bool_lin_le"; }
+
 }  // namespace atlantis::invariantgraph

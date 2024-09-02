@@ -107,4 +107,6 @@ void ArrayIntMaximumNode::registerNode(InvariantGraph& graph,
       solver, graph.varId(outputVarNodeIds().front()), std::move(solverVars));
 }
 
+std::string ArrayIntMaximumNode::dotLangIdentifier() const { return "max"; }
+
 }  // namespace atlantis::invariantgraph

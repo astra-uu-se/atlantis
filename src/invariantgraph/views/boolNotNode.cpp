@@ -41,4 +41,6 @@ void BoolNotNode::registerOutputVars(InvariantGraph& graph,
 
 void BoolNotNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
+std::string BoolNotNode::dotLangIdentifier() const { return "bool_not"; }
+
 }  // namespace atlantis::invariantgraph

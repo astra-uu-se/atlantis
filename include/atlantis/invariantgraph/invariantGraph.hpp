@@ -128,6 +128,8 @@ class InvariantGraph {
 
   void close(propagation::SolverBase&);
 
+  void writeDotFile(std::ostream&) const;
+
  private:
   std::unordered_set<VarNodeId, VarNodeIdHash> dynamicVarNodeFrontier(
       VarNodeId node,

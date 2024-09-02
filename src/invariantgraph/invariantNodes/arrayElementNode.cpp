@@ -73,4 +73,6 @@ void ArrayElementNode::registerOutputVars(InvariantGraph& graph,
 void ArrayElementNode::registerNode(InvariantGraph&, propagation::SolverBase&) {
 }
 
+std::string ArrayElementNode::dotLangIdentifier() const { return "element"; }
+
 }  // namespace atlantis::invariantgraph

@@ -26,6 +26,8 @@ class IntAbsNode : public InvariantNode {
   [[nodiscard]] VarNodeId input() const noexcept {
     return staticInputVarNodeIds().front();
   }
+
+  virtual std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

@@ -49,6 +49,8 @@ class ImplicitConstraintNode : public InvariantNode {
   [[nodiscard]] std::shared_ptr<search::neighbourhoods::Neighbourhood>
   neighbourhood() noexcept;
 
+  std::ostream& dotLangEntry(std::ostream&) const override;
+
  protected:
   virtual std::shared_ptr<search::neighbourhoods::Neighbourhood>
   createNeighbourhood(InvariantGraph&, propagation::SolverBase&) = 0;

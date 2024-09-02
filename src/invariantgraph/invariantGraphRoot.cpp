@@ -33,4 +33,14 @@ void InvariantGraphRoot::addSearchVarNode(VarNode& varNode) {
   assert(outputVarNodeIds().back() == varNode.varNodeId());
 }
 
+std::ostream& InvariantGraphRoot::dotLangEdges(std::ostream& o) const {
+  return o;
+}
+
+std::ostream& InvariantGraphRoot::dotLangEntry(std::ostream& o) const {
+  return o;
+}
+
+std::string InvariantGraphRoot::dotLangIdentifier() const { return ""; }
+
 }  // namespace atlantis::invariantgraph

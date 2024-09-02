@@ -80,4 +80,8 @@ AllDifferentImplicitNode::createNeighbourhood(InvariantGraph& graph,
   }
 }
 
+std::string AllDifferentImplicitNode::dotLangIdentifier() const {
+  return "all_different";
+}
+
 }  // namespace atlantis::invariantgraph

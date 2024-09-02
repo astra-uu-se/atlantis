@@ -51,4 +51,6 @@ void BoolOrNode::registerNode(InvariantGraph& graph,
                                             graph.varId(a()), graph.varId(b()));
 }
 
+std::string BoolOrNode::dotLangIdentifier() const { return "bool_or"; }
+
 }  // namespace atlantis::invariantgraph

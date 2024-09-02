@@ -97,4 +97,6 @@ void IntLtNode::registerNode(InvariantGraph& graph,
   }
 }
 
+std::string IntLtNode::dotLangIdentifier() const { return "int_lt_node"; }
+
 }  // namespace atlantis::invariantgraph

@@ -82,6 +82,21 @@ void IntLinearNode::updateState(InvariantGraph& graph) {
   }
 }
 
+bool IntLinearNode::canBeReplaced(const InvariantGraph&) const {
+  return state() == InvariantNodeState::ACTIVE &&
+         staticInputVarNodeIds().size() == 1;
+}
+
+bool IntLinearNode::replace(InvariantGraph& graph) {
+  if (!canBeReplaced(graph)) {
+    return false;
+  }
+  graph.addInvariantNode(std::make_unique<IntScalarNode>(
+      staticInputVarNodeIds().front(), outputVarNodeIds().front(),
+      _coeffs.front(), _offset));
+  return true;
+}
+
 bool IntLinearNode::canBeMadeImplicit(const InvariantGraph& graph) const {
   return std::all_of(_coeffs.begin(), _coeffs.end(),
                      [](const Int& coeff) { return std::abs(coeff) == 1; }) &&
@@ -159,5 +174,7 @@ void IntLinearNode::registerNode(InvariantGraph& graph,
 }
 
 const std::vector<Int>& IntLinearNode::coeffs() const { return _coeffs; }
+
+std::string IntLinearNode::dotLangIdentifier() const { return "int_linear"; }
 
 }  // namespace atlantis::invariantgraph

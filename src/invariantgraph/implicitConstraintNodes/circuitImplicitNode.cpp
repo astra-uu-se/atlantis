@@ -70,4 +70,6 @@ CircuitImplicitNode::createNeighbourhood(InvariantGraph& graph,
       std::move(searchVars));
 }
 
+std::string CircuitImplicitNode::dotLangIdentifier() const { return "circuit"; }
+
 }  // namespace atlantis::invariantgraph

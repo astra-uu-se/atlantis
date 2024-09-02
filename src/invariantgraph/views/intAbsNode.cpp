@@ -55,4 +55,6 @@ void IntAbsNode::registerOutputVars(InvariantGraph& graph,
 
 void IntAbsNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
 
+std::string IntAbsNode::dotLangIdentifier() const { return "abs"; }
+
 }  // namespace atlantis::invariantgraph

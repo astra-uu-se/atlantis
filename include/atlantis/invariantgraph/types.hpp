@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ostream>
 #include <string>
 
 #include "atlantis/types.hpp"
@@ -41,6 +42,11 @@ struct VarNodeId : public NodeId {
 
   bool operator!=(const VarNodeId& other) const { return !(operator==(other)); }
   bool operator!=(const NodeId& other) const { return !(operator==(other)); }
+
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const VarNodeId& varNodeId) {
+    return os << "var_" << varNodeId.id;
+  }
 };
 
 struct InvariantNodeId : public NodeId {
@@ -78,7 +84,15 @@ struct InvariantNodeId : public NodeId {
   bool operator!=(const InvariantNodeId& other) const {
     return !(operator==(other));
   }
+
   bool operator!=(const NodeId& other) const { return !(operator==(other)); }
+
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const InvariantNodeId& invariantNodeId) {
+    os << (invariantNodeId.type == Type::IMPLICIT_CONSTRAINT ? "impl_"
+                                                             : "inv_");
+    return os << invariantNodeId.id;
+  }
 };
 
 struct VarNodeIdHash {

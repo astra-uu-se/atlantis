@@ -23,6 +23,10 @@ class IntLinearNode : public InvariantNode {
 
   void updateState(InvariantGraph&) override;
 
+  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+
+  [[nodiscard]] bool replace(InvariantGraph&) override;
+
   [[nodiscard]] bool canBeMadeImplicit(const InvariantGraph&) const override;
 
   [[nodiscard]] bool makeImplicit(InvariantGraph&) override;
@@ -32,5 +36,7 @@ class IntLinearNode : public InvariantNode {
   void registerNode(InvariantGraph&, propagation::SolverBase&) override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
+
+  virtual std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

@@ -133,4 +133,8 @@ void ArrayBoolAndNode::registerNode(InvariantGraph& graph,
   }
 }
 
+std::string ArrayBoolAndNode::dotLangIdentifier() const {
+  return "array_bool_and";
+}
+
 }  // namespace atlantis::invariantgraph

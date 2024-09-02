@@ -121,4 +121,8 @@ void ArrayElement2dNode::registerNode(InvariantGraph& graph,
       _offset2);
 }
 
+std::string ArrayElement2dNode::dotLangIdentifier() const {
+  return "element2d";
+}
+
 }  // namespace atlantis::invariantgraph

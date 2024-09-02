@@ -183,4 +183,8 @@ void ArrayVarElement2dNode::registerNode(InvariantGraph& graph,
       graph.varId(idx2()), std::move(varMatrix), _offset1, _offset2);
 }
 
+std::string ArrayVarElement2dNode::dotLangIdentifier() const {
+  return "var_element2d";
+}
+
 }  // namespace atlantis::invariantgraph

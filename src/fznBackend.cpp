@@ -138,6 +138,14 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
 
   propagation::Solver solver;
   invariantGraph.apply(solver);
+  if (_dotFilePath.has_value()) {
+    std::ofstream dotFile;
+    dotFile.open(*_dotFilePath);
+    if (dotFile) {
+      invariantGraph.writeDotFile(dotFile);
+    }
+    dotFile.close();
+  }
   auto neighbourhood = invariantGraph.neighbourhood();
 
   neighbourhood.printNeighbourhood(logger);

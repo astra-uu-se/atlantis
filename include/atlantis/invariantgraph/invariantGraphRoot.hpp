@@ -19,9 +19,15 @@ class InvariantGraphRoot : public ImplicitConstraintNode {
 
   void addSearchVarNode(VarNode&);
 
+  virtual std::ostream& dotLangEntry(std::ostream&) const override;
+
+  virtual std::ostream& dotLangEdges(std::ostream&) const override;
+
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood(
       InvariantGraph&, propagation::SolverBase&) override;
+
+  virtual std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph
