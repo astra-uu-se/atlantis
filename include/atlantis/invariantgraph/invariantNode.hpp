@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "atlantis/invariantgraph/invariantNodeBase.hpp"
+#include "atlantis/invariantgraph/iInvariantNode.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -16,11 +16,16 @@ namespace atlantis::invariantgraph {
  * view.
  */
 
-class InvariantGraph;  // Forward declaration
-
-class InvariantNode : public InvariantNodeBase {
+class InvariantNode : public IInvariantNode {
  private:
+  InvariantNodeId _id{NULL_NODE_ID};
+  InvariantNodeState _state{InvariantNodeState::UNINITIALIZED};
   InvariantGraph& _invariantGraph;
+
+ protected:
+  std::vector<VarNodeId> _outputVarNodeIds;
+  std::vector<VarNodeId> _staticInputVarNodeIds;
+  std::vector<VarNodeId> _dynamicInputVarNodeIds;
 
  public:
   explicit InvariantNode(InvariantGraph& invariantGraph,
@@ -38,9 +43,15 @@ class InvariantNode : public InvariantNodeBase {
 
   const propagation::SolverBase& solverConst() const;
 
-  virtual void init(InvariantNodeId) override;
+  InvariantNodeId id() const override;
 
-  virtual void deactivate() override;
+  InvariantNodeState state() const override;
+
+  void setState(InvariantNodeState) override;
+
+  void init(InvariantNodeId) override;
+
+  void deactivate() override;
 
   void replaceDefinedVar(VarNodeId oldOutputVarNodeId,
                          VarNodeId newOutputVarNodeId) override;
@@ -51,6 +62,10 @@ class InvariantNode : public InvariantNodeBase {
 
   void removeOutputVarNode(VarNodeId) override;
 
+  void eraseStaticInputVarNode(size_t index);
+
+  void eraseDynamicInputVarNode(size_t index);
+
   void replaceStaticInputVarNode(VarNodeId oldInputVarNodeId,
                                  VarNodeId newInputVarNodeId) override;
 
@@ -59,10 +74,10 @@ class InvariantNode : public InvariantNodeBase {
 
   std::vector<std::pair<VarNodeId, VarNodeId>> splitOutputVarNodes() override;
 
-  virtual propagation::VarId makeSolverVar(VarNodeId varNodeId) override;
+  propagation::VarId makeSolverVar(VarNodeId varNodeId) override;
 
-  virtual propagation::VarId makeSolverVar(VarNodeId varNodeId,
-                                           Int initialValue) override;
+  propagation::VarId makeSolverVar(VarNodeId varNodeId,
+                                   Int initialValue) override;
 
   void markOutputTo(VarNodeId varNodeId, bool registerHere) override;
 

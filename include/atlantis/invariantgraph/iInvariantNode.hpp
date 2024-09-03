@@ -17,33 +17,27 @@ namespace atlantis::invariantgraph {
 
 class InvariantGraph;  // Forward declaration
 
-class InvariantNodeBase {
- private:
-  InvariantNodeId _id{NULL_NODE_ID};
-  InvariantNodeState _state{InvariantNodeState::UNINITIALIZED};
-
+class IInvariantNode {
  public:
-  explicit InvariantNodeBase(std::vector<VarNodeId>&& outputIds,
-                             std::vector<VarNodeId>&& staticInputIds = {},
-                             std::vector<VarNodeId>&& dynamicInputIds = {});
+  IInvariantNode() = delete;
 
-  virtual ~InvariantNodeBase() = default;
+  virtual ~IInvariantNode() = default;
 
-  virtual void init(InvariantNodeId);
+  virtual void init(InvariantNodeId) = 0;
 
-  [[nodiscard]] InvariantNodeId id() const { return _id; }
+  [[nodiscard]] virtual InvariantNodeId id() const = 0;
 
-  [[nodiscard]] virtual bool isReified() const;
+  [[nodiscard]] virtual bool isReified() const = 0;
 
-  [[nodiscard]] virtual bool canBeReplaced() const;
+  [[nodiscard]] virtual bool canBeReplaced() const = 0;
 
-  [[nodiscard]] virtual bool replace();
+  [[nodiscard]] virtual bool replace() = 0;
 
-  [[nodiscard]] virtual bool canBeMadeImplicit() const;
+  [[nodiscard]] virtual bool canBeMadeImplicit() const = 0;
 
-  [[nodiscard]] virtual bool makeImplicit();
+  [[nodiscard]] virtual bool makeImplicit() = 0;
 
-  [[nodiscard]] InvariantNodeState state() const { return _state; }
+  [[nodiscard]] virtual InvariantNodeState state() const = 0;
 
   virtual void deactivate() = 0;
 
@@ -70,22 +64,23 @@ class InvariantNodeBase {
   /**
    * @return The variable nodes defined by this node.
    */
-  [[nodiscard]] const std::vector<VarNodeId>& outputVarNodeIds() const noexcept;
+  [[nodiscard]] virtual const std::vector<VarNodeId>& outputVarNodeIds()
+      const = 0;
 
   /**
    * @return The violation variable of this variable defining node. Only
    * applicable if the current node is a violation invariant. If this node does
    * not define a violation variable, this method returns propagation::NULL_ID.
    */
-  [[nodiscard]] virtual propagation::VarId violationVarId() const;
+  [[nodiscard]] virtual propagation::VarId violationVarId() const = 0;
 
-  [[nodiscard]] const std::vector<VarNodeId>& staticInputVarNodeIds()
-      const noexcept;
+  [[nodiscard]] virtual const std::vector<VarNodeId>& staticInputVarNodeIds()
+      const = 0;
 
-  [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds()
-      const noexcept;
+  [[nodiscard]] virtual const std::vector<VarNodeId>& dynamicInputVarNodeIds()
+      const = 0;
 
-  virtual void updateState(){};
+  virtual void updateState() = 0;
 
   virtual void replaceDefinedVar(VarNodeId oldOutputVarNode,
                                  VarNodeId newOutputVarNode) = 0;
@@ -101,18 +96,6 @@ class InvariantNodeBase {
 
   virtual void replaceDynamicInputVarNode(VarNodeId oldInputVarNode,
                                           VarNodeId newInputVarNode) = 0;
-
-  // A hack in order to steal the _inputs from the nested constraint.
-  friend class ReifiedConstraint;
-
- protected:
-  std::vector<VarNodeId> _outputVarNodeIds;
-  std::vector<VarNodeId> _staticInputVarNodeIds;
-  std::vector<VarNodeId> _dynamicInputVarNodeIds;
-
-  void eraseStaticInputVarNode(size_t index);
-
-  void eraseDynamicInputVarNode(size_t index);
 
   /**
    * Splits the unfixed output variable nodes of the current node into multiple
@@ -133,6 +116,6 @@ class InvariantNodeBase {
 
   virtual void markDynamicInputTo(VarNodeId node, bool registerHere) = 0;
 
-  void setState(InvariantNodeState state) { _state = state; }
+  virtual void setState(InvariantNodeState) = 0;
 };
 }  // namespace atlantis::invariantgraph

@@ -7,9 +7,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
+#include "atlantis/invariantgraph/iImplicitConstraintNode.hpp"
+#include "atlantis/invariantgraph/iInvariantNode.hpp"
 #include "atlantis/invariantgraph/invariantGraphRoot.hpp"
-#include "atlantis/invariantgraph/invariantNodeBase.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -30,7 +30,7 @@ class InvariantGraph {
   std::unordered_map<Int, VarNodeId> _intVarNodeIndices;
   std::array<VarNodeId, 2> _boolVarNodeIndices;
 
-  std::vector<std::shared_ptr<InvariantNodeBase>> _invariantNodes;
+  std::vector<std::shared_ptr<IInvariantNode>> _invariantNodes;
   std::vector<std::shared_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
   bool _breakDynamicCycles;
 
@@ -96,14 +96,14 @@ class InvariantGraph {
   [[nodiscard]] bool containsImplicitConstraintNode(
       InvariantNodeId) const noexcept;
 
-  [[nodiscard]] InvariantNodeBase& invariantNode(InvariantNodeId);
+  [[nodiscard]] IInvariantNode& invariantNode(InvariantNodeId);
   [[nodiscard]] InvariantGraphRoot& root();
   [[nodiscard]] ImplicitConstraintNode& implicitConstraintNode(InvariantNodeId);
 
   [[nodiscard]] InvariantNodeId nextInvariantNodeId() const noexcept;
   [[nodiscard]] InvariantNodeId nextImplicitNodeId() const noexcept;
 
-  InvariantNodeId addInvariantNode(std::shared_ptr<InvariantNodeBase>&&);
+  InvariantNodeId addInvariantNode(std::shared_ptr<IInvariantNode>&&);
 
   /**
    * @brief replaces the given old VarNode with the new VarNode in

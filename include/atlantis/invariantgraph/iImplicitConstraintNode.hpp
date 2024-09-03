@@ -2,12 +2,9 @@
 
 #include <memory>
 
-#include "atlantis/invariantgraph/iImplicitConstraintNode.hpp"
-#include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/invariantgraph/iInvariantNode.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/search/neighbourhoods/neighbourhood.hpp"
-#include "atlantis/search/searchVariable.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -15,20 +12,8 @@ namespace atlantis::invariantgraph {
  * Serves as a marker for the invariant graph to start the application to the
  * propagation solver.
  */
-class ImplicitConstraintNode : public IImplicitConstraintNode, InvariantNode {
- private:
-  std::shared_ptr<search::neighbourhoods::Neighbourhood> _neighbourhood{
-      nullptr};
-
- public:
-  void init(InvariantNodeId) override;
-
-  explicit ImplicitConstraintNode(InvariantGraph&, std::vector<VarNodeId>&&);
-
-  void registerOutputVars() override;
-
-  void registerNode() override;
-
+class IImplicitConstraintNode : public virtual IInvariantNode {
+  IImplicitConstraintNode() = delete;
   /**
    * Take the neighbourhood which is constructed in the registerNode
    * call out of this instance. Note, this transfers ownership (as indicated
@@ -45,11 +30,11 @@ class ImplicitConstraintNode : public IImplicitConstraintNode, InvariantNode {
    *
    * @return The neighbourhood corresponding to this implicit constraint.
    */
-  [[nodiscard]] std::shared_ptr<search::neighbourhoods::Neighbourhood>
-  neighbourhood() override;
+  [[nodiscard]] virtual std::shared_ptr<search::neighbourhoods::Neighbourhood>
+  neighbourhood() = 0;
 
  protected:
   virtual std::shared_ptr<search::neighbourhoods::Neighbourhood>
-  createNeighbourhood() override = 0;
+  createNeighbourhood() = 0;
 };
 }  // namespace atlantis::invariantgraph
