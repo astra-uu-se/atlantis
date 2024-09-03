@@ -65,7 +65,7 @@ class ElementLinearTree : public ::benchmark::Fixture {
   }
 
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::vector<propagation::VarId>
       elementInputVars;  // Ouput of each tree is input to Element.
   std::vector<propagation::VarId> decisionVars;  // Shared input vars to trees.
@@ -85,7 +85,7 @@ class ElementLinearTree : public ::benchmark::Fixture {
   int ub{0};
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     lb = 0;
     ub = 1000;

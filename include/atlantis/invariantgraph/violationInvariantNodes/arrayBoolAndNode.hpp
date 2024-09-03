@@ -27,7 +27,7 @@ class ArrayBoolAndNode : public ViolationInvariantNode {
   ArrayBoolAndNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
                    bool shouldHold = true);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

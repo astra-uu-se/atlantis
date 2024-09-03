@@ -65,7 +65,7 @@ class ElementVarTree : public ::benchmark::Fixture {
   }
 
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   propagation::VarId output;
 
   std::vector<propagation::VarId> vars;
@@ -88,7 +88,7 @@ class ElementVarTree : public ::benchmark::Fixture {
   void commit(::benchmark::State& st, size_t numMoves);
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     treeHeight = state.range(0);
     elementSize = state.range(1);  // number of element inputs

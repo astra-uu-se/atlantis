@@ -18,7 +18,7 @@ namespace atlantis::benchmark {
 
 class MagicSquare : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::vector<std::vector<propagation::VarId>> square;
   std::vector<propagation::VarId> flat;
   std::random_device rd;
@@ -30,7 +30,7 @@ class MagicSquare : public ::benchmark::Fixture {
   propagation::VarId totalViolation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     n = state.range(0);
     if (n < 0) {

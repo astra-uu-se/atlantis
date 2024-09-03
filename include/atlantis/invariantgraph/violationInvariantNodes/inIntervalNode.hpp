@@ -15,16 +15,13 @@ class InIntervalNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit InIntervalNode(InvariantGraph& graph,
+  explicit InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
+                          Int ub, VarNodeId r);
 
-                          VarNodeId input, Int lb, Int ub, VarNodeId r);
+  explicit InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
+                          Int ub, bool shouldHold = true);
 
-  explicit InIntervalNode(InvariantGraph& graph,
-
-                          VarNodeId input, Int lb, Int ub,
-                          bool shouldHold = true);
-
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 

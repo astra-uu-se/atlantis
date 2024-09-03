@@ -21,7 +21,7 @@ inline bool all_in_range(size_t minInclusive, size_t maxExclusive,
 
 class Queens {
  public:
-  std::unique_ptr<Solver> solver;
+  std::shared_ptr<Solver> solver;
   std::vector<VarId> queens;
   std::vector<VarId> q_offset_plus;
   std::vector<VarId> q_offset_minus;
@@ -38,7 +38,7 @@ class Queens {
 
   Queens(int n_, PropagationMode propMode = PropagationMode::INPUT_TO_OUTPUT,
          OutputToInputMarkingMode markingMode = OutputToInputMarkingMode::NONE)
-      : solver(std::make_unique<Solver>()), n(n_) {
+      : solver(std::make_shared<Solver>()), n(n_) {
     if (n < 0) {
       throw std::runtime_error("n must be non-negative.");
     }

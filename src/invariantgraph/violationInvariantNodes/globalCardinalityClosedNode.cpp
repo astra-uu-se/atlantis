@@ -18,39 +18,41 @@ GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
                              shouldHold),
       _cover(std::move(cover)) {}
 
-void GlobalCardinalityClosedNode::init(const InvariantNodeId& id) {
-  ViolationInvariantNode::init(id);
-  assert(!isReified() ||
-         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
-  assert(std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
-}
-
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
-    std::vector<VarNodeId>&& inputs, std::vector<Int>&& cover,
-    std::vector<VarNodeId>&& counts, VarNodeId r)
-    : ViolationInvariantNode(std::move(counts), std::move(inputs), r),
+    InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
+    std::vector<Int>&& cover, std::vector<VarNodeId>&& counts, VarNodeId r)
+    : ViolationInvariantNode(graph, std::move(counts), std::move(inputs), r),
       _cover(std::move(cover)) {}
 
-void GlobalCardinalityClosedNode::registerOutputVars(InvariantGraph&,
-                                                     propagation::SolverBase&) {
+void GlobalCardinalityClosedNode::init(InvariantNodeId id) {
+  ViolationInvariantNode::init(id);
+  assert(
+      !isReified() ||
+      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(
+      std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+                  [&](const VarNodeId& vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
+  assert(
+      std::all_of(staticInputVarNodeIds().begin(),
+                  staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
+}
+
+void GlobalCardinalityClosedNode::registerOutputVars() {
   throw std::runtime_error("Not implemented");
 }
 
-bool GlobalCardinalityClosedNode::canBeReplaced(const InvariantGraph&) const {
+bool GlobalCardinalityClosedNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE;
 }
 
-bool GlobalCardinalityClosedNode::replace(InvariantGraph& invariantGraph) {
+bool GlobalCardinalityClosedNode::replace() {
   if (!isReified() && shouldHold()) {
-    invariantGraph.addInvariantNode(std::make_shared<GlobalCardinalityNode>(
-        graph, std::vector<VarNodeId>{staticInputVarNodeIds()},
+    invariantGraph().addInvariantNode(std::make_shared<GlobalCardinalityNode>(
+        invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
         std::vector<Int>{_cover}, std::vector<VarNodeId>{outputVarNodeIds()}));
     return true;
   }
@@ -63,42 +65,43 @@ bool GlobalCardinalityClosedNode::replace(InvariantGraph& invariantGraph) {
   intermediateOutputNodeIds.reserve(outputVarNodeIds().size());
 
   for (VarNodeId countId : outputVarNodeIds()) {
-    intermediateOutputNodeIds.emplace_back(invariantGraph.retrieveIntVarNode(
+    intermediateOutputNodeIds.emplace_back(invariantGraph().retrieveIntVarNode(
         SearchDomain(0, static_cast<Int>(staticInputVarNodeIds().size())),
         VarNode::DomainType::NONE));
 
-    violationVarNodeIds.emplace_back(invariantGraph.retrieveBoolVarNode());
+    violationVarNodeIds.emplace_back(invariantGraph().retrieveBoolVarNode());
 
-    invariantGraph.addInvariantNode(std::make_shared<IntAllEqualNode>(
-        graph, countId, intermediateOutputNodeIds.back(),
+    invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
+        invariantGraph(), countId, intermediateOutputNodeIds.back(),
         violationVarNodeIds.back()));
   }
 
   for (VarNodeId inputId : staticInputVarNodeIds()) {
-    violationVarNodeIds.emplace_back(invariantGraph.retrieveBoolVarNode());
+    violationVarNodeIds.emplace_back(invariantGraph().retrieveBoolVarNode());
 
-    invariantGraph.addInvariantNode(std::make_shared<SetInNode>(
-        graph, inputId, std::vector<Int>(_cover), violationVarNodeIds.back()));
+    invariantGraph().addInvariantNode(std::make_shared<SetInNode>(
+        invariantGraph(), inputId, std::vector<Int>(_cover),
+        violationVarNodeIds.back()));
   }
 
-  invariantGraph.addInvariantNode(std::make_shared<GlobalCardinalityNode>(
-      graph, std::vector<VarNodeId>{staticInputVarNodeIds()},
+  invariantGraph().addInvariantNode(std::make_shared<GlobalCardinalityNode>(
+      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
       std::vector<Int>{_cover}, std::move(intermediateOutputNodeIds)));
 
   if (isReified()) {
-    invariantGraph.addInvariantNode(std::make_shared<ArrayBoolAndNode>(
-        graph, std::move(violationVarNodeIds), reifiedViolationNodeId()));
+    invariantGraph().addInvariantNode(std::make_shared<ArrayBoolAndNode>(
+        invariantGraph(), std::move(violationVarNodeIds),
+        reifiedViolationNodeId()));
     return true;
   } else {
-    invariantGraph.addInvariantNode(std::make_shared<ArrayBoolAndNode>(
-        graph, std::move(violationVarNodeIds), false));
+    invariantGraph().addInvariantNode(std::make_shared<ArrayBoolAndNode>(
+        invariantGraph(), std::move(violationVarNodeIds), false));
     return true;
   }
   return true;
 }
 
-void GlobalCardinalityClosedNode::registerNode(InvariantGraph&,
-                                               propagation::SolverBase&) {
+void GlobalCardinalityClosedNode::registerNode() {
   throw std::runtime_error("Not implemented");
 }
 

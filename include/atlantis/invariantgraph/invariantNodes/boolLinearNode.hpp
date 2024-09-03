@@ -21,7 +21,7 @@ class BoolLinearNode : public InvariantNode {
                  std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                  VarNodeId output, Int offset = 0);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

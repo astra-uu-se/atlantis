@@ -15,12 +15,11 @@ class ArrayVarElementNode : public InvariantNode {
   Int _offset;
 
  public:
-  ArrayVarElementNode(InvariantGraph& graph,
+  ArrayVarElementNode(InvariantGraph& graph, VarNodeId idx,
+                      std::vector<VarNodeId>&& varVector, VarNodeId output,
+                      Int offset);
 
-                      VarNodeId idx, std::vector<VarNodeId>&& varVector,
-                      VarNodeId output, Int offset);
-
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

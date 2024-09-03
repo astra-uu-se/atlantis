@@ -16,7 +16,7 @@ namespace atlantis::benchmark {
 
 class LinearAllDifferent : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::vector<propagation::VarId> decisionVars;
   std::random_device rd;
   std::mt19937 gen;
@@ -27,7 +27,7 @@ class LinearAllDifferent : public ::benchmark::Fixture {
   propagation::VarId violation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
     bool overlappingLinears = state.range(0) != 0;
     std::vector<propagation::VarId> linearOutputVars;
     size_t increment;

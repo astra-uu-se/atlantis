@@ -17,17 +17,14 @@ class BoolLinLeNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  BoolLinLeNode(InvariantGraph& graph,
+  BoolLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+                std::vector<VarNodeId>&& vars, Int bound,
+                bool shouldHold = true);
 
-                std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-                Int bound, bool shouldHold = true);
+  BoolLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+                std::vector<VarNodeId>&& vars, Int bound, VarNodeId reified);
 
-  BoolLinLeNode(InvariantGraph& graph,
-
-                std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-                Int bound, VarNodeId reified);
-
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

@@ -11,7 +11,7 @@ class Int2BoolNode : public InvariantNode {
  public:
   Int2BoolNode(InvariantGraph& graph, VarNodeId staticInput, VarNodeId output);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

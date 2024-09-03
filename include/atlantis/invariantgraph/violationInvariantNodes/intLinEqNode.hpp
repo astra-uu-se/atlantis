@@ -17,17 +17,14 @@ class IntLinEqNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  IntLinEqNode(InvariantGraph& graph,
+  IntLinEqNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+               std::vector<VarNodeId>&& vars, Int bound,
+               bool shouldHold = true);
 
-               std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-               Int bound, bool shouldHold = true);
+  IntLinEqNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+               std::vector<VarNodeId>&& vars, Int bound, VarNodeId reified);
 
-  IntLinEqNode(InvariantGraph& graph,
-
-               std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-               Int bound, VarNodeId reified);
-
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

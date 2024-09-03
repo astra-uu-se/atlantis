@@ -19,7 +19,7 @@ namespace atlantis::benchmark {
 
 class TSP : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::vector<propagation::VarId> pred;
   std::vector<propagation::VarId> timeToPred;
   std::vector<std::vector<Int>> durations;
@@ -33,7 +33,7 @@ class TSP : public ::benchmark::Fixture {
   const int MAX_TIME = 100000;
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
     n = state.range(0);
 
     if (n < 3) {

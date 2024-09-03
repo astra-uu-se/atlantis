@@ -40,15 +40,16 @@ ArrayElement2dNode::ArrayElement2dNode(
       _offset2(offset2),
       _isIntMatrix(false) {}
 
-void ArrayElement2dNode::init(const InvariantNodeId& id) {
-  InvariantNode::init(, id);
-  assert(_isIntMatrix ==
-         invariantGraph().varNodeConst(outputVarNodeIds().front()).isIntVar());
+void ArrayElement2dNode::init(InvariantNodeId id) {
+  InvariantNode::init(id);
+  assert(_isIntMatrix == invariantGraphConst()
+                             .varNodeConst(outputVarNodeIds().front())
+                             .isIntVar());
 }
 
 void ArrayElement2dNode::updateState() {
-  const auto& idx1Node = invariantGraph().varNodeConst(idx1());
-  const auto& idx2Node = invariantGraph().varNodeConst(idx2());
+  const auto& idx1Node = invariantGraphConst().varNodeConst(idx1());
+  const auto& idx2Node = invariantGraphConst().varNodeConst(idx2());
   if (idx1Node.isFixed() && idx2Node.isFixed()) {
     auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
     if (outputNode.isIntVar()) {
@@ -64,8 +65,8 @@ void ArrayElement2dNode::updateState() {
 
 bool ArrayElement2dNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         (invariantGraph().varNodeConst(idx1()).isFixed() ||
-          invariantGraph().varNodeConst(idx2()).isFixed());
+         (invariantGraphConst().varNodeConst(idx1()).isFixed() ||
+          invariantGraphConst().varNodeConst(idx2()).isFixed());
 }
 
 bool ArrayElement2dNode::replace() {
@@ -79,7 +80,7 @@ bool ArrayElement2dNode::replace() {
     assert(rowIndex < static_cast<Int>(_parMatrix.size()));
 
     invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
-        graph, std::move(_parMatrix.at(rowIndex)), idx2(),
+        invariantGraph(), std::move(_parMatrix.at(rowIndex)), idx2(),
         outputVarNodeIds().front(), _offset2, _isIntMatrix));
     _parMatrix.clear();
     return true;
@@ -94,19 +95,18 @@ bool ArrayElement2dNode::replace() {
   }
   _parMatrix.clear();
   invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
-      graph, std::move(parMatrixRow), idx1(), outputVarNodeIds().front(),
-      _offset1, _isIntMatrix));
+      invariantGraph(), std::move(parMatrixRow), idx1(),
+      outputVarNodeIds().front(), _offset1, _isIntMatrix));
   return true;
 }
 
 void ArrayElement2dNode::registerOutputVars() {
   if (!staticInputVarNodeIds().empty()) {
-    makeSolverVar(solver(),
-                  invariantGraph().varNode(outputVarNodeIds().front()));
+    makeSolverVar(outputVarNodeIds().front());
   }
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
-                       return invariantGraph().varNodeConst(vId).varId() !=
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }

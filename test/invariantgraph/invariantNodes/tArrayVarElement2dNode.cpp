@@ -1,7 +1,5 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/fzn/array_var_int_element2d.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElement2dNode.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -58,7 +56,7 @@ class ArrayVarElement2dNodeTestFixture
         "idx2");
 
     createInvariantNode(
-        idx1VarNodeId, idx2VarNodeId,
+        *_invariantGraph, idx1VarNodeId, idx2VarNodeId,
         std::vector<std::vector<VarNodeId>>{varMatrixVarNodeIds},
         outputVarNodeId, offsetIdx1, offsetIdx2);
   }
@@ -85,48 +83,47 @@ TEST_P(ArrayVarElement2dNodeTestFixture, construction) {
 }
 
 TEST_P(ArrayVarElement2dNodeTestFixture, application) {
-  propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
+  _solver->open();
+  addInputVarsToSolver();
 
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVars(*_invariantGraph, solver);
+  invNode().registerOutputVars();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, solver);
-  solver.close();
+  invNode().registerNode();
+  _solver->close();
 
   // x00, x01, x10, x11, idx1VarNodeId, idx2VarNodeId
-  EXPECT_EQ(solver.searchVars().size(), 6);
+  EXPECT_EQ(_solver->searchVars().size(), 6);
 
   // x00, x01, x10, x11, idx1VarNodeId, idx2VarNodeId, and outputVarNodeId
-  EXPECT_EQ(solver.numVars(), 7);
+  EXPECT_EQ(_solver->numVars(), 7);
 
   // element2dVar
-  EXPECT_EQ(solver.numInvariants(), 1);
+  EXPECT_EQ(_solver->numInvariants(), 1);
 }
 
 TEST_P(ArrayVarElement2dNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  invNode().updateState(*_invariantGraph);
+  invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-    EXPECT_TRUE(invNode().replace(*_invariantGraph));
-    invNode().deactivate(*_invariantGraph);
+    EXPECT_TRUE(invNode().canBeReplaced());
+    EXPECT_TRUE(invNode().replace());
+    invNode().deactivate();
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
   } else {
-    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+    EXPECT_FALSE(invNode().canBeReplaced());
   }
 }
 
 TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply(solver);
-  _invariantGraph->close(solver);
+  _invariantGraph->apply();
+  _invariantGraph->close();
 
   const propagation::VarId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
@@ -141,7 +138,7 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
                                : varId(idxVarNodeId));
     idxVals.emplace_back(idxVarIds.back() == propagation::NULL_ID
                              ? varNode(idxVarNodeId).lowerBound()
-                             : solver.lowerBound(idxVarIds.back()));
+                             : _solver->lowerBound(idxVarIds.back()));
   }
   for (const auto& row : varMatrixVarNodeIds) {
     for (const auto& nId : row) {
@@ -149,22 +146,22 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
                                                     : varId(nId));
       idxVals.emplace_back(idxVarIds.back() == propagation::NULL_ID
                                ? varNode(nId).lowerBound()
-                               : solver.lowerBound(idxVarIds.back()));
+                               : _solver->lowerBound(idxVarIds.back()));
     }
   }
 
   EXPECT_EQ(idxVarIds.size(), idxVals.size());
 
-  while (increaseNextVal(solver, idxVarIds, idxVals)) {
-    solver.beginMove();
-    setVarVals(solver, idxVarIds, idxVals);
-    solver.endMove();
+  while (increaseNextVal(idxVarIds, idxVals)) {
+    _solver->beginMove();
+    setVarVals(idxVarIds, idxVals);
+    _solver->endMove();
 
-    solver.beginProbe();
-    solver.query(outputId);
-    solver.endProbe();
+    _solver->beginProbe();
+    _solver->query(outputId);
+    _solver->endProbe();
 
-    const Int actual = solver.currentValue(outputId);
+    const Int actual = _solver->currentValue(outputId);
     const Int row = idxVals.at(0) - offsetIdx1;
     const Int col = idxVals.at(1) - offsetIdx2;
 

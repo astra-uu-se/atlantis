@@ -15,27 +15,21 @@ class ArrayBoolXorNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  ArrayBoolXorNode(InvariantGraph& graph,
+  ArrayBoolXorNode(InvariantGraph& graph, VarNodeId aVarNodeId,
+                   VarNodeId bNodeId, VarNodeId reifiedVarNodeId);
 
-                   VarNodeId aVarNodeId, VarNodeId bNodeId,
-                   VarNodeId reifiedVarNodeId);
-
-  ArrayBoolXorNode(InvariantGraph& graph,
-
-                   VarNodeId aVarNodeId, VarNodeId bNodeId,
-                   bool shouldHold = true);
+  ArrayBoolXorNode(InvariantGraph& graph, VarNodeId aVarNodeId,
+                   VarNodeId bNodeId, bool shouldHold = true);
 
   ArrayBoolXorNode(InvariantGraph& graph,
-
                    std::vector<VarNodeId>&& inputVarNodeIds,
                    VarNodeId reifiedVarNodeId);
 
   ArrayBoolXorNode(InvariantGraph& graph,
-
                    std::vector<VarNodeId>&& inputVarNodeIds,
                    bool shouldHold = true);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

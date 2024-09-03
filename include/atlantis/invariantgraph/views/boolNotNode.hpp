@@ -13,7 +13,7 @@ class BoolNotNode : public InvariantNode {
 
               VarNodeId staticInput, VarNodeId output);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

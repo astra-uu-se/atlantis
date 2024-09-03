@@ -1,8 +1,5 @@
-#include <gmock/gmock.h>
-
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/invariantNodes/boolLinearNode.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -17,7 +14,26 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
-  Int computeOutput() {
+  Int computeOutput(bool isRegistered = false) {
+    if (isRegistered) {
+      Int sum = 0;
+      for (size_t i = 0; i < coeffs.size(); ++i) {
+        if (coeffs.at(i) == 0) {
+          continue;
+        }
+        if (varNode(inputVarNodeIds.at(i)).isFixed() ||
+            varId(inputVarNodeIds.at(i)) == propagation::NULL_ID) {
+          sum += varNode(inputVarNodeIds.at(i)).inDomain(bool{true})
+                     ? coeffs.at(i)
+                     : 0;
+        } else {
+          sum += _solver->currentValue(varId(inputVarNodeIds.at(i))) == 0
+                     ? coeffs.at(i)
+                     : 0;
+        }
+      }
+      return sum;
+    }
     Int sum = 0;
     for (size_t i = 0; i < coeffs.size(); ++i) {
       if (coeffs.at(i) == 0) {
@@ -26,26 +42,6 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
       EXPECT_TRUE(varNode(inputVarNodeIds.at(i)).isFixed());
       sum += varNode(inputVarNodeIds.at(i)).inDomain(bool{true}) ? coeffs.at(i)
                                                                  : 0;
-    }
-    return sum;
-  }
-
-  Int computeOutput(propagation::Solver& solver) {
-    Int sum = 0;
-    for (size_t i = 0; i < coeffs.size(); ++i) {
-      if (coeffs.at(i) == 0) {
-        continue;
-      }
-      if (varNode(inputVarNodeIds.at(i)).isFixed() ||
-          varId(inputVarNodeIds.at(i)) == propagation::NULL_ID) {
-        sum += varNode(inputVarNodeIds.at(i)).inDomain(bool{true})
-                   ? coeffs.at(i)
-                   : 0;
-      } else {
-        sum += solver.currentValue(varId(inputVarNodeIds.at(i))) == 0
-                   ? coeffs.at(i)
-                   : 0;
-      }
     }
     return sum;
   }
@@ -70,7 +66,7 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
 
     outputVarNodeId = retrieveIntVarNode(minSum, maxSum, outputIdentifier);
 
-    createInvariantNode(std::vector<Int>(coeffs),
+    createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                         std::vector<VarNodeId>(inputVarNodeIds),
                         outputVarNodeId);
   }
@@ -87,32 +83,31 @@ TEST_P(BoolLinearNodeTestFixture, construction) {
 }
 
 TEST_P(BoolLinearNodeTestFixture, application) {
-  propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
+  _solver->open();
+  addInputVarsToSolver();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVars(*_invariantGraph, solver);
+  invNode().registerOutputVars();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, solver);
-  solver.close();
+  invNode().registerNode();
+  _solver->close();
 
   // inputVarNodeIds and outputVarNodeId
-  EXPECT_EQ(solver.searchVars().size(), inputVarNodeIds.size());
+  EXPECT_EQ(_solver->searchVars().size(), inputVarNodeIds.size());
 
   // inputVarNodeIds and outputVarNodeId
-  EXPECT_EQ(solver.numVars(), inputVarNodeIds.size() + 1);
+  EXPECT_EQ(_solver->numVars(), inputVarNodeIds.size() + 1);
 
   // linear invariant
-  EXPECT_EQ(solver.numInvariants(), 1);
+  EXPECT_EQ(_solver->numInvariants(), 1);
 }
 
 TEST_P(BoolLinearNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  invNode().updateState(*_invariantGraph);
+  invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
@@ -127,11 +122,11 @@ TEST_P(BoolLinearNodeTestFixture, updateState) {
 
 TEST_P(BoolLinearNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply(solver);
-  _invariantGraph->close(solver);
+  _invariantGraph->apply();
+  _invariantGraph->close();
 
   if (shouldBeSubsumed()) {
-    const Int expected = computeOutput(solver);
+    const Int expected = computeOutput(true);
     const Int actual = varNode(outputVarNodeId).lowerBound();
     EXPECT_EQ(expected, actual);
     return;
@@ -150,21 +145,21 @@ TEST_P(BoolLinearNodeTestFixture, propagation) {
   const propagation::VarId outputVarId = varId(outputIdentifier);
   EXPECT_NE(outputVarId, propagation::NULL_ID);
 
-  std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
+  std::vector<Int> inputVals = makeInputVals(inputVarIds);
 
-  while (increaseNextVal(solver, inputVarIds, inputVals)) {
-    solver.beginMove();
-    setVarVals(solver, inputVarIds, inputVals);
-    solver.endMove();
+  while (increaseNextVal(inputVarIds, inputVals)) {
+    _solver->beginMove();
+    setVarVals(inputVarIds, inputVals);
+    _solver->endMove();
 
-    solver.beginProbe();
-    solver.query(outputVarId);
-    solver.endProbe();
+    _solver->beginProbe();
+    _solver->query(outputVarId);
+    _solver->endProbe();
 
-    expectVarVals(solver, inputVarIds, inputVals);
+    expectVarVals(inputVarIds, inputVals);
 
-    const Int actual = solver.currentValue(outputVarId);
-    const Int expected = computeOutput(solver);
+    const Int actual = _solver->currentValue(outputVarId);
+    const Int expected = computeOutput(true);
 
     EXPECT_EQ(actual, expected);
   }

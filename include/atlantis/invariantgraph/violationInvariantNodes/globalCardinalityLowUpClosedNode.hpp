@@ -31,7 +31,7 @@ class GlobalCardinalityLowUpClosedNode : public ViolationInvariantNode {
                                             std::vector<Int>&& up,
                                             bool shouldHold = true);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 

@@ -17,7 +17,7 @@ class IntLinEqImplicitNode : public ImplicitConstraintNode {
   explicit IntLinEqImplicitNode(InvariantGraph&, std::vector<Int>&& coeffs,
                                 std::vector<VarNodeId>&&, Int offset);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood()

@@ -46,7 +46,7 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
   }
 
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::vector<propagation::VarId> vars;
   std::vector<propagation::VarId> decisionVars;
   propagation::VarId queryVar;
@@ -66,7 +66,7 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
   void commitRnd(::benchmark::State& st, size_t moveCount);
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     treeHeight = state.range(0);  // Tree height
     lb = -1000;

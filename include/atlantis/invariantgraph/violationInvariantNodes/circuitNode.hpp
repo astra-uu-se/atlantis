@@ -11,11 +11,9 @@
 namespace atlantis::invariantgraph {
 class CircuitNode : public ViolationInvariantNode {
  public:
-  explicit CircuitNode(InvariantGraph& graph,
+  explicit CircuitNode(InvariantGraph& graph, std::vector<VarNodeId>&&);
 
-                       std::vector<VarNodeId>&&);
-
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

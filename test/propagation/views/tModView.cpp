@@ -11,19 +11,19 @@ using namespace atlantis::propagation;
 
 class ModViewTest : public ::testing::Test {
  protected:
-  std::unique_ptr<Solver> solver;
+  std::shared_ptr<Solver> _solver;
 
-  void SetUp() override { solver = std::make_unique<Solver>(); }
+  void SetUp() override { _solver = std::make_unique<Solver>(); }
 };
 
 RC_GTEST_FIXTURE_PROP(ModViewTest, simple, (Int val)) {
   const Int denominator = *rc::gen::suchThat(rc::gen::arbitrary<Int>(),
                                              [](Int v) { return v != 0; });
-  solver->open();
-  auto varId = solver->makeIntVar(val, val, val);
-  auto viewId = solver->makeIntView<ModView>(*solver, varId, denominator);
-  solver->close();
+  _solver->open();
+  auto varId = _solver->makeIntVar(val, val, val);
+  auto viewId = _solver->makeIntView<ModView>(*_solver, varId, denominator);
+  _solver->close();
 
-  RC_ASSERT(solver->committedValue(viewId) == val % std::abs(denominator));
+  RC_ASSERT(_solver->committedValue(viewId) == val % std::abs(denominator));
 }
 }  // namespace atlantis::testing

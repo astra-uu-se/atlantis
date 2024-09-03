@@ -1,6 +1,5 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intPowNode.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -37,19 +36,19 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
     return result;
   }
 
-  Int computeOutput() {
+  Int computeOutput(bool isRegistered = false) {
+    if (isRegistered) {
+      const Int baseVal = varNode(baseVarNodeId).isFixed()
+                              ? varNode(baseVarNodeId).lowerBound()
+                              : _solver->currentValue(varId(baseVarNodeId));
+      const Int exponentVal =
+          varNode(exponentVarNodeId).isFixed()
+              ? varNode(exponentVarNodeId).lowerBound()
+              : _solver->currentValue(varId(exponentVarNodeId));
+      return int_exp(baseVal, exponentVal);
+    }
     const Int baseVal = varNode(baseVarNodeId).lowerBound();
     const Int exponentVal = varNode(exponentVarNodeId).lowerBound();
-    return int_exp(baseVal, exponentVal);
-  }
-
-  Int computeOutput(propagation::Solver& solver) {
-    const Int baseVal = varNode(baseVarNodeId).isFixed()
-                            ? varNode(baseVarNodeId).lowerBound()
-                            : solver.currentValue(varId(baseVarNodeId));
-    const Int exponentVal = varNode(exponentVarNodeId).isFixed()
-                                ? varNode(exponentVarNodeId).lowerBound()
-                                : solver.currentValue(varId(exponentVarNodeId));
     return int_exp(baseVal, exponentVal);
   }
 
@@ -59,7 +58,8 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
     exponentVarNodeId = retrieveIntVarNode(0, 10, "exponent");
     outputVarNodeId = retrieveIntVarNode(0, 10, outputIdentifier);
 
-    createInvariantNode(baseVarNodeId, exponentVarNodeId, outputVarNodeId);
+    createInvariantNode(*_invariantGraph, baseVarNodeId, exponentVarNodeId,
+                        outputVarNodeId);
   }
 };
 
@@ -74,36 +74,35 @@ TEST_P(IntPowNodeTestFixture, construction) {
 }
 
 TEST_P(IntPowNodeTestFixture, application) {
-  propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
+  _solver->open();
+  addInputVarsToSolver();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVars(*_invariantGraph, solver);
+  invNode().registerOutputVars();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, solver);
-  solver.close();
+  invNode().registerNode();
+  _solver->close();
 
   // baseVarNodeId and exponentVarNodeId
-  EXPECT_EQ(solver.searchVars().size(), 2);
+  EXPECT_EQ(_solver->searchVars().size(), 2);
 
   // baseVarNodeId, exponentVarNodeId and outputVarNodeId
-  EXPECT_EQ(solver.numVars(), 3);
+  EXPECT_EQ(_solver->numVars(), 3);
 
   // intPow
-  EXPECT_EQ(solver.numInvariants(), 1);
+  EXPECT_EQ(_solver->numInvariants(), 1);
 }
 
 TEST_P(IntPowNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply(solver);
-  _invariantGraph->close(solver);
+  _invariantGraph->apply();
+  _invariantGraph->close();
 
   if (shouldBeSubsumed()) {
-    const Int expected = computeOutput(solver);
+    const Int expected = computeOutput(true);
     const Int actual = varNode(outputVarNodeId).lowerBound();
     EXPECT_EQ(expected, actual);
     return;
@@ -121,22 +120,22 @@ TEST_P(IntPowNodeTestFixture, propagation) {
   const propagation::VarId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
-  std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
+  std::vector<Int> inputVals = makeInputVals(inputVarIds);
 
-  while (increaseNextVal(solver, inputVarIds, inputVals)) {
-    solver.beginMove();
-    setVarVals(solver, inputVarIds, inputVals);
-    solver.endMove();
+  while (increaseNextVal(inputVarIds, inputVals)) {
+    _solver->beginMove();
+    setVarVals(inputVarIds, inputVals);
+    _solver->endMove();
 
-    solver.beginProbe();
-    solver.query(outputId);
-    solver.endProbe();
+    _solver->beginProbe();
+    _solver->query(outputId);
+    _solver->endProbe();
 
-    expectVarVals(solver, inputVarIds, inputVals);
+    expectVarVals(inputVarIds, inputVals);
 
     if (inputVals.at(0) != 0 || inputVals.at(1) > 0) {
-      const Int actual = solver.currentValue(outputId);
-      const Int expected = computeOutput(solver);
+      const Int actual = _solver->currentValue(outputId);
+      const Int expected = computeOutput(true);
       EXPECT_EQ(actual, expected);
     }
   }

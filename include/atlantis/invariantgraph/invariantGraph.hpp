@@ -130,9 +130,9 @@ class InvariantGraph {
   void splitMultiDefinedVars();
   void breakCycles();
 
-  void apply(propagation::SolverBase&);
+  void apply();
 
-  void close(propagation::SolverBase&);
+  void close();
 
  private:
   std::unordered_set<VarNodeId, VarNodeIdHash> dynamicVarNodeFrontier(
@@ -154,10 +154,10 @@ class InvariantGraph {
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal);
   VarNodeId breakCycle(const std::vector<Edge>& cycle);
 
-  void createVars(propagation::SolverBase&);
-  void createImplicitConstraints(propagation::SolverBase&);
-  void createInvariants(propagation::SolverBase&);
-  propagation::VarId createViolations(propagation::SolverBase&);
+  void createVars();
+  void createImplicitConstraints();
+  void createInvariants();
+  propagation::VarId createViolations();
   void sanity(bool);
 };
 

@@ -15,7 +15,7 @@ namespace atlantis::benchmark {
 
 class Queens : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::vector<propagation::VarId> queens;
   std::vector<propagation::VarId> q_offset_plus;
   std::vector<propagation::VarId> q_offset_minus;
@@ -31,7 +31,7 @@ class Queens : public ::benchmark::Fixture {
   propagation::VarId totalViolation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
     n = state.range(0);
     if (n < 0) {
       throw std::runtime_error("n must be non-negative.");

@@ -5,31 +5,33 @@
 
 namespace atlantis::invariantgraph {
 
-IntModNode::IntModNode(VarNodeId numerator, VarNodeId denominator,
-                       VarNodeId remainder)
-    : InvariantNode({remainder}, {numerator, denominator}) {}
+IntModNode::IntModNode(InvariantGraph& graph, VarNodeId numerator,
+                       VarNodeId denominator, VarNodeId remainder)
+    : InvariantNode(graph, {remainder}, {numerator, denominator}) {}
 
-void IntModNode::init(const InvariantNodeId& id) {
+void IntModNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(graph.varNodeConst(remainder()).isIntVar());
-  assert(graph.varNodeConst(numerator()).isIntVar());
-  assert(graph.varNodeConst(denominator()).isIntVar());
+  assert(invariantGraphConst().varNodeConst(remainder()).isIntVar());
+  assert(invariantGraphConst().varNodeConst(numerator()).isIntVar());
+  assert(invariantGraphConst().varNodeConst(denominator()).isIntVar());
 }
 
 void IntModNode::registerOutputVars() {
-  makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
+  makeSolverVar(outputVarNodeIds().front());
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
 void IntModNode::registerNode() {
-  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  solver.makeInvariant<propagation::Mod>(
-      solver, graph.varId(outputVarNodeIds().front()), graph.varId(numerator()),
-      graph.varId(denominator()));
+  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
+         propagation::NULL_ID);
+  solver().makeInvariant<propagation::Mod>(
+      solver(), invariantGraph().varId(outputVarNodeIds().front()),
+      invariantGraph().varId(numerator()),
+      invariantGraph().varId(denominator()));
 }
 
 VarNodeId IntModNode::numerator() const {

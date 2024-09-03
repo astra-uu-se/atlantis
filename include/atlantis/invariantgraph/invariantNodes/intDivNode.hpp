@@ -15,7 +15,7 @@ class IntDivNode : public InvariantNode {
 
              VarNodeId numerator, VarNodeId denominator, VarNodeId quotient);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 

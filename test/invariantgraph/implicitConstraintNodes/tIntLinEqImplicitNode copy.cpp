@@ -1,6 +1,5 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/neighbourhoods/intLinEqNeighbourhood.hpp"
 
 namespace atlantis::testing {
@@ -25,7 +24,7 @@ class IntLinEqImplicitNodeTestFixture
       coeffs.emplace_back(i % 2 == 0 ? 1 : -1);
     }
 
-    createImplicitConstraintNode(std::vector<Int>{coeffs},
+    createImplicitConstraintNode(*_invariantGraph, std::vector<Int>{coeffs},
                                  std::vector<VarNodeId>{inputVarNodeIds},
                                  bound);
   }
@@ -36,25 +35,24 @@ TEST_P(IntLinEqImplicitNodeTestFixture, construction) {
 }
 
 TEST_P(IntLinEqImplicitNodeTestFixture, application) {
-  propagation::Solver solver;
-  solver.open();
+  _solver->open();
   for (VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVars(*_invariantGraph, solver);
+  invNode().registerOutputVars();
   for (VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, solver);
-  solver.close();
+  invNode().registerNode();
+  _solver->close();
 
   // a, b, c and d
-  EXPECT_EQ(solver.searchVars().size(), 4);
+  EXPECT_EQ(_solver->searchVars().size(), 4);
 
   // a, b, c and d
-  EXPECT_EQ(solver.numVars(), 4);
+  EXPECT_EQ(_solver->numVars(), 4);
 
-  EXPECT_EQ(solver.numInvariants(), 0);
+  EXPECT_EQ(_solver->numInvariants(), 0);
 
   auto neighbourhood = invNode().neighbourhood();
 

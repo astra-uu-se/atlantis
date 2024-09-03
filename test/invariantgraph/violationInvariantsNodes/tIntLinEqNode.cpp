@@ -2,7 +2,6 @@
 
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intLinEqNode.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -19,7 +18,22 @@ class IntLinEqNodeTestFixture : public NodeTestBase<IntLinEqNode> {
   std::string reifiedIdentifier{"output"};
   Int bound = 0;
 
-  bool isViolating() {
+  bool isViolating(bool isRegistered = false) {
+    if (isRegistered) {
+      Int sum = 0;
+      for (size_t i = 0; i < coeffs.size(); ++i) {
+        if (coeffs.at(i) == 0) {
+          continue;
+        }
+        if (varNode(inputVarNodeIds.at(i)).isFixed()) {
+          sum += varNode(inputVarNodeIds.at(i)).lowerBound() * coeffs.at(i);
+        } else {
+          sum += _solver->currentValue(varId(inputVarNodeIds.at(i))) *
+                 coeffs.at(i);
+        }
+      }
+      return sum != bound;
+    }
     Int sum = 0;
     for (size_t i = 0; i < coeffs.size(); ++i) {
       if (coeffs.at(i) == 0) {
@@ -27,21 +41,6 @@ class IntLinEqNodeTestFixture : public NodeTestBase<IntLinEqNode> {
       }
       EXPECT_TRUE(varNode(inputVarNodeIds.at(i)).isFixed());
       sum += varNode(inputVarNodeIds.at(i)).lowerBound() * coeffs.at(i);
-    }
-    return sum != bound;
-  }
-
-  bool isViolating(propagation::Solver& solver) {
-    Int sum = 0;
-    for (size_t i = 0; i < coeffs.size(); ++i) {
-      if (coeffs.at(i) == 0) {
-        continue;
-      }
-      if (varNode(inputVarNodeIds.at(i)).isFixed()) {
-        sum += varNode(inputVarNodeIds.at(i)).lowerBound() * coeffs.at(i);
-      } else {
-        sum += solver.currentValue(varId(inputVarNodeIds.at(i))) * coeffs.at(i);
-      }
     }
     return sum != bound;
   }
@@ -66,11 +65,11 @@ class IntLinEqNodeTestFixture : public NodeTestBase<IntLinEqNode> {
 
     if (isReified()) {
       reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
-      createInvariantNode(std::vector<Int>(coeffs),
+      createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                           std::vector<VarNodeId>(inputVarNodeIds), bound,
                           reifiedVarNodeId);
     } else {
-      createInvariantNode(std::vector<Int>(coeffs),
+      createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                           std::vector<VarNodeId>(inputVarNodeIds), bound,
                           shouldHold());
     }
@@ -91,7 +90,7 @@ TEST_P(IntLinEqNodeTestFixture, construction) {
 
 TEST_P(IntLinEqNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  invNode().updateState(*_invariantGraph);
+  invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     const Int expected = isViolating();
@@ -114,8 +113,8 @@ TEST_P(IntLinEqNodeTestFixture, updateState) {
 
 TEST_P(IntLinEqNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply(solver);
-  _invariantGraph->close(solver);
+  _invariantGraph->apply();
+  _invariantGraph->close();
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();
@@ -149,21 +148,21 @@ TEST_P(IntLinEqNodeTestFixture, propagation) {
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 
-  std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
+  std::vector<Int> inputVals = makeInputVals(inputVarIds);
 
-  while (increaseNextVal(solver, inputVarIds, inputVals)) {
-    solver.beginMove();
-    setVarVals(solver, inputVarIds, inputVals);
-    solver.endMove();
+  while (increaseNextVal(inputVarIds, inputVals)) {
+    _solver->beginMove();
+    setVarVals(inputVarIds, inputVals);
+    _solver->endMove();
 
-    solver.beginProbe();
-    solver.query(violVarId);
-    solver.endProbe();
+    _solver->beginProbe();
+    _solver->query(violVarId);
+    _solver->endProbe();
 
-    expectVarVals(solver, inputVarIds, inputVals);
+    expectVarVals(inputVarIds, inputVals);
 
-    const bool actual = solver.currentValue(violVarId) > 0;
-    const bool expected = isViolating(solver);
+    const bool actual = _solver->currentValue(violVarId) > 0;
+    const bool expected = isViolating(true);
 
     if (!shouldFail()) {
       EXPECT_EQ(actual, expected);

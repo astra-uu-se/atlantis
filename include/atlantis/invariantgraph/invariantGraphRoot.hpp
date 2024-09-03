@@ -15,9 +15,10 @@ namespace atlantis::invariantgraph {
  */
 class InvariantGraphRoot : public ImplicitConstraintNode {
  public:
-  explicit InvariantGraphRoot(std::vector<VarNodeId>&& vars = {});
+  explicit InvariantGraphRoot(InvariantGraph& graph,
+                              std::vector<VarNodeId>&& vars = {});
 
-  void addSearchVarNode(VarNode&);
+  void addSearchVarNode(VarNodeId);
 
  protected:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood()

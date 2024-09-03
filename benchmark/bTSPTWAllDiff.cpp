@@ -18,7 +18,7 @@ namespace atlantis::benchmark {
 
 class TSPTWAllDiff : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::vector<propagation::VarId> tour;
   std::vector<propagation::VarId> timeTo;
   std::vector<propagation::VarId> arrivalTime;
@@ -36,7 +36,7 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
   propagation::VarId totalViolation;
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
     // First location is the dummy location:
     n = state.range(0);
 

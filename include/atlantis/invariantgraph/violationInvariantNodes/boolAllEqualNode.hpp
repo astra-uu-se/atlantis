@@ -15,27 +15,21 @@ class BoolAllEqualNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit BoolAllEqualNode(InvariantGraph& graph,
+  explicit BoolAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+                            VarNodeId r, bool breaksCycle = false);
 
-                            VarNodeId a, VarNodeId b, VarNodeId r,
-                            bool breaksCycle = false);
-
-  explicit BoolAllEqualNode(InvariantGraph& graph,
-
-                            VarNodeId a, VarNodeId b, bool shouldHold = true,
-                            bool breaksCycle = false);
+  explicit BoolAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+                            bool shouldHold = true, bool breaksCycle = false);
 
   explicit BoolAllEqualNode(InvariantGraph& graph,
-
                             std::vector<VarNodeId>&& vars, VarNodeId r,
                             bool breaksCycle = false);
 
   explicit BoolAllEqualNode(InvariantGraph& graph,
-
                             std::vector<VarNodeId>&& vars,
                             bool shouldHold = true, bool breaksCycle = false);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

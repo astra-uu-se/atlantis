@@ -1,5 +1,6 @@
 #pragma once
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <unordered_map>
@@ -17,12 +18,13 @@ using namespace atlantis::invariantgraph;
 
 class UnitInvariantNode : public InvariantNode {
  public:
-  explicit UnitInvariantNode(std::vector<VarNodeId>&& defVarNodes)
-      : InvariantNode(std::move(defVarNodes)) {}
+  explicit UnitInvariantNode(InvariantGraph& graph,
+                             std::vector<VarNodeId>&& defVarNodes)
+      : InvariantNode(graph, std::move(defVarNodes)) {}
 
   void registerOutputVars() override {
     for (const auto& varNodeId : outputVarNodeIds()) {
-      makeSolverVar(solver, graph.varNode(varNodeId));
+      makeSolverVar(varNodeId);
     }
   }
 
@@ -95,12 +97,14 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _paramData.violType == ViolationInvariantType::REIFIED;
   }
 
-  std::unique_ptr<InvariantGraph> _invariantGraph;
+  std::shared_ptr<propagation::Solver> _solver{nullptr};
+  std::shared_ptr<InvariantGraph> _invariantGraph{nullptr};
 
   InvariantNodeId _invNodeId = InvariantNodeId(NULL_NODE_ID);
 
   void SetUp() override {
-    _invariantGraph = std::make_unique<InvariantGraph>();
+    _solver = std::make_unique<propagation::Solver>();
+    _invariantGraph = std::make_unique<InvariantGraph>(*_solver);
     _paramData = GetParam();
   }
 
@@ -172,8 +176,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return varNode(varNodeId).identifier();
   }
 
-  void addInputVarsToSolver(propagation::Solver& solver) {
-    EXPECT_EQ(solver.numVars(), 0);
+  void addInputVarsToSolver() {
+    EXPECT_EQ(_solver->numVars(), 0);
     std::unordered_set<size_t> visited;
     visited.reserve(invNode().staticInputVarNodeIds().size() +
                     invNode().dynamicInputVarNodeIds().size());
@@ -188,7 +192,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       }
       if (varId(varNodeId) == propagation::NULL_ID) {
         const auto& [lb, ub] = varNode(varNodeId).bounds();
-        varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+        varNode(varNodeId).setVarId(_solver->makeIntVar(lb, lb, ub));
       }
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
@@ -203,11 +207,11 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       }
       if (varId(varNodeId) == propagation::NULL_ID) {
         const auto& [lb, ub] = varNode(varNodeId).bounds();
-        varNode(varNodeId).setVarId(solver.makeIntVar(lb, lb, ub));
+        varNode(varNodeId).setVarId(_solver->makeIntVar(lb, lb, ub));
       }
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
-    expectInputsRegistered(invNode(), solver);
+    expectInputsRegistered(invNode());
   }
 
   [[nodiscard]] inline propagation::VarId solverVarId(
@@ -215,9 +219,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->varNode(varNodeId).varId();
   }
 
-  void expectInputsRegistered(const InvariantNode& invNode,
-                              const propagation::Solver& solver) {
-    std::vector<bool> registered(solver.numVars(), false);
+  void expectInputsRegistered(const InvariantNode& invNode) {
+    std::vector<bool> registered(_solver->numVars(), false);
     for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       if (!varNode(varNodeId).isFixed()) {
@@ -269,61 +272,56 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   std::vector<Int> makeInputVals(
-      const propagation::Solver& solver,
       const std::vector<propagation::VarId>& inputVars) {
     std::vector<Int> inputVals;
     inputVals.reserve(inputVars.size());
     for (const propagation::VarId& varId : inputVars) {
-      inputVals.emplace_back(solver.lowerBound(varId));
+      inputVals.emplace_back(_solver->lowerBound(varId));
     }
     return inputVals;
   }
 
-  bool increaseNextVal(const propagation::Solver& solver,
-                       const std::vector<propagation::VarId>& inputVars,
+  bool increaseNextVal(const std::vector<propagation::VarId>& inputVars,
                        std::vector<Int>& inputVals) {
     EXPECT_EQ(inputVars.size(), inputVals.size());
     for (Int i = static_cast<Int>(inputVals.size()) - 1; i >= 0; --i) {
       if (inputVars.at(i) == propagation::NULL_ID) {
         continue;
       }
-      if (inputVals.at(i) < solver.upperBound(inputVars.at(i))) {
+      if (inputVals.at(i) < _solver->upperBound(inputVars.at(i))) {
         ++inputVals.at(i);
         return true;
       }
-      inputVals.at(i) = solver.lowerBound(inputVars.at(i));
+      inputVals.at(i) = _solver->lowerBound(inputVars.at(i));
     }
     return false;
   }
 
-  void setVarVals(propagation::Solver& solver,
-                  const std::vector<propagation::VarId>& inputVars,
+  void setVarVals(const std::vector<propagation::VarId>& inputVars,
                   const std::vector<Int>& vals) {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVars.at(i) != propagation::NULL_ID) {
-        solver.setValue(inputVars.at(i), vals.at(i));
+        _solver->setValue(inputVars.at(i), vals.at(i));
       }
     }
   }
 
-  void expectVarVals(propagation::Solver& solver,
-                     const std::vector<propagation::VarId>& inputVars,
+  void expectVarVals(const std::vector<propagation::VarId>& inputVars,
                      const std::vector<Int>& vals) {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVars.at(i) != propagation::NULL_ID) {
-        EXPECT_EQ(solver.currentValue(inputVars.at(i)), vals.at(i));
+        EXPECT_EQ(_solver->currentValue(inputVars.at(i)), vals.at(i));
       }
     }
   }
 
-  void updateOutputVals(propagation::Solver& solver,
-                        const std::vector<propagation::VarId>& outputVars,
+  void updateOutputVals(const std::vector<propagation::VarId>& outputVars,
                         std::vector<Int>& outputVals) {
     EXPECT_EQ(outputVars.size(), outputVals.size());
     for (size_t i = 0; i < outputVars.size(); ++i) {
-      outputVals.at(i) = solver.currentValue(outputVars.at(i));
+      outputVals.at(i) = _solver->currentValue(outputVars.at(i));
     }
   }
 };

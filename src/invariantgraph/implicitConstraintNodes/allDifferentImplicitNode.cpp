@@ -13,12 +13,13 @@ AllDifferentImplicitNode::AllDifferentImplicitNode(
     InvariantGraph& graph, std::vector<VarNodeId>&& inputVars)
     : ImplicitConstraintNode(graph, std::move(inputVars)) {}
 
-void AllDifferentImplicitNode::init(const InvariantNodeId& id) {
+void AllDifferentImplicitNode::init(InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return invariantGraph().varNodeConst(vId).isIntVar();
-                     }));
+  assert(
+      std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                  [&](const VarNodeId& vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
@@ -29,12 +30,14 @@ AllDifferentImplicitNode::createNeighbourhood() {
   bool hasSameDomain = true;
   assert(!outputVarNodeIds().empty());
 
-  const auto& domain =
-      invariantGraph().varNodeConst(outputVarNodeIds().front()).constDomain();
+  const auto& domain = invariantGraphConst()
+                           .varNodeConst(outputVarNodeIds().front())
+                           .constDomain();
 
   for (size_t i = 1; i < outputVarNodeIds().size(); ++i) {
-    if (invariantGraph().varNodeConst(outputVarNodeIds().at(i)).constDomain() !=
-        domain) {
+    if (invariantGraphConst()
+            .varNodeConst(outputVarNodeIds().at(i))
+            .constDomain() != domain) {
       hasSameDomain = false;
       break;
     }

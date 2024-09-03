@@ -20,7 +20,7 @@ class IntCountNode : public InvariantNode {
 
                std::vector<VarNodeId>&& vars, Int needle, VarNodeId count);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

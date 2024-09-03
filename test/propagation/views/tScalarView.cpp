@@ -10,18 +10,19 @@ using namespace atlantis::propagation;
 
 class ScalarViewTest : public ::testing::Test {
  protected:
-  std::unique_ptr<Solver> solver;
+  std::shared_ptr<Solver> _solver;
 
-  void SetUp() override { solver = std::make_unique<Solver>(); }
+  void SetUp() override { _solver = std::make_shared<Solver>(); }
 };
 
 RC_GTEST_FIXTURE_PROP(ScalarViewTest, simple,
                       (Int val, Int scalar, Int offset)) {
-  solver->open();
-  auto varId = solver->makeIntVar(val, val, val);
-  auto viewId = solver->makeIntView<ScalarView>(*solver, varId, scalar, offset);
-  solver->close();
+  _solver->open();
+  auto varId = _solver->makeIntVar(val, val, val);
+  auto viewId =
+      _solver->makeIntView<ScalarView>(*_solver, varId, scalar, offset);
+  _solver->close();
 
-  RC_ASSERT(solver->committedValue(viewId) == val * scalar + offset);
+  RC_ASSERT(_solver->committedValue(viewId) == val * scalar + offset);
 }
 }  // namespace atlantis::testing

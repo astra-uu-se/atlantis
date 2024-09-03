@@ -31,7 +31,7 @@ class AllDifferentNode : public ViolationInvariantNode {
                             std::vector<VarNodeId>&& vars,
                             bool shouldHold = true);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   virtual void updateState() override;
 

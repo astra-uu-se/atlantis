@@ -1,6 +1,5 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intModNode.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -13,20 +12,20 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
-  Int computeOutput() {
+  Int computeOutput(bool isRegistered = false) {
+    if (isRegistered) {
+      const Int numerator =
+          varNode(numeratorVarNodeId).isFixed()
+              ? varNode(numeratorVarNodeId).lowerBound()
+              : _solver->currentValue(varId(numeratorVarNodeId));
+      const Int denominator =
+          varNode(denominatorVarNodeId).isFixed()
+              ? varNode(denominatorVarNodeId).lowerBound()
+              : _solver->currentValue(varId(denominatorVarNodeId));
+      return denominator != 0 ? numerator % denominator : 0;
+    }
     const Int numerator = varNode(numeratorVarNodeId).lowerBound();
     const Int denominator = varNode(denominatorVarNodeId).lowerBound();
-    return denominator != 0 ? numerator % denominator : 0;
-  }
-
-  Int computeOutput(propagation::Solver& solver) {
-    const Int numerator = varNode(numeratorVarNodeId).isFixed()
-                              ? varNode(numeratorVarNodeId).lowerBound()
-                              : solver.currentValue(varId(numeratorVarNodeId));
-    const Int denominator =
-        varNode(denominatorVarNodeId).isFixed()
-            ? varNode(denominatorVarNodeId).lowerBound()
-            : solver.currentValue(varId(denominatorVarNodeId));
     return denominator != 0 ? numerator % denominator : 0;
   }
 
@@ -36,8 +35,8 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
     denominatorVarNodeId = retrieveIntVarNode(1, 10, "denominator");
     outputVarNodeId = retrieveIntVarNode(0, 10, outputIdentifier);
 
-    createInvariantNode(numeratorVarNodeId, denominatorVarNodeId,
-                        outputVarNodeId);
+    createInvariantNode(*_invariantGraph, numeratorVarNodeId,
+                        denominatorVarNodeId, outputVarNodeId);
   }
 };
 
@@ -52,36 +51,35 @@ TEST_P(IntModNodeTestFixture, construction) {
 }
 
 TEST_P(IntModNodeTestFixture, application) {
-  propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
+  _solver->open();
+  addInputVarsToSolver();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVars(*_invariantGraph, solver);
+  invNode().registerOutputVars();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, solver);
-  solver.close();
+  invNode().registerNode();
+  _solver->close();
 
   // numeratorVarNodeId and denominatorVarNodeId
-  EXPECT_EQ(solver.searchVars().size(), 2);
+  EXPECT_EQ(_solver->searchVars().size(), 2);
 
   // numeratorVarNodeId, denominatorVarNodeId and outputVarNodeId
-  EXPECT_EQ(solver.numVars(), 3);
+  EXPECT_EQ(_solver->numVars(), 3);
 
   // intMod
-  EXPECT_EQ(solver.numInvariants(), 1);
+  EXPECT_EQ(_solver->numInvariants(), 1);
 }
 
 TEST_P(IntModNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply(solver);
-  _invariantGraph->close(solver);
+  _invariantGraph->apply();
+  _invariantGraph->close();
 
   if (shouldBeSubsumed()) {
-    const Int expected = computeOutput(solver);
+    const Int expected = computeOutput(true);
     const Int actual = varNode(outputVarNodeId).lowerBound();
     EXPECT_EQ(expected, actual);
     return;
@@ -101,22 +99,22 @@ TEST_P(IntModNodeTestFixture, propagation) {
       varId(invNode().outputVarNodeIds().front());
   EXPECT_EQ(inputVarIds.size(), 2);
 
-  std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
+  std::vector<Int> inputVals = makeInputVals(inputVarIds);
 
-  while (increaseNextVal(solver, inputVarIds, inputVals)) {
-    solver.beginMove();
-    setVarVals(solver, inputVarIds, inputVals);
-    solver.endMove();
+  while (increaseNextVal(inputVarIds, inputVals)) {
+    _solver->beginMove();
+    setVarVals(inputVarIds, inputVals);
+    _solver->endMove();
 
-    solver.beginProbe();
-    solver.query(outputId);
-    solver.endProbe();
+    _solver->beginProbe();
+    _solver->query(outputId);
+    _solver->endProbe();
 
-    expectVarVals(solver, inputVarIds, inputVals);
+    expectVarVals(inputVarIds, inputVals);
 
     if (inputVals.at(1) != 0) {
-      const Int actual = solver.currentValue(outputId);
-      const Int expected = computeOutput(solver);
+      const Int actual = _solver->currentValue(outputId);
+      const Int expected = computeOutput(true);
       EXPECT_EQ(actual, expected);
     }
   }

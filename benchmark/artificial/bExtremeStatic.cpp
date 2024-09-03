@@ -16,7 +16,7 @@ namespace atlantis::benchmark {
 
 class ExtremeStatic : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::vector<propagation::VarId> staticInputVars;
   propagation::VarId objective;
 
@@ -29,7 +29,7 @@ class ExtremeStatic : public ::benchmark::Fixture {
   Int ub{0};
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     lb = 0;
     ub = 16;

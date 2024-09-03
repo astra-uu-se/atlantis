@@ -27,18 +27,20 @@ AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
                                    bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold) {}
 
-void AllDifferentNode::init(const InvariantNodeId& id) {
+void AllDifferentNode::init(InvariantNodeId id) {
   ViolationInvariantNode::init(id);
-  assert(!isReified() ||
-         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
+  assert(
+      !isReified() ||
+      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(
+      std::all_of(staticInputVarNodeIds().begin(),
+                  staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
 void AllDifferentNode::updateState() {
-  ViolationInvariantNode::updateState(graph);
+  ViolationInvariantNode::updateState();
   if (isReified() || !shouldHold()) {
     return;
   }
@@ -52,7 +54,10 @@ bool AllDifferentNode::canBeMadeImplicit() const {
          shouldHold() &&
          std::all_of(staticInputVarNodeIds().begin(),
                      staticInputVarNodeIds().end(), [&](const auto& id) {
-                       return graph.varNodeConst(id).definingNodes().empty();
+                       return invariantGraphConst()
+                           .varNodeConst(id)
+                           .definingNodes()
+                           .empty();
                      });
 }
 
@@ -60,8 +65,9 @@ bool AllDifferentNode::makeImplicit() {
   if (!canBeMadeImplicit()) {
     return false;
   }
-  graph.addImplicitConstraintNode(std::make_shared<AllDifferentImplicitNode>(
-      std::vector<VarNodeId>{staticInputVarNodeIds()}));
+  invariantGraph().addImplicitConstraintNode(
+      std::make_shared<AllDifferentImplicitNode>(
+          invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
   return true;
 }
 
@@ -69,21 +75,21 @@ void AllDifferentNode::registerOutputVars() {
   assert(state() == InvariantNodeState::ACTIVE);
   assert(!staticInputVarNodeIds().empty());
   if (!staticInputVarNodeIds().empty() &&
-      violationVarId(graph) == propagation::NULL_ID) {
+      violationVarId() == propagation::NULL_ID) {
     if (shouldHold()) {
-      registerViolation(graph, solver);
+      registerViolation();
     } else {
       assert(!isReified());
-      _intermediate = solver.makeIntVar(0, 0, 0);
-      setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
-                                   solver, _intermediate, 0));
+      _intermediate = solver().makeIntVar(0, 0, 0);
+      setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
+          solver(), _intermediate, 0));
     }
   }
   assert(outputVarNodeIds().size() <= 1);
   assert(outputVarNodeIds().empty() ||
          std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
@@ -92,21 +98,21 @@ void AllDifferentNode::registerNode() {
   if (staticInputVarNodeIds().empty()) {
     return;
   }
-  assert(violationVarId(graph) != propagation::NULL_ID);
+  assert(violationVarId() != propagation::NULL_ID);
 
   std::vector<propagation::VarId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(solverVars),
-                 [&](const auto& id) { return graph.varId(id); });
+                 [&](const auto& id) { return invariantGraph().varId(id); });
 
   if (solverVars.size() == 2) {
-    solver.makeViolationInvariant<propagation::NotEqual>(
-        solver, !shouldHold() ? _intermediate : violationVarId(graph),
+    solver().makeViolationInvariant<propagation::NotEqual>(
+        solver(), !shouldHold() ? _intermediate : violationVarId(),
         solverVars.front(), solverVars.back());
   } else {
-    solver.makeViolationInvariant<propagation::AllDifferent>(
-        solver, !shouldHold() ? _intermediate : violationVarId(graph),
+    solver().makeViolationInvariant<propagation::AllDifferent>(
+        solver(), !shouldHold() ? _intermediate : violationVarId(),
         std::move(solverVars));
   }
 }

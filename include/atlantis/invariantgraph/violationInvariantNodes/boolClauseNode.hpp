@@ -15,17 +15,13 @@ class BoolClauseNode : public ViolationInvariantNode {
   propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
-  explicit BoolClauseNode(InvariantGraph& graph,
-
-                          std::vector<VarNodeId>&& as,
+  explicit BoolClauseNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
                           std::vector<VarNodeId>&& bs, VarNodeId r);
 
-  explicit BoolClauseNode(InvariantGraph& graph,
-
-                          std::vector<VarNodeId>&& as,
+  explicit BoolClauseNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
                           std::vector<VarNodeId>&& bs, bool shouldHold = true);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

@@ -128,12 +128,12 @@ class SolverTest : public ::testing::Test {
  protected:
   std::mt19937 gen;
 
-  std::unique_ptr<Solver> solver;
+  std::shared_ptr<Solver> solver;
 
   void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
-    solver = std::make_unique<Solver>();
+    solver = std::make_shared<Solver>();
   }
 
   void propagation(PropagationMode propMode,

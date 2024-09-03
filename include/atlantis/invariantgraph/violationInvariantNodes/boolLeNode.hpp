@@ -16,7 +16,7 @@ class BoolLeNode : public ViolationInvariantNode {
   BoolLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
              bool shouldHold = true);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

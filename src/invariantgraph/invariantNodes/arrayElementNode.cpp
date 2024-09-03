@@ -37,14 +37,15 @@ ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
       _offset(offset),
       _isIntVector(false) {}
 
-void ArrayElementNode::init(const InvariantNodeId& id) {
+void ArrayElementNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(_isIntVector ==
-         invariantGraph().varNodeConst(outputVarNodeIds().front()).isIntVar());
+  assert(_isIntVector == invariantGraphConst()
+                             .varNodeConst(outputVarNodeIds().front())
+                             .isIntVar());
 }
 
 void ArrayElementNode::updateState() {
-  const auto& idxNode = invariantGraph().varNodeConst(idx());
+  const auto& idxNode = invariantGraphConst().varNodeConst(idx());
   if (idxNode.isFixed()) {
     auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
     if (outputNode.isIntVar()) {
@@ -69,7 +70,7 @@ void ArrayElementNode::registerOutputVars() {
   }
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
-                       return invariantGraph().varNodeConst(vId).varId() !=
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }

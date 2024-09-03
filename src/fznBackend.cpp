@@ -139,7 +139,7 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   logger.timedProcedure("building invariant graph",
                         [&] { invariantGraph.build(_model); });
 
-  invariantGraph.apply(solver);
+  invariantGraph.apply();
   auto neighbourhood = invariantGraph.neighbourhood();
 
   neighbourhood.printNeighbourhood(logger);
@@ -149,7 +149,7 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   auto violation = searchObjective.registerNode(
       invariantGraph.totalViolationVarId(), invariantGraph.objectiveVarId());
 
-  invariantGraph.close(solver);
+  invariantGraph.close();
 
   const Int objectiveOptimalValue =
       _model.isSatisfactionProblem()

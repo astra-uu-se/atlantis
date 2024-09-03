@@ -16,12 +16,13 @@ IntLinEqImplicitNode::IntLinEqImplicitNode(InvariantGraph& graph,
       _coeffs(std::move(coeffs)),
       _offset(offset) {}
 
-void IntLinEqImplicitNode::init(const InvariantNodeId& id) {
+void IntLinEqImplicitNode::init(InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
+  assert(
+      std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                  [&](const VarNodeId& vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
@@ -34,7 +35,7 @@ IntLinEqImplicitNode::createNeighbourhood() {
   searchVars.reserve(outputVarNodeIds().size());
 
   for (const auto& nId : outputVarNodeIds()) {
-    auto& varNode = graph.varNode(nId);
+    auto& varNode = invariantGraph().varNode(nId);
     assert(varNode.varId() != propagation::NULL_ID);
     searchVars.emplace_back(varNode.varId(),
                             SearchDomain{varNode.constDomain().lowerBound(),
@@ -43,7 +44,7 @@ IntLinEqImplicitNode::createNeighbourhood() {
   }
 
   return std::make_shared<search::neighbourhoods::IntLinEqNeighbourhood>(
-      std::vector<Int>{_coeffs}, std::move(searchVars), _offset, solver);
+      std::vector<Int>{_coeffs}, std::move(searchVars), _offset);
 }
 
 }  // namespace atlantis::invariantgraph

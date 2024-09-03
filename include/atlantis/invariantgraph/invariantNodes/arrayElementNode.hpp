@@ -24,7 +24,7 @@ class ArrayElementNode : public InvariantNode {
   ArrayElementNode(InvariantGraph& graph, std::vector<bool>&& parVector,
                    VarNodeId idx, VarNodeId output, Int offset);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

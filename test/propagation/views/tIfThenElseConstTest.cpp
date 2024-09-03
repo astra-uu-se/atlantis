@@ -12,7 +12,7 @@ using namespace atlantis::propagation;
 
 class IfThenElseConstTest : public ::testing::Test {
  protected:
-  std::unique_ptr<Solver> solver;
+  std::shared_ptr<Solver> _solver;
   std::mt19937 gen;
   std::default_random_engine rng;
 
@@ -28,7 +28,7 @@ class IfThenElseConstTest : public ::testing::Test {
   void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
-    solver = std::make_unique<Solver>();
+    _solver = std::make_unique<Solver>();
 
     valueDist = std::uniform_int_distribution<Int>(valueLb, valueUb);
     thenVal = valueDist(gen);
@@ -36,7 +36,7 @@ class IfThenElseConstTest : public ::testing::Test {
   }
 
   Int computeOutput(const Timestamp ts, const VarId condVarId) {
-    return computeOutput(solver->value(ts, condVarId));
+    return computeOutput(_solver->value(ts, condVarId));
   }
 
   Int computeOutput(const Int conditionVal) {
@@ -46,39 +46,39 @@ class IfThenElseConstTest : public ::testing::Test {
 };
 
 TEST_F(IfThenElseConstTest, Bounds) {
-  solver->open();
-  const VarId condVarId = solver->makeIntVar(condLb, condLb, condUb);
-  const VarId outputId = solver->makeIntView<IfThenElseConst>(
-      *solver, condVarId, thenVal, elseVal);
-  solver->close();
+  _solver->open();
+  const VarId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
+  const VarId outputId = _solver->makeIntView<IfThenElseConst>(
+      *_solver, condVarId, thenVal, elseVal);
+  _solver->close();
 
-  EXPECT_EQ(std::min(thenVal, elseVal), solver->lowerBound(outputId));
-  EXPECT_EQ(std::max(thenVal, elseVal), solver->upperBound(outputId));
+  EXPECT_EQ(std::min(thenVal, elseVal), _solver->lowerBound(outputId));
+  EXPECT_EQ(std::max(thenVal, elseVal), _solver->upperBound(outputId));
 
-  solver->updateBounds(condVarId, 0, 0, false);
-  EXPECT_EQ(thenVal, solver->lowerBound(outputId));
-  EXPECT_EQ(thenVal, solver->upperBound(outputId));
+  _solver->updateBounds(condVarId, 0, 0, false);
+  EXPECT_EQ(thenVal, _solver->lowerBound(outputId));
+  EXPECT_EQ(thenVal, _solver->upperBound(outputId));
 
-  solver->updateBounds(condVarId, 1, 1, false);
-  EXPECT_EQ(elseVal, solver->lowerBound(outputId));
-  EXPECT_EQ(elseVal, solver->upperBound(outputId));
+  _solver->updateBounds(condVarId, 1, 1, false);
+  EXPECT_EQ(elseVal, _solver->lowerBound(outputId));
+  EXPECT_EQ(elseVal, _solver->upperBound(outputId));
 }
 
 TEST_F(IfThenElseConstTest, Value) {
-  solver->open();
-  const VarId condVarId = solver->makeIntVar(condLb, condLb, condUb);
-  const VarId outputId = solver->makeIntView<IfThenElseConst>(
-      *solver, condVarId, thenVal, elseVal);
-  solver->close();
+  _solver->open();
+  const VarId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
+  const VarId outputId = _solver->makeIntView<IfThenElseConst>(
+      *_solver, condVarId, thenVal, elseVal);
+  _solver->close();
 
   for (Int condVal = condLb; condVal <= condUb; ++condVal) {
-    solver->setValue(solver->currentTimestamp(), condVarId, condVal);
-    EXPECT_EQ(solver->value(solver->currentTimestamp(), condVarId), condVal);
+    _solver->setValue(_solver->currentTimestamp(), condVarId, condVal);
+    EXPECT_EQ(_solver->value(_solver->currentTimestamp(), condVarId), condVal);
     const Int expectedOutput =
-        computeOutput(solver->currentTimestamp(), condVarId);
+        computeOutput(_solver->currentTimestamp(), condVarId);
 
     EXPECT_EQ(expectedOutput,
-              solver->value(solver->currentTimestamp(), outputId));
+              _solver->value(_solver->currentTimestamp(), outputId));
   }
 }
 
@@ -86,28 +86,28 @@ TEST_F(IfThenElseConstTest, CommittedValue) {
   std::vector<Int> condValues{0, 1};
   std::shuffle(condValues.begin(), condValues.end(), rng);
 
-  solver->open();
-  const VarId condVarId = solver->makeIntVar(condLb, condLb, condUb);
-  const VarId outputId = solver->makeIntView<IfThenElseConst>(
-      *solver, condVarId, thenVal, elseVal);
-  solver->close();
+  _solver->open();
+  const VarId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
+  const VarId outputId = _solver->makeIntView<IfThenElseConst>(
+      *_solver, condVarId, thenVal, elseVal);
+  _solver->close();
 
-  Int committedValue = solver->committedValue(condVarId);
+  Int committedValue = _solver->committedValue(condVarId);
 
   for (size_t i = 0; i < condValues.size(); ++i) {
-    Timestamp ts = solver->currentTimestamp() + Timestamp(1 + i);
-    ASSERT_EQ(solver->committedValue(condVarId), committedValue);
+    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    ASSERT_EQ(_solver->committedValue(condVarId), committedValue);
 
-    solver->setValue(ts, condVarId, condValues[i]);
+    _solver->setValue(ts, condVarId, condValues[i]);
 
     const Int expectedOutput = computeOutput(condValues[i]);
 
-    ASSERT_EQ(expectedOutput, solver->value(ts, outputId));
+    ASSERT_EQ(expectedOutput, _solver->value(ts, outputId));
 
-    solver->commitIf(ts, condVarId);
-    committedValue = solver->value(ts, condVarId);
+    _solver->commitIf(ts, condVarId);
+    committedValue = _solver->value(ts, condVarId);
 
-    ASSERT_EQ(expectedOutput, solver->value(ts + 1, outputId));
+    ASSERT_EQ(expectedOutput, _solver->value(ts + 1, outputId));
   }
 }
 

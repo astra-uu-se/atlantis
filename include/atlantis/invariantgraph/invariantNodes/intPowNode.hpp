@@ -14,7 +14,7 @@ class IntPowNode : public InvariantNode {
   IntPowNode(InvariantGraph& graph, VarNodeId base, VarNodeId exponent,
              VarNodeId power);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 

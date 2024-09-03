@@ -15,7 +15,7 @@ class IntModNode : public InvariantNode {
 
              VarNodeId numerator, VarNodeId denominator, VarNodeId remainder);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 

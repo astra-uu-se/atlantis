@@ -34,15 +34,15 @@ enum struct IntArgState : unsigned char { PAR = 0, FIXED = 1, VAR = 2 };
 
 class FznTestBase : public ::testing::Test {
  public:
-  std::unique_ptr<Model> _model;
-  std::unique_ptr<FznInvariantGraph> _invariantGraph;
-  std::unique_ptr<propagation::Solver> _solver;
+  std::shared_ptr<Model> _model;
+  std::shared_ptr<FznInvariantGraph> _invariantGraph;
+  std::shared_ptr<propagation::Solver> _solver;
   std::string constraintIdentifier;
 
   void SetUp() override {
-    _model = std::make_unique<Model>();
-    _invariantGraph = std::make_unique<FznInvariantGraph>(true);
-    _solver = std::make_unique<propagation::Solver>();
+    _model = std::make_shared<Model>();
+    _solver = std::make_shared<propagation::Solver>();
+    _invariantGraph = std::make_shared<FznInvariantGraph>(*_solver, true);
   }
 
   [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const {

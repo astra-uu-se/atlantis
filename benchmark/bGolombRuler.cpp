@@ -18,7 +18,7 @@ namespace atlantis::benchmark {
 
 class GolombRuler : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::mt19937 gen;
 
   size_t markCount{0};
@@ -30,7 +30,7 @@ class GolombRuler : public ::benchmark::Fixture {
   propagation::VarId totalViolation;
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     markCount = state.range(0);
     const size_t ub = markCount * markCount;

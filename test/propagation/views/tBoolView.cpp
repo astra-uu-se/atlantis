@@ -12,60 +12,61 @@ using namespace atlantis::propagation;
 
 class BoolViewTest : public ::testing::Test {
  protected:
-  std::unique_ptr<Solver> solver;
+  std::shared_ptr<Solver> _solver;
 
-  void SetUp() override { solver = std::make_unique<Solver>(); }
+  void SetUp() override { _solver = std::make_unique<Solver>(); }
 };
 
 TEST_F(BoolViewTest, CreateBoolView) {
-  solver->open();
+  _solver->open();
 
-  const VarId var = solver->makeIntVar(10, 0, 10);
-  auto viewOfVar = solver->makeIntView<Violation2BoolView>(*solver, var);
-  auto viewOfView = solver->makeIntView<Violation2BoolView>(*solver, viewOfVar);
+  const VarId var = _solver->makeIntVar(10, 0, 10);
+  auto viewOfVar = _solver->makeIntView<Violation2BoolView>(*_solver, var);
+  auto viewOfView =
+      _solver->makeIntView<Violation2BoolView>(*_solver, viewOfVar);
 
-  EXPECT_EQ(solver->committedValue(viewOfVar), Int(1));
-  EXPECT_EQ(solver->committedValue(viewOfView), Int(1));
+  EXPECT_EQ(_solver->committedValue(viewOfVar), Int(1));
+  EXPECT_EQ(_solver->committedValue(viewOfView), Int(1));
 
-  solver->close();
+  _solver->close();
 }
 
 TEST_F(BoolViewTest, ComputeBounds) {
-  solver->open();
-  auto a = solver->makeIntVar(20, -100, 100);
+  _solver->open();
+  auto a = _solver->makeIntVar(20, -100, 100);
 
-  auto va = solver->makeIntView<Violation2BoolView>(*solver, a);
+  auto va = _solver->makeIntView<Violation2BoolView>(*_solver, a);
 
-  EXPECT_EQ(solver->lowerBound(va), Int(0));
-  EXPECT_EQ(solver->upperBound(va), Int(1));
+  EXPECT_EQ(_solver->lowerBound(va), Int(0));
+  EXPECT_EQ(_solver->upperBound(va), Int(1));
 
-  solver->close();
+  _solver->close();
 
-  EXPECT_EQ(solver->lowerBound(va), Int(0));
-  EXPECT_EQ(solver->upperBound(va), Int(1));
+  EXPECT_EQ(_solver->lowerBound(va), Int(0));
+  EXPECT_EQ(_solver->upperBound(va), Int(1));
 }
 
 TEST_F(BoolViewTest, RecomputeBoolView) {
-  solver->open();
-  auto a = solver->makeIntVar(20, -100, 100);
+  _solver->open();
+  auto a = _solver->makeIntVar(20, -100, 100);
 
-  auto viewOfVarId = solver->makeIntView<Violation2BoolView>(*solver, a);
+  auto viewOfVarId = _solver->makeIntView<Violation2BoolView>(*_solver, a);
 
-  EXPECT_EQ(solver->currentValue(viewOfVarId), Int(1));
+  EXPECT_EQ(_solver->currentValue(viewOfVarId), Int(1));
 
-  solver->close();
+  _solver->close();
 
-  EXPECT_EQ(solver->currentValue(viewOfVarId), Int(1));
+  EXPECT_EQ(_solver->currentValue(viewOfVarId), Int(1));
 
-  solver->beginMove();
-  solver->setValue(a, 0);
-  solver->endMove();
+  _solver->beginMove();
+  _solver->setValue(a, 0);
+  _solver->endMove();
 
-  solver->beginProbe();
-  solver->query(a);
-  solver->endProbe();
+  _solver->beginProbe();
+  _solver->query(a);
+  _solver->endProbe();
 
-  EXPECT_EQ(solver->currentValue(viewOfVarId), Int(0));
+  EXPECT_EQ(_solver->currentValue(viewOfVarId), Int(0));
 }
 
 }  // namespace atlantis::testing

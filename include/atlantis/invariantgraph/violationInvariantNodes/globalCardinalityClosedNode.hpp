@@ -15,20 +15,18 @@ class GlobalCardinalityClosedNode : public ViolationInvariantNode {
 
  public:
   explicit GlobalCardinalityClosedNode(InvariantGraph& graph,
-
                                        std::vector<VarNodeId>&& inputs,
                                        std::vector<Int>&& cover,
                                        std::vector<VarNodeId>&& counts,
                                        VarNodeId r);
 
   explicit GlobalCardinalityClosedNode(InvariantGraph& graph,
-
                                        std::vector<VarNodeId>&& inputs,
                                        std::vector<Int>&& cover,
                                        std::vector<VarNodeId>&& counts,
                                        bool shouldHold = true);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 

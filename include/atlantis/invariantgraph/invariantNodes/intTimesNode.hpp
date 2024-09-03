@@ -16,7 +16,7 @@ class IntTimesNode : public InvariantNode {
   IntTimesNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                VarNodeId output);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

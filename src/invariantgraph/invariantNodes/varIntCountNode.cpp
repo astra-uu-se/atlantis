@@ -11,17 +11,21 @@
 
 namespace atlantis::invariantgraph {
 
-VarIntCountNode::VarIntCountNode(std::vector<VarNodeId>&& vars,
+VarIntCountNode::VarIntCountNode(InvariantGraph& graph,
+                                 std::vector<VarNodeId>&& vars,
                                  VarNodeId needle, VarNodeId count)
-    : InvariantNode({count}, append(std::move(vars), needle)) {}
+    : InvariantNode(graph, {count}, append(std::move(vars), needle)) {}
 
-void VarIntCountNode::init(const InvariantNodeId& id) {
+void VarIntCountNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
-  assert(std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
+  assert(invariantGraphConst()
+             .varNodeConst(outputVarNodeIds().front())
+             .isIntVar());
+  assert(
+      std::all_of(staticInputVarNodeIds().begin(),
+                  staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
 std::vector<VarNodeId> VarIntCountNode::haystack() const {
@@ -38,7 +42,7 @@ VarNodeId VarIntCountNode::needle() const {
 
 bool VarIntCountNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         graph.varNodeConst(needle()).isFixed();
+         invariantGraphConst().varNodeConst(needle()).isFixed();
 }
 
 bool VarIntCountNode::replace() {
@@ -46,35 +50,38 @@ bool VarIntCountNode::replace() {
     return false;
   }
 
-  graph.addInvariantNode(std::make_shared<IntCountNode>(
-      graph, haystack(), graph.varNodeConst(needle()).lowerBound(),
+  invariantGraph().addInvariantNode(std::make_shared<IntCountNode>(
+      invariantGraph(), haystack(),
+      invariantGraphConst().varNodeConst(needle()).lowerBound(),
       outputVarNodeIds().front()));
 
   return true;
 }
 
 void VarIntCountNode::registerOutputVars() {
-  makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
+  makeSolverVar(outputVarNodeIds().front());
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
 void VarIntCountNode::registerNode() {
-  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
+         propagation::NULL_ID);
 
   std::vector<VarNodeId> h = haystack();
   std::vector<propagation::VarId> solverVars;
   solverVars.reserve(h.size());
 
-  std::transform(h.begin(), h.end(), std::back_inserter(solverVars),
-                 [&](const VarNodeId node) { return graph.varId(node); });
+  std::transform(
+      h.begin(), h.end(), std::back_inserter(solverVars),
+      [&](const VarNodeId node) { return invariantGraph().varId(node); });
 
-  solver.makeInvariant<propagation::Count>(
-      solver, graph.varId(outputVarNodeIds().front()), graph.varId(needle()),
-      std::move(solverVars));
+  solver().makeInvariant<propagation::Count>(
+      solver(), invariantGraph().varId(outputVarNodeIds().front()),
+      invariantGraph().varId(needle()), std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

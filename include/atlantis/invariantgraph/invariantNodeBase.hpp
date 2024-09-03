@@ -29,7 +29,7 @@ class InvariantNodeBase {
 
   virtual ~InvariantNodeBase() = default;
 
-  virtual void init(const InvariantNodeId&);
+  virtual void init(InvariantNodeId);
 
   [[nodiscard]] InvariantNodeId id() const { return _id; }
 

@@ -18,7 +18,7 @@ class IntScalarNode : public InvariantNode {
                 VarNodeId staticInput, VarNodeId output, Int factor,
                 Int offset);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

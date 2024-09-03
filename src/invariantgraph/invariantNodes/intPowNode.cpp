@@ -7,32 +7,37 @@
 
 namespace atlantis::invariantgraph {
 
-IntPowNode::IntPowNode(VarNodeId base, VarNodeId exponent, VarNodeId power)
-    : InvariantNode({power}, {base, exponent}) {}
+IntPowNode::IntPowNode(InvariantGraph& graph, VarNodeId base,
+                       VarNodeId exponent, VarNodeId power)
+    : InvariantNode(graph, {power}, {base, exponent}) {}
 
-void IntPowNode::init(const InvariantNodeId& id) {
+void IntPowNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
-  assert(std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
+  assert(invariantGraphConst()
+             .varNodeConst(outputVarNodeIds().front())
+             .isIntVar());
+  assert(
+      std::all_of(staticInputVarNodeIds().begin(),
+                  staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
 void IntPowNode::registerOutputVars() {
-  makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
+  makeSolverVar(outputVarNodeIds().front());
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
 void IntPowNode::registerNode() {
-  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  solver.makeInvariant<propagation::Pow>(
-      solver, graph.varId(outputVarNodeIds().front()), graph.varId(base()),
-      graph.varId(exponent()));
+  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
+         propagation::NULL_ID);
+  solver().makeInvariant<propagation::Pow>(
+      solver(), invariantGraph().varId(outputVarNodeIds().front()),
+      invariantGraph().varId(base()), invariantGraph().varId(exponent()));
 }
 
 VarNodeId IntPowNode::base() const { return staticInputVarNodeIds().front(); }

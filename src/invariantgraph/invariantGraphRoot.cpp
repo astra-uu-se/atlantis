@@ -12,26 +12,27 @@ InvariantGraphRoot::InvariantGraphRoot(InvariantGraph& graph,
     : ImplicitConstraintNode(graph, std::move(vars)) {}
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
-InvariantGraphRoot::createNeighbourhood(InvariantGraph& graph,
-                                        propagation::SolverBase& solver) {
+InvariantGraphRoot::createNeighbourhood() {
   std::vector<search::SearchVar> searchVars;
   searchVars.reserve(outputVarNodeIds().size());
 
   for (const auto& nId : outputVarNodeIds()) {
-    SearchDomain dom = graph.varNode(outputVarNodeIds().front()).constDomain();
-    auto& node = graph.varNode(nId);
+    SearchDomain dom = invariantGraphConst()
+                           .varNodeConst(outputVarNodeIds().front())
+                           .constDomain();
+    auto& node = invariantGraph().varNode(nId);
     assert(node.varId() != propagation::NULL_ID);
     searchVars.emplace_back(node.varId(), std::move(dom));
     node.setDomainType(VarNode::DomainType::NONE);
   }
 
   return std::make_shared<search::neighbourhoods::RandomNeighbourhood>(
-      std::move(searchVars), solver);
+      std::move(searchVars));
 }
 
-void InvariantGraphRoot::addSearchVarNode(VarNode& varNode) {
-  markOutputTo(varNode);
-  assert(outputVarNodeIds().back() == varNode.varNodeId());
+void InvariantGraphRoot::addSearchVarNode(VarNodeId vId) {
+  markOutputTo(vId, true);
+  assert(outputVarNodeIds().back() == vId);
 }
 
 }  // namespace atlantis::invariantgraph

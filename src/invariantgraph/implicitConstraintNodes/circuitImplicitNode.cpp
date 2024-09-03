@@ -14,12 +14,13 @@ CircuitImplicitNode::CircuitImplicitNode(InvariantGraph& graph,
   assert(outputVarNodeIds().size() > 1);
 }
 
-void CircuitImplicitNode::init(const InvariantNodeId& id) {
+void CircuitImplicitNode::init(InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return invariantGraph().varNodeConst(vId).isIntVar();
-                     }));
+  assert(
+      std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                  [&](const VarNodeId& vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
@@ -29,7 +30,7 @@ CircuitImplicitNode::createNeighbourhood() {
   std::vector<Int> freeIndices;
   freeIndices.reserve(outputVarNodeIds().size());
   for (const auto& nId : outputVarNodeIds()) {
-    const auto& varNode = invariantGraph().varNodeConst(nId);
+    const auto& varNode = invariantGraphConst().varNodeConst(nId);
     if (varNode.isFixed()) {
       freeIndices.emplace_back(varNode.constDomain().lowerBound());
     }

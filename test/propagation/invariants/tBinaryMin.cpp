@@ -1,11 +1,5 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
-#include <vector>
-
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/invariants/binaryMin.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -14,8 +8,8 @@ using namespace atlantis::propagation;
 class BinaryMinTest : public InvariantTest {
  public:
   Int computeOutput(Timestamp ts, std::array<VarId, 2> inputs) {
-    return computeOutput(solver->value(ts, inputs.at(0)),
-                         solver->value(ts, inputs.at(1)));
+    return computeOutput(_solver->value(ts, inputs.at(0)),
+                         _solver->value(ts, inputs.at(1)));
   }
 
   static Int computeOutput(std::array<Int, 2> inputs) {
@@ -23,7 +17,7 @@ class BinaryMinTest : public InvariantTest {
   }
 
   Int computeOutput(Timestamp ts, const VarId x, const VarId y) {
-    return computeOutput(solver->value(ts, x), solver->value(ts, y));
+    return computeOutput(_solver->value(ts, x), _solver->value(ts, y));
   }
 
   static Int computeOutput(const Int xVal, const Int yVal) {
@@ -34,27 +28,27 @@ class BinaryMinTest : public InvariantTest {
 TEST_F(BinaryMinTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
-  solver->open();
-  const VarId x = solver->makeIntVar(
+  _solver->open();
+  const VarId x = _solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId y = solver->makeIntVar(
+  const VarId y = _solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId outputId = solver->makeIntVar(0, 0, 2);
+  const VarId outputId = _solver->makeIntVar(0, 0, 2);
   BinaryMin& invariant =
-      solver->makeInvariant<BinaryMin>(*solver, outputId, x, y);
-  solver->close();
+      _solver->makeInvariant<BinaryMin>(*_solver, outputId, x, y);
+  _solver->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_TRUE(xLb <= xUb);
-    solver->updateBounds(x, xLb, xUb, false);
+    _solver->updateBounds(x, xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
-      solver->updateBounds(y, yLb, yUb, false);
-      solver->open();
+      _solver->updateBounds(y, yLb, yUb, false);
+      _solver->open();
       invariant.updateBounds(false);
-      solver->close();
-      EXPECT_EQ(solver->lowerBound(outputId), std::min(xLb, yLb));
-      EXPECT_EQ(solver->upperBound(outputId), std::min(xUb, yUb));
+      _solver->close();
+      EXPECT_EQ(_solver->lowerBound(outputId), std::min(xLb, yLb));
+      EXPECT_EQ(_solver->upperBound(outputId), std::min(xUb, yUb));
     }
   }
 }
@@ -67,24 +61,24 @@ TEST_F(BinaryMinTest, Recompute) {
   EXPECT_TRUE(xLb <= xUb);
   EXPECT_TRUE(yLb <= yUb);
 
-  solver->open();
-  const VarId x = solver->makeIntVar(xUb, xLb, xUb);
-  const VarId y = solver->makeIntVar(yUb, yLb, yUb);
+  _solver->open();
+  const VarId x = _solver->makeIntVar(xUb, xLb, xUb);
+  const VarId y = _solver->makeIntVar(yUb, yLb, yUb);
   const VarId outputId =
-      solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
+      _solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
   BinaryMin& invariant =
-      solver->makeInvariant<BinaryMin>(*solver, outputId, x, y);
-  solver->close();
+      _solver->makeInvariant<BinaryMin>(*_solver, outputId, x, y);
+  _solver->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
     for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-      solver->setValue(solver->currentTimestamp(), x, xVal);
-      solver->setValue(solver->currentTimestamp(), y, yVal);
+      _solver->setValue(_solver->currentTimestamp(), x, xVal);
+      _solver->setValue(_solver->currentTimestamp(), y, yVal);
 
       const Int expectedOutput = computeOutput(xVal, yVal);
-      invariant.recompute(solver->currentTimestamp());
+      invariant.recompute(_solver->currentTimestamp());
       EXPECT_EQ(expectedOutput,
-                solver->value(solver->currentTimestamp(), outputId));
+                _solver->value(_solver->currentTimestamp(), outputId));
     }
   }
 }
@@ -94,24 +88,24 @@ TEST_F(BinaryMinTest, NotifyInputChanged) {
   const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
-  solver->open();
-  std::array<VarId, 2> inputs{solver->makeIntVar(ub, lb, ub),
-                              solver->makeIntVar(ub, lb, ub)};
-  VarId outputId = solver->makeIntVar(0, 0, ub - lb);
-  BinaryMin& invariant = solver->makeInvariant<BinaryMin>(
-      *solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+  _solver->open();
+  std::array<VarId, 2> inputs{_solver->makeIntVar(ub, lb, ub),
+                              _solver->makeIntVar(ub, lb, ub)};
+  VarId outputId = _solver->makeIntVar(0, 0, ub - lb);
+  BinaryMin& invariant = _solver->makeInvariant<BinaryMin>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  Timestamp ts = solver->currentTimestamp();
+  Timestamp ts = _solver->currentTimestamp();
 
   for (Int val = lb; val <= ub; ++val) {
     ++ts;
     for (size_t i = 0; i < inputs.size(); ++i) {
-      solver->setValue(ts, inputs.at(i), val);
+      _solver->setValue(ts, inputs.at(i), val);
       const Int expectedOutput = computeOutput(ts, inputs);
 
       invariant.notifyInputChanged(ts, LocalId(i));
-      EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
+      EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
     }
   }
 }
@@ -121,18 +115,18 @@ TEST_F(BinaryMinTest, NextInput) {
   const Int ub = 10;
   EXPECT_TRUE(lb <= ub);
 
-  solver->open();
-  const std::array<VarId, 2> inputs = {solver->makeIntVar(lb, lb, ub),
-                                       solver->makeIntVar(ub, lb, ub)};
-  const VarId outputId = solver->makeIntVar(0, 0, 2);
+  _solver->open();
+  const std::array<VarId, 2> inputs = {_solver->makeIntVar(lb, lb, ub),
+                                       _solver->makeIntVar(ub, lb, ub)};
+  const VarId outputId = _solver->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  BinaryMin& invariant = solver->makeInvariant<BinaryMin>(
-      *solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+  BinaryMin& invariant = _solver->makeInvariant<BinaryMin>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  for (Timestamp ts = solver->currentTimestamp() + 1;
-       ts < solver->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = _solver->currentTimestamp() + 1;
+       ts < _solver->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < inputs.size(); ++i) {
       const VarId varId = invariant.nextInput(ts);
@@ -154,26 +148,26 @@ TEST_F(BinaryMinTest, NotifyCurrentInputChanged) {
   const Int ub = 5;
   EXPECT_TRUE(lb <= ub);
 
-  solver->open();
+  _solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   const std::array<VarId, 2> inputs = {
-      solver->makeIntVar(valueDist(gen), lb, ub),
-      solver->makeIntVar(valueDist(gen), lb, ub)};
-  const VarId outputId = solver->makeIntVar(0, 0, ub - lb);
-  BinaryMin& invariant = solver->makeInvariant<BinaryMin>(
-      *solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+      _solver->makeIntVar(valueDist(gen), lb, ub),
+      _solver->makeIntVar(valueDist(gen), lb, ub)};
+  const VarId outputId = _solver->makeIntVar(0, 0, ub - lb);
+  BinaryMin& invariant = _solver->makeInvariant<BinaryMin>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  for (Timestamp ts = solver->currentTimestamp() + 1;
-       ts < solver->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = _solver->currentTimestamp() + 1;
+       ts < _solver->currentTimestamp() + 4; ++ts) {
     for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
-      const Int oldVal = solver->value(ts, varId);
+      const Int oldVal = _solver->value(ts, varId);
       do {
-        solver->setValue(ts, varId, valueDist(gen));
-      } while (solver->value(ts, varId) == oldVal);
+        _solver->setValue(ts, varId, valueDist(gen));
+      } while (_solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(solver->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, inputs));
     }
   }
 }
@@ -183,51 +177,51 @@ TEST_F(BinaryMinTest, Commit) {
   const Int ub = 10;
   EXPECT_TRUE(lb <= ub);
 
-  solver->open();
+  _solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   std::array<size_t, 2> indices{0, 1};
   std::array<Int, 2> committedValues{valueDist(gen), valueDist(gen)};
   std::array<VarId, 2> inputs{
-      solver->makeIntVar(committedValues.at(0), lb, ub),
-      solver->makeIntVar(committedValues.at(1), lb, ub)};
+      _solver->makeIntVar(committedValues.at(0), lb, ub),
+      _solver->makeIntVar(committedValues.at(1), lb, ub)};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  VarId outputId = solver->makeIntVar(0, 0, 2);
-  BinaryMin& invariant = solver->makeInvariant<BinaryMin>(
-      *solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+  VarId outputId = _solver->makeIntVar(0, 0, 2);
+  BinaryMin& invariant = _solver->makeInvariant<BinaryMin>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
-            computeOutput(solver->currentTimestamp(), inputs));
+  EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
+            computeOutput(_solver->currentTimestamp(), inputs));
 
   for (const size_t i : indices) {
-    Timestamp ts = solver->currentTimestamp() + Timestamp(1 + i);
+    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputs.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(_solver->committedValue(inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      solver->setValue(ts, inputs.at(i), valueDist(gen));
-    } while (oldVal == solver->value(ts, inputs.at(i)));
+      _solver->setValue(ts, inputs.at(i), valueDist(gen));
+    } while (oldVal == _solver->value(ts, inputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = solver->value(ts, outputId);
+    const Int notifiedOutput = _solver->value(ts, outputId);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
-    solver->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = solver->value(ts, inputs.at(i));
-    solver->commitIf(ts, outputId);
+    _solver->commitIf(ts, inputs.at(i));
+    committedValues.at(i) = _solver->value(ts, inputs.at(i));
+    _solver->commitIf(ts, outputId);
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
   }
 }
 
@@ -238,8 +232,8 @@ class MockBinaryMin : public BinaryMin {
     registered = true;
     BinaryMin::registerVars();
   }
-  explicit MockBinaryMin(SolverBase& solver, VarId output, VarId x, VarId y)
-      : BinaryMin(solver, output, x, y) {
+  explicit MockBinaryMin(SolverBase& _solver, VarId output, VarId x, VarId y)
+      : BinaryMin(_solver, output, x, y) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return BinaryMin::recompute(timestamp);
     });
@@ -266,14 +260,14 @@ class MockBinaryMin : public BinaryMin {
 };
 TEST_F(BinaryMinTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!solver->isOpen()) {
-      solver->open();
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    const VarId x = solver->makeIntVar(-10, -100, 100);
-    const VarId y = solver->makeIntVar(10, -100, 100);
-    const VarId output = solver->makeIntVar(0, 0, 200);
+    const VarId x = _solver->makeIntVar(-10, -100, 100);
+    const VarId y = _solver->makeIntVar(10, -100, 100);
+    const VarId output = _solver->makeIntVar(0, 0, 200);
     testNotifications<MockBinaryMin>(
-        &solver->makeInvariant<MockBinaryMin>(*solver, output, x, y),
+        &_solver->makeInvariant<MockBinaryMin>(*_solver, output, x, y),
         {propMode, markingMode, 3, x, 0, output});
   }
 }

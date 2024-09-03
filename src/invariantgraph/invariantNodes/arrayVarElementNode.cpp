@@ -5,27 +5,31 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayVarElementNode::ArrayVarElementNode(VarNodeId idx,
+ArrayVarElementNode::ArrayVarElementNode(InvariantGraph& graph, VarNodeId idx,
                                          std::vector<VarNodeId>&& varVector,
                                          VarNodeId output, Int offset)
-    : InvariantNode({output}, {idx}, std::move(varVector)), _offset(offset) {}
+    : InvariantNode(graph, {output}, {idx}, std::move(varVector)),
+      _offset(offset) {}
 
-void ArrayVarElementNode::init(const InvariantNodeId& id) {
+void ArrayVarElementNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& node) {
-                       return graph.varNodeConst(node).isIntVar();
-                     }));
-  assert(std::all_of(
-      dynamicInputVarNodeIds().begin(), dynamicInputVarNodeIds().end(),
-      [&](const VarNodeId& node) {
-        return graph.varNodeConst(outputVarNodeIds().front()).isIntVar() ==
-               graph.varNodeConst(node).isIntVar();
-      }));
+  assert(
+      std::all_of(staticInputVarNodeIds().begin(),
+                  staticInputVarNodeIds().end(), [&](const VarNodeId& node) {
+                    return invariantGraphConst().varNodeConst(node).isIntVar();
+                  }));
+  assert(
+      std::all_of(dynamicInputVarNodeIds().begin(),
+                  dynamicInputVarNodeIds().end(), [&](const VarNodeId& node) {
+                    return invariantGraph()
+                               .varNodeConst(outputVarNodeIds().front())
+                               .isIntVar() ==
+                           invariantGraphConst().varNodeConst(node).isIntVar();
+                  }));
 }
 
 void ArrayVarElementNode::updateState() {
-  VarNode& idxNode = graph.varNode(idx());
+  VarNode& idxNode = invariantGraph().varNode(idx());
   /*
   idxNode.removeValuesBelow(_offset);
   idxNode.removeValuesAbove(
@@ -66,33 +70,33 @@ void ArrayVarElementNode::updateState() {
     if (std::none_of(dynamicInputVarNodeIds().begin(),
                      dynamicInputVarNodeIds().end(),
                      [&](const VarNodeId& dId) { return dId == vId; })) {
-      removeDynamicInputVarNode(graph.varNode(vId));
+      removeDynamicInputVarNode(vId);
     }
   }
 }
 
 bool ArrayVarElementNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         graph.varNodeConst(idx()).isFixed();
+         invariantGraphConst().varNodeConst(idx()).isFixed();
 }
 
 bool ArrayVarElementNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  auto& idxNode = graph.varNode(idx());
+  auto& idxNode = invariantGraph().varNode(idx());
   const VarNodeId input =
       dynamicInputVarNodeIds().at(idxNode.lowerBound() - _offset);
 
-  graph.replaceVarNode(outputVarNodeIds().front(), input);
+  invariantGraph().replaceVarNode(outputVarNodeIds().front(), input);
   return true;
 }
 
 void ArrayVarElementNode::registerOutputVars() {
-  makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()), _offset);
+  makeSolverVar(outputVarNodeIds().front(), _offset);
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
@@ -101,13 +105,14 @@ void ArrayVarElementNode::registerNode() {
   std::vector<propagation::VarId> varVector;
   std::transform(dynamicInputVarNodeIds().begin(),
                  dynamicInputVarNodeIds().end(), std::back_inserter(varVector),
-                 [&](auto node) { return graph.varId(node); });
+                 [&](auto node) { return invariantGraph().varId(node); });
 
-  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
+         propagation::NULL_ID);
 
-  solver.makeInvariant<propagation::ElementVar>(
-      solver, graph.varId(outputVarNodeIds().front()), graph.varId(idx()),
-      std::move(varVector), _offset);
+  solver().makeInvariant<propagation::ElementVar>(
+      solver(), invariantGraph().varId(outputVarNodeIds().front()),
+      invariantGraph().varId(idx()), std::move(varVector), _offset);
 }
 
 }  // namespace atlantis::invariantgraph

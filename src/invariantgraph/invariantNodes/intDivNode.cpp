@@ -5,48 +5,48 @@
 
 namespace atlantis::invariantgraph {
 
-IntDivNode::IntDivNode(VarNodeId numerator, VarNodeId denominator,
-                       VarNodeId quotient)
-    : InvariantNode({quotient}, {numerator, denominator}) {}
+IntDivNode::IntDivNode(InvariantGraph& graph, VarNodeId numerator,
+                       VarNodeId denominator, VarNodeId quotient)
+    : InvariantNode(graph, {quotient}, {numerator, denominator}) {}
 
-void IntDivNode::init(const InvariantNodeId& id) {
+void IntDivNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(graph.varNodeConst(quotient()).isIntVar());
-  assert(graph.varNodeConst(numerator()).isIntVar());
-  assert(graph.varNodeConst(denominator()).isIntVar());
+  assert(invariantGraphConst().varNodeConst(quotient()).isIntVar());
+  assert(invariantGraphConst().varNodeConst(numerator()).isIntVar());
+  assert(invariantGraphConst().varNodeConst(denominator()).isIntVar());
 }
 
 bool IntDivNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         graph.varNodeConst(denominator()).isFixed() &&
-         graph.varNodeConst(denominator()).lowerBound() == 1;
+         invariantGraphConst().varNodeConst(denominator()).isFixed() &&
+         invariantGraphConst().varNodeConst(denominator()).lowerBound() == 1;
 }
 
 bool IntDivNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  assert(graph.varNode(denominator()).isFixed() &&
-         graph.varNode(denominator()).lowerBound() == 1);
-  graph.replaceVarNode(quotient(), numerator());
+  assert(invariantGraph().varNode(denominator()).isFixed() &&
+         invariantGraph().varNode(denominator()).lowerBound() == 1);
+  invariantGraph().replaceVarNode(quotient(), numerator());
   return true;
 }
 
-void invariantgraph::IntDivNode::registerOutputVars(
-    InvariantGraph& graph, propagation::SolverBase& solver) {
-  makeSolverVar(solver, graph.varNode(quotient()));
+void invariantgraph::IntDivNode::registerOutputVars() {
+  makeSolverVar(quotient());
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
 void invariantgraph::IntDivNode::registerNode() {
-  assert(graph.varId(quotient()) != propagation::NULL_ID);
-  solver.makeInvariant<propagation::IntDiv>(solver, graph.varId(quotient()),
-                                            graph.varId(numerator()),
-                                            graph.varId(denominator()));
+  assert(invariantGraph().varId(quotient()) != propagation::NULL_ID);
+  solver().makeInvariant<propagation::IntDiv>(
+      solver(), invariantGraph().varId(quotient()),
+      invariantGraph().varId(numerator()),
+      invariantGraph().varId(denominator()));
 }
 
 VarNodeId IntDivNode::numerator() const noexcept {

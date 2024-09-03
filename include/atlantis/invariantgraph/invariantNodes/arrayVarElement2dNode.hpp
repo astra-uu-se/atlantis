@@ -30,7 +30,7 @@ class ArrayVarElement2dNode : public InvariantNode {
                         std::vector<std::vector<VarNodeId>>&& varMatrix,
                         VarNodeId output, Int offset1, Int offset2);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 

@@ -62,9 +62,10 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
           }
         }
 
-        logger.indented<void>(logging::Level::TRACE, "Round statistics", [&] {
-          logRoundStatistics(logger, annealer.currentRoundStatistics());
-        });
+        logger.indentedProcedure(
+            logging::Level::TRACE, "Round statistics", [&] {
+              logRoundStatistics(logger, annealer.currentRoundStatistics());
+            });
         annealer.nextRound();
         rounds->increment();
       });

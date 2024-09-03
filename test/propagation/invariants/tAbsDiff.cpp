@@ -1,11 +1,5 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
-#include <vector>
-
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/invariants/absDiff.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -14,8 +8,8 @@ using namespace atlantis::propagation;
 class AbsDiffTest : public InvariantTest {
  public:
   Int computeOutput(Timestamp ts, std::array<VarId, 2> inputs) {
-    return computeOutput(solver->value(ts, inputs.at(0)),
-                         solver->value(ts, inputs.at(1)));
+    return computeOutput(_solver->value(ts, inputs.at(0)),
+                         _solver->value(ts, inputs.at(1)));
   }
 
   static Int computeOutput(std::array<Int, 2> inputs) {
@@ -23,7 +17,7 @@ class AbsDiffTest : public InvariantTest {
   }
 
   Int computeOutput(Timestamp ts, const VarId x, const VarId y) {
-    return computeOutput(solver->value(ts, x), solver->value(ts, y));
+    return computeOutput(_solver->value(ts, x), _solver->value(ts, y));
   }
 
   static Int computeOutput(const Int xVal, const Int yVal) {
@@ -34,37 +28,38 @@ class AbsDiffTest : public InvariantTest {
 TEST_F(AbsDiffTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
-  solver->open();
-  const VarId x = solver->makeIntVar(
+  _solver->open();
+  const VarId x = _solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId y = solver->makeIntVar(
+  const VarId y = _solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId outputId = solver->makeIntVar(0, 0, 2);
-  AbsDiff& invariant = solver->makeInvariant<AbsDiff>(*solver, outputId, x, y);
-  solver->close();
+  const VarId outputId = _solver->makeIntVar(0, 0, 2);
+  AbsDiff& invariant =
+      _solver->makeInvariant<AbsDiff>(*_solver, outputId, x, y);
+  _solver->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_TRUE(xLb <= xUb);
-    solver->updateBounds(x, xLb, xUb, false);
+    _solver->updateBounds(x, xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
-      solver->updateBounds(y, yLb, yUb, false);
+      _solver->updateBounds(y, yLb, yUb, false);
       invariant.updateBounds(false);
       std::vector<Int> outputs;
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
-        solver->setValue(solver->currentTimestamp(), x, xVal);
+        _solver->setValue(_solver->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-          solver->setValue(solver->currentTimestamp(), y, yVal);
+          _solver->setValue(_solver->currentTimestamp(), y, yVal);
           invariant.updateBounds(false);
-          invariant.recompute(solver->currentTimestamp());
+          invariant.recompute(_solver->currentTimestamp());
           outputs.emplace_back(
-              solver->value(solver->currentTimestamp(), outputId));
+              _solver->value(_solver->currentTimestamp(), outputId));
         }
       }
       const auto& [minViol, maxViol] =
           std::minmax_element(outputs.begin(), outputs.end());
-      ASSERT_EQ(*minViol, solver->lowerBound(outputId));
-      ASSERT_EQ(*maxViol, solver->upperBound(outputId));
+      ASSERT_EQ(*minViol, _solver->lowerBound(outputId));
+      ASSERT_EQ(*maxViol, _solver->upperBound(outputId));
     }
   }
 }
@@ -77,23 +72,24 @@ TEST_F(AbsDiffTest, Recompute) {
   EXPECT_TRUE(xLb <= xUb);
   EXPECT_TRUE(yLb <= yUb);
 
-  solver->open();
-  const VarId x = solver->makeIntVar(xUb, xLb, xUb);
-  const VarId y = solver->makeIntVar(yLb, yLb, yUb);
+  _solver->open();
+  const VarId x = _solver->makeIntVar(xUb, xLb, xUb);
+  const VarId y = _solver->makeIntVar(yLb, yLb, yUb);
   const VarId outputId =
-      solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
-  AbsDiff& invariant = solver->makeInvariant<AbsDiff>(*solver, outputId, x, y);
-  solver->close();
+      _solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
+  AbsDiff& invariant =
+      _solver->makeInvariant<AbsDiff>(*_solver, outputId, x, y);
+  _solver->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
     for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-      solver->setValue(solver->currentTimestamp(), x, xVal);
-      solver->setValue(solver->currentTimestamp(), y, yVal);
+      _solver->setValue(_solver->currentTimestamp(), x, xVal);
+      _solver->setValue(_solver->currentTimestamp(), y, yVal);
 
       const Int expectedOutput = computeOutput(xVal, yVal);
-      invariant.recompute(solver->currentTimestamp());
+      invariant.recompute(_solver->currentTimestamp());
       EXPECT_EQ(expectedOutput,
-                solver->value(solver->currentTimestamp(), outputId));
+                _solver->value(_solver->currentTimestamp(), outputId));
     }
   }
 }
@@ -103,24 +99,24 @@ TEST_F(AbsDiffTest, NotifyInputChanged) {
   const Int ub = -49;
   EXPECT_TRUE(lb <= ub);
 
-  solver->open();
-  std::array<VarId, 2> inputs{solver->makeIntVar(ub, lb, ub),
-                              solver->makeIntVar(ub, lb, ub)};
-  VarId outputId = solver->makeIntVar(0, 0, ub - lb);
-  AbsDiff& invariant = solver->makeInvariant<AbsDiff>(
-      *solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+  _solver->open();
+  std::array<VarId, 2> inputs{_solver->makeIntVar(ub, lb, ub),
+                              _solver->makeIntVar(ub, lb, ub)};
+  VarId outputId = _solver->makeIntVar(0, 0, ub - lb);
+  AbsDiff& invariant = _solver->makeInvariant<AbsDiff>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  Timestamp ts = solver->currentTimestamp();
+  Timestamp ts = _solver->currentTimestamp();
 
   for (Int val = lb; val <= ub; ++val) {
     ++ts;
     for (size_t i = 0; i < inputs.size(); ++i) {
-      solver->setValue(ts, inputs.at(i), val);
+      _solver->setValue(ts, inputs.at(i), val);
       const Int expectedOutput = computeOutput(ts, inputs);
 
       invariant.notifyInputChanged(ts, LocalId(i));
-      EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
+      EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
     }
   }
 }
@@ -130,18 +126,18 @@ TEST_F(AbsDiffTest, NextInput) {
   const Int ub = 10;
   EXPECT_TRUE(lb <= ub);
 
-  solver->open();
-  const std::array<VarId, 2> inputs = {solver->makeIntVar(lb, lb, ub),
-                                       solver->makeIntVar(lb, lb, ub)};
-  const VarId outputId = solver->makeIntVar(0, 0, 2);
+  _solver->open();
+  const std::array<VarId, 2> inputs = {_solver->makeIntVar(lb, lb, ub),
+                                       _solver->makeIntVar(lb, lb, ub)};
+  const VarId outputId = _solver->makeIntVar(0, 0, 2);
   const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
   const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  AbsDiff& invariant = solver->makeInvariant<AbsDiff>(
-      *solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+  AbsDiff& invariant = _solver->makeInvariant<AbsDiff>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  for (Timestamp ts = solver->currentTimestamp() + 1;
-       ts < solver->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = _solver->currentTimestamp() + 1;
+       ts < _solver->currentTimestamp() + 4; ++ts) {
     std::vector<bool> notified(maxVarId + 1, false);
     for (size_t i = 0; i < inputs.size(); ++i) {
       const VarId varId = invariant.nextInput(ts);
@@ -163,26 +159,26 @@ TEST_F(AbsDiffTest, NotifyCurrentInputChanged) {
   const Int ub = -10000;
   EXPECT_TRUE(lb <= ub);
 
-  solver->open();
+  _solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   const std::array<VarId, 2> inputs = {
-      solver->makeIntVar(valueDist(gen), lb, ub),
-      solver->makeIntVar(valueDist(gen), lb, ub)};
-  const VarId outputId = solver->makeIntVar(0, 0, ub - lb);
-  AbsDiff& invariant = solver->makeInvariant<AbsDiff>(
-      *solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+      _solver->makeIntVar(valueDist(gen), lb, ub),
+      _solver->makeIntVar(valueDist(gen), lb, ub)};
+  const VarId outputId = _solver->makeIntVar(0, 0, ub - lb);
+  AbsDiff& invariant = _solver->makeInvariant<AbsDiff>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  for (Timestamp ts = solver->currentTimestamp() + 1;
-       ts < solver->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = _solver->currentTimestamp() + 1;
+       ts < _solver->currentTimestamp() + 4; ++ts) {
     for (const VarId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
-      const Int oldVal = solver->value(ts, varId);
+      const Int oldVal = _solver->value(ts, varId);
       do {
-        solver->setValue(ts, varId, valueDist(gen));
-      } while (solver->value(ts, varId) == oldVal);
+        _solver->setValue(ts, varId, valueDist(gen));
+      } while (_solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(solver->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, inputs));
     }
   }
 }
@@ -192,51 +188,51 @@ TEST_F(AbsDiffTest, Commit) {
   const Int ub = 10;
   EXPECT_TRUE(lb <= ub);
 
-  solver->open();
+  _solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   std::array<size_t, 2> indices{0, 1};
   std::array<Int, 2> committedValues{valueDist(gen), valueDist(gen)};
   std::array<VarId, 2> inputs{
-      solver->makeIntVar(committedValues.at(0), lb, ub),
-      solver->makeIntVar(committedValues.at(1), lb, ub)};
+      _solver->makeIntVar(committedValues.at(0), lb, ub),
+      _solver->makeIntVar(committedValues.at(1), lb, ub)};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  VarId outputId = solver->makeIntVar(0, 0, 2);
-  AbsDiff& invariant = solver->makeInvariant<AbsDiff>(
-      *solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+  VarId outputId = _solver->makeIntVar(0, 0, 2);
+  AbsDiff& invariant = _solver->makeInvariant<AbsDiff>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
-            computeOutput(solver->currentTimestamp(), inputs));
+  EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
+            computeOutput(_solver->currentTimestamp(), inputs));
 
   for (const size_t i : indices) {
-    Timestamp ts = solver->currentTimestamp() + Timestamp(1 + i);
+    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputs.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(_solver->committedValue(inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      solver->setValue(ts, inputs.at(i), valueDist(gen));
-    } while (oldVal == solver->value(ts, inputs.at(i)));
+      _solver->setValue(ts, inputs.at(i), valueDist(gen));
+    } while (oldVal == _solver->value(ts, inputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = solver->value(ts, outputId);
+    const Int notifiedOutput = _solver->value(ts, outputId);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
-    solver->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = solver->value(ts, inputs.at(i));
-    solver->commitIf(ts, outputId);
+    _solver->commitIf(ts, inputs.at(i));
+    committedValues.at(i) = _solver->value(ts, inputs.at(i));
+    _solver->commitIf(ts, outputId);
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
   }
 }
 
@@ -275,14 +271,14 @@ class MockAbsDiff : public AbsDiff {
 };
 TEST_F(AbsDiffTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!solver->isOpen()) {
-      solver->open();
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    const VarId x = solver->makeIntVar(-10, -100, 100);
-    const VarId y = solver->makeIntVar(10, -100, 100);
-    const VarId output = solver->makeIntVar(0, 0, 200);
+    const VarId x = _solver->makeIntVar(-10, -100, 100);
+    const VarId y = _solver->makeIntVar(10, -100, 100);
+    const VarId output = _solver->makeIntVar(0, 0, 200);
     testNotifications<MockAbsDiff>(
-        &solver->makeInvariant<MockAbsDiff>(*solver, output, x, y),
+        &_solver->makeInvariant<MockAbsDiff>(*_solver, output, x, y),
         {propMode, markingMode, 3, x, 0, output});
   }
 }

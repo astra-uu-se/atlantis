@@ -23,7 +23,7 @@ void ImplicitConstraintNode::registerOutputVars() {
   }
 }
 
-void ImplicitConstraintNode::init(const InvariantNodeId& id) {
+void ImplicitConstraintNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
 }
 

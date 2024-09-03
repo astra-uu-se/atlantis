@@ -16,7 +16,7 @@ namespace atlantis::benchmark {
 
 class VesselLoading : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::random_device rd;
   std::mt19937 gen;
 
@@ -51,7 +51,7 @@ class VesselLoading : public ::benchmark::Fixture {
   void SetUp(const ::benchmark::State& state) override {
     containerCount = state.range(0);
 
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
     solver->open();
     setSolverMode(*solver, static_cast<int>(state.range(1)));
 

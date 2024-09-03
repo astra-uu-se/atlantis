@@ -20,7 +20,7 @@ class BoolOrNode : public ViolationInvariantNode {
   BoolOrNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
              bool shouldHold = true);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 

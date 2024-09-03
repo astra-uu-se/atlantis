@@ -22,47 +22,43 @@ class ViolationInvariantNode : public InvariantNode {
   // the violation invariant should hold or not:
   bool _shouldHold;
 
-  void updateReified(InvariantGraph&);
+  void updateReified();
 
-  explicit ViolationInvariantNode(InvariantGraph graph,
+  explicit ViolationInvariantNode(InvariantGraph& graph,
                                   std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId,
                                   bool shouldHold);
 
  protected:
-  propagation::VarId setViolationVarId(InvariantGraph&, propagation::VarId);
+  propagation::VarId setViolationVarId(propagation::VarId);
 
-  propagation::VarId registerViolation(InvariantGraph&,
-                                       propagation::SolverBase&,
-                                       Int initialValue = 0);
+  propagation::VarId registerViolation(Int initialValue = 0);
 
   [[nodiscard]] bool shouldHold() const noexcept;
 
-  void fixReified(InvariantGraph&, bool);
+  void fixReified(bool);
 
  public:
-  explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
+  explicit ViolationInvariantNode(InvariantGraph& graph,
+                                  std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId);
 
-  explicit ViolationInvariantNode(std::vector<VarNodeId>&& staticInputIds,
+  explicit ViolationInvariantNode(InvariantGraph& graph,
+                                  std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId);
 
-  void init(const InvariantNodeId&) override;
-
-  /**
-   * @brief Construct a new violation invariant node object
-   *
-   * @param staticInputVarNodeIds
-   * @param shouldHold true if the violation invariant should hold, else false
-   */
-  explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
+  explicit ViolationInvariantNode(InvariantGraph& graph,
+                                  std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   bool shouldHold);
 
-  explicit ViolationInvariantNode(std::vector<VarNodeId>&& staticInputIds,
+  explicit ViolationInvariantNode(InvariantGraph& graph,
+                                  std::vector<VarNodeId>&& staticInputIds,
                                   bool shouldHold);
+
+  void init(InvariantNodeId) override;
 
   [[nodiscard]] bool isReified() const override;
 

@@ -22,7 +22,7 @@ class ImplicitConstraintNode : public InvariantNode {
       nullptr};
 
  public:
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   explicit ImplicitConstraintNode(InvariantGraph& graph,
                                   std::vector<VarNodeId>&& outputVarNodeIds);

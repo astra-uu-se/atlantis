@@ -9,31 +9,41 @@ IntModViewNode::IntModViewNode(InvariantGraph& graph, VarNodeId staticInput,
     : InvariantNode(graph, {output}, {staticInput}),
       _denominator(std::abs(denominator)) {}
 
-void IntModViewNode::init(const InvariantNodeId& id) {
+void IntModViewNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
-  assert(graph.varNodeConst(staticInputVarNodeIds().front()).isIntVar());
+  assert(invariantGraphConst()
+             .varNodeConst(outputVarNodeIds().front())
+             .isIntVar());
+  assert(invariantGraph()
+             .varNodeConst(staticInputVarNodeIds().front())
+             .isIntVar());
 }
 
 void IntModViewNode::updateState() {
-  if (graph.varNodeConst(staticInputVarNodeIds().front()).isFixed()) {
-    graph.varNode(outputVarNodeIds().front())
-        .fixToValue(
-            graph.varNodeConst(staticInputVarNodeIds().front()).lowerBound() %
-            _denominator);
+  if (invariantGraph()
+          .varNodeConst(staticInputVarNodeIds().front())
+          .isFixed()) {
+    invariantGraph()
+        .varNode(outputVarNodeIds().front())
+        .fixToValue(invariantGraph()
+                        .varNodeConst(staticInputVarNodeIds().front())
+                        .lowerBound() %
+                    _denominator);
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 void IntModViewNode::registerOutputVars() {
-  if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
-    graph.varNode(outputVarNodeIds().front())
-        .setVarId(solver.makeIntView<propagation::ModView>(
-            solver, graph.varId(input()), _denominator));
+  if (invariantGraph().varId(outputVarNodeIds().front()) ==
+      propagation::NULL_ID) {
+    invariantGraph()
+        .varNode(outputVarNodeIds().front())
+        .setVarId(solver().makeIntView<propagation::ModView>(
+            solver(), invariantGraph().varId(input()), _denominator));
   }
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }

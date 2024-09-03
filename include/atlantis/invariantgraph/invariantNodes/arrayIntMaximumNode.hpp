@@ -20,7 +20,7 @@ class ArrayIntMaximumNode : public InvariantNode {
 
                                std::vector<VarNodeId>&& vars, VarNodeId output);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 

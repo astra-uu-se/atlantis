@@ -18,7 +18,7 @@ namespace atlantis::benchmark {
 
 class ExtremeDynamic : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   propagation::VarId staticInputVar;
   std::vector<propagation::VarId> dynamicInputVars;
   std::vector<propagation::VarId> outputVars;
@@ -33,7 +33,7 @@ class ExtremeDynamic : public ::benchmark::Fixture {
   int ub{0};
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     lb = 0;
     ub = 1000;

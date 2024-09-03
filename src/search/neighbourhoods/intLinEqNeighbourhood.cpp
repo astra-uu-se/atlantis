@@ -5,13 +5,12 @@
 
 namespace atlantis::search::neighbourhoods {
 
-IntLinEqNeighbourhood::IntLinEqNeighbourhood(
-    std::vector<Int>&& coeffs, std::vector<SearchVar>&& vars, Int bound,
-    const propagation::SolverBase& solver)
+IntLinEqNeighbourhood::IntLinEqNeighbourhood(std::vector<Int>&& coeffs,
+                                             std::vector<SearchVar>&& vars,
+                                             Int bound)
     : _coeffs(coeffs),
       _vars(std::move(vars)),
       _offset(bound),
-      _solver(solver),
       _indices(_vars.size()) {
   assert(_vars.size() > 1);
   std::iota(_indices.begin(), _indices.end(), 0);

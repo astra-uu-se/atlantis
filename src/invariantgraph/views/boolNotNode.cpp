@@ -4,37 +4,49 @@
 
 namespace atlantis::invariantgraph {
 
-BoolNotNode::BoolNotNode(InvariantGraph& graph, VarNodeId staticInput,
+BoolNotNode::BoolNotNode(InvariantGraph& invariantGraph, VarNodeId staticInput,
                          VarNodeId output)
-    : InvariantNode(graph, {output}, {staticInput}) {}
+    : InvariantNode(invariantGraph, {output}, {staticInput}) {}
 
-void BoolNotNode::init(const InvariantNodeId& id) {
+void BoolNotNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(!graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
-  assert(!graph.varNodeConst(staticInputVarNodeIds().front()).isIntVar());
+  assert(!invariantGraphConst()
+              .varNodeConst(outputVarNodeIds().front())
+              .isIntVar());
+  assert(!invariantGraph()
+              .varNodeConst(staticInputVarNodeIds().front())
+              .isIntVar());
 }
 
 void BoolNotNode::updateState() {
-  if (graph.varNodeConst(input()).isFixed()) {
-    graph.varNode(outputVarNodeIds().front())
-        .fixToValue(!graph.varNodeConst(input()).inDomain(bool{true}));
+  if (invariantGraphConst().varNodeConst(input()).isFixed()) {
+    invariantGraph()
+        .varNode(outputVarNodeIds().front())
+        .fixToValue(
+            !invariantGraphConst().varNodeConst(input()).inDomain(bool{true}));
     setState(InvariantNodeState::SUBSUMED);
-  } else if (graph.varNodeConst(outputVarNodeIds().front()).isFixed()) {
-    graph.varNode(input()).fixToValue(
-        !graph.varNodeConst(outputVarNodeIds().front()).inDomain(bool{true}));
+  } else if (invariantGraph()
+                 .varNodeConst(outputVarNodeIds().front())
+                 .isFixed()) {
+    invariantGraph().varNode(input()).fixToValue(
+        !invariantGraph()
+             .varNodeConst(outputVarNodeIds().front())
+             .inDomain(bool{true}));
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 void BoolNotNode::registerOutputVars() {
-  if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
-    graph.varNode(outputVarNodeIds().front())
-        .setVarId(solver.makeIntView<propagation::Bool2IntView>(
-            solver, graph.varId(input())));
+  if (invariantGraph().varId(outputVarNodeIds().front()) ==
+      propagation::NULL_ID) {
+    invariantGraph()
+        .varNode(outputVarNodeIds().front())
+        .setVarId(solver().makeIntView<propagation::Bool2IntView>(
+            solver(), invariantGraph().varId(input())));
   }
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }

@@ -8,33 +8,37 @@
 
 namespace atlantis::invariantgraph {
 
-IntLtNode::IntLtNode(VarNodeId a, VarNodeId b, VarNodeId r)
-    : ViolationInvariantNode({a, b}, r) {}
+IntLtNode::IntLtNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+                     VarNodeId r)
+    : ViolationInvariantNode(graph, {a, b}, r) {}
 
-IntLtNode::IntLtNode(VarNodeId a, VarNodeId b, bool shouldHold)
-    : ViolationInvariantNode({a, b}, shouldHold) {}
+IntLtNode::IntLtNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+                     bool shouldHold)
+    : ViolationInvariantNode(graph, {a, b}, shouldHold) {}
 
-void IntLtNode::init(const InvariantNodeId& id) {
+void IntLtNode::init(InvariantNodeId id) {
   ViolationInvariantNode::init(id);
-  assert(!isReified() ||
-         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
+  assert(
+      !isReified() ||
+      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(
+      std::all_of(staticInputVarNodeIds().begin(),
+                  staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
 void IntLtNode::updateState() {
-  ViolationInvariantNode::updateState(graph);
+  ViolationInvariantNode::updateState();
   if (staticInputVarNodeIds().size() < 2) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  VarNode aNode = graph.varNode(a());
-  VarNode bNode = graph.varNode(b());
+  VarNode aNode = invariantGraph().varNode(a());
+  VarNode bNode = invariantGraph().varNode(b());
   if (a() == b()) {
     if (isReified()) {
-      fixReified(graph, false);
+      fixReified(false);
     } else if (shouldHold()) {
       throw InconsistencyException("IntLtNode: a == b");
     }
@@ -55,7 +59,7 @@ void IntLtNode::updateState() {
   if (aNode.upperBound() < bNode.lowerBound()) {
     // always true
     if (isReified()) {
-      fixReified(graph, true);
+      fixReified(true);
     } else if (!shouldHold()) {
       throw InconsistencyException("IntLtNode neg: a < b");
     }
@@ -64,7 +68,7 @@ void IntLtNode::updateState() {
   } else if (aNode.lowerBound() >= bNode.upperBound()) {
     // always false
     if (isReified()) {
-      fixReified(graph, false);
+      fixReified(false);
     } else if (shouldHold()) {
       throw InconsistencyException("IntLtNode: a >= b");
     }
@@ -74,24 +78,26 @@ void IntLtNode::updateState() {
 }
 
 void IntLtNode::registerOutputVars() {
-  registerViolation(graph, solver);
+  registerViolation();
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
                      [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
 void IntLtNode::registerNode() {
-  assert(violationVarId(graph) != propagation::NULL_ID);
+  assert(violationVarId() != propagation::NULL_ID);
 
   if (shouldHold()) {
-    solver.makeViolationInvariant<propagation::LessThan>(
-        solver, violationVarId(graph), graph.varId(a()), graph.varId(b()));
+    solver().makeViolationInvariant<propagation::LessThan>(
+        solver(), violationVarId(), invariantGraph().varId(a()),
+        invariantGraph().varId(b()));
   } else {
     assert(!isReified());
-    solver.makeViolationInvariant<propagation::LessEqual>(
-        solver, violationVarId(graph), graph.varId(b()), graph.varId(a()));
+    solver().makeViolationInvariant<propagation::LessEqual>(
+        solver(), violationVarId(), invariantGraph().varId(b()),
+        invariantGraph().varId(a()));
   }
 }
 

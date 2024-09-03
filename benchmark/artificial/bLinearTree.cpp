@@ -65,7 +65,7 @@ class LinearTree : public ::benchmark::Fixture {
   }
 
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   propagation::VarId output;
 
   std::vector<propagation::VarId> vars;

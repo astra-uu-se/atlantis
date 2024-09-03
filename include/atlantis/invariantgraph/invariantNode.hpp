@@ -36,9 +36,9 @@ class InvariantNode : public InvariantNodeBase {
 
   propagation::SolverBase& solver();
 
-  const propagation::SolverBase& solver() const;
+  const propagation::SolverBase& solverConst() const;
 
-  virtual void init(const InvariantNodeId&) override;
+  virtual void init(InvariantNodeId) override;
 
   virtual void deactivate() override;
 

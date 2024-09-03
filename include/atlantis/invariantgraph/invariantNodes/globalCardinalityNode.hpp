@@ -22,7 +22,7 @@ class GlobalCardinalityNode : public InvariantNode {
                                  std::vector<Int>&& cover,
                                  std::vector<VarNodeId>&& counts);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 

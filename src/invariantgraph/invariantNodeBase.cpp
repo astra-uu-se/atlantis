@@ -36,10 +36,6 @@ bool InvariantNodeBase::canBeMadeImplicit() const { return false; }
 
 bool InvariantNodeBase::makeImplicit() { return false; }
 
-propagation::VarId InvariantNodeBase::violationVarId() const {
-  return propagation::NULL_ID;
-}
-
 /**
  * @return The variable nodes defined by this node.
  */

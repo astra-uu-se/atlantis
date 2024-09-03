@@ -26,14 +26,13 @@ class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
                                       std::vector<Int>&& up, VarNodeId r);
 
   explicit GlobalCardinalityLowUpNode(InvariantGraph& graph,
-
                                       std::vector<VarNodeId>&& x,
                                       std::vector<Int>&& cover,
                                       std::vector<Int>&& low,
                                       std::vector<Int>&& up,
                                       bool shouldHold = true);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 

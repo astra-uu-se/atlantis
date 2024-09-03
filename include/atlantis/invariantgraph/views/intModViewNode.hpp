@@ -16,7 +16,7 @@ class IntModViewNode : public InvariantNode {
 
                  VarNodeId staticInput, VarNodeId output, Int denominator);
 
-  void init(const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
   void updateState() override;
 
