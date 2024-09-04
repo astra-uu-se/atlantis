@@ -47,14 +47,14 @@ ViolationInvariantNode::ViolationInvariantNode(
     IInvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
     std::vector<VarNodeId>&& staticInputIds, bool shouldHold)
     : ViolationInvariantNode(graph, std::move(outputIds),
-                             std::move(staticInputIds), VarNodeId(NULL_NODE_ID),
+                             std::move(staticInputIds), VarNodeId{NULL_NODE_ID},
                              shouldHold) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
     IInvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
     bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(staticInputIds),
-                             VarNodeId(NULL_NODE_ID), shouldHold) {}
+                             VarNodeId{NULL_NODE_ID}, shouldHold) {}
 
 void ViolationInvariantNode::init(InvariantNodeId id) {
   InvariantNode::init(id);

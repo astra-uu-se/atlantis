@@ -110,7 +110,7 @@ void FznInvariantGraph::build(const fznparser::Model& model) {
 }
 
 VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::BoolVar& var) {
-  VarNodeId nId(NULL_NODE_ID);
+  VarNodeId nId{NULL_NODE_ID};
   if (var.isFixed()) {
     nId = var.identifier().empty()
               ? retrieveBoolVarNode(var.lowerBound())
@@ -142,7 +142,7 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::BoolArg& arg) {
 }
 
 VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntVar& var) {
-  VarNodeId nId(NULL_NODE_ID);
+  VarNodeId nId{NULL_NODE_ID};
   if (var.isFixed()) {
     nId = var.identifier().empty()
               ? retrieveIntVarNode(var.lowerBound())

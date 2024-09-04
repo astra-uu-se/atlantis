@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits.h>
+
 #include <cstdint>
 #include <string>
 
@@ -8,13 +10,20 @@
 namespace atlantis::invariantgraph {
 
 struct NodeId {
+ protected:
   size_t id;
+
+ public:
   NodeId() : id(0) {}
+
   explicit NodeId(size_t i) : id(i) {}
+
   NodeId(const NodeId&) = default;
+
+  explicit operator size_t() const { return id; }
 };
 
-static NodeId NULL_NODE_ID = NodeId();
+static NodeId NULL_NODE_ID = NodeId(~size_t{0});
 
 struct VarNodeId : public NodeId {
   VarNodeId() : NodeId() {}
@@ -23,76 +32,87 @@ struct VarNodeId : public NodeId {
   explicit VarNodeId(NodeId nodeId) : NodeId(nodeId) {}
 
   inline VarNodeId& operator=(const VarNodeId& other) {
-    id = other.id;
+    id = size_t(other);
     return *this;
   }
   inline VarNodeId& operator=(const NodeId& other) {
-    id = other.id;
+    id = size_t(other);
     return *this;
   }
 
   inline bool operator==(const VarNodeId& other) const {
-    return id == other.id;
+    return id == size_t(other);
   }
 
   inline bool operator==(const NodeId& other) const {
-    return other.id == NULL_NODE_ID.id && NULL_NODE_ID.id == id;
+    return id == size_t(other);
   }
+
+  explicit operator size_t() const { return size_t(id); }
 
   bool operator!=(const VarNodeId& other) const { return !(operator==(other)); }
   bool operator!=(const NodeId& other) const { return !(operator==(other)); }
 };
 
 struct InvariantNodeId : public NodeId {
-  enum struct Type : bool { INVARIANT = false, IMPLICIT_CONSTRAINT = true };
-  Type type;
+ private:
+  static const size_t IMPLICIT_CONSTRAINT_MASK =
+      (size_t{1} << (sizeof(size_t) * CHAR_BIT - 1));
 
+ public:
   InvariantNodeId(const InvariantNodeId&) = default;
 
-  InvariantNodeId() : NodeId(), type(Type::INVARIANT) {}
-  explicit InvariantNodeId(size_t i) : NodeId(i), type(Type::INVARIANT) {}
+  InvariantNodeId() : NodeId() {}
+
+  InvariantNodeId(NodeId nodeId) : NodeId(size_t(nodeId)) {}
+
+  explicit InvariantNodeId(size_t i)
+      : NodeId(i == size_t(NULL_NODE_ID) ? i
+                                         : (i & ~IMPLICIT_CONSTRAINT_MASK)) {}
+
   InvariantNodeId(size_t i, bool isImplicitConstraint)
-      : NodeId(i),
-        type(isImplicitConstraint ? Type::IMPLICIT_CONSTRAINT
-                                  : Type::INVARIANT) {}
-  explicit InvariantNodeId(NodeId nodeId)
-      : NodeId(nodeId), type(Type::INVARIANT) {}
+      : NodeId(i == size_t(NULL_NODE_ID)
+                   ? i
+                   : (isImplicitConstraint ? (i | IMPLICIT_CONSTRAINT_MASK)
+                                           : (i & ~IMPLICIT_CONSTRAINT_MASK))) {
+  }
+
+  inline bool isImplicitConstraint() const {
+    return id != size_t(NULL_NODE_ID) &&
+           (id & IMPLICIT_CONSTRAINT_MASK) != size_t{0};
+  }
+
+  inline bool isInvariant() const {
+    return id != size_t(NULL_NODE_ID) &&
+           (id & IMPLICIT_CONSTRAINT_MASK) == size_t{0};
+  }
 
   inline InvariantNodeId& operator=(const InvariantNodeId& other) {
     id = other.id;
-    type = other.type;
-    return *this;
-  }
-  inline InvariantNodeId& operator=(const NodeId& other) {
-    id = other.id;
     return *this;
   }
 
-  bool operator==(const InvariantNodeId& other) const {
-    return type == other.type && id == other.id;
-  }
-  inline bool operator==(const NodeId& other) const {
-    return other.id == NULL_NODE_ID.id && NULL_NODE_ID.id == id;
-  }
+  bool operator==(const InvariantNodeId& other) const { return id == other.id; }
 
   bool operator!=(const InvariantNodeId& other) const {
     return !(operator==(other));
   }
-  bool operator!=(const NodeId& other) const { return !(operator==(other)); }
+
+  explicit operator size_t() const {
+    return id == size_t(NULL_NODE_ID) ? id : (id & ~IMPLICIT_CONSTRAINT_MASK);
+  }
 };
 
 struct VarNodeIdHash {
   std::size_t operator()(VarNodeId const& varNodeId) const noexcept {
-    return varNodeId.id;
+    return size_t(varNodeId);
   }
 };
 
 struct InvariantNodeIdHash {
   std::size_t operator()(
       InvariantNodeId const& invariantNodeId) const noexcept {
-    std::size_t typeHash =
-        std::hash<int>{}(static_cast<int>(invariantNodeId.type));
-    return typeHash ^ (invariantNodeId.id << 1);
+    return size_t(invariantNodeId);
   }
 };
 

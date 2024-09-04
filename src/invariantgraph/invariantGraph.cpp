@@ -23,16 +23,16 @@ InvariantGraphRoot& InvariantGraph::root() {
 InvariantGraph::InvariantGraph(propagation::SolverBase& solver,
                                bool breakDynamicCycles)
     : _solver(solver),
-      _varNodes{VarNode{VarNodeId{1}, false, SearchDomain({1})},
-                VarNode{VarNodeId{2}, false, SearchDomain({0})}},
+      _varNodes{VarNode{VarNodeId{0}, false, SearchDomain({1})},
+                VarNode{VarNodeId{1}, false, SearchDomain({0})}},
       _namedVarNodeIndices(),
       _intVarNodeIndices(),
-      _boolVarNodeIndices{VarNodeId{1}, VarNodeId{2}},
+      _boolVarNodeIndices{VarNodeId{0}, VarNodeId{1}},
       _invariantNodes(),
       _implicitConstraintNodes{},
       _breakDynamicCycles(breakDynamicCycles),
       _totalViolationVarId(propagation::NULL_ID),
-      _objectiveVarNodeId(NULL_NODE_ID) {
+      _objectiveVarNodeId{NULL_NODE_ID} {
   addImplicitConstraintNode(std::make_shared<InvariantGraphRoot>(*this));
 }
 
@@ -43,7 +43,7 @@ const propagation::SolverBase& InvariantGraph::solverConst() const {
 }
 
 VarNodeId InvariantGraph::nextVarNodeId() const {
-  return VarNodeId(_varNodes.size() + 1);
+  return VarNodeId(_varNodes.size());
 }
 
 bool InvariantGraph::containsVarNode(const std::string& identifier) const {
@@ -180,21 +180,19 @@ VarNodeId InvariantGraph::retrieveIntVarNode(SearchDomain&& domain,
 
 VarNode& InvariantGraph::varNode(const std::string& identifier) {
   assert(_namedVarNodeIndices.contains(identifier));
-  assert(_namedVarNodeIndices.at(identifier).id != 0 &&
-         _namedVarNodeIndices.at(identifier).id <= _varNodes.size());
-  return _varNodes.at(_namedVarNodeIndices.at(identifier).id - 1);
+  assert(size_t(_namedVarNodeIndices.at(identifier)) < _varNodes.size());
+  return _varNodes.at(size_t(_namedVarNodeIndices.at(identifier)));
 }
 
 VarNode& InvariantGraph::varNode(VarNodeId id) {
-  assert(id.id != 0 && id.id <= _varNodes.size());
-  return _varNodes.at(id.id - 1);
+  assert(size_t(id) < _varNodes.size());
+  return _varNodes.at(size_t(id));
 }
 
 VarNode& InvariantGraph::varNode(Int value) {
   assert(_intVarNodeIndices.contains(value));
-  assert(_intVarNodeIndices.at(value).id != 0 &&
-         _intVarNodeIndices.at(value).id <= _varNodes.size());
-  return _varNodes.at(_intVarNodeIndices.at(value).id - 1);
+  assert(size_t(_intVarNodeIndices.at(value)) < _varNodes.size());
+  return _varNodes.at(size_t(_intVarNodeIndices.at(value)));
 }
 
 void InvariantGraph::replaceInvariantNodes() {
@@ -265,76 +263,75 @@ void InvariantGraph::replaceFixedVars() {
 const VarNode& InvariantGraph::varNodeConst(
     const std::string& identifier) const {
   assert(_namedVarNodeIndices.contains(identifier));
-  assert(_namedVarNodeIndices.at(identifier).id != 0 &&
-         _namedVarNodeIndices.at(identifier).id <= _varNodes.size());
-  return _varNodes.at(_namedVarNodeIndices.at(identifier).id - 1);
+  assert(size_t(_namedVarNodeIndices.at(identifier)) < _varNodes.size());
+  return _varNodes.at(size_t(_namedVarNodeIndices.at(identifier)));
 }
 
 const VarNode& InvariantGraph::varNodeConst(VarNodeId id) const {
-  assert(id.id != 0 && id.id <= _varNodes.size());
-  return _varNodes.at(id.id - 1);
+  assert(size_t(id) < _varNodes.size());
+  return _varNodes.at(size_t(id));
 }
 
 VarNodeId InvariantGraph::varNodeId(const std::string& identifier) const {
   if (!containsVarNode(identifier)) {
-    return VarNodeId(NULL_NODE_ID);
+    return VarNodeId{NULL_NODE_ID};
   }
   return _namedVarNodeIndices.at(identifier);
 }
 
 VarNodeId InvariantGraph::varNodeId(bool val) const {
   if (!containsVarNode(val)) {
-    return VarNodeId(NULL_NODE_ID);
+    return VarNodeId{NULL_NODE_ID};
   }
   return _boolVarNodeIndices.at(val ? 1 : 0);
 }
 
 VarNodeId InvariantGraph::varNodeId(Int val) const {
   if (!containsVarNode(val)) {
-    return VarNodeId(NULL_NODE_ID);
+    return VarNodeId{NULL_NODE_ID};
   }
   return _intVarNodeIndices.at(val);
 }
 
 propagation::VarId InvariantGraph::varId(const std::string& identifier) const {
-  return _varNodes.at(_namedVarNodeIndices.at(identifier).id - 1).varId();
+  return _varNodes.at(size_t(_namedVarNodeIndices.at(identifier))).varId();
 }
 
 propagation::VarId InvariantGraph::varId(VarNodeId id) const {
-  assert(id.id != 0 && id.id <= _varNodes.size());
-  return _varNodes.at(id.id - 1).varId();
+  assert(size_t(id) < _varNodes.size());
+  return _varNodes.at(size_t(id)).varId();
 }
 
 bool InvariantGraph::containsInvariantNode(InvariantNodeId id) const {
-  return id.type == InvariantNodeId::Type::INVARIANT &&
-         id.id <= _invariantNodes.size();
+  return id.isInvariant() && size_t(id) < _invariantNodes.size();
 }
 
 bool InvariantGraph::containsImplicitConstraintNode(InvariantNodeId id) const {
-  return id.type == InvariantNodeId::Type::IMPLICIT_CONSTRAINT &&
-         id.id <= _implicitConstraintNodes.size();
+  return id.isImplicitConstraint() &&
+         size_t(id) < _implicitConstraintNodes.size();
 }
 
 IInvariantNode& InvariantGraph::invariantNode(InvariantNodeId id) {
-  if (id.type == InvariantNodeId::Type::IMPLICIT_CONSTRAINT) {
+  if (id.isImplicitConstraint()) {
+    assert(containsImplicitConstraintNode(id));
     return implicitConstraintNode(id);
   }
   assert(containsInvariantNode(id));
-  return *_invariantNodes.at(id.id - 1);
+  return *_invariantNodes.at(size_t(id));
 }
 
 IImplicitConstraintNode& InvariantGraph::implicitConstraintNode(
     InvariantNodeId id) {
   assert(containsImplicitConstraintNode(id));
-  return *_implicitConstraintNodes.at(id.id - 1);
+  return *_implicitConstraintNodes.at(size_t(id));
 }
 
 InvariantNodeId InvariantGraph::nextInvariantNodeId() const {
-  return {_invariantNodes.size() + 1, false};
+  return {_invariantNodes.size(), false};
 }
 
 InvariantNodeId InvariantGraph::nextImplicitNodeId() const {
-  return {_implicitConstraintNodes.size() + 1, true};
+  return {_implicitConstraintNodes.size(), true};
 }
 
 InvariantNodeId InvariantGraph::addInvariantNode(
@@ -373,10 +370,10 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
         .replaceStaticInputVarNode(oldNode.varNodeId(), newNode.varNodeId());
     assert(std::none_of(
         oldNode.staticInputTo().begin(), oldNode.staticInputTo().end(),
-        [&](const InvariantNodeId& id) { return id == invNodeId; }));
+        [&](const InvariantNodeId id) { return id == invNodeId; }));
     assert(std::any_of(
         newNode.staticInputTo().begin(), newNode.staticInputTo().end(),
-        [&](const InvariantNodeId& id) { return id == invNodeId; }));
+        [&](const InvariantNodeId id) { return id == invNodeId; }));
     assert(
         std::none_of(invariantNode(invNodeId).staticInputVarNodeIds().begin(),
                      invariantNode(invNodeId).staticInputVarNodeIds().end(),
@@ -477,6 +474,7 @@ void InvariantGraph::populateRootNode() {
          _objectiveVarNodeId == vNode.varNodeId()) &&
         !vNode.isFixed()) {
       root().addSearchVarNode(vNode.varNodeId());
+      assert(root().outputVarNodeIds().back() == vNode.varNodeId());
       assert(vNode.definingNodes().contains(root().id()));
     }
   }
@@ -724,7 +722,7 @@ VarNodeId InvariantGraph::findCycleUtil(
   // variable y that i defines.
   if (visitedGlobal.contains(varNodeId)) {
     assert(!path.contains(varNodeId));
-    return VarNodeId(NULL_NODE_ID);
+    return VarNodeId{NULL_NODE_ID};
   }
 
   if (visitedLocal.contains(varNodeId)) {
@@ -784,7 +782,7 @@ VarNodeId InvariantGraph::findCycleUtil(
   // this variable is not part of a cycle, remove it from the path and return
   // null:
   path.erase(varNodeId);
-  return VarNodeId(NULL_NODE_ID);
+  return VarNodeId{NULL_NODE_ID};
 }
 
 void InvariantGraph::breakSelfCycles() {

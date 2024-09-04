@@ -289,7 +289,7 @@ VarNode::definingNodes() const noexcept {
 
 InvariantNodeId VarNode::outputOf() const {
   if (_outputOf.empty()) {
-    return InvariantNodeId(NULL_NODE_ID);
+    return InvariantNodeId{NULL_NODE_ID};
   } else if (_outputOf.size() != 1) {
     throw std::runtime_error("VarNode is not an output var");
   }

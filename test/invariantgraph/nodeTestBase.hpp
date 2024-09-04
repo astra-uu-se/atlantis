@@ -99,7 +99,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   std::shared_ptr<propagation::Solver> _solver{nullptr};
   std::shared_ptr<InvariantGraph> _invariantGraph{nullptr};
 
-  InvariantNodeId _invNodeId = InvariantNodeId(NULL_NODE_ID);
+  InvariantNodeId _invNodeId = InvariantNodeId{NULL_NODE_ID};
 
   void SetUp() override {
     _solver = std::make_unique<propagation::Solver>();
@@ -123,7 +123,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
 
   InvNode& invNode() {
     EXPECT_NE(_invNodeId, NULL_NODE_ID);
-    if (_invNodeId.type == InvariantNodeId::Type::INVARIANT) {
+    if (_invNodeId.isInvariant()) {
       return dynamic_cast<InvNode&>(_invariantGraph->invariantNode(_invNodeId));
     } else {
       return dynamic_cast<InvNode&>(
@@ -181,13 +181,13 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     visited.reserve(invNode().staticInputVarNodeIds().size() +
                     invNode().dynamicInputVarNodeIds().size());
     for (const VarNodeId& varNodeId : invNode().staticInputVarNodeIds()) {
-      if (visited.contains(varNodeId.id)) {
+      if (visited.contains(size_t(varNodeId))) {
         EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
       } else {
         if (!varNode(varNodeId).isFixed()) {
           EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
         }
-        visited.emplace(varNodeId.id);
+        visited.emplace(size_t(varNodeId));
       }
       if (varId(varNodeId) == propagation::NULL_ID) {
         const auto& [lb, ub] = varNode(varNodeId).bounds();
@@ -196,13 +196,13 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
     for (const VarNodeId& varNodeId : invNode().dynamicInputVarNodeIds()) {
-      if (visited.contains(varNodeId.id)) {
+      if (visited.contains(size_t(varNodeId))) {
         EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
       } else {
         if (!varNode(varNodeId).isFixed()) {
           EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
         }
-        visited.emplace(varNodeId.id);
+        visited.emplace(size_t(varNodeId));
       }
       if (varId(varNodeId) == propagation::NULL_ID) {
         const auto& [lb, ub] = varNode(varNodeId).bounds();
