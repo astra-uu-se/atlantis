@@ -6,7 +6,7 @@
 
 namespace atlantis::invariantgraph {
 
-IntTimesNode::IntTimesNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+IntTimesNode::IntTimesNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                            VarNodeId output)
     : InvariantNode(graph, {output}, {a, b}) {}
 

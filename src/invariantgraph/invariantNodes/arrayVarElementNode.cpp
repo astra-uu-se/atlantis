@@ -5,7 +5,7 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayVarElementNode::ArrayVarElementNode(InvariantGraph& graph, VarNodeId idx,
+ArrayVarElementNode::ArrayVarElementNode(IInvariantGraph& graph, VarNodeId idx,
                                          std::vector<VarNodeId>&& varVector,
                                          VarNodeId output, Int offset)
     : InvariantNode(graph, {output}, {idx}, std::move(varVector)),

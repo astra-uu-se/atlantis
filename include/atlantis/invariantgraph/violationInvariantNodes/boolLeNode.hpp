@@ -1,19 +1,14 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
 class BoolLeNode : public ViolationInvariantNode {
  public:
-  BoolLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
+  BoolLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
 
-  BoolLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+  BoolLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
              bool shouldHold = true);
 
   void init(InvariantNodeId) override;

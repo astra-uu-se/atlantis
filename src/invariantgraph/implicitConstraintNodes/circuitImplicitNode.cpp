@@ -3,12 +3,12 @@
 #include <numeric>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
 
 namespace atlantis::invariantgraph {
 
-CircuitImplicitNode::CircuitImplicitNode(InvariantGraph& graph,
+CircuitImplicitNode::CircuitImplicitNode(IInvariantGraph& graph,
                                          std::vector<VarNodeId>&& vars)
     : ImplicitConstraintNode(graph, std::move(vars)) {
   assert(outputVarNodeIds().size() > 1);

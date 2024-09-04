@@ -153,7 +153,7 @@ TEST_P(BoolLtNodeTestFixture, propagation) {
     return;
   }
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeReplaced() && varId(reifiedIdentifier) == propagation::NULL_ID) {

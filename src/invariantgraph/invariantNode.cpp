@@ -5,14 +5,14 @@
 #include <unordered_map>
 
 #include "atlantis/exceptions/exceptions.hpp"
-#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 
 namespace atlantis::invariantgraph {
 /**
  * A node in the invariant graph which defines a number of variables. This could
  * be an invariant, a soft constraint (which defines a violation), or a view.
  */
-InvariantNode::InvariantNode(InvariantGraph& invariantGraph,
+InvariantNode::InvariantNode(IInvariantGraph& invariantGraph,
                              std::vector<VarNodeId>&& outputIds,
                              std::vector<VarNodeId>&& staticInputIds,
                              std::vector<VarNodeId>&& dynamicInputIds)
@@ -21,15 +21,11 @@ InvariantNode::InvariantNode(InvariantGraph& invariantGraph,
       _staticInputVarNodeIds(std::move(staticInputIds)),
       _dynamicInputVarNodeIds(std::move(dynamicInputIds)) {}
 
-InvariantGraph& InvariantNode::invariantGraph() { return _invariantGraph; }
-
-InvariantNodeId InvariantNode::id() const { return _id; }
-
-InvariantNodeState InvariantNode::state() const { return _state; }
+IInvariantGraph& InvariantNode::invariantGraph() { return _invariantGraph; }
 
 void InvariantNode::setState(InvariantNodeState state) { _state = state; }
 
-const InvariantGraph& InvariantNode::invariantGraphConst() const {
+const IInvariantGraph& InvariantNode::invariantGraphConst() const {
   return _invariantGraph;
 }
 
@@ -39,6 +35,32 @@ propagation::SolverBase& InvariantNode::solver() {
 
 const propagation::SolverBase& InvariantNode::solverConst() const {
   return _invariantGraph.solverConst();
+}
+
+InvariantNodeId InvariantNode::id() const { return _id; }
+
+bool InvariantNode::isReified() const { return false; }
+
+void InvariantNode::updateState() {}
+
+bool InvariantNode::canBeReplaced() const { return false; }
+
+bool InvariantNode::replace() { return false; }
+
+bool InvariantNode::canBeMadeImplicit() const { return false; }
+
+bool InvariantNode::makeImplicit() { return false; }
+
+InvariantNodeState InvariantNode::state() const { return _state; }
+
+const std::vector<VarNodeId>& InvariantNode::outputVarNodeIds() const {
+  return _outputVarNodeIds;
+}
+const std::vector<VarNodeId>& InvariantNode::staticInputVarNodeIds() const {
+  return _staticInputVarNodeIds;
+}
+const std::vector<VarNodeId>& InvariantNode::dynamicInputVarNodeIds() const {
+  return _dynamicInputVarNodeIds;
 }
 
 void InvariantNode::init(InvariantNodeId id) {
@@ -59,20 +81,8 @@ void InvariantNode::init(InvariantNodeId id) {
   _state = InvariantNodeState::ACTIVE;
 }
 
-const std::vector<VarNodeId>& InvariantNode::outputVarNodeIds() const {
-  return _outputVarNodeIds;
-}
-
 propagation::VarId InvariantNode::violationVarId() const {
   return propagation::NULL_ID;
-}
-
-const std::vector<VarNodeId>& InvariantNode::staticInputVarNodeIds() const {
-  return _staticInputVarNodeIds;
-}
-
-const std::vector<VarNodeId>& InvariantNode::dynamicInputVarNodeIds() const {
-  return _dynamicInputVarNodeIds;
 }
 
 void InvariantNode::eraseStaticInputVarNode(size_t index) {
@@ -90,16 +100,6 @@ void InvariantNode::eraseDynamicInputVarNode(size_t index) {
   }
   _dynamicInputVarNodeIds.erase(_dynamicInputVarNodeIds.begin() + index);
 }
-
-bool InvariantNode::isReified() const { return false; }
-
-bool InvariantNode::canBeReplaced() const { return false; }
-
-bool InvariantNode::replace() { return false; }
-
-bool InvariantNode::canBeMadeImplicit() const { return false; }
-
-bool InvariantNode::makeImplicit() { return false; }
 
 void InvariantNode::deactivate() {
   while (!staticInputVarNodeIds().empty()) {

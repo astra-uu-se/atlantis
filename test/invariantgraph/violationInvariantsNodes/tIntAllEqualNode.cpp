@@ -179,7 +179,7 @@ TEST_P(IntAllEqualNodeTestFixture, propagation) {
     return;
   }
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeSubsumed()) {

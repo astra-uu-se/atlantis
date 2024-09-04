@@ -1,29 +1,18 @@
 #pragma once
 
 #include <array>
-#include <stack>
-#include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <vector>
 
-#include "atlantis/invariantgraph/iImplicitConstraintNode.hpp"
-#include "atlantis/invariantgraph/iInvariantNode.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantGraphRoot.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/search/neighbourhoods/neighbourhoodCombinator.hpp"
 
 namespace atlantis::invariantgraph {
 
-class InvariantGraph {
+class InvariantGraph : public virtual IInvariantGraph {
  private:
-  struct Edge {
-    InvariantNodeId invariantNodeId;
-    VarNodeId varNodeId;
-  };
   propagation::SolverBase& _solver;
   std::vector<VarNode> _varNodes;
   std::unordered_map<std::string, VarNodeId> _namedVarNodeIndices;
@@ -31,7 +20,8 @@ class InvariantGraph {
   std::array<VarNodeId, 2> _boolVarNodeIndices;
 
   std::vector<std::shared_ptr<IInvariantNode>> _invariantNodes;
-  std::vector<std::shared_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
+  std::vector<std::shared_ptr<IImplicitConstraintNode>>
+      _implicitConstraintNodes;
   bool _breakDynamicCycles;
 
   void populateRootNode();
@@ -48,91 +38,131 @@ class InvariantGraph {
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
 
-  [[nodiscard]] propagation::SolverBase& solver() noexcept;
+  [[nodiscard]] propagation::SolverBase& solver() override;
 
-  [[nodiscard]] const propagation::SolverBase& solverConst() const noexcept;
+  [[nodiscard]] const propagation::SolverBase& solverConst() const override;
 
-  [[nodiscard]] VarNodeId nextVarNodeId() const noexcept;
+  [[nodiscard]] VarNodeId nextVarNodeId() const override;
 
-  [[nodiscard]] bool containsVarNode(
-      const std::string& identifier) const noexcept;
-  [[nodiscard]] bool containsVarNode(Int) const noexcept;
-  [[nodiscard]] static bool containsVarNode(bool) noexcept;
+  [[nodiscard]] bool containsVarNode(const std::string&) const override;
 
-  VarNodeId retrieveBoolVarNode(
-      VarNode::DomainType = VarNode::DomainType::RANGE);
-  VarNodeId retrieveBoolVarNode(
-      const std::string&, VarNode::DomainType = VarNode::DomainType::RANGE);
-  VarNodeId retrieveBoolVarNode(bool);
-  VarNodeId retrieveBoolVarNode(bool, const std::string&);
-  VarNodeId retrieveBoolVarNode(
-      SearchDomain&&, VarNode::DomainType = VarNode::DomainType::RANGE);
+  [[nodiscard]] bool containsVarNode(Int) const override;
 
-  VarNodeId retrieveIntVarNode(const std::string&);
-  VarNodeId retrieveIntVarNode(Int);
-  VarNodeId retrieveIntVarNode(Int, const std::string&);
-  VarNodeId retrieveIntVarNode(
-      SearchDomain&&, VarNode::DomainType = VarNode::DomainType::DOMAIN);
-  VarNodeId retrieveIntVarNode(
-      SearchDomain&&, const std::string&,
-      VarNode::DomainType = VarNode::DomainType::DOMAIN);
+  [[nodiscard]] bool containsVarNode(bool) const override;
 
-  [[nodiscard]] VarNode& varNode(const std::string& identifier);
-  [[nodiscard]] VarNode& varNode(VarNodeId id);
-  [[nodiscard]] VarNode& varNode(Int value);
+  VarNodeId retrieveBoolVarNode(VarNode::DomainType) override;
 
-  [[nodiscard]] const VarNode& varNodeConst(
-      const std::string& identifier) const;
-  [[nodiscard]] const VarNode& varNodeConst(VarNodeId id) const;
+  VarNodeId retrieveBoolVarNode() override {
+    return retrieveBoolVarNode(VarNode::DomainType::RANGE);
+  }
 
-  [[nodiscard]] VarNodeId varNodeId(bool val) const;
-  [[nodiscard]] VarNodeId varNodeId(Int val) const;
-  [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const;
+  VarNodeId retrieveBoolVarNode(const std::string&,
+                                VarNode::DomainType) override;
 
-  [[nodiscard]] propagation::VarId varId(const std::string& identifier) const;
-  [[nodiscard]] propagation::VarId varId(VarNodeId id) const;
+  VarNodeId retrieveBoolVarNode(const std::string& identifier) override {
+    return retrieveBoolVarNode(identifier, VarNode::DomainType::RANGE);
+  }
 
-  [[nodiscard]] bool containsInvariantNode(InvariantNodeId) const noexcept;
+  VarNodeId retrieveBoolVarNode(bool) override;
+
+  VarNodeId retrieveBoolVarNode(bool, const std::string&) override;
+
+  VarNodeId retrieveBoolVarNode(SearchDomain&&, VarNode::DomainType) override;
+
+  VarNodeId retrieveBoolVarNode(SearchDomain&& dom) override {
+    return retrieveBoolVarNode(std::move(dom), VarNode::DomainType::RANGE);
+  }
+
+  VarNodeId retrieveIntVarNode(const std::string&) override;
+
+  VarNodeId retrieveIntVarNode(Int) override;
+
+  VarNodeId retrieveIntVarNode(Int, const std::string&) override;
+
+  VarNodeId retrieveIntVarNode(SearchDomain&&, VarNode::DomainType) override;
+
+  VarNodeId retrieveIntVarNode(SearchDomain&& dom) override {
+    return retrieveIntVarNode(std::move(dom), VarNode::DomainType::DOMAIN);
+  }
+
+  VarNodeId retrieveIntVarNode(SearchDomain&& dom, const std::string& str,
+                               VarNode::DomainType) override;
+
+  VarNodeId retrieveIntVarNode(SearchDomain&& dom,
+                               const std::string& identifier) override {
+    return retrieveIntVarNode(std::move(dom), identifier,
+                              VarNode::DomainType::DOMAIN);
+  }
+
+  [[nodiscard]] VarNode& varNode(const std::string& identifier) override;
+
+  [[nodiscard]] VarNode& varNode(VarNodeId id) override;
+
+  [[nodiscard]] VarNode& varNode(Int value) override;
+
+  [[nodiscard]] const VarNode& varNodeConst(const std::string&) const override;
+
+  [[nodiscard]] const VarNode& varNodeConst(VarNodeId id) const override;
+
+  [[nodiscard]] VarNodeId varNodeId(bool val) const override;
+
+  [[nodiscard]] VarNodeId varNodeId(Int val) const override;
+
+  [[nodiscard]] VarNodeId varNodeId(
+      const std::string& identifier) const override;
+
+  [[nodiscard]] propagation::VarId varId(
+      const std::string& identifier) const override;
+
+  [[nodiscard]] propagation::VarId varId(VarNodeId id) const override;
+
+  [[nodiscard]] bool containsInvariantNode(InvariantNodeId) const override;
+
   [[nodiscard]] bool containsImplicitConstraintNode(
-      InvariantNodeId) const noexcept;
+      InvariantNodeId) const override;
 
-  [[nodiscard]] IInvariantNode& invariantNode(InvariantNodeId);
-  [[nodiscard]] InvariantGraphRoot& root();
-  [[nodiscard]] ImplicitConstraintNode& implicitConstraintNode(InvariantNodeId);
+  [[nodiscard]] IInvariantNode& invariantNode(InvariantNodeId) override;
 
-  [[nodiscard]] InvariantNodeId nextInvariantNodeId() const noexcept;
-  [[nodiscard]] InvariantNodeId nextImplicitNodeId() const noexcept;
+  [[nodiscard]] IImplicitConstraintNode& implicitConstraintNode(
+      InvariantNodeId) override;
 
-  InvariantNodeId addInvariantNode(std::shared_ptr<IInvariantNode>&&);
+  [[nodiscard]] InvariantNodeId nextInvariantNodeId() const override;
+
+  [[nodiscard]] InvariantNodeId nextImplicitNodeId() const override;
+
+  InvariantNodeId addInvariantNode(std::shared_ptr<IInvariantNode>&&) override;
 
   /**
    * @brief replaces the given old VarNode with the new VarNode in
    * all Invariants.
    */
-  void replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId);
+  void replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) override;
+
+  InvariantNodeId addImplicitConstraintNode(
+      std::shared_ptr<IImplicitConstraintNode>&&) override;
+
+  [[nodiscard]] propagation::VarId totalViolationVarId() const override;
+
+  [[nodiscard]] const VarNode& objectiveVarNode() const override;
+
+  [[nodiscard]] propagation::VarId objectiveVarId() const override;
+
+  void breakCycles() override;
+
+  void construct() override;
+
+  void close() override;
+
+  void splitMultiDefinedVars();
 
   void replaceFixedVars();
 
   void replaceInvariantNodes();
 
-  InvariantNodeId addImplicitConstraintNode(
-      std::shared_ptr<ImplicitConstraintNode>&&);
+  [[nodiscard]] InvariantGraphRoot& root();
 
   [[nodiscard]] search::neighbourhoods::NeighbourhoodCombinator neighbourhood()
-      const noexcept;
-
-  [[nodiscard]] propagation::VarId totalViolationVarId() const noexcept;
-
-  [[nodiscard]] const VarNode& objectiveVarNode() const;
-
-  [[nodiscard]] propagation::VarId objectiveVarId() const noexcept;
-
-  void splitMultiDefinedVars();
-  void breakCycles();
-
-  void apply();
-
-  void close();
+      const;
 
  private:
   std::unordered_set<VarNodeId, VarNodeIdHash> dynamicVarNodeFrontier(
@@ -143,16 +173,17 @@ class InvariantGraph {
       VarNodeId varNodeId,
       const std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal,
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedLocal,
-      std::unordered_map<VarNodeId, Edge, VarNodeIdHash>& path);
+      std::unordered_map<VarNodeId, InvariantGraphEdge, VarNodeIdHash>& path);
 
-  Edge findPivotInCycle(const std::vector<Edge>& cycle);
+  InvariantGraphEdge findPivotInCycle(
+      const std::vector<InvariantGraphEdge>& cycle);
 
   void breakSelfCycles();
 
   std::vector<VarNodeId> breakCycles(
       VarNodeId node,
       std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal);
-  VarNodeId breakCycle(const std::vector<Edge>& cycle);
+  VarNodeId breakCycle(const std::vector<InvariantGraphEdge>& cycle);
 
   void createVars();
   void createImplicitConstraints();

@@ -21,7 +21,7 @@ static std::vector<std::vector<Int>> toIntMatrix(
 }
 
 ArrayElement2dNode::ArrayElement2dNode(
-    InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+    IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
     std::vector<std::vector<Int>>&& parMatrix, VarNodeId output, Int offset1,
     Int offset2)
     : InvariantNode(graph, {output}, {idx1, idx2}),
@@ -31,7 +31,7 @@ ArrayElement2dNode::ArrayElement2dNode(
       _isIntMatrix(true) {}
 
 ArrayElement2dNode::ArrayElement2dNode(
-    InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+    IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
     std::vector<std::vector<bool>>&& parMatrix, VarNodeId output, Int offset1,
     Int offset2)
     : InvariantNode(graph, {output}, {idx1, idx2}),

@@ -1,16 +1,14 @@
 #include "atlantis/invariantgraph/implicitConstraintNode.hpp"
 
 #include <cassert>
-#include <vector>
 
-#include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/search/neighbourhoods/neighbourhood.hpp"
 
 namespace atlantis::invariantgraph {
 
 ImplicitConstraintNode::ImplicitConstraintNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& outputVarNodeIds)
+    IInvariantGraph& graph, std::vector<VarNodeId>&& outputVarNodeIds)
     : InvariantNode(graph, std::move(outputVarNodeIds)) {}
 
 void ImplicitConstraintNode::registerOutputVars() {
@@ -28,7 +26,7 @@ void ImplicitConstraintNode::init(InvariantNodeId id) {
 }
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
-ImplicitConstraintNode::neighbourhood() noexcept {
+ImplicitConstraintNode::neighbourhood() {
   return _neighbourhood;
 }
 

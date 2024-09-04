@@ -100,7 +100,7 @@ TEST_P(IntAbsNodeTestFixture, propagation) {
     return;
   }
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeReplaced()) {

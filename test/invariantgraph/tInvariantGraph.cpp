@@ -35,7 +35,7 @@ TEST(InvariantGraphTest, apply_result) {
   invariantGraph.addImplicitConstraintNode(std::make_shared<InvariantGraphRoot>(
       invariantGraph, std::vector<VarNodeId>{a, b}));
 
-  invariantGraph.apply();
+  invariantGraph.construct();
   invariantGraph.close();
 
   EXPECT_NE(invariantGraph.varNode(a).varId(), propagation::NULL_ID);
@@ -66,7 +66,7 @@ TEST(InvariantGraphTest, ApplyGraph) {
   invariantGraph.addInvariantNode(
       std::make_shared<IntPlusNode>(invariantGraph, output1, output2, output3));
 
-  invariantGraph.apply();
+  invariantGraph.construct();
   invariantGraph.close();
 
   // 7 variables
@@ -108,7 +108,7 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
   invariantGraph.addInvariantNode(
       std::make_shared<IntPlusNode>(invariantGraph, c, d, output));
 
-  invariantGraph.apply();
+  invariantGraph.construct();
   invariantGraph.close();
 
   // a, b, c, d, output
@@ -165,7 +165,7 @@ TEST(InvariantGraphTest, SplitGraph) {
         output));
   }
 
-  invariantGraph.apply();
+  invariantGraph.construct();
   invariantGraph.close();
 
   // Each invariant has numInputs inputs
@@ -208,7 +208,7 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
   invariantGraph.addInvariantNode(
       std::make_shared<IntPlusNode>(invariantGraph, output1, x2, output2));
 
-  invariantGraph.apply();
+  invariantGraph.construct();
   invariantGraph.close();
 
   // x1, x2, output1, output2
@@ -255,7 +255,7 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
   invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
       invariantGraph, output1, std::vector<VarNodeId>{x21, x22}, output2, 0));
 
-  invariantGraph.apply();
+  invariantGraph.construct();
   invariantGraph.close();
 
   // x11, x12, x21, x22, output1, output1
@@ -303,7 +303,7 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
   invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
       invariantGraph, idx2, std::vector<VarNodeId>{output1, x2}, output2, 1));
 
-  invariantGraph.apply();
+  invariantGraph.construct();
   invariantGraph.close();
 
   // idx1, x1, idx2, x2, output1, output2

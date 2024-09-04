@@ -83,7 +83,7 @@ TEST_P(CircuitNodeTestFixture, propagation) {
   }
   return;
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   for (Int i = 0; i < numInputs; i++) {
     const Int val = 1 + ((i + 1) % numInputs);
     _solver->setValue(varId(inputIdentifiers.at(i)), val);

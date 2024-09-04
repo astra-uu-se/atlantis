@@ -7,7 +7,7 @@
 
 namespace atlantis::invariantgraph {
 
-IntAbsNode::IntAbsNode(InvariantGraph& graph, VarNodeId staticInput,
+IntAbsNode::IntAbsNode(IInvariantGraph& graph, VarNodeId staticInput,
                        VarNodeId output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 

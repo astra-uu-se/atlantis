@@ -6,16 +6,9 @@
 #include <fznparser/variables.hpp>
 #include <string>
 #include <typeinfo>
-#include <unordered_set>
-#include <variant>
 
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
-#include "atlantis/invariantgraph/invariantNodes/varIntCountNode.hpp"
-#include "atlantis/types.hpp"
-#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -31,7 +24,7 @@ void verifyNumArguments(const fznparser::Constraint& constraint, size_t size);
 std::vector<Int> getFixedValues(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray);
 
-std::vector<bool> getFixedBoolValues(const InvariantGraph&,
+std::vector<bool> getFixedBoolValues(const IInvariantGraph&,
                                      const std::vector<VarNodeId>&);
 
 std::vector<bool> getFixedValues(
@@ -43,7 +36,7 @@ std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
 std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
     FznInvariantGraph&, const std::shared_ptr<fznparser::BoolVarArray>&);
 
-std::vector<VarNodeId> getUnfixedVarNodeIds(const InvariantGraph&,
+std::vector<VarNodeId> getUnfixedVarNodeIds(const IInvariantGraph&,
                                             const std::vector<VarNodeId>&);
 
 void verifyAllDifferent(

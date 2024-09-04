@@ -10,20 +10,20 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, VarNodeId a,
+ArrayBoolOrNode::ArrayBoolOrNode(IInvariantGraph& graph, VarNodeId a,
                                  VarNodeId b, VarNodeId reified)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, reified) {}
 
-ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, VarNodeId a,
+ArrayBoolOrNode::ArrayBoolOrNode(IInvariantGraph& graph, VarNodeId a,
                                  VarNodeId b, bool shouldHold)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
-ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph,
+ArrayBoolOrNode::ArrayBoolOrNode(IInvariantGraph& graph,
                                  std::vector<VarNodeId>&& inputs,
                                  VarNodeId reified)
     : ViolationInvariantNode(graph, std::move(inputs), reified) {}
 
-ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph,
+ArrayBoolOrNode::ArrayBoolOrNode(IInvariantGraph& graph,
                                  std::vector<VarNodeId>&& inputs,
                                  bool shouldHold)
     : ViolationInvariantNode(graph, std::move(inputs), shouldHold) {}

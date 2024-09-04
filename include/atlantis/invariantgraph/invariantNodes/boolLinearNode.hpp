@@ -1,12 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
 class BoolLinearNode : public InvariantNode {
@@ -16,7 +10,7 @@ class BoolLinearNode : public InvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  BoolLinearNode(InvariantGraph& graph,
+  BoolLinearNode(IInvariantGraph& graph,
 
                  std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                  VarNodeId output, Int offset = 0);

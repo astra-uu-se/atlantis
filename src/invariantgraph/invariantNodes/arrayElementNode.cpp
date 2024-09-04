@@ -20,7 +20,7 @@ static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
   return intVec;
 }
 
-ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
+ArrayElementNode::ArrayElementNode(IInvariantGraph& graph,
                                    std::vector<Int>&& parVector, VarNodeId idx,
                                    VarNodeId output, Int offset,
                                    bool isIntVector)
@@ -29,7 +29,7 @@ ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
       _offset(offset),
       _isIntVector(isIntVector) {}
 
-ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
+ArrayElementNode::ArrayElementNode(IInvariantGraph& graph,
                                    std::vector<bool>&& parVector, VarNodeId idx,
                                    VarNodeId output, Int offset)
     : InvariantNode(graph, {output}, {idx}),

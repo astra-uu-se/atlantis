@@ -1,17 +1,12 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
 class IntDivNode : public InvariantNode {
  public:
-  IntDivNode(InvariantGraph& graph,
+  IntDivNode(IInvariantGraph& graph,
 
              VarNodeId numerator, VarNodeId denominator, VarNodeId quotient);
 

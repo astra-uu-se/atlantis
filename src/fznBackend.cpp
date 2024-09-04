@@ -139,7 +139,7 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   logger.timedProcedure("building invariant graph",
                         [&] { invariantGraph.build(_model); });
 
-  invariantGraph.apply();
+  invariantGraph.construct();
   auto neighbourhood = invariantGraph.neighbourhood();
 
   neighbourhood.printNeighbourhood(logger);

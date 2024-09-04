@@ -9,11 +9,11 @@
 
 namespace atlantis::invariantgraph {
 
-InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
+InIntervalNode::InIntervalNode(IInvariantGraph& graph, VarNodeId input, Int lb,
                                Int ub, VarNodeId r)
     : ViolationInvariantNode(graph, {input}, r), _lb(lb), _ub(ub) {}
 
-InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
+InIntervalNode::InIntervalNode(IInvariantGraph& graph, VarNodeId input, Int lb,
                                Int ub, bool shouldHold)
     : ViolationInvariantNode(graph, {input}, shouldHold), _lb(lb), _ub(ub) {}
 

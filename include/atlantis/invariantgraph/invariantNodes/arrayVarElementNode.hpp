@@ -1,12 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -15,7 +9,7 @@ class ArrayVarElementNode : public InvariantNode {
   Int _offset;
 
  public:
-  ArrayVarElementNode(InvariantGraph& graph, VarNodeId idx,
+  ArrayVarElementNode(IInvariantGraph& graph, VarNodeId idx,
                       std::vector<VarNodeId>&& varVector, VarNodeId output,
                       Int offset);
 

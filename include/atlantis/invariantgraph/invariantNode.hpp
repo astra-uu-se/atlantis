@@ -1,13 +1,8 @@
 #pragma once
 
-#include <vector>
-
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/iInvariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
 /**
@@ -16,11 +11,11 @@ namespace atlantis::invariantgraph {
  * view.
  */
 
-class InvariantNode : public IInvariantNode {
+class InvariantNode : virtual public IInvariantNode {
  private:
   InvariantNodeId _id{NULL_NODE_ID};
   InvariantNodeState _state{InvariantNodeState::UNINITIALIZED};
-  InvariantGraph& _invariantGraph;
+  IInvariantGraph& _invariantGraph;
 
  protected:
   std::vector<VarNodeId> _outputVarNodeIds;
@@ -28,24 +23,52 @@ class InvariantNode : public IInvariantNode {
   std::vector<VarNodeId> _dynamicInputVarNodeIds;
 
  public:
-  explicit InvariantNode(InvariantGraph& invariantGraph,
+  explicit InvariantNode(IInvariantGraph& invariantGraph,
                          std::vector<VarNodeId>&& outputIds,
                          std::vector<VarNodeId>&& staticInputIds = {},
                          std::vector<VarNodeId>&& dynamicInputIds = {});
 
   virtual ~InvariantNode() = default;
 
-  InvariantGraph& invariantGraph();
+  [[nodiscard]] IInvariantGraph& invariantGraph();
 
-  const InvariantGraph& invariantGraphConst() const;
+  [[nodiscard]] const IInvariantGraph& invariantGraphConst() const;
 
-  propagation::SolverBase& solver();
+  [[nodiscard]] propagation::SolverBase& solver();
 
-  const propagation::SolverBase& solverConst() const;
+  [[nodiscard]] const propagation::SolverBase& solverConst() const;
 
-  InvariantNodeId id() const override;
+  [[nodiscard]] InvariantNodeId id() const override;
 
-  InvariantNodeState state() const override;
+  [[nodiscard]] virtual bool isReified() const override;
+
+  virtual void updateState() override;
+
+  [[nodiscard]] virtual bool canBeReplaced() const override;
+
+  [[nodiscard]] virtual bool replace() override;
+
+  [[nodiscard]] virtual bool canBeMadeImplicit() const override;
+
+  [[nodiscard]] virtual bool makeImplicit() override;
+
+  [[nodiscard]] InvariantNodeState state() const override;
+
+  /**
+   * @return The violation variable of this variable defining node. Only
+   * applicable if the current node is a violation invariant. If this node does
+   * not define a violation variable, this method returns propagation::NULL_ID.
+   */
+  [[nodiscard]] propagation::VarId violationVarId() const;
+
+  /**
+   * @return The variable nodes defined by this node.
+   */
+  [[nodiscard]] const std::vector<VarNodeId>& outputVarNodeIds() const;
+
+  [[nodiscard]] const std::vector<VarNodeId>& staticInputVarNodeIds() const;
+
+  [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds() const;
 
   void setState(InvariantNodeState) override;
 
@@ -72,12 +95,13 @@ class InvariantNode : public IInvariantNode {
   void replaceDynamicInputVarNode(VarNodeId oldInputVarNodeId,
                                   VarNodeId newInputVarNodeId) override;
 
-  std::vector<std::pair<VarNodeId, VarNodeId>> splitOutputVarNodes() override;
+  [[nodiscard]] std::vector<std::pair<VarNodeId, VarNodeId>>
+  splitOutputVarNodes() override;
 
-  propagation::VarId makeSolverVar(VarNodeId varNodeId) override;
+  [[nodiscard]] propagation::VarId makeSolverVar(VarNodeId varNodeId) override;
 
-  propagation::VarId makeSolverVar(VarNodeId varNodeId,
-                                   Int initialValue) override;
+  [[nodiscard]] propagation::VarId makeSolverVar(VarNodeId varNodeId,
+                                                 Int initialValue) override;
 
   void markOutputTo(VarNodeId varNodeId, bool registerHere) override;
 

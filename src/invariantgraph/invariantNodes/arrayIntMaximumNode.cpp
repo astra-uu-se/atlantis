@@ -9,11 +9,11 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph, VarNodeId a,
+ArrayIntMaximumNode::ArrayIntMaximumNode(IInvariantGraph& graph, VarNodeId a,
                                          VarNodeId b, VarNodeId output)
     : ArrayIntMaximumNode(graph, std::vector<VarNodeId>{a, b}, output) {}
 
-ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph,
+ArrayIntMaximumNode::ArrayIntMaximumNode(IInvariantGraph& graph,
                                          std::vector<VarNodeId>&& vars,
                                          VarNodeId output)
     : InvariantNode(graph, {output}, std::move(vars)),

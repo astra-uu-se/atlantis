@@ -122,7 +122,7 @@ TEST_P(ArrayVarElement2dNodeTestFixture, replace) {
 
 TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   const propagation::VarId outputId = varId(outputIdentifier);

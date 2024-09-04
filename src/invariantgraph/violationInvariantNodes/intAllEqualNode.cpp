@@ -12,22 +12,22 @@
 
 namespace atlantis::invariantgraph {
 
-IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, VarNodeId a,
+IntAllEqualNode::IntAllEqualNode(IInvariantGraph& graph, VarNodeId a,
                                  VarNodeId b, VarNodeId r, bool breaksCycle)
     : IntAllEqualNode(graph, std::vector<VarNodeId>{a, b}, r, breaksCycle) {}
 
-IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, VarNodeId a,
+IntAllEqualNode::IntAllEqualNode(IInvariantGraph& graph, VarNodeId a,
                                  VarNodeId b, bool shouldHold, bool breaksCycle)
     : IntAllEqualNode(graph, std::vector<VarNodeId>{a, b}, shouldHold,
                       breaksCycle) {}
 
-IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph,
+IntAllEqualNode::IntAllEqualNode(IInvariantGraph& graph,
                                  std::vector<VarNodeId>&& vars, VarNodeId r,
                                  bool breaksCycle)
     : ViolationInvariantNode(graph, std::move(vars), r),
       _breaksCycle(breaksCycle) {}
 
-IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph,
+IntAllEqualNode::IntAllEqualNode(IInvariantGraph& graph,
                                  std::vector<VarNodeId>&& vars, bool shouldHold,
                                  bool breaksCycle)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),

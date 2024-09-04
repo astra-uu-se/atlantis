@@ -123,7 +123,7 @@ TEST_P(IntTimesNodeTestFixture, replace) {
 
 TEST_P(IntTimesNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeSubsumed()) {

@@ -98,7 +98,7 @@ TEST_P(IntPowNodeTestFixture, application) {
 
 TEST_P(IntPowNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeSubsumed()) {

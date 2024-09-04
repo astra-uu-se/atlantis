@@ -8,11 +8,11 @@
 
 namespace atlantis::invariantgraph {
 
-BoolOrNode::BoolOrNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+BoolOrNode::BoolOrNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                        VarNodeId r)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, r) {}
 
-BoolOrNode::BoolOrNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+BoolOrNode::BoolOrNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                        bool shouldHold)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 

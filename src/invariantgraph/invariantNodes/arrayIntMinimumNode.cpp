@@ -9,11 +9,11 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayIntMinimumNode::ArrayIntMinimumNode(InvariantGraph& graph, VarNodeId a,
+ArrayIntMinimumNode::ArrayIntMinimumNode(IInvariantGraph& graph, VarNodeId a,
                                          VarNodeId b, VarNodeId output)
     : ArrayIntMinimumNode(graph, std::vector<VarNodeId>{a, b}, output) {}
 
-ArrayIntMinimumNode::ArrayIntMinimumNode(InvariantGraph& graph,
+ArrayIntMinimumNode::ArrayIntMinimumNode(IInvariantGraph& graph,
                                          std::vector<VarNodeId>&& vars,
                                          VarNodeId output)
     : InvariantNode(graph, {output}, std::move(vars)),

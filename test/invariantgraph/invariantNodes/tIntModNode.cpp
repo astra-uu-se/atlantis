@@ -75,7 +75,7 @@ TEST_P(IntModNodeTestFixture, application) {
 
 TEST_P(IntModNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeSubsumed()) {

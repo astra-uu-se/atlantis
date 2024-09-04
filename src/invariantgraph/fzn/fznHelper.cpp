@@ -1,5 +1,8 @@
 #include "./fznHelper.hpp"
 
+#include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/varIntCountNode.hpp"
+
 namespace atlantis::invariantgraph::fzn {
 
 std::string to_string(const std::type_info& t, bool isVar) {
@@ -149,7 +152,7 @@ std::vector<Int> getFixedValues(
   return values;
 }
 
-std::vector<bool> getFixedBoolValues(const InvariantGraph& graph,
+std::vector<bool> getFixedBoolValues(const IInvariantGraph& graph,
                                      const std::vector<VarNodeId>& varNodeIds) {
   std::vector<bool> values;
   values.reserve(varNodeIds.size());
@@ -220,7 +223,7 @@ std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
 }
 
 std::vector<VarNodeId> getUnfixedVarNodeIds(
-    const InvariantGraph& graph, const std::vector<VarNodeId>& varNodeIds) {
+    const IInvariantGraph& graph, const std::vector<VarNodeId>& varNodeIds) {
   std::vector<VarNodeId> unfixed;
   unfixed.reserve(varNodeIds.size());
   for (VarNodeId varNodeId : varNodeIds) {

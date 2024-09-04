@@ -4,7 +4,7 @@
 
 namespace atlantis::invariantgraph {
 
-IntScalarNode::IntScalarNode(InvariantGraph& graph, VarNodeId staticInput,
+IntScalarNode::IntScalarNode(IInvariantGraph& graph, VarNodeId staticInput,
                              VarNodeId output, Int factor, Int offset)
     : InvariantNode(graph, {output}, {staticInput}),
       _factor(factor),

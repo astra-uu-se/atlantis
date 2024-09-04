@@ -70,7 +70,7 @@ TEST_F(array_int_elementTest, construction) {
 
 TEST_F(array_int_elementTest, propagation) {
   array_int_element(*_invariantGraph, _model->constraints().front());
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   for (Int i = 0; i < numInputs; ++i) {

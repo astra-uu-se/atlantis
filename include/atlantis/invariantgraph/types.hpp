@@ -115,4 +115,9 @@ enum struct InvariantNodeState : unsigned char {
   SUBSUMED
 };
 
+struct InvariantGraphEdge {
+  InvariantNodeId invariantNodeId;
+  VarNodeId varNodeId;
+};
+
 }  // namespace atlantis::invariantgraph

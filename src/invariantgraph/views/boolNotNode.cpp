@@ -4,7 +4,7 @@
 
 namespace atlantis::invariantgraph {
 
-BoolNotNode::BoolNotNode(InvariantGraph& invariantGraph, VarNodeId staticInput,
+BoolNotNode::BoolNotNode(IInvariantGraph& invariantGraph, VarNodeId staticInput,
                          VarNodeId output)
     : InvariantNode(invariantGraph, {output}, {staticInput}) {}
 

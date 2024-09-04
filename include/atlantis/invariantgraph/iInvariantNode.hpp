@@ -3,8 +3,6 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/types.hpp"
 
@@ -15,12 +13,8 @@ namespace atlantis::invariantgraph {
  * view.
  */
 
-class InvariantGraph;  // Forward declaration
-
 class IInvariantNode {
  public:
-  IInvariantNode() = delete;
-
   virtual ~IInvariantNode() = default;
 
   virtual void init(InvariantNodeId) = 0;

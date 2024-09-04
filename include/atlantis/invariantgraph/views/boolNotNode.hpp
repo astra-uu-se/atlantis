@@ -1,15 +1,12 @@
 #pragma once
 
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
 class BoolNotNode : public InvariantNode {
  public:
-  BoolNotNode(InvariantGraph& graph,
+  BoolNotNode(IInvariantGraph& graph,
 
               VarNodeId staticInput, VarNodeId output);
 

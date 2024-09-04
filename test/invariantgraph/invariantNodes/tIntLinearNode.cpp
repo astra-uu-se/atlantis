@@ -124,7 +124,7 @@ TEST_P(IntLinearNodeTestFixture, updateState) {
 
 TEST_P(IntLinearNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeSubsumed()) {

@@ -1,11 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 class ArrayIntMaximumNode : public InvariantNode {
@@ -13,10 +8,10 @@ class ArrayIntMaximumNode : public InvariantNode {
   Int _lb;
 
  public:
-  explicit ArrayIntMaximumNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+  explicit ArrayIntMaximumNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                                VarNodeId output);
 
-  explicit ArrayIntMaximumNode(InvariantGraph& graph,
+  explicit ArrayIntMaximumNode(IInvariantGraph& graph,
 
                                std::vector<VarNodeId>&& vars, VarNodeId output);
 

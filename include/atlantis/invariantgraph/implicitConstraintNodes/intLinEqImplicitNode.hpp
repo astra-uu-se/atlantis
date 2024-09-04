@@ -14,7 +14,7 @@ class IntLinEqImplicitNode : public ImplicitConstraintNode {
   Int _offset;
 
  public:
-  explicit IntLinEqImplicitNode(InvariantGraph&, std::vector<Int>&& coeffs,
+  explicit IntLinEqImplicitNode(IInvariantGraph&, std::vector<Int>&& coeffs,
                                 std::vector<VarNodeId>&&, Int offset);
 
   void init(InvariantNodeId) override;

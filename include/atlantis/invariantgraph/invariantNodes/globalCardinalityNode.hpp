@@ -1,12 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
 class GlobalCardinalityNode : public InvariantNode {
@@ -16,7 +10,7 @@ class GlobalCardinalityNode : public InvariantNode {
   std::vector<propagation::VarId> _intermediate;
 
  public:
-  explicit GlobalCardinalityNode(InvariantGraph& graph,
+  explicit GlobalCardinalityNode(IInvariantGraph& graph,
 
                                  std::vector<VarNodeId>&& inputs,
                                  std::vector<Int>&& cover,

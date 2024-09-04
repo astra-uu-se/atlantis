@@ -112,7 +112,7 @@ TEST_P(BoolLinLeNodeTestFixture, updateState) {
 
 TEST_P(BoolLinLeNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeSubsumed()) {

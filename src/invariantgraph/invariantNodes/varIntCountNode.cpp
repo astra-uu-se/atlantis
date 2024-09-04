@@ -11,7 +11,7 @@
 
 namespace atlantis::invariantgraph {
 
-VarIntCountNode::VarIntCountNode(InvariantGraph& graph,
+VarIntCountNode::VarIntCountNode(IInvariantGraph& graph,
                                  std::vector<VarNodeId>&& vars,
                                  VarNodeId needle, VarNodeId count)
     : InvariantNode(graph, {count}, append(std::move(vars), needle)) {}

@@ -1,15 +1,12 @@
 #pragma once
 
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
 class Bool2IntNode : public InvariantNode {
  public:
-  Bool2IntNode(InvariantGraph& graph, VarNodeId staticInput, VarNodeId output);
+  Bool2IntNode(IInvariantGraph& graph, VarNodeId staticInput, VarNodeId output);
 
   void init(InvariantNodeId) override;
 

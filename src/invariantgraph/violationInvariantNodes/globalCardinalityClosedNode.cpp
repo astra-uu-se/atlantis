@@ -12,14 +12,14 @@
 namespace atlantis::invariantgraph {
 
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
+    IInvariantGraph& graph, std::vector<VarNodeId>&& inputs,
     std::vector<Int>&& cover, std::vector<VarNodeId>&& counts, bool shouldHold)
     : ViolationInvariantNode(graph, std::move(counts), std::move(inputs),
                              shouldHold),
       _cover(std::move(cover)) {}
 
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
+    IInvariantGraph& graph, std::vector<VarNodeId>&& inputs,
     std::vector<Int>&& cover, std::vector<VarNodeId>&& counts, VarNodeId r)
     : ViolationInvariantNode(graph, std::move(counts), std::move(inputs), r),
       _cover(std::move(cover)) {}

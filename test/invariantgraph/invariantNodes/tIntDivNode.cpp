@@ -99,7 +99,7 @@ TEST_P(IntDivNodeTestFixture, replace) {
 
 TEST_P(IntDivNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeReplaced()) {

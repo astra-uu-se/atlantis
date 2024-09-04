@@ -1,12 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -15,16 +9,16 @@ class ArrayBoolOrNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  ArrayBoolOrNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+  ArrayBoolOrNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                   VarNodeId output);
 
-  ArrayBoolOrNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+  ArrayBoolOrNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                   bool shouldHold = true);
 
-  ArrayBoolOrNode(InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
+  ArrayBoolOrNode(IInvariantGraph& graph, std::vector<VarNodeId>&& inputs,
                   VarNodeId output);
 
-  ArrayBoolOrNode(InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
+  ArrayBoolOrNode(IInvariantGraph& graph, std::vector<VarNodeId>&& inputs,
                   bool shouldHold = true);
 
   void init(InvariantNodeId) override;

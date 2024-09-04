@@ -7,7 +7,7 @@
 
 namespace atlantis::invariantgraph {
 
-IntPowNode::IntPowNode(InvariantGraph& graph, VarNodeId base,
+IntPowNode::IntPowNode(IInvariantGraph& graph, VarNodeId base,
                        VarNodeId exponent, VarNodeId power)
     : InvariantNode(graph, {power}, {base, exponent}) {}
 

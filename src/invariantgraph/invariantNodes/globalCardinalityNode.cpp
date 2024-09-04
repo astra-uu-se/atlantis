@@ -11,7 +11,7 @@
 
 namespace atlantis::invariantgraph {
 
-GlobalCardinalityNode::GlobalCardinalityNode(InvariantGraph& graph,
+GlobalCardinalityNode::GlobalCardinalityNode(IInvariantGraph& graph,
                                              std::vector<VarNodeId>&& inputs,
                                              std::vector<Int>&& cover,
                                              std::vector<VarNodeId>&& counts)

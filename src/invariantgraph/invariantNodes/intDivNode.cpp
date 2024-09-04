@@ -5,7 +5,7 @@
 
 namespace atlantis::invariantgraph {
 
-IntDivNode::IntDivNode(InvariantGraph& graph, VarNodeId numerator,
+IntDivNode::IntDivNode(IInvariantGraph& graph, VarNodeId numerator,
                        VarNodeId denominator, VarNodeId quotient)
     : InvariantNode(graph, {quotient}, {numerator, denominator}) {}
 

@@ -7,7 +7,7 @@
 
 namespace atlantis::invariantgraph {
 
-Bool2IntNode::Bool2IntNode(InvariantGraph& graph, VarNodeId staticInput,
+Bool2IntNode::Bool2IntNode(IInvariantGraph& graph, VarNodeId staticInput,
                            VarNodeId output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 

@@ -154,7 +154,7 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
   }
 
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeSubsumed()) {

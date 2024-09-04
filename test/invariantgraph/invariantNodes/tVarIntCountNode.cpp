@@ -131,7 +131,7 @@ TEST_P(VarIntCountNodeTestFixture, replace) {
 
 TEST_P(VarIntCountNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeReplaced()) {

@@ -1,11 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -15,7 +10,7 @@ class IntPlusNode : public InvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  IntPlusNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+  IntPlusNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
               VarNodeId output);
 
   void init(InvariantNodeId) override;

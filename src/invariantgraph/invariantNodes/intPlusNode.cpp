@@ -8,7 +8,7 @@
 
 namespace atlantis::invariantgraph {
 
-IntPlusNode::IntPlusNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+IntPlusNode::IntPlusNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                          VarNodeId output)
     : InvariantNode(graph, {output}, {a, b}) {}
 

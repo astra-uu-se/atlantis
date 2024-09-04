@@ -1,13 +1,7 @@
 #pragma once
 
-#include <memory>
-
 #include "atlantis/invariantgraph/iImplicitConstraintNode.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
-#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
-#include "atlantis/search/searchVariable.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -15,15 +9,16 @@ namespace atlantis::invariantgraph {
  * Serves as a marker for the invariant graph to start the application to the
  * propagation solver.
  */
-class ImplicitConstraintNode : public IImplicitConstraintNode, InvariantNode {
+class ImplicitConstraintNode : public virtual IImplicitConstraintNode,
+                               public InvariantNode {
  private:
   std::shared_ptr<search::neighbourhoods::Neighbourhood> _neighbourhood{
       nullptr};
 
  public:
-  void init(InvariantNodeId) override;
+  explicit ImplicitConstraintNode(IInvariantGraph&, std::vector<VarNodeId>&&);
 
-  explicit ImplicitConstraintNode(InvariantGraph&, std::vector<VarNodeId>&&);
+  void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 

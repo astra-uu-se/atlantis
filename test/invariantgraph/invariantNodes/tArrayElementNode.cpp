@@ -136,7 +136,7 @@ TEST_P(ArrayElementNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayElementNodeTestFixture, propagation) {
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   VarNode& outputNode = varNode(outputIdentifier);

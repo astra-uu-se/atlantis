@@ -1,11 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 class ArrayIntMinimumNode : public InvariantNode {
@@ -13,10 +8,10 @@ class ArrayIntMinimumNode : public InvariantNode {
   Int _ub;
 
  public:
-  explicit ArrayIntMinimumNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+  explicit ArrayIntMinimumNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                                VarNodeId output);
 
-  explicit ArrayIntMinimumNode(InvariantGraph& graph,
+  explicit ArrayIntMinimumNode(IInvariantGraph& graph,
 
                                std::vector<VarNodeId>&& vars, VarNodeId output);
 

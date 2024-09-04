@@ -1,16 +1,11 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 class VarIntCountNode : public InvariantNode {
  public:
-  VarIntCountNode(InvariantGraph& graph,
+  VarIntCountNode(IInvariantGraph& graph,
 
                   std::vector<VarNodeId>&& vars, VarNodeId needle,
                   VarNodeId count);

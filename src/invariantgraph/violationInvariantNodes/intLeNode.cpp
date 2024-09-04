@@ -8,11 +8,11 @@
 
 namespace atlantis::invariantgraph {
 
-IntLeNode::IntLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+IntLeNode::IntLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                      VarNodeId r)
     : ViolationInvariantNode(graph, {a, b}, r) {}
 
-IntLeNode::IntLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+IntLeNode::IntLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                      bool shouldHold)
     : ViolationInvariantNode(graph, {a, b}, shouldHold) {}
 

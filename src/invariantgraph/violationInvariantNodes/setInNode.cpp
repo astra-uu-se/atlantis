@@ -9,11 +9,11 @@
 
 namespace atlantis::invariantgraph {
 
-SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
+SetInNode::SetInNode(IInvariantGraph& graph, VarNodeId input,
                      std::vector<Int>&& values, VarNodeId r)
     : ViolationInvariantNode(graph, {input}, r), _values(std::move(values)) {}
 
-SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
+SetInNode::SetInNode(IInvariantGraph& graph, VarNodeId input,
                      std::vector<Int>&& values, bool shouldHold)
     : ViolationInvariantNode(graph, {input}, shouldHold),
       _values(std::move(values)) {}

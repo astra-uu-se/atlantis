@@ -11,7 +11,7 @@
 
 namespace atlantis::invariantgraph {
 
-CircuitNode::CircuitNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars)
+CircuitNode::CircuitNode(IInvariantGraph& graph, std::vector<VarNodeId>&& vars)
     : ViolationInvariantNode(graph, std::move(vars), true) {}
 
 void CircuitNode::init(InvariantNodeId id) {

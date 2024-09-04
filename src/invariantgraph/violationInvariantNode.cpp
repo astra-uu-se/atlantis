@@ -19,7 +19,7 @@ static std::vector<invariantgraph::VarNodeId> combine(
  */
 
 ViolationInvariantNode::ViolationInvariantNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
+    IInvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
     std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedId,
     bool shouldHold)
     : InvariantNode(graph, combine(reifiedId, std::move(outputIds)),
@@ -32,26 +32,26 @@ ViolationInvariantNode::ViolationInvariantNode(
 }
 
 ViolationInvariantNode::ViolationInvariantNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
+    IInvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
     std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedId)
     : ViolationInvariantNode(graph, std::move(outputIds),
                              std::move(staticInputIds), reifiedId, true) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
+    IInvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
     VarNodeId reifiedId)
     : ViolationInvariantNode(graph, {}, std::move(staticInputIds), reifiedId,
                              true) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
+    IInvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
     std::vector<VarNodeId>&& staticInputIds, bool shouldHold)
     : ViolationInvariantNode(graph, std::move(outputIds),
                              std::move(staticInputIds), VarNodeId(NULL_NODE_ID),
                              shouldHold) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
+    IInvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
     bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(staticInputIds),
                              VarNodeId(NULL_NODE_ID), shouldHold) {}

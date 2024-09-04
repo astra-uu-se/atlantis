@@ -10,19 +10,19 @@
 
 namespace atlantis::invariantgraph {
 
-AllDifferentNode::AllDifferentNode(InvariantGraph& graph, VarNodeId a,
+AllDifferentNode::AllDifferentNode(IInvariantGraph& graph, VarNodeId a,
                                    VarNodeId b, VarNodeId r)
     : AllDifferentNode(graph, std::vector<VarNodeId>{a, b}, r) {}
 
-AllDifferentNode::AllDifferentNode(InvariantGraph& graph, VarNodeId a,
+AllDifferentNode::AllDifferentNode(IInvariantGraph& graph, VarNodeId a,
                                    VarNodeId b, bool shouldHold)
     : AllDifferentNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
-AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
+AllDifferentNode::AllDifferentNode(IInvariantGraph& graph,
                                    std::vector<VarNodeId>&& vars, VarNodeId r)
     : ViolationInvariantNode(graph, std::move(vars), r) {}
 
-AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
+AllDifferentNode::AllDifferentNode(IInvariantGraph& graph,
                                    std::vector<VarNodeId>&& vars,
                                    bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold) {}

@@ -9,14 +9,14 @@
 
 namespace atlantis::invariantgraph {
 
-BoolLinLeNode::BoolLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+BoolLinLeNode::BoolLinLeNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars, Int bound,
                              VarNodeId reified)
     : ViolationInvariantNode(graph, std::move(vars), reified),
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
-BoolLinLeNode::BoolLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+BoolLinLeNode::BoolLinLeNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars, Int bound,
                              bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),

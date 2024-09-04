@@ -162,7 +162,7 @@ TEST_P(ArrayBoolXorNodeTestFixture, propagation) {
     return;
   }
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeReplaced()) {

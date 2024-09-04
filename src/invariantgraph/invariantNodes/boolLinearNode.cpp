@@ -11,7 +11,8 @@
 
 namespace atlantis::invariantgraph {
 
-BoolLinearNode::BoolLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+BoolLinearNode::BoolLinearNode(IInvariantGraph& graph,
+                               std::vector<Int>&& coeffs,
                                std::vector<VarNodeId>&& vars, VarNodeId output,
                                Int offset)
     : InvariantNode(graph, {output}, std::move(vars)),

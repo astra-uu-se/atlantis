@@ -1,12 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -17,11 +11,11 @@ class IntLinNeNode : public ViolationInvariantNode {
   propagation::VarId _intermediate{propagation::NULL_ID};
 
  public:
-  IntLinNeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+  IntLinNeNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
                std::vector<VarNodeId>&& vars, Int bound,
                bool shouldHold = true);
 
-  IntLinNeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+  IntLinNeNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
                std::vector<VarNodeId>&& vars, Int bound, VarNodeId reified);
 
   void init(InvariantNodeId) override;

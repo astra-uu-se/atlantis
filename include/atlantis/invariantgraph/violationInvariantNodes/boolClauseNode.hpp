@@ -1,12 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::invariantgraph {
 class BoolClauseNode : public ViolationInvariantNode {
@@ -15,10 +9,10 @@ class BoolClauseNode : public ViolationInvariantNode {
   propagation::VarId _sumVarId{propagation::NULL_ID};
 
  public:
-  explicit BoolClauseNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
+  explicit BoolClauseNode(IInvariantGraph& graph, std::vector<VarNodeId>&& as,
                           std::vector<VarNodeId>&& bs, VarNodeId r);
 
-  explicit BoolClauseNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
+  explicit BoolClauseNode(IInvariantGraph& graph, std::vector<VarNodeId>&& as,
                           std::vector<VarNodeId>&& bs, bool shouldHold = true);
 
   void init(InvariantNodeId) override;

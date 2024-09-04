@@ -144,7 +144,7 @@ TEST_P(GlobalCardinalityNodeTestFixture, replace) {
 
 TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   for (size_t i = 0; i < cover.size(); ++i) {

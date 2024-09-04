@@ -12,7 +12,7 @@
 
 namespace atlantis::invariantgraph {
 
-IntLinearNode::IntLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+IntLinearNode::IntLinearNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars, VarNodeId output,
                              Int offset)
     : InvariantNode(graph, {output}, std::move(vars)),

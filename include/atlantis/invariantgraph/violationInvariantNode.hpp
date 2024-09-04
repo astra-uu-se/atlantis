@@ -1,10 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -24,7 +20,7 @@ class ViolationInvariantNode : public InvariantNode {
 
   void updateReified();
 
-  explicit ViolationInvariantNode(InvariantGraph& graph,
+  explicit ViolationInvariantNode(IInvariantGraph& graph,
                                   std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId,
@@ -40,21 +36,21 @@ class ViolationInvariantNode : public InvariantNode {
   void fixReified(bool);
 
  public:
-  explicit ViolationInvariantNode(InvariantGraph& graph,
+  explicit ViolationInvariantNode(IInvariantGraph& graph,
                                   std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId);
 
-  explicit ViolationInvariantNode(InvariantGraph& graph,
+  explicit ViolationInvariantNode(IInvariantGraph& graph,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId);
 
-  explicit ViolationInvariantNode(InvariantGraph& graph,
+  explicit ViolationInvariantNode(IInvariantGraph& graph,
                                   std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   bool shouldHold);
 
-  explicit ViolationInvariantNode(InvariantGraph& graph,
+  explicit ViolationInvariantNode(IInvariantGraph& graph,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   bool shouldHold);
 

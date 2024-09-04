@@ -155,7 +155,7 @@ TEST_P(ArrayBoolAndNodeTestFixture, propagation) {
     return;
   }
   propagation::Solver solver;
-  _invariantGraph->apply();
+  _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeReplaced() && isReified()) {
