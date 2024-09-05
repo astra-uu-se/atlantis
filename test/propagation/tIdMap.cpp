@@ -17,10 +17,10 @@ class IdMapTest : public ::testing::Test {};
 TEST_F(IdMapTest, ID2IDtest) {
   IdMap<VarId> invToVar(10000);
 
-  InvariantId id1(1);
-  InvariantId id2(2);
-  InvariantId id3(3);
-  InvariantId id4(4);
+  InvariantId id1(0);
+  InvariantId id2(1);
+  InvariantId id3(2);
+  InvariantId id4(3);
   // values to store
   VarId data1(11);
   VarId data2(12);
@@ -46,8 +46,8 @@ TEST_F(IdMapTest, ID2IDtest) {
 TEST_F(IdMapTest, ID2Vectortest) {
   IdMap<std::vector<VarId>> varToVector(10000);
 
-  VarId id1(1);
-  VarId id2(2);
+  VarId id1(0);
+  VarId id2(1);
   // values to store
   varToVector.register_idx(id1);
   varToVector.register_idx(id2);

@@ -224,17 +224,17 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       EXPECT_TRUE(solverVarId(varNodeId).isVar());
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       if (!varNode(varNodeId).isFixed()) {
-        EXPECT_FALSE(registered.at(size_t(solverVarId(varNodeId)) - 1));
+        EXPECT_FALSE(registered.at(size_t(solverVarId(varNodeId))));
       }
-      registered.at(size_t(solverVarId(varNodeId)) - 1) = true;
+      registered.at(size_t(solverVarId(varNodeId))) = true;
     }
     for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
       EXPECT_TRUE(solverVarId(varNodeId).isVar());
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       if (!varNode(varNodeId).isFixed()) {
-        EXPECT_FALSE(registered.at(size_t(solverVarId(varNodeId)) - 1));
+        EXPECT_FALSE(registered.at(size_t(solverVarId(varNodeId))));
       }
-      registered.at(size_t(solverVarId(varNodeId)) - 1) = true;
+      registered.at(size_t(solverVarId(varNodeId))) = true;
     }
     for (const bool r : registered) {
       EXPECT_TRUE(r);

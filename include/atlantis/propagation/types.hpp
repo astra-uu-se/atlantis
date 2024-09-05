@@ -17,7 +17,7 @@ using VarId = size_t;
 using ViewId = size_t;
 using InvariantId = size_t;
 using LocalId = size_t;
-[[maybe_unused]] static size_t NULL_ID{0};  // = ~size_t{0};
+[[maybe_unused]] static size_t NULL_ID = ~size_t{0};
 
 struct VarViewId {
  private:
@@ -27,19 +27,17 @@ struct VarViewId {
   static const size_t VIEW_MASK =
       (size_t{1} << (sizeof(size_t) * CHAR_BIT - 1));
 
-  VarViewId(size_t i) : id(i == size_t(NULL_ID) ? i : (i & ~VIEW_MASK)) {}
+  VarViewId(size_t i) : id(i == NULL_ID ? i : (i & ~VIEW_MASK)) {}
 
   VarViewId(size_t i, bool isView)
-      : id(i == size_t(NULL_ID)
-               ? i
-               : (isView ? (i | VIEW_MASK) : (i & ~VIEW_MASK))) {}
+      : id(i == NULL_ID ? i : (isView ? (i | VIEW_MASK) : (i & ~VIEW_MASK))) {}
 
   inline bool isView() const {
-    return id != size_t(NULL_ID) && (id & VIEW_MASK) != size_t{0};
+    return id != NULL_ID && (id & VIEW_MASK) != size_t{0};
   }
 
   inline bool isVar() const {
-    return id != size_t(NULL_ID) && (id & VIEW_MASK) == size_t{0};
+    return id != NULL_ID && (id & VIEW_MASK) == size_t{0};
   }
 
   [[nodiscard]] inline bool operator==(size_t other) const {
@@ -59,7 +57,7 @@ struct VarViewId {
   }
 
   explicit operator size_t() const {
-    return id == size_t(NULL_ID) ? id : (id & ~VIEW_MASK);
+    return id == NULL_ID ? id : (id & ~VIEW_MASK);
   }
 };
 

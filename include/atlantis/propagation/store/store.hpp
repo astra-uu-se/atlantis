@@ -27,7 +27,7 @@ class Store {
 
   [[nodiscard]] inline VarViewId createIntVar(Timestamp ts, Int initValue,
                                               Int lowerBound, Int upperBound) {
-    VarId vId(_intVars.size() + 1);
+    VarId vId(_intVars.size());
     const VarViewId newId = VarViewId(vId, false);
     _intVars.register_idx(vId,
                           IntVar(ts, vId, initValue, lowerBound, upperBound));
@@ -35,7 +35,7 @@ class Store {
   }
   [[nodiscard]] inline InvariantId createInvariantFromPtr(
       std::unique_ptr<Invariant>&& ptr) {
-    auto newId = InvariantId(_invariants.size() + 1);
+    auto newId = InvariantId(_invariants.size());
     ptr->setId(newId);
     _invariants.register_idx_move(newId, std::move(ptr));
     return newId;
@@ -43,7 +43,7 @@ class Store {
 
   [[nodiscard]] inline VarViewId createIntViewFromPtr(
       std::unique_ptr<IntView>&& ptr) {
-    const VarViewId newId = VarViewId(_intViews.size() + 1, true);
+    const VarViewId newId = VarViewId(_intViews.size(), true);
     ptr->setId(ViewId(newId));
     const VarViewId parentId = ptr->parentId();
     const VarViewId source =

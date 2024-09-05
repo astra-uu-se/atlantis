@@ -41,7 +41,7 @@ void PropagationGraph::registerInvariant(InvariantId invariantId) {
 }
 
 void PropagationGraph::registerVar(VarId id) {
-  _definingInvariant.register_idx(id);
+  _definingInvariant.register_idx(id, NULL_ID);
   _listeningInvariantData.register_idx(id);
   _varLayerIndex.register_idx(id);
   _varPosition.register_idx(id);
@@ -90,11 +90,11 @@ void PropagationGraph::registerDefinedVar(VarId varId,
 }
 
 void PropagationGraph::close(Timestamp ts) {
-  _isSearchVar.resize(numVars() + 1);
-  _isEvaluationVar.resize(numVars() + 1);
+  _isSearchVar.resize(numVars());
+  _isEvaluationVar.resize(numVars());
   _evaluationVars.clear();
   _searchVars.clear();
-  for (size_t i = 1; i < numVars() + 1; ++i) {
+  for (size_t i = 0; i < numVars(); ++i) {
     _isEvaluationVar[i] = (_listeningInvariantData.at(i).empty());
     _isSearchVar[i] = (_definingInvariant.at(i) == NULL_ID);
     if (_isEvaluationVar[i]) {
@@ -113,8 +113,8 @@ void PropagationGraph::close(Timestamp ts) {
   // TODO: Be sure that this does not cause a memeory leak...
   // _propagationQueue = PropagationQueue();
   _propagationQueue.init(numVars(), numLayers());
-  for (size_t i = 1; i < numVars() + 1; ++i) {
-    _propagationQueue.initVar(VarId(i), varPosition(VarId(i)));
+  for (VarId vId = 0; vId < numVars(); ++vId) {
+    _propagationQueue.initVar(vId, varPosition(vId));
   }
 }
 
@@ -144,11 +144,11 @@ bool PropagationGraph::containsStaticCycle(std::vector<bool>& visited,
 }
 
 bool PropagationGraph::containsStaticCycle() {
-  std::vector<bool> visited(numVars() + 1, false);
-  std::vector<bool> inFrontier(numVars() + 1, false);
+  std::vector<bool> visited(numVars(), false);
+  std::vector<bool> inFrontier(numVars(), false);
   // Check for static cycles starting from the output variables:
-  for (VarId varId = 1u; varId <= numVars(); ++varId) {
-    assert(all_in_range(1u, numVars() + 1,
+  for (VarId varId = 0; varId < numVars(); ++varId) {
+    assert(all_in_range(0, numVars(),
                         [&](const size_t i) { return !inFrontier.at(i); }));
     if (listeningInvariantData(varId).empty()) {
       if (containsStaticCycle(visited, inFrontier, VarId(varId))) {
@@ -156,7 +156,7 @@ bool PropagationGraph::containsStaticCycle() {
       }
     }
   }
-  assert(all_in_range(1u, numVars() + 1,
+  assert(all_in_range(0, numVars(),
                       [&](const size_t varId) { return visited.at(varId); }));
   return false;
 }
@@ -205,7 +205,7 @@ void PropagationGraph::partitionIntoLayers(std::vector<bool>& visited,
  * share key-value.
  */
 void PropagationGraph::partitionIntoLayers() {
-  std::vector<bool> visited(numVars() + 1, false);
+  std::vector<bool> visited(numVars(), false);
   _layerHasDynamicCycle.assign(1, false);
   _varsInLayer.assign(1, std::vector<VarId>{});
   assert(_varLayerIndex.size() == numVars());
@@ -214,12 +214,12 @@ void PropagationGraph::partitionIntoLayers() {
     partitionIntoLayers(visited, evalVar);
   }
   // Visit any unvisited nodes (this should not happen):
-  for (size_t varId = 1u; varId <= numVars(); ++varId) {
+  for (VarId varId = 0; varId < numVars(); ++varId) {
     if (!visited[varId]) {
       partitionIntoLayers(visited, VarId(varId));
     }
   }
-  assert(all_in_range(1u, numVars() + 1, [&](const VarId varId) {
+  assert(all_in_range(0, numVars(), [&](const VarId varId) {
     const size_t layer = _varLayerIndex.at(varId).layer;
     const size_t index = _varLayerIndex.at(varId).index;
     return _varLayerIndex.has_idx(varId) && layer < _varsInLayer.size() &&

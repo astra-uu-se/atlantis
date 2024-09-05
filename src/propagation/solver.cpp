@@ -403,13 +403,14 @@ void Solver::propagate() {
 void Solver::computeBounds() {
   IdMap<Int> inputsToCompute(numInvariants());
 
-  for (size_t invariantId = 1u; invariantId <= numInvariants(); ++invariantId) {
+  for (InvariantId invariantId = 0; invariantId < numInvariants();
+       ++invariantId) {
     inputsToCompute.register_idx(
         invariantId, static_cast<Int>(inputVars(invariantId).size()));
   }
 
   // Search variables might now have been computed yet
-  for (size_t varId = 1u; varId <= numVars(); ++varId) {
+  for (VarId varId = 0; varId < numVars(); ++varId) {
     if (definingInvariant(varId) == NULL_ID) {
       for (const PropagationGraph::ListeningInvariantData&
                listeningInvariantData : listeningInvariantData(varId)) {
@@ -427,7 +428,8 @@ void Solver::computeBounds() {
 
   std::set<InvariantId, decltype(cmp)> invariantQueue(cmp);
 
-  for (size_t invariantId = 1; invariantId <= numInvariants(); ++invariantId) {
+  for (InvariantId invariantId = 0; invariantId < numInvariants();
+       ++invariantId) {
     invariantQueue.emplace(invariantId);
   }
 

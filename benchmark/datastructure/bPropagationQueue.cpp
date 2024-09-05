@@ -31,7 +31,7 @@ BENCHMARK_DEFINE_F(PropQueue, initVar)(::benchmark::State& st) {
   size_t inits = 0;
   for ([[maybe_unused]] const auto& _ : st) {
     propagation::PropagationQueue queue;
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.initVar(i, i);
       ++inits;
     }
@@ -45,12 +45,12 @@ BENCHMARK_DEFINE_F(PropQueue, push_min)(::benchmark::State& st) {
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
     propagation::PropagationQueue queue;
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.initVar(i, i);
     }
     st.ResumeTiming();
 
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.push(i);
       ++pushes;
     }
@@ -64,7 +64,7 @@ BENCHMARK_DEFINE_F(PropQueue, push_max)(::benchmark::State& st) {
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
     propagation::PropagationQueue queue;
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.initVar(i, i);
     }
     st.ResumeTiming();
@@ -83,12 +83,12 @@ BENCHMARK_DEFINE_F(PropQueue, push_random)(::benchmark::State& st) {
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
     propagation::PropagationQueue queue;
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.initVar(i, distribution(gen));
     }
     st.ResumeTiming();
 
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.push(i);
       ++pushes;
     }
@@ -102,10 +102,10 @@ BENCHMARK_DEFINE_F(PropQueue, pop_min)(::benchmark::State& st) {
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
     propagation::PropagationQueue queue;
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.initVar(i, i);
     }
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.push(i);
     }
     st.ResumeTiming();
@@ -124,10 +124,10 @@ BENCHMARK_DEFINE_F(PropQueue, pop_max)(::benchmark::State& st) {
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
     propagation::PropagationQueue queue;
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.initVar(i, queueSize - i + 1);
     }
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.push(i);
     }
     st.ResumeTiming();
@@ -146,11 +146,11 @@ BENCHMARK_DEFINE_F(PropQueue, pop_random)(::benchmark::State& st) {
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
     propagation::PropagationQueue queue;
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.initVar(i, distribution(gen));
     }
 
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.push(i);
     }
 

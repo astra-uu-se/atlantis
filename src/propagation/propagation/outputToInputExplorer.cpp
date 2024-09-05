@@ -20,10 +20,10 @@ OutputToInputExplorer::OutputToInputExplorer(Solver& e, size_t expectedSize)
 }
 
 void OutputToInputExplorer::outputToInputStaticMarking() {
-  std::vector<bool> varVisited(_solver.numVars() + 1);
+  std::vector<bool> varVisited(_solver.numVars());
 
-  for (VarId idx = 1; idx <= _solver.numVars(); ++idx) {
-    if (_searchVarAncestors.size() < idx) {
+  for (size_t idx = 0; idx < _solver.numVars(); ++idx) {
+    if (_searchVarAncestors.size() <= idx) {
       _searchVarAncestors.register_idx(idx);
     }
 
@@ -231,12 +231,12 @@ bool OutputToInputExplorer::pushNextInputVar() {
 
 void OutputToInputExplorer::registerVar(VarId id) {
   _varStack.emplace_back(NULL_ID);  // push back just to resize the stack!
-  _varComputedAt.register_idx(id);
+  _varComputedAt.register_idx(id, NULL_TIMESTAMP);
 }
 
 void OutputToInputExplorer::registerInvariant(InvariantId invariantId) {
   _invariantStack.emplace_back(NULL_ID);  // push back just to resize the stack!
-  _invariantComputedAt.register_idx(invariantId);
+  _invariantComputedAt.register_idx(invariantId, NULL_TIMESTAMP);
   _invariantIsOnStack.register_idx(invariantId, false);
 }
 
