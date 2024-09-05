@@ -18,7 +18,7 @@ inline bool all_in_range(size_t start, size_t stop,
   return std::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
-InDomain::InDomain(SolverBase& solver, VarId parentId,
+InDomain::InDomain(SolverBase& solver, VarViewId parentId,
                    std::vector<DomainEntry>&& domain)
     : IntView(solver, parentId),
       _domain(std::move(domain)),

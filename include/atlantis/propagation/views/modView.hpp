@@ -12,7 +12,7 @@ class ModView : public IntView {
   Int _denominator;
 
  public:
-  explicit ModView(SolverBase& solver, VarId parentId, Int denominator);
+  explicit ModView(SolverBase& solver, VarViewId parentId, Int denominator);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

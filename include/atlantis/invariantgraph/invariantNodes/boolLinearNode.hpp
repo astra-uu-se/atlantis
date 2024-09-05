@@ -7,7 +7,7 @@ class BoolLinearNode : public InvariantNode {
  private:
   std::vector<Int> _coeffs;
   Int _offset{0};
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
   BoolLinearNode(IInvariantGraph& graph,

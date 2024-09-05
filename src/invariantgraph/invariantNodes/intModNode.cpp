@@ -28,6 +28,8 @@ void IntModNode::registerOutputVars() {
 void IntModNode::registerNode() {
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
+  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
+
   solver().makeInvariant<propagation::Mod>(
       solver(), invariantGraph().varId(outputVarNodeIds().front()),
       invariantGraph().varId(numerator()),

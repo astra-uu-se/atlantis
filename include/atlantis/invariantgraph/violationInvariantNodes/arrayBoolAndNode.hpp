@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 
 class ArrayBoolAndNode : public ViolationInvariantNode {
  private:
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
   ArrayBoolAndNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,

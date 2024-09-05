@@ -12,7 +12,7 @@ class GreaterEqualConst : public IntView {
   const Int _val;
 
  public:
-  explicit GreaterEqualConst(SolverBase& solver, VarId parentId, Int val);
+  explicit GreaterEqualConst(SolverBase& solver, VarViewId parentId, Int val);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

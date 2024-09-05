@@ -113,6 +113,8 @@ void BoolLtNode::registerOutputVars() {
 
 void BoolLtNode::registerNode() {
   assert(violationVarId() != propagation::NULL_ID);
+  assert(violationVarId().isVar());
+
   assert(invariantGraph().varId(a()) != propagation::NULL_ID);
   assert(invariantGraph().varId(b()) != propagation::NULL_ID);
 

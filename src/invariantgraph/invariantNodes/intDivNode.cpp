@@ -43,6 +43,8 @@ void invariantgraph::IntDivNode::registerOutputVars() {
 
 void invariantgraph::IntDivNode::registerNode() {
   assert(invariantGraph().varId(quotient()) != propagation::NULL_ID);
+  assert(invariantGraph().varId(quotient()).isVar());
+
   solver().makeInvariant<propagation::IntDiv>(
       solver(), invariantGraph().varId(quotient()),
       invariantGraph().varId(numerator()),

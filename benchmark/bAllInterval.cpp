@@ -15,14 +15,14 @@ namespace atlantis::benchmark {
 class AllInterval : public ::benchmark::Fixture {
  public:
   std::shared_ptr<propagation::Solver> _solver;
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
   size_t n{0};
 
-  propagation::VarId totalViolation = propagation::NULL_ID;
+  propagation::VarViewId totalViolation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
     _solver = std::make_shared<propagation::Solver>();
@@ -31,7 +31,8 @@ class AllInterval : public ::benchmark::Fixture {
     }
     n = state.range(0);
     inputVarIds.resize(n, propagation::NULL_ID);
-    std::vector<propagation::VarId> violationVars(n - 1, propagation::NULL_ID);
+    std::vector<propagation::VarViewId> violationVars(n - 1,
+                                                      propagation::NULL_ID);
     // number of constraints: n
     // total number of static input variables: 3 * n
     _solver->open();
@@ -57,7 +58,7 @@ class AllInterval : public ::benchmark::Fixture {
     // Creating one invariant, taking n input variables and one output
     _solver->makeViolationInvariant<propagation::AllDifferent>(
         *_solver, totalViolation,
-        std::vector<propagation::VarId>(violationVars));
+        std::vector<propagation::VarViewId>(violationVars));
 
     _solver->close();
 

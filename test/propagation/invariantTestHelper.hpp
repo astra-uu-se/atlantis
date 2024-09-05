@@ -62,9 +62,9 @@ struct NotificationData {
   PropagationMode propMode{PropagationMode::INPUT_TO_OUTPUT};
   OutputToInputMarkingMode markingMode{OutputToInputMarkingMode::NONE};
   size_t numNextInputCalls{0};
-  propagation::VarId modifiedVarId{NULL_ID};
+  propagation::VarViewId modifiedVarId{NULL_ID};
   Int modifiedVal{0};
-  propagation::VarId queryVarId{NULL_ID};
+  propagation::VarViewId queryVarId{NULL_ID};
 };
 
 class InvariantTest : public ::testing::Test {
@@ -81,7 +81,7 @@ class InvariantTest : public ::testing::Test {
           {PropagationMode::OUTPUT_TO_INPUT,
            OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION}};
 
-  std::vector<Int> createInputVals(const std::vector<VarId>& inputVars) {
+  std::vector<Int> createInputVals(const std::vector<VarViewId>& inputVars) {
     std::vector<Int> inputVals(inputVars.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       inputVals.at(i) = _solver->lowerBound(inputVars.at(i));
@@ -89,7 +89,7 @@ class InvariantTest : public ::testing::Test {
     return inputVals;
   }
 
-  size_t trySetNextInputVarVal(const std::vector<VarId>& inputVars,
+  size_t trySetNextInputVarVal(const std::vector<VarViewId>& inputVars,
                                std::vector<Int>& inputVals) {
     EXPECT_EQ(inputVars.size(), inputVals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
@@ -105,7 +105,7 @@ class InvariantTest : public ::testing::Test {
     return inputVars.size();
   }
 
-  size_t trySetMinDiffInputVarVal(const std::vector<VarId>& inputVars,
+  size_t trySetMinDiffInputVarVal(const std::vector<VarViewId>& inputVars,
                                   std::vector<Int>& inputVals) {
     EXPECT_EQ(inputVars.size(), inputVals.size());
     Int minDiff = std::numeric_limits<Int>::max();

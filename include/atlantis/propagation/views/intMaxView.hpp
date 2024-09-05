@@ -12,7 +12,7 @@ class IntMaxView : public IntView {
   Int _max;
 
  public:
-  explicit IntMaxView(SolverBase& solver, VarId parentId, Int max);
+  explicit IntMaxView(SolverBase& solver, VarViewId parentId, Int max);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 class BoolAllEqualNode : public ViolationInvariantNode {
  private:
   bool _breaksCycle{false};
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
   explicit BoolAllEqualNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,

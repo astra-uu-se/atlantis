@@ -107,7 +107,7 @@ TEST_F(int_lin_leTest, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  std::vector<propagation::VarId> inputVarIds = getVarIds(inputIdentifiers);
+  std::vector<propagation::VarViewId> inputVarIds = getVarIds(inputIdentifiers);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
 

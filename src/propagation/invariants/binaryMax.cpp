@@ -4,8 +4,14 @@
 
 namespace atlantis::propagation {
 
-BinaryMax::BinaryMax(SolverBase& solver, VarId output, VarId x, VarId y)
+BinaryMax::BinaryMax(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
+
+BinaryMax::BinaryMax(SolverBase& solver, VarViewId output, VarViewId x,
+                     VarViewId y)
+    : BinaryMax(solver, VarId(output), x, y) {
+  assert(output.isVar());
+}
 
 void BinaryMax::registerVars() {
   assert(_id != NULL_ID);
@@ -25,7 +31,7 @@ void BinaryMax::recompute(Timestamp ts) {
               std::max(_solver.value(ts, _x), _solver.value(ts, _y)));
 }
 
-VarId BinaryMax::nextInput(Timestamp ts) {
+VarViewId BinaryMax::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

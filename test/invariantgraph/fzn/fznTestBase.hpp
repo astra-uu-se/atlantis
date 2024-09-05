@@ -49,7 +49,8 @@ class FznTestBase : public ::testing::Test {
     return _invariantGraph->varNodeId(identifier);
   }
 
-  [[nodiscard]] propagation::VarId varId(const std::string& identifier) const {
+  [[nodiscard]] propagation::VarViewId varId(
+      const std::string& identifier) const {
     return _invariantGraph->varId(identifier);
   }
 
@@ -61,7 +62,7 @@ class FznTestBase : public ::testing::Test {
     return _solver->currentValue(varId(identifier));
   }
 
-  [[nodiscard]] propagation::VarId totalViolationVarId() const {
+  [[nodiscard]] propagation::VarViewId totalViolationVarId() const {
     return _invariantGraph->totalViolationVarId();
   }
 
@@ -69,14 +70,14 @@ class FznTestBase : public ::testing::Test {
     return _solver->currentValue(totalViolationVarId());
   }
 
-  [[nodiscard]] std::vector<propagation::VarId> getVarIds(
+  [[nodiscard]] std::vector<propagation::VarViewId> getVarIds(
       const std::vector<std::string>& varIdentifiers) const {
-    std::vector<propagation::VarId> varIds;
+    std::vector<propagation::VarViewId> varIds;
     varIds.reserve(varIdentifiers.size());
     for (const std::string& identifier : varIdentifiers) {
       EXPECT_TRUE(_invariantGraph->containsVarNode(identifier));
       const VarNode& vNode = _invariantGraph->varNode(identifier);
-      const propagation::VarId vId = vNode.varId();
+      const propagation::VarViewId vId = vNode.varId();
       if (!vNode.isFixed() && vId != propagation::NULL_ID) {
         varIds.emplace_back(vId);
       }
@@ -85,17 +86,17 @@ class FznTestBase : public ::testing::Test {
   }
 
   [[nodiscard]] std::vector<Int> makeInputVals(
-      const std::vector<propagation::VarId>& varIds) const {
+      const std::vector<propagation::VarViewId>& varIds) const {
     std::vector<Int> inputVals;
     inputVals.reserve(varIds.size());
-    for (const propagation::VarId& vId : varIds) {
+    for (const propagation::VarViewId& vId : varIds) {
       EXPECT_NE(vId, propagation::NULL_ID);
       inputVals.emplace_back(_solver->lowerBound(vId));
     }
     return inputVals;
   }
 
-  bool increaseNextVal(const std::vector<propagation::VarId>& varIds,
+  bool increaseNextVal(const std::vector<propagation::VarViewId>& varIds,
                        std::vector<Int>& inputVals) const {
     EXPECT_EQ(varIds.size(), inputVals.size());
     for (Int i = static_cast<Int>(inputVals.size() - 1); i >= 0; --i) {
@@ -111,7 +112,7 @@ class FznTestBase : public ::testing::Test {
     return false;
   }
 
-  void setVarVals(const std::vector<propagation::VarId>& varIds,
+  void setVarVals(const std::vector<propagation::VarViewId>& varIds,
                   const std::vector<Int>& vals) const {
     EXPECT_EQ(varIds.size(), vals.size());
     for (size_t i = 0; i < varIds.size(); ++i) {

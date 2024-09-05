@@ -150,7 +150,7 @@ TEST_P(IntAllEqualNodeTestFixture, application) {
                 ::testing::Contains(varId(inputVarNodeId)));
   }
 
-  EXPECT_GE(_solver->numVars(), invNode().violationVarId());
+  EXPECT_GE(_solver->numVars(), size_t(invNode().violationVarId()));
 
   EXPECT_EQ(_solver->numInvariants(), 1);
 }
@@ -198,21 +198,22 @@ TEST_P(IntAllEqualNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& inputIdentifier : inputIdentifiers) {
     if (!varNode(inputIdentifier).isFixed()) {
-      const propagation::VarId inputVarId = varId(inputIdentifier);
+      const propagation::VarViewId inputVarId = varId(inputIdentifier);
       EXPECT_NE(inputVarId, propagation::NULL_ID);
-      const bool inVec = std::any_of(
-          inputVarIds.begin(), inputVarIds.end(),
-          [&](const propagation::VarId& varId) { return varId == inputVarId; });
+      const bool inVec = std::any_of(inputVarIds.begin(), inputVarIds.end(),
+                                     [&](const propagation::VarViewId& varId) {
+                                       return varId == inputVarId;
+                                     });
       if (!inVec) {
         inputVarIds.emplace_back(inputVarId);
       }
     }
   }
 
-  const propagation::VarId violVarId =
+  const propagation::VarViewId violVarId =
       isReified() ? varId(reifiedIdentifier)
                   : _invariantGraph->totalViolationVarId();
 

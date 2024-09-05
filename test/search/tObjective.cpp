@@ -11,12 +11,12 @@ using namespace atlantis::search;
 class ObjectiveTest : public ::testing::Test {
  public:
   std::shared_ptr<propagation::Solver> _solver;
-  propagation::VarId objectiveVarId;
-  propagation::VarId totalViolationVarId;
+  propagation::VarViewId objectiveVarId{propagation::NULL_ID};
+  propagation::VarViewId totalViolationVarId{propagation::NULL_ID};
 
   void SetUp() override { _solver = std::make_shared<propagation::Solver>(); }
 
-  propagation::VarId install(
+  propagation::VarViewId install(
       search::Objective& objective,
       const fznparser::IntSet& objectiveRange = fznparser::IntSet(0, 0),
       Int initial = 0) {

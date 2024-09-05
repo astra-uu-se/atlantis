@@ -143,7 +143,7 @@ TEST_P(IntCountNodeTestFixture, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& identifier : inputIdentifiers) {
     if (!varNode(identifier).isFixed() &&
         varNode(identifier).inDomain(needle)) {
@@ -172,7 +172,7 @@ TEST_P(IntCountNodeTestFixture, propagation) {
     return;
   }
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);

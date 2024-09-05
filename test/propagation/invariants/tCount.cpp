@@ -7,8 +7,8 @@ using namespace atlantis::propagation;
 
 class CountTest : public InvariantTest {
  public:
-  Int computeOutput(const Timestamp ts, const VarId y,
-                    const std::vector<VarId>& vars) {
+  Int computeOutput(const Timestamp ts, const VarViewId y,
+                    const std::vector<VarViewId>& vars) {
     std::vector<Int> values(vars.size(), 0);
     for (size_t i = 0; i < vars.size(); ++i) {
       values.at(i) = _solver->value(ts, vars.at(i));
@@ -32,26 +32,26 @@ TEST_F(CountTest, UpdateBounds) {
       {-20, -15}, {-10, 0}, {-5, 5}, {0, 10}, {15, 20}};
   _solver->open();
 
-  const VarId y = _solver->makeIntVar(0, 0, 10);
-  std::vector<VarId> vars{_solver->makeIntVar(0, 0, 10),
-                          _solver->makeIntVar(0, 0, 10),
-                          _solver->makeIntVar(0, 0, 10)};
-  const VarId outputId = _solver->makeIntVar(0, 0, 2);
-  Count& invariant = _solver->makeInvariant<Count>(*_solver, outputId, y,
-                                                   std::vector<VarId>(vars));
+  const VarViewId y = _solver->makeIntVar(0, 0, 10);
+  std::vector<VarViewId> vars{_solver->makeIntVar(0, 0, 10),
+                              _solver->makeIntVar(0, 0, 10),
+                              _solver->makeIntVar(0, 0, 10)};
+  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
+  Count& invariant = _solver->makeInvariant<Count>(
+      *_solver, outputId, y, std::vector<VarViewId>(vars));
 
   for (const auto& [yLb, yUb] : boundVec) {
     EXPECT_TRUE(yLb <= yUb);
-    _solver->updateBounds(y, yLb, yUb, false);
+    _solver->updateBounds(VarId(y), yLb, yUb, false);
     for (const auto& [aLb, aUb] : boundVec) {
       EXPECT_TRUE(aLb <= aUb);
-      _solver->updateBounds(vars.at(0), aLb, aUb, false);
+      _solver->updateBounds(VarId(vars.at(0)), aLb, aUb, false);
       for (const auto& [bLb, bUb] : boundVec) {
         EXPECT_TRUE(bLb <= bUb);
-        _solver->updateBounds(vars.at(1), bLb, bUb, false);
+        _solver->updateBounds(VarId(vars.at(1)), bLb, bUb, false);
         for (const auto& [cLb, cUb] : boundVec) {
           EXPECT_TRUE(cLb <= cUb);
-          _solver->updateBounds(vars.at(2), cLb, cUb, false);
+          _solver->updateBounds(VarId(vars.at(2)), cLb, cUb, false);
           invariant.updateBounds(false);
 
           ASSERT_GE(0, _solver->lowerBound(outputId));
@@ -72,18 +72,18 @@ TEST_F(CountTest, Recompute) {
 
   _solver->open();
 
-  const VarId y = _solver->makeIntVar(dist(gen), lb, ub);
-  const VarId a = _solver->makeIntVar(dist(gen), lb, ub);
-  const VarId b = _solver->makeIntVar(dist(gen), lb, ub);
-  const VarId c = _solver->makeIntVar(dist(gen), lb, ub);
+  const VarViewId y = _solver->makeIntVar(dist(gen), lb, ub);
+  const VarViewId a = _solver->makeIntVar(dist(gen), lb, ub);
+  const VarViewId b = _solver->makeIntVar(dist(gen), lb, ub);
+  const VarViewId c = _solver->makeIntVar(dist(gen), lb, ub);
 
-  std::vector<VarId> inputs{a, b, c};
+  std::vector<VarViewId> inputs{a, b, c};
 
-  const VarId outputId = _solver->makeIntVar(0, std::numeric_limits<Int>::min(),
-                                             std::numeric_limits<Int>::max());
+  const VarViewId outputId = _solver->makeIntVar(
+      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
 
-  Count& invariant = _solver->makeInvariant<Count>(*_solver, outputId, y,
-                                                   std::vector<VarId>(inputs));
+  Count& invariant = _solver->makeInvariant<Count>(
+      *_solver, outputId, y, std::vector<VarViewId>(inputs));
   _solver->close();
 
   for (Int yVal = lb; yVal <= ub; ++yVal) {
@@ -112,20 +112,20 @@ TEST_F(CountTest, NotifyInputChanged) {
   const Int ub = 10;
   std::uniform_int_distribution<Int> dist(lb, ub);
 
-  std::vector<VarId> inputs(numInputs, NULL_ID);
-  const VarId y = _solver->makeIntVar(dist(gen), lb, ub);
+  std::vector<VarViewId> inputs(numInputs, NULL_ID);
+  const VarViewId y = _solver->makeIntVar(dist(gen), lb, ub);
   for (size_t i = 0; i < numInputs; ++i) {
     inputs.at(i) = _solver->makeIntVar(dist(gen), lb, ub);
   }
-  const VarId outputId = _solver->makeIntVar(0, std::numeric_limits<Int>::min(),
-                                             std::numeric_limits<Int>::max());
-  Count& invariant = _solver->makeInvariant<Count>(*_solver, outputId, y,
-                                                   std::vector<VarId>(inputs));
+  const VarViewId outputId = _solver->makeIntVar(
+      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
+  Count& invariant = _solver->makeInvariant<Count>(
+      *_solver, outputId, y, std::vector<VarViewId>(inputs));
   _solver->close();
 
   const Timestamp ts = _solver->currentTimestamp() + 1;
 
-  std::vector<VarId> allInputs(inputs);
+  std::vector<VarViewId> allInputs(inputs);
   allInputs.emplace_back(y);
 
   for (size_t i = 0; i < allInputs.size(); ++i) {
@@ -147,40 +147,54 @@ TEST_F(CountTest, NextInput) {
   const Int ub = 10;
   std::uniform_int_distribution<Int> dist(lb, ub);
 
-  std::vector<VarId> inputs(numInputs, NULL_ID);
+  std::vector<VarViewId> inputs(numInputs, NULL_ID);
 
   _solver->open();
-  const VarId y = _solver->makeIntVar(dist(gen), lb, ub);
+  const VarViewId y = _solver->makeIntVar(dist(gen), lb, ub);
   for (size_t i = 0; i < numInputs; ++i) {
     inputs.at(i) = _solver->makeIntVar(dist(gen), lb, ub);
   }
-  const VarId outputId = _solver->makeIntVar(0, std::numeric_limits<Int>::min(),
-                                             std::numeric_limits<Int>::max());
-  Count& invariant = _solver->makeInvariant<Count>(*_solver, outputId, y,
-                                                   std::vector<VarId>(inputs));
+  const VarViewId outputId = _solver->makeIntVar(
+      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
+  Count& invariant = _solver->makeInvariant<Count>(
+      *_solver, outputId, y, std::vector<VarViewId>(inputs));
   _solver->close();
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
-  const VarId minVarId =
-      std::min(y, *std::min_element(inputs.begin(), inputs.end()));
-  const VarId maxVarId =
-      std::max(y, *std::max_element(inputs.begin(), inputs.end()));
+  const VarViewId minVarId =
+      std::min(y,
+               *std::min_element(inputs.begin(), inputs.end(),
+                                 [&](const VarViewId& a, const VarViewId& b) {
+                                   return size_t(a) < size_t(b);
+                                 }),
+               [&](const VarViewId& a, const VarViewId& b) {
+                 return size_t(a) < size_t(b);
+               });
+  const VarViewId maxVarId =
+      std::max(y,
+               *std::max_element(inputs.begin(), inputs.end(),
+                                 [&](const VarViewId& a, const VarViewId& b) {
+                                   return size_t(a) < size_t(b);
+                                 }),
+               [&](const VarViewId& a, const VarViewId& b) {
+                 return size_t(a) < size_t(b);
+               });
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(maxVarId + 1, false);
+    std::vector<bool> notified(size_t(maxVarId) + 1, false);
     for (size_t i = 0; i <= numInputs; ++i) {
-      const VarId varId = invariant.nextInput(ts);
+      const VarViewId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
-      EXPECT_TRUE(minVarId <= varId);
-      EXPECT_TRUE(varId <= maxVarId);
-      EXPECT_FALSE(notified.at(varId));
-      notified[varId] = true;
+      EXPECT_LE(size_t(minVarId), size_t(varId));
+      EXPECT_GE(size_t(maxVarId), size_t(varId));
+      EXPECT_FALSE(notified.at(size_t(varId)));
+      notified.at(size_t(varId)) = true;
     }
     EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
-      EXPECT_TRUE(notified.at(varId));
+    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
+      EXPECT_TRUE(notified.at(i));
     }
   }
 }
@@ -191,25 +205,25 @@ TEST_F(CountTest, NotifyCurrentInputChanged) {
   const Int ub = 10;
   std::uniform_int_distribution<Int> dist(lb, ub);
 
-  std::vector<VarId> inputs(numInputs, NULL_ID);
+  std::vector<VarViewId> inputs(numInputs, NULL_ID);
   _solver->open();
-  const VarId y = _solver->makeIntVar(dist(gen), lb, ub);
+  const VarViewId y = _solver->makeIntVar(dist(gen), lb, ub);
   for (size_t i = 0; i < numInputs; ++i) {
     inputs.at(i) = _solver->makeIntVar(dist(gen), lb, ub);
   }
 
-  const VarId outputId = _solver->makeIntVar(0, std::numeric_limits<Int>::min(),
-                                             std::numeric_limits<Int>::max());
-  Count& invariant = _solver->makeInvariant<Count>(*_solver, outputId, y,
-                                                   std::vector<VarId>(inputs));
+  const VarViewId outputId = _solver->makeIntVar(
+      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
+  Count& invariant = _solver->makeInvariant<Count>(
+      *_solver, outputId, y, std::vector<VarViewId>(inputs));
   _solver->close();
 
-  std::vector<VarId> allInputs(inputs);
+  std::vector<VarViewId> allInputs(inputs);
   allInputs.emplace_back(y);
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId& varId : allInputs) {
+    for (const VarViewId& varId : allInputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = _solver->value(ts, varId);
       do {
@@ -226,7 +240,7 @@ TEST_F(CountTest, Commit) {
   const Int lb = -10;
   const Int ub = 10;
   std::uniform_int_distribution<Int> dist(lb, ub);
-  std::vector<VarId> inputs(numInputs, NULL_ID);
+  std::vector<VarViewId> inputs(numInputs, NULL_ID);
   std::vector<size_t> indices(numInputs + 1, 0);
   std::vector<Int> committedValues(numInputs + 1, 0);
 
@@ -238,17 +252,17 @@ TEST_F(CountTest, Commit) {
   }
   indices.back() = numInputs;
   committedValues.back() = dist(gen);
-  const VarId y = _solver->makeIntVar(committedValues.back(), lb, ub);
+  const VarViewId y = _solver->makeIntVar(committedValues.back(), lb, ub);
 
-  const VarId outputId = _solver->makeIntVar(0, std::numeric_limits<Int>::min(),
-                                             std::numeric_limits<Int>::max());
-  Count& invariant = _solver->makeInvariant<Count>(*_solver, outputId, y,
-                                                   std::vector<VarId>(inputs));
+  const VarViewId outputId = _solver->makeIntVar(
+      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
+  Count& invariant = _solver->makeInvariant<Count>(
+      *_solver, outputId, y, std::vector<VarViewId>(inputs));
 
   std::shuffle(indices.begin(), indices.end(), rng);
 
   _solver->close();
-  std::vector<VarId> allInputs(inputs);
+  std::vector<VarViewId> allInputs(inputs);
   allInputs.emplace_back(y);
 
   EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
@@ -276,9 +290,9 @@ TEST_F(CountTest, Commit) {
 
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
-    _solver->commitIf(ts, allInputs.at(i));
+    _solver->commitIf(ts, VarId(allInputs.at(i)));
     committedValues.at(i) = _solver->value(ts, allInputs.at(i));
-    _solver->commitIf(ts, outputId);
+    _solver->commitIf(ts, VarId(outputId));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -293,9 +307,11 @@ class MockCount : public Count {
     registered = true;
     Count::registerVars();
   }
-  explicit MockCount(SolverBase& _solver, VarId output, VarId y,
-                     std::vector<VarId>&& varArray)
-      : Count(_solver, output, y, std::move(varArray)) {
+  explicit MockCount(SolverBase& solver, VarViewId output, VarViewId y,
+                     std::vector<VarViewId>&& varArray)
+      : Count(solver, output, y, std::move(varArray)) {
+    EXPECT_TRUE(output.isVar());
+
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return Count::recompute(timestamp);
     });
@@ -315,7 +331,7 @@ class MockCount : public Count {
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
@@ -326,14 +342,14 @@ TEST_F(CountTest, SolverIntegration) {
       _solver->open();
     }
     const size_t numArgs = 10;
-    const VarId y = _solver->makeIntVar(0, 0, numArgs);
-    std::vector<VarId> args;
+    const VarViewId y = _solver->makeIntVar(0, 0, numArgs);
+    std::vector<VarViewId> args;
     for (size_t value = 1; value <= numArgs; ++value) {
       args.push_back(_solver->makeIntVar(static_cast<Int>(value), 1,
                                          static_cast<Int>(numArgs)));
     }
-    const VarId modifiedVarId = args.front();
-    const VarId output = _solver->makeIntVar(-10, -100, numArgs * numArgs);
+    const VarViewId modifiedVarId = args.front();
+    const VarViewId output = _solver->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockCount>(
         &_solver->makeInvariant<MockCount>(*_solver, output, y,
                                            std::move(args)),

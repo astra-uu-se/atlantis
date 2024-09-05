@@ -35,7 +35,7 @@ class IfThenElseConstTest : public ::testing::Test {
     elseVal = valueDist(gen);
   }
 
-  Int computeOutput(const Timestamp ts, const VarId condVarId) {
+  Int computeOutput(const Timestamp ts, const VarViewId condVarId) {
     return computeOutput(_solver->value(ts, condVarId));
   }
 
@@ -47,27 +47,27 @@ class IfThenElseConstTest : public ::testing::Test {
 
 TEST_F(IfThenElseConstTest, Bounds) {
   _solver->open();
-  const VarId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
-  const VarId outputId = _solver->makeIntView<IfThenElseConst>(
+  const VarViewId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
+  const VarViewId outputId = _solver->makeIntView<IfThenElseConst>(
       *_solver, condVarId, thenVal, elseVal);
   _solver->close();
 
   EXPECT_EQ(std::min(thenVal, elseVal), _solver->lowerBound(outputId));
   EXPECT_EQ(std::max(thenVal, elseVal), _solver->upperBound(outputId));
 
-  _solver->updateBounds(condVarId, 0, 0, false);
+  _solver->updateBounds(VarId(condVarId), 0, 0, false);
   EXPECT_EQ(thenVal, _solver->lowerBound(outputId));
   EXPECT_EQ(thenVal, _solver->upperBound(outputId));
 
-  _solver->updateBounds(condVarId, 1, 1, false);
+  _solver->updateBounds(VarId(condVarId), 1, 1, false);
   EXPECT_EQ(elseVal, _solver->lowerBound(outputId));
   EXPECT_EQ(elseVal, _solver->upperBound(outputId));
 }
 
 TEST_F(IfThenElseConstTest, Value) {
   _solver->open();
-  const VarId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
-  const VarId outputId = _solver->makeIntView<IfThenElseConst>(
+  const VarViewId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
+  const VarViewId outputId = _solver->makeIntView<IfThenElseConst>(
       *_solver, condVarId, thenVal, elseVal);
   _solver->close();
 
@@ -87,8 +87,8 @@ TEST_F(IfThenElseConstTest, CommittedValue) {
   std::shuffle(condValues.begin(), condValues.end(), rng);
 
   _solver->open();
-  const VarId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
-  const VarId outputId = _solver->makeIntView<IfThenElseConst>(
+  const VarViewId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
+  const VarViewId outputId = _solver->makeIntView<IfThenElseConst>(
       *_solver, condVarId, thenVal, elseVal);
   _solver->close();
 
@@ -104,7 +104,7 @@ TEST_F(IfThenElseConstTest, CommittedValue) {
 
     ASSERT_EQ(expectedOutput, _solver->value(ts, outputId));
 
-    _solver->commitIf(ts, condVarId);
+    _solver->commitIf(ts, VarId(condVarId));
     committedValue = _solver->value(ts, condVarId);
 
     ASSERT_EQ(expectedOutput, _solver->value(ts + 1, outputId));

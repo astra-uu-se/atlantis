@@ -20,7 +20,7 @@ class BoolViewTest : public ::testing::Test {
 TEST_F(BoolViewTest, CreateBoolView) {
   _solver->open();
 
-  const VarId var = _solver->makeIntVar(10, 0, 10);
+  const VarViewId var = _solver->makeIntVar(10, 0, 10);
   auto viewOfVar = _solver->makeIntView<Violation2BoolView>(*_solver, var);
   auto viewOfView =
       _solver->makeIntView<Violation2BoolView>(*_solver, viewOfVar);

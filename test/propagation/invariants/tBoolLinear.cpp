@@ -16,7 +16,7 @@ class BoolLinearTest : public InvariantTest {
   Int inputUb = std::numeric_limits<Int>::max();
   Int coeffLb = -10000;
   Int coeffUb = 10000;
-  std::vector<VarId> inputs;
+  std::vector<VarViewId> inputs;
   std::vector<Int> coeffs;
   std::uniform_int_distribution<Int> inputValueDist;
   std::uniform_int_distribution<Int> coeffDist;
@@ -42,7 +42,7 @@ class BoolLinearTest : public InvariantTest {
     inputs.clear();
   }
 
-  Int computeOutput(const Timestamp ts, const std::vector<VarId>& violVars,
+  Int computeOutput(const Timestamp ts, const std::vector<VarViewId>& violVars,
                     const std::vector<Int>& coefficients) {
     std::vector<Int> values(violVars.size(), 0);
     for (size_t i = 0; i < violVars.size(); ++i) {
@@ -70,22 +70,22 @@ TEST_F(BoolLinearTest, UpdateBounds) {
   for (const Int aCoef : coefVec) {
     for (const Int bCoef : coefVec) {
       for (const Int cCoef : coefVec) {
-        std::vector<VarId> vars{_solver->makeIntVar(0, 0, 10),
-                                _solver->makeIntVar(0, 0, 10),
-                                _solver->makeIntVar(0, 0, 10)};
-        const VarId outputId = _solver->makeIntVar(0, 0, 2);
+        std::vector<VarViewId> vars{_solver->makeIntVar(0, 0, 10),
+                                    _solver->makeIntVar(0, 0, 10),
+                                    _solver->makeIntVar(0, 0, 10)};
+        const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
         BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
             *_solver, outputId, std::vector<Int>{aCoef, bCoef, cCoef},
-            std::vector<VarId>(vars));
+            std::vector<VarViewId>(vars));
         for (const auto& [aLb, aUb] : boundVec) {
           EXPECT_TRUE(aLb <= aUb);
-          _solver->updateBounds(vars.at(0), aLb, aUb, false);
+          _solver->updateBounds(VarId(vars.at(0)), aLb, aUb, false);
           for (const auto& [bLb, bUb] : boundVec) {
             EXPECT_TRUE(bLb <= bUb);
-            _solver->updateBounds(vars.at(1), bLb, bUb, false);
+            _solver->updateBounds(VarId(vars.at(1)), bLb, bUb, false);
             for (const auto& [cLb, cUb] : boundVec) {
               EXPECT_TRUE(cLb <= cUb);
-              _solver->updateBounds(vars.at(2), cLb, cUb, false);
+              _solver->updateBounds(VarId(vars.at(2)), cLb, cUb, false);
               invariant.updateBounds(false);
 
               const Int aMin = std::min(static_cast<Int>(aLb == 0) * aCoef,
@@ -125,18 +125,19 @@ TEST_F(BoolLinearTest, Recompute) {
 
   _solver->open();
 
-  const VarId a = _solver->makeIntVar(iDist(gen), iLb, iUb);
-  const VarId b = _solver->makeIntVar(iDist(gen), iLb, iUb);
-  const VarId c = _solver->makeIntVar(iDist(gen), iLb, iUb);
+  const VarViewId a = _solver->makeIntVar(iDist(gen), iLb, iUb);
+  const VarViewId b = _solver->makeIntVar(iDist(gen), iLb, iUb);
+  const VarViewId c = _solver->makeIntVar(iDist(gen), iLb, iUb);
 
-  inputs = std::vector<VarId>{a, b, c};
+  inputs = std::vector<VarViewId>{a, b, c};
   coeffs = std::vector<Int>{cDist(gen), cDist(gen), cDist(gen)};
 
-  const VarId outputId = _solver->makeIntVar(0, std::numeric_limits<Int>::min(),
-                                             std::numeric_limits<Int>::max());
+  const VarViewId outputId = _solver->makeIntVar(
+      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
 
   BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
-      *_solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+      *_solver, outputId, std::vector<Int>(coeffs),
+      std::vector<VarViewId>(inputs));
   _solver->close();
 
   for (Int aVal = iLb; aVal <= iUb; ++aVal) {
@@ -161,16 +162,17 @@ TEST_F(BoolLinearTest, NotifyInputChanged) {
     inputs.at(i) = _solver->makeIntVar(inputValueDist(gen), inputLb, inputUb);
     coeffs.at(i) = coeffDist(gen);
   }
-  const VarId outputId = _solver->makeIntVar(0, std::numeric_limits<Int>::min(),
-                                             std::numeric_limits<Int>::max());
+  const VarViewId outputId = _solver->makeIntVar(
+      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
   BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
-      *_solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+      *_solver, outputId, std::vector<Int>(coeffs),
+      std::vector<VarViewId>(inputs));
   _solver->close();
 
   Timestamp ts = _solver->currentTimestamp() + 1;
 
   for (size_t i = 0; i < inputs.size(); ++i) {
-    const Int oldVal = _solver->value(ts, inputs.at(i));
+    const Int oldVal = _solver->value(ts, VarId(inputs.at(i)));
     do {
       _solver->setValue(ts, inputs.at(i), inputValueDist(gen));
     } while (oldVal == _solver->value(ts, inputs.at(i)));
@@ -189,30 +191,39 @@ TEST_F(BoolLinearTest, NextInput) {
     coeffs.at(i) = coeffDist(gen);
   }
 
-  const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
+  const VarViewId minVarId =
+      *std::min_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
+  const VarViewId maxVarId =
+      *std::max_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
-  const VarId outputId = _solver->makeIntVar(0, std::numeric_limits<Int>::min(),
-                                             std::numeric_limits<Int>::max());
+  const VarViewId outputId = _solver->makeIntVar(
+      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
   BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
-      *_solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+      *_solver, outputId, std::vector<Int>(coeffs),
+      std::vector<VarViewId>(inputs));
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(maxVarId + 1, false);
+    std::vector<bool> notified(size_t(maxVarId) + 1, false);
     for (size_t i = 0; i < numInputs; ++i) {
-      const VarId varId = invariant.nextInput(ts);
+      const VarViewId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
-      EXPECT_TRUE(minVarId <= varId);
-      EXPECT_TRUE(varId <= maxVarId);
-      EXPECT_FALSE(notified.at(varId));
-      notified[varId] = true;
+      EXPECT_LE(size_t(minVarId), size_t(varId));
+      EXPECT_GE(size_t(maxVarId), size_t(varId));
+      EXPECT_FALSE(notified.at(size_t(varId)));
+      notified.at(size_t(varId)) = true;
     }
     EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
-      EXPECT_TRUE(notified.at(varId));
+    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
+      EXPECT_TRUE(notified.at(i));
     }
   }
 }
@@ -223,15 +234,16 @@ TEST_F(BoolLinearTest, NotifyCurrentInputChanged) {
     inputs.at(i) = _solver->makeIntVar(inputValueDist(gen), inputLb, inputUb);
     coeffs.at(i) = coeffDist(gen);
   }
-  const VarId outputId = _solver->makeIntVar(0, std::numeric_limits<Int>::min(),
-                                             std::numeric_limits<Int>::max());
+  const VarViewId outputId = _solver->makeIntVar(
+      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
   BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
-      *_solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+      *_solver, outputId, std::vector<Int>(coeffs),
+      std::vector<VarViewId>(inputs));
   _solver->close();
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId& varId : inputs) {
+    for (const VarViewId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = _solver->value(ts, varId);
       do {
@@ -258,10 +270,11 @@ TEST_F(BoolLinearTest, Commit) {
   }
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  const VarId outputId = _solver->makeIntVar(0, std::numeric_limits<Int>::min(),
-                                             std::numeric_limits<Int>::max());
+  const VarViewId outputId = _solver->makeIntVar(
+      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
   BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
-      *_solver, outputId, std::vector<Int>(coeffs), std::vector<VarId>(inputs));
+      *_solver, outputId, std::vector<Int>(coeffs),
+      std::vector<VarViewId>(inputs));
   _solver->close();
 
   EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
@@ -288,9 +301,9 @@ TEST_F(BoolLinearTest, Commit) {
 
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
-    _solver->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = _solver->value(ts, inputs.at(i));
-    _solver->commitIf(ts, outputId);
+    _solver->commitIf(ts, VarId(inputs.at(i)));
+    committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
+    _solver->commitIf(ts, VarId(outputId));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -313,15 +326,18 @@ RC_GTEST_FIXTURE_PROP(BoolLinearTest, ShouldAlwaysBeSum,
   bCoef = clamp(bCoef, globalLb, globalUb);
   cCoef = clamp(cCoef, globalLb, globalUb);
 
-  const VarId a = _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
-  const VarId b = _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
-  const VarId c = _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
-  const VarId output = _solver->makeIntVar(aCoef + bCoef + cCoef,
-                                           std::numeric_limits<Int>::min(),
-                                           std::numeric_limits<Int>::max());
+  const VarViewId a =
+      _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
+  const VarViewId b =
+      _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
+  const VarViewId c =
+      _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
+  const VarViewId output = _solver->makeIntVar(aCoef + bCoef + cCoef,
+                                               std::numeric_limits<Int>::min(),
+                                               std::numeric_limits<Int>::max());
   _solver->makeInvariant<BoolLinear>(*_solver, output,
                                      std::vector<Int>{aCoef, bCoef, cCoef},
-                                     std::vector<VarId>{a, b, c});
+                                     std::vector<VarViewId>{a, b, c});
   _solver->close();
 
   aVal = std::max<Int>(0, aVal);
@@ -354,9 +370,11 @@ class MockBoolLinear : public BoolLinear {
     registered = true;
     BoolLinear::registerVars();
   }
-  explicit MockBoolLinear(SolverBase& _solver, VarId output,
-                          std::vector<VarId>&& varArray)
-      : BoolLinear(_solver, output, std::move(varArray)) {
+  explicit MockBoolLinear(SolverBase& solver, VarViewId output,
+                          std::vector<VarViewId>&& varArray)
+      : BoolLinear(solver, output, std::move(varArray)) {
+    EXPECT_TRUE(output.isVar());
+
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return BoolLinear::recompute(timestamp);
     });
@@ -376,7 +394,7 @@ class MockBoolLinear : public BoolLinear {
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
@@ -386,14 +404,14 @@ TEST_F(BoolLinearTest, SolverIntegration) {
     if (!_solver->isOpen()) {
       _solver->open();
     }
-    std::vector<VarId> args;
+    std::vector<VarViewId> args;
     const size_t numArgs = 10;
     for (size_t value = 1; value <= numArgs; ++value) {
       args.push_back(_solver->makeIntVar(static_cast<Int>(value), 1,
                                          static_cast<Int>(numArgs)));
     }
-    const VarId modifiedVarId = args.front();
-    const VarId output =
+    const VarViewId modifiedVarId = args.front();
+    const VarViewId output =
         _solver->makeIntVar(-10, -100, static_cast<Int>(numArgs * numArgs));
     testNotifications<MockBoolLinear>(
         &_solver->makeInvariant<MockBoolLinear>(*_solver, output,

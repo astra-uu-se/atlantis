@@ -10,8 +10,8 @@
 namespace atlantis::propagation {
 
 /**
- * Invariant for output <- varArray[index] where varArray is a vector of VarId.
- * NOTE: the index set is 1 based (first element is varArray[1], not
+ * Invariant for output <- varArray[index] where varArray is a vector of
+ * VarViewId. NOTE: the index set is 1 based (first element is varArray[1], not
  * varArray[0])
  *
  */
@@ -19,7 +19,7 @@ namespace atlantis::propagation {
 class ElementVar : public Invariant {
  private:
   VarId _output, _index;
-  std::vector<VarId> _varArray;
+  std::vector<VarViewId> _varArray;
   Int _offset;
 
   [[nodiscard]] inline size_t safeIndex(Int index) const noexcept {
@@ -28,14 +28,18 @@ class ElementVar : public Invariant {
   }
 
  public:
-  explicit ElementVar(SolverBase&, VarId output, VarId index,
-                      std::vector<VarId>&& varArray, Int offset = 1);
+  explicit ElementVar(SolverBase&, VarId output, VarViewId index,
+                      std::vector<VarViewId>&& varArray, Int offset = 1);
+
+  explicit ElementVar(SolverBase&, VarViewId output, VarViewId index,
+                      std::vector<VarViewId>&& varArray, Int offset = 1);
+
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
-  [[nodiscard]] VarId dynamicInputVar(Timestamp) const noexcept override;
+  [[nodiscard]] VarViewId dynamicInputVar(Timestamp) const noexcept override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

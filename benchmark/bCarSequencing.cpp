@@ -30,8 +30,8 @@ class CarSequencing : public ::benchmark::Fixture {
   std::vector<std::vector<bool>> carData;
   std::vector<std::vector<Int>> carFeature;
 
-  std::vector<propagation::VarId> sequence;
-  propagation::VarId totalViolation;
+  std::vector<propagation::VarViewId> sequence;
+  VarViewId totalViolation{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;
@@ -123,18 +123,18 @@ class CarSequencing : public ::benchmark::Fixture {
         }));
 
     // introducing variables linear in numCars
-    sequence = std::vector<propagation::VarId>(numCars);
-    std::vector<propagation::VarId> violations{};
+    sequence = std::vector<propagation::VarViewId>(numCars);
+    std::vector<propagation::VarViewId> violations{};
     // introducing variables linear in numCars
     violations.reserve(numFeatures * numCars);
-    std::vector<propagation::VarId> featureElemSum{};
+    std::vector<propagation::VarViewId> featureElemSum{};
     // introducing variables linear in numCars
     featureElemSum.reserve(numFeatures * numCars);
     // introducing variables linear in numCars (numFeatures is a constant)
-    std::vector<std::vector<propagation::VarId>> featureElem(numFeatures);
+    std::vector<std::vector<propagation::VarViewId>> featureElem(numFeatures);
     for (size_t o = 0; o < numFeatures; ++o) {
       featureElem.at(o) =
-          std::vector<propagation::VarId>(numCars, propagation::NULL_ID);
+          std::vector<propagation::VarViewId>(numCars, propagation::NULL_ID);
     }
 
     for (Int i = 0; i < static_cast<Int>(numCars); ++i) {
@@ -144,7 +144,7 @@ class CarSequencing : public ::benchmark::Fixture {
     for (size_t o = 0; o < numFeatures; ++o) {
       const size_t end = numCars - blockSize.at(o) + 1;
       for (size_t start = 0; start < end; ++start) {
-        std::vector<propagation::VarId> featureElemRun(
+        std::vector<propagation::VarViewId> featureElemRun(
             sequence.begin() + static_cast<Int>(start),
             sequence.begin() + static_cast<Int>(start + blockSize.at(o)));
         assert(featureElemRun.size() == blockSize.at(o));
@@ -164,7 +164,7 @@ class CarSequencing : public ::benchmark::Fixture {
     assert(featureElemSum.size() <= numFeatures * numCars);
 
     Int maxViol = 0;
-    for (const propagation::VarId& viol : violations) {
+    for (const propagation::VarViewId& viol : violations) {
       maxViol += _solver->upperBound(viol);
     }
     totalViolation = _solver->makeIntVar(0, 0, maxViol);

@@ -14,7 +14,7 @@ inline bool all_in_range(size_t start, size_t stop,
   return std::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
-InSparseDomain::InSparseDomain(SolverBase& solver, VarId parentId,
+InSparseDomain::InSparseDomain(SolverBase& solver, VarViewId parentId,
                                const std::vector<DomainEntry>& domain)
     : IntView(solver, parentId), _offset(domain.front().lowerBound) {
   assert(!domain.empty());

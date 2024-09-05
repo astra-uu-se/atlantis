@@ -110,10 +110,10 @@ TEST_P(ArrayVarElementNodeTestFixture, propagation) {
     return;
   }
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   std::vector<Int> inputVals;
 
   inputVarIds.emplace_back(varNode(idx).isFixed() ? propagation::NULL_ID

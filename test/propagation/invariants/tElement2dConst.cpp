@@ -47,8 +47,8 @@ class Element2dConstTest : public InvariantTest {
     return colIndexVal - colOffset;
   }
 
-  Int computeOutput(const Timestamp ts, const VarId rowIndex,
-                    const VarId colIndex, const Int rowOffset,
+  Int computeOutput(const Timestamp ts, const VarViewId rowIndex,
+                    const VarViewId colIndex, const Int rowOffset,
                     const Int colOffset) {
     return computeOutput(_solver->value(ts, rowIndex),
                          _solver->value(ts, colIndex), rowOffset, colOffset);
@@ -76,13 +76,13 @@ TEST_F(Element2dConstTest, UpdateBounds) {
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
     _solver->open();
-    const VarId rowIndex =
+    const VarViewId rowIndex =
         _solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
+    const VarViewId colIndex =
         _solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
 
-    const VarId outputId = _solver->makeIntVar(
+    const VarViewId outputId = _solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = _solver->makeInvariant<Element2dConst>(
         *_solver, outputId, rowIndex, colIndex,
@@ -93,12 +93,13 @@ TEST_F(Element2dConstTest, UpdateBounds) {
          ++minRowIndex) {
       for (Int maxRowIndex = rowIndexUb; maxRowIndex >= minRowIndex;
            --maxRowIndex) {
-        _solver->updateBounds(rowIndex, minRowIndex, maxRowIndex, false);
+        _solver->updateBounds(VarId(rowIndex), minRowIndex, maxRowIndex, false);
         for (Int minColIndex = colIndexLb; minColIndex <= colIndexUb;
              ++minColIndex) {
           for (Int maxColIndex = colIndexUb; maxColIndex >= minColIndex;
                --maxColIndex) {
-            _solver->updateBounds(colIndex, minColIndex, maxColIndex, false);
+            _solver->updateBounds(VarId(colIndex), minColIndex, maxColIndex,
+                                  false);
             invariant.updateBounds(false);
             Int minVal = std::numeric_limits<Int>::max();
             Int maxVal = std::numeric_limits<Int>::min();
@@ -138,13 +139,13 @@ TEST_F(Element2dConstTest, Recompute) {
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
     _solver->open();
-    const VarId rowIndex =
+    const VarViewId rowIndex =
         _solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
+    const VarViewId colIndex =
         _solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
 
-    const VarId outputId = _solver->makeIntVar(
+    const VarViewId outputId = _solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = _solver->makeInvariant<Element2dConst>(
         *_solver, outputId, rowIndex, colIndex,
@@ -191,13 +192,13 @@ TEST_F(Element2dConstTest, NotifyInputChanged) {
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
     _solver->open();
-    const VarId rowIndex =
+    const VarViewId rowIndex =
         _solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
+    const VarViewId colIndex =
         _solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
 
-    const VarId outputId = _solver->makeIntVar(
+    const VarViewId outputId = _solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = _solver->makeInvariant<Element2dConst>(
         *_solver, outputId, rowIndex, colIndex,
@@ -239,13 +240,13 @@ TEST_F(Element2dConstTest, NextInput) {
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
     _solver->open();
-    const VarId rowIndex =
+    const VarViewId rowIndex =
         _solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
+    const VarViewId colIndex =
         _solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
 
-    const VarId outputId = _solver->makeIntVar(
+    const VarViewId outputId = _solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = _solver->makeInvariant<Element2dConst>(
         *_solver, outputId, rowIndex, colIndex,
@@ -286,13 +287,13 @@ TEST_F(Element2dConstTest, NotifyCurrentInputChanged) {
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
     _solver->open();
-    const VarId rowIndex =
+    const VarViewId rowIndex =
         _solver->makeIntVar(rowIndexValues.back(), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
+    const VarViewId colIndex =
         _solver->makeIntVar(colIndexValues.back(), colIndexLb, colIndexUb);
 
-    const VarId outputId = _solver->makeIntVar(
+    const VarViewId outputId = _solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = _solver->makeInvariant<Element2dConst>(
         *_solver, outputId, rowIndex, colIndex,
@@ -343,13 +344,13 @@ TEST_F(Element2dConstTest, Commit) {
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
     _solver->open();
-    const VarId rowIndex =
+    const VarViewId rowIndex =
         _solver->makeIntVar(rowIndexValues.back(), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
+    const VarViewId colIndex =
         _solver->makeIntVar(colIndexValues.back(), colIndexLb, colIndexUb);
 
-    const VarId outputId = _solver->makeIntVar(
+    const VarViewId outputId = _solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
     Element2dConst& invariant = _solver->makeInvariant<Element2dConst>(
         *_solver, outputId, rowIndex, colIndex,
@@ -394,11 +395,11 @@ TEST_F(Element2dConstTest, Commit) {
 
         ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
-        _solver->commitIf(ts, rowIndex);
+        _solver->commitIf(ts, VarId(rowIndex));
         committedRowIndexValue = _solver->value(ts, rowIndex);
-        _solver->commitIf(ts, colIndex);
+        _solver->commitIf(ts, VarId(colIndex));
         committedColIndexValue = _solver->value(ts, colIndex);
-        _solver->commitIf(ts, outputId);
+        _solver->commitIf(ts, VarId(outputId));
 
         invariant.commit(ts);
         invariant.recompute(ts + 1);
@@ -415,12 +416,14 @@ class MockElement2dVar : public Element2dConst {
     registered = true;
     Element2dConst::registerVars();
   }
-  explicit MockElement2dVar(SolverBase& _solver, VarId output, VarId index1,
-                            VarId index2,
+  explicit MockElement2dVar(SolverBase& solver, VarViewId output,
+                            VarViewId index1, VarViewId index2,
                             std::vector<std::vector<Int>>&& matrix, Int offset1,
                             Int offset2)
-      : Element2dConst(_solver, output, index1, index2, std::move(matrix),
+      : Element2dConst(solver, output, index1, index2, std::move(matrix),
                        offset1, offset2) {
+    EXPECT_TRUE(output.isVar());
+
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return Element2dConst::recompute(timestamp);
     });
@@ -440,7 +443,7 @@ class MockElement2dVar : public Element2dConst {
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
@@ -456,9 +459,9 @@ TEST_F(Element2dConstTest, SolverIntegration) {
         parMatrix.at(i).at(j) = static_cast<Int>(i * numCols + j);
       }
     }
-    VarId index1 = _solver->makeIntVar(1, 1, static_cast<Int>(numRows));
-    VarId index2 = _solver->makeIntVar(1, 1, static_cast<Int>(numCols));
-    VarId output = _solver->makeIntVar(-10, -100, 100);
+    VarViewId index1 = _solver->makeIntVar(1, 1, static_cast<Int>(numRows));
+    VarViewId index2 = _solver->makeIntVar(1, 1, static_cast<Int>(numCols));
+    VarViewId output = _solver->makeIntVar(-10, -100, 100);
     testNotifications<MockElement2dVar>(
         &_solver->makeInvariant<MockElement2dVar>(
             *_solver, output, index1, index2, std::move(parMatrix), 1, 1),

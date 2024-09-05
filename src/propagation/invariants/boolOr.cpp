@@ -12,8 +12,13 @@ namespace atlantis::propagation {
  * @param y second violation variable
  * @param output result
  */
-BoolOr::BoolOr(SolverBase& solver, VarId output, VarId x, VarId y)
+BoolOr::BoolOr(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
+
+BoolOr::BoolOr(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
+    : BoolOr(solver, VarId(output), x, y) {
+  assert(output.isVar());
+}
 
 void BoolOr::registerVars() {
   assert(_id != NULL_ID);
@@ -35,7 +40,7 @@ void BoolOr::recompute(Timestamp ts) {
 
 void BoolOr::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId BoolOr::nextInput(Timestamp ts) {
+VarViewId BoolOr::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

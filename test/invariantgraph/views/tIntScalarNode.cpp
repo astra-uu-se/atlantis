@@ -90,10 +90,10 @@ TEST_P(IntScalarNodeTestFixture, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  const propagation::VarId inputId = varId(inputIdentifier);
+  const propagation::VarViewId inputId = varId(inputIdentifier);
   EXPECT_NE(inputId, propagation::NULL_ID);
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   for (Int inputVal = _solver->lowerBound(inputId);

@@ -158,7 +158,7 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& inputVarNodeId : inputVarNodeIds) {
     if (!varNode(inputVarNodeId).isFixed()) {
       EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
@@ -166,7 +166,7 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
     }
   }
 
-  const propagation::VarId violVarId =
+  const propagation::VarViewId violVarId =
       isReified() ? varId(reifiedIdentifier)
                   : _invariantGraph->totalViolationVarId();
 

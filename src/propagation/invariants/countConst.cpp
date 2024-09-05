@@ -5,9 +5,18 @@
 
 namespace atlantis::propagation {
 
-CountConst::CountConst(SolverBase& solver, VarId output, Int y,
-                       std::vector<VarId>&& vars)
-    : Invariant(solver), _output(output), _y(y), _vars(std::move(vars)) {}
+CountConst::CountConst(SolverBase& solver, VarId output, Int needle,
+                       std::vector<VarViewId>&& vars)
+    : Invariant(solver),
+      _output(output),
+      _needle(needle),
+      _vars(std::move(vars)) {}
+
+CountConst::CountConst(SolverBase& solver, VarViewId output, Int needle,
+                       std::vector<VarViewId>&& vars)
+    : CountConst(solver, VarId(output), needle, std::move(vars)) {
+  assert(output.isVar());
+}
 
 void CountConst::registerVars() {
   // precondition: this invariant must be registered with the solver before it
@@ -27,23 +36,24 @@ void CountConst::updateBounds(bool widenOnly) {
 void CountConst::recompute(Timestamp ts) {
   Int count = 0;
   for (const auto& var : _vars) {
-    count += static_cast<Int>(_solver.value(ts, var) == _y);
+    count += static_cast<Int>(_solver.value(ts, var) == _needle);
   }
   updateValue(ts, _output, count);
 }
 
 void CountConst::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _vars.size());
-  const Int newValue = static_cast<Int>(_solver.value(ts, _vars[id]) == _y);
+  const Int newValue =
+      static_cast<Int>(_solver.value(ts, _vars[id]) == _needle);
   const Int committedValue =
-      static_cast<Int>(_solver.committedValue(_vars[id]) == _y);
+      static_cast<Int>(_solver.committedValue(_vars[id]) == _needle);
   if (newValue == committedValue) {
     return;
   }
   incValue(ts, _output, newValue - committedValue);
 }
 
-VarId CountConst::nextInput(Timestamp ts) {
+VarViewId CountConst::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index < _vars.size()) {

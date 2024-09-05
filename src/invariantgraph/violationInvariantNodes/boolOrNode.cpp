@@ -48,6 +48,7 @@ void BoolOrNode::registerOutputVars() {
 
 void BoolOrNode::registerNode() {
   assert(violationVarId() != propagation::NULL_ID);
+  assert(violationVarId().isVar());
 
   solver().makeInvariant<propagation::BoolOr>(solver(), violationVarId(),
                                               invariantGraph().varId(a()),

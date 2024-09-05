@@ -13,8 +13,8 @@ static inline Int numCols(const std::vector<std::vector<Int>>& matrix) {
   return matrix.empty() ? 0 : static_cast<Int>(matrix.front().size());
 }
 
-Element2dConst::Element2dConst(SolverBase& solver, VarId output, VarId index1,
-                               VarId index2,
+Element2dConst::Element2dConst(SolverBase& solver, VarId output,
+                               VarViewId index1, VarViewId index2,
                                std::vector<std::vector<Int>>&& matrix,
                                Int offset1, Int offset2)
     : Invariant(solver),
@@ -23,6 +23,15 @@ Element2dConst::Element2dConst(SolverBase& solver, VarId output, VarId index1,
       _dimensions{static_cast<Int>(_matrix.size()), numCols(_matrix)},
       _offsets{offset1, offset2},
       _output(output) {}
+
+Element2dConst::Element2dConst(SolverBase& solver, VarViewId output,
+                               VarViewId index1, VarViewId index2,
+                               std::vector<std::vector<Int>>&& matrix,
+                               Int offset1, Int offset2)
+    : Element2dConst(solver, VarId(output), index1, index2, std::move(matrix),
+                     offset1, offset2) {
+  assert(output.isVar());
+}
 
 void Element2dConst::registerVars() {
   assert(_id != NULL_ID);
@@ -74,7 +83,7 @@ void Element2dConst::notifyInputChanged(Timestamp ts, LocalId) {
   recompute(ts);
 }
 
-VarId Element2dConst::nextInput(Timestamp ts) {
+VarViewId Element2dConst::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _indices[0];

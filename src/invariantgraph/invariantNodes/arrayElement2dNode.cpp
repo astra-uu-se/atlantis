@@ -117,6 +117,8 @@ void ArrayElement2dNode::registerNode() {
   }
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
+  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
+
   solver().makeInvariant<propagation::Element2dConst>(
       solver(), invariantGraph().varId(outputVarNodeIds().front()),
       invariantGraph().varId(idx1()), invariantGraph().varId(idx2()),

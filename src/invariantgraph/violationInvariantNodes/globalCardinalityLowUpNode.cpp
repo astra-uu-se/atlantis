@@ -66,7 +66,11 @@ void GlobalCardinalityLowUpNode::registerOutputVars() {
 }
 
 void GlobalCardinalityLowUpNode::registerNode() {
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
+  assert(violationVarId() != propagation::NULL_ID);
+  assert(shouldHold() || _intermediate != propagation::NULL_ID);
+  assert(shouldHold() ? violationVarId().isVar() : _intermediate.isVar());
+
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputVarIds),
                  [&](const auto& id) { return invariantGraph().varId(id); });

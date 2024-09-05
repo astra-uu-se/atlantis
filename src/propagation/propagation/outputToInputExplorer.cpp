@@ -22,7 +22,7 @@ OutputToInputExplorer::OutputToInputExplorer(Solver& e, size_t expectedSize)
 void OutputToInputExplorer::outputToInputStaticMarking() {
   std::vector<bool> varVisited(_solver.numVars() + 1);
 
-  for (IdBase idx = 1; idx <= _solver.numVars(); ++idx) {
+  for (VarId idx = 1; idx <= _solver.numVars(); ++idx) {
     if (_searchVarAncestors.size() < idx) {
       _searchVarAncestors.register_idx(idx);
     }
@@ -30,22 +30,22 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
     _searchVarAncestors[idx].clear();
   }
 
-  for (const VarIdBase& searchVar : _solver.searchVars()) {
+  for (const VarId searchVar : _solver.searchVars()) {
     std::fill(varVisited.begin(), varVisited.end(), false);
-    std::vector<IdBase> stack;
+    std::vector<VarId> stack;
     stack.reserve(_solver.numVars());
 
     stack.emplace_back(searchVar);
     varVisited[searchVar] = true;
 
     while (!stack.empty()) {
-      const VarIdBase id = stack.back();
+      const VarId id = stack.back();
       stack.pop_back();
       _searchVarAncestors[id].emplace(searchVar);
 
       for (const PropagationGraph::ListeningInvariantData& invariantData :
-           _solver.listeningInvariantData(IdBase(id))) {
-        for (const VarIdBase& outputVar :
+           _solver.listeningInvariantData(id)) {
+        for (const VarId outputVar :
              _solver.varsDefinedBy(invariantData.invariantId)) {
           if (!varVisited[outputVar]) {
             varVisited[outputVar] = true;
@@ -58,22 +58,22 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
 }
 
 void OutputToInputExplorer::inputToOutputExplorationMarking() {
-  std::vector<IdBase> stack;
+  std::vector<VarId> stack;
   stack.reserve(_solver.numVars());
 
   _onPropagationPath.assign(_solver.numVars(), false);
 
-  for (const VarIdBase& modifiedDecisionVar : _solver.modifiedSearchVar()) {
+  for (const VarId modifiedDecisionVar : _solver.modifiedSearchVar()) {
     stack.emplace_back(modifiedDecisionVar);
     assert(!_onPropagationPath.get(modifiedDecisionVar));
     _onPropagationPath.set(modifiedDecisionVar, true);
 
     while (!stack.empty()) {
-      const IdBase id = stack.back();
+      const VarId id = stack.back();
       stack.pop_back();
       for (const PropagationGraph::ListeningInvariantData& invariantData :
            _solver.listeningInvariantData(id)) {
-        for (const VarIdBase& outputVar :
+        for (const VarId outputVar :
              _solver.varsDefinedBy(invariantData.invariantId)) {
           if (!_onPropagationPath.get(outputVar)) {
             _onPropagationPath.set(outputVar, true);
@@ -120,13 +120,13 @@ void OutputToInputExplorer::propagate(Timestamp ts) {
 }
 
 template bool OutputToInputExplorer::isMarked<OutputToInputMarkingMode::NONE>(
-    VarIdBase id);
+    VarId id);
 template bool OutputToInputExplorer::isMarked<
-    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>(VarIdBase id);
+    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>(VarId id);
 template bool OutputToInputExplorer::isMarked<
-    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>(VarIdBase id);
+    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>(VarId id);
 template <OutputToInputMarkingMode MarkingMode>
-bool OutputToInputExplorer::isMarked(VarIdBase id) {
+bool OutputToInputExplorer::isMarked(VarId id) {
   if constexpr (MarkingMode ==
                 OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
     return std::any_of(_solver.modifiedSearchVar().begin(),
@@ -189,13 +189,14 @@ void OutputToInputExplorer::expandInvariant(InvariantId invariantId) {
   if (_invariantIsOnStack.get(invariantId)) {
     throw DynamicCycleException();
   }
+  // nextInput gets the source if the input would be a view:
   VarId nextVar = _solver.nextInput(invariantId);
   if constexpr (MarkingMode != OutputToInputMarkingMode::NONE) {
-    while (nextVar != NULL_ID && !isMarked<MarkingMode>(nextVar.id)) {
+    while (nextVar != NULL_ID && !isMarked<MarkingMode>(nextVar)) {
       nextVar = _solver.nextInput(invariantId);
     }
   }
-  if (nextVar.id == NULL_ID) {
+  if (nextVar == NULL_ID) {
     return;
   }
   pushVarStack(nextVar);
@@ -217,11 +218,11 @@ template <OutputToInputMarkingMode MarkingMode>
 bool OutputToInputExplorer::pushNextInputVar() {
   VarId nextVar = _solver.nextInput(peekInvariantStack());
   if constexpr (MarkingMode != OutputToInputMarkingMode::NONE) {
-    while (nextVar != NULL_ID && !isMarked<MarkingMode>(nextVar.id)) {
+    while (nextVar != NULL_ID && !isMarked<MarkingMode>(nextVar)) {
       nextVar = _solver.nextInput(peekInvariantStack());
     }
   }
-  if (nextVar.id == NULL_ID) {
+  if (nextVar == NULL_ID) {
     return true;  // done with invariant
   }
   pushVarStack(nextVar);
@@ -230,7 +231,7 @@ bool OutputToInputExplorer::pushNextInputVar() {
 
 void OutputToInputExplorer::registerVar(VarId id) {
   _varStack.emplace_back(NULL_ID);  // push back just to resize the stack!
-  _varComputedAt.register_idx(id.id);
+  _varComputedAt.register_idx(id);
 }
 
 void OutputToInputExplorer::registerInvariant(InvariantId invariantId) {
@@ -256,13 +257,13 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
     const VarId currentVarId = peekVarStack();
 
     // If the variable is not computed, then expand it.
-    if (!isComputed(currentTimestamp, currentVarId.id)) {
+    if (!isComputed(currentTimestamp, currentVarId)) {
       // Variable will become computed as it is either not defined or we now
       // expand its invariant. Note that expandInvariant may sometimes not
       // push a new invariant nor a new variable on the stack, so we must mark
       // the variable as computed before we expand it as this otherwise
       // results in an infinite loop.
-      setComputed(currentTimestamp, currentVarId.id);
+      setComputed(currentTimestamp, currentVarId);
       // The variable is marked and computed: expand its defining invariant.
       expandInvariant<MarkingMode>(_solver.definingInvariant(currentVarId));
       continue;
@@ -284,7 +285,7 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
     if (pushNextInputVar<MarkingMode>()) {
       // The top invariant has finished propagating, so all defined vars can
       // be marked as compte at the current time.
-      for (const auto& defVar : _solver.varsDefinedBy(peekInvariantStack())) {
+      for (const VarId defVar : _solver.varsDefinedBy(peekInvariantStack())) {
         setComputed(currentTimestamp, defVar);
       }
       popInvariantStack();

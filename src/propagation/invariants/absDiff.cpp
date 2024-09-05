@@ -4,8 +4,13 @@
 
 namespace atlantis::propagation {
 
-AbsDiff::AbsDiff(SolverBase& solver, VarId output, VarId x, VarId y)
+AbsDiff::AbsDiff(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
+
+AbsDiff::AbsDiff(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
+    : Invariant(solver), _output(output), _x(x), _y(y) {
+  assert(output.isVar());
+}
 
 void AbsDiff::registerVars() {
   assert(_id != NULL_ID);
@@ -38,7 +43,7 @@ void AbsDiff::recompute(Timestamp ts) {
 
 void AbsDiff::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId AbsDiff::nextInput(Timestamp ts) {
+VarViewId AbsDiff::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

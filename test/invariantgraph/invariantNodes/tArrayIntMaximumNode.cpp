@@ -170,7 +170,7 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& identifier : inputIdentifiers) {
     if (varNode(identifier).upperBound() > lb) {
       EXPECT_NE(varId(identifier), propagation::NULL_ID);
@@ -189,7 +189,7 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
 
   EXPECT_NE(varId(outputIdentifier), propagation::NULL_ID);
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
 

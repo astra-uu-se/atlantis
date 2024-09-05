@@ -21,12 +21,12 @@ class CircuitNeighbourhoodTest : public ::testing::Test {
 
     _solver->open();
     for (auto i = 0u; i < 4; ++i) {
-      propagation::VarId var = _solver->makeIntVar(1, 1, 4);
+      propagation::VarViewId var = _solver->makeIntVar(1, 1, 4);
       next.emplace_back(var, SearchDomain(1, 4));
     }
 
-    propagation::VarId objective = _solver->makeIntVar(0, 0, 0);
-    propagation::VarId violation = _solver->makeIntVar(0, 0, 0);
+    propagation::VarViewId objective = _solver->makeIntVar(0, 0, 0);
+    propagation::VarViewId violation = _solver->makeIntVar(0, 0, 0);
     _solver->close();
 
     _assignment = std::make_shared<search::Assignment>(

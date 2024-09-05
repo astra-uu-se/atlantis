@@ -14,7 +14,7 @@ namespace atlantis::propagation {
 
 class GlobalCardinalityLowUp : public ViolationInvariant {
  private:
-  std::vector<VarId> _vars;
+  std::vector<VarViewId> _vars;
   std::vector<Int> _lowerBounds;
   std::vector<Int> _upperBounds;
   CommittableInt _shortage;
@@ -25,13 +25,24 @@ class GlobalCardinalityLowUp : public ViolationInvariant {
   signed char decreaseCount(Timestamp ts, Int value);
 
  public:
-  GlobalCardinalityLowUp(SolverBase&, VarId violationId,
-                         std::vector<VarId>&& vars,
+  GlobalCardinalityLowUp(SolverBase&, VarViewId violationId,
+                         std::vector<VarViewId>&& vars,
                          const std::vector<Int>& cover,
                          const std::vector<Int>& bounds);
 
   GlobalCardinalityLowUp(SolverBase&, VarId violationId,
-                         std::vector<VarId>&& vars,
+                         std::vector<VarViewId>&& vars,
+                         const std::vector<Int>& cover,
+                         const std::vector<Int>& bounds);
+
+  GlobalCardinalityLowUp(SolverBase&, VarViewId violationId,
+                         std::vector<VarViewId>&& vars,
+                         const std::vector<Int>& cover,
+                         const std::vector<Int>& lowerBounds,
+                         const std::vector<Int>& upperBounds);
+
+  GlobalCardinalityLowUp(SolverBase&, VarId violationId,
+                         std::vector<VarViewId>&& vars,
                          const std::vector<Int>& cover,
                          const std::vector<Int>& lowerBounds,
                          const std::vector<Int>& upperBounds);
@@ -42,7 +53,7 @@ class GlobalCardinalityLowUp : public ViolationInvariant {
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

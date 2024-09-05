@@ -18,19 +18,26 @@ class BoolLinear : public Invariant {
  private:
   VarId _output;
   std::vector<Int> _coeffs;
-  std::vector<VarId> _violArray;
+  std::vector<VarViewId> _violArray;
 
  public:
+  explicit BoolLinear(SolverBase&, VarViewId output,
+                      std::vector<VarViewId>&& violArray);
+
   explicit BoolLinear(SolverBase&, VarId output,
-                      std::vector<VarId>&& violArray);
+                      std::vector<VarViewId>&& violArray);
+
+  explicit BoolLinear(SolverBase&, VarViewId output, std::vector<Int>&& coeffs,
+                      std::vector<VarViewId>&& violArray);
+
   explicit BoolLinear(SolverBase&, VarId output, std::vector<Int>&& coeffs,
-                      std::vector<VarId>&& violArray);
+                      std::vector<VarViewId>&& violArray);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

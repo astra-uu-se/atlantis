@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "atlantis/fznBackend.hpp"
-#include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 
 /**

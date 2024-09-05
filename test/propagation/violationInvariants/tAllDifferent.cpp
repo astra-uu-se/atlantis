@@ -7,7 +7,7 @@ using namespace atlantis::propagation;
 
 class AllDifferentTest : public InvariantTest {
  public:
-  Int computeViolation(Timestamp ts, const std::vector<VarId>& vars) {
+  Int computeViolation(Timestamp ts, const std::vector<VarViewId>& vars) {
     std::vector<Int> values(vars.size(), 0);
     for (size_t i = 0; i < vars.size(); ++i) {
       values.at(i) = _solver->value(ts, vars.at(i));
@@ -41,22 +41,22 @@ TEST_F(AllDifferentTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-250, -150}, {-100, 0}, {-50, 50}, {0, 100}, {150, 250}};
   _solver->open();
-  std::vector<VarId> inputs{_solver->makeIntVar(0, 0, 0),
-                            _solver->makeIntVar(0, 0, 0),
-                            _solver->makeIntVar(0, 0, 0)};
-  const VarId violationId = _solver->makeIntVar(0, 0, 2);
+  std::vector<VarViewId> inputs{_solver->makeIntVar(0, 0, 0),
+                                _solver->makeIntVar(0, 0, 0),
+                                _solver->makeIntVar(0, 0, 0)};
+  const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
   AllDifferent& invariant = _solver->makeViolationInvariant<AllDifferent>(
-      *_solver, violationId, std::vector<VarId>(inputs));
+      *_solver, violationId, std::vector<VarViewId>(inputs));
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_TRUE(aLb <= aUb);
-    _solver->updateBounds(inputs.at(0), aLb, aUb, false);
+    _solver->updateBounds(VarId(inputs.at(0)), aLb, aUb, false);
     for (const auto& [bLb, bUb] : boundVec) {
       EXPECT_TRUE(bLb <= bUb);
-      _solver->updateBounds(inputs.at(1), bLb, bUb, false);
+      _solver->updateBounds(VarId(inputs.at(1)), bLb, bUb, false);
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_TRUE(cLb <= cUb);
-        _solver->updateBounds(inputs.at(2), cLb, cUb, false);
+        _solver->updateBounds(VarId(inputs.at(2)), cLb, cUb, false);
         invariant.updateBounds(false);
         ASSERT_EQ(0, _solver->lowerBound(violationId));
         ASSERT_EQ(inputs.size() - 1, _solver->upperBound(violationId));
@@ -72,12 +72,12 @@ TEST_F(AllDifferentTest, Recompute) {
   for (const auto& [lb, ub] : boundVec) {
     EXPECT_TRUE(lb <= ub);
     _solver->open();
-    const VarId a = _solver->makeIntVar(lb, lb, ub);
-    const VarId b = _solver->makeIntVar(lb, lb, ub);
-    const VarId c = _solver->makeIntVar(lb, lb, ub);
-    const VarId violationId = _solver->makeIntVar(0, 0, 2);
+    const VarViewId a = _solver->makeIntVar(lb, lb, ub);
+    const VarViewId b = _solver->makeIntVar(lb, lb, ub);
+    const VarViewId c = _solver->makeIntVar(lb, lb, ub);
+    const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
     AllDifferent& invariant = _solver->makeViolationInvariant<AllDifferent>(
-        *_solver, violationId, std::vector<VarId>{a, b, c});
+        *_solver, violationId, std::vector<VarViewId>{a, b, c});
     _solver->close();
 
     for (Int aVal = lb; aVal <= ub; ++aVal) {
@@ -105,12 +105,12 @@ TEST_F(AllDifferentTest, NotifyInputChanged) {
     EXPECT_TRUE(lb <= ub);
 
     _solver->open();
-    std::vector<VarId> inputs{_solver->makeIntVar(lb, lb, ub),
-                              _solver->makeIntVar(lb, lb, ub),
-                              _solver->makeIntVar(lb, lb, ub)};
-    const VarId violationId = _solver->makeIntVar(0, 0, 2);
+    std::vector<VarViewId> inputs{_solver->makeIntVar(lb, lb, ub),
+                                  _solver->makeIntVar(lb, lb, ub),
+                                  _solver->makeIntVar(lb, lb, ub)};
+    const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
     AllDifferent& invariant = _solver->makeViolationInvariant<AllDifferent>(
-        *_solver, violationId, std::vector<VarId>(inputs));
+        *_solver, violationId, std::vector<VarViewId>(inputs));
     _solver->close();
 
     Timestamp ts = _solver->currentTimestamp();
@@ -137,34 +137,42 @@ TEST_F(AllDifferentTest, NextInput) {
   _solver->open();
   std::vector<size_t> indices;
   std::vector<Int> committedValues;
-  std::vector<VarId> inputs;
+  std::vector<VarViewId> inputs;
   for (size_t i = 0; i < numInputs; ++i) {
     inputs.emplace_back(_solver->makeIntVar(static_cast<Int>(i), lb, ub));
   }
-  const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
+  const VarViewId minVarId =
+      *std::min_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
+  const VarViewId maxVarId =
+      *std::max_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
-  const VarId violationId = _solver->makeIntVar(0, 0, 2);
+  const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
   AllDifferent& invariant = _solver->makeViolationInvariant<AllDifferent>(
-      *_solver, violationId, std::vector<VarId>(inputs));
+      *_solver, violationId, std::vector<VarViewId>(inputs));
   _solver->close();
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(maxVarId + 1, false);
+    std::vector<bool> notified(size_t(maxVarId) + 1, false);
     for (size_t i = 0; i < numInputs; ++i) {
-      const VarId varId = invariant.nextInput(ts);
+      const VarViewId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
-      EXPECT_TRUE(minVarId <= varId);
-      EXPECT_TRUE(varId <= maxVarId);
-      EXPECT_FALSE(notified.at(varId));
-      notified[varId] = true;
+      EXPECT_LE(size_t(minVarId), size_t(varId));
+      EXPECT_GE(size_t(maxVarId), size_t(varId));
+      EXPECT_FALSE(notified.at(size_t(varId)));
+      notified.at(size_t(varId)) = true;
     }
     EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
-      EXPECT_TRUE(notified.at(varId));
+    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
+      EXPECT_TRUE(notified.at(i));
     }
   }
 }
@@ -177,18 +185,18 @@ TEST_F(AllDifferentTest, NotifyCurrentInputChanged) {
   _solver->open();
   const size_t numInputs = 100;
   std::uniform_int_distribution<Int> valueDist(lb, ub);
-  std::vector<VarId> inputs;
+  std::vector<VarViewId> inputs;
   for (size_t i = 0; i < numInputs; ++i) {
     inputs.emplace_back(_solver->makeIntVar(valueDist(gen), lb, ub));
   }
-  const VarId violationId = _solver->makeIntVar(0, 0, numInputs - 1);
+  const VarViewId violationId = _solver->makeIntVar(0, 0, numInputs - 1);
   AllDifferent& invariant = _solver->makeViolationInvariant<AllDifferent>(
-      *_solver, violationId, std::vector<VarId>(inputs));
+      *_solver, violationId, std::vector<VarViewId>(inputs));
   _solver->close();
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId& varId : inputs) {
+    for (const VarViewId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = _solver->value(ts, varId);
       do {
@@ -211,7 +219,7 @@ TEST_F(AllDifferentTest, Commit) {
   std::uniform_int_distribution<size_t> varDist(size_t(0), numInputs);
   std::vector<size_t> indices;
   std::vector<Int> committedValues;
-  std::vector<VarId> inputs;
+  std::vector<VarViewId> inputs;
   for (size_t i = 0; i < numInputs; ++i) {
     indices.emplace_back(i);
     committedValues.emplace_back(valueDist(gen));
@@ -219,9 +227,9 @@ TEST_F(AllDifferentTest, Commit) {
   }
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  const VarId violationId = _solver->makeIntVar(0, 0, 2);
+  const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
   AllDifferent& invariant = _solver->makeViolationInvariant<AllDifferent>(
-      *_solver, violationId, std::vector<VarId>(inputs));
+      *_solver, violationId, std::vector<VarViewId>(inputs));
   _solver->close();
 
   EXPECT_EQ(_solver->value(_solver->currentTimestamp(), violationId),
@@ -248,9 +256,9 @@ TEST_F(AllDifferentTest, Commit) {
 
     ASSERT_EQ(notifiedViolation, _solver->value(ts, violationId));
 
-    _solver->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = _solver->value(ts, inputs.at(i));
-    _solver->commitIf(ts, violationId);
+    _solver->commitIf(ts, VarId(inputs.at(i)));
+    committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
+    _solver->commitIf(ts, VarId(violationId));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -265,9 +273,11 @@ class MockAllDifferent : public AllDifferent {
     registered = true;
     AllDifferent::registerVars();
   }
-  explicit MockAllDifferent(SolverBase& _solver, VarId violationId,
-                            std::vector<VarId>&& t_vars)
-      : AllDifferent(_solver, violationId, std::move(t_vars)) {
+  explicit MockAllDifferent(SolverBase& solver, VarViewId violationId,
+                            std::vector<VarViewId>&& t_vars)
+      : AllDifferent(solver, violationId, std::move(t_vars)) {
+    EXPECT_TRUE(violationId.isVar());
+
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return AllDifferent::recompute(timestamp);
     });
@@ -287,7 +297,7 @@ class MockAllDifferent : public AllDifferent {
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
@@ -298,13 +308,13 @@ TEST_F(AllDifferentTest, SolverIntegration) {
     if (!_solver->isOpen()) {
       _solver->open();
     }
-    std::vector<VarId> args;
+    std::vector<VarViewId> args;
     const size_t numArgs = 10;
     for (size_t value = 0; value < numArgs; ++value) {
       args.emplace_back(_solver->makeIntVar(0, -100, 100));
     }
-    const VarId viol = _solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
-    const VarId modifiedVarId = args.front();
+    const VarViewId viol = _solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
+    const VarViewId modifiedVarId = args.front();
     testNotifications<MockAllDifferent>(
         &_solver->makeViolationInvariant<MockAllDifferent>(*_solver, viol,
                                                            std::move(args)),

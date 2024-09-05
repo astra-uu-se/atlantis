@@ -17,12 +17,22 @@ inline bool all_in_range(Int start, Int stop,
   return std::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
+inline std::vector<VarId> toVarIds(std::vector<VarViewId>&& ids) {
+  std::vector<VarId> varIds;
+  varIds.reserve(ids.size());
+  for (const auto& id : ids) {
+    assert(id.isVar());
+    varIds.emplace_back(VarId(id));
+  }
+  return varIds;
+}
+
 /**
  * @param violationId id for the violationCount
  */
 GlobalCardinalityOpen::GlobalCardinalityOpen(SolverBase& solver,
                                              std::vector<VarId>&& outputs,
-                                             std::vector<VarId>&& inputs,
+                                             std::vector<VarViewId>&& inputs,
                                              std::vector<Int>&& cover)
     : Invariant(solver),
       _outputs(std::move(outputs)),
@@ -39,12 +49,19 @@ GlobalCardinalityOpen::GlobalCardinalityOpen(SolverBase& solver,
   }));
 }
 
+GlobalCardinalityOpen::GlobalCardinalityOpen(SolverBase& solver,
+                                             std::vector<VarViewId>&& outputs,
+                                             std::vector<VarViewId>&& inputs,
+                                             std::vector<Int>&& cover)
+    : GlobalCardinalityOpen(solver, toVarIds(std::move(outputs)),
+                            std::move(inputs), std::move(cover)) {}
+
 void GlobalCardinalityOpen::registerVars() {
   assert(_id != NULL_ID);
   for (size_t i = 0; i < _inputs.size(); ++i) {
     _solver.registerInvariantInput(_id, _inputs[i], LocalId(i), false);
   }
-  for (const VarId& output : _outputs) {
+  for (const VarId output : _outputs) {
     registerDefinedVar(output);
   }
 }
@@ -96,7 +113,7 @@ void GlobalCardinalityOpen::notifyInputChanged(Timestamp timestamp,
   increaseCountAndUpdateOutput(timestamp, newValue);
 }
 
-VarId GlobalCardinalityOpen::nextInput(Timestamp timestamp) {
+VarViewId GlobalCardinalityOpen::nextInput(Timestamp timestamp) {
   const auto index = static_cast<size_t>(_state.incValue(timestamp, 1));
   assert(0 <= _state.value(timestamp));
   if (index < _inputs.size()) {

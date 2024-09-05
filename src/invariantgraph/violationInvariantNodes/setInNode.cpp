@@ -32,7 +32,7 @@ void SetInNode::init(InvariantNodeId id) {
 
 void SetInNode::registerOutputVars() {
   if (violationVarId() == propagation::NULL_ID) {
-    const propagation::VarId input =
+    const propagation::VarViewId input =
         invariantGraph().varId(staticInputVarNodeIds().front());
     std::vector<DomainEntry> domainEntries;
     domainEntries.reserve(_values.size());

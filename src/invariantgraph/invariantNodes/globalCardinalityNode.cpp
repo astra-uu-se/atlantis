@@ -154,14 +154,20 @@ void GlobalCardinalityNode::registerOutputVars() {
 }
 
 void GlobalCardinalityNode::registerNode() {
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputVarIds),
                  [&](const auto& id) { return invariantGraph().varId(id); });
 
-  std::vector<propagation::VarId> outputVarIds;
+  std::vector<propagation::VarViewId> outputVarIds;
   outputVarIds.reserve(outputVarNodeIds().size());
   for (size_t i = 0; i < _cover.size(); ++i) {
+    assert(_intermediate.at(i) == propagation::NULL_ID ||
+           _intermediate.at(i).isVar());
+    assert(_intermediate.at(i) == propagation::NULL_ID
+               ? invariantGraph().varId(outputVarNodeIds().at(i)).isVar()
+               : invariantGraph().varId(outputVarNodeIds().at(i)).isView());
+
     outputVarIds.emplace_back(
         _intermediate.at(i) == propagation::NULL_ID
             ? invariantGraph().varId(outputVarNodeIds().at(i))

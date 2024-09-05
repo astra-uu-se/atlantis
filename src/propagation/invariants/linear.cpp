@@ -4,16 +4,29 @@
 
 namespace atlantis::propagation {
 
-Linear::Linear(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)
-    : Linear(solver, output, std::vector<Int>(varArray.size(), 1),
-             std::move(varArray)) {}
-
 Linear::Linear(SolverBase& solver, VarId output, std::vector<Int>&& coeffs,
-               std::vector<VarId>&& varArray)
+               std::vector<VarViewId>&& varArray)
     : Invariant(solver),
       _output(output),
       _coeffs(std::move(coeffs)),
       _varArray(std::move(varArray)) {}
+
+Linear::Linear(SolverBase& solver, VarViewId output, std::vector<Int>&& coeffs,
+               std::vector<VarViewId>&& varArray)
+    : Linear(solver, VarId(output), std::move(coeffs), std::move(varArray)) {
+  assert(output.isVar());
+}
+
+Linear::Linear(SolverBase& solver, VarId output,
+               std::vector<VarViewId>&& varArray)
+    : Linear(solver, output, std::vector<Int>(varArray.size(), 1),
+             std::move(varArray)) {}
+
+Linear::Linear(SolverBase& solver, VarViewId output,
+               std::vector<VarViewId>&& varArray)
+    : Linear(solver, VarId(output), std::move(varArray)) {
+  assert(output.isVar());
+}
 
 void Linear::registerVars() {
   // precondition: this invariant must be registered with the solver before it
@@ -56,7 +69,7 @@ void Linear::notifyInputChanged(Timestamp ts, LocalId id) {
                _coeffs[id]);
 }
 
-VarId Linear::nextInput(Timestamp ts) {
+VarViewId Linear::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index < _varArray.size()) {

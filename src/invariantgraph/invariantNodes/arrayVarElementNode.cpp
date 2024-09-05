@@ -102,13 +102,14 @@ void ArrayVarElementNode::registerOutputVars() {
 }
 
 void ArrayVarElementNode::registerNode() {
-  std::vector<propagation::VarId> varVector;
+  std::vector<propagation::VarViewId> varVector;
   std::transform(dynamicInputVarNodeIds().begin(),
                  dynamicInputVarNodeIds().end(), std::back_inserter(varVector),
                  [&](auto node) { return invariantGraph().varId(node); });
 
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
+  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
 
   solver().makeInvariant<propagation::ElementVar>(
       solver(), invariantGraph().varId(outputVarNodeIds().front()),

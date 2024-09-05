@@ -19,7 +19,7 @@ class ElementVarTree : public ::benchmark::Fixture {
  private:
   struct TreeNode {
     size_t level;
-    propagation::VarId id;
+    VarViewId id{propagation::NULL_ID};
   };
 
   void createTree() {
@@ -33,7 +33,7 @@ class ElementVarTree : public ::benchmark::Fixture {
       TreeNode cur = treeNodes.top();
       treeNodes.pop();
 
-      propagation::VarId indexVar =
+      propagation::VarViewId indexVar =
           solver->makeIntVar(cur.level < treeHeight - 1 ? 0 : valueDist(gen), 0,
                              static_cast<Int>(elementSize) - 1);
 
@@ -45,8 +45,8 @@ class ElementVarTree : public ::benchmark::Fixture {
         indexDecisionVars.push_back(indexVar);
       }
 
-      std::vector<propagation::VarId> elementInputs(elementSize,
-                                                    propagation::NULL_ID);
+      std::vector<propagation::VarViewId> elementInputs(elementSize,
+                                                        propagation::NULL_ID);
 
       for (size_t i = 0; i < elementInputs.size(); ++i) {
         elementInputs[i] = solver->makeIntVar(
@@ -66,11 +66,11 @@ class ElementVarTree : public ::benchmark::Fixture {
 
  public:
   std::shared_ptr<propagation::Solver> solver;
-  propagation::VarId output;
+  VarViewId output{propagation::NULL_ID};
 
-  std::vector<propagation::VarId> vars;
-  std::vector<propagation::VarId> decisionVars;
-  std::vector<propagation::VarId> indexDecisionVars;
+  std::vector<propagation::VarViewId> vars;
+  std::vector<propagation::VarViewId> decisionVars;
+  std::vector<propagation::VarViewId> indexDecisionVars;
 
   std::random_device rd;
 

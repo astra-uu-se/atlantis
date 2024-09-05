@@ -114,6 +114,8 @@ void IntTimesNode::registerNode() {
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
 
+  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
+
   solver().makeInvariant<propagation::Times>(
       solver(), invariantGraph().varId(outputVarNodeIds().front()),
       invariantGraph().varId(staticInputVarNodeIds().front()),

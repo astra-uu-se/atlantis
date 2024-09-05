@@ -123,8 +123,12 @@ void IntLinLeNode::registerOutputVars() {
 
 void IntLinLeNode::registerNode() {
   assert(violationVarId() != propagation::NULL_ID);
+  assert(violationVarId().isView());
 
-  std::vector<propagation::VarId> solverVars;
+  assert(_intermediate != propagation::NULL_ID);
+  assert(_intermediate.isVar());
+
+  std::vector<propagation::VarViewId> solverVars;
   std::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars), [&](const VarNodeId varNodeId) {

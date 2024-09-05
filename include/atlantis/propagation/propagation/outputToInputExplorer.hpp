@@ -18,14 +18,13 @@ class OutputToInputExplorer {
   size_t _varStackIdx = 0;
   std::vector<InvariantId> _invariantStack;
   size_t _invariantStackIdx = 0;
-  IdMap<VarIdBase, Timestamp>
-      _varComputedAt;  // last timestamp when a VarID was
-                       // computed (i.e., will not change)
-  IdMap<InvariantId, Timestamp> _invariantComputedAt;
-  IdMap<InvariantId, bool> _invariantIsOnStack;
+  IdMap<Timestamp> _varComputedAt;  // last timestamp when a VarID was
+                                    // computed (i.e., will not change)
+  IdMap<Timestamp> _invariantComputedAt;
+  IdMap<bool> _invariantIsOnStack;
 
-  IdMap<VarIdBase, std::unordered_set<VarIdBase>> _searchVarAncestors;
-  IdMap<VarIdBase, bool> _onPropagationPath;
+  IdMap<std::unordered_set<VarId>> _searchVarAncestors;
+  IdMap<bool> _onPropagationPath;
 
   OutputToInputMarkingMode _outputToInputMarkingMode;
 
@@ -33,7 +32,7 @@ class OutputToInputExplorer {
   void preprocessVarStack([[maybe_unused]] Timestamp);
 
   template <OutputToInputMarkingMode MarkingMode>
-  bool isMarked([[maybe_unused]] VarIdBase);
+  bool isMarked([[maybe_unused]] VarId);
 
   void pushVarStack(VarId);
   void popVarStack();
@@ -41,8 +40,8 @@ class OutputToInputExplorer {
   void pushInvariantStack(InvariantId);
   void popInvariantStack();
   InvariantId peekInvariantStack();
-  void setComputed(Timestamp, VarIdBase);
-  bool isComputed(Timestamp, VarIdBase);
+  void setComputed(Timestamp, VarId);
+  bool isComputed(Timestamp, VarId);
 
   // We expand an invariant by pushing it and its first input variable onto
   // the stack.
@@ -110,11 +109,11 @@ inline InvariantId OutputToInputExplorer::peekInvariantStack() {
   return _invariantStack[_invariantStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::setComputed(Timestamp ts, VarIdBase id) {
-  _varComputedAt[id] = ts;
+inline void OutputToInputExplorer::setComputed(Timestamp ts, VarId id) {
+  _varComputedAt[size_t(id)] = ts;
 }
-inline bool OutputToInputExplorer::isComputed(Timestamp ts, VarIdBase id) {
-  return _varComputedAt.at(id) == ts;
+inline bool OutputToInputExplorer::isComputed(Timestamp ts, VarId id) {
+  return _varComputedAt.at(size_t(id)) == ts;
 }
 
 inline OutputToInputMarkingMode

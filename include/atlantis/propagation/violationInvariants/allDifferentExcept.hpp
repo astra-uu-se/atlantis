@@ -18,7 +18,11 @@ class AllDifferentExcept : public AllDifferent {
 
  public:
   explicit AllDifferentExcept(SolverBase&, VarId violationId,
-                              std::vector<VarId>&& vars,
+                              std::vector<VarViewId>&& vars,
+                              const std::vector<Int>& ignored);
+
+  explicit AllDifferentExcept(SolverBase&, VarViewId violationId,
+                              std::vector<VarViewId>&& vars,
                               const std::vector<Int>& ignored);
 
   void recompute(Timestamp) override;

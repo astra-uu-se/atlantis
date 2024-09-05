@@ -35,6 +35,8 @@ void IntPowNode::registerOutputVars() {
 void IntPowNode::registerNode() {
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
+  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
+
   solver().makeInvariant<propagation::Pow>(
       solver(), invariantGraph().varId(outputVarNodeIds().front()),
       invariantGraph().varId(base()), invariantGraph().varId(exponent()));

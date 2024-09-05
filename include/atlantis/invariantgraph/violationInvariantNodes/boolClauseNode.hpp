@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 class BoolClauseNode : public ViolationInvariantNode {
  private:
   size_t _numAs;
-  propagation::VarId _sumVarId{propagation::NULL_ID};
+  propagation::VarViewId _sumVarId{propagation::NULL_ID};
 
  public:
   explicit BoolClauseNode(IInvariantGraph& graph, std::vector<VarNodeId>&& as,

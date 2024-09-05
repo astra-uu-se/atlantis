@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "atlantis/exceptions/exceptions.hpp"
-#include "atlantis/misc/logging.hpp"
 #include "atlantis/propagation/store/store.hpp"
 #include "atlantis/propagation/utils/idMap.hpp"
 #include "atlantis/types.hpp"
@@ -71,60 +70,42 @@ class SolverBase {
 
   //--------------------- Variable ---------------------
 
-  [[nodiscard]] inline VarId sourceId(VarId id) const {
+  [[nodiscard]] inline VarId sourceId(VarViewId id) const {
     return _store.sourceId(id);
   }
 
   virtual void enqueueDefinedVar(VarId) = 0;
 
-  [[nodiscard]] Int value(Timestamp, VarId);
-  [[nodiscard]] inline Int currentValue(VarId id) {
+  [[nodiscard]] Int value(Timestamp, VarViewId);
+  [[nodiscard]] inline Int currentValue(VarViewId id) {
     return value(_currentTimestamp, id);
   }
 
-  [[nodiscard]] Int committedValue(VarId);
+  [[nodiscard]] Int committedValue(VarViewId);
 
-  [[nodiscard]] Timestamp tmpTimestamp(VarId) const;
+  [[nodiscard]] Timestamp tmpTimestamp(VarViewId) const;
 
   [[nodiscard]] bool isPostponed(InvariantId) const;
 
   void recompute(InvariantId);
   void recompute(Timestamp, InvariantId);
 
-  void commit(VarId);  // todo: this feels dangerous, maybe commit should
-                       // always have a timestamp?
+  void commit(VarId);
   void commitIf(Timestamp, VarId);
   void commitValue(VarId, Int val);
 
-  [[nodiscard]] inline Int lowerBound(VarId id) const {
-    if (id.idType == VarIdType::view) {
-      return intViewLowerBound(id);
-    }
-    assert(id.idType == VarIdType::var);
-    return _store.constIntVar(id).lowerBound();
+  [[nodiscard]] inline Int lowerBound(VarViewId id) const {
+    return id.isView() ? _store.constIntView(ViewId(id)).lowerBound()
+                       : _store.constIntVar(VarId(id)).lowerBound();
   }
 
-  [[nodiscard]] inline Int intViewLowerBound(VarId id) const {
-    assert(id.idType == VarIdType::view);
-    return _store.constIntView(id).lowerBound();
-  }
-
-  [[nodiscard]] inline Int upperBound(VarId id) const {
-    if (id.idType == VarIdType::view) {
-      return intViewUpperBound(id);
-    }
-    assert(id.idType == VarIdType::var);
-    return _store.constIntVar(id).upperBound();
+  [[nodiscard]] inline Int upperBound(VarViewId id) const {
+    return id.isView() ? _store.constIntView(ViewId(id)).upperBound()
+                       : _store.constIntVar(VarId(id)).upperBound();
   }
 
   inline void updateBounds(VarId id, Int lb, Int ub, bool widenOnly) {
-    assert(id.idType == VarIdType::var);
     _store.intVar(id).updateBounds(lb, ub, widenOnly);
-  }
-
-  [[nodiscard]] inline Int intViewUpperBound(VarId id) const {
-    assert(id.idType == VarIdType::view);
-    return _store.constIntView(id).upperBound();
   }
 
   void commitInvariantIf(Timestamp, InvariantId);
@@ -149,7 +130,7 @@ class SolverBase {
    * @return the created IntView.
    */
   template <class T, typename... Args>
-  std::enable_if_t<std::is_base_of<IntView, T>::value, VarId> makeIntView(
+  std::enable_if_t<std::is_base_of<IntView, T>::value, VarViewId> makeIntView(
       Args&&... args);
 
   /**
@@ -166,7 +147,7 @@ class SolverBase {
    * Creates an IntVar and registers it to the solver.
    * @return the created IntVar
    */
-  VarId makeIntVar(Int initValue, Int lowerBound, Int upperBound);
+  VarViewId makeIntVar(Int initValue, Int lowerBound, Int upperBound);
 
   /**
    * Register that a variable is a input to an invariant.
@@ -174,7 +155,7 @@ class SolverBase {
    * @param varId the input
    * @param localId the id of the input in the invariant
    */
-  virtual void registerInvariantInput(InvariantId invariantId, VarId varId,
+  virtual void registerInvariantInput(InvariantId invariantId, VarViewId varId,
                                       LocalId localId, bool isDynamic) = 0;
 
   virtual void registerVar(VarId) = 0;
@@ -194,7 +175,6 @@ SolverBase::makeInvariant(Args&&... args) {
       std::make_unique<T>(std::forward<Args>(args)...));
   registerInvariant(invariantId);
 
-  logDebug("Created new invariant with id: " << invariantId);
   T& invariant = static_cast<T&>(_store.invariant(invariantId));
   invariant.registerVars();
   invariant.updateBounds(false);
@@ -202,16 +182,16 @@ SolverBase::makeInvariant(Args&&... args) {
 }
 
 template <class T, typename... Args>
-std::enable_if_t<std::is_base_of<IntView, T>::value, VarId>
+std::enable_if_t<std::is_base_of<IntView, T>::value, VarViewId>
 SolverBase::makeIntView(Args&&... args) {
   if (!_isOpen) {
     throw SolverClosedException("Cannot make intView when store is closed.");
   }
   // We don't actually register views as they are invisible to propagation.
 
-  const VarId viewId = _store.createIntViewFromPtr(
+  const VarViewId viewId = _store.createIntViewFromPtr(
       std::make_unique<T>(std::forward<Args>(args)...));
-  _store.intView(viewId).init(viewId);
+  _store.intView(ViewId(viewId)).init(ViewId(viewId));
   return viewId;
 }
 
@@ -226,7 +206,6 @@ SolverBase::makeViolationInvariant(Args&&... args) {
   T& violationInvariant = static_cast<T&>(_store.invariant(violationInvId));
   // A violation invariant is a type of invariant:
   registerInvariant(violationInvId);
-  logDebug("Created new Violation Invariant with id: " << violationInvId);
   violationInvariant.registerVars();
   violationInvariant.updateBounds(false);
   return violationInvariant;
@@ -243,25 +222,19 @@ inline bool SolverBase::hasChanged(Timestamp ts, VarId id) {
   return _store.intVar(id).hasChanged(ts);
 }
 
-inline Int SolverBase::value(Timestamp ts, VarId id) {
-  if (id.idType == VarIdType::view) {
-    return _store.intView(id).value(ts);
-  }
-  return _store.constIntVar(id).value(ts);
+inline Int SolverBase::value(Timestamp ts, VarViewId id) {
+  return id.isView() ? _store.intView(ViewId(id)).value(ts)
+                     : _store.constIntVar(VarId(id)).value(ts);
 }
 
-inline Int SolverBase::committedValue(VarId id) {
-  if (id.idType == VarIdType::view) {
-    return _store.intView(id).committedValue();
-  }
-  return _store.constIntVar(id).committedValue();
+inline Int SolverBase::committedValue(VarViewId id) {
+  return id.isView() ? _store.intView(ViewId(id)).committedValue()
+                     : _store.constIntVar(VarId(id)).committedValue();
 }
 
-inline Timestamp SolverBase::tmpTimestamp(VarId id) const {
-  if (id.idType == VarIdType::view) {
-    return _store.constIntVar(_store.intViewSourceId(id)).tmpTimestamp();
-  }
-  return _store.constIntVar(id).tmpTimestamp();
+inline Timestamp SolverBase::tmpTimestamp(VarViewId id) const {
+  return _store.constIntVar(id.isView() ? sourceId(id) : VarId(id))
+      .tmpTimestamp();
 }
 
 inline bool SolverBase::isPostponed(InvariantId invariantId) const {

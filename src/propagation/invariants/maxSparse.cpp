@@ -5,12 +5,18 @@
 namespace atlantis::propagation {
 
 MaxSparse::MaxSparse(SolverBase& solver, VarId output,
-                     std::vector<VarId>&& varArray)
+                     std::vector<VarViewId>&& varArray)
     : Invariant(solver),
       _output(output),
       _varArray(std::move(varArray)),
       _localPriority(_varArray.size()) {
   assert(!_varArray.empty());
+}
+
+MaxSparse::MaxSparse(SolverBase& solver, VarViewId output,
+                     std::vector<VarViewId>&& varArray)
+    : MaxSparse(solver, VarId(output), std::move(varArray)) {
+  assert(output.isVar());
 }
 
 void MaxSparse::registerVars() {
@@ -24,7 +30,7 @@ void MaxSparse::registerVars() {
 void MaxSparse::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::min();
   Int ub = std::numeric_limits<Int>::min();
-  for (const VarId& input : _varArray) {
+  for (const VarViewId& input : _varArray) {
     lb = std::max(lb, _solver.lowerBound(input));
     ub = std::max(ub, _solver.upperBound(input));
   }
@@ -43,7 +49,7 @@ void MaxSparse::notifyInputChanged(Timestamp ts, LocalId id) {
   updateValue(ts, _output, _localPriority.maxPriority(ts));
 }
 
-VarId MaxSparse::nextInput(Timestamp ts) {
+VarViewId MaxSparse::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index < _varArray.size()) {

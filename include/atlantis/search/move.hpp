@@ -10,7 +10,7 @@ namespace atlantis::search {
 template <unsigned int N>
 class Move {
  public:
-  Move(std::array<propagation::VarId, N> vars, std::array<Int, N> values)
+  Move(std::array<propagation::VarViewId, N> vars, std::array<Int, N> values)
       : _vars(std::move(vars)), _values(std::move(values)) {}
 
   /**
@@ -48,7 +48,7 @@ class Move {
   }
 
  private:
-  std::array<propagation::VarId, N> _vars;
+  std::array<propagation::VarViewId, N> _vars;
   std::array<Int, N> _values;
 
   Cost _cost{0, 0, propagation::ObjectiveDirection::NONE};

@@ -123,7 +123,10 @@ void ArrayBoolOrNode::registerNode() {
     return;
   }
   assert(violationVarId() != propagation::NULL_ID);
-  std::vector<propagation::VarId> solverVars;
+  assert(shouldHold() || _intermediate != propagation::NULL_ID);
+  assert(shouldHold() ? violationVarId().isVar() : _intermediate.isVar());
+
+  std::vector<propagation::VarViewId> solverVars;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(solverVars), [&](const auto& node) {
                    return invariantGraph().varId(node);

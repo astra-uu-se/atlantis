@@ -134,7 +134,7 @@ TEST_P(IntLinearNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& inputVarNodeId : inputVarNodeIds) {
     if (!varNode(inputVarNodeId).isFixed()) {
       EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
@@ -144,7 +144,7 @@ TEST_P(IntLinearNodeTestFixture, propagation) {
 
   EXPECT_FALSE(inputVarIds.empty());
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);

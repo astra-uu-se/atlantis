@@ -163,7 +163,12 @@ void ArrayBoolXorNode::registerNode() {
     return;
   }
   assert(violationVarId() != propagation::NULL_ID);
-  std::vector<propagation::VarId> inputNodeIds;
+  assert(staticInputVarNodeIds().size() == 2 ||
+         _intermediate != propagation::NULL_ID);
+  assert(staticInputVarNodeIds().size() == 2 ? violationVarId().isVar()
+                                             : _intermediate.isVar());
+
+  std::vector<propagation::VarViewId> inputNodeIds;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputNodeIds), [&](const auto& node) {
                    return invariantGraph().varId(node);

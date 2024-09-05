@@ -163,11 +163,11 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->varNode(varNodeId);
   }
 
-  propagation::VarId varId(const std::string& identifier) {
+  propagation::VarViewId varId(const std::string& identifier) {
     return varNode(identifier).varId();
   }
 
-  propagation::VarId varId(VarNodeId varNodeId) {
+  propagation::VarViewId varId(VarNodeId varNodeId) {
     return varNode(varNodeId).varId();
   }
 
@@ -213,7 +213,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     expectInputsRegistered(invNode());
   }
 
-  [[nodiscard]] inline propagation::VarId solverVarId(
+  [[nodiscard]] inline propagation::VarViewId solverVarId(
       const VarNodeId& varNodeId) const {
     return _invariantGraph->varNode(varNodeId).varId();
   }
@@ -221,18 +221,20 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   void expectInputsRegistered(const InvariantNode& invNode) {
     std::vector<bool> registered(_solver->numVars(), false);
     for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
+      EXPECT_TRUE(solverVarId(varNodeId).isVar());
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       if (!varNode(varNodeId).isFixed()) {
-        EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+        EXPECT_FALSE(registered.at(size_t(solverVarId(varNodeId)) - 1));
       }
-      registered.at(solverVarId(varNodeId) - 1) = true;
+      registered.at(size_t(solverVarId(varNodeId)) - 1) = true;
     }
     for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
+      EXPECT_TRUE(solverVarId(varNodeId).isVar());
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       if (!varNode(varNodeId).isFixed()) {
-        EXPECT_FALSE(registered.at(solverVarId(varNodeId) - 1));
+        EXPECT_FALSE(registered.at(size_t(solverVarId(varNodeId)) - 1));
       }
-      registered.at(solverVarId(varNodeId) - 1) = true;
+      registered.at(size_t(solverVarId(varNodeId)) - 1) = true;
     }
     for (const bool r : registered) {
       EXPECT_TRUE(r);
@@ -271,16 +273,16 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   std::vector<Int> makeInputVals(
-      const std::vector<propagation::VarId>& inputVars) {
+      const std::vector<propagation::VarViewId>& inputVars) {
     std::vector<Int> inputVals;
     inputVals.reserve(inputVars.size());
-    for (const propagation::VarId& varId : inputVars) {
+    for (const propagation::VarViewId& varId : inputVars) {
       inputVals.emplace_back(_solver->lowerBound(varId));
     }
     return inputVals;
   }
 
-  bool increaseNextVal(const std::vector<propagation::VarId>& inputVars,
+  bool increaseNextVal(const std::vector<propagation::VarViewId>& inputVars,
                        std::vector<Int>& inputVals) {
     EXPECT_EQ(inputVars.size(), inputVals.size());
     for (Int i = static_cast<Int>(inputVals.size()) - 1; i >= 0; --i) {
@@ -296,7 +298,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return false;
   }
 
-  void setVarVals(const std::vector<propagation::VarId>& inputVars,
+  void setVarVals(const std::vector<propagation::VarViewId>& inputVars,
                   const std::vector<Int>& vals) {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
@@ -306,7 +308,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     }
   }
 
-  void expectVarVals(const std::vector<propagation::VarId>& inputVars,
+  void expectVarVals(const std::vector<propagation::VarViewId>& inputVars,
                      const std::vector<Int>& vals) {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
@@ -316,7 +318,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     }
   }
 
-  void updateOutputVals(const std::vector<propagation::VarId>& outputVars,
+  void updateOutputVals(const std::vector<propagation::VarViewId>& outputVars,
                         std::vector<Int>& outputVals) {
     EXPECT_EQ(outputVars.size(), outputVals.size());
     for (size_t i = 0; i < outputVars.size(); ++i) {

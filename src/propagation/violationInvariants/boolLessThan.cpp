@@ -8,9 +8,15 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-BoolLessThan::BoolLessThan(SolverBase& solver, VarId violationId, VarId x,
-                           VarId y)
+BoolLessThan::BoolLessThan(SolverBase& solver, VarId violationId, VarViewId x,
+                           VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
+
+BoolLessThan::BoolLessThan(SolverBase& solver, VarViewId violationId,
+                           VarViewId x, VarViewId y)
+    : BoolLessThan(solver, VarId(violationId), x, y) {
+  assert(violationId.isVar());
+}
 
 void BoolLessThan::registerVars() {
   assert(_id != NULL_ID);
@@ -31,7 +37,7 @@ void BoolLessThan::recompute(Timestamp ts) {
 
 void BoolLessThan::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId BoolLessThan::nextInput(Timestamp ts) {
+VarViewId BoolLessThan::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

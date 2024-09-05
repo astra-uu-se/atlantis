@@ -2,44 +2,58 @@
 
 namespace atlantis::propagation {
 
-IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarId b, VarId x,
-                       VarId y)
-    : Invariant(solver), _output(output), _b(b), _xy({x, y}) {}
+IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarViewId condition,
+                       VarViewId thenBranch, VarViewId elseBranch)
+    : Invariant(solver),
+      _output(output),
+      _condition(condition),
+      _branches({thenBranch, elseBranch}) {}
+
+IfThenElse::IfThenElse(SolverBase& solver, VarViewId output,
+                       VarViewId condition, VarViewId thenBranch,
+                       VarViewId elseBranch)
+    : IfThenElse(solver, VarId(output), condition, thenBranch, elseBranch) {
+  assert(output.isVar());
+}
 
 void IfThenElse::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _b, 0, false);
-  _solver.registerInvariantInput(_id, _xy[0], 0, true);
-  _solver.registerInvariantInput(_id, _xy[1], 0, true);
+  _solver.registerInvariantInput(_id, _condition, 0, false);
+  _solver.registerInvariantInput(_id, _branches[0], 0, true);
+  _solver.registerInvariantInput(_id, _branches[1], 0, true);
   registerDefinedVar(_output);
 }
 
-VarId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
-  return _solver.value(ts,
-                       _xy[static_cast<size_t>(_solver.value(ts, _b) != 0)]);
+VarViewId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
+  return _solver.value(
+      ts, _branches[static_cast<size_t>(_solver.value(ts, _condition) != 0)]);
 }
 
 void IfThenElse::updateBounds(bool widenOnly) {
-  _solver.updateBounds(
-      _output, std::min(_solver.lowerBound(_xy[0]), _solver.lowerBound(_xy[1])),
-      std::max(_solver.upperBound(_xy[0]), _solver.upperBound(_xy[1])),
-      widenOnly);
+  _solver.updateBounds(_output,
+                       std::min(_solver.lowerBound(_branches[0]),
+                                _solver.lowerBound(_branches[1])),
+                       std::max(_solver.upperBound(_branches[0]),
+                                _solver.upperBound(_branches[1])),
+                       widenOnly);
 }
 
 void IfThenElse::recompute(Timestamp ts) {
   updateValue(
       ts, _output,
-      _solver.value(ts, _xy[static_cast<size_t>(_solver.value(ts, _b) != 0)]));
+      _solver.value(
+          ts,
+          _branches[static_cast<size_t>(_solver.value(ts, _condition) != 0)]));
 }
 
 void IfThenElse::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId IfThenElse::nextInput(Timestamp ts) {
+VarViewId IfThenElse::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
-      return _b;
+      return _condition;
     case 1:
-      return _xy[1 - (_solver.value(ts, _b) == 0)];
+      return _branches[1 - (_solver.value(ts, _condition) == 0)];
     default:
       return NULL_ID;  // Done
   }

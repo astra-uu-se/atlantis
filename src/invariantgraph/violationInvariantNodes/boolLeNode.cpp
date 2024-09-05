@@ -115,6 +115,7 @@ void BoolLeNode::registerNode() {
   assert(violationVarId() != propagation::NULL_ID);
   assert(invariantGraph().varId(a()) != propagation::NULL_ID);
   assert(invariantGraph().varId(b()) != propagation::NULL_ID);
+  assert(violationVarId().isVar());
 
   if (shouldHold()) {
     solver().makeViolationInvariant<propagation::BoolLessEqual>(

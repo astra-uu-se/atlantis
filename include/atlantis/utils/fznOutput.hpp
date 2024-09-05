@@ -11,15 +11,16 @@ namespace atlantis {
 
 struct FznOutputVar {
   std::string identifier;
-  std::variant<propagation::VarId, Int> var;
-  FznOutputVar(std::string ident, std::variant<propagation::VarId, Int> var0)
+  std::variant<propagation::VarViewId, Int> var;
+  FznOutputVar(std::string ident,
+               std::variant<propagation::VarViewId, Int> var0)
       : identifier(ident), var(var0) {}
 };
 
 struct FznOutputVarArray {
   std::string identifier;
   std::vector<Int> indexSetSizes;
-  std::vector<std::variant<propagation::VarId, Int>> vars;
+  std::vector<std::variant<propagation::VarViewId, Int>> vars;
   FznOutputVarArray(std::string id, std::vector<Int>&& setSizes)
       : identifier(std::move(id)), indexSetSizes(std::move(setSizes)), vars(){};
 };

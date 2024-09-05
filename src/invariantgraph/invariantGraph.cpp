@@ -293,11 +293,12 @@ VarNodeId InvariantGraph::varNodeId(Int val) const {
   return _intVarNodeIndices.at(val);
 }
 
-propagation::VarId InvariantGraph::varId(const std::string& identifier) const {
+propagation::VarViewId InvariantGraph::varId(
+    const std::string& identifier) const {
   return _varNodes.at(size_t(_namedVarNodeIndices.at(identifier))).varId();
 }
 
-propagation::VarId InvariantGraph::varId(VarNodeId id) const {
+propagation::VarViewId InvariantGraph::varId(VarNodeId id) const {
   assert(size_t(id) < _varNodes.size());
   return _varNodes.at(size_t(id)).varId();
 }
@@ -455,7 +456,7 @@ search::neighbourhoods::NeighbourhoodCombinator InvariantGraph::neighbourhood()
       std::move(neighbourhoods));
 }
 
-propagation::VarId InvariantGraph::totalViolationVarId() const {
+propagation::VarViewId InvariantGraph::totalViolationVarId() const {
   return _totalViolationVarId;
 }
 
@@ -463,7 +464,7 @@ const VarNode& InvariantGraph::objectiveVarNode() const {
   return varNodeConst(_objectiveVarNodeId);
 }
 
-propagation::VarId InvariantGraph::objectiveVarId() const {
+propagation::VarViewId InvariantGraph::objectiveVarId() const {
   return varId(_objectiveVarNodeId);
 }
 
@@ -1132,8 +1133,8 @@ void InvariantGraph::createInvariants() {
   }
 }
 
-propagation::VarId InvariantGraph::createViolations() {
-  std::vector<propagation::VarId> violations;
+propagation::VarViewId InvariantGraph::createViolations() {
+  std::vector<propagation::VarViewId> violations;
   for (const auto& definingNode : _invariantNodes) {
     if (!definingNode->isReified() &&
         definingNode->violationVarId() != propagation::NULL_ID) {
@@ -1143,7 +1144,7 @@ propagation::VarId InvariantGraph::createViolations() {
 
   for (auto& vNode : _varNodes) {
     if (vNode.varId() != propagation::NULL_ID) {
-      const propagation::VarId violationId =
+      const propagation::VarViewId violationId =
           vNode.postDomainConstraint(_solver);
       if (violationId != propagation::NULL_ID) {
         violations.emplace_back(violationId);
@@ -1156,7 +1157,7 @@ propagation::VarId InvariantGraph::createViolations() {
   if (violations.size() == 1) {
     return violations.front();
   }
-  const propagation::VarId totalViolation = _solver.makeIntVar(0, 0, 0);
+  const propagation::VarViewId totalViolation = _solver.makeIntVar(0, 0, 0);
   _solver.makeInvariant<propagation::Linear>(_solver, totalViolation,
                                              std::move(violations));
   return totalViolation;

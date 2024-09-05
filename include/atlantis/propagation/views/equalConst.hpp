@@ -12,7 +12,7 @@ class EqualConst : public IntView {
   const Int _val;
 
  public:
-  explicit EqualConst(SolverBase& solver, VarId parentId, Int val);
+  explicit EqualConst(SolverBase& solver, VarViewId parentId, Int val);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

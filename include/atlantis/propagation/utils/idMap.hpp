@@ -10,46 +10,42 @@ namespace atlantis::propagation {
 // TODO: do template specialisation for when T is also an ID so that NULL_ID is
 // then the default pushed into the stack and delete the default constructors
 // for IDs
-template <typename I, typename T>
+template <typename T>
 class IdMap {
  private:
   std::vector<T> _vector;
 
  public:
-  explicit IdMap(size_t reservedSize) {
-    static_assert(std::is_base_of<Id, I>::value,
-                  "The index must be a subclass of id");
-    _vector.reserve(reservedSize);
+  explicit IdMap(size_t reservedSize) { _vector.reserve(reservedSize); }
+
+  inline T& operator[](size_t idx) {
+    assert(idx > 0);
+    assert(idx <= _vector.size());
+    return _vector[idx - 1];
   }
 
-  inline T& operator[](I idx) {
-    assert(static_cast<Id>(idx).id > 0);
-    assert(static_cast<Id>(idx).id <= _vector.size());
-    return _vector[static_cast<Id>(idx).id - 1];
+  inline const T& at(size_t idx) const {
+    assert(idx > 0);
+    assert(idx <= _vector.size());
+    return _vector[idx - 1];
   }
 
-  inline const T& at(I idx) const {
-    assert(static_cast<Id>(idx).id > 0);
-    assert(static_cast<Id>(idx).id <= _vector.size());
-    return _vector[static_cast<Id>(idx).id - 1];
-  }
-
-  inline void register_idx(I idx) {
-    if (static_cast<size_t>(idx.id) != _vector.size() + 1) {
+  inline void register_idx(size_t idx) {
+    if (idx != _vector.size() + 1) {
       throw OutOfOrderIndexRegistration();
     }
     _vector.emplace_back(T());
   }
 
-  inline void register_idx(I idx, T initValue) {
-    if (static_cast<size_t>(idx.id) != _vector.size() + 1) {
+  inline void register_idx(size_t idx, T initValue) {
+    if (idx != _vector.size() + 1) {
       throw OutOfOrderIndexRegistration();
     }
     _vector.emplace_back(initValue);
   }
 
-  inline void register_idx_move(I idx, T&& initValue) {
-    if (static_cast<size_t>(idx.id) != _vector.size() + 1) {
+  inline void register_idx_move(size_t idx, T&& initValue) {
+    if (idx != _vector.size() + 1) {
       throw OutOfOrderIndexRegistration();
     }
     _vector.emplace_back(std::move(initValue));
@@ -58,8 +54,8 @@ class IdMap {
   inline void assign_all(T value) { _vector.assign(_vector.size(), value); }
 
   [[nodiscard]] inline size_t size() const { return _vector.size(); }
-  [[nodiscard]] inline bool has_idx(I idx) {
-    return static_cast<size_t>(idx.id) <= _vector.size();
+  [[nodiscard]] inline bool has_idx(size_t idx) {
+    return idx <= _vector.size();
   }
   typedef typename std::vector<T>::iterator iterator;
 
@@ -69,32 +65,28 @@ class IdMap {
   inline iterator end() { return _vector.end(); }
 };
 
-template <typename I>
-class IdMap<I, bool> {
+template <>
+class IdMap<bool> {
  private:
   std::vector<bool> _vector;
 
  public:
-  explicit IdMap(size_t reservedSize) {
-    static_assert(std::is_base_of<Id, I>::value,
-                  "The index must be a subclass of id");
-    _vector.reserve(reservedSize);
+  explicit IdMap(size_t reservedSize) { _vector.reserve(reservedSize); }
+
+  inline bool get(size_t idx) const {
+    assert(idx > 0);
+    assert(idx <= _vector.size());
+    return _vector[idx - 1];
   }
 
-  inline bool get(I idx) const {
-    assert(static_cast<Id>(idx).id > 0);
-    assert(static_cast<Id>(idx).id <= _vector.size());
-    return _vector[static_cast<Id>(idx).id - 1];
+  inline void set(size_t idx, bool value) {
+    assert(idx > 0);
+    assert(idx <= _vector.size());
+    _vector[idx - 1] = value;
   }
 
-  inline void set(I idx, bool value) {
-    assert(static_cast<Id>(idx).id > 0);
-    assert(static_cast<Id>(idx).id <= _vector.size());
-    _vector[static_cast<Id>(idx).id - 1] = value;
-  }
-
-  inline void register_idx(I idx, bool initValue) {
-    if (static_cast<size_t>(idx.id) != _vector.size() + 1) {
+  inline void register_idx(size_t idx, bool initValue) {
+    if (idx != _vector.size() + 1) {
       throw OutOfOrderIndexRegistration();
     }
     _vector.emplace_back(initValue);

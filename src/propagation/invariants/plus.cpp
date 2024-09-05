@@ -4,8 +4,13 @@
 
 namespace atlantis::propagation {
 
-Plus::Plus(SolverBase& solver, VarId output, VarId x, VarId y)
+Plus::Plus(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
+
+Plus::Plus(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
+    : Plus(solver, VarId(output), x, y) {
+  assert(output.isVar());
+}
 
 void Plus::registerVars() {
   assert(_id != NULL_ID);
@@ -24,7 +29,7 @@ void Plus::recompute(Timestamp ts) {
   updateValue(ts, _output, _solver.value(ts, _x) + _solver.value(ts, _y));
 }
 
-VarId Plus::nextInput(Timestamp ts) {
+VarViewId Plus::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

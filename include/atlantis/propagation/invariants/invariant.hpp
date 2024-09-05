@@ -50,13 +50,13 @@ class Invariant {
   [[nodiscard]] size_t level() const noexcept { return _level; }
   void setLevel(size_t newLevel) noexcept { _level = newLevel; }
 
-  [[nodiscard]] virtual VarId dynamicInputVar(Timestamp) const noexcept {
+  [[nodiscard]] virtual VarViewId dynamicInputVar(Timestamp) const noexcept {
     return NULL_ID;
   }
 
   [[nodiscard]] inline InvariantId id() const noexcept { return _id; }
 
-  void setId(Id id) { _id = id; }
+  void setId(InvariantId id) { _id = id; }
 
   /**
    * Preconditions for initialisation:
@@ -88,7 +88,7 @@ class Invariant {
    * Used in Output-to-Input propagation to get the next input variable to
    * visit.
    */
-  virtual VarId nextInput(Timestamp) = 0;
+  virtual VarViewId nextInput(Timestamp) = 0;
 
   /**
    * Used in Output-to-Input propagation to notify to the

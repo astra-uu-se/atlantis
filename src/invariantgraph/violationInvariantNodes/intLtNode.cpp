@@ -88,6 +88,7 @@ void IntLtNode::registerOutputVars() {
 
 void IntLtNode::registerNode() {
   assert(violationVarId() != propagation::NULL_ID);
+  assert(violationVarId().isVar());
 
   if (shouldHold()) {
     solver().makeViolationInvariant<propagation::LessThan>(

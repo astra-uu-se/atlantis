@@ -88,9 +88,9 @@ class IInvariantGraph {
 
   [[nodiscard]] virtual VarNodeId varNodeId(const std::string&) const = 0;
 
-  [[nodiscard]] virtual propagation::VarId varId(
+  [[nodiscard]] virtual propagation::VarViewId varId(
       const std::string& identifier) const = 0;
-  [[nodiscard]] virtual propagation::VarId varId(VarNodeId id) const = 0;
+  [[nodiscard]] virtual propagation::VarViewId varId(VarNodeId id) const = 0;
 
   [[nodiscard]] virtual bool containsInvariantNode(InvariantNodeId) const = 0;
   [[nodiscard]] virtual bool containsImplicitConstraintNode(
@@ -115,11 +115,11 @@ class IInvariantGraph {
   virtual InvariantNodeId addImplicitConstraintNode(
       std::shared_ptr<IImplicitConstraintNode>&&) = 0;
 
-  [[nodiscard]] virtual propagation::VarId totalViolationVarId() const = 0;
+  [[nodiscard]] virtual propagation::VarViewId totalViolationVarId() const = 0;
 
   [[nodiscard]] virtual const VarNode& objectiveVarNode() const = 0;
 
-  [[nodiscard]] virtual propagation::VarId objectiveVarId() const = 0;
+  [[nodiscard]] virtual propagation::VarViewId objectiveVarId() const = 0;
 
   virtual void construct() = 0;
 

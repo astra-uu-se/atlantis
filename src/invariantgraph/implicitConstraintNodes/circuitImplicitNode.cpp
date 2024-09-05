@@ -51,7 +51,7 @@ CircuitImplicitNode::createNeighbourhood() {
         SearchDomain{1, static_cast<Int>(outputVarNodeIds().size())});
 
     bool enforceDomain = false;
-    for (Int val = 1; val <= static_cast<Int>(outputVarNodeIds().size());
+    for (Int val = 0; val <= static_cast<Int>(outputVarNodeIds().size());
          ++val) {
       if (val == (static_cast<Int>(i) - 1) ||
           std::any_of(freeIndices.begin(), freeIndices.end(),

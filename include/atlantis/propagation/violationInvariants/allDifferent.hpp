@@ -12,7 +12,7 @@ namespace atlantis::propagation {
 
 class AllDifferent : public ViolationInvariant {
  protected:
-  std::vector<VarId> _vars;
+  std::vector<VarViewId> _vars;
   std::vector<CommittableInt> _counts;
   Int _offset;
   signed char increaseCount(Timestamp ts, Int value);
@@ -20,7 +20,10 @@ class AllDifferent : public ViolationInvariant {
 
  public:
   explicit AllDifferent(SolverBase&, VarId violationId,
-                        std::vector<VarId>&& vars);
+                        std::vector<VarViewId>&& vars);
+
+  explicit AllDifferent(SolverBase&, VarViewId violationId,
+                        std::vector<VarViewId>&& vars);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
@@ -28,7 +31,7 @@ class AllDifferent : public ViolationInvariant {
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

@@ -8,8 +8,15 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-BoolEqual::BoolEqual(SolverBase& solver, VarId violationId, VarId x, VarId y)
+BoolEqual::BoolEqual(SolverBase& solver, VarId violationId, VarViewId x,
+                     VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
+
+BoolEqual::BoolEqual(SolverBase& solver, VarViewId violationId, VarViewId x,
+                     VarViewId y)
+    : BoolEqual(solver, VarId(violationId), x, y) {
+  assert(violationId.isVar());
+}
 
 void BoolEqual::registerVars() {
   assert(_id != NULL_ID);
@@ -30,7 +37,7 @@ void BoolEqual::recompute(Timestamp ts) {
 
 void BoolEqual::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId BoolEqual::nextInput(Timestamp ts) {
+VarViewId BoolEqual::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

@@ -9,8 +9,15 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y parameter of rhs
  */
-PowDomain::PowDomain(SolverBase& solver, VarId violationId, VarId x, VarId y)
+PowDomain::PowDomain(SolverBase& solver, VarId violationId, VarViewId x,
+                     VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
+
+PowDomain::PowDomain(SolverBase& solver, VarViewId violationId, VarViewId x,
+                     VarViewId y)
+    : PowDomain(solver, VarId(violationId), x, y) {
+  assert(violationId.isVar());
+}
 
 void PowDomain::registerVars() {
   assert(_id != NULL_ID);
@@ -38,7 +45,7 @@ void PowDomain::recompute(Timestamp ts) {
 
 void PowDomain::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId PowDomain::nextInput(Timestamp ts) {
+VarViewId PowDomain::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -51,7 +58,8 @@ VarId PowDomain::nextInput(Timestamp ts) {
 
 void PowDomain::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
-[[nodiscard]] bool PowDomain::shouldPost(SolverBase& solver, VarId x, VarId y) {
+[[nodiscard]] bool PowDomain::shouldPost(SolverBase& solver, VarViewId x,
+                                         VarViewId y) {
   return solver.lowerBound(x) <= 0 && 0 <= solver.upperBound(x) &&
          solver.lowerBound(y) < 0;
 }

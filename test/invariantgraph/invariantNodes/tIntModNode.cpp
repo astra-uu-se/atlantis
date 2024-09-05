@@ -85,7 +85,7 @@ TEST_P(IntModNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& inputVarNodeId :
        std::array<VarNodeId, 2>{numeratorVarNodeId, denominatorVarNodeId}) {
     if (!varNode(inputVarNodeId).isFixed()) {
@@ -95,7 +95,7 @@ TEST_P(IntModNodeTestFixture, propagation) {
   }
 
   EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
-  const propagation::VarId outputId =
+  const propagation::VarViewId outputId =
       varId(invNode().outputVarNodeIds().front());
   EXPECT_EQ(inputVarIds.size(), 2);
 

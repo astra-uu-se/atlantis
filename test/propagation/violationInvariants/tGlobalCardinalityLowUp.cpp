@@ -12,7 +12,7 @@ using namespace atlantis::propagation;
 class GlobalCardinalityLowUpTest : public InvariantTest {
  public:
   Int computeViolation(
-      const Timestamp ts, const std::vector<VarId>& vars,
+      const Timestamp ts, const std::vector<VarViewId>& vars,
       const std::unordered_map<Int, std::pair<Int, Int>>& coverSet) {
     std::vector<Int> values(vars.size(), 0);
     for (size_t i = 0; i < vars.size(); ++i) {
@@ -51,18 +51,18 @@ TEST_F(GlobalCardinalityLowUpTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> lowUpVector{{0, 0}, {0, 4}, {3, 3}, {4, 5}};
 
   _solver->open();
-  std::vector<VarId> inputs{_solver->makeIntVar(0, 0, 2),
-                            _solver->makeIntVar(0, 0, 2),
-                            _solver->makeIntVar(0, 0, 2)};
+  std::vector<VarViewId> inputs{_solver->makeIntVar(0, 0, 2),
+                                _solver->makeIntVar(0, 0, 2),
+                                _solver->makeIntVar(0, 0, 2)};
 
   for (const auto& [low, up] : lowUpVector) {
     if (!_solver->isOpen()) {
       _solver->open();
     }
-    const VarId violationId = _solver->makeIntVar(0, 0, 2);
+    const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
     GlobalCardinalityLowUp& invariant =
         _solver->makeViolationInvariant<GlobalCardinalityLowUp>(
-            *_solver, violationId, std::vector<VarId>(inputs),
+            *_solver, violationId, std::vector<VarViewId>(inputs),
             std::vector<Int>{1}, std::vector<Int>{low}, std::vector<Int>{up});
     _solver->close();
     EXPECT_EQ(_solver->lowerBound(violationId), 0);
@@ -107,16 +107,17 @@ TEST_F(GlobalCardinalityLowUpTest, Recompute) {
     }
 
     _solver->open();
-    const VarId a = _solver->makeIntVar(lb, lb, ub);
-    const VarId b = _solver->makeIntVar(lb, lb, ub);
-    const VarId c = _solver->makeIntVar(lb, lb, ub);
-    const VarId violationId = _solver->makeIntVar(0, 0, 2);
+    const VarViewId a = _solver->makeIntVar(lb, lb, ub);
+    const VarViewId b = _solver->makeIntVar(lb, lb, ub);
+    const VarViewId c = _solver->makeIntVar(lb, lb, ub);
+    const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
     GlobalCardinalityLowUp& invariant =
         _solver->makeViolationInvariant<GlobalCardinalityLowUp>(
-            *_solver, violationId, std::vector<VarId>{a, b, c}, cover, low, up);
+            *_solver, violationId, std::vector<VarViewId>{a, b, c}, cover, low,
+            up);
     _solver->close();
 
-    const std::vector<VarId> inputs{a, b, c};
+    const std::vector<VarViewId> inputs{a, b, c};
 
     for (Int aVal = lb; aVal <= ub; ++aVal) {
       for (Int bVal = lb; bVal <= ub; ++bVal) {
@@ -160,13 +161,14 @@ TEST_F(GlobalCardinalityLowUpTest, NotifyInputChanged) {
     }
 
     _solver->open();
-    std::vector<VarId> inputs{_solver->makeIntVar(lb, lb, ub),
-                              _solver->makeIntVar(lb, lb, ub),
-                              _solver->makeIntVar(lb, lb, ub)};
-    const VarId violationId = _solver->makeIntVar(0, 0, 2);
+    std::vector<VarViewId> inputs{_solver->makeIntVar(lb, lb, ub),
+                                  _solver->makeIntVar(lb, lb, ub),
+                                  _solver->makeIntVar(lb, lb, ub)};
+    const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
     GlobalCardinalityLowUp& invariant =
         _solver->makeViolationInvariant<GlobalCardinalityLowUp>(
-            *_solver, violationId, std::vector<VarId>(inputs), cover, low, up);
+            *_solver, violationId, std::vector<VarViewId>(inputs), cover, low,
+            up);
     _solver->close();
 
     Timestamp ts = _solver->currentTimestamp();
@@ -192,7 +194,7 @@ TEST_F(GlobalCardinalityLowUpTest, NextInput) {
   _solver->open();
   std::vector<size_t> indices;
   std::vector<Int> committedValues;
-  std::vector<VarId> inputs;
+  std::vector<VarViewId> inputs;
   std::vector<Int> cover;
   std::vector<Int> low;
   std::vector<Int> up;
@@ -208,31 +210,40 @@ TEST_F(GlobalCardinalityLowUpTest, NextInput) {
     coverSet.emplace(cover.at(j), std::pair<Int, Int>(low.at(j), up.at(j)));
   }
 
-  const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
+  const VarViewId minVarId =
+      *std::min_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
+  const VarViewId maxVarId =
+      *std::max_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
-  const VarId violationId = _solver->makeIntVar(0, 0, 2);
+  const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
   GlobalCardinalityLowUp& invariant =
       _solver->makeViolationInvariant<GlobalCardinalityLowUp>(
-          *_solver, violationId, std::vector<VarId>(inputs), cover, low, up);
+          *_solver, violationId, std::vector<VarViewId>(inputs), cover, low,
+          up);
   _solver->close();
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(maxVarId + 1, false);
+    std::vector<bool> notified(size_t(maxVarId) + 1, false);
     for (size_t i = 0; i < numInputs; ++i) {
-      const VarId varId = invariant.nextInput(ts);
+      const VarViewId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
-      EXPECT_TRUE(minVarId <= varId);
-      EXPECT_TRUE(varId <= maxVarId);
-      EXPECT_FALSE(notified.at(varId));
-      notified[varId] = true;
+      EXPECT_LE(size_t(minVarId), size_t(varId));
+      EXPECT_GE(size_t(maxVarId), size_t(varId));
+      EXPECT_FALSE(notified.at(size_t(varId)));
+      notified.at(size_t(varId)) = true;
     }
     EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
-      EXPECT_TRUE(notified.at(varId));
+    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
+      EXPECT_TRUE(notified.at(i));
     }
   }
 }
@@ -245,7 +256,7 @@ TEST_F(GlobalCardinalityLowUpTest, NotifyCurrentInputChanged) {
   _solver->open();
   const size_t numInputs = 100;
   std::uniform_int_distribution<Int> valueDist(lb, ub);
-  std::vector<VarId> inputs;
+  std::vector<VarViewId> inputs;
   std::vector<Int> cover;
   std::vector<Int> low;
   std::vector<Int> up;
@@ -261,15 +272,16 @@ TEST_F(GlobalCardinalityLowUpTest, NotifyCurrentInputChanged) {
     coverSet.emplace(cover.at(j), std::pair<Int, Int>(low.at(j), up.at(j)));
   }
 
-  const VarId violationId = _solver->makeIntVar(0, 0, numInputs - 1);
+  const VarViewId violationId = _solver->makeIntVar(0, 0, numInputs - 1);
   GlobalCardinalityLowUp& invariant =
       _solver->makeViolationInvariant<GlobalCardinalityLowUp>(
-          *_solver, violationId, std::vector<VarId>(inputs), cover, low, up);
+          *_solver, violationId, std::vector<VarViewId>(inputs), cover, low,
+          up);
   _solver->close();
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId& varId : inputs) {
+    for (const VarViewId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = _solver->value(ts, varId);
       do {
@@ -293,7 +305,7 @@ TEST_F(GlobalCardinalityLowUpTest, Commit) {
   std::uniform_int_distribution<size_t> varDist(size_t(0), numInputs);
   std::vector<size_t> indices;
   std::vector<Int> committedValues;
-  std::vector<VarId> inputs;
+  std::vector<VarViewId> inputs;
   std::vector<Int> cover;
   std::vector<Int> low;
   std::vector<Int> up;
@@ -313,10 +325,11 @@ TEST_F(GlobalCardinalityLowUpTest, Commit) {
   }
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  const VarId violationId = _solver->makeIntVar(0, 0, 2);
+  const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
   GlobalCardinalityLowUp& invariant =
       _solver->makeViolationInvariant<GlobalCardinalityLowUp>(
-          *_solver, violationId, std::vector<VarId>(inputs), cover, low, up);
+          *_solver, violationId, std::vector<VarViewId>(inputs), cover, low,
+          up);
   _solver->close();
 
   EXPECT_EQ(_solver->value(_solver->currentTimestamp(), violationId),
@@ -343,9 +356,9 @@ TEST_F(GlobalCardinalityLowUpTest, Commit) {
 
     ASSERT_EQ(notifiedViolation, _solver->value(ts, violationId));
 
-    _solver->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = _solver->value(ts, inputs.at(i));
-    _solver->commitIf(ts, violationId);
+    _solver->commitIf(ts, VarId(inputs.at(i)));
+    committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
+    _solver->commitIf(ts, VarId(violationId));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -365,7 +378,7 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityLowUpTest, RapidCheck,
   auto valGen = std::mt19937(rd());
 
   std::vector<Int> coverCounts(valUb - valLb + 1, 0);
-  std::vector<VarId> vars;
+  std::vector<VarViewId> vars;
 
   _solver->open();
   for (size_t i = 0; i < numVars; i++) {
@@ -385,10 +398,11 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityLowUpTest, RapidCheck,
     }
   }
 
-  VarId viol = _solver->makeIntVar(0, 0, static_cast<Int>(numVars));
+  VarViewId viol = _solver->makeIntVar(0, 0, static_cast<Int>(numVars));
 
-  _solver->makeInvariant<GlobalCardinalityLowUp>(
-      *_solver, viol, std::vector<VarId>(vars), cover, lowerBound, upperBound);
+  _solver->makeInvariant<GlobalCardinalityLowUp>(*_solver, viol,
+                                                 std::vector<VarViewId>(vars),
+                                                 cover, lowerBound, upperBound);
 
   _solver->close();
 
@@ -412,7 +426,7 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityLowUpTest, RapidCheck,
       _solver->close();
 
       _solver->beginMove();
-      for (const VarId& x : vars) {
+      for (const VarViewId& x : vars) {
         _solver->setValue(x, valDistribution(valGen));
       }
       _solver->endMove();
@@ -430,7 +444,7 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityLowUpTest, RapidCheck,
         actualCounts.emplace(cover[i], 0);
       }
 
-      for (const VarId& varId : vars) {
+      for (const VarViewId& varId : vars) {
         Int val = _solver->currentValue(varId);
         if (actualCounts.count(val) <= 0) {
           ++outsideCount;
@@ -467,12 +481,14 @@ class MockGlobalCardinalityConst : public GlobalCardinalityLowUp {
     registered = true;
     GlobalCardinalityLowUp::registerVars();
   }
-  explicit MockGlobalCardinalityConst(SolverBase& _solver, VarId violationId,
-                                      std::vector<VarId>&& vars,
+  explicit MockGlobalCardinalityConst(SolverBase& solver, VarViewId violationId,
+                                      std::vector<VarViewId>&& vars,
                                       const std::vector<Int>& cover,
                                       const std::vector<Int>& counts)
-      : GlobalCardinalityLowUp(_solver, violationId, std::move(vars), cover,
+      : GlobalCardinalityLowUp(solver, violationId, std::move(vars), cover,
                                counts) {
+    EXPECT_TRUE(violationId.isVar());
+
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return GlobalCardinalityLowUp::recompute(timestamp);
     });
@@ -492,7 +508,7 @@ class MockGlobalCardinalityConst : public GlobalCardinalityLowUp {
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
@@ -503,14 +519,14 @@ TEST_F(GlobalCardinalityLowUpTest, SolverIntegration) {
     if (!_solver->isOpen()) {
       _solver->open();
     }
-    std::vector<VarId> args;
+    std::vector<VarViewId> args;
     size_t numArgs = 10;
     for (size_t value = 0; value < numArgs; ++value) {
       args.push_back(_solver->makeIntVar(0, -100, 100));
     }
 
-    VarId viol = _solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
-    const VarId modifiedVarId = args.front();
+    VarViewId viol = _solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
+    const VarViewId modifiedVarId = args.front();
 
     testNotifications<MockGlobalCardinalityConst>(
         &_solver->makeInvariant<MockGlobalCardinalityConst>(

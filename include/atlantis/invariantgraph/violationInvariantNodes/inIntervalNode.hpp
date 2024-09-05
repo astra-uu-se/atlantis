@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 class InIntervalNode : public ViolationInvariantNode {
  private:
   Int _lb, _ub;
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
   explicit InIntervalNode(IInvariantGraph& graph, VarNodeId input, Int lb,

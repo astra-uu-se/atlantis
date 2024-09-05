@@ -24,21 +24,24 @@ class AssignmentModifier {
    * @param var The variable to assign.
    * @param value The value to assign to the variable.
    */
-  void set(propagation::VarId var, Int value) { _solver.setValue(var, value); }
+  void set(propagation::VarViewId var, Int value) {
+    _solver.setValue(var, value);
+  }
 };
 
 class Assignment {
  private:
   propagation::Solver& _solver;
-  std::vector<propagation::VarId> _searchVars{};
-  propagation::VarId _violation;
-  propagation::VarId _objective;
+  std::vector<propagation::VarViewId> _searchVars{};
+  propagation::VarViewId _violation{propagation::NULL_ID};
+  propagation::VarViewId _objective{propagation::NULL_ID};
   propagation::ObjectiveDirection _objectiveDirection;
   Int _objectiveOptimalValue;
 
  public:
-  explicit Assignment(propagation::Solver& solver, propagation::VarId violation,
-                      propagation::VarId objective,
+  explicit Assignment(propagation::Solver& solver,
+                      propagation::VarViewId violation,
+                      propagation::VarViewId objective,
                       propagation::ObjectiveDirection objectiveDirection,
                       Int objectiveOptimalValue);
 
@@ -93,7 +96,7 @@ class Assignment {
    * @param var The variable for which to query the value.
    * @return The value of @p var.
    */
-  [[nodiscard]] Int value(propagation::VarId var) const noexcept;
+  [[nodiscard]] Int value(propagation::VarViewId var) const noexcept;
 
   /**
    * @return True if the current assignment satisfies all the constraints, false
@@ -108,7 +111,7 @@ class Assignment {
    */
   [[nodiscard]] Cost cost() const noexcept;
 
-  [[nodiscard]] const std::vector<propagation::VarId>& searchVars()
+  [[nodiscard]] const std::vector<propagation::VarViewId>& searchVars()
       const noexcept {
     return _searchVars;
   }

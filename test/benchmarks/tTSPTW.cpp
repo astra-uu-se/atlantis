@@ -12,29 +12,29 @@
 #include "atlantis/types.hpp"
 
 namespace atlantis::testing {
+
 class TSPTWTest : public ::testing::Test {
  public:
   std::shared_ptr<propagation::Solver> _solver;
-  std::vector<propagation::VarId> pred;
-  std::vector<propagation::VarId> timeToPrev;
-  std::vector<propagation::VarId> arrivalPrev;
-  std::vector<propagation::VarId> arrivalTime;
+  std::vector<propagation::VarViewId> pred;
+  std::vector<propagation::VarViewId> timeToPrev;
+  std::vector<propagation::VarViewId> arrivalPrev;
+  std::vector<propagation::VarViewId> arrivalTime;
   std::vector<std::vector<Int>> dist;
-  propagation::VarId totalDist;
+  propagation::VarViewId totalDist{propagation::NULL_ID};
 
   std::random_device rd;
 
   Int n{30};
   const int MAX_TIME = 100000;
 
-  std::vector<propagation::VarId> violation;
-  propagation::VarId totalViolation;
+  std::vector<propagation::VarViewId> violation;
+  propagation::VarViewId totalViolation{propagation::NULL_ID};
 
   void SetUp() override {
     _solver = std::make_shared<propagation::Solver>();
     n = 30;
 
-    logInfo(n);
     _solver->open();
 
     for (int i = 0; i < n; ++i) {
@@ -66,19 +66,19 @@ class TSPTWTest : public ::testing::Test {
       // arrivalPrev[i] = arrivalTime[pred[i]]
       _solver->makeInvariant<propagation::ElementVar>(
           *_solver, arrivalPrev[i], pred[i],
-          std::vector<propagation::VarId>(arrivalTime));
+          std::vector<propagation::VarViewId>(arrivalTime));
       // arrivalTime[i] = arrivalPrev[i] + timeToPrev[i]
       _solver->makeInvariant<propagation::Linear>(
           *_solver, arrivalTime[i],
-          std::vector<propagation::VarId>({arrivalPrev[i], timeToPrev[i]}));
+          std::vector<propagation::VarViewId>{arrivalPrev[i], timeToPrev[i]});
     }
 
     // totalDist = sum(timeToPrev)
     totalDist = _solver->makeIntVar(0, 0, MAX_TIME);
     _solver->makeInvariant<propagation::Linear>(
-        *_solver, totalDist, std::vector<propagation::VarId>(timeToPrev));
+        *_solver, totalDist, std::vector<propagation::VarViewId>(timeToPrev));
 
-    propagation::VarId leqConst = _solver->makeIntVar(100, 100, 100);
+    propagation::VarViewId leqConst = _solver->makeIntVar(100, 100, 100);
     for (int i = 0; i < n; ++i) {
       _solver->makeViolationInvariant<propagation::LessEqual>(
           *_solver, violation[i], arrivalTime[i], leqConst);
@@ -86,10 +86,11 @@ class TSPTWTest : public ::testing::Test {
 
     totalViolation = _solver->makeIntVar(0, 0, MAX_TIME * n);
     _solver->makeInvariant<propagation::Linear>(
-        *_solver, totalViolation, std::vector<propagation::VarId>(violation));
+        *_solver, totalViolation,
+        std::vector<propagation::VarViewId>(violation));
 
     _solver->close();
-    for (const propagation::VarId& p : pred) {
+    for (const propagation::VarViewId& p : pred) {
       assert(_solver->lowerBound(p) == 1);
       assert(_solver->upperBound(p) == n);
       assert(1 <= _solver->committedValue(p) &&

@@ -94,8 +94,12 @@ void IntCountNode::registerNode() {
   }
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
+  assert(_intermediate == propagation::NULL_ID
+             ? invariantGraph().varId(outputVarNodeIds().front()).isVar()
+             : invariantGraph().varId(outputVarNodeIds().front()).isView());
+  assert(_intermediate == propagation::NULL_ID || _intermediate.isVar());
 
-  std::vector<propagation::VarId> solverVars;
+  std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
 
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),

@@ -81,7 +81,7 @@ void InvariantNode::init(InvariantNodeId id) {
   _state = InvariantNodeState::ACTIVE;
 }
 
-propagation::VarId InvariantNode::violationVarId() const {
+propagation::VarViewId InvariantNode::violationVarId() const {
   return propagation::NULL_ID;
 }
 
@@ -207,8 +207,8 @@ InvariantNode::splitOutputVarNodes() {
   return replaced;
 }
 
-propagation::VarId InvariantNode::makeSolverVar(VarNodeId varNodeId,
-                                                Int initialValue) {
+propagation::VarViewId InvariantNode::makeSolverVar(VarNodeId varNodeId,
+                                                    Int initialValue) {
   auto& varNode = _invariantGraph.varNode(varNodeId);
   if (varNode.varId() == propagation::NULL_ID) {
     varNode.setVarId(solver().makeIntVar(
@@ -219,7 +219,7 @@ propagation::VarId InvariantNode::makeSolverVar(VarNodeId varNodeId,
   return varNode.varId();
 }
 
-propagation::VarId InvariantNode::makeSolverVar(VarNodeId varNodeId) {
+propagation::VarViewId InvariantNode::makeSolverVar(VarNodeId varNodeId) {
   return makeSolverVar(varNodeId, 0);
 }
 

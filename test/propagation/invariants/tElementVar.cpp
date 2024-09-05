@@ -11,7 +11,7 @@ class ElementVarTest : public InvariantTest {
   const Int inputLb = std::numeric_limits<Int>::min();
   const Int inputUb = std::numeric_limits<Int>::max();
   std::vector<Int> offsets{-10, 0, 10};
-  std::vector<VarId> inputs;
+  std::vector<VarViewId> inputs;
   std::uniform_int_distribution<Int> inputDist;
 
  public:
@@ -33,11 +33,12 @@ class ElementVarTest : public InvariantTest {
     return indexVal - offset;
   }
 
-  VarId getInput(const Int indexVal, const Int offset) {
+  VarViewId getInput(const Int indexVal, const Int offset) {
     return inputs.at(zeroBasedIndex(indexVal, offset));
   }
 
-  Int computeOutput(const Timestamp ts, const VarId index, const Int offset) {
+  Int computeOutput(const Timestamp ts, const VarViewId index,
+                    const Int offset) {
     return computeOutput(ts, _solver->value(ts, index), offset);
   }
 
@@ -56,18 +57,19 @@ TEST_F(ElementVarTest, UpdateBounds) {
     std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
     _solver->open();
-    const VarId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
+    const VarViewId index =
+        _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
     for (auto& input : inputs) {
       input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
-    const VarId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarId>(inputs), offset);
+        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
     _solver->close();
 
     for (Int minIndex = indexLb; minIndex <= indexUb; ++minIndex) {
       for (Int maxIndex = indexUb; maxIndex >= minIndex; --maxIndex) {
-        _solver->updateBounds(index, minIndex, maxIndex, false);
+        _solver->updateBounds(VarId(index), minIndex, maxIndex, false);
         invariant.updateBounds(false);
         Int minVal = std::numeric_limits<Int>::max();
         Int maxVal = std::numeric_limits<Int>::min();
@@ -94,13 +96,14 @@ TEST_F(ElementVarTest, Recompute) {
     std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
     _solver->open();
-    const VarId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
+    const VarViewId index =
+        _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
     for (auto& input : inputs) {
       input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
-    const VarId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarId>(inputs), offset);
+        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
     _solver->close();
 
     for (Int indexVal = indexLb; indexVal <= indexUb; ++indexVal) {
@@ -128,13 +131,14 @@ TEST_F(ElementVarTest, NotifyInputChanged) {
     std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
     _solver->open();
-    const VarId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
+    const VarViewId index =
+        _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
     for (auto& input : inputs) {
       input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
-    const VarId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarId>(inputs), offset);
+        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
     _solver->close();
 
     Timestamp ts = _solver->currentTimestamp();
@@ -160,13 +164,14 @@ TEST_F(ElementVarTest, NextInput) {
     std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
 
     _solver->open();
-    const VarId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
+    const VarViewId index =
+        _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
     for (auto& input : inputs) {
       input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
-    const VarId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarId>(inputs), offset);
+        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
     _solver->close();
 
     for (Timestamp ts = _solver->currentTimestamp() + 1;
@@ -193,14 +198,14 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
     std::shuffle(indexValues.begin(), indexValues.end(), rng);
 
     _solver->open();
-    const VarId index =
+    const VarViewId index =
         _solver->makeIntVar(indexValues.back(), indexLb, indexUb);
     for (auto& input : inputs) {
       input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
-    const VarId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarId>(inputs), offset);
+        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
     _solver->close();
 
     for (size_t i = 0; i < indexValues.size(); ++i) {
@@ -211,7 +216,7 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
       invariant.notifyCurrentInputChanged(ts);
       EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, index, offset));
 
-      const VarId curInput = invariant.nextInput(ts);
+      const VarViewId curInput = invariant.nextInput(ts);
       EXPECT_EQ(curInput, getInput(indexVal, offset));
 
       const Int oldInputVal = _solver->value(ts, curInput);
@@ -237,14 +242,14 @@ TEST_F(ElementVarTest, Commit) {
     std::shuffle(indexValues.begin(), indexValues.end(), rng);
 
     _solver->open();
-    const VarId index =
+    const VarViewId index =
         _solver->makeIntVar(indexValues.back(), indexLb, indexUb);
     for (auto& input : inputs) {
       input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
     }
-    const VarId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
     ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarId>(inputs), offset);
+        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
     _solver->close();
 
     Int committedIndexValue = _solver->committedValue(index);
@@ -276,7 +281,7 @@ TEST_F(ElementVarTest, Commit) {
       ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
       // Change input
-      const VarId curInput = getInput(indexVal, offset);
+      const VarViewId curInput = getInput(indexVal, offset);
       const Int oldInputVal = _solver->value(ts, curInput);
       do {
         _solver->setValue(ts, curInput, inputDist(gen));
@@ -291,12 +296,12 @@ TEST_F(ElementVarTest, Commit) {
 
       ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
-      _solver->commitIf(ts, index);
+      _solver->commitIf(ts, VarId(index));
       committedIndexValue = _solver->value(ts, index);
-      _solver->commitIf(ts, curInput);
+      _solver->commitIf(ts, VarId(curInput));
       committedInputValues.at(zeroBasedIndex(indexVal, offset)) =
           _solver->value(ts, curInput);
-      _solver->commitIf(ts, outputId);
+      _solver->commitIf(ts, VarId(outputId));
 
       invariant.commit(ts);
       invariant.recompute(ts + 1);
@@ -312,9 +317,11 @@ class MockElementVar : public ElementVar {
     registered = true;
     ElementVar::registerVars();
   }
-  explicit MockElementVar(SolverBase& _solver, VarId output, VarId index,
-                          std::vector<VarId>&& varArray, Int offset)
-      : ElementVar(_solver, output, index, std::move(varArray), offset) {
+  explicit MockElementVar(SolverBase& solver, VarViewId output, VarViewId index,
+                          std::vector<VarViewId>&& varArray, Int offset)
+      : ElementVar(solver, output, index, std::move(varArray), offset) {
+    EXPECT_TRUE(output.isVar());
+
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return ElementVar::recompute(timestamp);
     });
@@ -334,7 +341,7 @@ class MockElementVar : public ElementVar {
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
@@ -344,14 +351,14 @@ TEST_F(ElementVarTest, SolverIntegration) {
     if (!_solver->isOpen()) {
       _solver->open();
     }
-    std::vector<VarId> args;
+    std::vector<VarViewId> args;
     const size_t numArgs = 10;
     args.reserve(numArgs);
     for (size_t value = 0; value < numArgs; ++value) {
       args.push_back(_solver->makeIntVar(static_cast<Int>(value), -100, 100));
     }
-    VarId idx = _solver->makeIntVar(0, 0, static_cast<Int>(numArgs) - 1);
-    VarId output = _solver->makeIntVar(-10, -100, 100);
+    VarViewId idx = _solver->makeIntVar(0, 0, static_cast<Int>(numArgs) - 1);
+    VarViewId output = _solver->makeIntVar(-10, -100, 100);
     testNotifications<MockElementVar>(
         &_solver->makeInvariant<MockElementVar>(*_solver, output, idx,
                                                 std::move(args), 1),

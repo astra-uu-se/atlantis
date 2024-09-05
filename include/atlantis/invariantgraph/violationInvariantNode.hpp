@@ -11,7 +11,7 @@ namespace atlantis::invariantgraph {
 class ViolationInvariantNode : public InvariantNode {
  private:
   // Bounds will be recomputed by the solver.
-  propagation::VarId _violationVarId{propagation::NULL_ID};
+  propagation::VarViewId _violationVarId{propagation::NULL_ID};
   bool _isReified;
 
   // If the violation invariant is not reified, then this boolean indicates if
@@ -27,9 +27,9 @@ class ViolationInvariantNode : public InvariantNode {
                                   bool shouldHold);
 
  protected:
-  propagation::VarId setViolationVarId(propagation::VarId);
+  propagation::VarViewId setViolationVarId(propagation::VarViewId);
 
-  propagation::VarId registerViolation(Int initialValue = 0);
+  propagation::VarViewId registerViolation(Int initialValue = 0);
 
   [[nodiscard]] bool shouldHold() const noexcept;
 
@@ -58,7 +58,7 @@ class ViolationInvariantNode : public InvariantNode {
 
   [[nodiscard]] bool isReified() const override;
 
-  [[nodiscard]] propagation::VarId violationVarId() const override;
+  [[nodiscard]] propagation::VarViewId violationVarId() const override;
 
   VarNodeId reifiedViolationNodeId();
 

@@ -2,7 +2,7 @@
 
 namespace atlantis::propagation {
 
-IntMaxView::IntMaxView(SolverBase& solver, VarId parentId, Int max)
+IntMaxView::IntMaxView(SolverBase& solver, VarViewId parentId, Int max)
     : IntView(solver, parentId), _max(max) {}
 
 Int IntMaxView::value(Timestamp ts) {

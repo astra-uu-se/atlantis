@@ -17,19 +17,23 @@ namespace atlantis::propagation {
 class MaxSparse : public Invariant {
  private:
   VarId _output;
-  std::vector<VarId> _varArray;
+  std::vector<VarViewId> _varArray;
 
   PriorityList _localPriority;
 
  public:
-  explicit MaxSparse(SolverBase&, VarId output, std::vector<VarId>&& varArray);
+  explicit MaxSparse(SolverBase&, VarId output,
+                     std::vector<VarViewId>&& varArray);
+
+  explicit MaxSparse(SolverBase&, VarViewId output,
+                     std::vector<VarViewId>&& varArray);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

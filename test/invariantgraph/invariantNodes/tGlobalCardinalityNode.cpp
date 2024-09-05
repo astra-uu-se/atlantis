@@ -161,7 +161,7 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
     }
   }
 
-  std::vector<propagation::VarId> outputIds;
+  std::vector<propagation::VarViewId> outputIds;
   for (const auto& identifier : outputIdentifiers) {
     outputIds.emplace_back(varNode(identifier).isFixed() ? propagation::NULL_ID
                                                          : varId(identifier));
@@ -176,7 +176,7 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   std::vector<Int> inputVals;
 
   for (const auto& inputVarNodeId : inputVarNodeIds) {

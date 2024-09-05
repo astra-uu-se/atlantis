@@ -22,7 +22,7 @@ namespace atlantis::propagation {
  */
 class Bool2IntView : public IntView {
  public:
-  explicit Bool2IntView(SolverBase& solver, const VarId parentId);
+  explicit Bool2IntView(SolverBase& solver, const VarViewId parentId);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

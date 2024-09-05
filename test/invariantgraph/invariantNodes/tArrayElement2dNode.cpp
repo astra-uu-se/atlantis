@@ -169,9 +169,9 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   }
 
   EXPECT_NE(varId(outputIdentifier), propagation::NULL_ID);
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& idxVarNodeId :
        std::array<VarNodeId, 2>{idx1VarNodeId, idx2VarNodeId}) {
     if (!varNode(idxVarNodeId).isFixed()) {

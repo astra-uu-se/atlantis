@@ -16,19 +16,19 @@ namespace atlantis::benchmark {
 class Queens : public ::benchmark::Fixture {
  public:
   std::shared_ptr<propagation::Solver> solver;
-  std::vector<propagation::VarId> queens;
-  std::vector<propagation::VarId> q_offset_plus;
-  std::vector<propagation::VarId> q_offset_minus;
+  std::vector<propagation::VarViewId> queens;
+  std::vector<propagation::VarViewId> q_offset_plus;
+  std::vector<propagation::VarViewId> q_offset_minus;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
   Int n;
 
-  propagation::VarId violation1 = propagation::NULL_ID;
-  propagation::VarId violation2 = propagation::NULL_ID;
-  propagation::VarId violation3 = propagation::NULL_ID;
-  propagation::VarId totalViolation = propagation::NULL_ID;
+  propagation::VarViewId violation1 = propagation::NULL_ID;
+  propagation::VarViewId violation2 = propagation::NULL_ID;
+  propagation::VarViewId violation3 = propagation::NULL_ID;
+  propagation::VarViewId totalViolation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_shared<propagation::Solver>();
@@ -40,9 +40,9 @@ class Queens : public ::benchmark::Fixture {
     solver->open();
     setSolverMode(*solver, static_cast<int>(state.range(1)));
     // the total number of variables is linear in n
-    queens = std::vector<propagation::VarId>(n);
-    q_offset_minus = std::vector<propagation::VarId>(n);
-    q_offset_plus = std::vector<propagation::VarId>(n);
+    queens = std::vector<propagation::VarViewId>(n);
+    q_offset_minus = std::vector<propagation::VarViewId>(n);
+    q_offset_plus = std::vector<propagation::VarViewId>(n);
 
     for (Int i = 0; i < n; ++i) {
       queens.at(i) = solver->makeIntVar(i, 0, n - 1);
@@ -58,17 +58,20 @@ class Queens : public ::benchmark::Fixture {
 
     // 3 invariants, each having taking n static input variables
     solver->makeViolationInvariant<propagation::AllDifferent>(
-        *solver, violation1, std::vector<propagation::VarId>(queens));
+        *solver, violation1, std::vector<propagation::VarViewId>(queens));
     solver->makeViolationInvariant<propagation::AllDifferent>(
-        *solver, violation2, std::vector<propagation::VarId>(q_offset_minus));
+        *solver, violation2,
+        std::vector<propagation::VarViewId>(q_offset_minus));
     solver->makeViolationInvariant<propagation::AllDifferent>(
-        *solver, violation3, std::vector<propagation::VarId>(q_offset_plus));
+        *solver, violation3,
+        std::vector<propagation::VarViewId>(q_offset_plus));
 
     totalViolation = solver->makeIntVar(0, 0, 3 * n);
 
     solver->makeInvariant<propagation::Linear>(
         *solver, totalViolation,
-        std::vector<propagation::VarId>{violation1, violation2, violation3});
+        std::vector<propagation::VarViewId>{violation1, violation2,
+                                            violation3});
 
     solver->close();
 
@@ -223,7 +226,6 @@ BENCHMARK_DEFINE_F(Queens, solve)(::benchmark::State& st) {
   st.counters["probes_per_s"] = ::benchmark::Counter(
       static_cast<double>(probes), ::benchmark::Counter::kIsRate);
   st.counters["solved"] = ::benchmark::Counter(done);
-  logDebug(instanceToString());
 }
 
 //*

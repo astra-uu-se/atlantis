@@ -6,18 +6,24 @@
 
 namespace atlantis::propagation {
 
-ElementVar::ElementVar(SolverBase& solver, VarId output, VarId index,
-                       std::vector<VarId>&& varArray, Int offset)
+ElementVar::ElementVar(SolverBase& solver, VarId output, VarViewId index,
+                       std::vector<VarViewId>&& varArray, Int offset)
     : Invariant(solver),
       _output(output),
       _index(index),
       _varArray(std::move(varArray)),
       _offset(offset) {}
 
+ElementVar::ElementVar(SolverBase& solver, VarViewId output, VarViewId index,
+                       std::vector<VarViewId>&& varArray, Int offset)
+    : ElementVar(solver, VarId(output), index, std::move(varArray), offset) {
+  assert(output.isVar());
+}
+
 void ElementVar::registerVars() {
   assert(_id != NULL_ID);
   _solver.registerInvariantInput(_id, _index, LocalId(0), false);
-  for (const VarId& input : _varArray) {
+  for (const VarViewId& input : _varArray) {
     _solver.registerInvariantInput(_id, input, LocalId(0), true);
   }
   registerDefinedVar(_output);
@@ -49,13 +55,13 @@ void ElementVar::recompute(Timestamp ts) {
       _solver.value(ts, _varArray[safeIndex(_solver.value(ts, _index))]));
 }
 
-VarId ElementVar::dynamicInputVar(Timestamp ts) const noexcept {
+VarViewId ElementVar::dynamicInputVar(Timestamp ts) const noexcept {
   return _varArray[safeIndex(_solver.value(ts, _index))];
 }
 
 void ElementVar::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId ElementVar::nextInput(Timestamp ts) {
+VarViewId ElementVar::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _index;

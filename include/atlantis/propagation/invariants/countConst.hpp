@@ -10,25 +10,28 @@ namespace atlantis::propagation {
 
 /**
  * Invariant for:
- * output <- number of occurences of _denominator in _vars
+ * output <- number of occurences of needle in _vars
  *
  */
 
 class CountConst : public Invariant {
  private:
   VarId _output;
-  Int _y;
-  std::vector<VarId> _vars;
+  Int _needle;
+  std::vector<VarViewId> _vars;
 
  public:
-  explicit CountConst(SolverBase&, VarId output, Int y,
-                      std::vector<VarId>&& vars);
+  explicit CountConst(SolverBase&, VarId output, Int needle,
+                      std::vector<VarViewId>&& vars);
+
+  explicit CountConst(SolverBase&, VarViewId output, Int needle,
+                      std::vector<VarViewId>&& vars);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

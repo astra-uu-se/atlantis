@@ -131,7 +131,7 @@ TEST_P(BoolLinEqNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& inputVarNodeId : inputVarNodeIds) {
     if (!varNode(inputVarNodeId).isFixed()) {
       EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
@@ -141,7 +141,7 @@ TEST_P(BoolLinEqNodeTestFixture, propagation) {
 
   EXPECT_FALSE(inputVarIds.empty());
 
-  const propagation::VarId violVarId =
+  const propagation::VarViewId violVarId =
       isReified() ? varId(reifiedIdentifier)
                   : _invariantGraph->totalViolationVarId();
 

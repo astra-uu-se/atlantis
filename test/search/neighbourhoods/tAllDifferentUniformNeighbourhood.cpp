@@ -22,7 +22,7 @@ class AllDifferentUniformNeighbourhoodTest : public ::testing::Test {
 
     _solver->open();
     for (auto i = 0u; i < 4; ++i) {
-      propagation::VarId var = _solver->makeIntVar(1, 1, 4);
+      propagation::VarViewId var = _solver->makeIntVar(1, 1, 4);
       vars.emplace_back(var, SearchDomain(1, 4));
     }
     _solver->close();

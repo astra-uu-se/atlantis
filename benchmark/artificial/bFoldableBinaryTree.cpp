@@ -20,21 +20,23 @@ namespace atlantis::benchmark {
 
 class FoldableBinaryTree : public ::benchmark::Fixture {
  private:
-  propagation::VarId randomVar() { return vars.at(std::rand() % vars.size()); }
-  propagation::VarId createTree() {
-    propagation::VarId output = solver->makeIntVar(0, lb, ub);
+  propagation::VarViewId randomVar() {
+    return vars.at(std::rand() % vars.size());
+  }
+  propagation::VarViewId createTree() {
+    propagation::VarViewId output = solver->makeIntVar(0, lb, ub);
     vars.push_back(output);
 
-    propagation::VarId prev = output;
+    propagation::VarViewId prev = output;
 
     for (size_t level = 0; level < treeHeight; ++level) {
-      propagation::VarId left = solver->makeIntVar(0, lb, ub);
-      propagation::VarId right = solver->makeIntVar(0, lb, ub);
+      propagation::VarViewId left = solver->makeIntVar(0, lb, ub);
+      propagation::VarViewId right = solver->makeIntVar(0, lb, ub);
       vars.push_back(left);
       vars.push_back(right);
 
       solver->makeInvariant<propagation::Linear>(
-          *solver, prev, std::vector<propagation::VarId>{left, right});
+          *solver, prev, std::vector<propagation::VarViewId>{left, right});
       if (level == treeHeight - 1) {
         decisionVars.push_back(left);
       }
@@ -47,9 +49,9 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
 
  public:
   std::shared_ptr<propagation::Solver> solver;
-  std::vector<propagation::VarId> vars;
-  std::vector<propagation::VarId> decisionVars;
-  propagation::VarId queryVar;
+  std::vector<propagation::VarViewId> vars;
+  std::vector<propagation::VarViewId> decisionVars;
+  VarViewId queryVar{propagation::NULL_ID};
   std::random_device rd;
 
   std::mt19937 genValue;

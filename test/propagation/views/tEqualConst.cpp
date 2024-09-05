@@ -22,8 +22,8 @@ RC_GTEST_FIXTURE_PROP(EqualViewConst, simple, (int a, int b)) {
   if (!_solver->isOpen()) {
     _solver->open();
   }
-  const VarId varId = _solver->makeIntVar(a, a, a);
-  const VarId violationId =
+  const VarViewId varId = _solver->makeIntVar(a, a, a);
+  const VarViewId violationId =
       _solver->makeIntView<EqualConst>(*_solver, varId, b);
   RC_ASSERT(_solver->committedValue(violationId) == std::abs(Int(a) - Int(b)));
 }
@@ -32,8 +32,8 @@ RC_GTEST_FIXTURE_PROP(EqualViewConst, singleton, (int a, int b)) {
   if (!_solver->isOpen()) {
     _solver->open();
   }
-  const VarId varId = _solver->makeIntVar(a, a, a);
-  const VarId violationId =
+  const VarViewId varId = _solver->makeIntVar(a, a, a);
+  const VarViewId violationId =
       _solver->makeIntView<EqualConst>(*_solver, varId, b);
   RC_ASSERT(_solver->committedValue(violationId) == std::abs(Int(a) - Int(b)));
   RC_ASSERT(_solver->lowerBound(violationId) ==
@@ -48,8 +48,8 @@ RC_GTEST_FIXTURE_PROP(EqualViewConst, interval, (int a, int b)) {
   Int ub = Int(a) + size;
 
   _solver->open();
-  const VarId varId = _solver->makeIntVar(ub, lb, ub);
-  const VarId violationId =
+  const VarViewId varId = _solver->makeIntVar(ub, lb, ub);
+  const VarViewId violationId =
       _solver->makeIntView<EqualConst>(*_solver, varId, b);
   _solver->close();
 

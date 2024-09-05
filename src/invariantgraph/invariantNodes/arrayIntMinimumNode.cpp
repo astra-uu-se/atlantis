@@ -101,7 +101,7 @@ void ArrayIntMinimumNode::registerNode() {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
-  std::vector<propagation::VarId> solverVars;
+  std::vector<propagation::VarViewId> solverVars;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(solverVars), [&](const auto& node) {
                    return invariantGraph().varId(node);
@@ -109,6 +109,7 @@ void ArrayIntMinimumNode::registerNode() {
 
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
+  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
   solver().makeInvariant<propagation::MinSparse>(
       solver(), invariantGraph().varId(outputVarNodeIds().front()),
       std::move(solverVars));

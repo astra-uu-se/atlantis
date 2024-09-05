@@ -133,8 +133,7 @@ void IntLinearNode::registerOutputVars() {
   } else if (!staticInputVarNodeIds().empty()) {
     if (_offset == 0) {
       makeSolverVar(outputVarNodeIds().front());
-      assert(invariantGraph().varId(outputVarNodeIds().front()).idType ==
-             propagation::VarIdType::var);
+      assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
     } else if (_intermediate == propagation::NULL_ID) {
       _intermediate = solver().makeIntVar(0, 0, 0);
       invariantGraph()
@@ -156,8 +155,12 @@ void IntLinearNode::registerNode() {
   }
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
+  assert(_intermediate == propagation::NULL_ID
+             ? invariantGraph().varId(outputVarNodeIds().front()).isVar()
+             : invariantGraph().varId(outputVarNodeIds().front()).isView());
+  assert(_intermediate == propagation::NULL_ID || _intermediate.isVar());
 
-  std::vector<propagation::VarId> solverVars;
+  std::vector<propagation::VarViewId> solverVars;
   std::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars), [&](const VarNodeId varNodeId) {

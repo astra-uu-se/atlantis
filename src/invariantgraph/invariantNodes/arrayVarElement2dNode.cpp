@@ -181,19 +181,21 @@ bool ArrayVarElement2dNode::replace() {
 
 void ArrayVarElement2dNode::registerNode() {
   const size_t numCols = dynamicInputVarNodeIds().size() / _numRows;
-  std::vector<std::vector<propagation::VarId>> varMatrix(
-      _numRows, std::vector<propagation::VarId>(numCols));
+  std::vector<std::vector<propagation::VarViewId>> varMatrix(
+      _numRows, std::vector<propagation::VarViewId>{});
   for (size_t i = 0; i < _numRows; ++i) {
+    varMatrix.at(i).reserve(numCols);
     for (size_t j = 0; j < numCols; ++j) {
-      varMatrix.at(i).at(j) =
+      varMatrix.at(i).emplace_back(
           invariantGraph()
               .varNode(dynamicInputVarNodeIds().at(i * numCols + j))
-              .varId();
+              .varId());
     }
   }
 
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
+  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
   solver().makeInvariant<propagation::Element2dVar>(
       solver(), invariantGraph().varId(outputVarNodeIds().front()),
       invariantGraph().varId(idx1()), invariantGraph().varId(idx2()),

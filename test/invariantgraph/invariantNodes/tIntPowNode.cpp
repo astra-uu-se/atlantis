@@ -108,7 +108,7 @@ TEST_P(IntPowNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& inputVarNodeId :
        std::array<VarNodeId, 2>{baseVarNodeId, exponentVarNodeId}) {
     if (!varNode(inputVarNodeId).isFixed()) {
@@ -117,7 +117,7 @@ TEST_P(IntPowNodeTestFixture, propagation) {
     }
   }
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);

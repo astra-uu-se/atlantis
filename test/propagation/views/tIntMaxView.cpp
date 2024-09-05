@@ -23,17 +23,18 @@ RC_GTEST_FIXTURE_PROP(IntMaxViewTest, shouldAlwaysBeMax, (Int a, Int b)) {
   if (!_solver->isOpen()) {
     _solver->open();
   }
-  const VarId varId = _solver->makeIntVar(a, a, a);
-  const VarId viewId = _solver->makeIntView<IntMaxView>(*_solver, varId, b);
+  const VarViewId varId = _solver->makeIntVar(a, a, a);
+  const VarViewId viewId = _solver->makeIntView<IntMaxView>(*_solver, varId, b);
   RC_ASSERT(_solver->committedValue(viewId) == std::max(a, b));
 }
 
 TEST_F(IntMaxViewTest, CreateIntMaxView) {
   _solver->open();
 
-  const VarId var = _solver->makeIntVar(10, 0, 10);
-  const VarId viewOfVar = _solver->makeIntView<IntMaxView>(*_solver, var, 25);
-  const VarId viewOfView =
+  const VarViewId var = _solver->makeIntVar(10, 0, 10);
+  const VarViewId viewOfVar =
+      _solver->makeIntView<IntMaxView>(*_solver, var, 25);
+  const VarViewId viewOfView =
       _solver->makeIntView<IntMaxView>(*_solver, viewOfVar, 50);
 
   EXPECT_EQ(_solver->committedValue(viewOfVar), Int(25));
@@ -47,8 +48,8 @@ TEST_F(IntMaxViewTest, ComputeBounds) {
   auto a = _solver->makeIntVar(20, -100, 100);
   auto b = _solver->makeIntVar(20, -100, 100);
 
-  const VarId va = _solver->makeIntView<IntMaxView>(*_solver, a, 10);
-  const VarId vb = _solver->makeIntView<IntMaxView>(*_solver, b, 200);
+  const VarViewId va = _solver->makeIntView<IntMaxView>(*_solver, a, 10);
+  const VarViewId vb = _solver->makeIntView<IntMaxView>(*_solver, b, 200);
 
   EXPECT_EQ(_solver->lowerBound(va), Int(10));
   EXPECT_EQ(_solver->lowerBound(vb), Int(200));
@@ -65,15 +66,16 @@ TEST_F(IntMaxViewTest, ComputeBounds) {
 
 TEST_F(IntMaxViewTest, RecomputeIntMaxView) {
   _solver->open();
-  const VarId a = _solver->makeIntVar(20, -100, 100);
-  const VarId b = _solver->makeIntVar(20, -100, 100);
-  const VarId sum = _solver->makeIntVar(0, -100, 100);
+  const VarViewId a = _solver->makeIntVar(20, -100, 100);
+  const VarViewId b = _solver->makeIntVar(20, -100, 100);
+  const VarViewId sum = _solver->makeIntVar(0, -100, 100);
 
   _solver->makeInvariant<Linear>(*_solver, sum, std::vector<Int>({1, 1}),
-                                 std::vector<VarId>({a, b}));
+                                 std::vector<VarViewId>({a, b}));
 
-  const VarId viewOfVar = _solver->makeIntView<IntMaxView>(*_solver, sum, 10);
-  const VarId viewOfView =
+  const VarViewId viewOfVar =
+      _solver->makeIntView<IntMaxView>(*_solver, sum, 10);
+  const VarViewId viewOfView =
       _solver->makeIntView<IntMaxView>(*_solver, viewOfVar, 15);
 
   EXPECT_EQ(_solver->currentValue(viewOfVar), Int(10));
@@ -113,19 +115,21 @@ TEST_F(IntMaxViewTest, PropagateIntViews) {
   // sum1 + sum2 = sum2
 
   _solver->makeInvariant<Linear>(*_solver, sum1, std::vector<Int>({1, 1}),
-                                 std::vector<VarId>({a, b}));
+                                 std::vector<VarViewId>({a, b}));
 
   _solver->makeInvariant<Linear>(*_solver, sum2, std::vector<Int>({1, 1}),
-                                 std::vector<VarId>({c, d}));
+                                 std::vector<VarViewId>({c, d}));
 
-  const VarId sum1View = _solver->makeIntView<IntMaxView>(*_solver, sum1, 45);
-  const VarId sum2View = _solver->makeIntView<IntMaxView>(*_solver, sum2, 20);
+  const VarViewId sum1View =
+      _solver->makeIntView<IntMaxView>(*_solver, sum1, 45);
+  const VarViewId sum2View =
+      _solver->makeIntView<IntMaxView>(*_solver, sum2, 20);
 
   _solver->makeInvariant<Linear>(*_solver, sum3, std::vector<Int>({1, 1}),
-                                 std::vector<VarId>({sum1View, sum2View}));
+                                 std::vector<VarViewId>({sum1View, sum2View}));
 
-  std::vector<VarId> sum3views;
-  VarId prev = sum3;
+  std::vector<VarViewId> sum3views;
+  VarViewId prev = sum3;
   for (size_t i = 0; i < 10; ++i) {
     sum3views.emplace_back(
         _solver->makeIntView<IntMaxView>(*_solver, prev, 80 + i));

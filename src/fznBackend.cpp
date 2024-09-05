@@ -12,18 +12,18 @@
 namespace atlantis {
 
 std::string toIntString(const search::Assignment& assignment,
-                        const std::variant<propagation::VarId, Int>& var) {
+                        const std::variant<propagation::VarViewId, Int>& var) {
   return std::to_string(
       std::holds_alternative<Int>(var)
           ? std::get<Int>(var)
-          : assignment.value(std::get<propagation::VarId>(var)));
+          : assignment.value(std::get<propagation::VarViewId>(var)));
 }
 
 std::string toBoolString(const search::Assignment& assignment,
-                         const std::variant<propagation::VarId, Int>& var) {
+                         const std::variant<propagation::VarViewId, Int>& var) {
   return ((std::holds_alternative<Int>(var)
                ? std::get<Int>(var)
-               : assignment.value(std::get<propagation::VarId>(var))) == 0)
+               : assignment.value(std::get<propagation::VarViewId>(var))) == 0)
              ? "true"
              : "false";
 }

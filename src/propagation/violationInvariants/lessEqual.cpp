@@ -8,8 +8,15 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-LessEqual::LessEqual(SolverBase& solver, VarId violationId, VarId x, VarId y)
+LessEqual::LessEqual(SolverBase& solver, VarId violationId, VarViewId x,
+                     VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
+
+LessEqual::LessEqual(SolverBase& solver, VarViewId violationId, VarViewId x,
+                     VarViewId y)
+    : LessEqual(solver, VarId(violationId), x, y) {
+  assert(violationId.isVar());
+}
 
 void LessEqual::registerVars() {
   assert(_id != NULL_ID);
@@ -33,7 +40,7 @@ void LessEqual::recompute(Timestamp ts) {
 
 void LessEqual::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId LessEqual::nextInput(Timestamp ts) {
+VarViewId LessEqual::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

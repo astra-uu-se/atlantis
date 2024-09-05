@@ -116,14 +116,16 @@ void IntAllEqualNode::registerOutputVars() {
 
 void IntAllEqualNode::registerNode() {
   assert(staticInputVarNodeIds().size() >= 2);
+
   assert(violationVarId() != propagation::NULL_ID);
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputVarIds),
                  [&](const auto& id) { return invariantGraph().varId(id); });
 
   if (inputVarIds.size() == 2) {
+    assert(violationVarId().isVar());
     if (shouldHold()) {
       solver().makeViolationInvariant<propagation::Equal>(
           solver(), violationVarId(), inputVarIds.front(), inputVarIds.back());
@@ -135,6 +137,7 @@ void IntAllEqualNode::registerNode() {
   }
 
   assert(_allDifferentViolationVarId != propagation::NULL_ID);
+  assert(_allDifferentViolationVarId.isVar());
 
   solver().makeViolationInvariant<propagation::AllDifferent>(
       solver(), _allDifferentViolationVarId, std::move(inputVarIds));

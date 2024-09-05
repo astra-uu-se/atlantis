@@ -5,8 +5,8 @@
 namespace atlantis::search {
 
 Assignment::Assignment(propagation::Solver& solver,
-                       propagation::VarId violation,
-                       propagation::VarId objective,
+                       propagation::VarViewId violation,
+                       propagation::VarViewId objective,
                        propagation::ObjectiveDirection objectiveDirection,
                        Int objectiveOptimalValue)
     : _solver(solver),
@@ -15,14 +15,14 @@ Assignment::Assignment(propagation::Solver& solver,
       _objectiveDirection(objectiveDirection),
       _objectiveOptimalValue(objectiveOptimalValue) {
   _searchVars.reserve(solver.searchVars().size());
-  for (propagation::VarId varId : solver.searchVars()) {
+  for (propagation::VarViewId varId : solver.searchVars()) {
     if (solver.lowerBound(varId) != solver.upperBound(varId)) {
       _searchVars.push_back(varId);
     }
   }
 }
 
-Int Assignment::value(propagation::VarId var) const noexcept {
+Int Assignment::value(propagation::VarViewId var) const noexcept {
   return _solver.committedValue(var);
 }
 

@@ -19,7 +19,7 @@ class InDomainTest : public ::testing::Test {
   std::default_random_engine rng;
 
  public:
-  Int computeViolation(Timestamp ts, VarId var,
+  Int computeViolation(Timestamp ts, VarViewId var,
                        const std::vector<DomainEntry>& domain) {
     return computeViolation(_solver->value(ts, var), domain);
   }
@@ -48,9 +48,9 @@ TEST_F(InDomainTest, Bounds) {
   std::vector<DomainEntry> domainVec{
       {-20, -15}, {-10, -5}, {0, 0}, {5, 10}, {15, 20}};
   _solver->open();
-  const VarId x = _solver->makeIntVar(domainVec.front().lowerBound,
-                                      domainVec.front().lowerBound,
-                                      domainVec.front().upperBound);
+  const VarViewId x = _solver->makeIntVar(domainVec.front().lowerBound,
+                                          domainVec.front().lowerBound,
+                                          domainVec.front().upperBound);
 
   for (const std::vector<DomainEntry>& dom : subsets(domainVec)) {
     if (dom.empty()) {
@@ -61,8 +61,8 @@ TEST_F(InDomainTest, Bounds) {
       if (!_solver->isOpen()) {
         _solver->open();
       }
-      _solver->updateBounds(x, xLb, xUb, false);
-      const VarId violationId = _solver->makeIntView<InDomain>(
+      _solver->updateBounds(VarId(x), xLb, xUb, false);
+      const VarViewId violationId = _solver->makeIntView<InDomain>(
           *_solver, x, std::vector<DomainEntry>(dom));
       _solver->close();
 
@@ -93,8 +93,8 @@ TEST_F(InDomainTest, Value) {
     }
     const Int lb = domainVec.front().lowerBound - margin;
     const Int ub = domainVec.back().upperBound + margin;
-    const VarId x = _solver->makeIntVar(lb, lb, ub);
-    const VarId violationId = _solver->makeIntView<InDomain>(
+    const VarViewId x = _solver->makeIntVar(lb, lb, ub);
+    const VarViewId violationId = _solver->makeIntView<InDomain>(
         *_solver, x, std::vector<DomainEntry>(dom));
     _solver->close();
     for (Int val = lb; val <= ub; ++val) {
@@ -126,8 +126,8 @@ TEST_F(InDomainTest, CommittedValue) {
 
     std::shuffle(values.begin(), values.end(), rng);
 
-    const VarId x = _solver->makeIntVar(lb, lb, ub);
-    const VarId violationId = _solver->makeIntView<InDomain>(
+    const VarViewId x = _solver->makeIntVar(lb, lb, ub);
+    const VarViewId violationId = _solver->makeIntView<InDomain>(
         *_solver, x, std::vector<DomainEntry>(dom));
     _solver->close();
 
@@ -143,7 +143,7 @@ TEST_F(InDomainTest, CommittedValue) {
 
       ASSERT_EQ(expectedViol, _solver->value(ts, violationId));
 
-      _solver->commitIf(ts, x);
+      _solver->commitIf(ts, VarId(x));
       committedValue = _solver->value(ts, x);
 
       ASSERT_EQ(expectedViol, _solver->value(ts + 1, violationId));

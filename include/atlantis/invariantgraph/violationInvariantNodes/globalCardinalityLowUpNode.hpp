@@ -9,7 +9,7 @@ class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
   std::vector<Int> _cover;
   std::vector<Int> _low;
   std::vector<Int> _up;
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
   explicit GlobalCardinalityLowUpNode(IInvariantGraph& graph,

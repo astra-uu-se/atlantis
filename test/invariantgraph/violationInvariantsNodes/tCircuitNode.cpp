@@ -90,13 +90,14 @@ TEST_P(CircuitNodeTestFixture, propagation) {
   }
   _invariantGraph->close();
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& inputVarNodeId : inputVarNodeIds) {
     EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
     inputVarIds.emplace_back(varId(inputVarNodeId));
   }
 
-  const propagation::VarId violVarId = _invariantGraph->totalViolationVarId();
+  const propagation::VarViewId violVarId =
+      _invariantGraph->totalViolationVarId();
   EXPECT_NE(violVarId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);

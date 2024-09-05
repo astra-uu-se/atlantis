@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 class SetInNode : public ViolationInvariantNode {
  private:
   std::vector<Int> _values;
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
   explicit SetInNode(IInvariantGraph& graph, VarNodeId input,

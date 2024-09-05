@@ -13,13 +13,12 @@ class SolverBase;
 class InDomain : public IntView {
  private:
   std::vector<DomainEntry> _domain;
-  VarId _x;
   Committable<std::pair<Int, Int>> _cache;
 
   [[nodiscard]] Int compute(Int val) const;
 
  public:
-  explicit InDomain(SolverBase& solver, VarId parentId,
+  explicit InDomain(SolverBase& solver, VarViewId parentId,
                     std::vector<DomainEntry>&& domain);
 
   [[nodiscard]] Int value(Timestamp) override;

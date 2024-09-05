@@ -59,7 +59,7 @@ class InvariantNode : virtual public IInvariantNode {
    * applicable if the current node is a violation invariant. If this node does
    * not define a violation variable, this method returns propagation::NULL_ID.
    */
-  [[nodiscard]] propagation::VarId violationVarId() const;
+  [[nodiscard]] propagation::VarViewId violationVarId() const;
 
   /**
    * @return The variable nodes defined by this node.
@@ -98,10 +98,11 @@ class InvariantNode : virtual public IInvariantNode {
   [[nodiscard]] std::vector<std::pair<VarNodeId, VarNodeId>>
   splitOutputVarNodes() override;
 
-  [[nodiscard]] propagation::VarId makeSolverVar(VarNodeId varNodeId) override;
+  [[nodiscard]] propagation::VarViewId makeSolverVar(
+      VarNodeId varNodeId) override;
 
-  [[nodiscard]] propagation::VarId makeSolverVar(VarNodeId varNodeId,
-                                                 Int initialValue) override;
+  [[nodiscard]] propagation::VarViewId makeSolverVar(VarNodeId varNodeId,
+                                                     Int initialValue) override;
 
   void markOutputTo(VarNodeId varNodeId, bool registerHere) override;
 

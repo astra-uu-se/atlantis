@@ -41,7 +41,7 @@ class ElementConstTest : public ::testing::Test {
 
   void TearDown() override { values.clear(); }
 
-  Int computeOutput(const Timestamp ts, const VarId index) {
+  Int computeOutput(const Timestamp ts, const VarViewId index) {
     return computeOutput(_solver->value(ts, index));
   }
 
@@ -57,8 +57,8 @@ TEST_F(ElementConstTest, Bounds) {
   EXPECT_TRUE(indexLb <= indexUb);
 
   _solver->open();
-  const VarId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarId outputId = _solver->makeIntView<ElementConst>(
+  const VarViewId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
+  const VarViewId outputId = _solver->makeIntView<ElementConst>(
       *_solver, index, std::vector<Int>(values));
   _solver->close();
 
@@ -66,7 +66,7 @@ TEST_F(ElementConstTest, Bounds) {
 
   for (Int minIndex = indexLb; minIndex <= ub; ++minIndex) {
     for (Int maxIndex = ub; maxIndex >= minIndex; --maxIndex) {
-      _solver->updateBounds(index, minIndex, maxIndex, false);
+      _solver->updateBounds(VarId(index), minIndex, maxIndex, false);
       Int minVal = std::numeric_limits<Int>::max();
       Int maxVal = std::numeric_limits<Int>::min();
       for (Int i = minIndex - 1; i < maxIndex; ++i) {
@@ -84,8 +84,8 @@ TEST_F(ElementConstTest, Value) {
   EXPECT_TRUE(indexLb <= indexUb);
 
   _solver->open();
-  const VarId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarId outputId = _solver->makeIntView<ElementConst>(
+  const VarViewId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
+  const VarViewId outputId = _solver->makeIntView<ElementConst>(
       *_solver, index, std::vector<Int>(values));
   _solver->close();
 
@@ -109,8 +109,8 @@ TEST_F(ElementConstTest, CommittedValue) {
   std::shuffle(indexValues.begin(), indexValues.end(), rng);
 
   _solver->open();
-  const VarId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarId outputId = _solver->makeIntView<ElementConst>(
+  const VarViewId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
+  const VarViewId outputId = _solver->makeIntView<ElementConst>(
       *_solver, index, std::vector<Int>(values));
   _solver->close();
 
@@ -126,7 +126,7 @@ TEST_F(ElementConstTest, CommittedValue) {
 
     ASSERT_EQ(expectedOutput, _solver->value(ts, outputId));
 
-    _solver->commitIf(ts, index);
+    _solver->commitIf(ts, VarId(index));
     committedValue = _solver->value(ts, index);
 
     ASSERT_EQ(expectedOutput, _solver->value(ts + 1, outputId));

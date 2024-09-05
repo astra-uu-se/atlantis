@@ -15,7 +15,7 @@ class InSparseDomain : public IntView {
   std::vector<Int> _valueViolation;
 
  public:
-  explicit InSparseDomain(SolverBase& solver, VarId parentId,
+  explicit InSparseDomain(SolverBase& solver, VarViewId parentId,
                           const std::vector<DomainEntry>& domain);
 
   [[nodiscard]] Int value(Timestamp) override;

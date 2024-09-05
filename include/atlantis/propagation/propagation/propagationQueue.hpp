@@ -12,7 +12,7 @@ class PropagationQueue {
   typedef PropagationListNode ListNode;
 
  private:
-  IdMap<VarIdBase, std::unique_ptr<ListNode>> _priorityNodes;
+  IdMap<std::unique_ptr<ListNode>> _priorityNodes;
   ListNode* head;
   ListNode* tail;
 
@@ -20,26 +20,26 @@ class PropagationQueue {
   PropagationQueue() : _priorityNodes(0), head(nullptr), tail(nullptr) {}
 
   void init(size_t, size_t) {
-    _priorityNodes = IdMap<VarIdBase, std::unique_ptr<ListNode>>(0);
+    _priorityNodes = IdMap<std::unique_ptr<ListNode>>(0);
     head = nullptr;
     tail = nullptr;
   }
 
   // vars must be initialised in order.
-  void initVar(VarIdBase id, size_t priority) {
+  void initVar(VarId id, size_t priority) {
     assert(!_priorityNodes.has_idx(id));
     _priorityNodes.register_idx(id);
     _priorityNodes[id] = std::make_unique<ListNode>(id, priority);
   }
 
-  void updatePriority(VarIdBase id, size_t newPriority) {
+  void updatePriority(VarId id, size_t newPriority) {
     assert(_priorityNodes.has_idx(id));
     _priorityNodes[id]->priority = newPriority;
   }
 
   [[nodiscard]] bool empty() const { return head == nullptr; }
 
-  void push(VarIdBase id) {
+  void push(VarId id) {
     ListNode* toInsert = _priorityNodes[id].get();
     if (toInsert->next != nullptr || head == toInsert || tail == toInsert) {
       return;  // id is already in list
@@ -75,7 +75,7 @@ class PropagationQueue {
     // Insert failed (this should and cannot happen):
     assert(false);
   }
-  VarIdBase pop() {
+  VarId pop() {
     if (head == nullptr) {
       return NULL_ID;
     }
@@ -87,7 +87,7 @@ class PropagationQueue {
     ret->next = nullptr;
     return ret->id;
   }
-  VarIdBase top() {
+  VarId top() {
     if (head == nullptr) {
       return NULL_ID;
     }

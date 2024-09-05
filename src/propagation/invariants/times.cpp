@@ -5,8 +5,13 @@
 
 namespace atlantis::propagation {
 
-Times::Times(SolverBase& solver, VarId output, VarId x, VarId y)
+Times::Times(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
+
+Times::Times(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
+    : Times(solver, VarId(output), x, y) {
+  assert(output.isVar());
+}
 
 void Times::registerVars() {
   assert(_id != NULL_ID);
@@ -30,7 +35,7 @@ void Times::recompute(Timestamp ts) {
   updateValue(ts, _output, _solver.value(ts, _x) * _solver.value(ts, _y));
 }
 
-VarId Times::nextInput(Timestamp ts) {
+VarViewId Times::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

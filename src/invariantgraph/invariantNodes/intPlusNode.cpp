@@ -95,6 +95,7 @@ void IntPlusNode::registerNode() {
   }
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
+  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
 
   solver().makeInvariant<propagation::Plus>(
       solver(), invariantGraph().varId(outputVarNodeIds().front()),

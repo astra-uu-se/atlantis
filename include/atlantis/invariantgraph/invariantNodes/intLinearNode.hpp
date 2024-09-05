@@ -7,7 +7,7 @@ class IntLinearNode : public InvariantNode {
  private:
   std::vector<Int> _coeffs;
   Int _offset;
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
   IntLinearNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,

@@ -125,10 +125,10 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
-  std::vector<propagation::VarId> idxVarIds;
+  std::vector<propagation::VarViewId> idxVarIds;
   std::vector<Int> idxVals;
 
   for (const auto& idxVarNodeId :

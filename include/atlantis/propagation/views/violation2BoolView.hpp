@@ -10,7 +10,7 @@ namespace atlantis::propagation {
 
 class Violation2BoolView : public IntView {
  public:
-  explicit Violation2BoolView(SolverBase& solver, VarId parentId);
+  explicit Violation2BoolView(SolverBase& solver, VarViewId parentId);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

@@ -6,12 +6,18 @@
 
 namespace atlantis::propagation {
 
-IntDiv::IntDiv(SolverBase& solver, VarId output, VarId numerator,
-               VarId denominator)
+IntDiv::IntDiv(SolverBase& solver, VarId output, VarViewId numerator,
+               VarViewId denominator)
     : Invariant(solver),
       _output(output),
       _nominator(numerator),
       _denominator(denominator) {}
+
+IntDiv::IntDiv(SolverBase& solver, VarViewId output, VarViewId numerator,
+               VarViewId denominator)
+    : IntDiv(solver, VarId(output), numerator, denominator) {
+  assert(output.isVar());
+}
 
 void IntDiv::registerVars() {
   assert(_id != NULL_ID);
@@ -75,7 +81,7 @@ void IntDiv::recompute(Timestamp ts) {
                   (denominator != 0 ? denominator : _zeroReplacement));
 }
 
-VarId IntDiv::nextInput(Timestamp ts) {
+VarViewId IntDiv::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _nominator;

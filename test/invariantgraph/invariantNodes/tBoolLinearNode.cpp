@@ -132,7 +132,7 @@ TEST_P(BoolLinearNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& inputVarNodeId : inputVarNodeIds) {
     if (!varNode(inputVarNodeId).isFixed()) {
       EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
@@ -142,7 +142,7 @@ TEST_P(BoolLinearNodeTestFixture, propagation) {
 
   EXPECT_FALSE(inputVarIds.empty());
 
-  const propagation::VarId outputVarId = varId(outputIdentifier);
+  const propagation::VarViewId outputVarId = varId(outputIdentifier);
   EXPECT_NE(outputVarId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);

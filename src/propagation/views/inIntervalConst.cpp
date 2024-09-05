@@ -6,7 +6,7 @@ static inline Int compute(Int val, Int lb, Int ub) {
   return lb <= val && val <= ub ? 0 : 1;
 }
 
-InIntervalConst::InIntervalConst(SolverBase& solver, VarId parentId, Int lb,
+InIntervalConst::InIntervalConst(SolverBase& solver, VarViewId parentId, Int lb,
                                  Int ub)
     : IntView(solver, parentId), _lb(lb), _ub(ub) {}
 

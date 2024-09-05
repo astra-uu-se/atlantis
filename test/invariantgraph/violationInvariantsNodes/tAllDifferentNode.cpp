@@ -123,7 +123,7 @@ TEST_P(AllDifferentNodeTestFixture, application) {
                 ::testing::Contains(varId(inputVarNodeId)));
   }
 
-  EXPECT_GE(_solver->numVars(), invNode().violationVarId());
+  EXPECT_GE(_solver->numVars(), size_t(invNode().violationVarId()));
 
   // alldifferent
   EXPECT_EQ(_solver->numInvariants(), 1);
@@ -168,7 +168,7 @@ TEST_P(AllDifferentNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& inputVarNodeId : inputVarNodeIds) {
     if (!varNode(inputVarNodeId).isFixed()) {
       EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
@@ -176,7 +176,7 @@ TEST_P(AllDifferentNodeTestFixture, propagation) {
     }
   }
 
-  const propagation::VarId violVarId =
+  const propagation::VarViewId violVarId =
       isReified() ? varId(reifiedIdentifier)
                   : _invariantGraph->totalViolationVarId();
 

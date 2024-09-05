@@ -13,7 +13,8 @@ class InIntervalConst : public IntView {
   Int _ub;
 
  public:
-  explicit InIntervalConst(SolverBase& solver, VarId parentId, Int lb, Int ub);
+  explicit InIntervalConst(SolverBase& solver, VarViewId parentId, Int lb,
+                           Int ub);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

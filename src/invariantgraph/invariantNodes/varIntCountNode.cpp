@@ -70,9 +70,10 @@ void VarIntCountNode::registerOutputVars() {
 void VarIntCountNode::registerNode() {
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
+  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
 
   std::vector<VarNodeId> h = haystack();
-  std::vector<propagation::VarId> solverVars;
+  std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(h.size());
 
   std::transform(

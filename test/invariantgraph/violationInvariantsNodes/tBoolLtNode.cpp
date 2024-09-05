@@ -179,7 +179,7 @@ TEST_P(BoolLtNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& inputVarNodeId :
        std::array<VarNodeId, 2>{aVarNodeId, bVarNodeId}) {
     if (!varNode(inputVarNodeId).isFixed()) {
@@ -188,7 +188,7 @@ TEST_P(BoolLtNodeTestFixture, propagation) {
     }
   }
 
-  const propagation::VarId violVarId =
+  const propagation::VarViewId violVarId =
       isReified() ? varId(reifiedIdentifier)
                   : _invariantGraph->totalViolationVarId();
 

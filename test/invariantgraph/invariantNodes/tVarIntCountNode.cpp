@@ -138,7 +138,7 @@ TEST_P(VarIntCountNodeTestFixture, propagation) {
     EXPECT_TRUE(varNode(needleIdentifier).isFixed());
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& identifier : inputIdentifiers) {
     if (varNode(identifier).isFixed()) {
       continue;
@@ -153,7 +153,7 @@ TEST_P(VarIntCountNodeTestFixture, propagation) {
     inputVarIds.emplace_back(varId(identifier));
   }
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);

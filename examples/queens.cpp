@@ -22,19 +22,19 @@ inline bool all_in_range(size_t minInclusive, size_t maxExclusive,
 class Queens {
  public:
   std::shared_ptr<Solver> solver;
-  std::vector<VarId> queens;
-  std::vector<VarId> q_offset_plus;
-  std::vector<VarId> q_offset_minus;
+  std::vector<VarViewId> queens;
+  std::vector<VarViewId> q_offset_plus;
+  std::vector<VarViewId> q_offset_minus;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<int> distribution;
   int n;
 
-  VarId violation1 = NULL_ID;
-  VarId violation2 = NULL_ID;
-  VarId violation3 = NULL_ID;
-  VarId totalViolation = NULL_ID;
+  VarViewId violation1 = NULL_ID;
+  VarViewId violation2 = NULL_ID;
+  VarViewId violation3 = NULL_ID;
+  VarViewId totalViolation = NULL_ID;
 
   Queens(int n_, PropagationMode propMode = PropagationMode::INPUT_TO_OUTPUT,
          OutputToInputMarkingMode markingMode = OutputToInputMarkingMode::NONE)
@@ -48,9 +48,9 @@ class Queens {
     solver->setOutputToInputMarkingMode(markingMode);
 
     // the total number of variables is linear in n
-    queens = std::vector<VarId>(n);
-    q_offset_minus = std::vector<VarId>(n);
-    q_offset_plus = std::vector<VarId>(n);
+    queens = std::vector<VarViewId>(n);
+    q_offset_minus = std::vector<VarViewId>(n);
+    q_offset_plus = std::vector<VarViewId>(n);
 
     for (int i = 0; i < n; ++i) {
       queens.at(i) = solver->makeIntVar(i, 0, n - 1);
@@ -65,18 +65,18 @@ class Queens {
     violation3 = solver->makeIntVar(0, 0, n);
 
     // 3 invariants, each having taking n static input variables
-    solver->makeViolationInvariant<AllDifferent>(*solver, violation1,
-                                                 std::vector<VarId>(queens));
     solver->makeViolationInvariant<AllDifferent>(
-        *solver, violation2, std::vector<VarId>(q_offset_minus));
+        *solver, violation1, std::vector<VarViewId>(queens));
     solver->makeViolationInvariant<AllDifferent>(
-        *solver, violation3, std::vector<VarId>(q_offset_plus));
+        *solver, violation2, std::vector<VarViewId>(q_offset_minus));
+    solver->makeViolationInvariant<AllDifferent>(
+        *solver, violation3, std::vector<VarViewId>(q_offset_plus));
 
     totalViolation = solver->makeIntVar(0, 0, 3 * n);
 
     solver->makeInvariant<Linear>(
         *solver, totalViolation,
-        std::vector<VarId>{violation1, violation2, violation3});
+        std::vector<VarViewId>{violation1, violation2, violation3});
 
     solver->close();
 

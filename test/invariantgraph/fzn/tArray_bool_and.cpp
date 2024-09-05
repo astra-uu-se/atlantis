@@ -90,7 +90,7 @@ TEST_F(array_bool_andTest, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  std::vector<propagation::VarId> inputVarIds = getVarIds(inputIdentifiers);
+  std::vector<propagation::VarViewId> inputVarIds = getVarIds(inputIdentifiers);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
 

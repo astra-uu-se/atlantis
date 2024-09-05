@@ -47,7 +47,7 @@ class AllDifferentNonUniformNeighbourhoodTest : public ::testing::Test {
     for (const auto& domain : _domains) {
       const auto& [lb, ub] = std::minmax_element(domain.begin(), domain.end());
 
-      propagation::VarId var = _solver->makeIntVar(*lb, *lb, *ub);
+      propagation::VarViewId var = _solver->makeIntVar(*lb, *lb, *ub);
       domainLb = std::min(domainLb, *lb);
       domainUb = std::max(domainUb, *ub);
       _vars.emplace_back(var, SearchDomain(domain));

@@ -6,7 +6,7 @@ namespace atlantis::propagation {
 
 inline static Int compute(Int var, Int val) { return std::abs(var - val); }
 
-EqualConst::EqualConst(SolverBase& solver, VarId parentId, Int val)
+EqualConst::EqualConst(SolverBase& solver, VarViewId parentId, Int val)
     : IntView(solver, parentId), _val(val) {}
 
 Int EqualConst::value(Timestamp ts) {

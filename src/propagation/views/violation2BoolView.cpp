@@ -4,7 +4,7 @@ namespace atlantis::propagation {
 
 static Int convert(Int value) { return std::min<Int>(value, 1); }
 
-Violation2BoolView::Violation2BoolView(SolverBase& solver, VarId parentId)
+Violation2BoolView::Violation2BoolView(SolverBase& solver, VarViewId parentId)
     : IntView(solver, parentId) {}
 
 Int Violation2BoolView::value(Timestamp ts) {

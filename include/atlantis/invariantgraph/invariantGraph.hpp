@@ -27,7 +27,7 @@ class InvariantGraph : public virtual IInvariantGraph {
   void populateRootNode();
 
  protected:
-  propagation::VarId _totalViolationVarId;
+  propagation::VarViewId _totalViolationVarId{propagation::NULL_ID};
   VarNodeId _objectiveVarNodeId;
 
  public:
@@ -111,10 +111,10 @@ class InvariantGraph : public virtual IInvariantGraph {
   [[nodiscard]] VarNodeId varNodeId(
       const std::string& identifier) const override;
 
-  [[nodiscard]] propagation::VarId varId(
+  [[nodiscard]] propagation::VarViewId varId(
       const std::string& identifier) const override;
 
-  [[nodiscard]] propagation::VarId varId(VarNodeId id) const override;
+  [[nodiscard]] propagation::VarViewId varId(VarNodeId id) const override;
 
   [[nodiscard]] bool containsInvariantNode(InvariantNodeId) const override;
 
@@ -141,11 +141,11 @@ class InvariantGraph : public virtual IInvariantGraph {
   InvariantNodeId addImplicitConstraintNode(
       std::shared_ptr<IImplicitConstraintNode>&&) override;
 
-  [[nodiscard]] propagation::VarId totalViolationVarId() const override;
+  [[nodiscard]] propagation::VarViewId totalViolationVarId() const override;
 
   [[nodiscard]] const VarNode& objectiveVarNode() const override;
 
-  [[nodiscard]] propagation::VarId objectiveVarId() const override;
+  [[nodiscard]] propagation::VarViewId objectiveVarId() const override;
 
   void breakCycles() override;
 
@@ -188,7 +188,7 @@ class InvariantGraph : public virtual IInvariantGraph {
   void createVars();
   void createImplicitConstraints();
   void createInvariants();
-  propagation::VarId createViolations();
+  propagation::VarViewId createViolations();
   void sanity(bool);
 };
 

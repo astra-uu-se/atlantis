@@ -175,7 +175,7 @@ TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& identifier : inputIdentifiers) {
     if (!varNode(identifier).isFixed()) {
       EXPECT_NE(varId(identifier), propagation::NULL_ID);
@@ -189,7 +189,7 @@ TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
     return;
   }
 
-  const propagation::VarId violVarId =
+  const propagation::VarViewId violVarId =
       isReified() ? varId(reifiedIdentifier)
                   : _invariantGraph->totalViolationVarId();
 

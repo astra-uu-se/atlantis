@@ -5,7 +5,7 @@
 namespace atlantis::invariantgraph {
 class IntCountNode : public InvariantNode {
  private:
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
   Int _offset{0};
   Int _needle;
 

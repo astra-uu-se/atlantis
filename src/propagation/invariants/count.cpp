@@ -5,21 +5,27 @@
 
 namespace atlantis::propagation {
 
-Count::Count(SolverBase& solver, VarId output, VarId y,
-             std::vector<VarId>&& varArray)
+Count::Count(SolverBase& solver, VarId output, VarViewId needle,
+             std::vector<VarViewId>&& varArray)
     : Invariant(solver),
       _output(output),
-      _y(y),
+      _needle(needle),
       _vars(std::move(varArray)),
       _counts(),
       _offset(0) {}
+
+Count::Count(SolverBase& solver, VarViewId output, VarViewId needle,
+             std::vector<VarViewId>&& varArray)
+    : Count(solver, VarId(output), needle, std::move(varArray)) {
+  assert(output.isVar());
+}
 
 void Count::registerVars() {
   assert(_id != NULL_ID);
   for (size_t i = 0; i < _vars.size(); ++i) {
     _solver.registerInvariantInput(_id, _vars[i], i, false);
   }
-  _solver.registerInvariantInput(_id, _y, _vars.size(), false);
+  _solver.registerInvariantInput(_id, _needle, _vars.size(), false);
   registerDefinedVar(_output);
 }
 
@@ -36,8 +42,8 @@ void Count::close(Timestamp ts) {
     ub = std::max(ub, _solver.upperBound(var));
   }
   assert(ub >= lb);
-  lb = std::max(lb, _solver.lowerBound(_y));
-  ub = std::max(ub, _solver.lowerBound(_y));
+  lb = std::max(lb, _solver.lowerBound(_needle));
+  ub = std::max(ub, _solver.lowerBound(_needle));
 
   _counts.resize(static_cast<unsigned long>(ub - lb + 1),
                  CommittableInt(ts, 0));
@@ -54,12 +60,12 @@ void Count::recompute(Timestamp ts) {
   for (const auto& var : _vars) {
     increaseCount(ts, _solver.value(ts, var));
   }
-  updateValue(ts, _output, count(ts, _solver.value(ts, _y)));
+  updateValue(ts, _output, count(ts, _solver.value(ts, _needle)));
 }
 
 void Count::notifyInputChanged(Timestamp ts, LocalId id) {
   if (id == _vars.size()) {
-    updateValue(ts, _output, count(ts, _solver.value(ts, _y)));
+    updateValue(ts, _output, count(ts, _solver.value(ts, _needle)));
     return;
   }
   assert(id < _vars.size());
@@ -70,15 +76,15 @@ void Count::notifyInputChanged(Timestamp ts, LocalId id) {
   }
   decreaseCount(ts, committedValue);
   increaseCount(ts, newValue);
-  updateValue(ts, _output, count(ts, _solver.value(ts, _y)));
+  updateValue(ts, _output, count(ts, _solver.value(ts, _needle)));
 }
 
-VarId Count::nextInput(Timestamp ts) {
+VarViewId Count::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _vars.size()) {
     return _vars[index];
   } else if (index == _vars.size()) {
-    return _y;
+    return _needle;
   }
   return NULL_ID;
 }

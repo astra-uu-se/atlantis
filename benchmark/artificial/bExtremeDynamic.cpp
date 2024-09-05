@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "atlantis/misc/logging.hpp"
 #include "atlantis/propagation/invariants/elementVar.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/solver.hpp"
@@ -19,10 +18,10 @@ namespace atlantis::benchmark {
 class ExtremeDynamic : public ::benchmark::Fixture {
  public:
   std::shared_ptr<propagation::Solver> solver;
-  propagation::VarId staticInputVar;
-  std::vector<propagation::VarId> dynamicInputVars;
-  std::vector<propagation::VarId> outputVars;
-  propagation::VarId objective;
+  VarViewId staticInputVar{propagation::NULL_ID};
+  std::vector<propagation::VarViewId> dynamicInputVars;
+  std::vector<propagation::VarViewId> outputVars;
+  VarViewId objective{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;
@@ -52,7 +51,7 @@ class ExtremeDynamic : public ::benchmark::Fixture {
     for (size_t i = 0; i < numInvariants; ++i) {
       solver->makeInvariant<propagation::ElementVar>(
           *solver, outputVars.at(i), staticInputVar,
-          std::vector<propagation::VarId>(dynamicInputVars), 0);
+          std::vector<propagation::VarViewId>(dynamicInputVars), 0);
     }
 
     objective = solver->makeIntVar(lb * static_cast<Int>(numInvariants),
@@ -60,7 +59,7 @@ class ExtremeDynamic : public ::benchmark::Fixture {
                                    ub * static_cast<Int>(numInvariants));
     solver->makeInvariant<propagation::ElementVar>(
         *solver, objective, staticInputVar,
-        std::vector<propagation::VarId>(outputVars), 0);
+        std::vector<propagation::VarViewId>(outputVars), 0);
 
     solver->close();
     gen = std::mt19937(rd());

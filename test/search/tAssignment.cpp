@@ -11,12 +11,12 @@ using namespace atlantis::search;
 
 class AssignmentTest : public ::testing::Test {
  public:
-  propagation::VarId a;
-  propagation::VarId b;
-  propagation::VarId c;
-  propagation::VarId d;
+  propagation::VarViewId a{propagation::NULL_ID};
+  propagation::VarViewId b{propagation::NULL_ID};
+  propagation::VarViewId c{propagation::NULL_ID};
+  propagation::VarViewId d{propagation::NULL_ID};
 
-  propagation::VarId violation;
+  propagation::VarViewId violation{propagation::NULL_ID};
 
   propagation::Solver solver;
 
@@ -33,7 +33,7 @@ class AssignmentTest : public ::testing::Test {
     violation = solver.makeIntVar(0, 0, 10);
 
     solver.makeInvariant<propagation::Linear>(
-        solver, c, std::vector<propagation::VarId>{a, b});
+        solver, c, std::vector<propagation::VarViewId>{a, b});
     solver.makeViolationInvariant<propagation::Equal>(solver, violation, c, d);
     solver.close();
   }
@@ -44,7 +44,7 @@ TEST_F(AssignmentTest, search_vars_are_identified) {
                                 propagation::ObjectiveDirection::MINIMIZE,
                                 solver.lowerBound(a)};
 
-  std::vector<propagation::VarId> expectedSearchVars{a, b};
+  std::vector<propagation::VarViewId> expectedSearchVars{a, b};
   EXPECT_EQ(assignment.searchVars(), expectedSearchVars);
 }
 

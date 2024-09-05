@@ -24,8 +24,8 @@ RC_GTEST_FIXTURE_PROP(GreaterEqualViewConst, simple, (int a, int b)) {
   if (!_solver->isOpen()) {
     _solver->open();
   }
-  const VarId varId = _solver->makeIntVar(a, a, a);
-  const VarId violationId =
+  const VarViewId varId = _solver->makeIntVar(a, a, a);
+  const VarViewId violationId =
       _solver->makeIntView<GreaterEqualConst>(*_solver, varId, b);
   RC_ASSERT(_solver->committedValue(violationId) == computeViolation(a, b));
 }
@@ -34,8 +34,8 @@ RC_GTEST_FIXTURE_PROP(GreaterEqualViewConst, singleton, (int a, int b)) {
   if (!_solver->isOpen()) {
     _solver->open();
   }
-  const VarId varId = _solver->makeIntVar(a, a, a);
-  const VarId violationId =
+  const VarViewId varId = _solver->makeIntVar(a, a, a);
+  const VarViewId violationId =
       _solver->makeIntView<GreaterEqualConst>(*_solver, varId, b);
   RC_ASSERT(_solver->committedValue(violationId) == computeViolation(a, b));
   RC_ASSERT(_solver->lowerBound(violationId) ==
@@ -50,8 +50,8 @@ RC_GTEST_FIXTURE_PROP(GreaterEqualViewConst, interval, (int a, int b)) {
   Int ub = Int(a) + size;
 
   _solver->open();
-  const VarId varId = _solver->makeIntVar(ub, lb, ub);
-  const VarId violationId =
+  const VarViewId varId = _solver->makeIntVar(ub, lb, ub);
+  const VarViewId violationId =
       _solver->makeIntView<GreaterEqualConst>(*_solver, varId, b);
   _solver->close();
 

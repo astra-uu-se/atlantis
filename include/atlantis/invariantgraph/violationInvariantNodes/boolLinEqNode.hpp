@@ -8,7 +8,7 @@ class BoolLinEqNode : public ViolationInvariantNode {
  private:
   std::vector<Int> _coeffs;
   Int _bound;
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
   BoolLinEqNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,

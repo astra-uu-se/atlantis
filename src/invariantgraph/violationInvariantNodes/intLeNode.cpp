@@ -90,6 +90,7 @@ void IntLeNode::updateState() {
 
 void IntLeNode::registerNode() {
   assert(violationVarId() != propagation::NULL_ID);
+  assert(violationVarId().isVar());
 
   if (shouldHold()) {
     solver().makeViolationInvariant<propagation::LessEqual>(

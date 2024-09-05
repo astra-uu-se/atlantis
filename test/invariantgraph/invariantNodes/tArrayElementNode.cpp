@@ -148,10 +148,10 @@ TEST_P(ArrayElementNodeTestFixture, propagation) {
     return;
   }
 
-  const propagation::VarId inputVarId = varId(idxVarNodeId);
+  const propagation::VarViewId inputVarId = varId(idxVarNodeId);
   EXPECT_NE(inputVarId, propagation::NULL_ID);
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   for (Int inputVal = _solver->lowerBound(inputVarId);

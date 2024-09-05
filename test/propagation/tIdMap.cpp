@@ -15,7 +15,7 @@ class IdMapTest : public ::testing::Test {};
  */
 
 TEST_F(IdMapTest, ID2IDtest) {
-  IdMap<InvariantId, VarId> invToVar(10000);
+  IdMap<VarId> invToVar(10000);
 
   InvariantId id1(1);
   InvariantId id2(2);
@@ -44,7 +44,7 @@ TEST_F(IdMapTest, ID2IDtest) {
 }
 
 TEST_F(IdMapTest, ID2Vectortest) {
-  IdMap<VarId, std::vector<VarId>> varToVector(10000);
+  IdMap<std::vector<VarId>> varToVector(10000);
 
   VarId id1(1);
   VarId id2(2);
