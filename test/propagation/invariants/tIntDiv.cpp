@@ -122,11 +122,11 @@ TEST_F(IntDivTest, NotifyInputChanged) {
 
   for (Int val = lb; val <= ub; ++val) {
     ++ts;
-    for (size_t i = 0; i < inputs.size(); ++i) {
+    for (LocalId i = 0; i < inputs.size(); ++i) {
       _solver->setValue(ts, inputs.at(i), val);
       const Int expectedOutput = computeOutput(ts, inputs);
 
-      invariant.notifyInputChanged(ts, LocalId(i));
+      invariant.notifyInputChanged(ts, i);
       EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
     }
   }
@@ -281,7 +281,7 @@ TEST_F(IntDivTest, ZeroDenominator) {
       if (method == 0) {
         invariant.recompute(_solver->currentTimestamp());
       } else {
-        invariant.notifyInputChanged(_solver->currentTimestamp(), LocalId(1));
+        invariant.notifyInputChanged(_solver->currentTimestamp(), LocalId{1});
       }
       EXPECT_EQ(expected,
                 _solver->value(_solver->currentTimestamp(), outputId));

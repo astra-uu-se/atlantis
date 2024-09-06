@@ -86,7 +86,7 @@ TEST_F(BoolAllEqualTest, NotifyInputChanged) {
         _solver->setValue(ts, inputs[i], val);
         const Int expectedViolation = computeViolation(ts, inputs);
 
-        invariant.notifyInputChanged(ts, LocalId(i));
+        invariant.notifyInputChanged(ts, i);
         EXPECT_EQ(expectedViolation, _solver->value(ts, violationId));
       }
     }

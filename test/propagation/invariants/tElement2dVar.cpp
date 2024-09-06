@@ -241,7 +241,7 @@ TEST_F(Element2dVarTest, NotifyInputChanged) {
         const Int expectedOutput =
             computeOutput(ts, rowIndex, colIndex, rowOffset, colOffset);
 
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId{0});
         EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
       }
     }

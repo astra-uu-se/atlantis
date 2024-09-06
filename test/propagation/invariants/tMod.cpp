@@ -155,12 +155,12 @@ TEST_F(ModTest, NotifyInputChanged) {
 
   for (Int val = lb; val <= ub; ++val) {
     ++ts;
-    for (size_t i = 0; i < inputs.size(); ++i) {
+    for (LocalId i = 0; i < inputs.size(); ++i) {
       _solver->setValue(_solver->currentTimestamp(), inputs.at(i), val);
       const Int expectedOutput =
           computeOutput(_solver->currentTimestamp(), inputs);
 
-      invariant.notifyInputChanged(_solver->currentTimestamp(), LocalId(i));
+      invariant.notifyInputChanged(_solver->currentTimestamp(), i);
       EXPECT_EQ(expectedOutput,
                 _solver->value(_solver->currentTimestamp(), outputId));
     }
@@ -314,7 +314,7 @@ TEST_F(ModTest, ZeroDenominator) {
       if (method == 0) {
         invariant.recompute(_solver->currentTimestamp());
       } else {
-        invariant.notifyInputChanged(_solver->currentTimestamp(), LocalId(1));
+        invariant.notifyInputChanged(_solver->currentTimestamp(), LocalId{1});
       }
       EXPECT_EQ(expected,
                 _solver->value(_solver->currentTimestamp(), outputId));

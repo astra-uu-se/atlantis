@@ -136,11 +136,11 @@ TEST_F(PowTest, NotifyInputChanged) {
 
   for (Int val = lb; val <= ub; ++val) {
     ++ts;
-    for (size_t i = 0; i < inputs.size(); ++i) {
+    for (LocalId i = 0; i < inputs.size(); ++i) {
       _solver->setValue(ts, inputs.at(i), val);
       const Int expectedOutput = computeOutput(ts, inputs, 1);
 
-      invariant.notifyInputChanged(ts, LocalId(i));
+      invariant.notifyInputChanged(ts, i);
       EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
     }
   }

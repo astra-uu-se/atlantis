@@ -107,11 +107,11 @@ TEST_F(BoolOrTest, NotifyInputChanged) {
 
   for (Int val = lb; val <= ub; ++val) {
     ++ts;
-    for (size_t i = 0; i < inputs.size(); ++i) {
+    for (LocalId i = 0; i < inputs.size(); ++i) {
       _solver->setValue(ts, inputs.at(i), val);
       const Int expectedViolation = computeViolation(ts, inputs);
 
-      invariant.notifyInputChanged(ts, LocalId(i));
+      invariant.notifyInputChanged(ts, i);
       EXPECT_EQ(expectedViolation, _solver->value(ts, outputId));
     }
   }

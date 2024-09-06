@@ -12,7 +12,7 @@ size_t IncomingArcContainer::numArcs() const {
   return _incomingStatic.size() + _incomingDynamic.size();
 }
 
-const std::vector<VarIdBase>& IncomingArcContainer::incomingStatic() const {
+const std::vector<VarId>& IncomingArcContainer::incomingStatic() const {
   return _incomingStatic;
 }
 
@@ -21,12 +21,12 @@ const std::vector<IncomingDynamicArc>& IncomingArcContainer::incomingDynamic()
   return _incomingDynamic;
 }
 
-LocalId IncomingArcContainer::emplaceStatic(VarIdBase varId) {
+LocalId IncomingArcContainer::emplaceStatic(VarId varId) {
   _incomingStatic.emplace_back(varId);
   return static_cast<LocalId>(numArcs() - 1);
 }
 
-LocalId IncomingArcContainer::emplaceDynamic(VarIdBase varId,
+LocalId IncomingArcContainer::emplaceDynamic(VarId varId,
                                              size_t outgoingDynamicArcIndex) {
   if (!_incomingStatic.empty()) {
     // All dynamic input variables must be registered before registering

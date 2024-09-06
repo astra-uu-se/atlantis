@@ -221,9 +221,9 @@ class SolverTest : public ::testing::Test {
 
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
       for (size_t i : markedInvariants) {
-        EXPECT_CALL(*invariants[i], notifyInputChanged(timestamp, LocalId(0)))
+        EXPECT_CALL(*invariants[i], notifyInputChanged(timestamp, LocalId{0}))
             .Times(i == 5 ? 1 : 0);
-        EXPECT_CALL(*invariants[i], notifyInputChanged(timestamp, LocalId(1)))
+        EXPECT_CALL(*invariants[i], notifyInputChanged(timestamp, LocalId{1}))
             .Times(i == 5 ? 0 : 1);
       }
     } else {
@@ -414,10 +414,9 @@ TEST_F(SolverTest, SimplePropagation) {
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(moveTimestamp)).Times(3);
   }
 
-  for (size_t id = 0; id < 3; ++id) {
+  for (LocalId id = 0; id < 3; ++id) {
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, LocalId(id)))
-          .Times(1);
+      EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, id)).Times(1);
     }
   }
 
@@ -462,10 +461,9 @@ TEST_F(SolverTest, SimpleCommit) {
   solver->setValue(c, -3);
   solver->endMove();
 
-  for (size_t id = 0; id < 3; ++id) {
+  for (LocalId id = 0; id < 3; ++id) {
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, LocalId(id)))
-          .Times(1);
+      EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, id)).Times(1);
     }
   }
 
@@ -474,7 +472,7 @@ TEST_F(SolverTest, SimpleCommit) {
   solver->endProbe();
 
   if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, LocalId(0)))
+    EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, LocalId{0}))
         .Times(1);
 
     EXPECT_CALL(*invariant, nextInput(::testing::_)).Times(0);

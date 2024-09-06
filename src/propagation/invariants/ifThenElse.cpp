@@ -26,8 +26,8 @@ void IfThenElse::registerVars() {
   registerDefinedVar(_output);
 }
 
-VarId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
-  return _xy[toIndex(_solver.value(ts, _b))];
+VarViewId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
+  return _branches[toIndex(_solver.value(ts, _condition))];
 }
 
 void IfThenElse::updateBounds(bool widenOnly) {
@@ -40,24 +40,24 @@ void IfThenElse::updateBounds(bool widenOnly) {
 }
 
 void IfThenElse::recompute(Timestamp ts) {
-  const size_t index = toIndex(_solver.value(ts, _b));
+  const size_t index = toIndex(_solver.value(ts, _condition));
 
   makeAllDynamicInputsInactive(ts);
   makeDynamicInputActive(ts, LocalId{index});
 
-  updateValue(ts, _output, _solver.value(ts, _xy[index]));
+  updateValue(ts, _output, _solver.value(ts, _branches[index]));
 }
 
 void IfThenElse::notifyInputChanged(Timestamp ts, LocalId localId) {
-  const size_t index = toIndex(_solver.value(ts, _b));
+  const size_t index = toIndex(_solver.value(ts, _condition));
   if (localId == size_t{2}) {
     if (_activeIndex != index) {
       assert(_activeIndex < 2);
-      makeDynamicInputInactive(ts, LocalId(_activeIndex));
-      makeDynamicInputActive(ts, LocalId(index));
+      makeDynamicInputInactive(ts, _activeIndex);
+      makeDynamicInputActive(ts, index);
     }
   }
-  updateValue(ts, _output, _solver.value(ts, _xy[index]));
+  updateValue(ts, _output, _solver.value(ts, _branches[index]));
 }
 
 VarViewId IfThenElse::nextInput(Timestamp ts) {
@@ -65,20 +65,21 @@ VarViewId IfThenElse::nextInput(Timestamp ts) {
     case 0:
       return _condition;
     case 1:
-      return _xy[toIndex(_solver.value(ts, _b))];
+      return _branches[toIndex(_solver.value(ts, _condition))];
     default:
       return NULL_ID;  // Done
   }
 }
 
 void IfThenElse::notifyCurrentInputChanged(Timestamp ts) {
-  updateValue(ts, _output,
-              _solver.value(ts, _xy[toIndex(_solver.value(ts, _b))]));
+  updateValue(
+      ts, _output,
+      _solver.value(ts, _branches[toIndex(_solver.value(ts, _condition))]));
 }
 
 void IfThenElse::commit(Timestamp ts) {
   Invariant::commit(ts);
-  _activeIndex = toIndex(_solver.committedValue(_b));
+  _activeIndex = toIndex(_solver.committedValue(_condition));
 }
 
 }  // namespace atlantis::propagation

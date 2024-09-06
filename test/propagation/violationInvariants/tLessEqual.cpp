@@ -111,12 +111,12 @@ TEST_F(LessEqualTest, NotifyInputChanged) {
   _solver->close();
 
   for (Int val = lb; val <= ub; ++val) {
-    for (size_t i = 0; i < inputs.size(); ++i) {
+    for (LocalId i = 0; i < inputs.size(); ++i) {
       _solver->setValue(_solver->currentTimestamp(), inputs.at(i), val);
       const Int expectedViolation =
           computeViolation(_solver->currentTimestamp(), inputs);
 
-      invariant.notifyInputChanged(_solver->currentTimestamp(), LocalId(i));
+      invariant.notifyInputChanged(_solver->currentTimestamp(), i);
       EXPECT_EQ(expectedViolation,
                 _solver->value(_solver->currentTimestamp(), violationId));
     }

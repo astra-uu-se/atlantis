@@ -124,7 +124,7 @@ TEST_F(ExistsTest, NotifyInputChanged) {
       *_solver, outputId, std::vector<VarViewId>(inputs));
   _solver->close();
 
-  for (size_t i = 0; i < inputs.size(); ++i) {
+  for (LocalId i = 0; i < inputs.size(); ++i) {
     const Int oldVal =
         _solver->value(_solver->currentTimestamp(), inputs.at(i));
     do {
@@ -136,7 +136,7 @@ TEST_F(ExistsTest, NotifyInputChanged) {
     const Int expectedOutput =
         computeOutput(_solver->currentTimestamp(), inputs);
 
-    invariant.notifyInputChanged(_solver->currentTimestamp(), LocalId(i));
+    invariant.notifyInputChanged(_solver->currentTimestamp(), i);
     EXPECT_EQ(expectedOutput,
               _solver->value(_solver->currentTimestamp(), outputId));
   }

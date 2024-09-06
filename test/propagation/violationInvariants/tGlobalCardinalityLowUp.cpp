@@ -175,11 +175,11 @@ TEST_F(GlobalCardinalityLowUpTest, NotifyInputChanged) {
 
     for (Int val = lb; val <= ub; ++val) {
       ++ts;
-      for (size_t j = 0; j < inputs.size(); ++j) {
+      for (LocalId j = 0; j < inputs.size(); ++j) {
         _solver->setValue(ts, inputs[j], val);
         const Int expectedViolation = computeViolation(ts, inputs, coverSet);
 
-        invariant.notifyInputChanged(ts, LocalId(j));
+        invariant.notifyInputChanged(ts, j);
         EXPECT_EQ(expectedViolation, _solver->value(ts, violationId));
       }
     }

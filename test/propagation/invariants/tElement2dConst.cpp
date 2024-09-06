@@ -218,7 +218,7 @@ TEST_F(Element2dConstTest, NotifyInputChanged) {
         const Int expectedOutput =
             computeOutput(ts, rowIndex, colIndex, rowOffset, colOffset);
 
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId{0});
         EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
       }
     }
@@ -388,7 +388,7 @@ TEST_F(Element2dConstTest, Commit) {
         _solver->setValue(ts, colIndex, colIndexVal);
 
         // notify col index change
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(ts, LocalId{0});
 
         // incremental value from col index
         notifiedOutput = _solver->value(ts, outputId);

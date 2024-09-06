@@ -148,7 +148,7 @@ TEST_F(ElementVarTest, NotifyInputChanged) {
       _solver->setValue(ts, index, indexVal);
       const Int expectedOutput = computeOutput(ts, index, offset);
 
-      invariant.notifyInputChanged(ts, LocalId(0));
+      invariant.notifyInputChanged(ts, LocalId{0});
       EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
     }
   }

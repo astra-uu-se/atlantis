@@ -173,7 +173,7 @@ TEST_F(LinearTest, NotifyInputChanged) {
 
     const Int expectedOutput = computeOutput(ts, inputs, coeffs);
 
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
     EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
   }
 }

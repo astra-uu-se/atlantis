@@ -11,24 +11,24 @@ namespace atlantis::propagation {
 namespace invariant {
 
 struct IncomingDynamicArc {
-  VarIdBase varId;
+  VarId varId;
   size_t outgoingDynamicArcIndex;
 };
 
 class IncomingArcContainer {
-  std::vector<VarIdBase> _incomingStatic{};
+  std::vector<VarId> _incomingStatic{};
   std::vector<IncomingDynamicArc> _incomingDynamic{};
 
  public:
   [[nodiscard]] size_t numArcs() const;
 
-  [[nodiscard]] const std::vector<VarIdBase>& incomingStatic() const;
+  [[nodiscard]] const std::vector<VarId>& incomingStatic() const;
 
   [[nodiscard]] const std::vector<IncomingDynamicArc>& incomingDynamic() const;
 
-  LocalId emplaceStatic(VarIdBase varId);
+  LocalId emplaceStatic(VarId varId);
 
-  LocalId emplaceDynamic(VarIdBase varId, size_t outgoingDynamicArcIndex);
+  LocalId emplaceDynamic(VarId varId, size_t outgoingDynamicArcIndex);
 };
 
 }  // namespace invariant

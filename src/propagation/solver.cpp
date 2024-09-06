@@ -117,9 +117,9 @@ void Solver::enqueueDefinedVar(VarId id, size_t curLayer) {
   _isEnqueued[id] = true;
 }
 
-LocalId Solver::registerInvariantInput(InvariantId invariantId, VarViewId inputId,
-                                       bool isDynamicInput) {
-  return _propGraph.registerInvariantInput(invariantId, sourceId(inputId).id,
+LocalId Solver::registerInvariantInput(InvariantId invariantId,
+                                       VarViewId inputId, bool isDynamicInput) {
+  return _propGraph.registerInvariantInput(invariantId, sourceId(inputId),
                                            isDynamicInput);
 }
 
@@ -311,35 +311,34 @@ void Solver::propagateOnClose() {
   }
 
   for (size_t i = 1; i <= _propGraph.numVars(); ++i) {
-    commitIf(_currentTimestamp, VarIdBase{i});
-    _propGraph.commitOutgoingArcs(_currentTimestamp, VarIdBase{i});
+    commitIf(_currentTimestamp, VarId{i});
+    _propGraph.commitOutgoingArcs(_currentTimestamp, VarId{i});
   }
 
   for (size_t i = 1; i <= _propGraph.numVars(); ++i) {
-    commitIf(_currentTimestamp, VarIdBase{i});
-    _propGraph.commitOutgoingArcs(_currentTimestamp, VarIdBase{i});
+    commitIf(_currentTimestamp, VarId{i});
+    _propGraph.commitOutgoingArcs(_currentTimestamp, VarId{i});
   }
 }
 
-template void Solver::enforceInvariant<false>(VarIdBase,
-                                              const var::OutgoingArc&, size_t);
-template void Solver::enforceInvariant<true>(VarIdBase, const var::OutgoingArc&,
+template void Solver::enforceInvariant<false>(VarId, const var::OutgoingArc&,
+                                              size_t);
+template void Solver::enforceInvariant<true>(VarId, const var::OutgoingArc&,
                                              size_t);
 // Enforces the invariant of outgoingArc
 template <bool SingleLayer>
-void Solver::enforceInvariant(VarIdBase queuedVar,
+void Solver::enforceInvariant(VarId queuedVar,
                               const var::OutgoingArc& outgoingArc,
                               size_t curLayer) {
   assert(outgoingArc.invariantId() != NULL_ID);
   Invariant& inv = _store.invariant(outgoingArc.invariantId());
   assert(inv.primaryDefinedVar() != NULL_ID);
-  assert(inv.primaryDefinedVar().idType == VarIdType::var);
-  assert(curLayer < _propGraph.layer(inv.primaryDefinedVar()) ||
-         _propGraph.position(queuedVar) <
-             _propGraph.position(inv.primaryDefinedVar()));
+  assert(curLayer < _propGraph.varLayer(inv.primaryDefinedVar()) ||
+         _propGraph.varPosition(queuedVar) <
+             _propGraph.varPosition(inv.primaryDefinedVar()));
   inv.notifyInputChanged(_currentTimestamp, outgoingArc.localId());
   if constexpr (SingleLayer) {
-    assert(_propGraph.layer(inv.primaryDefinedVar()) == 0);
+    assert(_propGraph.varLayer(inv.primaryDefinedVar()) == 0);
     enqueueDefinedVar(inv.primaryDefinedVar());
   } else {
     enqueueDefinedVar(inv.primaryDefinedVar(), curLayer);
@@ -360,7 +359,7 @@ void Solver::propagate() {
          queuedVar = dequeueComputedVar(_currentTimestamp)) {
       assert(_propGraph.varLayer(queuedVar) == curLayer);
       // queuedVar has been computed under _currentTimestamp
-      const InvariantId defInvId = _propGraph.definingInvariant(queuedVar.id);
+      const InvariantId defInvId = _propGraph.definingInvariant(queuedVar);
 
       if (defInvId != NULL_ID) {
         // If the variable is a defined var
@@ -369,26 +368,27 @@ void Solver::propagate() {
         // is entered only once per invariant:
         if (queuedVar == defInv.primaryDefinedVar()) {
           // enqueue all modified defined vars:
-          for (const VarId& inputId : defInv.nonPrimaryDefinedVars()) {
+          for (const VarId inputId : defInv.nonPrimaryDefinedVars()) {
             if (hasChanged(_currentTimestamp, inputId)) {
-              assert(!_isEnqueued.get(inputId.id));
-              _propGraph.enqueuePropagationQueue(inputId.id);
-              _isEnqueued.set(inputId.id, true);
+              assert(!_isEnqueued.at(inputId));
+              _propGraph.enqueuePropagationQueue(inputId);
+              _isEnqueued[inputId] = true;
             }
           }
           if constexpr (Mode == CommitMode::COMMIT) {
             if (_propGraph.isDynamicInvariant(defInvId)) {
               // commit each dynamic input that was not previously committed
-              for (const VarIdBase& dynVar : std::array<VarIdBase, 2>{
+              for (const VarId dynVar : std::array<VarId, 2>{
                        _store.dynamicInputVar(_currentTimestamp, defInvId),
                        _store.dynamicInputVar(_currentTimestamp + 1,
                                               defInvId)}) {
-                if (dynVar != NULL_ID && !_isEnqueued.get(dynVar.id)) {
-                  if (_propGraph.layer(dynVar) < curLayer ||
-                      (_propGraph.layer(dynVar) == curLayer &&
-                       _propGraph.position(dynVar) <
-                           _propGraph.position(queuedVar))) {
-                    _isEnqueued.set(dynVar.id, true);
+                assert(dynVar == NULL_ID || dynVar < _isEnqueued.size());
+                if (dynVar != NULL_ID && !_isEnqueued[dynVar]) {
+                  if (_propGraph.varLayer(dynVar) < curLayer ||
+                      (_propGraph.varLayer(dynVar) == curLayer &&
+                       _propGraph.varPosition(dynVar) <
+                           _propGraph.varPosition(queuedVar))) {
+                    _isEnqueued[dynVar] = true;
                     _propGraph.commitOutgoingArcs(_currentTimestamp, dynVar);
                   } else {
                     enqueueDefinedVar(dynVar, curLayer);
@@ -422,7 +422,7 @@ void Solver::propagate() {
         assert(index < arcs.outgoingDynamic().size());
         const auto& arc = arcs.outgoingDynamic().arcs()[index];
         assert(arc.invariantId() != NULL_ID);
-        const VarIdBase dynVar =
+        const VarId dynVar =
             _store.dynamicInputVar(_currentTimestamp, arc.invariantId());
         assert(queuedVar == dynVar);
         enforceInvariant<SingleLayer>(queuedVar, arc, curLayer);
@@ -473,8 +473,7 @@ void Solver::computeBounds() {
 
   for (InvariantId invariantId = 0; invariantId < numInvariants();
        ++invariantId) {
-    inputsToCompute[invariantId] =
-        static_cast<Int>(inputVars(invariantId).size());
+    inputsToCompute[invariantId] = static_cast<Int>(numInputVars(invariantId));
   }
 
   // Search variables might now have been computed yet
