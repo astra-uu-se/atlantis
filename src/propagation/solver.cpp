@@ -473,15 +473,14 @@ void Solver::propagate() {
 }
 
 void Solver::computeBounds() {
-  std::vector<Int> inputsToCompute;
-  inputsToCompute.resize(numInvariants(), 0);
+  std::vector<Int> inputsToCompute(numInvariants(), 0);
 
   for (InvariantId invariantId = 0; invariantId < numInvariants();
        ++invariantId) {
     inputsToCompute[invariantId] = static_cast<Int>(numInputVars(invariantId));
   }
 
-  // Search variables might now have been computed yet
+  // Mark the search variables as computed:
   for (VarId varId = 0; varId < numVars(); ++varId) {
     if (definingInvariant(varId) == NULL_ID) {
       auto& listeningInvData = outgoingArcs(varId);
@@ -502,6 +501,7 @@ void Solver::computeBounds() {
     return inputsToCompute[a] < inputsToCompute[b];
   };
 
+  // As a hack, we use an ordered set as a priority queue:
   std::set<InvariantId, decltype(cmp)> invariantQueue(cmp);
 
   for (InvariantId invariantId = 0; invariantId < numInvariants();
@@ -516,7 +516,6 @@ void Solver::computeBounds() {
     invariantQueue.erase(invariantId);
     assert(!invariantQueue.contains(invariantId));
 
-    assert(!invariantQueue.contains(invariantId));
     // If the following assertion fails, then inputsToCompute[i] was
     // updated before removing invariant i:
     assert(std::ranges::all_of(
@@ -532,6 +531,7 @@ void Solver::computeBounds() {
     _store.invariant(invariantId).updateBounds(true);
 
     for (const VarId outputVarId : _propGraph.varsDefinedBy(invariantId)) {
+      // Mark each output variable as comptued:
       auto& listeningInvData = outgoingArcs(outputVarId);
       for (const auto& listeningInvData : listeningInvData.outgoingStatic()) {
         // Remove from the data structure must happen before updating
