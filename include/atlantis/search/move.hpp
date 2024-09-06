@@ -23,7 +23,7 @@ class Move {
   const Cost& probe(const Assignment& assignment) {
     if (!_probed) {
       _cost = assignment.probe([&](auto& modifier) {
-        for (auto i = 0u; i < N; i++) {
+        for (size_t i = 0; i < N; i++) {
           modifier.set(_vars[i], _values[i]);
         }
       });

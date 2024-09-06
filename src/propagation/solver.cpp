@@ -11,8 +11,10 @@ Solver::Solver()
     : _propagationMode(PropagationMode::INPUT_TO_OUTPUT),
       _propGraph(_store, ESTIMATED_NUM_OBJECTS),
       _outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
-      _isEnqueued(ESTIMATED_NUM_OBJECTS),
-      _modifiedSearchVars() {}
+      _isEnqueued(),
+      _modifiedSearchVars() {
+  _isEnqueued.reserve(ESTIMATED_NUM_OBJECTS);
+}
 
 void Solver::open() {
   if (_isOpen) {
@@ -88,15 +90,17 @@ void Solver::close() {
 
 //---------------------Registration---------------------
 void Solver::enqueueDefinedVar(VarId id) {
-  if (_isEnqueued.get(id)) {
+  assert(id < _isEnqueued.size());
+  if (_isEnqueued[id]) {
     return;
   }
   _propGraph.enqueuePropagationQueue(id);
-  _isEnqueued.set(id, true);
+  _isEnqueued[id] = true;
 }
 
 void Solver::enqueueDefinedVar(VarId id, size_t curLayer) {
-  if (_isEnqueued.get(id)) {
+  assert(id < _isEnqueued.size());
+  if (_isEnqueued[id]) {
     return;
   }
   const size_t varLayer = _propGraph.varLayer(id);
@@ -106,11 +110,11 @@ void Solver::enqueueDefinedVar(VarId id, size_t curLayer) {
     assert(
         std::all_of(_layerQueue[varLayer].begin(),
                     _layerQueue[varLayer].begin() + _layerQueueIndex[varLayer],
-                    [&](const VarId& vId) { return _isEnqueued.get(vId); }));
+                    [&](const VarId& vId) { return _isEnqueued.at(vId); }));
     _layerQueue[varLayer][_layerQueueIndex[varLayer]] = id;
     ++_layerQueueIndex[varLayer];
   }
-  _isEnqueued.set(id, true);
+  _isEnqueued[id] = true;
 }
 
 void Solver::registerInvariantInput(InvariantId invariantId, VarViewId inputId,
@@ -127,7 +131,8 @@ void Solver::registerVar(VarId id) {
   _numVars++;
   _propGraph.registerVar(id);
   _outputToInputExplorer.registerVar(id);
-  _isEnqueued.register_idx(id, false);
+  assert(id == _isEnqueued.size());
+  _isEnqueued.emplace_back(false);
 }
 
 void Solver::registerInvariant(InvariantId invariantId) {
@@ -148,7 +153,7 @@ VarId Solver::dequeueComputedVar(Timestamp) {
 
 void Solver::clearPropagationQueue() {
   _propGraph.clearPropagationQueue();
-  _isEnqueued.assign_all(false);
+  _isEnqueued.assign(_isEnqueued.size(), false);
 }
 
 void Solver::closeInvariants() {
@@ -267,7 +272,7 @@ void Solver::endCommit() {
 }
 
 void Solver::propagateOnClose() {
-  IdMap<bool> committedInvariants(_propGraph.numInvariants());
+  std::vector<bool> committedInvariants(_propGraph.numInvariants());
   committedInvariants.assign(_propGraph.numInvariants(), false);
   for (VarId varId : _propGraph.searchVars()) {
     commitIf(_currentTimestamp, varId);
@@ -282,8 +287,9 @@ void Solver::propagateOnClose() {
     });
     for (const VarId& varId : vars) {
       const InvariantId defInv = _propGraph.definingInvariant(varId);
-      if (defInv != NULL_ID && !committedInvariants.get(defInv)) {
-        committedInvariants.set(defInv, true);
+      assert(defInv == NULL_ID || defInv < committedInvariants.size());
+      if (defInv != NULL_ID && !committedInvariants[defInv]) {
+        committedInvariants[defInv] = true;
         Invariant& inv = _store.invariant(defInv);
         inv.recompute(_currentTimestamp);
         inv.commit(_currentTimestamp);
@@ -319,9 +325,9 @@ void Solver::propagate() {
           // enqueue all modified defined vars:
           for (const VarId defVarId : defInv.nonPrimaryDefinedVars()) {
             if (hasChanged(_currentTimestamp, defVarId)) {
-              assert(!_isEnqueued.get(defVarId));
+              assert(!_isEnqueued.at(defVarId));
               _propGraph.enqueuePropagationQueue(defVarId);
-              _isEnqueued.set(defVarId, true);
+              _isEnqueued[defVarId] = true;
             }
           }
           if constexpr (Mode == CommitMode::COMMIT) {
@@ -392,7 +398,7 @@ void Solver::propagate() {
       }
       // Add all queued variables to the propagation queue:
       for (size_t i = 0; i < _layerQueueIndex[curLayer]; ++i) {
-        assert(_isEnqueued.get(_layerQueue[curLayer][i]));
+        assert(_isEnqueued.at(_layerQueue[curLayer][i]));
         _propGraph.enqueuePropagationQueue(_layerQueue[curLayer][i]);
       }
       _layerQueueIndex[curLayer] = 0;
@@ -401,12 +407,13 @@ void Solver::propagate() {
 }
 
 void Solver::computeBounds() {
-  IdMap<Int> inputsToCompute(numInvariants());
+  std::vector<Int> inputsToCompute;
+  inputsToCompute.resize(numInvariants(), 0);
 
   for (InvariantId invariantId = 0; invariantId < numInvariants();
        ++invariantId) {
-    inputsToCompute.register_idx(
-        invariantId, static_cast<Int>(inputVars(invariantId).size()));
+    inputsToCompute[invariantId] =
+        static_cast<Int>(inputVars(invariantId).size());
   }
 
   // Search variables might now have been computed yet

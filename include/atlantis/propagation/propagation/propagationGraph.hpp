@@ -38,14 +38,14 @@ class PropagationGraph {
    *
    * Maps to nullptr if not defined by any invariant.
    */
-  IdMap<InvariantId> _definingInvariant;
+  std::vector<InvariantId> _definingInvariant;
 
   /**
    * Map from InvariantId -> list of VarViewId
    *
    * Maps an invariant to all variables it defines.
    */
-  IdMap<std::vector<VarId>> _varsDefinedByInvariant;
+  std::vector<std::vector<VarId>> _varsDefinedByInvariant;
   /**
    * Map from InvariantId -> list of VarViewId
    *
@@ -53,22 +53,22 @@ class PropagationGraph {
    */
   // Given input variable with VarViewId x and invariant with InvariantId i,
   // then _inputVars[i] = <x, b>, where b = true iff x is a dynamic input to i.
-  IdMap<std::vector<std::pair<VarId, bool>>> _inputVars;
+  std::vector<std::vector<std::pair<VarId, bool>>> _inputVars;
 
   // Given invariant with InvariantId i, _isDynamicInvairiant[i] = true iff i
   // has one or more dynamic input variables.
-  IdMap<bool> _isDynamicInvariant;
+  std::vector<bool> _isDynamicInvariant;
 
   // Map from VarID -> vector of InvariantID
-  IdMap<std::vector<ListeningInvariantData>> _listeningInvariantData;
+  std::vector<std::vector<ListeningInvariantData>> _listeningInvariantData;
 
   std::vector<std::vector<VarId>> _varsInLayer;
   struct LayerIndex {
     size_t layer;
     size_t index;
   };
-  IdMap<LayerIndex> _varLayerIndex;
-  IdMap<size_t> _varPosition;
+  std::vector<LayerIndex> _varLayerIndex;
+  std::vector<size_t> _varPosition;
   std::vector<size_t> _layerPositionOffset{};
   std::vector<bool> _layerHasDynamicCycle{};
   bool _hasDynamicCycle{false};
@@ -169,7 +169,8 @@ class PropagationGraph {
   }
 
   [[nodiscard]] inline bool isDynamicInvariant(InvariantId id) const {
-    return _isDynamicInvariant.get(id);
+    assert(id < _isDynamicInvariant.size());
+    return _isDynamicInvariant[id];
   }
 
   [[nodiscard]] inline InvariantId definingInvariant(VarId id) const {

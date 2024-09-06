@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/utils/idMap.hpp"
 #include "atlantis/propagation/variables/intVar.hpp"
 #include "atlantis/propagation/views/intView.hpp"
 
@@ -12,32 +11,32 @@ namespace atlantis::propagation {
 
 class Store {
  private:
-  IdMap<IntVar> _intVars;
-
-  IdMap<std::unique_ptr<Invariant>> _invariants;
-  IdMap<std::unique_ptr<IntView>> _intViews;
-  IdMap<VarId> _intViewSourceId;
+  std::vector<IntVar> _intVars;
+  std::vector<std::unique_ptr<Invariant>> _invariants;
+  std::vector<std::unique_ptr<IntView>> _intViews;
+  std::vector<VarId> _intViewSourceId;
 
  public:
   Store(size_t estimatedSize, [[maybe_unused]] size_t nullId)
-      : _intVars(estimatedSize),
-        _invariants(estimatedSize),
-        _intViews(estimatedSize),
-        _intViewSourceId(estimatedSize) {}
+      : _intVars(), _invariants(), _intViews(), _intViewSourceId() {
+    _intVars.reserve(estimatedSize);
+    _invariants.reserve(estimatedSize);
+    _intViews.reserve(estimatedSize);
+    _intViewSourceId.reserve(estimatedSize);
+  }
 
   [[nodiscard]] inline VarViewId createIntVar(Timestamp ts, Int initValue,
                                               Int lowerBound, Int upperBound) {
     VarId vId(_intVars.size());
     const VarViewId newId = VarViewId(vId, false);
-    _intVars.register_idx(vId,
-                          IntVar(ts, vId, initValue, lowerBound, upperBound));
+    _intVars.emplace_back(ts, vId, initValue, lowerBound, upperBound);
     return newId;
   }
   [[nodiscard]] inline InvariantId createInvariantFromPtr(
       std::unique_ptr<Invariant>&& ptr) {
     auto newId = InvariantId(_invariants.size());
     ptr->setId(newId);
-    _invariants.register_idx_move(newId, std::move(ptr));
+    _invariants.emplace_back(std::move(ptr));
     return newId;
   }
 
@@ -48,8 +47,8 @@ class Store {
     const VarViewId parentId = ptr->parentId();
     const VarViewId source =
         parentId.isVar() ? parentId : _intViewSourceId[size_t(parentId)];
-    _intViews.register_idx_move(size_t(newId), std::move(ptr));
-    _intViewSourceId.register_idx(size_t(newId), VarId(source));
+    _intViews.emplace_back(std::move(ptr));
+    _intViewSourceId.emplace_back(VarId(source));
     return newId;
   }
 

@@ -8,7 +8,6 @@
 #include "atlantis/propagation/propagation/propagationGraph.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/utils/hashes.hpp"
-#include "atlantis/propagation/utils/idMap.hpp"
 #include "atlantis/propagation/variables/intVar.hpp"
 
 namespace atlantis::propagation {
@@ -23,7 +22,7 @@ class Solver : public SolverBase {
   PropagationGraph _propGraph;
   OutputToInputExplorer _outputToInputExplorer;
 
-  IdMap<bool> _isEnqueued;
+  std::vector<bool> _isEnqueued;
   std::vector<std::vector<VarId>> _layerQueue{};
   std::vector<size_t> _layerQueueIndex{};
 

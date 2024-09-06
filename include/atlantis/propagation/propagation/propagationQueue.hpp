@@ -4,7 +4,6 @@
 
 #include "atlantis/propagation/propagation/propagationListNode.hpp"
 #include "atlantis/propagation/types.hpp"
-#include "atlantis/propagation/utils/idMap.hpp"
 
 namespace atlantis::propagation {
 
@@ -12,7 +11,7 @@ class PropagationQueue {
   typedef PropagationListNode ListNode;
 
  private:
-  IdMap<std::unique_ptr<ListNode>> _priorityNodes;
+  std::vector<std::unique_ptr<ListNode>> _priorityNodes;
   ListNode* head;
   ListNode* tail;
 
@@ -20,20 +19,19 @@ class PropagationQueue {
   PropagationQueue() : _priorityNodes(0), head(nullptr), tail(nullptr) {}
 
   void init(size_t, size_t) {
-    _priorityNodes = IdMap<std::unique_ptr<ListNode>>(0);
+    _priorityNodes = std::vector<std::unique_ptr<ListNode>>(0);
     head = nullptr;
     tail = nullptr;
   }
 
   // vars must be initialised in order.
   void initVar(VarId id, size_t priority) {
-    assert(!_priorityNodes.has_idx(id));
-    _priorityNodes.register_idx(id);
-    _priorityNodes[id] = std::make_unique<ListNode>(id, priority);
+    assert(id == _priorityNodes.size());
+    _priorityNodes.emplace_back(std::make_unique<ListNode>(id, priority));
   }
 
   void updatePriority(VarId id, size_t newPriority) {
-    assert(_priorityNodes.has_idx(id));
+    assert(id < _priorityNodes.size());
     _priorityNodes[id]->priority = newPriority;
   }
 

@@ -5,7 +5,6 @@
 
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/store/store.hpp"
-#include "atlantis/propagation/utils/idMap.hpp"
 #include "atlantis/types.hpp"
 
 namespace atlantis::propagation {

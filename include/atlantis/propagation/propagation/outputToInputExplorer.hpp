@@ -3,8 +3,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/types.hpp"
-#include "atlantis/propagation/utils/idMap.hpp"
 
 namespace atlantis::propagation {
 
@@ -18,13 +18,13 @@ class OutputToInputExplorer {
   size_t _varStackIdx = 0;
   std::vector<InvariantId> _invariantStack;
   size_t _invariantStackIdx = 0;
-  IdMap<Timestamp> _varComputedAt;  // last timestamp when a VarID was
-                                    // computed (i.e., will not change)
-  IdMap<Timestamp> _invariantComputedAt;
-  IdMap<bool> _invariantIsOnStack;
+  std::vector<Timestamp> _varComputedAt;  // last timestamp when a VarID was
+                                          // computed (i.e., will not change)
+  std::vector<Timestamp> _invariantComputedAt;
+  std::vector<bool> _invariantIsOnStack;
 
-  IdMap<std::unordered_set<VarId>> _searchVarAncestors;
-  IdMap<bool> _onPropagationPath;
+  std::vector<std::unordered_set<VarId>> _searchVarAncestors;
+  std::vector<bool> _onPropagationPath;
 
   OutputToInputMarkingMode _outputToInputMarkingMode;
 
@@ -95,14 +95,16 @@ inline VarId OutputToInputExplorer::peekVarStack() {
 }
 
 inline void OutputToInputExplorer::pushInvariantStack(InvariantId invariantId) {
-  if (_invariantIsOnStack.get(invariantId)) {
+  assert(invariantId < _invariantIsOnStack.size());
+  if (_invariantIsOnStack[invariantId]) {
     throw DynamicCycleException();
   }
-  _invariantIsOnStack.set(invariantId, true);
+  _invariantIsOnStack[invariantId] = true;
   _invariantStack[_invariantStackIdx++] = invariantId;
 }
 inline void OutputToInputExplorer::popInvariantStack() {
-  _invariantIsOnStack.set(_invariantStack[--_invariantStackIdx], false);
+  assert(_invariantStackIdx > 0);
+  _invariantIsOnStack[_invariantStack[--_invariantStackIdx]] = false;
 }
 
 inline InvariantId OutputToInputExplorer::peekInvariantStack() {

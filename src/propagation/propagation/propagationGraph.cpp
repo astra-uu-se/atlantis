@@ -9,7 +9,6 @@
 
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/store/store.hpp"
-#include "atlantis/propagation/utils/idMap.hpp"
 
 namespace atlantis::propagation {
 
@@ -24,27 +23,44 @@ inline bool all_in_range(size_t start, size_t stop,
 
 PropagationGraph::PropagationGraph(const Store& store, size_t expectedSize)
     : _store(store),
-      _definingInvariant(expectedSize),
-      _varsDefinedByInvariant(expectedSize),
-      _inputVars(expectedSize),
-      _isDynamicInvariant(expectedSize),
-      _listeningInvariantData(expectedSize),
-      _varLayerIndex(expectedSize),
-      _varPosition(expectedSize) {}
+      _definingInvariant(),
+      _varsDefinedByInvariant(),
+      _inputVars(),
+      _isDynamicInvariant(),
+      _listeningInvariantData(),
+      _varLayerIndex(),
+      _varPosition() {
+  _definingInvariant.reserve(expectedSize);
+  _varsDefinedByInvariant.reserve(expectedSize);
+  _inputVars.reserve(expectedSize);
+  _isDynamicInvariant.reserve(expectedSize);
+  _listeningInvariantData.reserve(expectedSize);
+  _varLayerIndex.reserve(expectedSize);
+  _varPosition.reserve(expectedSize);
+}
 
 void PropagationGraph::registerInvariant(InvariantId invariantId) {
   // Everything must be registered in sequence.
-  _varsDefinedByInvariant.register_idx(invariantId);
-  _isDynamicInvariant.register_idx(invariantId, false);
-  _inputVars.register_idx(invariantId);
+  assert(invariantId == _varsDefinedByInvariant.size());
+  assert(invariantId == _isDynamicInvariant.size());
+  assert(invariantId == _inputVars.size());
+
+  _varsDefinedByInvariant.emplace_back();
+  _isDynamicInvariant.emplace_back(false);
+  _inputVars.emplace_back();
   ++_numInvariants;
 }
 
 void PropagationGraph::registerVar(VarId id) {
-  _definingInvariant.register_idx(id, NULL_ID);
-  _listeningInvariantData.register_idx(id);
-  _varLayerIndex.register_idx(id);
-  _varPosition.register_idx(id);
+  assert(id == _definingInvariant.size());
+  assert(id == _listeningInvariantData.size());
+  assert(id == _varLayerIndex.size());
+  assert(id == _varPosition.size());
+
+  _definingInvariant.emplace_back(NULL_ID);
+  _listeningInvariantData.emplace_back();
+  _varLayerIndex.emplace_back();
+  _varPosition.emplace_back();
   ++_numVars;
 }
 
@@ -52,12 +68,18 @@ void PropagationGraph::registerInvariantInput(InvariantId invariantId,
                                               VarId varId, LocalId localId,
                                               bool isDynamicInput) {
   assert(invariantId != NULL_ID && varId != NULL_ID);
+  assert(varId < _definingInvariant.size());
   if (_definingInvariant[varId] == invariantId) {
     return;
   }
-  _isDynamicInvariant.set(
-      invariantId, _isDynamicInvariant.get(invariantId) || isDynamicInput);
+  assert(invariantId < _isDynamicInvariant.size());
+  _isDynamicInvariant[invariantId] =
+      _isDynamicInvariant[invariantId] || isDynamicInput;
+
+  assert(varId < _listeningInvariantData.size());
   _listeningInvariantData[varId].emplace_back(invariantId, localId);
+
+  assert(invariantId < _inputVars.size());
   _inputVars[invariantId].emplace_back(varId, isDynamicInput);
 }
 
@@ -163,7 +185,7 @@ bool PropagationGraph::containsStaticCycle() {
 
 void PropagationGraph::partitionIntoLayers(std::vector<bool>& visited,
                                            VarId varId) {
-  assert(_varLayerIndex.has_idx(varId));
+  assert(varId < _varLayerIndex.size());
   assert(varId < visited.size());
   // Mark current output variable
   visited[varId] = true;
@@ -222,7 +244,7 @@ void PropagationGraph::partitionIntoLayers() {
   assert(all_in_range(0, numVars(), [&](const VarId varId) {
     const size_t layer = _varLayerIndex.at(varId).layer;
     const size_t index = _varLayerIndex.at(varId).index;
-    return _varLayerIndex.has_idx(varId) && layer < _varsInLayer.size() &&
+    return varId < _varLayerIndex.size() && layer < _varsInLayer.size() &&
            index < _varsInLayer.at(layer).size() &&
            varId == _varsInLayer.at(layer).at(index);
   }));
@@ -230,7 +252,7 @@ void PropagationGraph::partitionIntoLayers() {
 
 bool PropagationGraph::containsDynamicCycle(std::vector<bool>& visited,
                                             VarId originVarId) {
-  assert(_varLayerIndex.has_idx(originVarId));
+  assert(originVarId < _varLayerIndex.size());
   const size_t layer = _varLayerIndex[originVarId].layer;
   assert(layer < numLayers());
 
@@ -358,7 +380,7 @@ void PropagationGraph::computeLayerOffsets() {
 void PropagationGraph::topologicallyOrder(const Timestamp ts,
                                           std::vector<bool>& inFrontier,
                                           const VarId varId) {
-  assert(_varLayerIndex.has_idx(varId));
+  assert(varId < _varLayerIndex.size());
   assert(_varLayerIndex.at(varId).layer < numLayers());
   const auto& [layer, index] = _varLayerIndex.at(varId);
 

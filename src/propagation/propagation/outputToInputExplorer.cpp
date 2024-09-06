@@ -9,26 +9,35 @@ OutputToInputExplorer::OutputToInputExplorer(Solver& e, size_t expectedSize)
     : _solver(e),
       _varStackIdx(0),
       _invariantStackIdx(0),
-      _varComputedAt(expectedSize),
-      _invariantComputedAt(expectedSize),
-      _invariantIsOnStack(expectedSize),
-      _searchVarAncestors(expectedSize),
-      _onPropagationPath(expectedSize),
+      _varStack(),
+      _invariantStack(),
+      _varComputedAt(),
+      _invariantComputedAt(),
+      _invariantIsOnStack(),
+      _searchVarAncestors(),
+      _onPropagationPath(),
       _outputToInputMarkingMode(OutputToInputMarkingMode::NONE) {
   _varStack.reserve(expectedSize);
   _invariantStack.reserve(expectedSize);
+  _varComputedAt.reserve(expectedSize);
+  _invariantComputedAt.reserve(expectedSize);
+  _invariantIsOnStack.reserve(expectedSize);
+  _searchVarAncestors.reserve(expectedSize);
+  _onPropagationPath.reserve(expectedSize);
 }
 
 void OutputToInputExplorer::outputToInputStaticMarking() {
   std::vector<bool> varVisited(_solver.numVars());
 
-  for (size_t idx = 0; idx < _solver.numVars(); ++idx) {
-    if (_searchVarAncestors.size() <= idx) {
-      _searchVarAncestors.register_idx(idx);
-    }
-
+  for (size_t idx = 0;
+       idx < std::min(_searchVarAncestors.size(), _solver.numVars()); ++idx) {
     _searchVarAncestors[idx].clear();
   }
+
+  _searchVarAncestors.resize(_solver.numVars());
+  assert(std::all_of(
+      _searchVarAncestors.begin(), _searchVarAncestors.end(),
+      [&](const std::unordered_set<VarId> anc) { return anc.empty(); }));
 
   for (const VarId searchVar : _solver.searchVars()) {
     std::fill(varVisited.begin(), varVisited.end(), false);
@@ -64,9 +73,11 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
   _onPropagationPath.assign(_solver.numVars(), false);
 
   for (const VarId modifiedDecisionVar : _solver.modifiedSearchVar()) {
+    assert(modifiedDecisionVar < _onPropagationPath.size());
+    assert(!_onPropagationPath.at(modifiedDecisionVar));
+
     stack.emplace_back(modifiedDecisionVar);
-    assert(!_onPropagationPath.get(modifiedDecisionVar));
-    _onPropagationPath.set(modifiedDecisionVar, true);
+    _onPropagationPath[modifiedDecisionVar] = true;
 
     while (!stack.empty()) {
       const VarId id = stack.back();
@@ -75,8 +86,9 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
            _solver.listeningInvariantData(id)) {
         for (const VarId outputVar :
              _solver.varsDefinedBy(invariantData.invariantId)) {
-          if (!_onPropagationPath.get(outputVar)) {
-            _onPropagationPath.set(outputVar, true);
+          assert(outputVar < _onPropagationPath.size());
+          if (!_onPropagationPath[outputVar]) {
+            _onPropagationPath[outputVar] = true;
             stack.emplace_back(outputVar);
           }
         }
@@ -129,13 +141,15 @@ template <OutputToInputMarkingMode MarkingMode>
 bool OutputToInputExplorer::isMarked(VarId id) {
   if constexpr (MarkingMode ==
                 OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
+    assert(id < _searchVarAncestors.size());
     return std::any_of(_solver.modifiedSearchVar().begin(),
                        _solver.modifiedSearchVar().end(), [&](size_t ancestor) {
-                         return _searchVarAncestors.at(id).contains(ancestor);
+                         return _searchVarAncestors[id].contains(ancestor);
                        });
   } else if constexpr (MarkingMode ==
                        OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION) {
-    return _onPropagationPath.get(id);
+    assert(id < _onPropagationPath.size());
+    return _onPropagationPath[id];
   } else {
     // We should check this with constant expressions
     assert(false);
@@ -186,7 +200,8 @@ void OutputToInputExplorer::expandInvariant(InvariantId invariantId) {
   if (invariantId == NULL_ID) {
     return;
   }
-  if (_invariantIsOnStack.get(invariantId)) {
+  assert(invariantId < _invariantIsOnStack.size());
+  if (_invariantIsOnStack[invariantId]) {
     throw DynamicCycleException();
   }
   // nextInput gets the source if the input would be a view:
@@ -231,13 +246,16 @@ bool OutputToInputExplorer::pushNextInputVar() {
 
 void OutputToInputExplorer::registerVar(VarId id) {
   _varStack.emplace_back(NULL_ID);  // push back just to resize the stack!
-  _varComputedAt.register_idx(id, NULL_TIMESTAMP);
+  assert(id == _varComputedAt.size());
+  _varComputedAt.emplace_back(NULL_TIMESTAMP);
 }
 
 void OutputToInputExplorer::registerInvariant(InvariantId invariantId) {
   _invariantStack.emplace_back(NULL_ID);  // push back just to resize the stack!
-  _invariantComputedAt.register_idx(invariantId, NULL_TIMESTAMP);
-  _invariantIsOnStack.register_idx(invariantId, false);
+  assert(invariantId == _invariantComputedAt.size());
+  assert(invariantId == _invariantIsOnStack.size());
+  _invariantComputedAt.emplace_back(NULL_TIMESTAMP);
+  _invariantIsOnStack.emplace_back(false);
 }
 
 template void OutputToInputExplorer::propagate<OutputToInputMarkingMode::NONE>(
