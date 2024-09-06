@@ -414,7 +414,7 @@ TEST_F(SolverTest, SimplePropagation) {
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(moveTimestamp)).Times(3);
   }
 
-  for (size_t id = 0; id < 3; ++id) {
+  for (LocalId id = 0; id < 3; ++id) {
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, id)).Times(1);
     }
@@ -461,7 +461,7 @@ TEST_F(SolverTest, SimpleCommit) {
   solver->setValue(c, -3);
   solver->endMove();
 
-  for (size_t id = 0; id < 3; ++id) {
+  for (LocalId id = 0; id < 3; ++id) {
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, id)).Times(1);
     }

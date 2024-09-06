@@ -51,10 +51,10 @@ class PropagationGraph {
   // Given input variable with VarId x and invariant with InvariantId i, then
   // _staticInputVars[i] = <x, b>, where b = true iff x is a dynamic input
   // to i.
-  IdMap<InvariantId, invariant::IncomingArcContainer> _incomingArcs;
+  std::vector<invariant::IncomingArcContainer> _incomingArcs;
 
   // Map from VarID -> vector of InvariantID
-  IdMap<VarIdBase, var::OutgoingArcContainer> _outgoingArcs;
+  std::vector<var::OutgoingArcContainer> _outgoingArcs;
 
   std::vector<std::vector<VarId>> _varsInLayer;
   std::vector<LayerIndex> _varLayerIndex;
@@ -104,6 +104,8 @@ class PropagationGraph {
    * @param isDynamicInput true if the variable is a dynamic input to the
    * invariant.
    */
+  LocalId registerInvariantInput(InvariantId invariantId, VarId inputId,
+                                 bool isDynamic);
   void registerInvariantInput(InvariantId invariantId, VarId inputVarId,
                               LocalId localId, bool isDynamicInput);
 
@@ -118,14 +120,8 @@ class PropagationGraph {
   void makeDynamicInputActive(Timestamp, InvariantId, LocalId);
   void makeAllDynamicInputsInactive(Timestamp, InvariantId);
   void makeDynamicInputInactive(Timestamp, InvariantId, LocalId);
-  void makeAllDynamicInactive(Timestamp, VarIdBase);
-  void commitOutgoingArcs(Timestamp, VarIdBase);
-
-  void makeDynamicInputActive(Timestamp, InvariantId, LocalId);
-  void makeAllDynamicInputsInactive(Timestamp, InvariantId);
-  void makeDynamicInputInactive(Timestamp, InvariantId, LocalId);
-  void makeAllDynamicInactive(Timestamp, VarIdBase);
-  void commitOutgoingArcs(Timestamp, VarIdBase);
+  void makeAllDynamicInactive(Timestamp, VarId);
+  void commitOutgoingArcs(Timestamp, VarId);
 
   /**
    * @brief topologically orders the layer
@@ -143,38 +139,45 @@ class PropagationGraph {
 
   [[nodiscard]] bool isSearchVar(VarId id) const;
 
-  [[nodiscard]] inline bool isDynamicInvariant(InvariantId id) const {
-    return !_incomingArcs.at(id).incomingDynamic().empty();
+  [[nodiscard]] inline bool isDynamicInvariant(InvariantId invariantId) const {
+    assert(invariantId < _incomingArcs.size());
+    return !_incomingArcs[invariantId].incomingDynamic().empty();
   }
 
-  [[nodiscard]] inline size_t numInputVars(InvariantId id) const {
-    return _incomingArcs.at(id).numArcs();
+  [[nodiscard]] inline size_t numInputVars(InvariantId invariantId) const {
+    assert(invariantId < _incomingArcs.size());
+    return _incomingArcs[invariantId].numArcs();
   }
 
-  [[nodiscard]] inline InvariantId definingInvariant(VarIdBase id) const {
-    // Returns NULL_ID if id is a search variable (not defined by an invariant)
-    return _definingInvariant.at(id);
+  [[nodiscard]] inline InvariantId definingInvariant(VarId varId) const {
+    // Returns NULL_ID if varId is a search variable (not defined by an
+    // invariant)
+    assert(varId < _definingInvariant.size());
+    return _definingInvariant[varId];
   }
 
   [[nodiscard]] const std::vector<VarId>& varsDefinedBy(
       InvariantId invariantId) const;
 
   [[nodiscard]] inline const var::OutgoingArcContainer& outgoingArcs(
-      VarId id) const {
-    return _outgoingArcs.at(id.id);
+      VarId varId) const {
+    assert(varId < _outgoingArcs.size());
+    return _outgoingArcs[varId];
   }
 
-  [[nodiscard]] inline const std::vector<VarIdBase>& staticInputVars(
+  [[nodiscard]] inline const std::vector<VarId>& staticInputVars(
       InvariantId invariantId) const {
-    return _incomingArcs.at(invariantId).incomingStatic();
+    assert(invariantId < _incomingArcs.size());
+    return _incomingArcs[invariantId].incomingStatic();
   }
 
   [[nodiscard]] inline const std::vector<invariant::IncomingDynamicArc>&
   dynamicInputVars(InvariantId invariantId) const {
-    return _incomingArcs.at(invariantId).incomingDynamic();
+    assert(invariantId < _incomingArcs.size());
+    return _incomingArcs[invariantId].incomingDynamic();
   }
 
-  [[nodiscard]] inline const std::vector<VarIdBase>& searchVars() const {
+  [[nodiscard]] inline const std::vector<VarId>& searchVars() const {
     return _searchVars;
   }
 

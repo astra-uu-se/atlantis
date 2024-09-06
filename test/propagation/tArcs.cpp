@@ -18,25 +18,25 @@ TEST(ArcsTest, IncomingArcContainerTest) {
   const size_t numStatic = 100;
 
   for (size_t i = 0; i < numDynamic; i++) {
-    EXPECT_EQ(container.emplaceDynamic(VarIdBase{i % 10}, i % 5), LocalId{i});
+    EXPECT_EQ(container.emplaceDynamic(VarId{i % 10}, i % 5), LocalId{i});
     EXPECT_EQ(container.numArcs(), i + 1);
   }
 
   for (size_t i = numDynamic; i < numDynamic + numStatic; i++) {
-    EXPECT_EQ(container.emplaceStatic(VarIdBase{i % 10}), LocalId{i});
+    EXPECT_EQ(container.emplaceStatic(VarId{i % 10}), LocalId{i});
     EXPECT_EQ(container.numArcs(), i + 1);
-    EXPECT_THROW(container.emplaceDynamic(VarIdBase{i + 1}, i % 5),
+    EXPECT_THROW(container.emplaceDynamic(VarId{i + 1}, i % 5),
                  OutOfOrderIndexRegistration);
   }
   size_t i = 0;
   for (const auto& varId : container.incomingStatic()) {
-    EXPECT_EQ(varId, VarIdBase{i % 10});
+    EXPECT_EQ(varId, VarId{i % 10});
     ++i;
   }
   i = 0;
   for (const auto& [varId, outgoingDynamicArcIndex] :
        container.incomingDynamic()) {
-    EXPECT_EQ(varId, VarIdBase{i % 10});
+    EXPECT_EQ(varId, VarId{i % 10});
     EXPECT_EQ(outgoingDynamicArcIndex, i % 5);
     ++i;
   }

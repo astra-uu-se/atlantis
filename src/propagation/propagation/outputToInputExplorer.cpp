@@ -35,7 +35,7 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
     varVisited[searchVar] = true;
 
     while (!stack.empty()) {
-      const VarId id = stack.back();
+      const VarId varId = stack.back();
       stack.pop_back();
       _searchVarAncestors[varId].emplace(searchVar);
 
@@ -47,7 +47,7 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
             // self cycle: skip
             continue;
           }
-          for (const VarIdBase& outputVar :
+          for (const VarId outputVar :
                _solver.varsDefinedBy(outArc.invariantId())) {
             if (!varVisited[outputVar]) {
               varVisited[outputVar] = true;
@@ -74,7 +74,7 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
     _onPropagationPath[modifiedDecisionVar] = true;
 
     while (!stack.empty()) {
-      const VarId id = stack.back();
+      const VarId varId = stack.back();
       stack.pop_back();
       for (signed char i = 0; i < 2; ++i) {
         for (const auto& outArc :
@@ -84,10 +84,11 @@ void OutputToInputExplorer::inputToOutputExplorationMarking() {
             // self cycle: skip
             continue;
           }
-          for (const VarIdBase& outputVar :
+          for (const VarId outputVar :
                _solver.varsDefinedBy(outArc.invariantId())) {
-            if (!_onPropagationPath.get(outputVar)) {
-              _onPropagationPath.set(outputVar, true);
+            assert(outputVar < _onPropagationPath.size());
+            if (!_onPropagationPath[outputVar]) {
+              _onPropagationPath[outputVar] = true;
               stack.emplace_back(outputVar);
             }
           }
