@@ -23,7 +23,7 @@ void VarIntCountNode::init(InvariantNodeId id) {
              .isIntVar());
   assert(
       std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
                     return invariantGraphConst().varNodeConst(vId).isIntVar();
                   }));
 }
@@ -61,7 +61,7 @@ bool VarIntCountNode::replace() {
 void VarIntCountNode::registerOutputVars() {
   makeSolverVar(outputVarNodeIds().front());
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
+                     [&](const VarNodeId vId) {
                        return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));

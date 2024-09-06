@@ -35,7 +35,7 @@ bool IntDivNode::replace() {
 void invariantgraph::IntDivNode::registerOutputVars() {
   makeSolverVar(quotient());
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
+                     [&](const VarNodeId vId) {
                        return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));

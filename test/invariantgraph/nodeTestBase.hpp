@@ -180,7 +180,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     std::unordered_set<size_t> visited;
     visited.reserve(invNode().staticInputVarNodeIds().size() +
                     invNode().dynamicInputVarNodeIds().size());
-    for (const VarNodeId& varNodeId : invNode().staticInputVarNodeIds()) {
+    for (const VarNodeId varNodeId : invNode().staticInputVarNodeIds()) {
       if (visited.contains(size_t(varNodeId))) {
         EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
       } else {
@@ -195,7 +195,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       }
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
-    for (const VarNodeId& varNodeId : invNode().dynamicInputVarNodeIds()) {
+    for (const VarNodeId varNodeId : invNode().dynamicInputVarNodeIds()) {
       if (visited.contains(size_t(varNodeId))) {
         EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
       } else {
@@ -214,7 +214,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   [[nodiscard]] inline propagation::VarViewId solverVarId(
-      const VarNodeId& varNodeId) const {
+      const VarNodeId varNodeId) const {
     return _invariantGraph->varNode(varNodeId).varId();
   }
 

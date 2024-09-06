@@ -19,8 +19,6 @@ class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
   VarNodeId reifiedVarNodeId{NULL_NODE_ID};
   std::string reifiedIdentifier{"reified"};
 
-  InvariantNodeId invNodeId;
-
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
       for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {

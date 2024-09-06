@@ -17,8 +17,6 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
   std::vector<VarNodeId> inputVarNodeIds;
   std::vector<std::string> inputIdentifiers;
 
-  InvariantNodeId invNodeId;
-
   bool isViolating(bool) {
     std::vector<Int> values(numInputs, -1);
     for (size_t i = 0; i < inputIdentifiers.size(); i++) {

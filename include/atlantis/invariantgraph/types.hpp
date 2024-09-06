@@ -9,103 +9,54 @@
 
 namespace atlantis::invariantgraph {
 
-struct NodeId {
- protected:
-  size_t id;
+static size_t NULL_NODE_ID = ~size_t{0};
 
- public:
-  NodeId() : id(0) {}
+using VarNodeId = size_t;
 
-  explicit NodeId(size_t i) : id(i) {}
-
-  NodeId(const NodeId&) = default;
-
-  explicit operator size_t() const { return id; }
-};
-
-static NodeId NULL_NODE_ID = NodeId(~size_t{0});
-
-struct VarNodeId : public NodeId {
-  VarNodeId() : NodeId() {}
-  VarNodeId(const VarNodeId&) = default;
-  explicit VarNodeId(size_t i) : NodeId(i) {}
-  explicit VarNodeId(NodeId nodeId) : NodeId(nodeId) {}
-
-  inline VarNodeId& operator=(const VarNodeId& other) {
-    id = size_t(other);
-    return *this;
-  }
-  inline VarNodeId& operator=(const NodeId& other) {
-    id = size_t(other);
-    return *this;
-  }
-
-  inline bool operator==(const VarNodeId& other) const {
-    return id == size_t(other);
-  }
-
-  inline bool operator==(const NodeId& other) const {
-    return id == size_t(other);
-  }
-
-  explicit operator size_t() const { return size_t(id); }
-
-  bool operator!=(const VarNodeId& other) const { return !(operator==(other)); }
-  bool operator!=(const NodeId& other) const { return !(operator==(other)); }
-};
-
-struct InvariantNodeId : public NodeId {
+struct InvariantNodeId {
  private:
+  size_t _id;
   static const size_t IMPLICIT_CONSTRAINT_MASK =
       (size_t{1} << (sizeof(size_t) * CHAR_BIT - 1));
 
  public:
   InvariantNodeId(const InvariantNodeId&) = default;
 
-  InvariantNodeId() : NodeId() {}
+  InvariantNodeId(size_t id, bool isImplicitConstraint)
+      : _id(id == NULL_NODE_ID
+                ? id
+                : (isImplicitConstraint ? (id | IMPLICIT_CONSTRAINT_MASK)
+                                        : (id & ~IMPLICIT_CONSTRAINT_MASK))) {}
 
-  InvariantNodeId(NodeId nodeId) : NodeId(size_t(nodeId)) {}
-
-  explicit InvariantNodeId(size_t i)
-      : NodeId(i == size_t(NULL_NODE_ID) ? i
-                                         : (i & ~IMPLICIT_CONSTRAINT_MASK)) {}
-
-  InvariantNodeId(size_t i, bool isImplicitConstraint)
-      : NodeId(i == size_t(NULL_NODE_ID)
-                   ? i
-                   : (isImplicitConstraint ? (i | IMPLICIT_CONSTRAINT_MASK)
-                                           : (i & ~IMPLICIT_CONSTRAINT_MASK))) {
-  }
+  explicit InvariantNodeId(size_t id) : InvariantNodeId(id, false) {}
 
   inline bool isImplicitConstraint() const {
-    return id != size_t(NULL_NODE_ID) &&
-           (id & IMPLICIT_CONSTRAINT_MASK) != size_t{0};
+    return _id != NULL_NODE_ID && (_id & IMPLICIT_CONSTRAINT_MASK) != size_t{0};
   }
 
   inline bool isInvariant() const {
-    return id != size_t(NULL_NODE_ID) &&
-           (id & IMPLICIT_CONSTRAINT_MASK) == size_t{0};
+    return _id != NULL_NODE_ID && (_id & IMPLICIT_CONSTRAINT_MASK) == size_t{0};
   }
 
   inline InvariantNodeId& operator=(const InvariantNodeId& other) {
-    id = other.id;
+    _id = other._id;
     return *this;
   }
 
-  bool operator==(const InvariantNodeId& other) const { return id == other.id; }
+  bool operator==(const InvariantNodeId& other) const {
+    return _id == other._id;
+  }
+
+  bool operator==(size_t other) const { return other == size_t(_id); }
 
   bool operator!=(const InvariantNodeId& other) const {
     return !(operator==(other));
   }
 
-  explicit operator size_t() const {
-    return id == size_t(NULL_NODE_ID) ? id : (id & ~IMPLICIT_CONSTRAINT_MASK);
-  }
-};
+  bool operator!=(size_t other) const { return !(operator==(other)); }
 
-struct VarNodeIdHash {
-  std::size_t operator()(VarNodeId const& varNodeId) const noexcept {
-    return size_t(varNodeId);
+  explicit operator size_t() const {
+    return _id == NULL_NODE_ID ? _id : (_id & ~IMPLICIT_CONSTRAINT_MASK);
   }
 };
 

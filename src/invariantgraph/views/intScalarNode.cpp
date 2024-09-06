@@ -46,7 +46,7 @@ void IntScalarNode::registerOutputVars() {
             solver(), invariantGraph().varId(input()), _factor, _offset));
   }
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
+                     [&](const VarNodeId vId) {
                        return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));

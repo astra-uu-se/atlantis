@@ -17,7 +17,7 @@ void AllDifferentImplicitNode::init(InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
   assert(
       std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                  [&](const VarNodeId& vId) {
+                  [&](const VarNodeId vId) {
                     return invariantGraphConst().varNodeConst(vId).isIntVar();
                   }));
 }

@@ -263,7 +263,7 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays()
         std::string(outputArray.identifier),
         std::vector<Int>(outputArray.indexSetSizes));
     fznArray.vars.reserve(outputArray.varNodeIds.size());
-    for (const VarNodeId& nId : outputArray.varNodeIds) {
+    for (const VarNodeId nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
       if (node.isFixed() || node.varId() == propagation::NULL_ID) {
         fznArray.vars.emplace_back(node.lowerBound());
@@ -284,7 +284,7 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays()
         std::string(outputArray.identifier),
         std::vector<Int>(outputArray.indexSetSizes));
     fznArray.vars.reserve(outputArray.varNodeIds.size());
-    for (const VarNodeId& nId : outputArray.varNodeIds) {
+    for (const VarNodeId nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
       if (node.isFixed() || node.varId() == propagation::NULL_ID) {
         fznArray.vars.emplace_back(node.lowerBound());

@@ -165,15 +165,13 @@ class InvariantGraph : public virtual IInvariantGraph {
       const;
 
  private:
-  std::unordered_set<VarNodeId, VarNodeIdHash> dynamicVarNodeFrontier(
-      VarNodeId node,
-      const std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal);
+  std::unordered_set<VarNodeId> dynamicVarNodeFrontier(
+      VarNodeId node, const std::unordered_set<VarNodeId>& visitedGlobal);
 
   VarNodeId findCycleUtil(
-      VarNodeId varNodeId,
-      const std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal,
-      std::unordered_set<VarNodeId, VarNodeIdHash>& visitedLocal,
-      std::unordered_map<VarNodeId, InvariantGraphEdge, VarNodeIdHash>& path);
+      VarNodeId varNodeId, const std::unordered_set<VarNodeId>& visitedGlobal,
+      std::unordered_set<VarNodeId>& visitedLocal,
+      std::unordered_map<VarNodeId, InvariantGraphEdge>& path);
 
   InvariantGraphEdge findPivotInCycle(
       const std::vector<InvariantGraphEdge>& cycle);
@@ -181,8 +179,7 @@ class InvariantGraph : public virtual IInvariantGraph {
   void breakSelfCycles();
 
   std::vector<VarNodeId> breakCycles(
-      VarNodeId node,
-      std::unordered_set<VarNodeId, VarNodeIdHash>& visitedGlobal);
+      VarNodeId node, std::unordered_set<VarNodeId>& visitedGlobal);
   VarNodeId breakCycle(const std::vector<InvariantGraphEdge>& cycle);
 
   void createVars();

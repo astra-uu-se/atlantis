@@ -18,7 +18,7 @@ void IntPowNode::init(InvariantNodeId id) {
              .isIntVar());
   assert(
       std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
                     return invariantGraphConst().varNodeConst(vId).isIntVar();
                   }));
 }
@@ -26,7 +26,7 @@ void IntPowNode::init(InvariantNodeId id) {
 void IntPowNode::registerOutputVars() {
   makeSolverVar(outputVarNodeIds().front());
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
+                     [&](const VarNodeId vId) {
                        return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));

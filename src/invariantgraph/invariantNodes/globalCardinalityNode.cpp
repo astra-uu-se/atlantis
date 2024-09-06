@@ -24,12 +24,12 @@ void GlobalCardinalityNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
   assert(
       std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                  [&](const VarNodeId& vId) {
+                  [&](const VarNodeId vId) {
                     return invariantGraphConst().varNodeConst(vId).isIntVar();
                   }));
   assert(
       std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
                     return invariantGraphConst().varNodeConst(vId).isIntVar();
                   }));
 }
@@ -113,7 +113,7 @@ void GlobalCardinalityNode::registerOutputVars() {
   for (size_t i = 0; i < _cover.size(); ++i) {
     const bool isDuplicate = std::any_of(
         outputVarNodeIds().begin(), outputVarNodeIds().begin() + i,
-        [&](const VarNodeId& vId) { return vId == outputVarNodeIds().at(i); });
+        [&](const VarNodeId vId) { return vId == outputVarNodeIds().at(i); });
 
     assert(
         !isDuplicate ||
@@ -147,7 +147,7 @@ void GlobalCardinalityNode::registerOutputVars() {
     }
   }
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
+                     [&](const VarNodeId vId) {
                        return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));

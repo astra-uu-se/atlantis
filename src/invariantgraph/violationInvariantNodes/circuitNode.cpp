@@ -21,7 +21,7 @@ void CircuitNode::init(InvariantNodeId id) {
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(
       std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
+                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
                     return invariantGraphConst().varNodeConst(vId).isIntVar();
                   }));
 }
@@ -47,7 +47,7 @@ bool CircuitNode::canBeMadeImplicit() const {
          shouldHold() && staticInputVarNodeIds().size() > 2 &&
          std::all_of(
              staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-             [&](const VarNodeId& nId) {
+             [&](const VarNodeId nId) {
                return invariantGraphConst().varNodeConst(nId).isFixed() ||
                       invariantGraphConst()
                           .varNodeConst(nId)
