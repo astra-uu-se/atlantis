@@ -110,7 +110,7 @@ void Solver::enqueueDefinedVar(VarId id, size_t curLayer) {
     assert(
         std::all_of(_layerQueue[varLayer].begin(),
                     _layerQueue[varLayer].begin() + _layerQueueIndex[varLayer],
-                    [&](const VarId& vId) { return _isEnqueued.at(vId); }));
+                    [&](const VarId vId) { return _isEnqueued.at(vId); }));
     _layerQueue[varLayer][_layerQueueIndex[varLayer]] = id;
     ++_layerQueueIndex[varLayer];
   }
@@ -285,7 +285,7 @@ void Solver::propagateOnClose() {
     std::sort(vars.begin(), vars.end(), [&](const VarId a, const VarId b) {
       return _propGraph.varPosition(a) < _propGraph.varPosition(b);
     });
-    for (const VarId& varId : vars) {
+    for (const VarId varId : vars) {
       const InvariantId defInv = _propGraph.definingInvariant(varId);
       assert(defInv == NULL_ID || defInv < committedInvariants.size());
       if (defInv != NULL_ID && !committedInvariants[defInv]) {
@@ -344,7 +344,7 @@ void Solver::propagate() {
       // For each invariant queuedVar is an input to:
       for (const auto& toNotify : listeningInvariantData(queuedVar)) {
         Invariant& invariant = _store.invariant(toNotify.invariantId);
-        const VarId& primaryDefinedVar = invariant.primaryDefinedVar();
+        const VarId primaryDefinedVar = invariant.primaryDefinedVar();
         assert(primaryDefinedVar != NULL_ID);
         assert(toNotify.invariantId != definingInvariant);
         invariant.notifyInputChanged(_currentTimestamp, toNotify.localId);

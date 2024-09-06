@@ -232,7 +232,7 @@ void PropagationGraph::partitionIntoLayers() {
   _varsInLayer.assign(1, std::vector<VarId>{});
   assert(_varLayerIndex.size() == numVars());
   // Call visit on all output variables
-  for (const VarId& evalVar : _evaluationVars) {
+  for (const VarId evalVar : _evaluationVars) {
     partitionIntoLayers(visited, evalVar);
   }
   // Visit any unvisited nodes (this should not happen):
@@ -296,7 +296,7 @@ bool PropagationGraph::containsDynamicCycle(std::vector<bool>& visited,
       }
     }
   }
-  for (const VarId& varId : stack) {
+  for (const VarId varId : stack) {
     // add all nodes that have been visited during this call to visited
     visited[_varLayerIndex[varId].index] = true;
   }
@@ -307,7 +307,7 @@ bool PropagationGraph::containsDynamicCycle(size_t layer) {
   assert(layer < numLayers());
   std::vector<bool> visited(_varsInLayer[layer].size(), false);
   // Check for dynamic cycles starting from the output variables:
-  for (const VarId& varId : _varsInLayer[layer]) {
+  for (const VarId varId : _varsInLayer[layer]) {
     if (!visited[varId] && definingInvariant(varId) != NULL_ID &&
         isDynamicInvariant(definingInvariant(varId)) &&
         containsDynamicCycle(visited, varId)) {
@@ -357,7 +357,7 @@ void PropagationGraph::mergeLayersWithoutDynamicCycles() {
     assert(!containsDynamicCycle(layer - 1));
     // shift the rest of the layers:
     for (size_t l = layer + 1; l < numLayers(); ++l) {
-      for (const VarId& varId : _varsInLayer[l]) {
+      for (const VarId varId : _varsInLayer[l]) {
         _varLayerIndex[varId].layer = l - 1;
       }
     }
@@ -481,11 +481,11 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
                                           bool updatePriorityQueue) {
   assert(layer < numLayers());
   assert(_layerPositionOffset.size() == numLayers());
-  for (const VarId& varId : _varsInLayer[layer]) {
+  for (const VarId varId : _varsInLayer[layer]) {
     _varPosition[varId] = numVars();
   }
   std::vector<bool> inFrontier(_varsInLayer[layer].size(), false);
-  for (const VarId& varId : _varsInLayer[layer]) {
+  for (const VarId varId : _varsInLayer[layer]) {
     if (_varPosition[varId] == numVars()) {
       topologicallyOrder(ts, inFrontier, varId);
     }
@@ -494,7 +494,7 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
   assert(all_in_range(0u, inFrontier.size(), [&](const size_t index) {
     return !inFrontier.at(index);
   }));
-  for (const VarId& varId : _varsInLayer.at(layer)) {
+  for (const VarId varId : _varsInLayer.at(layer)) {
     const InvariantId defInv = definingInvariant(varId);
     if (defInv == NULL_ID) {
       assert(_varPosition[varId] == 0);
@@ -513,7 +513,7 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
   }
 
   if (updatePriorityQueue) {
-    for (const VarId& varId : _varsInLayer[layer]) {
+    for (const VarId varId : _varsInLayer[layer]) {
       _propagationQueue.updatePriority(varId, _varPosition.at(varId));
     }
   }

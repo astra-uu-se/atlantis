@@ -67,7 +67,7 @@ void GlobalCardinalityOpen::registerVars() {
 }
 
 void GlobalCardinalityOpen::updateBounds(bool widenOnly) {
-  for (const VarId& output : _outputs) {
+  for (const VarId output : _outputs) {
     _solver.updateBounds(output, 0, static_cast<Int>(_inputs.size()),
                          widenOnly);
   }
