@@ -1,12 +1,5 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
-#include <vector>
-
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/invariants/mod.hpp"
-#include "atlantis/propagation/solver.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::testing {
 
@@ -14,16 +7,16 @@ using namespace atlantis::propagation;
 
 class ModTest : public InvariantTest {
  public:
-  Int computeOutput(Timestamp ts, std::array<VarId, 2> inputs) {
+  Int computeOutput(Timestamp ts, std::array<VarViewId, 2> inputs) {
     return computeOutput(ts, inputs.at(0), inputs.at(1));
   }
 
-  Int computeOutput(Timestamp ts, const VarId x, const VarId y) {
-    Int denominator = solver->value(ts, y);
+  Int computeOutput(Timestamp ts, const VarViewId x, const VarViewId y) {
+    Int denominator = _solver->value(ts, y);
     if (denominator == 0) {
-      denominator = solver->upperBound(y) > 0 ? 1 : -1;
+      denominator = _solver->upperBound(y) > 0 ? 1 : -1;
     }
-    return solver->value(ts, x) % std::abs(denominator);
+    return _solver->value(ts, x) % std::abs(denominator);
   }
 };
 
@@ -50,25 +43,25 @@ TEST_F(ModTest, Examples) {
   EXPECT_TRUE(yLb <= yUb);
   EXPECT_TRUE(yLb != 0 || yUb != 0);
 
-  solver->open();
-  const VarId x = solver->makeIntVar(xUb, xLb, xUb);
-  const VarId y = solver->makeIntVar(yUb, yLb, yUb);
-  const VarId outputId = solver->makeIntVar(0, outputLb, outputUb);
-  Mod& invariant = solver->makeInvariant<Mod>(*solver, outputId, x, y);
-  solver->close();
+  _solver->open();
+  const VarViewId x = _solver->makeIntVar(xUb, xLb, xUb);
+  const VarViewId y = _solver->makeIntVar(yUb, yLb, yUb);
+  const VarViewId outputId = _solver->makeIntVar(0, outputLb, outputUb);
+  Mod& invariant = _solver->makeInvariant<Mod>(*_solver, outputId, x, y);
+  _solver->close();
 
   for (size_t i = 0; i < data.size(); ++i) {
-    Timestamp ts = solver->currentTimestamp() + Timestamp(i + 1);
+    Timestamp ts = _solver->currentTimestamp() + Timestamp(i + 1);
     const Int xVal = data.at(i).at(0);
     const Int yVal = data.at(i).at(1);
     const Int expectedOutput = data.at(i).at(2);
 
-    solver->setValue(ts, x, xVal);
-    solver->setValue(ts, y, yVal);
+    _solver->setValue(ts, x, xVal);
+    _solver->setValue(ts, y, yVal);
 
     invariant.recompute(ts);
 
-    EXPECT_EQ(solver->value(ts, outputId), expectedOutput);
+    EXPECT_EQ(_solver->value(ts, outputId), expectedOutput);
     EXPECT_EQ(computeOutput(ts, x, y), expectedOutput);
   }
 }
@@ -76,34 +69,34 @@ TEST_F(ModTest, Examples) {
 TEST_F(ModTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
-  solver->open();
-  const VarId x = solver->makeIntVar(
+  _solver->open();
+  const VarViewId x = _solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId y = solver->makeIntVar(
+  const VarViewId y = _solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId outputId = solver->makeIntVar(0, 0, 2);
-  Mod& invariant = solver->makeInvariant<Mod>(*solver, outputId, x, y);
-  solver->close();
+  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
+  Mod& invariant = _solver->makeInvariant<Mod>(*_solver, outputId, x, y);
+  _solver->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_TRUE(xLb <= xUb);
-    solver->updateBounds(x, xLb, xUb, false);
+    _solver->updateBounds(VarId(x), xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
-      solver->updateBounds(y, yLb, yUb, false);
-      solver->open();
+      _solver->updateBounds(VarId(y), yLb, yUb, false);
+      _solver->open();
       invariant.updateBounds(false);
-      solver->close();
+      _solver->close();
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
-        solver->setValue(solver->currentTimestamp(), x, xVal);
+        _solver->setValue(_solver->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-          solver->setValue(solver->currentTimestamp(), y, yVal);
-          invariant.recompute(solver->currentTimestamp());
-          const Int o = solver->value(solver->currentTimestamp(), outputId);
-          if (o < solver->lowerBound(outputId) ||
-              solver->upperBound(outputId) < o) {
-            ASSERT_GE(o, solver->lowerBound(outputId));
-            ASSERT_LE(o, solver->upperBound(outputId));
+          _solver->setValue(_solver->currentTimestamp(), y, yVal);
+          invariant.recompute(_solver->currentTimestamp());
+          const Int o = _solver->value(_solver->currentTimestamp(), outputId);
+          if (o < _solver->lowerBound(outputId) ||
+              _solver->upperBound(outputId) < o) {
+            ASSERT_GE(o, _solver->lowerBound(outputId));
+            ASSERT_LE(o, _solver->upperBound(outputId));
           }
         }
       }
@@ -123,23 +116,23 @@ TEST_F(ModTest, Recompute) {
   EXPECT_TRUE(yLb <= yUb);
   EXPECT_TRUE(yLb != 0 || yUb != 0);
 
-  solver->open();
-  const VarId x = solver->makeIntVar(xUb, xLb, xUb);
-  const VarId y = solver->makeIntVar(yUb, yLb, yUb);
-  const VarId outputId = solver->makeIntVar(outputLb, outputLb, outputUb);
-  Mod& invariant = solver->makeInvariant<Mod>(*solver, outputId, x, y);
-  solver->close();
+  _solver->open();
+  const VarViewId x = _solver->makeIntVar(xUb, xLb, xUb);
+  const VarViewId y = _solver->makeIntVar(yUb, yLb, yUb);
+  const VarViewId outputId = _solver->makeIntVar(outputLb, outputLb, outputUb);
+  Mod& invariant = _solver->makeInvariant<Mod>(*_solver, outputId, x, y);
+  _solver->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
     for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-      solver->setValue(solver->currentTimestamp(), x, xVal);
-      solver->setValue(solver->currentTimestamp(), y, yVal);
+      _solver->setValue(_solver->currentTimestamp(), x, xVal);
+      _solver->setValue(_solver->currentTimestamp(), y, yVal);
 
       const Int expectedOutput =
-          computeOutput(solver->currentTimestamp(), x, y);
-      invariant.recompute(solver->currentTimestamp());
+          computeOutput(_solver->currentTimestamp(), x, y);
+      invariant.recompute(_solver->currentTimestamp());
       EXPECT_EQ(expectedOutput,
-                solver->value(solver->currentTimestamp(), outputId));
+                _solver->value(_solver->currentTimestamp(), outputId));
     }
   }
 }
@@ -150,26 +143,26 @@ TEST_F(ModTest, NotifyInputChanged) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(lb != 0 || ub != 0);
 
-  solver->open();
-  std::array<VarId, 2> inputs{solver->makeIntVar(ub, lb, ub),
-                              solver->makeIntVar(ub, lb, ub)};
-  VarId outputId = solver->makeIntVar(0, 0, ub - lb);
-  Mod& invariant =
-      solver->makeInvariant<Mod>(*solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+  _solver->open();
+  std::array<VarViewId, 2> inputs{_solver->makeIntVar(ub, lb, ub),
+                                  _solver->makeIntVar(ub, lb, ub)};
+  VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
+  Mod& invariant = _solver->makeInvariant<Mod>(*_solver, outputId, inputs.at(0),
+                                               inputs.at(1));
+  _solver->close();
 
-  Timestamp ts = solver->currentTimestamp();
+  Timestamp ts = _solver->currentTimestamp();
 
   for (Int val = lb; val <= ub; ++val) {
     ++ts;
     for (size_t i = 0; i < inputs.size(); ++i) {
-      solver->setValue(solver->currentTimestamp(), inputs.at(i), val);
+      _solver->setValue(_solver->currentTimestamp(), inputs.at(i), val);
       const Int expectedOutput =
-          computeOutput(solver->currentTimestamp(), inputs);
+          computeOutput(_solver->currentTimestamp(), inputs);
 
-      invariant.notifyInputChanged(solver->currentTimestamp(), LocalId(i));
+      invariant.notifyInputChanged(_solver->currentTimestamp(), LocalId(i));
       EXPECT_EQ(expectedOutput,
-                solver->value(solver->currentTimestamp(), outputId));
+                _solver->value(_solver->currentTimestamp(), outputId));
     }
   }
 }
@@ -180,30 +173,38 @@ TEST_F(ModTest, NextInput) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(lb != 0 || ub != 0);
 
-  solver->open();
-  const std::array<VarId, 2> inputs = {solver->makeIntVar(lb, lb, ub),
-                                       solver->makeIntVar(ub, lb, ub)};
-  const VarId outputId = solver->makeIntVar(0, 0, 2);
-  const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  Mod& invariant =
-      solver->makeInvariant<Mod>(*solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+  _solver->open();
+  const std::array<VarViewId, 2> inputs = {_solver->makeIntVar(lb, lb, ub),
+                                           _solver->makeIntVar(ub, lb, ub)};
+  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
+  const VarViewId minVarId =
+      *std::min_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
+  const VarViewId maxVarId =
+      *std::max_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
+  Mod& invariant = _solver->makeInvariant<Mod>(*_solver, outputId, inputs.at(0),
+                                               inputs.at(1));
+  _solver->close();
 
-  for (Timestamp ts = solver->currentTimestamp() + 1;
-       ts < solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(maxVarId + 1, false);
+  for (Timestamp ts = _solver->currentTimestamp() + 1;
+       ts < _solver->currentTimestamp() + 4; ++ts) {
+    std::vector<bool> notified(size_t(maxVarId) + 1, false);
     for (size_t i = 0; i < inputs.size(); ++i) {
-      const VarId varId = invariant.nextInput(ts);
+      const VarViewId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
-      EXPECT_TRUE(minVarId <= varId);
-      EXPECT_TRUE(varId <= maxVarId);
-      EXPECT_FALSE(notified.at(varId));
-      notified[varId] = true;
+      EXPECT_LE(size_t(minVarId), size_t(varId));
+      EXPECT_GE(size_t(maxVarId), size_t(varId));
+      EXPECT_FALSE(notified.at(size_t(varId)));
+      notified.at(size_t(varId)) = true;
     }
     EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
-      EXPECT_TRUE(notified.at(varId));
+    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
+      EXPECT_TRUE(notified.at(i));
     }
   }
 }
@@ -214,26 +215,26 @@ TEST_F(ModTest, NotifyCurrentInputChanged) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(lb != 0 || ub != 0);
 
-  solver->open();
+  _solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
-  const std::array<VarId, 2> inputs = {
-      solver->makeIntVar(valueDist(gen), lb, ub),
-      solver->makeIntVar(valueDist(gen), lb, ub)};
-  const VarId outputId = solver->makeIntVar(0, 0, ub - lb);
-  Mod& invariant =
-      solver->makeInvariant<Mod>(*solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+  const std::array<VarViewId, 2> inputs = {
+      _solver->makeIntVar(valueDist(gen), lb, ub),
+      _solver->makeIntVar(valueDist(gen), lb, ub)};
+  const VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
+  Mod& invariant = _solver->makeInvariant<Mod>(*_solver, outputId, inputs.at(0),
+                                               inputs.at(1));
+  _solver->close();
 
-  for (Timestamp ts = solver->currentTimestamp() + 1;
-       ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId& varId : inputs) {
+  for (Timestamp ts = _solver->currentTimestamp() + 1;
+       ts < _solver->currentTimestamp() + 4; ++ts) {
+    for (const VarViewId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
-      const Int oldVal = solver->value(ts, varId);
+      const Int oldVal = _solver->value(ts, varId);
       do {
-        solver->setValue(ts, varId, valueDist(gen));
-      } while (solver->value(ts, varId) == oldVal);
+        _solver->setValue(ts, varId, valueDist(gen));
+      } while (_solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(solver->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, inputs));
     }
   }
 }
@@ -244,51 +245,51 @@ TEST_F(ModTest, Commit) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(lb != 0 || ub != 0);
 
-  solver->open();
+  _solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   std::array<size_t, 2> indices{0, 1};
   std::array<Int, 2> committedValues{valueDist(gen), valueDist(gen)};
-  std::array<VarId, 2> inputs{
-      solver->makeIntVar(committedValues.at(0), lb, ub),
-      solver->makeIntVar(committedValues.at(1), lb, ub)};
+  std::array<VarViewId, 2> inputs{
+      _solver->makeIntVar(committedValues.at(0), lb, ub),
+      _solver->makeIntVar(committedValues.at(1), lb, ub)};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  VarId outputId = solver->makeIntVar(0, 0, 2);
-  Mod& invariant =
-      solver->makeInvariant<Mod>(*solver, outputId, inputs.at(0), inputs.at(1));
-  solver->close();
+  VarViewId outputId = _solver->makeIntVar(0, 0, 2);
+  Mod& invariant = _solver->makeInvariant<Mod>(*_solver, outputId, inputs.at(0),
+                                               inputs.at(1));
+  _solver->close();
 
-  EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
-            computeOutput(solver->currentTimestamp(), inputs));
+  EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
+            computeOutput(_solver->currentTimestamp(), inputs));
 
   for (const size_t i : indices) {
-    Timestamp ts = solver->currentTimestamp() + Timestamp(1 + i);
+    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputs.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(_solver->committedValue(inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      solver->setValue(ts, inputs.at(i), valueDist(gen));
-    } while (oldVal == solver->value(ts, inputs.at(i)));
+      _solver->setValue(ts, inputs.at(i), valueDist(gen));
+    } while (oldVal == _solver->value(ts, inputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = solver->value(ts, outputId);
+    const Int notifiedOutput = _solver->value(ts, outputId);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
-    solver->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = solver->value(ts, inputs.at(i));
-    solver->commitIf(ts, outputId);
+    _solver->commitIf(ts, VarId(inputs.at(i)));
+    committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
+    _solver->commitIf(ts, VarId(outputId));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
   }
 }
 
@@ -302,20 +303,21 @@ TEST_F(ModTest, ZeroDenominator) {
     EXPECT_TRUE(yLb != 0 || yUb != 0);
 
     for (size_t method = 0; method < 2; ++method) {
-      solver->open();
-      const VarId x = solver->makeIntVar(xVal, xVal, xVal);
-      const VarId y = solver->makeIntVar(0, yLb, yUb);
-      const VarId outputId = solver->makeIntVar(0, outputLb, outputUb);
-      Mod& invariant = solver->makeInvariant<Mod>(*solver, outputId, x, y);
-      solver->close();
+      _solver->open();
+      const VarViewId x = _solver->makeIntVar(xVal, xVal, xVal);
+      const VarViewId y = _solver->makeIntVar(0, yLb, yUb);
+      const VarViewId outputId = _solver->makeIntVar(0, outputLb, outputUb);
+      Mod& invariant = _solver->makeInvariant<Mod>(*_solver, outputId, x, y);
+      _solver->close();
 
-      EXPECT_EQ(expected, computeOutput(solver->currentTimestamp(), x, y));
+      EXPECT_EQ(expected, computeOutput(_solver->currentTimestamp(), x, y));
       if (method == 0) {
-        invariant.recompute(solver->currentTimestamp());
+        invariant.recompute(_solver->currentTimestamp());
       } else {
-        invariant.notifyInputChanged(solver->currentTimestamp(), LocalId(1));
+        invariant.notifyInputChanged(_solver->currentTimestamp(), LocalId(1));
       }
-      EXPECT_EQ(expected, solver->value(solver->currentTimestamp(), outputId));
+      EXPECT_EQ(expected,
+                _solver->value(_solver->currentTimestamp(), outputId));
     }
   }
 }
@@ -327,8 +329,11 @@ class MockMod : public Mod {
     registered = true;
     Mod::registerVars();
   }
-  explicit MockMod(SolverBase& solver, VarId output, VarId x, VarId y)
+  explicit MockMod(SolverBase& solver, VarViewId output, VarViewId x,
+                   VarViewId y)
       : Mod(solver, output, x, y) {
+    EXPECT_TRUE(output.isVar());
+
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return Mod::recompute(timestamp);
     });
@@ -348,21 +353,21 @@ class MockMod : public Mod {
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(ModTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!solver->isOpen()) {
-      solver->open();
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    const VarId x = solver->makeIntVar(-10, -100, 100);
-    const VarId y = solver->makeIntVar(10, -100, 100);
-    const VarId output = solver->makeIntVar(0, 0, 200);
+    const VarViewId x = _solver->makeIntVar(-10, -100, 100);
+    const VarViewId y = _solver->makeIntVar(10, -100, 100);
+    const VarViewId output = _solver->makeIntVar(0, 0, 200);
     testNotifications<MockMod>(
-        &solver->makeInvariant<MockMod>(*solver, output, x, y),
+        &_solver->makeInvariant<MockMod>(*_solver, output, x, y),
         {propMode, markingMode, 3, x, 0, output});
   }
 }

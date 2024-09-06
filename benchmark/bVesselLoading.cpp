@@ -16,7 +16,7 @@ namespace atlantis::benchmark {
 
 class VesselLoading : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::random_device rd;
   std::mt19937 gen;
 
@@ -37,11 +37,11 @@ class VesselLoading : public ::benchmark::Fixture {
   std::vector<size_t> conLength;
   // conWidth[i]  = container i vesselWidth:
   std::vector<size_t> conWidth;
-  std::vector<propagation::VarId> orientation;
-  std::vector<propagation::VarId> left;
-  std::vector<propagation::VarId> bottom;
+  std::vector<propagation::VarViewId> orientation;
+  std::vector<propagation::VarViewId> left;
+  std::vector<propagation::VarViewId> bottom;
 
-  propagation::VarId totalViolation;
+  VarViewId totalViolation{propagation::NULL_ID};
 
   std::uniform_int_distribution<size_t> indexDistr;
   std::uniform_int_distribution<Int> orientationDistr;
@@ -51,7 +51,7 @@ class VesselLoading : public ::benchmark::Fixture {
   void SetUp(const ::benchmark::State& state) override {
     containerCount = state.range(0);
 
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
     solver->open();
     setSolverMode(*solver, static_cast<int>(state.range(1)));
 
@@ -69,9 +69,9 @@ class VesselLoading : public ::benchmark::Fixture {
 
     orientation.resize(containerCount);
     left.resize(containerCount);
-    std::vector<propagation::VarId> right(containerCount);
+    std::vector<propagation::VarViewId> right(containerCount);
     bottom.resize(containerCount);
-    std::vector<propagation::VarId> top(containerCount);
+    std::vector<propagation::VarViewId> top(containerCount);
 
     // Create containerCount containers
     for (size_t i = 0; i < containerCount; ++i) {
@@ -108,16 +108,16 @@ class VesselLoading : public ::benchmark::Fixture {
     for (size_t i = 0; i < containerCount; ++i) {
       // orientation[i] = 0 <=> container i is positioned horizontally
       // orientation[i] = 1 <=> container i is positioned vertically
-      propagation::VarId rightHorizontally =
+      propagation::VarViewId rightHorizontally =
           solver->makeIntView<propagation::IntOffsetView>(*solver, left[i],
                                                           conWidth[i]);
-      propagation::VarId rightVertically =
+      propagation::VarViewId rightVertically =
           solver->makeIntView<propagation::IntOffsetView>(*solver, left[i],
                                                           conLength[i]);
-      propagation::VarId topHorizontally =
+      propagation::VarViewId topHorizontally =
           solver->makeIntView<propagation::IntOffsetView>(*solver, bottom[i],
                                                           conLength[i]);
-      propagation::VarId topVertically =
+      propagation::VarViewId topVertically =
           solver->makeIntView<propagation::IntOffsetView>(*solver, bottom[i],
                                                           conWidth[i]);
 
@@ -136,7 +136,7 @@ class VesselLoading : public ::benchmark::Fixture {
     // Creating a number of static invariants that is quadratic in n, each with
     // a constant number of static input variables, resulting in a number of
     // static input variables that is quadratic in n.
-    std::vector<propagation::VarId> violations{};
+    std::vector<propagation::VarViewId> violations{};
     violations.reserve(containerCount * (containerCount - 1) / 2);
 
     for (size_t i = 0; i < containerCount; ++i) {
@@ -154,19 +154,19 @@ class VesselLoading : public ::benchmark::Fixture {
 
         Int sep = seperations[conClass[i]][c];
 
-        propagation::VarId rightSep =
+        propagation::VarViewId rightSep =
             sep == 0 ? right[i]
                      : solver->makeIntView<propagation::IntOffsetView>(
                            *solver, right[i], sep);
-        propagation::VarId leftSep =
+        propagation::VarViewId leftSep =
             sep == 0 ? left[i]
                      : solver->makeIntView<propagation::IntOffsetView>(
                            *solver, left[i], -sep);
-        propagation::VarId topSep =
+        propagation::VarViewId topSep =
             sep == 0 ? top[i]
                      : solver->makeIntView<propagation::IntOffsetView>(
                            *solver, top[i], sep);
-        propagation::VarId bottomSep =
+        propagation::VarViewId bottomSep =
             sep == 0 ? bottom[i]
                      : solver->makeIntView<propagation::IntOffsetView>(
                            *solver, bottom[i], -sep);
@@ -176,13 +176,13 @@ class VesselLoading : public ::benchmark::Fixture {
             continue;
           }
 
-          propagation::VarId isRightOf = solver->makeIntVar(
+          propagation::VarViewId isRightOf = solver->makeIntVar(
               0, 0, static_cast<Int>(vesselLength + vesselWidth));
-          propagation::VarId isLeftOf = solver->makeIntVar(
+          propagation::VarViewId isLeftOf = solver->makeIntVar(
               0, 0, static_cast<Int>(vesselLength + vesselWidth));
-          propagation::VarId isBelow = solver->makeIntVar(
+          propagation::VarViewId isBelow = solver->makeIntVar(
               0, 0, static_cast<Int>(vesselLength + vesselWidth));
-          propagation::VarId isAbove = solver->makeIntVar(
+          propagation::VarViewId isAbove = solver->makeIntVar(
               0, 0, static_cast<Int>(vesselLength + vesselWidth));
 
           // isRightOf = (right[i] + sep <= left[j]):
@@ -202,8 +202,8 @@ class VesselLoading : public ::benchmark::Fixture {
               *solver,
               violations.emplace_back(solver->makeIntVar(
                   0, 0, static_cast<Int>(vesselLength + vesselWidth))),
-              std::vector<propagation::VarId>{isRightOf, isLeftOf, isAbove,
-                                              isBelow});
+              std::vector<propagation::VarViewId>{isRightOf, isLeftOf, isAbove,
+                                                  isBelow});
         }
       }
     }

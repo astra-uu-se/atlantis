@@ -2,7 +2,7 @@
 
 namespace atlantis::propagation {
 
-ScalarView::ScalarView(SolverBase& solver, VarId parentId, Int factor,
+ScalarView::ScalarView(SolverBase& solver, VarViewId parentId, Int factor,
                        Int offset)
     : IntView(solver, parentId), _factor(factor), _offset(offset) {}
 

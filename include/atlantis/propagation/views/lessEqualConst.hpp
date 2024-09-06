@@ -12,7 +12,7 @@ class LessEqualConst : public IntView {
   Int _val;
 
  public:
-  explicit LessEqualConst(SolverBase& solver, VarId parentId, Int val);
+  explicit LessEqualConst(SolverBase& solver, VarViewId parentId, Int val);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

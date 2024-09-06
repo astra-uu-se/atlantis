@@ -8,8 +8,9 @@ namespace atlantis::invariantgraph::fzn {
 
 bool bool_not(FznInvariantGraph& graph, const fznparser::BoolArg& boolVar,
               const fznparser::BoolArg& negatedBoolVar) {
-  graph.addInvariantNode(std::make_unique<BoolNotNode>(
-      graph.retrieveVarNode(boolVar), graph.retrieveVarNode(negatedBoolVar)));
+  graph.addInvariantNode(
+      std::make_shared<BoolNotNode>(graph, graph.retrieveVarNode(boolVar),
+                                    graph.retrieveVarNode(negatedBoolVar)));
   return true;
 }
 

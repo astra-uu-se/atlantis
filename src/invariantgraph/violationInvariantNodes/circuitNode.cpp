@@ -11,56 +11,67 @@
 
 namespace atlantis::invariantgraph {
 
-CircuitNode::CircuitNode(std::vector<VarNodeId>&& vars)
-    : ViolationInvariantNode(std::move(vars), true) {}
+CircuitNode::CircuitNode(IInvariantGraph& graph, std::vector<VarNodeId>&& vars)
+    : ViolationInvariantNode(graph, std::move(vars), true) {}
 
-void CircuitNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
-  assert(!isReified() ||
-         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
+void CircuitNode::init(InvariantNodeId id) {
+  ViolationInvariantNode::init(id);
+  assert(
+      !isReified() ||
+      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(
+      std::all_of(staticInputVarNodeIds().begin(),
+                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
-void CircuitNode::updateState(InvariantGraph& graph) {
+void CircuitNode::updateState() {
   if (staticInputVarNodeIds().size() == 1) {
-    graph.varNode(staticInputVarNodeIds().front()).fixToValue(Int{1});
+    invariantGraph()
+        .varNode(staticInputVarNodeIds().front())
+        .fixToValue(Int{1});
   } else if (staticInputVarNodeIds().size() == 2) {
-    graph.varNode(staticInputVarNodeIds().front()).fixToValue(Int{2});
-    graph.varNode(staticInputVarNodeIds().back()).fixToValue(Int{1});
+    invariantGraph()
+        .varNode(staticInputVarNodeIds().front())
+        .fixToValue(Int{2});
+    invariantGraph().varNode(staticInputVarNodeIds().back()).fixToValue(Int{1});
   }
   if (staticInputVarNodeIds().size() <= 2) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-bool CircuitNode::canBeMadeImplicit(const InvariantGraph& graph) const {
+bool CircuitNode::canBeMadeImplicit() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
          shouldHold() && staticInputVarNodeIds().size() > 2 &&
-         std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& nId) {
-                       return graph.varNodeConst(nId).isFixed() ||
-                              graph.varNodeConst(nId).definingNodes().empty();
-                     });
+         std::all_of(
+             staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+             [&](const VarNodeId nId) {
+               return invariantGraphConst().varNodeConst(nId).isFixed() ||
+                      invariantGraphConst()
+                          .varNodeConst(nId)
+                          .definingNodes()
+                          .empty();
+             });
 }
 
-bool CircuitNode::makeImplicit(InvariantGraph& graph) {
-  if (!canBeMadeImplicit(graph)) {
+bool CircuitNode::makeImplicit() {
+  if (!canBeMadeImplicit()) {
     return false;
   }
-  graph.addImplicitConstraintNode(std::make_unique<CircuitImplicitNode>(
-      std::vector<VarNodeId>{staticInputVarNodeIds()}));
+  invariantGraph().addImplicitConstraintNode(
+      std::make_shared<CircuitImplicitNode>(
+          invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
   return true;
 }
 
-bool CircuitNode::canBeReplaced(const InvariantGraph& graph) const {
-  return state() == InvariantNodeState::ACTIVE && !canBeMadeImplicit(graph);
+bool CircuitNode::canBeReplaced() const {
+  return state() == InvariantNodeState::ACTIVE && !canBeMadeImplicit();
 }
 
-bool CircuitNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool CircuitNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   /*
@@ -88,8 +99,8 @@ bool CircuitNode::replace(InvariantGraph& graph) {
         [if i != j then order[j] else 1 endif | j in S])
       } in sansI[x[i]] = modulo[i]) endif;
   */
-  graph.addInvariantNode(std::make_unique<AllDifferentNode>(
-      std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
+  invariantGraph().addInvariantNode(std::make_shared<AllDifferentNode>(
+      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
 
   std::vector<VarNodeId> orderVars;
   orderVars.reserve(staticInputVarNodeIds().size());
@@ -98,29 +109,30 @@ bool CircuitNode::replace(InvariantGraph& graph) {
   std::vector<VarNodeId> modoluVars;
   modoluVars.reserve(staticInputVarNodeIds().size());
   // order[l] == 1:
-  orderVars.emplace_back(graph.retrieveIntVarNode(1));
+  orderVars.emplace_back(invariantGraph().retrieveIntVarNode(1));
   // order[l] == 1 -> offset[0] = 2
-  offsetVars.emplace_back(graph.retrieveIntVarNode(2));
+  offsetVars.emplace_back(invariantGraph().retrieveIntVarNode(2));
   // order[l] == 1 -> modulo[0] = 2 mod n
-  modoluVars.emplace_back(graph.retrieveIntVarNode(
+  modoluVars.emplace_back(invariantGraph().retrieveIntVarNode(
       2 % static_cast<Int>(staticInputVarNodeIds().size())));
 
   for (size_t i = 1; i < staticInputVarNodeIds().size(); ++i) {
-    orderVars.emplace_back(graph.retrieveIntVarNode(
+    orderVars.emplace_back(invariantGraph().retrieveIntVarNode(
         SearchDomain{1, static_cast<Int>(staticInputVarNodeIds().size())},
         VarNode::DomainType::NONE));
-    offsetVars.emplace_back(graph.retrieveIntVarNode(
+    offsetVars.emplace_back(invariantGraph().retrieveIntVarNode(
         SearchDomain{1, static_cast<Int>(staticInputVarNodeIds().size()) + 1},
         VarNode::DomainType::NONE));
-    modoluVars.emplace_back(graph.retrieveIntVarNode(
+    modoluVars.emplace_back(invariantGraph().retrieveIntVarNode(
         SearchDomain{0, static_cast<Int>(staticInputVarNodeIds().size()) - 1},
         VarNode::DomainType::NONE));
     // offset[i] = order[i] + 1
-    graph.addInvariantNode(std::make_unique<IntScalarNode>(
-        offsetVars.at(i), orderVars.at(i), 1, 1));
+    invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(
+        invariantGraph(), offsetVars.at(i), orderVars.at(i), 1, 1));
     // modulo[i] = offset[i] mod n
-    graph.addInvariantNode(std::make_unique<IntModViewNode>(
-        modoluVars.at(i), offsetVars.at(i), staticInputVarNodeIds().size()));
+    invariantGraph().addInvariantNode(std::make_shared<IntModViewNode>(
+        invariantGraph(), modoluVars.at(i), offsetVars.at(i),
+        staticInputVarNodeIds().size()));
   }
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
     std::vector<VarNodeId> orderSansI;
@@ -128,29 +140,28 @@ bool CircuitNode::replace(InvariantGraph& graph) {
     for (size_t j = 0; j < staticInputVarNodeIds().size(); ++j) {
       if (i == j) {
         // remove self cycle:
-        orderSansI.emplace_back(graph.retrieveIntVarNode(1));
+        orderSansI.emplace_back(invariantGraph().retrieveIntVarNode(1));
       } else {
         orderSansI.emplace_back(orderVars.at(j));
       }
     }
     // sansI[x[i]] = modulo[i]
-    graph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
-        staticInputVarNodeIds().at(i), std::move(orderSansI), modoluVars.at(i),
-        1));
+    invariantGraph().addInvariantNode(std::make_shared<ArrayVarElementNode>(
+        invariantGraph(), staticInputVarNodeIds().at(i), std::move(orderSansI),
+        modoluVars.at(i), 1));
   }
 
-  graph.addInvariantNode(
-      std::make_unique<AllDifferentNode>(std::move(orderVars), true));
+  invariantGraph().addInvariantNode(std::make_shared<AllDifferentNode>(
+      invariantGraph(), std::move(orderVars), true));
 
   return true;
 }
 
-void CircuitNode::registerOutputVars(InvariantGraph&,
-                                     propagation::SolverBase&) {
+void CircuitNode::registerOutputVars() {
   throw std::runtime_error("CircuitNode::registerOutputVars not implemented");
 }
 
-void CircuitNode::registerNode(InvariantGraph&, propagation::SolverBase&) {
+void CircuitNode::registerNode() {
   throw std::runtime_error("CircuitNode::registerOutputVars not implemented");
 }
 

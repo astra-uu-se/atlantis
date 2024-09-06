@@ -28,8 +28,8 @@ class PropagationGraph {
  private:
   std::vector<bool> _isEvaluationVar{};
   std::vector<bool> _isSearchVar{};
-  std::vector<VarIdBase> _searchVars{};
-  std::vector<VarIdBase> _evaluationVars{};
+  std::vector<VarId> _searchVars{};
+  std::vector<VarId> _evaluationVars{};
 
   const Store& _store;
 
@@ -38,38 +38,37 @@ class PropagationGraph {
    *
    * Maps to nullptr if not defined by any invariant.
    */
-  IdMap<VarIdBase, InvariantId> _definingInvariant;
+  std::vector<InvariantId> _definingInvariant;
 
   /**
-   * Map from InvariantId -> list of VarId
+   * Map from InvariantId -> list of VarViewId
    *
    * Maps an invariant to all variables it defines.
    */
-  IdMap<InvariantId, std::vector<VarIdBase>> _varsDefinedByInvariant;
+  std::vector<std::vector<VarId>> _varsDefinedByInvariant;
   /**
-   * Map from InvariantId -> list of VarId
+   * Map from InvariantId -> list of VarViewId
    *
    * Maps an invariant to all its variable inputs.
    */
-  // Given input variable with VarId x and invariant with InvariantId i, then
-  // _inputVars[i] = <x, b>, where b = true iff x is a dynamic input
-  // to i.
-  IdMap<InvariantId, std::vector<std::pair<VarIdBase, bool>>> _inputVars;
+  // Given input variable with VarViewId x and invariant with InvariantId i,
+  // then _inputVars[i] = <x, b>, where b = true iff x is a dynamic input to i.
+  std::vector<std::vector<std::pair<VarId, bool>>> _inputVars;
 
   // Given invariant with InvariantId i, _isDynamicInvairiant[i] = true iff i
   // has one or more dynamic input variables.
-  IdMap<InvariantId, bool> _isDynamicInvariant;
+  std::vector<bool> _isDynamicInvariant;
 
   // Map from VarID -> vector of InvariantID
-  IdMap<VarIdBase, std::vector<ListeningInvariantData>> _listeningInvariantData;
+  std::vector<std::vector<ListeningInvariantData>> _listeningInvariantData;
 
-  std::vector<std::vector<VarIdBase>> _varsInLayer;
+  std::vector<std::vector<VarId>> _varsInLayer;
   struct LayerIndex {
     size_t layer;
     size_t index;
   };
-  IdMap<VarIdBase, LayerIndex> _varLayerIndex;
-  IdMap<VarIdBase, size_t> _varPosition;
+  std::vector<LayerIndex> _varLayerIndex;
+  std::vector<size_t> _varPosition;
   std::vector<size_t> _layerPositionOffset{};
   std::vector<bool> _layerHasDynamicCycle{};
   bool _hasDynamicCycle{false};
@@ -77,24 +76,24 @@ class PropagationGraph {
   size_t _numVars{0};
 
   bool containsStaticCycle(std::vector<bool>& visited,
-                           std::vector<bool>& inFrontier, VarIdBase varId);
+                           std::vector<bool>& inFrontier, VarId varId);
   bool containsStaticCycle();
-  void partitionIntoLayers(std::vector<bool>& visited, VarIdBase varId);
+  void partitionIntoLayers(std::vector<bool>& visited, VarId varId);
   void partitionIntoLayers();
-  bool containsDynamicCycle(std::vector<bool>& visited, VarIdBase varId);
+  bool containsDynamicCycle(std::vector<bool>& visited, VarId varId);
   bool containsDynamicCycle(size_t level);
   void mergeLayersWithoutDynamicCycles();
   void computeLayerOffsets();
   void topologicallyOrder(Timestamp ts, std::vector<bool>& inFrontier,
-                          VarIdBase varId);
+                          VarId varId);
   void topologicallyOrder(Timestamp ts, size_t layer, bool updatePriorityQueue);
   void topologicallyOrder(Timestamp ts);
 
   struct PriorityCmp {
     PropagationGraph& graph;
     explicit PriorityCmp(PropagationGraph& g) : graph(g) {}
-    bool operator()(VarIdBase left, VarIdBase right) {
-      return graph.position(left) > graph.position(right);
+    bool operator()(VarId left, VarId right) {
+      return graph.varPosition(left) > graph.varPosition(right);
     }
   };
 
@@ -122,7 +121,7 @@ class PropagationGraph {
   /**
    * Register a variable in the propagation graph.
    */
-  void registerVar(VarIdBase);
+  void registerVar(VarId);
 
   /**
    * Register that inputId is a input of invariantId
@@ -130,7 +129,7 @@ class PropagationGraph {
    * @param inputId the variable input
    * @param isDynamic true if the variable is a dynamic input to the invariant.
    */
-  void registerInvariantInput(InvariantId invariantId, VarIdBase inputId,
+  void registerInvariantInput(InvariantId invariantId, VarId inputId,
                               LocalId localId, bool isDynamic);
 
   /**
@@ -139,7 +138,7 @@ class PropagationGraph {
    * @param invriant the invariant defining the variable
    * @throw if the variable is already defined by an invariant.
    */
-  void registerDefinedVar(VarIdBase varId, InvariantId invariant);
+  void registerDefinedVar(VarId varId, InvariantId invariant);
 
   /**
    * @brief topologically orders the layer
@@ -159,45 +158,46 @@ class PropagationGraph {
     return _numInvariants;  // this ignores null invariant
   }
 
-  inline bool isEvaluationVar(VarIdBase id) {
-    assert(id < _isEvaluationVar.size());
-    return _isEvaluationVar[id];
+  inline bool isEvaluationVar(VarId id) {
+    assert(size_t(id) < _isEvaluationVar.size());
+    return _isEvaluationVar[size_t(id)];
   }
 
-  inline bool isSearchVar(VarIdBase id) {
-    assert(id < _isSearchVar.size());
-    return _isSearchVar.at(id);
+  inline bool isSearchVar(VarId id) {
+    assert(size_t(id) < _isSearchVar.size());
+    return _isSearchVar.at(size_t(id));
   }
 
   [[nodiscard]] inline bool isDynamicInvariant(InvariantId id) const {
-    return _isDynamicInvariant.get(id);
+    assert(id < _isDynamicInvariant.size());
+    return _isDynamicInvariant[id];
   }
 
-  [[nodiscard]] inline InvariantId definingInvariant(VarIdBase id) const {
+  [[nodiscard]] inline InvariantId definingInvariant(VarId id) const {
     // Returns NULL_ID if id is a search variable (not defined by an invariant)
     return _definingInvariant.at(id);
   }
 
-  [[nodiscard]] inline const std::vector<VarIdBase>& varsDefinedBy(
+  [[nodiscard]] inline const std::vector<VarId>& varsDefinedBy(
       InvariantId invariantId) const {
     return _varsDefinedByInvariant.at(invariantId);
   }
 
   [[nodiscard]] inline const std::vector<ListeningInvariantData>&
   listeningInvariantData(VarId id) const {
-    return _listeningInvariantData.at(id.id);
+    return _listeningInvariantData.at(id);
   }
 
-  [[nodiscard]] inline const std::vector<std::pair<VarIdBase, bool>>& inputVars(
+  [[nodiscard]] inline const std::vector<std::pair<VarId, bool>>& inputVars(
       InvariantId invariantId) const {
     return _inputVars.at(invariantId);
   }
 
-  [[nodiscard]] inline const std::vector<VarIdBase>& searchVars() const {
+  [[nodiscard]] inline const std::vector<VarId>& searchVars() const {
     return _searchVars;
   }
 
-  [[nodiscard]] inline const std::vector<VarIdBase>& evaluationVars() const {
+  [[nodiscard]] inline const std::vector<VarId>& evaluationVars() const {
     return _evaluationVars;
   }
 
@@ -211,8 +211,8 @@ class PropagationGraph {
     return _propagationQueue.empty();
   }
 
-  [[nodiscard]] inline VarIdBase dequeuePropagationQueue() {
-    VarIdBase id = _propagationQueue.top();
+  [[nodiscard]] inline VarId dequeuePropagationQueue() {
+    VarId id = _propagationQueue.top();
     _propagationQueue.pop();
     return id;
   }
@@ -235,32 +235,30 @@ class PropagationGraph {
     return _varsInLayer[layer].size();
   }
 
-  [[nodiscard]] inline const std::vector<VarIdBase>& varsInLayer(
+  [[nodiscard]] inline const std::vector<VarId>& varsInLayer(
       size_t layer) const noexcept {
     return _varsInLayer[layer];
   }
 
-  [[nodiscard]] inline size_t layer(VarIdBase id) {
+  [[nodiscard]] inline size_t varLayer(VarId id) {
     return _varLayerIndex.at(id).layer;
   }
 
-  [[nodiscard]] inline size_t layer(InvariantId invariantId) {
+  [[nodiscard]] inline size_t invariantLayer(InvariantId invariantId) {
     assert(!varsDefinedBy(invariantId).empty());
     return _varLayerIndex.at(varsDefinedBy(invariantId).front()).layer;
   }
 
-  [[nodiscard]] inline size_t position(VarIdBase id) {
-    return _varPosition[id];
+  [[nodiscard]] inline size_t varPosition(VarId id) {
+    return _varPosition[size_t(id)];
   }
 
-  inline size_t position(InvariantId invariantId) {
+  inline size_t invariantPosition(InvariantId invariantId) {
     assert(!_varsDefinedByInvariant.at(invariantId).empty());
     return _varPosition.at(_varsDefinedByInvariant.at(invariantId).front());
   }
 
-  inline void enqueuePropagationQueue(VarIdBase id) {
-    _propagationQueue.push(id);
-  }
+  inline void enqueuePropagationQueue(VarId id) { _propagationQueue.push(id); }
 };
 
 }  // namespace atlantis::propagation

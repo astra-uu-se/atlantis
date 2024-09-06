@@ -12,8 +12,9 @@ Objective::Objective(propagation::Solver& solver,
                      fznparser::ProblemType problemType)
     : _solver(solver), _problemType(problemType) {}
 
-propagation::VarId Objective::registerNode(
-    propagation::VarId totalViolationVarId, propagation::VarId objectiveVarId) {
+propagation::VarViewId Objective::registerNode(
+    propagation::VarViewId totalViolationVarId,
+    propagation::VarViewId objectiveVarId) {
   assert(_solver.isOpen());
 
   _objective = objectiveVarId;
@@ -21,16 +22,18 @@ propagation::VarId Objective::registerNode(
   if (_problemType == fznparser::ProblemType::MINIMIZE) {
     return registerOptimisation(
         totalViolationVarId, objectiveVarId, _solver.upperBound(objectiveVarId),
-        [&](propagation::VarId v, propagation::VarId b) {
+        [&](propagation::VarId boundViolation,
+            propagation::VarViewId boundVar) {
           _solver.makeViolationInvariant<propagation::LessEqual>(
-              _solver, v, objectiveVarId, b);
+              _solver, boundViolation, objectiveVarId, boundVar);
         });
   } else if (_problemType == fznparser::ProblemType::MAXIMIZE) {
     return registerOptimisation(
         totalViolationVarId, objectiveVarId, _solver.lowerBound(objectiveVarId),
-        [&](propagation::VarId v, propagation::VarId b) {
+        [&](propagation::VarId boundViolation,
+            propagation::VarViewId boundVar) {
           _solver.makeViolationInvariant<propagation::LessEqual>(
-              _solver, v, b, objectiveVarId);
+              _solver, boundViolation, boundVar, objectiveVarId);
         });
   }
   assert(_problemType == fznparser::ProblemType::SATISFY);

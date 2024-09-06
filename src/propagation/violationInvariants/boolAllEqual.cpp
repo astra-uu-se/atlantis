@@ -9,7 +9,7 @@ namespace atlantis::propagation {
  * @param violationId id for the violationCount
  */
 BoolAllEqual::BoolAllEqual(SolverBase& solver, VarId violationId,
-                           std::vector<VarId>&& vars)
+                           std::vector<VarViewId>&& vars)
     : ViolationInvariant(solver, violationId),
       _vars(std::move(vars)),
       _numTrue(NULL_TIMESTAMP, 0) {
@@ -17,6 +17,12 @@ BoolAllEqual::BoolAllEqual(SolverBase& solver, VarId violationId,
   for (size_t i = 0; i < _vars.size(); ++i) {
     _varNotified.emplace_back(NULL_TIMESTAMP, 0);
   }
+}
+
+BoolAllEqual::BoolAllEqual(SolverBase& solver, VarViewId violationId,
+                           std::vector<VarViewId>&& vars)
+    : BoolAllEqual(solver, VarId(violationId), std::move(vars)) {
+  assert(violationId.isVar());
 }
 
 void BoolAllEqual::registerVars() {
@@ -66,7 +72,7 @@ void BoolAllEqual::notifyInputChanged(Timestamp ts, LocalId id) {
                        static_cast<Int>(_vars.size()) - _numTrue.value(ts)));
 }
 
-VarId BoolAllEqual::nextInput(Timestamp ts) {
+VarViewId BoolAllEqual::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _vars.size()) {
     return _vars[index];

@@ -10,11 +10,13 @@ namespace atlantis::invariantgraph::fzn {
 bool set_in(FznInvariantGraph& graph, const fznparser::IntArg& var,
             const fznparser::IntSet& set) {
   if (set.isInterval()) {
-    graph.addInvariantNode(std::make_unique<InIntervalNode>(
-        graph.retrieveVarNode(var), set.lowerBound(), set.upperBound(), true));
+    graph.addInvariantNode(std::make_shared<InIntervalNode>(
+        graph, graph.retrieveVarNode(var), set.lowerBound(), set.upperBound(),
+        true));
   } else {
-    graph.addInvariantNode(std::make_unique<SetInNode>(
-        graph.retrieveVarNode(var), std::vector<Int>{set.elements()}, true));
+    graph.addInvariantNode(
+        std::make_shared<SetInNode>(graph, graph.retrieveVarNode(var),
+                                    std::vector<Int>{set.elements()}, true));
   }
   return true;
 }
@@ -22,12 +24,12 @@ bool set_in(FznInvariantGraph& graph, const fznparser::IntArg& var,
 bool set_in(FznInvariantGraph& graph, const fznparser::IntArg& var,
             const fznparser::IntSet& set, const fznparser::BoolArg& reified) {
   if (set.isInterval()) {
-    graph.addInvariantNode(std::make_unique<InIntervalNode>(
-        graph.retrieveVarNode(var), set.lowerBound(), set.upperBound(),
+    graph.addInvariantNode(std::make_shared<InIntervalNode>(
+        graph, graph.retrieveVarNode(var), set.lowerBound(), set.upperBound(),
         graph.retrieveVarNode(reified)));
   } else {
-    graph.addInvariantNode(std::make_unique<SetInNode>(
-        graph.retrieveVarNode(var), std::vector<Int>{set.elements()},
+    graph.addInvariantNode(std::make_shared<SetInNode>(
+        graph, graph.retrieveVarNode(var), std::vector<Int>{set.elements()},
         graph.retrieveVarNode(reified)));
   }
   return true;

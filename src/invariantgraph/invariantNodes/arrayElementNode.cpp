@@ -20,31 +20,34 @@ static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
   return intVec;
 }
 
-ArrayElementNode::ArrayElementNode(std::vector<Int>&& parVector, VarNodeId idx,
+ArrayElementNode::ArrayElementNode(IInvariantGraph& graph,
+                                   std::vector<Int>&& parVector, VarNodeId idx,
                                    VarNodeId output, Int offset,
                                    bool isIntVector)
-    : InvariantNode({output}, {idx}),
+    : InvariantNode(graph, {output}, {idx}),
       _parVector(std::move(parVector)),
       _offset(offset),
       _isIntVector(isIntVector) {}
 
-ArrayElementNode::ArrayElementNode(std::vector<bool>&& parVector, VarNodeId idx,
+ArrayElementNode::ArrayElementNode(IInvariantGraph& graph,
+                                   std::vector<bool>&& parVector, VarNodeId idx,
                                    VarNodeId output, Int offset)
-    : InvariantNode({output}, {idx}),
+    : InvariantNode(graph, {output}, {idx}),
       _parVector(toIntVec(std::move(parVector))),
       _offset(offset),
       _isIntVector(false) {}
 
-void ArrayElementNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
-  assert(_isIntVector ==
-         graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
+void ArrayElementNode::init(InvariantNodeId id) {
+  InvariantNode::init(id);
+  assert(_isIntVector == invariantGraphConst()
+                             .varNodeConst(outputVarNodeIds().front())
+                             .isIntVar());
 }
 
-void ArrayElementNode::updateState(InvariantGraph& graph) {
-  const auto& idxNode = graph.varNodeConst(idx());
+void ArrayElementNode::updateState() {
+  const auto& idxNode = invariantGraphConst().varNodeConst(idx());
   if (idxNode.isFixed()) {
-    auto& outputNode = graph.varNode(outputVarNodeIds().front());
+    auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
     if (outputNode.isIntVar()) {
       outputNode.fixToValue(getVal(_parVector, idxNode.lowerBound(), _offset));
     } else {
@@ -55,22 +58,23 @@ void ArrayElementNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void ArrayElementNode::registerOutputVars(InvariantGraph& graph,
-                                          propagation::SolverBase& solver) {
-  if (graph.varId(outputVarNodeIds().front()) == propagation::NULL_ID) {
-    assert(graph.varId(idx()) != propagation::NULL_ID);
-    graph.varNode(outputVarNodeIds().front())
-        .setVarId(solver.makeIntView<propagation::ElementConst>(
-            solver, graph.varId(idx()), std::vector<Int>(_parVector), _offset));
+void ArrayElementNode::registerOutputVars() {
+  if (invariantGraph().varId(outputVarNodeIds().front()) ==
+      propagation::NULL_ID) {
+    assert(invariantGraph().varId(idx()) != propagation::NULL_ID);
+    invariantGraph()
+        .varNode(outputVarNodeIds().front())
+        .setVarId(solver().makeIntView<propagation::ElementConst>(
+            solver(), invariantGraph().varId(idx()),
+            std::vector<Int>(_parVector), _offset));
   }
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                     [&](const VarNodeId vId) {
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
-void ArrayElementNode::registerNode(InvariantGraph&, propagation::SolverBase&) {
-}
+void ArrayElementNode::registerNode() {}
 
 }  // namespace atlantis::invariantgraph

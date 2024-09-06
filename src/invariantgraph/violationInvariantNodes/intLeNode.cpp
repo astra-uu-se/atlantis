@@ -8,43 +8,46 @@
 
 namespace atlantis::invariantgraph {
 
-IntLeNode::IntLeNode(VarNodeId a, VarNodeId b, VarNodeId r)
-    : ViolationInvariantNode({a, b}, r) {}
+IntLeNode::IntLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+                     VarNodeId r)
+    : ViolationInvariantNode(graph, {a, b}, r) {}
 
-IntLeNode::IntLeNode(VarNodeId a, VarNodeId b, bool shouldHold)
-    : ViolationInvariantNode({a, b}, shouldHold) {}
+IntLeNode::IntLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+                     bool shouldHold)
+    : ViolationInvariantNode(graph, {a, b}, shouldHold) {}
 
-void IntLeNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
-  assert(!isReified() ||
-         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
+void IntLeNode::init(InvariantNodeId id) {
+  ViolationInvariantNode::init(id);
+  assert(
+      !isReified() ||
+      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(
+      std::all_of(staticInputVarNodeIds().begin(),
+                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
-void IntLeNode::registerOutputVars(InvariantGraph& graph,
-                                   propagation::SolverBase& solver) {
-  registerViolation(graph, solver);
+void IntLeNode::registerOutputVars() {
+  registerViolation();
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                     [&](const VarNodeId vId) {
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
-void IntLeNode::updateState(InvariantGraph& graph) {
-  ViolationInvariantNode::updateState(graph);
+void IntLeNode::updateState() {
+  ViolationInvariantNode::updateState();
   if (staticInputVarNodeIds().size() < 2) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  VarNode aNode = graph.varNode(a());
-  VarNode bNode = graph.varNode(b());
+  VarNode aNode = invariantGraph().varNode(a());
+  VarNode bNode = invariantGraph().varNode(b());
   if (a() == b()) {
     if (isReified()) {
-      fixReified(graph, true);
+      fixReified(true);
     } else if (!shouldHold()) {
       throw InconsistencyException("IntLeNode neg: a == b");
     }
@@ -67,7 +70,7 @@ void IntLeNode::updateState(InvariantGraph& graph) {
   if (aNode.upperBound() <= bNode.lowerBound()) {
     // always true
     if (isReified()) {
-      fixReified(graph, true);
+      fixReified(true);
     } else if (!shouldHold()) {
       throw InconsistencyException("IntLeNode neg: a <= b");
     }
@@ -76,7 +79,7 @@ void IntLeNode::updateState(InvariantGraph& graph) {
   } else if (aNode.lowerBound() > bNode.upperBound()) {
     // always false
     if (isReified()) {
-      fixReified(graph, false);
+      fixReified(false);
     } else if (shouldHold()) {
       throw InconsistencyException("IntLeNode: a > b");
     }
@@ -85,17 +88,19 @@ void IntLeNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void IntLeNode::registerNode(InvariantGraph& graph,
-                             propagation::SolverBase& solver) {
-  assert(violationVarId(graph) != propagation::NULL_ID);
+void IntLeNode::registerNode() {
+  assert(violationVarId() != propagation::NULL_ID);
+  assert(violationVarId().isVar());
 
   if (shouldHold()) {
-    solver.makeViolationInvariant<propagation::LessEqual>(
-        solver, violationVarId(graph), graph.varId(a()), graph.varId(b()));
+    solver().makeViolationInvariant<propagation::LessEqual>(
+        solver(), violationVarId(), invariantGraph().varId(a()),
+        invariantGraph().varId(b()));
   } else {
     assert(!isReified());
-    solver.makeViolationInvariant<propagation::LessThan>(
-        solver, violationVarId(graph), graph.varId(b()), graph.varId(a()));
+    solver().makeViolationInvariant<propagation::LessThan>(
+        solver(), violationVarId(), invariantGraph().varId(b()),
+        invariantGraph().varId(a()));
   }
 }
 

@@ -18,12 +18,12 @@ namespace atlantis::benchmark {
 
 class TSPTWAllDiff : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  std::vector<propagation::VarId> tour;
-  std::vector<propagation::VarId> timeTo;
-  std::vector<propagation::VarId> arrivalTime;
+  std::shared_ptr<propagation::Solver> solver;
+  std::vector<propagation::VarViewId> tour;
+  std::vector<propagation::VarViewId> timeTo;
+  std::vector<propagation::VarViewId> arrivalTime;
   std::vector<std::vector<Int>> dist;
-  propagation::VarId totalDist;
+  VarViewId totalDist{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;
@@ -32,11 +32,11 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
   Int n{0};
   const int MAX_TIME = 100000;
 
-  std::vector<propagation::VarId> violations;
-  propagation::VarId totalViolation;
+  std::vector<propagation::VarViewId> violations;
+  VarViewId totalViolation{propagation::NULL_ID};
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
     // First location is the dummy location:
     n = state.range(0);
 
@@ -70,7 +70,6 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
       return all_in_range(a + 1, n, [&](const size_t b) {
         const Int curB = solver->currentValue(tour.at(b));
         if (curA == curB) {
-          logDebug("a: " << a << "; b: " << b);
           return false;
         }
         return curA != curB;
@@ -93,7 +92,7 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
     // totalDist = sum(timeTo)
     totalDist = solver->makeIntVar(0, 0, MAX_TIME);
     solver->makeInvariant<propagation::Linear>(
-        *solver, totalDist, std::vector<propagation::VarId>(timeTo));
+        *solver, totalDist, std::vector<propagation::VarViewId>(timeTo));
 
     for (int i = 1; i < n; ++i) {
       violations.emplace_back(solver->makeIntView<propagation::LessEqualConst>(
@@ -102,22 +101,23 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
 
     totalViolation = solver->makeIntVar(0, 0, MAX_TIME * n);
     solver->makeInvariant<propagation::Linear>(
-        *solver, totalViolation, std::vector<propagation::VarId>(violations));
+        *solver, totalViolation,
+        std::vector<propagation::VarViewId>(violations));
 
     solver->close();
-    assert(
-        std::all_of(tour.begin(), tour.end(), [&](const propagation::VarId p) {
-          return solver->lowerBound(p) == 0;
-        }));
-    assert(
-        std::all_of(tour.begin(), tour.end(), [&](const propagation::VarId p) {
-          return solver->upperBound(p) == n - 1;
-        }));
-    assert(
-        std::all_of(tour.begin(), tour.end(), [&](const propagation::VarId p) {
-          return 0 <= solver->committedValue(p) &&
-                 solver->committedValue(p) <= n - 1;
-        }));
+    assert(std::all_of(tour.begin(), tour.end(),
+                       [&](const propagation::VarViewId p) {
+                         return solver->lowerBound(p) == 0;
+                       }));
+    assert(std::all_of(tour.begin(), tour.end(),
+                       [&](const propagation::VarViewId p) {
+                         return solver->upperBound(p) == n - 1;
+                       }));
+    assert(std::all_of(tour.begin(), tour.end(),
+                       [&](const propagation::VarViewId p) {
+                         return 0 <= solver->committedValue(p) &&
+                                solver->committedValue(p) <= n - 1;
+                       }));
 
     gen = std::mt19937(rd());
 
@@ -150,7 +150,6 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
     return all_in_range(a + 1, n, [&](const size_t b) {
       const Int curB = solver->committedValue(tour.at(b));
       if (curA == curB) {
-        logDebug("a: " << a << "; b: " << b);
         return false;
       }
       return curA != curB;
@@ -168,13 +167,11 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
 
     solver->beginMove();
     size_t cur = b;
-    logDebug("probe " << probes);
+
     for (size_t i = d; i <= e; ++i) {
-      logDebug("  tour[" << cur << "] = tour[" << i << ']');
       solver->setValue(tour[cur++], solver->committedValue(tour[i]));
     }
     for (size_t i = b; i < d; ++i) {
-      logDebug("  tour[" << cur << "] = tour[" << i << ']');
       solver->setValue(tour[cur++], solver->committedValue(tour[i]));
     }
 
@@ -183,7 +180,6 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
       return all_in_range(i + 1, n, [&](const size_t j) {
         const Int curJ = solver->currentValue(tour.at(j));
         if (curI == curJ) {
-          logDebug("i: " << i << "; j: " << j);
           return false;
         }
         return curI != curJ;

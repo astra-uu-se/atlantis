@@ -9,7 +9,7 @@ namespace atlantis::propagation {
  * @param violationId id for the violationCount
  */
 AllDifferentExcept::AllDifferentExcept(SolverBase& solver, VarId violationId,
-                                       std::vector<VarId>&& vars,
+                                       std::vector<VarViewId>&& vars,
                                        const std::vector<Int>& ignored)
     : AllDifferent(solver, violationId, std::move(vars)) {
   const auto [lb, ub] =
@@ -20,6 +20,14 @@ AllDifferentExcept::AllDifferentExcept(SolverBase& solver, VarId violationId,
   for (const Int val : ignored) {
     _ignored[val - _ignoredOffset] = true;
   }
+}
+
+AllDifferentExcept::AllDifferentExcept(SolverBase& solver,
+                                       VarViewId violationId,
+                                       std::vector<VarViewId>&& vars,
+                                       const std::vector<Int>& ignored)
+    : AllDifferentExcept(solver, VarId(violationId), std::move(vars), ignored) {
+  assert(violationId.isVar());
 }
 
 void AllDifferentExcept::recompute(Timestamp ts) {

@@ -1,6 +1,5 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intDivNode.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -15,25 +14,26 @@ class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
-  Int denominatorVal() { return varNode(denominatorVarNodeId).lowerBound(); }
-
-  Int denominatorVal(propagation::Solver& solver) {
-    return varNode(denominatorIdentifier).isFixed()
-               ? varNode(denominatorIdentifier).lowerBound()
-               : solver.currentValue(varId(denominatorIdentifier));
+  Int denominatorVal(bool isRegistered = false) {
+    if (isRegistered) {
+      return varNode(denominatorIdentifier).isFixed()
+                 ? varNode(denominatorIdentifier).lowerBound()
+                 : _solver->currentValue(varId(denominatorIdentifier));
+    }
+    return varNode(denominatorVarNodeId).lowerBound();
   }
 
-  Int computeOutput() {
+  Int computeOutput(bool isRegistered = false) {
+    if (isRegistered) {
+      const Int numerator =
+          varNode(numeratorIdentifier).isFixed()
+              ? varNode(numeratorIdentifier).lowerBound()
+              : _solver->currentValue(varId(numeratorIdentifier));
+      const Int denominator = denominatorVal(true);
+      return denominator != 0 ? numerator / denominator : 0;
+    }
     const Int numerator = varNode(numeratorIdentifier).lowerBound();
     const Int denominator = denominatorVal();
-    return denominator != 0 ? numerator / denominator : 0;
-  }
-
-  Int computeOutput(propagation::Solver& solver) {
-    const Int numerator = varNode(numeratorIdentifier).isFixed()
-                              ? varNode(numeratorIdentifier).lowerBound()
-                              : solver.currentValue(varId(numeratorIdentifier));
-    const Int denominator = denominatorVal(solver);
     return denominator != 0 ? numerator / denominator : 0;
   }
 
@@ -47,8 +47,8 @@ class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
     }
     outputVarNodeId = retrieveIntVarNode(-2, 2, outputIdentifier);
 
-    createInvariantNode(numeratorVarNodeId, denominatorVarNodeId,
-                        outputVarNodeId);
+    createInvariantNode(*_invariantGraph, numeratorVarNodeId,
+                        denominatorVarNodeId, outputVarNodeId);
   }
 };
 
@@ -63,45 +63,44 @@ TEST_P(IntDivNodeTestFixture, construction) {
 }
 
 TEST_P(IntDivNodeTestFixture, application) {
-  propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
+  _solver->open();
+  addInputVarsToSolver();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVars(*_invariantGraph, solver);
+  invNode().registerOutputVars();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, solver);
-  solver.close();
+  invNode().registerNode();
+  _solver->close();
 
-  EXPECT_EQ(solver.searchVars().size(), 2);
+  EXPECT_EQ(_solver->searchVars().size(), 2);
 
-  EXPECT_EQ(solver.numVars(), 3);
+  EXPECT_EQ(_solver->numVars(), 3);
 
   // intDiv
-  EXPECT_EQ(solver.numInvariants(), 1);
+  EXPECT_EQ(_solver->numInvariants(), 1);
 }
 
 TEST_P(IntDivNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  invNode().updateState(*_invariantGraph);
+  invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-    EXPECT_TRUE(invNode().replace(*_invariantGraph));
-    invNode().deactivate(*_invariantGraph);
+    EXPECT_TRUE(invNode().canBeReplaced());
+    EXPECT_TRUE(invNode().replace());
+    invNode().deactivate();
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
   } else {
-    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+    EXPECT_FALSE(invNode().canBeReplaced());
   }
 }
 
 TEST_P(IntDivNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply(solver);
-  _invariantGraph->close(solver);
+  _invariantGraph->construct();
+  _invariantGraph->close();
 
   if (shouldBeReplaced()) {
     EXPECT_EQ(varNode(outputIdentifier).varNodeId(),
@@ -109,7 +108,7 @@ TEST_P(IntDivNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& identifier :
        std::array<std::string, 2>{numeratorIdentifier, denominatorIdentifier}) {
     if (!varNode(identifier).isFixed()) {
@@ -118,25 +117,25 @@ TEST_P(IntDivNodeTestFixture, propagation) {
     }
   }
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
-  std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
+  std::vector<Int> inputVals = makeInputVals(inputVarIds);
 
-  while (increaseNextVal(solver, inputVarIds, inputVals)) {
-    solver.beginMove();
-    setVarVals(solver, inputVarIds, inputVals);
-    solver.endMove();
+  while (increaseNextVal(inputVarIds, inputVals)) {
+    _solver->beginMove();
+    setVarVals(inputVarIds, inputVals);
+    _solver->endMove();
 
-    solver.beginProbe();
-    solver.query(outputId);
-    solver.endProbe();
+    _solver->beginProbe();
+    _solver->query(outputId);
+    _solver->endProbe();
 
-    expectVarVals(solver, inputVarIds, inputVals);
+    expectVarVals(inputVarIds, inputVals);
 
-    if (denominatorVal(solver) != 0) {
-      const Int actual = solver.currentValue(outputId);
-      const Int expected = computeOutput(solver);
+    if (denominatorVal(true) != 0) {
+      const Int actual = _solver->currentValue(outputId);
+      const Int expected = computeOutput(true);
       EXPECT_EQ(actual, expected);
     }
   }

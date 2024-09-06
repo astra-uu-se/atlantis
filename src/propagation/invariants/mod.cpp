@@ -4,11 +4,18 @@
 
 namespace atlantis::propagation {
 
-Mod::Mod(SolverBase& solver, VarId output, VarId numerator, VarId denominator)
+Mod::Mod(SolverBase& solver, VarId output, VarViewId numerator,
+         VarViewId denominator)
     : Invariant(solver),
       _output(output),
       _nominator(numerator),
       _denominator(denominator) {}
+
+Mod::Mod(SolverBase& solver, VarViewId output, VarViewId numerator,
+         VarViewId denominator)
+    : Mod(solver, VarId(output), numerator, denominator) {
+  assert(output.isVar());
+}
 
 void Mod::registerVars() {
   assert(_id != NULL_ID);
@@ -42,7 +49,7 @@ void Mod::recompute(Timestamp ts) {
 
 void Mod::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId Mod::nextInput(Timestamp ts) {
+VarViewId Mod::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _nominator;

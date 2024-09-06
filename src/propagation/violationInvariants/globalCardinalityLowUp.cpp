@@ -2,20 +2,8 @@
 
 namespace atlantis::propagation {
 
-/**
- * @param violationId id for the violationCount
- */
-
-GlobalCardinalityLowUp::GlobalCardinalityLowUp(SolverBase& solver,
-                                               VarId violationId,
-                                               std::vector<VarId>&& t_vars,
-                                               const std::vector<Int>& cover,
-                                               const std::vector<Int>& bounds)
-    : GlobalCardinalityLowUp(solver, violationId, std::move(t_vars), cover,
-                             bounds, bounds) {}
-
 GlobalCardinalityLowUp::GlobalCardinalityLowUp(
-    SolverBase& solver, VarId violationId, std::vector<VarId>&& t_vars,
+    SolverBase& solver, VarId violationId, std::vector<VarViewId>&& t_vars,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
     const std::vector<Int>& upperBound)
     : ViolationInvariant(solver, violationId),
@@ -42,6 +30,33 @@ GlobalCardinalityLowUp::GlobalCardinalityLowUp(
     _lowerBounds[cover[i] - _offset] = lowerBound[i];
     _upperBounds[cover[i] - _offset] = upperBound[i];
   }
+}
+
+GlobalCardinalityLowUp::GlobalCardinalityLowUp(
+    SolverBase& solver, VarViewId violationId, std::vector<VarViewId>&& t_vars,
+    const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
+    const std::vector<Int>& upperBound)
+    : GlobalCardinalityLowUp(solver, VarId(violationId), std::move(t_vars),
+                             cover, lowerBound, upperBound) {
+  assert(violationId.isVar());
+}
+
+GlobalCardinalityLowUp::GlobalCardinalityLowUp(SolverBase& solver,
+                                               VarId violationId,
+                                               std::vector<VarViewId>&& t_vars,
+                                               const std::vector<Int>& cover,
+                                               const std::vector<Int>& bounds)
+    : GlobalCardinalityLowUp(solver, violationId, std::move(t_vars), cover,
+                             bounds, bounds) {}
+
+GlobalCardinalityLowUp::GlobalCardinalityLowUp(SolverBase& solver,
+                                               VarViewId violationId,
+                                               std::vector<VarViewId>&& t_vars,
+                                               const std::vector<Int>& cover,
+                                               const std::vector<Int>& bounds)
+    : GlobalCardinalityLowUp(solver, VarId(violationId), std::move(t_vars),
+                             cover, bounds) {
+  assert(violationId.isVar());
 }
 
 void GlobalCardinalityLowUp::registerVars() {
@@ -114,7 +129,7 @@ void GlobalCardinalityLowUp::notifyInputChanged(Timestamp timestamp,
                                                        (inc > 0 ? inc : 0))));
 }
 
-VarId GlobalCardinalityLowUp::nextInput(Timestamp timestamp) {
+VarViewId GlobalCardinalityLowUp::nextInput(Timestamp timestamp) {
   const auto index = static_cast<size_t>(_state.incValue(timestamp, 1));
   assert(0 <= _state.value(timestamp));
   if (index < _vars.size()) {

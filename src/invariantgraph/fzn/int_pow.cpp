@@ -9,8 +9,8 @@ namespace atlantis::invariantgraph::fzn {
 bool int_pow(FznInvariantGraph& graph, const fznparser::IntArg& base,
              const fznparser::IntArg& exponent,
              const fznparser::IntArg& power) {
-  graph.addInvariantNode(std::make_unique<IntPowNode>(
-      graph.retrieveVarNode(base), graph.retrieveVarNode(exponent),
+  graph.addInvariantNode(std::make_shared<IntPowNode>(
+      graph, graph.retrieveVarNode(base), graph.retrieveVarNode(exponent),
       graph.retrieveVarNode(power)));
   return true;
 }

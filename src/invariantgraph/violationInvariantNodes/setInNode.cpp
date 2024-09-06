@@ -9,28 +9,31 @@
 
 namespace atlantis::invariantgraph {
 
-SetInNode::SetInNode(VarNodeId input, std::vector<Int>&& values, VarNodeId r)
-    : ViolationInvariantNode({input}, r), _values(std::move(values)) {}
+SetInNode::SetInNode(IInvariantGraph& graph, VarNodeId input,
+                     std::vector<Int>&& values, VarNodeId r)
+    : ViolationInvariantNode(graph, {input}, r), _values(std::move(values)) {}
 
-SetInNode::SetInNode(VarNodeId input, std::vector<Int>&& values,
-                     bool shouldHold)
-    : ViolationInvariantNode({input}, shouldHold), _values(std::move(values)) {}
+SetInNode::SetInNode(IInvariantGraph& graph, VarNodeId input,
+                     std::vector<Int>&& values, bool shouldHold)
+    : ViolationInvariantNode(graph, {input}, shouldHold),
+      _values(std::move(values)) {}
 
-void SetInNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
-  assert(!isReified() ||
-         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
+void SetInNode::init(InvariantNodeId id) {
+  ViolationInvariantNode::init(id);
+  assert(
+      !isReified() ||
+      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(
+      std::all_of(staticInputVarNodeIds().begin(),
+                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
-void SetInNode::registerOutputVars(InvariantGraph& graph,
-                                   propagation::SolverBase& solver) {
-  if (violationVarId(graph) == propagation::NULL_ID) {
-    const propagation::VarId input =
-        graph.varId(staticInputVarNodeIds().front());
+void SetInNode::registerOutputVars() {
+  if (violationVarId() == propagation::NULL_ID) {
+    const propagation::VarViewId input =
+        invariantGraph().varId(staticInputVarNodeIds().front());
     std::vector<DomainEntry> domainEntries;
     domainEntries.reserve(_values.size());
     std::transform(_values.begin(), _values.end(),
@@ -39,22 +42,22 @@ void SetInNode::registerOutputVars(InvariantGraph& graph,
 
     if (!shouldHold()) {
       assert(!isReified());
-      _intermediate = solver.makeIntView<propagation::InDomain>(
-          solver, input, std::move(domainEntries));
-      setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
-                                   solver, _intermediate, 0));
+      _intermediate = solver().makeIntView<propagation::InDomain>(
+          solver(), input, std::move(domainEntries));
+      setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
+          solver(), _intermediate, 0));
     } else {
-      setViolationVarId(graph, solver.makeIntView<propagation::InDomain>(
-                                   solver, input, std::move(domainEntries)));
+      setViolationVarId(solver().makeIntView<propagation::InDomain>(
+          solver(), input, std::move(domainEntries)));
     }
   }
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                     [&](const VarNodeId vId) {
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
-void SetInNode::registerNode(InvariantGraph&, propagation::SolverBase&) {}
+void SetInNode::registerNode() {}
 
 }  // namespace atlantis::invariantgraph

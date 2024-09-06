@@ -16,9 +16,9 @@ namespace atlantis::benchmark {
 
 class ExtremeStatic : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  std::vector<propagation::VarId> staticInputVars;
-  propagation::VarId objective;
+  std::shared_ptr<propagation::Solver> solver;
+  std::vector<propagation::VarViewId> staticInputVars;
+  VarViewId objective{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;
@@ -29,7 +29,7 @@ class ExtremeStatic : public ::benchmark::Fixture {
   Int ub{0};
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     lb = 0;
     ub = 16;
@@ -47,7 +47,8 @@ class ExtremeStatic : public ::benchmark::Fixture {
                                    lb * static_cast<Int>(numInputs),
                                    ub * static_cast<Int>(numInputs));
     solver->makeInvariant<propagation::Linear>(
-        *solver, objective, std::vector<propagation::VarId>(staticInputVars));
+        *solver, objective,
+        std::vector<propagation::VarViewId>(staticInputVars));
 
     solver->close();
     gen = std::mt19937(rd());

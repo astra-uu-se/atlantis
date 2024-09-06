@@ -27,7 +27,7 @@ class ElementConst : public IntView {
   }
 
  public:
-  explicit ElementConst(SolverBase& solver, VarId parentId,
+  explicit ElementConst(SolverBase& solver, VarViewId parentId,
                         std::vector<Int>&& array, Int offset = 1);
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

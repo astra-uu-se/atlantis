@@ -1,11 +1,5 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
-#include <vector>
-
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/invariants/boolOr.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -14,17 +8,18 @@ using namespace atlantis::propagation;
 class BoolXorTest : public InvariantTest {
  public:
   Int computeViolation(const Timestamp ts,
-                       const std::array<const VarId, 2>& inputs) {
-    return computeViolation(solver->value(ts, inputs.at(0)),
-                            solver->value(ts, inputs.at(1)));
+                       const std::array<const VarViewId, 2>& inputs) {
+    return computeViolation(_solver->value(ts, inputs.at(0)),
+                            _solver->value(ts, inputs.at(1)));
   }
 
   static Int computeViolation(const std::array<const Int, 2>& inputs) {
     return computeViolation(inputs.at(0), inputs.at(1));
   }
 
-  Int computeViolation(const Timestamp ts, const VarId x, const VarId y) {
-    return computeViolation(solver->value(ts, x), solver->value(ts, y));
+  Int computeViolation(const Timestamp ts, const VarViewId x,
+                       const VarViewId y) {
+    return computeViolation(_solver->value(ts, x), _solver->value(ts, y));
   }
 
   static Int computeViolation(const Int xVal, const Int yVal) {
@@ -35,32 +30,32 @@ class BoolXorTest : public InvariantTest {
 TEST_F(BoolXorTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {0, 0}, {0, 1}, {0, 10}, {1, 10}, {10, 100}};
-  solver->open();
-  const VarId x = solver->makeIntVar(
+  _solver->open();
+  const VarViewId x = _solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId y = solver->makeIntVar(
+  const VarViewId y = _solver->makeIntVar(
       boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarId outputId = solver->makeIntVar(0, 0, 2);
-  BoolOr& invariant = solver->makeInvariant<BoolOr>(*solver, outputId, x, y);
-  solver->close();
+  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
+  BoolOr& invariant = _solver->makeInvariant<BoolOr>(*_solver, outputId, x, y);
+  _solver->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_TRUE(xLb <= xUb);
-    solver->updateBounds(x, xLb, xUb, false);
+    _solver->updateBounds(VarId(x), xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_TRUE(yLb <= yUb);
-      solver->updateBounds(y, yLb, yUb, false);
+      _solver->updateBounds(VarId(y), yLb, yUb, false);
       invariant.updateBounds(false);
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
-        solver->setValue(solver->currentTimestamp(), x, xVal);
+        _solver->setValue(_solver->currentTimestamp(), x, xVal);
         for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-          solver->setValue(solver->currentTimestamp(), y, yVal);
+          _solver->setValue(_solver->currentTimestamp(), y, yVal);
           invariant.updateBounds(false);
-          invariant.recompute(solver->currentTimestamp());
+          invariant.recompute(_solver->currentTimestamp());
         }
       }
-      ASSERT_GE(std::min(xLb, yLb), solver->lowerBound(outputId));
-      ASSERT_EQ(std::min(xUb, yUb), solver->upperBound(outputId));
+      ASSERT_GE(std::min(xLb, yLb), _solver->lowerBound(outputId));
+      ASSERT_EQ(std::min(xUb, yUb), _solver->upperBound(outputId));
     }
   }
 }
@@ -73,24 +68,24 @@ TEST_F(BoolXorTest, Recompute) {
 
   EXPECT_TRUE(xLb <= xUb);
   EXPECT_TRUE(yLb <= yUb);
-  solver->open();
-  const std::array<const VarId, 2> inputs{solver->makeIntVar(xUb, xLb, xUb),
-                                          solver->makeIntVar(yUb, yLb, yUb)};
-  const VarId outputId =
-      solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
-  BoolOr& invariant = solver->makeInvariant<BoolOr>(*solver, outputId,
-                                                    inputs.at(0), inputs.at(1));
-  solver->close();
+  _solver->open();
+  const std::array<const VarViewId, 2> inputs{
+      _solver->makeIntVar(xUb, xLb, xUb), _solver->makeIntVar(yUb, yLb, yUb)};
+  const VarViewId outputId =
+      _solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
+  BoolOr& invariant = _solver->makeInvariant<BoolOr>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
   for (Int xVal = xLb; xVal <= xUb; ++xVal) {
     for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-      solver->setValue(solver->currentTimestamp(), inputs.at(0), xVal);
-      solver->setValue(solver->currentTimestamp(), inputs.at(1), yVal);
+      _solver->setValue(_solver->currentTimestamp(), inputs.at(0), xVal);
+      _solver->setValue(_solver->currentTimestamp(), inputs.at(1), yVal);
 
       const Int expectedViolation = computeViolation(xVal, yVal);
-      invariant.recompute(solver->currentTimestamp());
+      invariant.recompute(_solver->currentTimestamp());
       EXPECT_EQ(expectedViolation,
-                solver->value(solver->currentTimestamp(), outputId));
+                _solver->value(_solver->currentTimestamp(), outputId));
     }
   }
 }
@@ -100,24 +95,24 @@ TEST_F(BoolXorTest, NotifyInputChanged) {
   const Int ub = 50;
   EXPECT_TRUE(lb <= ub);
 
-  solver->open();
-  const std::array<const VarId, 2> inputs{solver->makeIntVar(ub, lb, ub),
-                                          solver->makeIntVar(ub, lb, ub)};
-  const VarId outputId = solver->makeIntVar(0, 0, ub - lb);
-  BoolOr& invariant = solver->makeInvariant<BoolOr>(*solver, outputId,
-                                                    inputs.at(0), inputs.at(1));
-  solver->close();
+  _solver->open();
+  const std::array<const VarViewId, 2> inputs{_solver->makeIntVar(ub, lb, ub),
+                                              _solver->makeIntVar(ub, lb, ub)};
+  const VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
+  BoolOr& invariant = _solver->makeInvariant<BoolOr>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  Timestamp ts = solver->currentTimestamp();
+  Timestamp ts = _solver->currentTimestamp();
 
   for (Int val = lb; val <= ub; ++val) {
     ++ts;
     for (size_t i = 0; i < inputs.size(); ++i) {
-      solver->setValue(ts, inputs.at(i), val);
+      _solver->setValue(ts, inputs.at(i), val);
       const Int expectedViolation = computeViolation(ts, inputs);
 
       invariant.notifyInputChanged(ts, LocalId(i));
-      EXPECT_EQ(expectedViolation, solver->value(ts, outputId));
+      EXPECT_EQ(expectedViolation, _solver->value(ts, outputId));
     }
   }
 }
@@ -127,30 +122,38 @@ TEST_F(BoolXorTest, NextInput) {
   const Int ub = 10;
   EXPECT_TRUE(lb <= ub);
 
-  solver->open();
-  const std::array<const VarId, 2> inputs = {solver->makeIntVar(0, lb, ub),
-                                             solver->makeIntVar(1, lb, ub)};
-  const VarId outputId = solver->makeIntVar(0, 0, 2);
-  const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  BoolOr& invariant = solver->makeInvariant<BoolOr>(*solver, outputId,
-                                                    inputs.at(0), inputs.at(1));
-  solver->close();
+  _solver->open();
+  const std::array<const VarViewId, 2> inputs = {
+      _solver->makeIntVar(0, lb, ub), _solver->makeIntVar(1, lb, ub)};
+  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
+  const VarViewId minVarId =
+      *std::min_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
+  const VarViewId maxVarId =
+      *std::max_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
+  BoolOr& invariant = _solver->makeInvariant<BoolOr>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  for (Timestamp ts = solver->currentTimestamp() + 1;
-       ts < solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(maxVarId + 1, false);
+  for (Timestamp ts = _solver->currentTimestamp() + 1;
+       ts < _solver->currentTimestamp() + 4; ++ts) {
+    std::vector<bool> notified(size_t(maxVarId) + 1, false);
     for (size_t i = 0; i < inputs.size(); ++i) {
-      const VarId varId = invariant.nextInput(ts);
+      const VarViewId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
-      EXPECT_TRUE(minVarId <= varId);
-      EXPECT_TRUE(varId <= maxVarId);
-      EXPECT_FALSE(notified.at(varId));
-      notified[varId] = true;
+      EXPECT_LE(size_t(minVarId), size_t(varId));
+      EXPECT_GE(size_t(maxVarId), size_t(varId));
+      EXPECT_FALSE(notified.at(size_t(varId)));
+      notified.at(size_t(varId)) = true;
     }
     EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
-      EXPECT_TRUE(notified.at(varId));
+    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
+      EXPECT_TRUE(notified.at(i));
     }
   }
 }
@@ -160,26 +163,26 @@ TEST_F(BoolXorTest, NotifyCurrentInputChanged) {
   const Int ub = 10;
   EXPECT_TRUE(lb <= ub);
 
-  solver->open();
+  _solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
-  const std::array<const VarId, 2> inputs = {
-      solver->makeIntVar(valueDist(gen), lb, ub),
-      solver->makeIntVar(valueDist(gen), lb, ub)};
-  const VarId outputId = solver->makeIntVar(0, 0, ub - lb);
-  BoolOr& invariant = solver->makeInvariant<BoolOr>(*solver, outputId,
-                                                    inputs.at(0), inputs.at(1));
-  solver->close();
+  const std::array<const VarViewId, 2> inputs = {
+      _solver->makeIntVar(valueDist(gen), lb, ub),
+      _solver->makeIntVar(valueDist(gen), lb, ub)};
+  const VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
+  BoolOr& invariant = _solver->makeInvariant<BoolOr>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  for (Timestamp ts = solver->currentTimestamp() + 1;
-       ts < solver->currentTimestamp() + 4; ++ts) {
-    for (const VarId& varId : inputs) {
+  for (Timestamp ts = _solver->currentTimestamp() + 1;
+       ts < _solver->currentTimestamp() + 4; ++ts) {
+    for (const VarViewId& varId : inputs) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
-      const Int oldVal = solver->value(ts, varId);
+      const Int oldVal = _solver->value(ts, varId);
       do {
-        solver->setValue(ts, varId, valueDist(gen));
-      } while (solver->value(ts, varId) == oldVal);
+        _solver->setValue(ts, varId, valueDist(gen));
+      } while (_solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(solver->value(ts, outputId), computeViolation(ts, inputs));
+      EXPECT_EQ(_solver->value(ts, outputId), computeViolation(ts, inputs));
     }
   }
 }
@@ -194,47 +197,47 @@ TEST_F(BoolXorTest, Commit) {
   std::array<Int, 2> committedValues{valueDist(gen), valueDist(gen)};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  solver->open();
-  const std::array<const VarId, 2> inputs{
-      solver->makeIntVar(committedValues.at(0), lb, ub),
-      solver->makeIntVar(committedValues.at(1), lb, ub)};
+  _solver->open();
+  const std::array<const VarViewId, 2> inputs{
+      _solver->makeIntVar(committedValues.at(0), lb, ub),
+      _solver->makeIntVar(committedValues.at(1), lb, ub)};
 
-  const VarId outputId = solver->makeIntVar(0, 0, 2);
-  BoolOr& invariant = solver->makeInvariant<BoolOr>(*solver, outputId,
-                                                    inputs.at(0), inputs.at(1));
-  solver->close();
+  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
+  BoolOr& invariant = _solver->makeInvariant<BoolOr>(
+      *_solver, outputId, inputs.at(0), inputs.at(1));
+  _solver->close();
 
-  EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
-            computeViolation(solver->currentTimestamp(), inputs));
+  EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
+            computeViolation(_solver->currentTimestamp(), inputs));
 
   for (const size_t i : indices) {
-    Timestamp ts = solver->currentTimestamp() + Timestamp(1 + i);
+    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputs.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(_solver->committedValue(inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      solver->setValue(ts, inputs.at(i), valueDist(gen));
-    } while (oldVal == solver->value(ts, inputs.at(i)));
+      _solver->setValue(ts, inputs.at(i), valueDist(gen));
+    } while (oldVal == _solver->value(ts, inputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedViolation = solver->value(ts, outputId);
+    const Int notifiedViolation = _solver->value(ts, outputId);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedViolation, solver->value(ts, outputId));
+    ASSERT_EQ(notifiedViolation, _solver->value(ts, outputId));
 
-    solver->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = solver->value(ts, inputs.at(i));
-    solver->commitIf(ts, outputId);
+    _solver->commitIf(ts, VarId(inputs.at(i)));
+    committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
+    _solver->commitIf(ts, VarId(outputId));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedViolation, solver->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedViolation, _solver->value(ts + 1, outputId));
   }
 }
 
@@ -245,8 +248,11 @@ class MockBoolXor : public BoolOr {
     registered = true;
     BoolOr::registerVars();
   }
-  explicit MockBoolXor(SolverBase& solver, VarId outputId, VarId x, VarId y)
-      : BoolOr(solver, outputId, x, y) {
+  explicit MockBoolXor(SolverBase& solver, VarViewId output, VarViewId x,
+                       VarViewId y)
+      : BoolOr(solver, output, x, y) {
+    EXPECT_TRUE(output.isVar());
+
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return BoolOr::recompute(timestamp);
     });
@@ -266,21 +272,21 @@ class MockBoolXor : public BoolOr {
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(BoolXorTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!solver->isOpen()) {
-      solver->open();
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    const VarId x = solver->makeIntVar(5, 0, 100);
-    const VarId y = solver->makeIntVar(0, 0, 100);
-    const VarId output = solver->makeIntVar(0, 0, 200);
+    const VarViewId x = _solver->makeIntVar(5, 0, 100);
+    const VarViewId y = _solver->makeIntVar(0, 0, 100);
+    const VarViewId output = _solver->makeIntVar(0, 0, 200);
     testNotifications<MockBoolXor>(
-        &solver->makeInvariant<MockBoolXor>(*solver, output, x, y),
+        &_solver->makeInvariant<MockBoolXor>(*_solver, output, x, y),
         {propMode, markingMode, 3, x, 1, output});
   }
 }

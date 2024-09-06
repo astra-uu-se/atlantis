@@ -8,8 +8,14 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-Equal::Equal(SolverBase& solver, VarId violationId, VarId x, VarId y)
+Equal::Equal(SolverBase& solver, VarId violationId, VarViewId x, VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
+
+Equal::Equal(SolverBase& solver, VarViewId violationId, VarViewId x,
+             VarViewId y)
+    : Equal(solver, VarId(violationId), x, y) {
+  assert(violationId.isVar());
+}
 
 void Equal::registerVars() {
   assert(_id != NULL_ID);
@@ -41,7 +47,7 @@ void Equal::recompute(Timestamp ts) {
 
 void Equal::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId Equal::nextInput(Timestamp ts) {
+VarViewId Equal::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

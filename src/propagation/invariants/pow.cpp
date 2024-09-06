@@ -6,8 +6,14 @@
 
 namespace atlantis::propagation {
 
-Pow::Pow(SolverBase& solver, VarId output, VarId base, VarId exponent)
+Pow::Pow(SolverBase& solver, VarId output, VarViewId base, VarViewId exponent)
     : Invariant(solver), _output(output), _base(base), _exponent(exponent) {}
+
+Pow::Pow(SolverBase& solver, VarViewId output, VarViewId base,
+         VarViewId exponent)
+    : Pow(solver, VarId(output), base, exponent) {
+  assert(output.isVar());
+}
 
 void Pow::registerVars() {
   assert(_id != NULL_ID);
@@ -92,7 +98,7 @@ void Pow::recompute(Timestamp ts) {
   updateValue(ts, _output, static_cast<Int>(std::pow(baseVal, expVal)));
 }
 
-VarId Pow::nextInput(Timestamp ts) {
+VarViewId Pow::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _base;

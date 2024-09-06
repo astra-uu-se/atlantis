@@ -12,30 +12,30 @@
 #include "atlantis/types.hpp"
 
 namespace atlantis::testing {
+
 class TSPTWTest : public ::testing::Test {
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  std::vector<propagation::VarId> pred;
-  std::vector<propagation::VarId> timeToPrev;
-  std::vector<propagation::VarId> arrivalPrev;
-  std::vector<propagation::VarId> arrivalTime;
+  std::shared_ptr<propagation::Solver> _solver;
+  std::vector<propagation::VarViewId> pred;
+  std::vector<propagation::VarViewId> timeToPrev;
+  std::vector<propagation::VarViewId> arrivalPrev;
+  std::vector<propagation::VarViewId> arrivalTime;
   std::vector<std::vector<Int>> dist;
-  propagation::VarId totalDist;
+  propagation::VarViewId totalDist{propagation::NULL_ID};
 
   std::random_device rd;
 
   Int n{30};
   const int MAX_TIME = 100000;
 
-  std::vector<propagation::VarId> violation;
-  propagation::VarId totalViolation;
+  std::vector<propagation::VarViewId> violation;
+  propagation::VarViewId totalViolation{propagation::NULL_ID};
 
   void SetUp() override {
-    solver = std::make_unique<propagation::Solver>();
+    _solver = std::make_shared<propagation::Solver>();
     n = 30;
 
-    logInfo(n);
-    solver->open();
+    _solver->open();
 
     for (int i = 0; i < n; ++i) {
       dist.emplace_back();
@@ -46,53 +46,55 @@ class TSPTWTest : public ::testing::Test {
 
     for (int i = 1; i <= n; ++i) {
       const Int initVal = 1 + (i % n);
-      pred.emplace_back(solver->makeIntVar(initVal, 1, n));
-      timeToPrev.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
-      arrivalTime.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
-      arrivalPrev.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
-      violation.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
+      pred.emplace_back(_solver->makeIntVar(initVal, 1, n));
+      timeToPrev.emplace_back(_solver->makeIntVar(0, 0, MAX_TIME));
+      arrivalTime.emplace_back(_solver->makeIntVar(0, 0, MAX_TIME));
+      arrivalPrev.emplace_back(_solver->makeIntVar(0, 0, MAX_TIME));
+      violation.emplace_back(_solver->makeIntVar(0, 0, MAX_TIME));
     }
 
     // Ignore index 0
     for (int i = 1; i < n; ++i) {
       // timeToPrev[i] = dist[i][pred[i]]
-      timeToPrev[i] = solver->makeIntView<propagation::ElementConst>(
-          *solver, pred[i], std::vector<Int>(dist[i]));
+      timeToPrev[i] = _solver->makeIntView<propagation::ElementConst>(
+          *_solver, pred[i], std::vector<Int>(dist[i]));
       // arrivalPrev[i] = arrivalTime[pred[i]]
     }
 
     // Ignore index 0
     for (int i = 1; i < n; ++i) {
       // arrivalPrev[i] = arrivalTime[pred[i]]
-      solver->makeInvariant<propagation::ElementVar>(
-          *solver, arrivalPrev[i], pred[i],
-          std::vector<propagation::VarId>(arrivalTime));
+      _solver->makeInvariant<propagation::ElementVar>(
+          *_solver, arrivalPrev[i], pred[i],
+          std::vector<propagation::VarViewId>(arrivalTime));
       // arrivalTime[i] = arrivalPrev[i] + timeToPrev[i]
-      solver->makeInvariant<propagation::Linear>(
-          *solver, arrivalTime[i],
-          std::vector<propagation::VarId>({arrivalPrev[i], timeToPrev[i]}));
+      _solver->makeInvariant<propagation::Linear>(
+          *_solver, arrivalTime[i],
+          std::vector<propagation::VarViewId>{arrivalPrev[i], timeToPrev[i]});
     }
 
     // totalDist = sum(timeToPrev)
-    totalDist = solver->makeIntVar(0, 0, MAX_TIME);
-    solver->makeInvariant<propagation::Linear>(
-        *solver, totalDist, std::vector<propagation::VarId>(timeToPrev));
+    totalDist = _solver->makeIntVar(0, 0, MAX_TIME);
+    _solver->makeInvariant<propagation::Linear>(
+        *_solver, totalDist, std::vector<propagation::VarViewId>(timeToPrev));
 
-    propagation::VarId leqConst = solver->makeIntVar(100, 100, 100);
+    propagation::VarViewId leqConst = _solver->makeIntVar(100, 100, 100);
     for (int i = 0; i < n; ++i) {
-      solver->makeViolationInvariant<propagation::LessEqual>(
-          *solver, violation[i], arrivalTime[i], leqConst);
+      _solver->makeViolationInvariant<propagation::LessEqual>(
+          *_solver, violation[i], arrivalTime[i], leqConst);
     }
 
-    totalViolation = solver->makeIntVar(0, 0, MAX_TIME * n);
-    solver->makeInvariant<propagation::Linear>(
-        *solver, totalViolation, std::vector<propagation::VarId>(violation));
+    totalViolation = _solver->makeIntVar(0, 0, MAX_TIME * n);
+    _solver->makeInvariant<propagation::Linear>(
+        *_solver, totalViolation,
+        std::vector<propagation::VarViewId>(violation));
 
-    solver->close();
-    for (const propagation::VarId& p : pred) {
-      assert(solver->lowerBound(p) == 1);
-      assert(solver->upperBound(p) == n);
-      assert(1 <= solver->committedValue(p) && solver->committedValue(p) <= n);
+    _solver->close();
+    for (const propagation::VarViewId& p : pred) {
+      assert(_solver->lowerBound(p) == 1);
+      assert(_solver->upperBound(p) == n);
+      assert(1 <= _solver->committedValue(p) &&
+             _solver->committedValue(p) <= n);
     }
   }
 
@@ -113,22 +115,21 @@ class TSPTWTest : public ::testing::Test {
 TEST_F(TSPTWTest, Probing) {
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      if (i == j || solver->committedValue(pred[i]) == j + 1) {
+      if (i == j || _solver->committedValue(pred[i]) == j + 1) {
         continue;
       }
-      solver->beginMove();
-      solver->setValue(
-          pred[i],
-          solver->committedValue(pred.at(solver->committedValue(pred[i]) - 1)));
-      solver->setValue(pred[j], solver->committedValue(pred[i]));
-      solver->setValue(pred.at(solver->committedValue(pred[i]) - 1),
-                       solver->committedValue(pred[j]));
-      solver->endMove();
+      _solver->beginMove();
+      _solver->setValue(pred[i], _solver->committedValue(pred.at(
+                                     _solver->committedValue(pred[i]) - 1)));
+      _solver->setValue(pred[j], _solver->committedValue(pred[i]));
+      _solver->setValue(pred.at(_solver->committedValue(pred[i]) - 1),
+                        _solver->committedValue(pred[j]));
+      _solver->endMove();
 
-      solver->beginProbe();
-      solver->query(totalDist);
-      solver->query(totalViolation);
-      solver->endProbe();
+      _solver->beginProbe();
+      _solver->query(totalDist);
+      _solver->query(totalViolation);
+      _solver->endProbe();
     }
   }
 }

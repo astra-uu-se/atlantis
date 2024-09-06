@@ -11,8 +11,8 @@ bool array_var_bool_element(
     FznInvariantGraph& graph, const fznparser::IntArg& index,
     const std::shared_ptr<fznparser::BoolVarArray>& inputs,
     const fznparser::BoolArg& output, Int offset) {
-  graph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
-      graph.retrieveVarNode(index), graph.retrieveVarNodes(inputs),
+  graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+      graph, graph.retrieveVarNode(index), graph.retrieveVarNodes(inputs),
       graph.retrieveVarNode(output), offset));
   return true;
 }

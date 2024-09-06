@@ -13,7 +13,7 @@ class IfThenElseConst : public IntView {
   Int _condVal;
 
  public:
-  explicit IfThenElseConst(SolverBase& solver, VarId parentId, Int thenVal,
+  explicit IfThenElseConst(SolverBase& solver, VarViewId parentId, Int thenVal,
                            Int elseVal, Int condVal = 0);
 
   [[nodiscard]] Int value(Timestamp) override;

@@ -6,16 +6,17 @@
 
 namespace atlantis::propagation {
 
-static inline Int numCols(const std::vector<std::vector<VarId>>& varMatrix) {
+static inline Int numCols(
+    const std::vector<std::vector<VarViewId>>& varMatrix) {
   assert(std::all_of(varMatrix.begin(), varMatrix.end(), [&](const auto& col) {
     return col.size() == varMatrix.front().size();
   }));
   return varMatrix.empty() ? 0 : static_cast<Int>(varMatrix.front().size());
 }
 
-Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarId index1,
-                           VarId index2,
-                           std::vector<std::vector<VarId>>&& varMatrix,
+Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarViewId index1,
+                           VarViewId index2,
+                           std::vector<std::vector<VarViewId>>&& varMatrix,
                            Int offset1, Int offset2)
     : Invariant(solver),
       _varMatrix(std::move(varMatrix)),
@@ -24,12 +25,21 @@ Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarId index1,
       _offsets{offset1, offset2},
       _output(output) {}
 
+Element2dVar::Element2dVar(SolverBase& solver, VarViewId output,
+                           VarViewId index1, VarViewId index2,
+                           std::vector<std::vector<VarViewId>>&& varMatrix,
+                           Int offset1, Int offset2)
+    : Element2dVar(solver, VarId(output), index1, index2, std::move(varMatrix),
+                   offset1, offset2) {
+  assert(output.isVar());
+}
+
 void Element2dVar::registerVars() {
   assert(_id != NULL_ID);
   _solver.registerInvariantInput(_id, _indices[0], LocalId(0), false);
   _solver.registerInvariantInput(_id, _indices[1], LocalId(0), false);
   for (const auto& varRow : _varMatrix) {
-    for (const VarId& input : varRow) {
+    for (const VarViewId& input : varRow) {
       _solver.registerInvariantInput(_id, input, LocalId(0), true);
     }
   }
@@ -67,7 +77,7 @@ void Element2dVar::updateBounds(bool widenOnly) {
   _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
-VarId Element2dVar::dynamicInputVar(Timestamp ts) const noexcept {
+VarViewId Element2dVar::dynamicInputVar(Timestamp ts) const noexcept {
   return _varMatrix[safeIndex1(_solver.value(ts, _indices[0]))]
                    [safeIndex2(_solver.value(ts, _indices[1]))];
 }
@@ -85,7 +95,7 @@ void Element2dVar::recompute(Timestamp ts) {
 
 void Element2dVar::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
 
-VarId Element2dVar::nextInput(Timestamp ts) {
+VarViewId Element2dVar::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _indices[0];

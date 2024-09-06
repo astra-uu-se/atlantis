@@ -40,7 +40,7 @@ BENCHMARK_DEFINE_F(PrioQueue, initVar)(::benchmark::State& st) {
   for ([[maybe_unused]] const auto& _ : st) {
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       order.push_back(i);
       ++inits;
     }
@@ -55,12 +55,12 @@ BENCHMARK_DEFINE_F(PrioQueue, push_min)(::benchmark::State& st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       order.push_back(i);
     }
     st.ResumeTiming();
 
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.push(i);
       ++pushes;
     }
@@ -75,7 +75,7 @@ BENCHMARK_DEFINE_F(PrioQueue, push_max)(::benchmark::State& st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       order.push_back(i);
     }
     st.ResumeTiming();
@@ -95,12 +95,12 @@ BENCHMARK_DEFINE_F(PrioQueue, push_random)(::benchmark::State& st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       order.push_back(distribution(gen));
     }
     st.ResumeTiming();
 
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.push(i);
       ++pushes;
     }
@@ -115,10 +115,10 @@ BENCHMARK_DEFINE_F(PrioQueue, pop_min)(::benchmark::State& st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       order.push_back(i);
     }
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.push(i);
     }
     st.ResumeTiming();
@@ -138,10 +138,10 @@ BENCHMARK_DEFINE_F(PrioQueue, pop_max)(::benchmark::State& st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       order.push_back(queueSize - i + 1);
     }
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.push(i);
     }
     st.ResumeTiming();
@@ -161,11 +161,11 @@ BENCHMARK_DEFINE_F(PrioQueue, pop_random)(::benchmark::State& st) {
     st.PauseTiming();
     std::priority_queue<size_t, std::vector<size_t>, PriorityCmp> queue{
         PriorityCmp(order)};
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       order.push_back(distribution(gen));
     }
 
-    for (size_t i = 1; i <= queueSize; ++i) {
+    for (size_t i = 0; i < queueSize; ++i) {
       queue.push(i);
     }
 

@@ -19,7 +19,7 @@ class ElementVarTree : public ::benchmark::Fixture {
  private:
   struct TreeNode {
     size_t level;
-    propagation::VarId id;
+    VarViewId id{propagation::NULL_ID};
   };
 
   void createTree() {
@@ -33,7 +33,7 @@ class ElementVarTree : public ::benchmark::Fixture {
       TreeNode cur = treeNodes.top();
       treeNodes.pop();
 
-      propagation::VarId indexVar =
+      propagation::VarViewId indexVar =
           solver->makeIntVar(cur.level < treeHeight - 1 ? 0 : valueDist(gen), 0,
                              static_cast<Int>(elementSize) - 1);
 
@@ -45,8 +45,8 @@ class ElementVarTree : public ::benchmark::Fixture {
         indexDecisionVars.push_back(indexVar);
       }
 
-      std::vector<propagation::VarId> elementInputs(elementSize,
-                                                    propagation::NULL_ID);
+      std::vector<propagation::VarViewId> elementInputs(elementSize,
+                                                        propagation::NULL_ID);
 
       for (size_t i = 0; i < elementInputs.size(); ++i) {
         elementInputs[i] = solver->makeIntVar(
@@ -65,12 +65,12 @@ class ElementVarTree : public ::benchmark::Fixture {
   }
 
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  propagation::VarId output;
+  std::shared_ptr<propagation::Solver> solver;
+  VarViewId output{propagation::NULL_ID};
 
-  std::vector<propagation::VarId> vars;
-  std::vector<propagation::VarId> decisionVars;
-  std::vector<propagation::VarId> indexDecisionVars;
+  std::vector<propagation::VarViewId> vars;
+  std::vector<propagation::VarViewId> decisionVars;
+  std::vector<propagation::VarViewId> indexDecisionVars;
 
   std::random_device rd;
 
@@ -88,7 +88,7 @@ class ElementVarTree : public ::benchmark::Fixture {
   void commit(::benchmark::State& st, size_t numMoves);
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     treeHeight = state.range(0);
     elementSize = state.range(1);  // number of element inputs

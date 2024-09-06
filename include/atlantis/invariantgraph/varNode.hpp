@@ -29,8 +29,8 @@ class VarNode {
   bool _isIntVar;
   DomainType _domainType{DomainType::DOMAIN};
   SearchDomain _domain;
-  propagation::VarId _varId{propagation::NULL_ID};
-  propagation::VarId _domainViolationId{propagation::NULL_ID};
+  propagation::VarViewId _varId{propagation::NULL_ID};
+  propagation::VarViewId _domainViolationId{propagation::NULL_ID};
 
   std::vector<InvariantNodeId> _staticInputTo;
   std::vector<InvariantNodeId> _dynamicInputTo;
@@ -56,18 +56,18 @@ class VarNode {
   VarNodeId varNodeId() const noexcept;
 
   /**
-   * @return The model propagation::VarId this node is associated
-   * with, or propagation::NULL_ID if no propagation::VarId is
+   * @return The model propagation::VarViewId this node is associated
+   * with, or propagation::NULL_ID if no propagation::VarViewId is
    * associated with this node.
    */
-  [[nodiscard]] propagation::VarId varId() const;
+  [[nodiscard]] propagation::VarViewId varId() const;
 
   /**
-   * @return The model propagation::VarId this node is associated
-   * with, or propagation::NULL_ID if no propagation::VarId is
+   * @return The model propagation::VarViewId this node is associated
+   * with, or propagation::NULL_ID if no propagation::VarViewId is
    * associated with this node.
    */
-  void setVarId(propagation::VarId varId);
+  void setVarId(propagation::VarViewId varId);
 
   [[nodiscard]] const SearchDomain& constDomain() const noexcept;
 
@@ -145,7 +145,7 @@ class VarNode {
    */
   [[nodiscard]] std::vector<DomainEntry> constrainedDomain(Int lb, Int ub);
 
-  propagation::VarId postDomainConstraint(propagation::SolverBase&);
+  propagation::VarViewId postDomainConstraint(propagation::SolverBase&);
 
   [[nodiscard]] std::pair<Int, Int> bounds() const;
 

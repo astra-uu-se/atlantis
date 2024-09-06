@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "atlantis/misc/logging.hpp"
 #include "atlantis/propagation/invariants/absDiff.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/solver.hpp"
@@ -16,20 +15,20 @@ namespace atlantis::benchmark {
 
 class LinearAllDifferent : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  std::vector<propagation::VarId> decisionVars;
+  std::shared_ptr<propagation::Solver> solver;
+  std::vector<propagation::VarViewId> decisionVars;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<size_t> decionVarIndexDist;
   size_t varCount{0};
 
-  propagation::VarId violation = propagation::NULL_ID;
+  propagation::VarViewId violation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
     bool overlappingLinears = state.range(0) != 0;
-    std::vector<propagation::VarId> linearOutputVars;
+    std::vector<propagation::VarViewId> linearOutputVars;
     size_t increment;
 
     if (overlappingLinears) {
@@ -57,8 +56,8 @@ class LinearAllDifferent : public ::benchmark::Fixture {
           static_cast<Int>(i), 0, 2 * (static_cast<Int>(varCount) - 1)));
       solver->makeInvariant<propagation::Linear>(
           *solver, linearOutputVars.back(),
-          std::vector<propagation::VarId>{decisionVars.at(i),
-                                          decisionVars.at(i + 1)});
+          std::vector<propagation::VarViewId>{decisionVars.at(i),
+                                              decisionVars.at(i + 1)});
     }
 
     violation = solver->makeIntVar(0, 0, static_cast<Int>(varCount));

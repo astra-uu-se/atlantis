@@ -1,42 +1,38 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::invariantgraph {
 class BoolAllEqualNode : public ViolationInvariantNode {
  private:
   bool _breaksCycle{false};
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit BoolAllEqualNode(VarNodeId a, VarNodeId b, VarNodeId r,
-                            bool breaksCycle = false);
+  explicit BoolAllEqualNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+                            VarNodeId r, bool breaksCycle = false);
 
-  explicit BoolAllEqualNode(VarNodeId a, VarNodeId b, bool shouldHold = true,
-                            bool breaksCycle = false);
-
-  explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
-                            bool breaksCycle = false);
-
-  explicit BoolAllEqualNode(std::vector<VarNodeId>&& vars,
+  explicit BoolAllEqualNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                             bool shouldHold = true, bool breaksCycle = false);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  explicit BoolAllEqualNode(IInvariantGraph& graph,
+                            std::vector<VarNodeId>&& vars, VarNodeId r,
+                            bool breaksCycle = false);
 
-  void updateState(InvariantGraph&) override;
+  explicit BoolAllEqualNode(IInvariantGraph& graph,
+                            std::vector<VarNodeId>&& vars,
+                            bool shouldHold = true, bool breaksCycle = false);
 
-  bool canBeReplaced(const InvariantGraph&) const override;
+  void init(InvariantNodeId) override;
 
-  bool replace(InvariantGraph&) override;
+  void updateState() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  bool canBeReplaced() const override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  bool replace() override;
+
+  void registerOutputVars() override;
+
+  void registerNode() override;
 };
 }  // namespace atlantis::invariantgraph

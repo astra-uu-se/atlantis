@@ -24,8 +24,8 @@ bool fzn_global_cardinality(
     const std::shared_ptr<fznparser::IntVarArray>& counts) {
   checkInputs(cover, counts);
 
-  graph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
-      graph.retrieveVarNodes(inputs), std::move(cover),
+  graph.addInvariantNode(std::make_shared<GlobalCardinalityNode>(
+      graph, graph.retrieveVarNodes(inputs), std::move(cover),
       graph.retrieveVarNodes(counts)));
   return true;
 }
@@ -51,17 +51,18 @@ bool fzn_global_cardinality(
         SearchDomain(0, static_cast<Int>(inputs->size())),
         VarNode::DomainType::NONE));
     binaryOutputVarNodeIds.push_back(graph.retrieveBoolVarNode());
-    graph.addInvariantNode(std::make_unique<BoolAllEqualNode>(
-        outputVarNodeIds.at(i), countVarNodeIds.at(i),
+    graph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
+        graph, outputVarNodeIds.at(i), countVarNodeIds.at(i),
         binaryOutputVarNodeIds.at(i)));
   }
 
-  graph.addInvariantNode(std::make_unique<GlobalCardinalityNode>(
-      graph.retrieveVarNodes(inputs), std::move(cover),
+  graph.addInvariantNode(std::make_shared<GlobalCardinalityNode>(
+      graph, graph.retrieveVarNodes(inputs), std::move(cover),
       std::move(outputVarNodeIds)));
 
-  graph.addInvariantNode(std::make_unique<ArrayBoolAndNode>(
-      std::move(binaryOutputVarNodeIds), graph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_shared<ArrayBoolAndNode>(
+      graph, std::move(binaryOutputVarNodeIds),
+      graph.retrieveVarNode(reified)));
   return true;
 }
 

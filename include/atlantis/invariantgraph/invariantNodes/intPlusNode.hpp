@@ -1,33 +1,29 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
 class IntPlusNode : public InvariantNode {
  private:
   Int _offset{0};
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  IntPlusNode(VarNodeId a, VarNodeId b, VarNodeId output);
+  IntPlusNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+              VarNodeId output);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
-  bool canBeReplaced(const InvariantGraph&) const override;
+  bool canBeReplaced() const override;
 
-  bool replace(InvariantGraph&) override;
+  bool replace() override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

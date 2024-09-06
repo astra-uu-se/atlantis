@@ -9,13 +9,14 @@ SolverBase::SolverBase()
 
 //---------------------Registration---------------------
 
-VarId SolverBase::makeIntVar(Int initValue, Int lowerBound, Int upperBound) {
+VarViewId SolverBase::makeIntVar(Int initValue, Int lowerBound,
+                                 Int upperBound) {
   if (!_isOpen) {
     throw SolverClosedException("Cannot make IntVar when store is closed.");
   }
-  VarId newId =
+  VarViewId newId =
       _store.createIntVar(_currentTimestamp, initValue, lowerBound, upperBound);
-  registerVar(newId);
+  registerVar(VarId(newId));
   return newId;
 }
 }  // namespace atlantis::propagation

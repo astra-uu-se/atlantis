@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "atlantis/misc/logging.hpp"
 #include "atlantis/propagation/invariants/absDiff.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/solver.hpp"
@@ -20,7 +19,7 @@ class LinearTree : public ::benchmark::Fixture {
  private:
   struct TreeNode {
     size_t level;
-    propagation::VarId id;
+    VarViewId id{propagation::NULL_ID};
   };
 
   void createTree() {
@@ -34,7 +33,7 @@ class LinearTree : public ::benchmark::Fixture {
 #endif
 
     while (!treeNodes.empty()) {
-      std::vector<propagation::VarId> linearInputs(linearArgumentCount);
+      std::vector<propagation::VarViewId> linearInputs(linearArgumentCount);
       for (size_t i = 0; i < linearArgumentCount; ++i) {
         linearInputs[i] = solver->makeIntVar(0, lb, ub);
         vars.push_back(linearInputs[i]);
@@ -45,12 +44,12 @@ class LinearTree : public ::benchmark::Fixture {
 #endif
       treeNodes.pop();
       if (cur.level < treeHeight - 1) {
-        for (propagation::VarId var : linearInputs) {
+        for (propagation::VarViewId var : linearInputs) {
           treeNodes.push({cur.level + 1, var});
         }
       } else {
         assert(cur.level == treeHeight - 1);
-        for (propagation::VarId var : linearInputs) {
+        for (propagation::VarViewId var : linearInputs) {
           decisionVars.push_back(var);
         }
       }
@@ -65,11 +64,12 @@ class LinearTree : public ::benchmark::Fixture {
   }
 
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  propagation::VarId output;
+  std::shared_ptr<propagation::Solver> solver;
+  VarViewId output{propagation::NULL_ID};
 
-  std::vector<propagation::VarId> vars;
-  std::vector<propagation::VarId> decisionVars;  // Shared input vars to trees.
+  std::vector<propagation::VarViewId> vars;
+  std::vector<propagation::VarViewId>
+      decisionVars;  // Shared input vars to trees.
 
   std::random_device rd;
 
@@ -102,9 +102,6 @@ class LinearTree : public ::benchmark::Fixture {
 
     createTree();
 
-    logDebug("Created a tree of height " << treeHeight
-                                         << ", each non-leaf node having "
-                                         << linearArgumentCount << " children");
     solver->close();
 
     gen = std::mt19937(rd());

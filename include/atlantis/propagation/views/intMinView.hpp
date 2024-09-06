@@ -12,7 +12,7 @@ class IntMinView : public IntView {
   Int _min;
 
  public:
-  explicit IntMinView(SolverBase& solver, VarId parentId, Int min);
+  explicit IntMinView(SolverBase& solver, VarViewId parentId, Int min);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

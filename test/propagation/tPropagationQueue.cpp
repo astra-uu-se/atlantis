@@ -24,8 +24,8 @@ class PropagationQueueTest : public ::testing::Test {
 
 TEST_F(PropagationQueueTest, init) {
   PropagationQueue queue;
-  queue.initVar(1, 1);
-  queue.initVar(2, 2);
+  queue.initVar(VarId{0}, 1);
+  queue.initVar(VarId{1}, 2);
   EXPECT_EQ(queue.empty(), true);
   EXPECT_EQ(queue.pop(), NULL_ID);
 }
@@ -33,11 +33,11 @@ TEST_F(PropagationQueueTest, init) {
 TEST_F(PropagationQueueTest, isEmpty) {
   PropagationQueue queue;
   EXPECT_EQ(queue.empty(), true);
-  queue.initVar(1, 1);
-  queue.initVar(2, 2);
-  queue.push(1);
+  queue.initVar(VarId{0}, 1);
+  queue.initVar(VarId{1}, 2);
+  queue.push(VarId{0});
   EXPECT_EQ(queue.empty(), false);
-  queue.push(2);
+  queue.push(VarId{1});
   EXPECT_EQ(queue.empty(), false);
   queue.pop();
   EXPECT_EQ(queue.empty(), false);
@@ -47,30 +47,30 @@ TEST_F(PropagationQueueTest, isEmpty) {
 
 TEST_F(PropagationQueueTest, pushAndPop) {
   PropagationQueue queue;
-  for (size_t i = 1; i < 100; ++i) {
-    queue.initVar(i, i);
+  for (VarId varId = 0; varId < 100; ++varId) {
+    queue.initVar(varId, varId);
   }
-  for (size_t i = 1; i < 100; ++i) {
-    queue.push(i);
+  for (VarId varId = 0; varId < 100; ++varId) {
+    queue.push(varId);
   }
-  for (size_t i = 1; i < 100; ++i) {
-    EXPECT_EQ(queue.pop(), i);
+  for (VarId varId = 0; varId < 100; ++varId) {
+    EXPECT_EQ(queue.pop(), varId);
   }
 }
 
 TEST_F(PropagationQueueTest, ignoreDuplicates) {
   PropagationQueue queue;
-  for (size_t i = 1; i < 100; ++i) {
-    queue.initVar(i, i);
+  for (VarId varId = 0; varId < 100; ++varId) {
+    queue.initVar(varId, varId);
   }
-  for (size_t i = 1; i < 100; ++i) {
-    queue.push(i);
+  for (VarId varId = 0; varId < 100; ++varId) {
+    queue.push(varId);
   }
-  for (size_t i = 1; i < 100; ++i) {
-    queue.push(i);
+  for (VarId varId = 0; varId < 100; ++varId) {
+    queue.push(varId);
   }
-  for (size_t i = 1; i < 100; ++i) {
-    EXPECT_EQ(queue.pop(), i);
+  for (VarId varId = 0; varId < 100; ++varId) {
+    EXPECT_EQ(queue.pop(), varId);
   }
   EXPECT_EQ(queue.empty(), true);
 }

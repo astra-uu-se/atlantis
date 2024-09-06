@@ -1,12 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -17,19 +11,20 @@ class ArrayElementNode : public InvariantNode {
   bool _isIntVector;
 
  public:
-  ArrayElementNode(std::vector<Int>&& parVector, VarNodeId idx,
-                   VarNodeId output, Int offset, bool isIntVector = true);
+  ArrayElementNode(IInvariantGraph& graph, std::vector<Int>&& parVector,
+                   VarNodeId idx, VarNodeId output, Int offset,
+                   bool isIntVector = true);
 
-  ArrayElementNode(std::vector<bool>&& parVector, VarNodeId idx,
-                   VarNodeId output, Int offset);
+  ArrayElementNode(IInvariantGraph& graph, std::vector<bool>&& parVector,
+                   VarNodeId idx, VarNodeId output, Int offset);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] const std::vector<Int>& as() const noexcept {
     return _parVector;

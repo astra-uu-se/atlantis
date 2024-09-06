@@ -1,39 +1,35 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::invariantgraph {
 
 class IntAllEqualNode : public ViolationInvariantNode {
  private:
   bool _breaksCycle{false};
-  propagation::VarId _allDifferentViolationVarId{propagation::NULL_ID};
+  propagation::VarViewId _allDifferentViolationVarId{propagation::NULL_ID};
 
  public:
-  explicit IntAllEqualNode(VarNodeId a, VarNodeId b, VarNodeId r,
-                           bool breaksCycle = false);
+  explicit IntAllEqualNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+                           VarNodeId r, bool breaksCycle = false);
 
-  explicit IntAllEqualNode(VarNodeId a, VarNodeId b, bool shouldHold = true,
-                           bool breaksCycle = false);
-
-  explicit IntAllEqualNode(std::vector<VarNodeId>&& vars, VarNodeId r,
-                           bool breaksCycle = false);
-
-  explicit IntAllEqualNode(std::vector<VarNodeId>&& vars,
+  explicit IntAllEqualNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                            bool shouldHold = true, bool breaksCycle = false);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  explicit IntAllEqualNode(IInvariantGraph& graph,
+                           std::vector<VarNodeId>&& vars, VarNodeId r,
+                           bool breaksCycle = false);
 
-  void updateState(InvariantGraph&) override;
+  explicit IntAllEqualNode(IInvariantGraph& graph,
+                           std::vector<VarNodeId>&& vars,
+                           bool shouldHold = true, bool breaksCycle = false);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void init(InvariantNodeId) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void updateState() override;
+
+  void registerOutputVars() override;
+
+  void registerNode() override;
 };
 }  // namespace atlantis::invariantgraph

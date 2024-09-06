@@ -10,8 +10,8 @@ namespace atlantis::invariantgraph::fzn {
 bool array_int_maximum(FznInvariantGraph& graph,
                        const fznparser::IntArg& output,
                        const std::shared_ptr<fznparser::IntVarArray>& inputs) {
-  graph.addInvariantNode(std::make_unique<ArrayIntMaximumNode>(
-      graph.retrieveVarNodes(inputs), graph.retrieveVarNode(output)));
+  graph.addInvariantNode(std::make_shared<ArrayIntMaximumNode>(
+      graph, graph.retrieveVarNodes(inputs), graph.retrieveVarNode(output)));
   return true;
 }
 

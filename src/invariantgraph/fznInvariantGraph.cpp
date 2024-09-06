@@ -78,8 +78,9 @@ VarNode::DomainType domainType(const fznparser::IntVar& var) {
   return domainType(var.annotations());
 }
 
-FznInvariantGraph::FznInvariantGraph(bool breakDynamicCycles)
-    : InvariantGraph(breakDynamicCycles),
+FznInvariantGraph::FznInvariantGraph(propagation::SolverBase& solver,
+                                     bool breakDynamicCycles)
+    : InvariantGraph(solver, breakDynamicCycles),
       _outputIdentifiers(),
       _outputBoolVars(),
       _outputIntVars(),
@@ -109,7 +110,7 @@ void FznInvariantGraph::build(const fznparser::Model& model) {
 }
 
 VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::BoolVar& var) {
-  VarNodeId nId(NULL_NODE_ID);
+  VarNodeId nId{NULL_NODE_ID};
   if (var.isFixed()) {
     nId = var.identifier().empty()
               ? retrieveBoolVarNode(var.lowerBound())
@@ -141,7 +142,7 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::BoolArg& arg) {
 }
 
 VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntVar& var) {
-  VarNodeId nId(NULL_NODE_ID);
+  VarNodeId nId{NULL_NODE_ID};
   if (var.isFixed()) {
     nId = var.identifier().empty()
               ? retrieveIntVarNode(var.lowerBound())
@@ -262,7 +263,7 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays()
         std::string(outputArray.identifier),
         std::vector<Int>(outputArray.indexSetSizes));
     fznArray.vars.reserve(outputArray.varNodeIds.size());
-    for (const VarNodeId& nId : outputArray.varNodeIds) {
+    for (const VarNodeId nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
       if (node.isFixed() || node.varId() == propagation::NULL_ID) {
         fznArray.vars.emplace_back(node.lowerBound());
@@ -283,7 +284,7 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays()
         std::string(outputArray.identifier),
         std::vector<Int>(outputArray.indexSetSizes));
     fznArray.vars.reserve(outputArray.varNodeIds.size());
-    for (const VarNodeId& nId : outputArray.varNodeIds) {
+    for (const VarNodeId nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
       if (node.isFixed() || node.varId() == propagation::NULL_ID) {
         fznArray.vars.emplace_back(node.lowerBound());

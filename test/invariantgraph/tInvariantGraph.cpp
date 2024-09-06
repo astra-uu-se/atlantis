@@ -15,8 +15,8 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 TEST(InvariantGraphTest, apply_result) {
-  fznparser::Model model;
-  InvariantGraph invariantGraph;
+  propagation::Solver solver;
+  InvariantGraph invariantGraph(solver);
 
   const VarNodeId a =
       invariantGraph.retrieveIntVarNode(SearchDomain(0, 10), "a");
@@ -29,14 +29,14 @@ TEST(InvariantGraphTest, apply_result) {
   EXPECT_TRUE(invariantGraph.containsVarNode("b"));
   EXPECT_TRUE(invariantGraph.containsVarNode("output"));
 
-  invariantGraph.addInvariantNode(std::make_unique<IntPlusNode>(a, b, output));
+  invariantGraph.addInvariantNode(
+      std::make_shared<IntPlusNode>(invariantGraph, a, b, output));
 
-  invariantGraph.addImplicitConstraintNode(
-      std::make_unique<InvariantGraphRoot>(std::vector<VarNodeId>{a, b}));
+  invariantGraph.addImplicitConstraintNode(std::make_shared<InvariantGraphRoot>(
+      invariantGraph, std::vector<VarNodeId>{a, b}));
 
-  propagation::Solver solver;
-  invariantGraph.apply(solver);
-  invariantGraph.close(solver);
+  invariantGraph.construct();
+  invariantGraph.close();
 
   EXPECT_NE(invariantGraph.varNode(a).varId(), propagation::NULL_ID);
   EXPECT_NE(invariantGraph.varNode(b).varId(), propagation::NULL_ID);
@@ -44,7 +44,8 @@ TEST(InvariantGraphTest, apply_result) {
 }
 
 TEST(InvariantGraphTest, ApplyGraph) {
-  InvariantGraph invariantGraph;
+  propagation::Solver solver;
+  InvariantGraph invariantGraph(solver);
 
   const VarNodeId a1 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
   const VarNodeId a2 = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
@@ -59,15 +60,14 @@ TEST(InvariantGraphTest, ApplyGraph) {
       invariantGraph.retrieveIntVarNode(SearchDomain(0, 40));
 
   invariantGraph.addInvariantNode(
-      std::make_unique<IntPlusNode>(a1, a2, output1));
+      std::make_shared<IntPlusNode>(invariantGraph, a1, a2, output1));
   invariantGraph.addInvariantNode(
-      std::make_unique<IntPlusNode>(b1, b2, output2));
+      std::make_shared<IntPlusNode>(invariantGraph, b1, b2, output2));
   invariantGraph.addInvariantNode(
-      std::make_unique<IntPlusNode>(output1, output2, output3));
+      std::make_shared<IntPlusNode>(invariantGraph, output1, output2, output3));
 
-  propagation::Solver solver;
-  invariantGraph.apply(solver);
-  invariantGraph.close(solver);
+  invariantGraph.construct();
+  invariantGraph.close();
 
   // 7 variables
   EXPECT_GE(solver.numVars(), 7);
@@ -77,7 +77,8 @@ TEST(InvariantGraphTest, ApplyGraph) {
 }
 
 TEST(InvariantGraphTest, SplitSimpleGraph) {
-  fznparser::Model model;
+  propagation::Solver solver;
+  InvariantGraph invariantGraph(solver);
   /* Graph:
    *
    *  a   b     c   d
@@ -93,7 +94,6 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
    *       output
    *
    */
-  InvariantGraph invariantGraph;
 
   const VarNodeId a = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
   const VarNodeId b = invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
@@ -102,13 +102,14 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
   const VarNodeId output =
       invariantGraph.retrieveIntVarNode(SearchDomain(0, 20));
 
-  invariantGraph.addInvariantNode(std::make_unique<IntPlusNode>(a, b, output));
+  invariantGraph.addInvariantNode(
+      std::make_shared<IntPlusNode>(invariantGraph, a, b, output));
 
-  invariantGraph.addInvariantNode(std::make_unique<IntPlusNode>(c, d, output));
+  invariantGraph.addInvariantNode(
+      std::make_shared<IntPlusNode>(invariantGraph, c, d, output));
 
-  propagation::Solver solver;
-  invariantGraph.apply(solver);
-  invariantGraph.close(solver);
+  invariantGraph.construct();
+  invariantGraph.close();
 
   // a, b, c, d, output
   // x_copy
@@ -121,8 +122,8 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
 }
 
 TEST(InvariantGraphTest, SplitGraph) {
-  fznparser::Model model;
-  InvariantGraph invariantGraph;
+  propagation::Solver solver;
+  InvariantGraph invariantGraph(solver);
   /* Graph:
    *
    * 0_0 0_1   0_0 0_1      n_0 n_1
@@ -159,13 +160,13 @@ TEST(InvariantGraphTest, SplitGraph) {
   std::vector<Int> coeffs(numInputs, 1);
   for (const auto& identifierArray : varNodeIdMatrix) {
     std::vector<VarNodeId> inputVarNodeIds(identifierArray);
-    invariantGraph.addInvariantNode(std::make_unique<IntLinearNode>(
-        std::vector<Int>{coeffs}, std::move(inputVarNodeIds), output));
+    invariantGraph.addInvariantNode(std::make_shared<IntLinearNode>(
+        invariantGraph, std::vector<Int>{coeffs}, std::move(inputVarNodeIds),
+        output));
   }
 
-  propagation::Solver solver;
-  invariantGraph.apply(solver);
-  invariantGraph.close(solver);
+  invariantGraph.construct();
+  invariantGraph.close();
 
   // Each invariant has numInputs inputs
   // Each invariant has 1 output
@@ -176,8 +177,8 @@ TEST(InvariantGraphTest, SplitGraph) {
 }
 
 TEST(InvariantGraphTest, BreakSimpleCycle) {
-  fznparser::Model model;
-  InvariantGraph invariantGraph;
+  propagation::Solver solver;
+  InvariantGraph invariantGraph(solver);
   /* Graph:
    *
    *      +---------------+
@@ -202,14 +203,13 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
       SearchDomain(0, 40), VarNode::DomainType::NONE);
 
   invariantGraph.addInvariantNode(
-      std::make_unique<IntPlusNode>(x1, output2, output1));
+      std::make_shared<IntPlusNode>(invariantGraph, x1, output2, output1));
 
   invariantGraph.addInvariantNode(
-      std::make_unique<IntPlusNode>(output1, x2, output2));
+      std::make_shared<IntPlusNode>(invariantGraph, output1, x2, output2));
 
-  propagation::Solver solver;
-  invariantGraph.apply(solver);
-  invariantGraph.close(solver);
+  invariantGraph.construct();
+  invariantGraph.close();
 
   // x1, x2, output1, output2
   // the pivot
@@ -223,8 +223,8 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
 }
 
 TEST(InvariantGraphTest, BreakElementIndexCycle) {
-  fznparser::Model model;
-  InvariantGraph invariantGraph;
+  propagation::Solver solver;
+  InvariantGraph invariantGraph(solver);
   /* Graph:
    *
    *     x11   x12    x21   x22
@@ -249,15 +249,14 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
   const VarNodeId output2 =
       invariantGraph.retrieveIntVarNode(SearchDomain(0, 1));
 
-  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
-      output2, std::vector<VarNodeId>{x11, x12}, output1, 0));
+  invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+      invariantGraph, output2, std::vector<VarNodeId>{x11, x12}, output1, 0));
 
-  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
-      output1, std::vector<VarNodeId>{x21, x22}, output2, 0));
+  invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+      invariantGraph, output1, std::vector<VarNodeId>{x21, x22}, output2, 0));
 
-  propagation::Solver solver;
-  invariantGraph.apply(solver);
-  invariantGraph.close(solver);
+  invariantGraph.construct();
+  invariantGraph.close();
 
   // x11, x12, x21, x22, output1, output1
   // the pivot
@@ -271,8 +270,8 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
 }
 
 TEST(InvariantGraphTest, AllowDynamicCycle) {
-  fznparser::Model model;
-  InvariantGraph invariantGraph;
+  propagation::Solver solver;
+  InvariantGraph invariantGraph(solver);
   /* Graph:
    *
    *             +---------------------+
@@ -298,15 +297,14 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
   const VarNodeId output2 =
       invariantGraph.retrieveIntVarNode(SearchDomain(0, 10));
 
-  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
-      idx1, std::vector<VarNodeId>{x1, output2}, output1, 1));
+  invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+      invariantGraph, idx1, std::vector<VarNodeId>{x1, output2}, output1, 1));
 
-  invariantGraph.addInvariantNode(std::make_unique<ArrayVarElementNode>(
-      idx2, std::vector<VarNodeId>{output1, x2}, output2, 1));
+  invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+      invariantGraph, idx2, std::vector<VarNodeId>{output1, x2}, output2, 1));
 
-  propagation::Solver solver;
-  invariantGraph.apply(solver);
-  invariantGraph.close(solver);
+  invariantGraph.construct();
+  invariantGraph.close();
 
   // idx1, x1, idx2, x2, output1, output2
   EXPECT_GE(solver.numVars(), 6);

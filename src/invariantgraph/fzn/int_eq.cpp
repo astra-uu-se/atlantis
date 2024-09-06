@@ -7,21 +7,21 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool int_eq(FznInvariantGraph& graph, VarNodeId a, VarNodeId b) {
-  graph.addInvariantNode(std::make_unique<IntAllEqualNode>(a, b, false));
+  graph.addInvariantNode(std::make_shared<IntAllEqualNode>(graph, a, b, false));
   return true;
 }
 
 bool int_eq(FznInvariantGraph& graph, const fznparser::IntArg& a,
             const fznparser::IntArg& b) {
-  graph.addInvariantNode(std::make_unique<IntAllEqualNode>(
-      graph.retrieveVarNode(a), graph.retrieveVarNode(b)));
+  graph.addInvariantNode(std::make_shared<IntAllEqualNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b)));
   return true;
 }
 
 bool int_eq(FznInvariantGraph& graph, const fznparser::IntArg& a,
             const fznparser::IntArg& b, const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_unique<IntAllEqualNode>(
-      graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+  graph.addInvariantNode(std::make_shared<IntAllEqualNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
       graph.retrieveVarNode(reified)));
   return true;
 }

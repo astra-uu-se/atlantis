@@ -1,32 +1,26 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::invariantgraph {
 class CircuitNode : public ViolationInvariantNode {
  public:
-  explicit CircuitNode(std::vector<VarNodeId>&&);
+  explicit CircuitNode(IInvariantGraph& graph, std::vector<VarNodeId>&&);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  [[nodiscard]] bool canBeMadeImplicit(const InvariantGraph&) const override;
+  [[nodiscard]] bool canBeMadeImplicit() const override;
 
-  [[nodiscard]] bool makeImplicit(InvariantGraph&) override;
+  [[nodiscard]] bool makeImplicit() override;
 
-  [[nodiscard]] bool canBeReplaced(const InvariantGraph&) const override;
+  [[nodiscard]] bool canBeReplaced() const override;
 
-  [[nodiscard]] bool replace(InvariantGraph&) override;
+  [[nodiscard]] bool replace() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 };
 }  // namespace atlantis::invariantgraph

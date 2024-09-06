@@ -18,19 +18,19 @@ namespace atlantis::benchmark {
 
 class MagicSquare : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  std::vector<std::vector<propagation::VarId>> square;
-  std::vector<propagation::VarId> flat;
+  std::shared_ptr<propagation::Solver> solver;
+  std::vector<std::vector<propagation::VarViewId>> square;
+  std::vector<propagation::VarViewId> flat;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
   Int n{0};
 
-  propagation::VarId totalViolation = propagation::NULL_ID;
+  propagation::VarViewId totalViolation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     n = state.range(0);
     if (n < 0) {
@@ -61,21 +61,21 @@ class MagicSquare : public ::benchmark::Fixture {
     assert(static_cast<size_t>(n) == square.size());
     assert(static_cast<size_t>(n * n) == flat.size());
 
-    std::vector<propagation::VarId> violations;
+    std::vector<propagation::VarViewId> violations;
 
     // Row
     for (Int i = 0; i < n; ++i) {
-      const propagation::VarId rowSum = solver->makeIntVar(0, 0, n2 * n);
+      const propagation::VarViewId rowSum = solver->makeIntVar(0, 0, n2 * n);
       solver->makeInvariant<propagation::Linear>(
-          *solver, rowSum, std::vector<propagation::VarId>(square[i]));
+          *solver, rowSum, std::vector<propagation::VarViewId>(square[i]));
       violations.push_back(solver->makeIntView<propagation::EqualConst>(
           *solver, rowSum, magicSum));
     }
 
     // Column
     for (Int i = 0; i < n; ++i) {
-      const propagation::VarId colSum = solver->makeIntVar(0, 0, n2 * n);
-      std::vector<propagation::VarId> col(n);
+      const propagation::VarViewId colSum = solver->makeIntVar(0, 0, n2 * n);
+      std::vector<propagation::VarViewId> col(n);
       for (Int j = 0; j < n; ++j) {
         assert(square[j].size() == static_cast<size_t>(n));
         col.at(j) = square[j][i];
@@ -87,8 +87,8 @@ class MagicSquare : public ::benchmark::Fixture {
     }
 
     // downDiag
-    const propagation::VarId downDiagSum = solver->makeIntVar(0, 0, n2 * n);
-    std::vector<propagation::VarId> downDiag(n);
+    const propagation::VarViewId downDiagSum = solver->makeIntVar(0, 0, n2 * n);
+    std::vector<propagation::VarViewId> downDiag(n);
     for (Int j = 0; j < n; ++j) {
       assert(square[j].size() == static_cast<size_t>(n));
       downDiag.at(j) = square[j][j];
@@ -99,8 +99,8 @@ class MagicSquare : public ::benchmark::Fixture {
         *solver, downDiagSum, magicSum));
 
     // upDiag
-    const propagation::VarId upDiagSum = solver->makeIntVar(0, 0, n2 * n);
-    std::vector<propagation::VarId> upDiag(n);
+    const propagation::VarViewId upDiagSum = solver->makeIntVar(0, 0, n2 * n);
+    std::vector<propagation::VarViewId> upDiag(n);
     for (Int j = 0; j < n; ++j) {
       assert(square[n - j - 1].size() == static_cast<size_t>(n));
       upDiag.at(j) = square[n - j - 1][j];
@@ -113,7 +113,7 @@ class MagicSquare : public ::benchmark::Fixture {
     // total violation
     assert(2 + 2 * static_cast<size_t>(n) == violations.size());
     Int maxViol = 0;
-    for (propagation::VarId viol : violations) {
+    for (propagation::VarViewId viol : violations) {
       maxViol += solver->upperBound(viol);
     }
 

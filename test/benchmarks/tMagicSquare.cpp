@@ -12,20 +12,20 @@
 namespace atlantis::testing {
 class MagicSquareTest : public ::testing::Test {
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  std::vector<std::vector<propagation::VarId>> square;
-  std::vector<propagation::VarId> flat;
+  std::shared_ptr<propagation::Solver> _solver;
+  std::vector<std::vector<propagation::VarViewId>> square;
+  std::vector<propagation::VarViewId> flat;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
   Int n{3};
 
-  propagation::VarId totalViolation = propagation::NULL_ID;
+  propagation::VarViewId totalViolation = propagation::NULL_ID;
 
   Int magicSum = 0;
   void SetUp() override {
-    solver = std::make_unique<propagation::Solver>();
+    _solver = std::make_unique<propagation::Solver>();
     n = 3;
     Int n2 = n * n;
     gen = std::mt19937(rd());
@@ -34,40 +34,41 @@ class MagicSquareTest : public ::testing::Test {
 
     distribution = std::uniform_int_distribution<Int>{0, n2 - 1};
 
-    solver->open();
+    _solver->open();
 
-    propagation::VarId magicSumVar =
-        solver->makeIntVar(magicSum, magicSum, magicSum);
+    propagation::VarViewId magicSumVar =
+        _solver->makeIntVar(magicSum, magicSum, magicSum);
 
     for (int i = 0; i < n; ++i) {
       square.emplace_back();
       for (int j = 0; j < n; ++j) {
-        auto var = solver->makeIntVar(i * n + j + 1, 1, n2);
+        auto var = _solver->makeIntVar(i * n + j + 1, 1, n2);
         square.at(i).push_back(var);
         flat.push_back(var);
       }
     }
 
-    std::vector<propagation::VarId> violations;
+    std::vector<propagation::VarViewId> violations;
 
     // All different is implied by initial assignment + swap moves.
     // {
-    //   propagation::VarId allDiffViol = solver->makeIntVar(0, 0, n2);
+    //   propagation::VarViewId allDiffViol = _solver->makeIntVar(0, 0, n2);
     //   violations.push_back(allDiffViol);
-    //   solver->makeViolationInvariant<propagation::AllDifferent>(*solver,
+    //   _solver->makeViolationInvariant<propagation::AllDifferent>(*_solver,
     //   allDiffViol, flat);
     // }
 
     {
       // Row
       for (int i = 0; i < n; ++i) {
-        propagation::VarId rowSum = solver->makeIntVar(0, 0, n2 * n);
-        propagation::VarId rowViol = solver->makeIntVar(0, 0, n2 * n);
+        propagation::VarViewId rowSum = _solver->makeIntVar(0, 0, n2 * n);
+        propagation::VarViewId rowViol = _solver->makeIntVar(0, 0, n2 * n);
 
-        solver->makeInvariant<propagation::Linear>(
-            *solver, rowSum, std::vector<propagation::VarId>(square.at(i)));
-        solver->makeViolationInvariant<propagation::Equal>(*solver, rowViol,
-                                                           rowSum, magicSumVar);
+        _solver->makeInvariant<propagation::Linear>(
+            *_solver, rowSum,
+            std::vector<propagation::VarViewId>(square.at(i)));
+        _solver->makeViolationInvariant<propagation::Equal>(
+            *_solver, rowViol, rowSum, magicSumVar);
         violations.push_back(rowViol);
       }
     }
@@ -75,57 +76,58 @@ class MagicSquareTest : public ::testing::Test {
     {
       // Column
       for (int i = 0; i < n; ++i) {
-        propagation::VarId colSum = solver->makeIntVar(0, 0, n2 * n);
-        propagation::VarId colViol = solver->makeIntVar(0, 0, n2 * n);
-        std::vector<propagation::VarId> col{};
+        propagation::VarViewId colSum = _solver->makeIntVar(0, 0, n2 * n);
+        propagation::VarViewId colViol = _solver->makeIntVar(0, 0, n2 * n);
+        std::vector<propagation::VarViewId> col{};
         col.reserve(n);
         for (int j = 0; j < n; ++j) {
           col.push_back(square.at(j).at(i));
         }
-        solver->makeInvariant<propagation::Linear>(
-            *solver, colSum, std::vector<propagation::VarId>(col));
-        solver->makeViolationInvariant<propagation::Equal>(*solver, colViol,
-                                                           colSum, magicSumVar);
+        _solver->makeInvariant<propagation::Linear>(
+            *_solver, colSum, std::vector<propagation::VarViewId>(col));
+        _solver->makeViolationInvariant<propagation::Equal>(
+            *_solver, colViol, colSum, magicSumVar);
         violations.push_back(colViol);
       }
     }
 
     {
       // downDiag
-      propagation::VarId downDiagSum = solver->makeIntVar(0, 0, n2 * n);
-      propagation::VarId downDiagViol = solver->makeIntVar(0, 0, n2 * n);
-      std::vector<propagation::VarId> diag{};
+      propagation::VarViewId downDiagSum = _solver->makeIntVar(0, 0, n2 * n);
+      propagation::VarViewId downDiagViol = _solver->makeIntVar(0, 0, n2 * n);
+      std::vector<propagation::VarViewId> diag{};
       diag.reserve(n);
       for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(j).at(j));
       }
-      solver->makeInvariant<propagation::Linear>(
-          *solver, downDiagSum, std::vector<propagation::VarId>(diag));
-      solver->makeViolationInvariant<propagation::Equal>(
-          *solver, downDiagViol, downDiagSum, magicSumVar);
+      _solver->makeInvariant<propagation::Linear>(
+          *_solver, downDiagSum, std::vector<propagation::VarViewId>(diag));
+      _solver->makeViolationInvariant<propagation::Equal>(
+          *_solver, downDiagViol, downDiagSum, magicSumVar);
       violations.push_back(downDiagViol);
     }
 
     {
       // upDiag
-      propagation::VarId upDiagSum = solver->makeIntVar(0, 0, n2 * n);
-      propagation::VarId upDiagViol = solver->makeIntVar(0, 0, n2 * n);
-      std::vector<propagation::VarId> diag{};
+      propagation::VarViewId upDiagSum = _solver->makeIntVar(0, 0, n2 * n);
+      propagation::VarViewId upDiagViol = _solver->makeIntVar(0, 0, n2 * n);
+      std::vector<propagation::VarViewId> diag{};
       diag.reserve(n);
       for (int j = 0; j < n; ++j) {
         diag.push_back(square.at(n - j - 1).at(j));
       }
-      solver->makeInvariant<propagation::Linear>(
-          *solver, upDiagSum, std::vector<propagation::VarId>(diag));
-      solver->makeViolationInvariant<propagation::Equal>(
-          *solver, upDiagViol, upDiagSum, magicSumVar);
+      _solver->makeInvariant<propagation::Linear>(
+          *_solver, upDiagSum, std::vector<propagation::VarViewId>(diag));
+      _solver->makeViolationInvariant<propagation::Equal>(
+          *_solver, upDiagViol, upDiagSum, magicSumVar);
       violations.push_back(upDiagViol);
     }
 
-    totalViolation = solver->makeIntVar(0, 0, n2 * n2 * 2 + 2 * n2);
-    solver->makeInvariant<propagation::Linear>(
-        *solver, totalViolation, std::vector<propagation::VarId>(violations));
-    solver->close();
+    totalViolation = _solver->makeIntVar(0, 0, n2 * n2 * 2 + 2 * n2);
+    _solver->makeInvariant<propagation::Linear>(
+        *_solver, totalViolation,
+        std::vector<propagation::VarViewId>(violations));
+    _solver->close();
   }
 
   void TearDown() override {
@@ -143,7 +145,7 @@ class MagicSquareTest : public ::testing::Test {
   for (size_t i = 0; i < static_cast<size_t>(test.n); ++i) {
     for (size_t j = 0; j < static_cast<size_t>(test.n); ++j) {
       str +=
-          std::to_string(test.solver->currentValue(test.square.at(i).at(j))) +
+          std::to_string(test._solver->currentValue(test.square.at(i).at(j))) +
           " ";
     }
     str += "\n";
@@ -157,8 +159,8 @@ Int computeTotalViolaton(MagicSquareTest& test) {
     Int rowSum = 0;
     Int colSum = 0;
     for (size_t j = 0; j < static_cast<size_t>(test.n); ++j) {
-      rowSum += test.solver->currentValue(test.square.at(i).at(j));
-      colSum += test.solver->currentValue(test.square.at(j).at(i));
+      rowSum += test._solver->currentValue(test.square.at(i).at(j));
+      colSum += test._solver->currentValue(test.square.at(j).at(i));
     }
     totalViol += std::abs(rowSum - test.magicSum);
     totalViol += std::abs(colSum - test.magicSum);
@@ -166,9 +168,9 @@ Int computeTotalViolaton(MagicSquareTest& test) {
   Int downDiagSum = 0;
   Int upDiagSum = 0;
   for (size_t i = 0; i < static_cast<size_t>(test.n); ++i) {
-    downDiagSum += test.solver->currentValue(test.square.at(i).at(i));
+    downDiagSum += test._solver->currentValue(test.square.at(i).at(i));
     upDiagSum +=
-        test.solver->currentValue(test.square.at(test.n - i - 1).at(i));
+        test._solver->currentValue(test.square.at(test.n - i - 1).at(i));
   }
 
   totalViol += std::abs(downDiagSum - test.magicSum);
@@ -179,28 +181,27 @@ Int computeTotalViolaton(MagicSquareTest& test) {
 TEST_F(MagicSquareTest, Probing) {
   for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
     for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
-      const Int oldI = solver->committedValue(flat.at(i));
-      const Int oldJ = solver->committedValue(flat.at(j));
-      solver->beginMove();
-      solver->setValue(flat.at(i), oldJ);
-      solver->setValue(flat.at(j), oldI);
-      solver->endMove();
+      const Int oldI = _solver->committedValue(flat.at(i));
+      const Int oldJ = _solver->committedValue(flat.at(j));
+      _solver->beginMove();
+      _solver->setValue(flat.at(i), oldJ);
+      _solver->setValue(flat.at(j), oldI);
+      _solver->endMove();
 
-      solver->beginProbe();
-      solver->query(totalViolation);
-      solver->endProbe();
+      _solver->beginProbe();
+      _solver->query(totalViolation);
+      _solver->endProbe();
 
       const Int totalViol = computeTotalViolaton(*this);
-      logDebug(squareToString(*this));
 
-      EXPECT_EQ(totalViol, solver->currentValue(totalViolation));
+      EXPECT_EQ(totalViol, _solver->currentValue(totalViolation));
     }
   }
 
   std::vector<int> occurrences;
   occurrences.resize(flat.size(), 0);
   for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
-    occurrences.at(solver->currentValue(flat.at(i)) - 1)++;
+    occurrences.at(_solver->currentValue(flat.at(i)) - 1)++;
   }
   for (const int count : occurrences) {
     EXPECT_EQ(count, 1);
@@ -211,43 +212,43 @@ TEST_F(MagicSquareTest, ProbeAndCommit) {
   for (size_t c = 0; c < 10; ++c) {
     for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n * n); ++j) {
-        const Int oldI = solver->committedValue(flat.at(i));
-        const Int oldJ = solver->committedValue(flat.at(j));
-        solver->beginMove();
-        solver->setValue(flat.at(i), oldJ);
-        solver->setValue(flat.at(j), oldI);
-        solver->endMove();
+        const Int oldI = _solver->committedValue(flat.at(i));
+        const Int oldJ = _solver->committedValue(flat.at(j));
+        _solver->beginMove();
+        _solver->setValue(flat.at(i), oldJ);
+        _solver->setValue(flat.at(j), oldI);
+        _solver->endMove();
 
-        solver->beginProbe();
-        solver->query(totalViolation);
-        solver->endProbe();
+        _solver->beginProbe();
+        _solver->query(totalViolation);
+        _solver->endProbe();
 
         const Int totalViol = computeTotalViolaton(*this);
 
-        EXPECT_EQ(totalViol, solver->currentValue(totalViolation));
+        EXPECT_EQ(totalViol, _solver->currentValue(totalViolation));
       }
     }
     const Int i = distribution(gen);
     const Int j = distribution(gen);
-    const Int oldI = solver->committedValue(flat.at(i));
-    const Int oldJ = solver->committedValue(flat.at(j));
+    const Int oldI = _solver->committedValue(flat.at(i));
+    const Int oldJ = _solver->committedValue(flat.at(j));
     // Perform random swap
-    solver->beginMove();
-    solver->setValue(flat.at(i), oldJ);
-    solver->setValue(flat.at(j), oldI);
-    solver->endMove();
+    _solver->beginMove();
+    _solver->setValue(flat.at(i), oldJ);
+    _solver->setValue(flat.at(j), oldI);
+    _solver->endMove();
 
-    solver->beginProbe();
-    solver->query(totalViolation);
-    solver->endProbe();
+    _solver->beginProbe();
+    _solver->query(totalViolation);
+    _solver->endProbe();
     const Int totalViol = computeTotalViolaton(*this);
-    EXPECT_EQ(totalViol, solver->currentValue(totalViolation));
+    EXPECT_EQ(totalViol, _solver->currentValue(totalViolation));
   }
 
   std::vector<int> occurrences;
   occurrences.resize(flat.size(), 0);
   for (size_t i = 0; i < static_cast<size_t>(n * n); ++i) {
-    occurrences.at(solver->currentValue(flat.at(i)) - 1)++;
+    occurrences.at(_solver->currentValue(flat.at(i)) - 1)++;
   }
   for (const int count : occurrences) {
     EXPECT_EQ(count, 1);

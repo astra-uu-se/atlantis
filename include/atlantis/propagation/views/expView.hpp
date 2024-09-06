@@ -39,7 +39,7 @@ class ExpView : public IntView {
   }
 
  public:
-  explicit ExpView(SolverBase& solver, VarId parentId, Int power)
+  explicit ExpView(SolverBase& solver, VarViewId parentId, Int power)
       : IntView(solver, parentId), _power(power) {}
 
   [[nodiscard]] Int value(Timestamp) override;

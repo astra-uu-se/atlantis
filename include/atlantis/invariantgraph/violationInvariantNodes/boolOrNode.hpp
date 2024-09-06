@@ -1,29 +1,24 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::invariantgraph {
 
 class BoolOrNode : public ViolationInvariantNode {
  private:
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  BoolOrNode(VarNodeId a, VarNodeId b, VarNodeId r);
+  BoolOrNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
 
-  BoolOrNode(VarNodeId a, VarNodeId b, bool shouldHold = true);
+  BoolOrNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+             bool shouldHold = true);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

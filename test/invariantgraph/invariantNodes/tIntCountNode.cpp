@@ -1,8 +1,5 @@
-#include <gmock/gmock.h>
-
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -18,30 +15,30 @@ class IntCountNodeTestFixture : public NodeTestBase<IntCountNode> {
   std::string outputIdentifier{"output"};
   Int needle{2};
 
-  Int computeOutput() {
+  Int computeOutput(bool isRegistered = false) {
+    if (isRegistered) {
+      Int occurrences = 0;
+      for (const auto& identifier : inputIdentifiers) {
+        if (!varNode(identifier).inDomain(needle)) {
+          continue;
+        }
+        if (varNode(identifier).isFixed() ||
+            varId(identifier) == propagation::NULL_ID) {
+          EXPECT_TRUE(varNode(identifier).inDomain(needle));
+          ++occurrences;
+        } else {
+          occurrences +=
+              _solver->currentValue(varId(identifier)) == needle ? 1 : 0;
+        }
+      }
+      return occurrences;
+    }
     Int occurrences = 0;
     for (const auto& identifier : inputIdentifiers) {
       occurrences +=
           varNode(identifier).isFixed() && varNode(identifier).inDomain(needle)
               ? 1
               : 0;
-    }
-    return occurrences;
-  }
-
-  Int computeOutput(propagation::Solver& solver) {
-    Int occurrences = 0;
-    for (const auto& identifier : inputIdentifiers) {
-      if (!varNode(identifier).inDomain(needle)) {
-        continue;
-      }
-      if (varNode(identifier).isFixed() ||
-          varId(identifier) == propagation::NULL_ID) {
-        EXPECT_TRUE(varNode(identifier).inDomain(needle));
-        ++occurrences;
-      } else {
-        occurrences += solver.currentValue(varId(identifier)) == needle ? 1 : 0;
-      }
     }
     return occurrences;
   }
@@ -78,7 +75,8 @@ class IntCountNodeTestFixture : public NodeTestBase<IntCountNode> {
       }
     }
 
-    createInvariantNode(std::vector<VarNodeId>{inputVarNodeIds}, needle,
+    createInvariantNode(*_invariantGraph,
+                        std::vector<VarNodeId>{inputVarNodeIds}, needle,
                         outputVarNodeId);
   }
 };
@@ -99,34 +97,33 @@ TEST_P(IntCountNodeTestFixture, construction) {
 }
 
 TEST_P(IntCountNodeTestFixture, application) {
-  propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
+  _solver->open();
+  addInputVarsToSolver();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-  invNode().registerOutputVars(*_invariantGraph, solver);
+  EXPECT_EQ(invNode().violationVarId(), propagation::NULL_ID);
+  invNode().registerOutputVars();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, solver);
-  solver.close();
+  invNode().registerNode();
+  _solver->close();
 
-  EXPECT_EQ(solver.searchVars().size(), 3);
-  EXPECT_EQ(solver.numVars(), 4);
+  EXPECT_EQ(_solver->searchVars().size(), 3);
+  EXPECT_EQ(_solver->numVars(), 4);
 
-  EXPECT_EQ(solver.numInvariants(), 1);
+  EXPECT_EQ(_solver->numInvariants(), 1);
 
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(solver.lowerBound(varId(outputVarNodeId)), 0);
-    EXPECT_GT(solver.upperBound(varId(outputVarNodeId)), 0);
+    EXPECT_EQ(_solver->lowerBound(varId(outputVarNodeId)), 0);
+    EXPECT_GT(_solver->upperBound(varId(outputVarNodeId)), 0);
   }
 }
 
 TEST_P(IntCountNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  invNode().updateState(*_invariantGraph);
+  invNode().updateState();
   if (shouldBeSubsumed()) {
     // disabled for the MZN challange. this should be computed by Gecode.
     // EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -143,10 +140,10 @@ TEST_P(IntCountNodeTestFixture, updateState) {
 
 TEST_P(IntCountNodeTestFixture, propagation) {
   propagation::Solver solver;
-  _invariantGraph->apply(solver);
-  _invariantGraph->close(solver);
+  _invariantGraph->construct();
+  _invariantGraph->close();
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& identifier : inputIdentifiers) {
     if (!varNode(identifier).isFixed() &&
         varNode(identifier).inDomain(needle)) {
@@ -170,29 +167,29 @@ TEST_P(IntCountNodeTestFixture, propagation) {
 
   if (outputNode.isFixed()) {
     const Int expected = outputNode.lowerBound();
-    const Int actual = computeOutput(solver);
+    const Int actual = computeOutput(true);
     EXPECT_EQ(expected, actual);
     return;
   }
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
-  std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
+  std::vector<Int> inputVals = makeInputVals(inputVarIds);
 
-  while (increaseNextVal(solver, inputVarIds, inputVals)) {
-    solver.beginMove();
-    setVarVals(solver, inputVarIds, inputVals);
-    solver.endMove();
+  while (increaseNextVal(inputVarIds, inputVals)) {
+    _solver->beginMove();
+    setVarVals(inputVarIds, inputVals);
+    _solver->endMove();
 
-    solver.beginProbe();
-    solver.query(outputId);
-    solver.endProbe();
+    _solver->beginProbe();
+    _solver->query(outputId);
+    _solver->endProbe();
 
-    expectVarVals(solver, inputVarIds, inputVals);
+    expectVarVals(inputVarIds, inputVals);
 
-    const Int actual = solver.currentValue(outputId);
-    const Int expected = computeOutput(solver);
+    const Int actual = _solver->currentValue(outputId);
+    const Int expected = computeOutput(true);
 
     EXPECT_EQ(actual, expected);
   }

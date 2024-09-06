@@ -9,16 +9,19 @@ namespace atlantis::propagation {
 
 class LessThan : public ViolationInvariant {
  private:
-  VarId _x, _y;
+  VarViewId _x, _y;
 
  public:
-  explicit LessThan(SolverBase&, VarId violationId, VarId x, VarId y);
+  explicit LessThan(SolverBase&, VarId violationId, VarViewId x, VarViewId y);
+
+  explicit LessThan(SolverBase&, VarViewId violationId, VarViewId x,
+                    VarViewId y);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

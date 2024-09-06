@@ -1,10 +1,6 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -15,62 +11,58 @@ namespace atlantis::invariantgraph {
 class ViolationInvariantNode : public InvariantNode {
  private:
   // Bounds will be recomputed by the solver.
-  propagation::VarId _violationVarId{propagation::NULL_ID};
+  propagation::VarViewId _violationVarId{propagation::NULL_ID};
   bool _isReified;
 
   // If the violation invariant is not reified, then this boolean indicates if
   // the violation invariant should hold or not:
   bool _shouldHold;
 
-  void updateReified(InvariantGraph&);
+  void updateReified();
 
-  explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
+  explicit ViolationInvariantNode(IInvariantGraph& graph,
+                                  std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId,
                                   bool shouldHold);
 
  protected:
-  propagation::VarId setViolationVarId(InvariantGraph&, propagation::VarId);
+  propagation::VarViewId setViolationVarId(propagation::VarViewId);
 
-  propagation::VarId registerViolation(InvariantGraph&,
-                                       propagation::SolverBase&,
-                                       Int initialValue = 0);
+  propagation::VarViewId registerViolation(Int initialValue = 0);
 
   [[nodiscard]] bool shouldHold() const noexcept;
 
-  void fixReified(InvariantGraph&, bool);
+  void fixReified(bool);
 
  public:
-  explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
+  explicit ViolationInvariantNode(IInvariantGraph& graph,
+                                  std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId);
 
-  explicit ViolationInvariantNode(std::vector<VarNodeId>&& staticInputIds,
+  explicit ViolationInvariantNode(IInvariantGraph& graph,
+                                  std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
-
-  /**
-   * @brief Construct a new violation invariant node object
-   *
-   * @param staticInputVarNodeIds
-   * @param shouldHold true if the violation invariant should hold, else false
-   */
-  explicit ViolationInvariantNode(std::vector<VarNodeId>&& outputIds,
+  explicit ViolationInvariantNode(IInvariantGraph& graph,
+                                  std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   bool shouldHold);
 
-  explicit ViolationInvariantNode(std::vector<VarNodeId>&& staticInputIds,
+  explicit ViolationInvariantNode(IInvariantGraph& graph,
+                                  std::vector<VarNodeId>&& staticInputIds,
                                   bool shouldHold);
+
+  void init(InvariantNodeId) override;
 
   [[nodiscard]] bool isReified() const override;
 
-  [[nodiscard]] propagation::VarId violationVarId(
-      const InvariantGraph&) const override;
+  [[nodiscard]] propagation::VarViewId violationVarId() const override;
 
   VarNodeId reifiedViolationNodeId();
 
-  virtual void updateState(InvariantGraph&) override;
+  virtual void updateState() override;
 };
 
 }  // namespace atlantis::invariantgraph

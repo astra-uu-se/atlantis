@@ -1,9 +1,6 @@
 #pragma once
 
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -13,16 +10,16 @@ class IntScalarNode : public InvariantNode {
   Int _offset;
 
  public:
-  IntScalarNode(VarNodeId staticInput, VarNodeId output, Int factor,
-                Int offset);
+  IntScalarNode(IInvariantGraph& graph, VarNodeId staticInput, VarNodeId output,
+                Int factor, Int offset);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId input() const noexcept {
     return staticInputVarNodeIds().front();

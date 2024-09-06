@@ -4,7 +4,7 @@ namespace atlantis::propagation {
 
 static inline Int convert(Int value) { return value <= 0 ? 1 : 0; }
 
-Int2BoolView::Int2BoolView(SolverBase& solver, const VarId parentId)
+Int2BoolView::Int2BoolView(SolverBase& solver, const VarViewId parentId)
     : IntView(solver, parentId) {}
 
 Int Int2BoolView::value(Timestamp ts) {

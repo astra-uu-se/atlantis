@@ -1,43 +1,39 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::invariantgraph {
 
 class ArrayBoolXorNode : public ViolationInvariantNode {
  private:
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  ArrayBoolXorNode(VarNodeId aVarNodeId, VarNodeId bNodeId,
+  ArrayBoolXorNode(IInvariantGraph& graph, VarNodeId aVarNodeId,
+                   VarNodeId bNodeId, VarNodeId reifiedVarNodeId);
+
+  ArrayBoolXorNode(IInvariantGraph& graph, VarNodeId aVarNodeId,
+                   VarNodeId bNodeId, bool shouldHold = true);
+
+  ArrayBoolXorNode(IInvariantGraph& graph,
+                   std::vector<VarNodeId>&& inputVarNodeIds,
                    VarNodeId reifiedVarNodeId);
 
-  ArrayBoolXorNode(VarNodeId aVarNodeId, VarNodeId bNodeId,
+  ArrayBoolXorNode(IInvariantGraph& graph,
+                   std::vector<VarNodeId>&& inputVarNodeIds,
                    bool shouldHold = true);
 
-  ArrayBoolXorNode(std::vector<VarNodeId>&& inputVarNodeIds,
-                   VarNodeId reifiedVarNodeId);
+  void init(InvariantNodeId) override;
 
-  ArrayBoolXorNode(std::vector<VarNodeId>&& inputVarNodeIds,
-                   bool shouldHold = true);
+  void updateState() override;
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  bool canBeReplaced() const override;
 
-  void updateState(InvariantGraph&) override;
+  bool replace() override;
 
-  bool canBeReplaced(const InvariantGraph&) const override;
+  void registerOutputVars() override;
 
-  bool replace(InvariantGraph&) override;
-
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
-
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 };
 
 }  // namespace atlantis::invariantgraph

@@ -12,15 +12,15 @@
 namespace atlantis::propagation {
 
 /**
- * output <- number of occurrences of y in variables
+ * output <- number of occurrences of needle in variables
  *
  */
 
 class Count : public Invariant {
  private:
   VarId _output;
-  VarId _y;
-  std::vector<VarId> _vars;
+  VarViewId _needle;
+  std::vector<VarViewId> _vars;
   std::vector<CommittableInt> _counts;
   Int _offset;
   void increaseCount(Timestamp ts, Int value);
@@ -28,15 +28,19 @@ class Count : public Invariant {
   signed char count(Timestamp ts, Int value);
 
  public:
-  explicit Count(SolverBase&, VarId output, VarId y,
-                 std::vector<VarId>&& varArray);
+  explicit Count(SolverBase&, VarId output, VarViewId needle,
+                 std::vector<VarViewId>&& varArray);
+
+  explicit Count(SolverBase&, VarViewId output, VarViewId needle,
+                 std::vector<VarViewId>&& varArray);
+
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
   void close(Timestamp) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

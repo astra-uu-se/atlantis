@@ -6,11 +6,18 @@
 
 namespace atlantis::propagation {
 
-Exists::Exists(SolverBase& solver, VarId output, std::vector<VarId>&& varArray)
+Exists::Exists(SolverBase& solver, VarId output,
+               std::vector<VarViewId>&& varArray)
     : Invariant(solver),
       _output(output),
       _varArray(std::move(varArray)),
       _minIndex(NULL_TIMESTAMP, 0) {}
+
+Exists::Exists(SolverBase& solver, VarViewId output,
+               std::vector<VarViewId>&& varArray)
+    : Exists(solver, VarId(output), std::move(varArray)) {
+  assert(output.isVar());
+}
 
 void Exists::registerVars() {
   assert(_id != NULL_ID);
@@ -23,7 +30,7 @@ void Exists::registerVars() {
 void Exists::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::max();
-  for (const VarId& input : _varArray) {
+  for (const VarViewId& input : _varArray) {
     lb = std::min(lb, _solver.lowerBound(input));
     ub = std::min(ub, _solver.upperBound(input));
   }
@@ -68,7 +75,7 @@ void Exists::notifyInputChanged(Timestamp ts, LocalId id) {
   }
 }
 
-VarId Exists::nextInput(Timestamp ts) {
+VarViewId Exists::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index == 0 || (index < _varArray.size() &&

@@ -13,12 +13,11 @@ class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
   std::string inputIdentifier{"input"};
   std::string outputIdentifier{"output"};
 
-  Int computeOutput() {
+  Int computeOutput(bool isRegistered = false) {
+    if (isRegistered) {
+      return std::abs(_solver->currentValue(varId(inputVarNodeId)));
+    }
     return std::abs(varNode(inputVarNodeId).domain().lowerBound());
-  }
-
-  Int computeOutput(propagation::Solver& solver) {
-    return std::abs(solver.currentValue(varId(inputVarNodeId)));
   }
 
   void SetUp() override {
@@ -32,7 +31,7 @@ class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
       varNode(inputVarNodeId).domain().removeBelow(0);
     }
 
-    createInvariantNode(inputVarNodeId, outputVarNodeId);
+    createInvariantNode(*_invariantGraph, inputVarNodeId, outputVarNodeId);
   }
 };
 
@@ -47,29 +46,28 @@ TEST_P(IntAbsNodeTestFixture, construction) {
 }
 
 TEST_P(IntAbsNodeTestFixture, application) {
-  propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
+  _solver->open();
+  addInputVarsToSolver();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerOutputVars(*_invariantGraph, solver);
+  invNode().registerOutputVars();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode(*_invariantGraph, solver);
-  solver.close();
+  invNode().registerNode();
+  _solver->close();
 
   // inputVarNodeId
-  EXPECT_EQ(solver.searchVars().size(), 1);
+  EXPECT_EQ(_solver->searchVars().size(), 1);
 
   // inputVarNodeId
-  EXPECT_EQ(solver.numVars(), 1);
+  EXPECT_EQ(_solver->numVars(), 1);
 }
 
 TEST_P(IntAbsNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  invNode().updateState(*_invariantGraph);
+  invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     EXPECT_TRUE(varNode(inputVarNodeId).isFixed());
@@ -85,15 +83,15 @@ TEST_P(IntAbsNodeTestFixture, updateState) {
 
 TEST_P(IntAbsNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  invNode().updateState(*_invariantGraph);
+  invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-    EXPECT_TRUE(invNode().replace(*_invariantGraph));
-    invNode().deactivate(*_invariantGraph);
+    EXPECT_TRUE(invNode().canBeReplaced());
+    EXPECT_TRUE(invNode().replace());
+    invNode().deactivate();
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
   } else {
-    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+    EXPECT_FALSE(invNode().canBeReplaced());
   }
 }
 
@@ -102,8 +100,8 @@ TEST_P(IntAbsNodeTestFixture, propagation) {
     return;
   }
   propagation::Solver solver;
-  _invariantGraph->apply(solver);
-  _invariantGraph->close(solver);
+  _invariantGraph->construct();
+  _invariantGraph->close();
 
   if (shouldBeReplaced()) {
     EXPECT_FALSE(varNode(outputIdentifier).isFixed());
@@ -113,24 +111,24 @@ TEST_P(IntAbsNodeTestFixture, propagation) {
     return;
   }
 
-  const propagation::VarId inputId = varId(inputIdentifier);
+  const propagation::VarViewId inputId = varId(inputIdentifier);
   EXPECT_NE(inputId, propagation::NULL_ID);
 
-  const propagation::VarId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
-  for (Int inputVal = solver.lowerBound(inputId);
-       inputVal <= solver.upperBound(inputId); ++inputVal) {
-    solver.beginMove();
-    solver.setValue(inputId, inputVal);
-    solver.endMove();
+  for (Int inputVal = _solver->lowerBound(inputId);
+       inputVal <= _solver->upperBound(inputId); ++inputVal) {
+    _solver->beginMove();
+    _solver->setValue(inputId, inputVal);
+    _solver->endMove();
 
-    solver.beginProbe();
-    solver.query(outputId);
-    solver.endProbe();
+    _solver->beginProbe();
+    _solver->query(outputId);
+    _solver->endProbe();
 
-    const Int expected = computeOutput(solver);
-    const Int actual = solver.currentValue(outputId);
+    const Int expected = computeOutput(true);
+    const Int actual = _solver->currentValue(outputId);
     EXPECT_EQ(expected, actual);
   }
 }

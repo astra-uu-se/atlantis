@@ -9,7 +9,7 @@ namespace atlantis::propagation {
 
 class IntAbsView : public IntView {
  public:
-  IntAbsView(SolverBase& solver, VarId parentId);
+  IntAbsView(SolverBase& solver, VarViewId parentId);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

@@ -9,32 +9,34 @@
 
 namespace atlantis::invariantgraph {
 
-BoolLinLeNode::BoolLinLeNode(std::vector<Int>&& coeffs,
+BoolLinLeNode::BoolLinLeNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars, Int bound,
                              VarNodeId reified)
-    : ViolationInvariantNode(std::move(vars), reified),
+    : ViolationInvariantNode(graph, std::move(vars), reified),
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
-BoolLinLeNode::BoolLinLeNode(std::vector<Int>&& coeffs,
+BoolLinLeNode::BoolLinLeNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars, Int bound,
                              bool shouldHold)
-    : ViolationInvariantNode(std::move(vars), shouldHold),
+    : ViolationInvariantNode(graph, std::move(vars), shouldHold),
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
-void BoolLinLeNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
-  assert(!isReified() ||
-         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(std::none_of(staticInputVarNodeIds().begin(),
-                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                        return graph.varNodeConst(vId).isIntVar();
-                      }));
+void BoolLinLeNode::init(InvariantNodeId id) {
+  ViolationInvariantNode::init(id);
+  assert(
+      !isReified() ||
+      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(
+      std::none_of(staticInputVarNodeIds().begin(),
+                   staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
+                     return invariantGraphConst().varNodeConst(vId).isIntVar();
+                   }));
 }
 
-void BoolLinLeNode::updateState(InvariantGraph& graph) {
-  ViolationInvariantNode::updateState(graph);
+void BoolLinLeNode::updateState() {
+  ViolationInvariantNode::updateState();
   // Remove duplicates:
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
     for (Int j = static_cast<Int>(staticInputVarNodeIds().size()) - 1; j > i;
@@ -53,7 +55,8 @@ void BoolLinLeNode::updateState(InvariantGraph& graph) {
   indicesToRemove.reserve(staticInputVarNodeIds().size());
 
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
-    const auto& inputNode = graph.varNodeConst(staticInputVarNodeIds().at(i));
+    const auto& inputNode =
+        invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
     if (inputNode.isFixed() || _coeffs.at(i) == 0) {
       _bound -= inputNode.inDomain(bool{true}) ? _coeffs.at(i) : 0;
       indicesToRemove.emplace_back(i);
@@ -61,8 +64,7 @@ void BoolLinLeNode::updateState(InvariantGraph& graph) {
   }
 
   for (Int i = indicesToRemove.size() - 1; i >= 0; --i) {
-    removeStaticInputVarNode(
-        graph.varNode(staticInputVarNodeIds().at(indicesToRemove.at(i))));
+    removeStaticInputVarNode(staticInputVarNodeIds().at(indicesToRemove.at(i)));
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
 
@@ -75,7 +77,7 @@ void BoolLinLeNode::updateState(InvariantGraph& graph) {
 
   if (ub <= _bound) {
     if (isReified()) {
-      fixReified(graph, true);
+      fixReified(true);
     }
     if (!shouldHold()) {
       throw InconsistencyException("BoolLinLeNode: Invariant is always false");
@@ -85,7 +87,7 @@ void BoolLinLeNode::updateState(InvariantGraph& graph) {
   }
   if (_bound < lb) {
     if (isReified()) {
-      fixReified(graph, false);
+      fixReified(false);
     }
     if (shouldHold()) {
       throw InconsistencyException(
@@ -96,40 +98,42 @@ void BoolLinLeNode::updateState(InvariantGraph& graph) {
   }
 }
 
-void BoolLinLeNode::registerOutputVars(InvariantGraph& graph,
-                                       propagation::SolverBase& solver) {
-  if (violationVarId(graph) == propagation::NULL_ID) {
-    _intermediate = solver.makeIntVar(0, 0, 0);
+void BoolLinLeNode::registerOutputVars() {
+  if (violationVarId() == propagation::NULL_ID) {
+    _intermediate = solver().makeIntVar(0, 0, 0);
     if (shouldHold()) {
-      setViolationVarId(graph, solver.makeIntView<propagation::LessEqualConst>(
-                                   solver, _intermediate, _bound));
+      setViolationVarId(solver().makeIntView<propagation::LessEqualConst>(
+          solver(), _intermediate, _bound));
     } else {
       assert(!isReified());
-      setViolationVarId(graph,
-                        solver.makeIntView<propagation::GreaterEqualConst>(
-                            solver, _intermediate, _bound + 1));
+      setViolationVarId(solver().makeIntView<propagation::GreaterEqualConst>(
+          solver(), _intermediate, _bound + 1));
     }
   }
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                     [&](const VarNodeId vId) {
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
-void BoolLinLeNode::registerNode(InvariantGraph& graph,
-                                 propagation::SolverBase& solver) {
-  assert(violationVarId(graph) != propagation::NULL_ID);
+void BoolLinLeNode::registerNode() {
+  assert(violationVarId() != propagation::NULL_ID);
+  assert(violationVarId().isView());
 
-  std::vector<propagation::VarId> solverVars;
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars),
-                 [&](const VarNodeId varNodeId) {
-                   assert(graph.varId(varNodeId) != propagation::NULL_ID);
-                   return graph.varId(varNodeId);
-                 });
-  solver.makeInvariant<propagation::BoolLinear>(
-      solver, _intermediate, std::vector<Int>(_coeffs), std::move(solverVars));
+  assert(_intermediate != propagation::NULL_ID);
+  assert(_intermediate.isVar());
+
+  std::vector<propagation::VarViewId> solverVars;
+  std::transform(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      std::back_inserter(solverVars), [&](const VarNodeId varNodeId) {
+        assert(invariantGraph().varId(varNodeId) != propagation::NULL_ID);
+        return invariantGraph().varId(varNodeId);
+      });
+  solver().makeInvariant<propagation::BoolLinear>(solver(), _intermediate,
+                                                  std::vector<Int>(_coeffs),
+                                                  std::move(solverVars));
 }
 
 const std::vector<Int>& BoolLinLeNode::coeffs() const { return _coeffs; }

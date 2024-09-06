@@ -2,6 +2,9 @@
 
 namespace atlantis::search::neighbourhoods {
 
+RandomNeighbourhood::RandomNeighbourhood(std::vector<SearchVar>&& vars)
+    : _vars(std::move(vars)) {}
+
 void RandomNeighbourhood::initialise(RandomProvider& random,
                                      AssignmentModifier& modifications) {
   for (auto& var : _vars) {

@@ -2,7 +2,7 @@
 
 namespace atlantis::propagation {
 
-IfThenElseConst::IfThenElseConst(SolverBase& solver, VarId parentId,
+IfThenElseConst::IfThenElseConst(SolverBase& solver, VarViewId parentId,
                                  Int thenVal, Int elseVal, Int condVal)
     : IntView(solver, parentId), _values{thenVal, elseVal}, _condVal(condVal) {}
 

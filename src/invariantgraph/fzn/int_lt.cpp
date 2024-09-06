@@ -8,15 +8,15 @@ namespace atlantis::invariantgraph::fzn {
 
 bool int_lt(FznInvariantGraph& graph, const fznparser::IntArg& a,
             const fznparser::IntArg& b) {
-  graph.addInvariantNode(std::make_unique<IntLtNode>(graph.retrieveVarNode(a),
-                                                     graph.retrieveVarNode(b)));
+  graph.addInvariantNode(std::make_shared<IntLtNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b)));
   return true;
 }
 
 bool int_lt(FznInvariantGraph& graph, const fznparser::IntArg& a,
             const fznparser::IntArg& b, const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_unique<IntLtNode>(
-      graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+  graph.addInvariantNode(std::make_shared<IntLtNode>(
+      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
       graph.retrieveVarNode(reified)));
   return true;
 }

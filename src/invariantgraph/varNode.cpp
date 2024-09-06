@@ -34,9 +34,9 @@ VarNode::VarNode(VarNodeId varNodeId, bool isIntVar, SearchDomain&& domain,
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
-propagation::VarId VarNode::varId() const { return _varId; }
+propagation::VarViewId VarNode::varId() const { return _varId; }
 
-void VarNode::setVarId(propagation::VarId varId) {
+void VarNode::setVarId(propagation::VarViewId varId) {
   assert(_varId == propagation::NULL_ID);
   _varId = varId;
 }
@@ -64,7 +64,7 @@ void VarNode::setIsViolationVar(bool isViolVar) {
   _isViolationVar = isViolVar;
 }
 
-propagation::VarId VarNode::postDomainConstraint(
+propagation::VarViewId VarNode::postDomainConstraint(
     propagation::SolverBase& solver) {
   if (_domainViolationId != propagation::NULL_ID) {
     return _domainViolationId;
@@ -72,7 +72,7 @@ propagation::VarId VarNode::postDomainConstraint(
   if (_domainType == DomainType::NONE ||
       ((staticInputTo().empty() || dynamicInputTo().empty()) &&
        definingNodes().empty())) {
-    return propagation::NULL_ID;
+    return propagation::VarViewId{propagation::NULL_ID};
   }
   if (_domainType == DomainType::FIXED && !isFixed()) {
     throw std::runtime_error("Domain type is fixed but domain is not fixed");
@@ -289,7 +289,7 @@ VarNode::definingNodes() const noexcept {
 
 InvariantNodeId VarNode::outputOf() const {
   if (_outputOf.empty()) {
-    return InvariantNodeId(NULL_NODE_ID);
+    return InvariantNodeId{NULL_NODE_ID};
   } else if (_outputOf.size() != 1) {
     throw std::runtime_error("VarNode is not an output var");
   }

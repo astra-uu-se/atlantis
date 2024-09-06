@@ -6,17 +6,32 @@
 namespace atlantis::propagation {
 
 BoolLinear::BoolLinear(SolverBase& solver, VarId output,
-                       std::vector<VarId>&& violArray)
-    : BoolLinear(solver, output, std::vector<Int>(violArray.size(), 1),
-                 std::move(violArray)) {}
-
-BoolLinear::BoolLinear(SolverBase& solver, VarId output,
                        std::vector<Int>&& coeffs,
-                       std::vector<VarId>&& violArray)
+                       std::vector<VarViewId>&& violArray)
     : Invariant(solver),
       _output(output),
       _coeffs(std::move(coeffs)),
       _violArray(std::move(violArray)) {}
+
+BoolLinear::BoolLinear(SolverBase& solver, VarViewId output,
+                       std::vector<Int>&& coeffs,
+                       std::vector<VarViewId>&& violArray)
+    : BoolLinear(solver, VarId(output), std::move(coeffs),
+                 std::move(violArray)) {
+  assert(output.isVar());
+}
+
+BoolLinear::BoolLinear(SolverBase& solver, VarId output,
+                       std::vector<VarViewId>&& violArray)
+    : BoolLinear(solver, output, std::vector<Int>(violArray.size(), 1),
+                 std::move(violArray)) {}
+
+BoolLinear::BoolLinear(SolverBase& solver, VarViewId output,
+                       std::vector<VarViewId>&& violArray)
+    : BoolLinear(solver, VarId(output), std::vector<Int>(violArray.size(), 1),
+                 std::move(violArray)) {
+  assert(output.isVar());
+}
 
 void BoolLinear::registerVars() {
   // precondition: this invariant must be registered with the solver before it
@@ -70,7 +85,7 @@ void BoolLinear::notifyInputChanged(Timestamp ts, LocalId id) {
   incValue(ts, _output, (newValue - committedValue) * _coeffs[id]);
 }
 
-VarId BoolLinear::nextInput(Timestamp ts) {
+VarViewId BoolLinear::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index < _violArray.size()) {

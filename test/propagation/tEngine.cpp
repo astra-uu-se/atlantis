@@ -23,11 +23,13 @@ class MockInvariantSimple : public Invariant {
   bool isRegistered = false;
   bool boundsUpdated = false;
   const VarId outputVar;
-  const VarId inputVar;
+  const VarViewId inputVar;
 
-  explicit MockInvariantSimple(SolverBase& solver, VarId t_outputVar,
-                               VarId t_inputVar)
-      : Invariant(solver), outputVar(t_outputVar), inputVar(t_inputVar) {}
+  explicit MockInvariantSimple(SolverBase& solver, VarViewId t_outputVar,
+                               VarViewId t_inputVar)
+      : Invariant(solver),
+        outputVar(VarId(t_outputVar)),
+        inputVar(t_inputVar) {}
 
   void registerVars() override {
     _solver.registerInvariantInput(_id, inputVar, LocalId(0), false);
@@ -38,7 +40,7 @@ class MockInvariantSimple : public Invariant {
 
   MOCK_METHOD(void, recompute, (Timestamp), (override));
 
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
 
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
@@ -50,11 +52,15 @@ class MockInvariantAdvanced : public Invariant {
   bool isRegistered = false;
   bool boundsUpdated = false;
   VarId output;
-  std::vector<VarId> inputs;
+  std::vector<VarViewId> inputs;
 
-  explicit MockInvariantAdvanced(SolverBase& solver, VarId t_output,
-                                 std::vector<VarId>&& t_inputs)
-      : Invariant(solver), output(t_output), inputs(std::move(t_inputs)) {}
+  explicit MockInvariantAdvanced(SolverBase& solver, VarViewId t_output,
+                                 std::vector<VarViewId>&& t_inputs)
+      : Invariant(solver),
+        output(VarId(t_output)),
+        inputs(std::move(t_inputs)) {
+    EXPECT_TRUE(t_output.isVar());
+  }
 
   void registerVars() override {
     assert(_id != NULL_ID);
@@ -68,7 +74,7 @@ class MockInvariantAdvanced : public Invariant {
   void updateBounds(bool) override { boundsUpdated = true; }
 
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
@@ -77,17 +83,20 @@ class MockInvariantAdvanced : public Invariant {
 class MockSimplePlus : public Invariant {
  public:
   bool isRegistered = false;
-  const VarId output, x, y;
+  VarId output;
+  VarViewId x, y;
   std::vector<InvariantId>* position;
 
-  explicit MockSimplePlus(SolverBase& solver, VarId t_output, VarId t_x,
-                          VarId t_y,
+  explicit MockSimplePlus(SolverBase& solver, VarViewId t_output, VarViewId t_x,
+                          VarViewId t_y,
                           std::vector<InvariantId>* t_position = nullptr)
       : Invariant(solver),
-        output(t_output),
+        output(VarId(t_output)),
         x(t_x),
         y(t_y),
         position(t_position) {
+    EXPECT_TRUE(t_output.isVar());
+
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp ts) {
           updateValue(ts, output, _solver.value(ts, x) + _solver.value(ts, y));
@@ -118,7 +127,7 @@ class MockSimplePlus : public Invariant {
   }
 
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
@@ -128,12 +137,12 @@ class SolverTest : public ::testing::Test {
  protected:
   std::mt19937 gen;
 
-  std::unique_ptr<Solver> solver;
+  std::shared_ptr<Solver> solver;
 
   void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
-    solver = std::make_unique<Solver>();
+    solver = std::make_shared<Solver>();
   }
 
   void propagation(PropagationMode propMode,
@@ -142,8 +151,8 @@ class SolverTest : public ::testing::Test {
     solver->setPropagationMode(propMode);
     solver->setOutputToInputMarkingMode(markingMode);
 
-    std::vector<std::vector<VarId>> inputs;
-    std::vector<VarId> outputs;
+    std::vector<std::vector<VarViewId>> inputs;
+    std::vector<VarViewId> outputs;
     std::vector<MockSimplePlus*> invariants;
 
     /* +------++------+ +------++------+ +------++------+ +------++------+
@@ -184,7 +193,7 @@ class SolverTest : public ::testing::Test {
       }
     }
     for (size_t i = 4; i < inputs.size(); ++i) {
-      for (VarId output : inputs[i]) {
+      for (VarViewId output : inputs[i]) {
         outputs.emplace_back(output);
       }
     }
@@ -204,7 +213,7 @@ class SolverTest : public ::testing::Test {
 
     solver->beginProbe();
     Timestamp timestamp = solver->currentTimestamp();
-    VarId modifiedDecisionVar = inputs[2][1];
+    VarViewId modifiedDecisionVar = inputs[2][1];
     solver->setValue(modifiedDecisionVar, 1);
     std::vector<size_t> markedInvariants = {2, 5, 6};
     std::vector<size_t> unmarkedInvariants = {0, 1, 3, 4};
@@ -221,8 +230,8 @@ class SolverTest : public ::testing::Test {
       if (solver->outputToInputMarkingMode() ==
           OutputToInputMarkingMode::NONE) {
         for (size_t i = 0; i < invariants.size(); ++i) {
-          VarId a = inputs[i][0];
-          VarId b = inputs[i][1];
+          VarViewId a = inputs[i][0];
+          VarViewId b = inputs[i][1];
           EXPECT_CALL(*invariants[i], nextInput(timestamp))
               .WillOnce(Return(a))
               .WillOnce(Return(b))
@@ -230,7 +239,8 @@ class SolverTest : public ::testing::Test {
         }
       } else {
         EXPECT_EQ(solver->modifiedSearchVar().size(), 1);
-        EXPECT_TRUE(solver->modifiedSearchVar().contains(modifiedDecisionVar));
+        EXPECT_TRUE(
+            solver->modifiedSearchVar().contains(VarId(modifiedDecisionVar)));
         for (size_t i : markedInvariants) {
           EXPECT_CALL(*invariants[i], nextInput(timestamp))
               .WillOnce(Return(inputs[i][0]))
@@ -257,8 +267,8 @@ class SolverTest : public ::testing::Test {
 TEST_F(SolverTest, CreateVarsAndInvariant) {
   solver->open();
 
-  const VarId inputVar = solver->makeIntVar(0, Int(-100), Int(100));
-  const VarId outputVar = solver->makeIntVar(0, Int(-100), Int(100));
+  const VarViewId inputVar = solver->makeIntVar(0, Int(-100), Int(100));
+  const VarViewId outputVar = solver->makeIntVar(0, Int(-100), Int(100));
 
   // TODO: use some other invariants...
   auto invariant =
@@ -281,14 +291,14 @@ TEST_F(SolverTest, ThisTestShouldNotBeHere) {
   solver->open();
 
   Int intVarCount = 10;
-  std::vector<VarId> X;
+  std::vector<VarViewId> X;
   for (Int value = 0; value < intVarCount; ++value) {
     X.push_back(solver->makeIntVar(value, Int(-100), Int(100)));
   }
 
-  VarId min = solver->makeIntVar(100, Int(-100), Int(100));
+  VarViewId min = solver->makeIntVar(100, Int(-100), Int(100));
   // TODO: use some other invariants...
-  solver->makeInvariant<MinSparse>(*solver, min, std::vector<VarId>{X});
+  solver->makeInvariant<MinSparse>(*solver, min, std::vector<VarViewId>{X});
 
   solver->close();
   EXPECT_EQ(solver->committedValue(min), 0);
@@ -347,8 +357,8 @@ TEST_F(SolverTest, ThisTestShouldNotBeHere) {
 TEST_F(SolverTest, RecomputeAndCommit) {
   solver->open();
 
-  const VarId inputVar = solver->makeIntVar(0, -100, 100);
-  const VarId outputVar = solver->makeIntVar(0, -100, 100);
+  const VarViewId inputVar = solver->makeIntVar(0, -100, 100);
+  const VarViewId outputVar = solver->makeIntVar(0, -100, 100);
 
   // TODO: use some other invariants...
   auto invariant =
@@ -369,13 +379,13 @@ TEST_F(SolverTest, RecomputeAndCommit) {
 TEST_F(SolverTest, SimplePropagation) {
   solver->open();
 
-  VarId output = solver->makeIntVar(0, -10, 10);
-  VarId a = solver->makeIntVar(1, -10, 10);
-  VarId b = solver->makeIntVar(2, -10, 10);
-  VarId c = solver->makeIntVar(3, -10, 10);
+  VarViewId output = solver->makeIntVar(0, -10, 10);
+  VarViewId a = solver->makeIntVar(1, -10, 10);
+  VarViewId b = solver->makeIntVar(2, -10, 10);
+  VarViewId c = solver->makeIntVar(3, -10, 10);
 
   auto invariant = &solver->makeInvariant<MockInvariantAdvanced>(
-      *solver, output, std::vector<VarId>({a, b, c}));
+      *solver, output, std::vector<VarViewId>({a, b, c}));
 
   EXPECT_CALL(*invariant, recompute(::testing::_)).Times(1);
 
@@ -419,13 +429,13 @@ TEST_F(SolverTest, SimplePropagation) {
 TEST_F(SolverTest, SimpleCommit) {
   solver->open();
 
-  VarId output = solver->makeIntVar(0, -10, 10);
-  VarId a = solver->makeIntVar(1, -10, 10);
-  VarId b = solver->makeIntVar(2, -10, 10);
-  VarId c = solver->makeIntVar(3, -10, 10);
+  VarViewId output = solver->makeIntVar(0, -10, 10);
+  VarViewId a = solver->makeIntVar(1, -10, 10);
+  VarViewId b = solver->makeIntVar(2, -10, 10);
+  VarViewId c = solver->makeIntVar(3, -10, 10);
 
   auto invariant = &solver->makeInvariant<MockInvariantAdvanced>(
-      *solver, output, std::vector<VarId>({a, b, c}));
+      *solver, output, std::vector<VarViewId>({a, b, c}));
 
   EXPECT_CALL(*invariant, recompute(::testing::_)).Times(AtLeast(1));
   EXPECT_CALL(*invariant, commit(::testing::_)).Times(AtLeast(1));
@@ -496,22 +506,22 @@ TEST_F(SolverTest, SimpleCommit) {
 TEST_F(SolverTest, DelayedCommit) {
   solver->open();
 
-  VarId a = solver->makeIntVar(1, -10, 10);
-  VarId b = solver->makeIntVar(1, -10, 10);
-  VarId c = solver->makeIntVar(1, -10, 10);
-  VarId d = solver->makeIntVar(1, -10, 10);
-  VarId e = solver->makeIntVar(1, -10, 10);
-  VarId f = solver->makeIntVar(1, -10, 10);
-  VarId g = solver->makeIntVar(1, -10, 10);
+  VarViewId a = solver->makeIntVar(1, -10, 10);
+  VarViewId b = solver->makeIntVar(1, -10, 10);
+  VarViewId c = solver->makeIntVar(1, -10, 10);
+  VarViewId d = solver->makeIntVar(1, -10, 10);
+  VarViewId e = solver->makeIntVar(1, -10, 10);
+  VarViewId f = solver->makeIntVar(1, -10, 10);
+  VarViewId g = solver->makeIntVar(1, -10, 10);
 
   solver->makeInvariant<Linear>(*solver, c, std::vector<Int>({1, 1}),
-                                std::vector<VarId>({a, b}));
+                                std::vector<VarViewId>({a, b}));
 
   solver->makeInvariant<Linear>(*solver, e, std::vector<Int>({1, 1}),
-                                std::vector<VarId>({c, d}));
+                                std::vector<VarViewId>({c, d}));
 
   solver->makeInvariant<Linear>(*solver, g, std::vector<Int>({1, 1}),
-                                std::vector<VarId>({c, f}));
+                                std::vector<VarViewId>({c, f}));
 
   solver->close();
   // 1+1 = c = 2
@@ -545,28 +555,31 @@ TEST_F(SolverTest, DelayedCommit) {
 TEST_F(SolverTest, TestSimpleDynamicCycleQuery) {
   solver->open();
 
-  VarId x1 = solver->makeIntVar(1, -100, 100);
-  VarId x2 = solver->makeIntVar(1, -100, 100);
-  VarId x3 = solver->makeIntVar(1, -100, 100);
-  VarId base = solver->makeIntVar(1, -10, 10);
-  VarId i1 = solver->makeIntVar(1, 1, 4);
-  VarId i2 = solver->makeIntVar(2, 1, 4);
-  VarId i3 = solver->makeIntVar(3, 1, 4);
-  VarId output = solver->makeIntVar(2, -300, 300);
+  VarViewId x1 = solver->makeIntVar(1, -100, 100);
+  VarViewId x2 = solver->makeIntVar(1, -100, 100);
+  VarViewId x3 = solver->makeIntVar(1, -100, 100);
+  VarViewId base = solver->makeIntVar(1, -10, 10);
+  VarViewId i1 = solver->makeIntVar(1, 1, 4);
+  VarViewId i2 = solver->makeIntVar(2, 1, 4);
+  VarViewId i3 = solver->makeIntVar(3, 1, 4);
+  VarViewId output = solver->makeIntVar(2, -300, 300);
 
-  VarId x1Plus1 = solver->makeIntView<IntOffsetView>(*solver, x1, 1);
-  VarId x2Plus2 = solver->makeIntView<IntOffsetView>(*solver, x2, 2);
-  VarId x3Plus3 = solver->makeIntView<IntOffsetView>(*solver, x3, 3);
+  VarViewId x1Plus1 = solver->makeIntView<IntOffsetView>(*solver, x1, 1);
+  VarViewId x2Plus2 = solver->makeIntView<IntOffsetView>(*solver, x2, 2);
+  VarViewId x3Plus3 = solver->makeIntView<IntOffsetView>(*solver, x3, 3);
 
   solver->makeInvariant<ElementVar>(
-      *solver, x1, i1, std::vector<VarId>({base, x1Plus1, x2Plus2, x3Plus3}));
+      *solver, x1, i1,
+      std::vector<VarViewId>({base, x1Plus1, x2Plus2, x3Plus3}));
   solver->makeInvariant<ElementVar>(
-      *solver, x2, i2, std::vector<VarId>({base, x1Plus1, x2Plus2, x3Plus3}));
+      *solver, x2, i2,
+      std::vector<VarViewId>({base, x1Plus1, x2Plus2, x3Plus3}));
   solver->makeInvariant<ElementVar>(
-      *solver, x3, i3, std::vector<VarId>({base, x1Plus1, x2Plus2, x3Plus3}));
+      *solver, x3, i3,
+      std::vector<VarViewId>({base, x1Plus1, x2Plus2, x3Plus3}));
 
   solver->makeInvariant<Linear>(*solver, output, std::vector<Int>({1, 1, 1}),
-                                std::vector<VarId>({x1, x2, x3}));
+                                std::vector<VarViewId>({x1, x2, x3}));
 
   solver->close();
 
@@ -632,31 +645,31 @@ TEST_F(SolverTest, TestSimpleDynamicCycleQuery) {
 TEST_F(SolverTest, TestSimpleDynamicCycleCommit) {
   solver->open();
 
-  VarId x1 = solver->makeIntVar(1, -100, 100);
-  VarId x2 = solver->makeIntVar(1, -100, 100);
-  VarId x3 = solver->makeIntVar(1, -100, 100);
-  VarId base = solver->makeIntVar(1, -10, 10);
-  VarId i1 = solver->makeIntVar(1, 1, 4);
-  VarId i2 = solver->makeIntVar(2, 1, 4);
-  VarId i3 = solver->makeIntVar(3, 1, 4);
-  VarId output = solver->makeIntVar(2, 0, 3);
+  VarViewId x1 = solver->makeIntVar(1, -100, 100);
+  VarViewId x2 = solver->makeIntVar(1, -100, 100);
+  VarViewId x3 = solver->makeIntVar(1, -100, 100);
+  VarViewId base = solver->makeIntVar(1, -10, 10);
+  VarViewId i1 = solver->makeIntVar(1, 1, 4);
+  VarViewId i2 = solver->makeIntVar(2, 1, 4);
+  VarViewId i3 = solver->makeIntVar(3, 1, 4);
+  VarViewId output = solver->makeIntVar(2, 0, 3);
 
-  VarId viewPlus1 = solver->makeIntView<IntOffsetView>(*solver, x1, 1);
-  VarId viewPlus2 = solver->makeIntView<IntOffsetView>(*solver, x2, 2);
-  VarId viewPlus3 = solver->makeIntView<IntOffsetView>(*solver, x3, 3);
+  VarViewId viewPlus1 = solver->makeIntView<IntOffsetView>(*solver, x1, 1);
+  VarViewId viewPlus2 = solver->makeIntView<IntOffsetView>(*solver, x2, 2);
+  VarViewId viewPlus3 = solver->makeIntView<IntOffsetView>(*solver, x3, 3);
 
   solver->makeInvariant<ElementVar>(
       *solver, x1, i1,
-      std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}));
+      std::vector<VarViewId>({base, viewPlus1, viewPlus2, viewPlus3}));
   solver->makeInvariant<ElementVar>(
       *solver, x2, i2,
-      std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}));
+      std::vector<VarViewId>({base, viewPlus1, viewPlus2, viewPlus3}));
   solver->makeInvariant<ElementVar>(
       *solver, x3, i3,
-      std::vector<VarId>({base, viewPlus1, viewPlus2, viewPlus3}));
+      std::vector<VarViewId>({base, viewPlus1, viewPlus2, viewPlus3}));
 
   solver->makeInvariant<Linear>(*solver, output, std::vector<Int>({1, 1, 1}),
-                                std::vector<VarId>({x1, x2, x3}));
+                                std::vector<VarViewId>({x1, x2, x3}));
 
   solver->close();
 
@@ -725,8 +738,8 @@ TEST_F(SolverTest, TestSimpleDynamicCycleCommit) {
 TEST_F(SolverTest, ComputeBounds) {
   solver->open();
 
-  std::vector<std::vector<VarId>> inputs;
-  std::vector<VarId> outputs;
+  std::vector<std::vector<VarViewId>> inputs;
+  std::vector<VarViewId> outputs;
   std::vector<MockSimplePlus*> invariants;
   std::vector<InvariantId> position;
 
@@ -770,7 +783,7 @@ TEST_F(SolverTest, ComputeBounds) {
     }
   }
   for (size_t i = 4; i < inputs.size(); ++i) {
-    for (VarId output : inputs[i]) {
+    for (VarViewId output : inputs[i]) {
       outputs.emplace_back(output);
     }
   }
@@ -824,13 +837,13 @@ TEST_F(SolverTest, ComputeBoundsCycle) {
   const Int lb = 5;
   const Int ub = 10;
 
-  std::vector<std::vector<VarId>> inputs{
-      std::vector<VarId>{solver->makeIntVar(lb, lb, ub),
-                         solver->makeIntVar(0, 0, 0)},
-      std::vector<VarId>{solver->makeIntVar(lb, lb, ub),
-                         solver->makeIntVar(0, 0, 0)}};
+  std::vector<std::vector<VarViewId>> inputs{
+      std::vector<VarViewId>{solver->makeIntVar(lb, lb, ub),
+                             solver->makeIntVar(0, 0, 0)},
+      std::vector<VarViewId>{solver->makeIntVar(lb, lb, ub),
+                             solver->makeIntVar(0, 0, 0)}};
 
-  std::vector<VarId> outputs{inputs.at(1).at(1), inputs.at(0).at(1)};
+  std::vector<VarViewId> outputs{inputs.at(1).at(1), inputs.at(0).at(1)};
 
   for (size_t i = 0; i < inputs.size(); ++i) {
     invariants.push_back(&solver->makeInvariant<MockSimplePlus>(

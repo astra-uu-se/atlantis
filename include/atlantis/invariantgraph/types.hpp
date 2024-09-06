@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits.h>
+
 #include <cstdint>
 #include <string>
 
@@ -7,92 +9,61 @@
 
 namespace atlantis::invariantgraph {
 
-struct NodeId {
-  size_t id;
-  NodeId() : id(0) {}
-  explicit NodeId(size_t i) : id(i) {}
-  NodeId(const NodeId&) = default;
-};
+static size_t NULL_NODE_ID = ~size_t{0};
 
-static NodeId NULL_NODE_ID = NodeId();
+using VarNodeId = size_t;
 
-struct VarNodeId : public NodeId {
-  VarNodeId() : NodeId() {}
-  VarNodeId(const VarNodeId&) = default;
-  explicit VarNodeId(size_t i) : NodeId(i) {}
-  explicit VarNodeId(NodeId nodeId) : NodeId(nodeId) {}
+struct InvariantNodeId {
+ private:
+  size_t _id;
+  static const size_t IMPLICIT_CONSTRAINT_MASK =
+      (size_t{1} << (sizeof(size_t) * CHAR_BIT - 1));
 
-  inline VarNodeId& operator=(const VarNodeId& other) {
-    id = other.id;
-    return *this;
-  }
-  inline VarNodeId& operator=(const NodeId& other) {
-    id = other.id;
-    return *this;
-  }
-
-  inline bool operator==(const VarNodeId& other) const {
-    return id == other.id;
-  }
-
-  inline bool operator==(const NodeId& other) const {
-    return other.id == NULL_NODE_ID.id && NULL_NODE_ID.id == id;
-  }
-
-  bool operator!=(const VarNodeId& other) const { return !(operator==(other)); }
-  bool operator!=(const NodeId& other) const { return !(operator==(other)); }
-};
-
-struct InvariantNodeId : public NodeId {
-  enum struct Type : bool { INVARIANT = false, IMPLICIT_CONSTRAINT = true };
-  Type type;
-
+ public:
   InvariantNodeId(const InvariantNodeId&) = default;
 
-  InvariantNodeId() : NodeId(), type(Type::INVARIANT) {}
-  explicit InvariantNodeId(size_t i) : NodeId(i), type(Type::INVARIANT) {}
-  InvariantNodeId(size_t i, bool isImplicitConstraint)
-      : NodeId(i),
-        type(isImplicitConstraint ? Type::IMPLICIT_CONSTRAINT
-                                  : Type::INVARIANT) {}
-  explicit InvariantNodeId(NodeId nodeId)
-      : NodeId(nodeId), type(Type::INVARIANT) {}
+  InvariantNodeId(size_t id, bool isImplicitConstraint)
+      : _id(id == NULL_NODE_ID
+                ? id
+                : (isImplicitConstraint ? (id | IMPLICIT_CONSTRAINT_MASK)
+                                        : (id & ~IMPLICIT_CONSTRAINT_MASK))) {}
+
+  explicit InvariantNodeId(size_t id) : InvariantNodeId(id, false) {}
+
+  inline bool isImplicitConstraint() const {
+    return _id != NULL_NODE_ID && (_id & IMPLICIT_CONSTRAINT_MASK) != size_t{0};
+  }
+
+  inline bool isInvariant() const {
+    return _id != NULL_NODE_ID && (_id & IMPLICIT_CONSTRAINT_MASK) == size_t{0};
+  }
 
   inline InvariantNodeId& operator=(const InvariantNodeId& other) {
-    id = other.id;
-    type = other.type;
-    return *this;
-  }
-  inline InvariantNodeId& operator=(const NodeId& other) {
-    id = other.id;
+    _id = other._id;
     return *this;
   }
 
   bool operator==(const InvariantNodeId& other) const {
-    return type == other.type && id == other.id;
+    return _id == other._id;
   }
-  inline bool operator==(const NodeId& other) const {
-    return other.id == NULL_NODE_ID.id && NULL_NODE_ID.id == id;
-  }
+
+  bool operator==(size_t other) const { return other == size_t(_id); }
 
   bool operator!=(const InvariantNodeId& other) const {
     return !(operator==(other));
   }
-  bool operator!=(const NodeId& other) const { return !(operator==(other)); }
-};
 
-struct VarNodeIdHash {
-  std::size_t operator()(VarNodeId const& varNodeId) const noexcept {
-    return varNodeId.id;
+  bool operator!=(size_t other) const { return !(operator==(other)); }
+
+  explicit operator size_t() const {
+    return _id == NULL_NODE_ID ? _id : (_id & ~IMPLICIT_CONSTRAINT_MASK);
   }
 };
 
 struct InvariantNodeIdHash {
   std::size_t operator()(
       InvariantNodeId const& invariantNodeId) const noexcept {
-    std::size_t typeHash =
-        std::hash<int>{}(static_cast<int>(invariantNodeId.type));
-    return typeHash ^ (invariantNodeId.id << 1);
+    return size_t(invariantNodeId);
   }
 };
 
@@ -113,6 +84,11 @@ enum struct InvariantNodeState : unsigned char {
   UNINITIALIZED,
   ACTIVE,
   SUBSUMED
+};
+
+struct InvariantGraphEdge {
+  InvariantNodeId invariantNodeId;
+  VarNodeId varNodeId;
 };
 
 }  // namespace atlantis::invariantgraph

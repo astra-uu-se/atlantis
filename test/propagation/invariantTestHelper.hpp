@@ -62,14 +62,14 @@ struct NotificationData {
   PropagationMode propMode{PropagationMode::INPUT_TO_OUTPUT};
   OutputToInputMarkingMode markingMode{OutputToInputMarkingMode::NONE};
   size_t numNextInputCalls{0};
-  propagation::VarId modifiedVarId{NULL_ID};
+  propagation::VarViewId modifiedVarId{NULL_ID};
   Int modifiedVal{0};
-  propagation::VarId queryVarId{NULL_ID};
+  propagation::VarViewId queryVarId{NULL_ID};
 };
 
 class InvariantTest : public ::testing::Test {
  protected:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> _solver;
   std::mt19937 gen;
   std::default_random_engine rng;
   std::vector<std::pair<PropagationMode, OutputToInputMarkingMode>>
@@ -81,48 +81,48 @@ class InvariantTest : public ::testing::Test {
           {PropagationMode::OUTPUT_TO_INPUT,
            OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION}};
 
-  std::vector<Int> createInputVals(const std::vector<VarId>& inputVars) {
+  std::vector<Int> createInputVals(const std::vector<VarViewId>& inputVars) {
     std::vector<Int> inputVals(inputVars.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
-      inputVals.at(i) = solver->lowerBound(inputVars.at(i));
+      inputVals.at(i) = _solver->lowerBound(inputVars.at(i));
     }
     return inputVals;
   }
 
-  size_t trySetNextInputVarVal(const std::vector<VarId>& inputVars,
+  size_t trySetNextInputVarVal(const std::vector<VarViewId>& inputVars,
                                std::vector<Int>& inputVals) {
     EXPECT_EQ(inputVars.size(), inputVals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
-      if (inputVals.at(i) < solver->upperBound(inputVars.at(i))) {
+      if (inputVals.at(i) < _solver->upperBound(inputVars.at(i))) {
         inputVals.at(i) += 1;
-        solver->setValue(inputVars.at(i), inputVals.at(i));
+        _solver->setValue(inputVars.at(i), inputVals.at(i));
         return i;
       } else {
-        EXPECT_EQ(inputVals.at(i), solver->upperBound(inputVars.at(i)));
-        inputVals.at(i) = solver->lowerBound(inputVars.at(i));
+        EXPECT_EQ(inputVals.at(i), _solver->upperBound(inputVars.at(i)));
+        inputVals.at(i) = _solver->lowerBound(inputVars.at(i));
       }
     }
     return inputVars.size();
   }
 
-  size_t trySetMinDiffInputVarVal(const std::vector<VarId>& inputVars,
+  size_t trySetMinDiffInputVarVal(const std::vector<VarViewId>& inputVars,
                                   std::vector<Int>& inputVals) {
     EXPECT_EQ(inputVars.size(), inputVals.size());
     Int minDiff = std::numeric_limits<Int>::max();
     for (size_t i = 0; i < inputVars.size(); ++i) {
-      EXPECT_LE(solver->lowerBound(inputVars.at(i)), inputVals.at(i));
-      EXPECT_LE(inputVals.at(i), solver->upperBound(inputVars.at(i)));
-      if (inputVals.at(i) < solver->upperBound(inputVars.at(i))) {
+      EXPECT_LE(_solver->lowerBound(inputVars.at(i)), inputVals.at(i));
+      EXPECT_LE(inputVals.at(i), _solver->upperBound(inputVars.at(i)));
+      if (inputVals.at(i) < _solver->upperBound(inputVars.at(i))) {
         minDiff = std::min(
-            minDiff, inputVals.at(i) - solver->lowerBound(inputVars.at(i)));
+            minDiff, inputVals.at(i) - _solver->lowerBound(inputVars.at(i)));
       }
     }
     for (size_t i = 0; i < inputVars.size(); ++i) {
-      const Int diff = inputVals.at(i) - solver->lowerBound(inputVars.at(i));
+      const Int diff = inputVals.at(i) - _solver->lowerBound(inputVars.at(i));
       if (diff == minDiff &&
-          inputVals.at(i) < solver->upperBound(inputVars.at(i))) {
+          inputVals.at(i) < _solver->upperBound(inputVars.at(i))) {
         inputVals.at(i) += 1;
-        solver->setValue(inputVars.at(i), inputVals.at(i));
+        _solver->setValue(inputVars.at(i), inputVals.at(i));
         return i;
       }
     }
@@ -134,14 +134,14 @@ class InvariantTest : public ::testing::Test {
     EXPECT_CALL(*invariant, recompute(::testing::_)).Times(AtLeast(1));
     EXPECT_CALL(*invariant, commit(::testing::_)).Times(AtLeast(1));
 
-    if (!solver->isOpen()) {
-      solver->open();
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    solver->setPropagationMode(data.propMode);
-    solver->setOutputToInputMarkingMode(data.markingMode);
-    solver->close();
+    _solver->setPropagationMode(data.propMode);
+    _solver->setOutputToInputMarkingMode(data.markingMode);
+    _solver->close();
 
-    if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
+    if (_solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
       EXPECT_CALL(*invariant, nextInput(::testing::_)).Times(0);
       EXPECT_CALL(*invariant, notifyCurrentInputChanged(::testing::_))
           .Times(AtMost(1));
@@ -156,21 +156,21 @@ class InvariantTest : public ::testing::Test {
           .Times(AtMost(1));
     }
 
-    solver->beginMove();
-    solver->setValue(data.modifiedVarId, data.modifiedVal);
-    solver->endMove();
+    _solver->beginMove();
+    _solver->setValue(data.modifiedVarId, data.modifiedVal);
+    _solver->endMove();
 
-    solver->beginProbe();
-    solver->query(data.queryVarId);
-    solver->endProbe();
-    solver->open();
+    _solver->beginProbe();
+    _solver->query(data.queryVarId);
+    _solver->endProbe();
+    _solver->open();
   }
 
  public:
   void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
-    solver = std::make_unique<propagation::Solver>();
+    _solver = std::make_unique<propagation::Solver>();
   }
 };
 

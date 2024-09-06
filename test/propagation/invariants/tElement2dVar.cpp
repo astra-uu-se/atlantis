@@ -1,13 +1,5 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
-#include <limits>
-#include <random>
-#include <vector>
-
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/invariants/element2dVar.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -21,13 +13,13 @@ class Element2dVarTest : public InvariantTest {
   const Int inputUb = std::numeric_limits<Int>::max();
   std::vector<std::pair<Int, Int>> offsets =
       cartesianProduct(std::vector<Int>{-10, 0, 10});
-  std::vector<std::vector<VarId>> inputMatrix;
+  std::vector<std::vector<VarViewId>> inputMatrix;
   std::uniform_int_distribution<Int> inputDist;
 
  public:
   void SetUp() override {
     InvariantTest::SetUp();
-    inputMatrix.resize(numRows, std::vector<VarId>(numCols, NULL_ID));
+    inputMatrix.resize(numRows, std::vector<VarViewId>(numCols, NULL_ID));
     inputDist = std::uniform_int_distribution<Int>(inputLb, inputUb);
   }
 
@@ -50,23 +42,23 @@ class Element2dVarTest : public InvariantTest {
     return colIndexVal - colOffset;
   }
 
-  VarId getInput(const Int rowIndexVal, const Int colIndexVal,
-                 const Int rowOffset, const Int colOffset) {
+  VarViewId getInput(const Int rowIndexVal, const Int colIndexVal,
+                     const Int rowOffset, const Int colOffset) {
     return inputMatrix.at(zeroBasedRowIndex(rowIndexVal, rowOffset))
         .at(zeroBasedColIndex(colIndexVal, colOffset));
   }
 
-  Int computeOutput(const Timestamp ts, const VarId rowIndex,
-                    const VarId colIndex, const Int rowOffset,
+  Int computeOutput(const Timestamp ts, const VarViewId rowIndex,
+                    const VarViewId colIndex, const Int rowOffset,
                     const Int colOffset) {
-    return computeOutput(ts, solver->value(ts, rowIndex),
-                         solver->value(ts, colIndex), rowOffset, colOffset);
+    return computeOutput(ts, _solver->value(ts, rowIndex),
+                         _solver->value(ts, colIndex), rowOffset, colOffset);
   }
 
   Int computeOutput(const Timestamp ts, const Int rowIndexVal,
                     const Int colIndexVal, const Int rowOffset,
                     const Int colOffset) {
-    return solver->value(
+    return _solver->value(
         ts, getInput(rowIndexVal, colIndexVal, rowOffset, colOffset));
   }
 };
@@ -86,36 +78,37 @@ TEST_F(Element2dVarTest, UpdateBounds) {
 
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
-    solver->open();
-    const VarId rowIndex =
-        solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
+    _solver->open();
+    const VarViewId rowIndex =
+        _solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
-        solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
+    const VarViewId colIndex =
+        _solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
 
     for (size_t i = 0; i < numRows; ++i) {
       for (size_t j = 0; j < numCols; ++j) {
         inputMatrix.at(i).at(j) =
-            solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+            _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
       }
     }
 
-    const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
-    Element2dVar& invariant = solver->makeInvariant<Element2dVar>(
-        *solver, outputId, rowIndex, colIndex,
-        std::vector<std::vector<VarId>>(inputMatrix), rowOffset, colOffset);
-    solver->close();
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    Element2dVar& invariant = _solver->makeInvariant<Element2dVar>(
+        *_solver, outputId, rowIndex, colIndex,
+        std::vector<std::vector<VarViewId>>(inputMatrix), rowOffset, colOffset);
+    _solver->close();
 
     for (Int minRowIndex = rowIndexLb; minRowIndex <= rowIndexUb;
          ++minRowIndex) {
       for (Int maxRowIndex = rowIndexUb; maxRowIndex >= minRowIndex;
            --maxRowIndex) {
-        solver->updateBounds(rowIndex, minRowIndex, maxRowIndex, false);
+        _solver->updateBounds(VarId(rowIndex), minRowIndex, maxRowIndex, false);
         for (Int minColIndex = colIndexLb; minColIndex <= colIndexUb;
              ++minColIndex) {
           for (Int maxColIndex = colIndexUb; maxColIndex >= minColIndex;
                --maxColIndex) {
-            solver->updateBounds(colIndex, minColIndex, maxColIndex, false);
+            _solver->updateBounds(VarId(colIndex), minColIndex, maxColIndex,
+                                  false);
             invariant.updateBounds(false);
             Int minVal = std::numeric_limits<Int>::max();
             Int maxVal = std::numeric_limits<Int>::min();
@@ -123,16 +116,16 @@ TEST_F(Element2dVarTest, UpdateBounds) {
                  ++rowIndexVal) {
               for (Int colIndexVal = minColIndex; colIndexVal <= maxColIndex;
                    ++colIndexVal) {
-                minVal = std::min(minVal, solver->lowerBound(
+                minVal = std::min(minVal, _solver->lowerBound(
                                               getInput(rowIndexVal, colIndexVal,
                                                        rowOffset, colOffset)));
-                maxVal = std::max(maxVal, solver->upperBound(
+                maxVal = std::max(maxVal, _solver->upperBound(
                                               getInput(rowIndexVal, colIndexVal,
                                                        rowOffset, colOffset)));
               }
             }
-            EXPECT_EQ(minVal, solver->lowerBound(outputId));
-            EXPECT_EQ(maxVal, solver->upperBound(outputId));
+            EXPECT_EQ(minVal, _solver->lowerBound(outputId));
+            EXPECT_EQ(maxVal, _solver->upperBound(outputId));
           }
         }
       }
@@ -155,46 +148,46 @@ TEST_F(Element2dVarTest, Recompute) {
 
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
-    solver->open();
-    const VarId rowIndex =
-        solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
+    _solver->open();
+    const VarViewId rowIndex =
+        _solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
-        solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
+    const VarViewId colIndex =
+        _solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
 
     for (size_t i = 0; i < numRows; ++i) {
       for (size_t j = 0; j < numCols; ++j) {
         inputMatrix.at(i).at(j) =
-            solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+            _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
       }
     }
 
-    const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
-    Element2dVar& invariant = solver->makeInvariant<Element2dVar>(
-        *solver, outputId, rowIndex, colIndex,
-        std::vector<std::vector<VarId>>(inputMatrix), rowOffset, colOffset);
-    solver->close();
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    Element2dVar& invariant = _solver->makeInvariant<Element2dVar>(
+        *_solver, outputId, rowIndex, colIndex,
+        std::vector<std::vector<VarViewId>>(inputMatrix), rowOffset, colOffset);
+    _solver->close();
 
     for (Int rowIndexVal = rowIndexLb; rowIndexVal <= rowIndexUb;
          ++rowIndexVal) {
-      solver->setValue(solver->currentTimestamp(), rowIndex, rowIndexVal);
-      EXPECT_EQ(solver->value(solver->currentTimestamp(), rowIndex),
+      _solver->setValue(_solver->currentTimestamp(), rowIndex, rowIndexVal);
+      EXPECT_EQ(_solver->value(_solver->currentTimestamp(), rowIndex),
                 rowIndexVal);
       for (Int colIndexVal = colIndexLb; colIndexVal <= colIndexUb;
            ++colIndexVal) {
-        solver->setValue(solver->currentTimestamp(), colIndex, colIndexVal);
-        EXPECT_EQ(solver->value(solver->currentTimestamp(), colIndex),
+        _solver->setValue(_solver->currentTimestamp(), colIndex, colIndexVal);
+        EXPECT_EQ(_solver->value(_solver->currentTimestamp(), colIndex),
                   colIndexVal);
 
         const Int expectedOutput =
-            computeOutput(solver->currentTimestamp(), rowIndex, colIndex,
+            computeOutput(_solver->currentTimestamp(), rowIndex, colIndex,
                           rowOffset, colOffset);
-        invariant.recompute(solver->currentTimestamp());
-        EXPECT_EQ(solver->value(solver->currentTimestamp(), rowIndex),
+        invariant.recompute(_solver->currentTimestamp());
+        EXPECT_EQ(_solver->value(_solver->currentTimestamp(), rowIndex),
                   rowIndexVal);
 
         EXPECT_EQ(expectedOutput,
-                  solver->value(solver->currentTimestamp(), outputId));
+                  _solver->value(_solver->currentTimestamp(), outputId));
       }
     }
   }
@@ -215,41 +208,41 @@ TEST_F(Element2dVarTest, NotifyInputChanged) {
 
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
-    solver->open();
-    const VarId rowIndex =
-        solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
+    _solver->open();
+    const VarViewId rowIndex =
+        _solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
-        solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
+    const VarViewId colIndex =
+        _solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
 
     for (size_t i = 0; i < numRows; ++i) {
       for (size_t j = 0; j < numCols; ++j) {
         inputMatrix.at(i).at(j) =
-            solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+            _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
       }
     }
 
-    const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
-    Element2dVar& invariant = solver->makeInvariant<Element2dVar>(
-        *solver, outputId, rowIndex, colIndex,
-        std::vector<std::vector<VarId>>(inputMatrix), rowOffset, colOffset);
-    solver->close();
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    Element2dVar& invariant = _solver->makeInvariant<Element2dVar>(
+        *_solver, outputId, rowIndex, colIndex,
+        std::vector<std::vector<VarViewId>>(inputMatrix), rowOffset, colOffset);
+    _solver->close();
 
-    Timestamp ts = solver->currentTimestamp();
+    Timestamp ts = _solver->currentTimestamp();
 
     for (Int rowIndexVal = rowIndexLb; rowIndexVal <= rowIndexUb;
          ++rowIndexVal) {
       for (Int colIndexVal = colIndexLb; colIndexVal <= colIndexUb;
            ++colIndexVal) {
         ++ts;
-        solver->setValue(ts, rowIndex, rowIndexVal);
-        solver->setValue(ts, colIndex, colIndexVal);
+        _solver->setValue(ts, rowIndex, rowIndexVal);
+        _solver->setValue(ts, colIndex, colIndexVal);
 
         const Int expectedOutput =
             computeOutput(ts, rowIndex, colIndex, rowOffset, colOffset);
 
         invariant.notifyInputChanged(ts, LocalId(0));
-        EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
+        EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
       }
     }
   }
@@ -270,33 +263,33 @@ TEST_F(Element2dVarTest, NextInput) {
 
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
-    solver->open();
-    const VarId rowIndex =
-        solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
+    _solver->open();
+    const VarViewId rowIndex =
+        _solver->makeIntVar(rowIndexDist(gen), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
-        solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
+    const VarViewId colIndex =
+        _solver->makeIntVar(colIndexDist(gen), colIndexLb, colIndexUb);
 
     for (size_t i = 0; i < numRows; ++i) {
       for (size_t j = 0; j < numCols; ++j) {
         inputMatrix.at(i).at(j) =
-            solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+            _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
       }
     }
 
-    const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
-    Element2dVar& invariant = solver->makeInvariant<Element2dVar>(
-        *solver, outputId, rowIndex, colIndex,
-        std::vector<std::vector<VarId>>(inputMatrix), rowOffset, colOffset);
-    solver->close();
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    Element2dVar& invariant = _solver->makeInvariant<Element2dVar>(
+        *_solver, outputId, rowIndex, colIndex,
+        std::vector<std::vector<VarViewId>>(inputMatrix), rowOffset, colOffset);
+    _solver->close();
 
-    for (Timestamp ts = solver->currentTimestamp() + 1;
-         ts < solver->currentTimestamp() + 4; ++ts) {
+    for (Timestamp ts = _solver->currentTimestamp() + 1;
+         ts < _solver->currentTimestamp() + 4; ++ts) {
       EXPECT_EQ(invariant.nextInput(ts), rowIndex);
       EXPECT_EQ(invariant.nextInput(ts), colIndex);
       EXPECT_EQ(invariant.nextInput(ts),
-                getInput(solver->value(ts, rowIndex),
-                         solver->value(ts, colIndex), rowOffset, colOffset));
+                getInput(_solver->value(ts, rowIndex),
+                         _solver->value(ts, colIndex), rowOffset, colOffset));
       EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
     }
   }
@@ -304,7 +297,7 @@ TEST_F(Element2dVarTest, NextInput) {
 
 TEST_F(Element2dVarTest, NotifyCurrentInputChanged) {
   EXPECT_TRUE(inputLb <= inputUb);
-  Timestamp t0 = solver->currentTimestamp() +
+  Timestamp t0 = _solver->currentTimestamp() +
                  (numRows * numCols * static_cast<Int>(offsets.size())) + 1;
   for (const auto& [rowOffset, colOffset] : offsets) {
     const Int rowIndexLb = rowOffset;
@@ -327,25 +320,25 @@ TEST_F(Element2dVarTest, NotifyCurrentInputChanged) {
 
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
-    solver->open();
-    const VarId rowIndex =
-        solver->makeIntVar(rowIndexValues.back(), rowIndexLb, rowIndexUb);
+    _solver->open();
+    const VarViewId rowIndex =
+        _solver->makeIntVar(rowIndexValues.back(), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
-        solver->makeIntVar(colIndexValues.back(), colIndexLb, colIndexUb);
+    const VarViewId colIndex =
+        _solver->makeIntVar(colIndexValues.back(), colIndexLb, colIndexUb);
 
     for (size_t i = 0; i < numRows; ++i) {
       for (size_t j = 0; j < numCols; ++j) {
         inputMatrix.at(i).at(j) =
-            solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+            _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
       }
     }
 
-    const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
-    Element2dVar& invariant = solver->makeInvariant<Element2dVar>(
-        *solver, outputId, rowIndex, colIndex,
-        std::vector<std::vector<VarId>>(inputMatrix), rowOffset, colOffset);
-    solver->close();
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    Element2dVar& invariant = _solver->makeInvariant<Element2dVar>(
+        *_solver, outputId, rowIndex, colIndex,
+        std::vector<std::vector<VarViewId>>(inputMatrix), rowOffset, colOffset);
+    _solver->close();
 
     for (size_t i = 0; i < rowIndexValues.size(); ++i) {
       const Int rowIndexVal = rowIndexValues.at(i);
@@ -354,27 +347,27 @@ TEST_F(Element2dVarTest, NotifyCurrentInputChanged) {
         const Timestamp ts = t0 + Timestamp(i * colIndexValues.size() + j);
 
         EXPECT_EQ(invariant.nextInput(ts), rowIndex);
-        solver->setValue(ts, rowIndex, rowIndexVal);
+        _solver->setValue(ts, rowIndex, rowIndexVal);
         invariant.notifyCurrentInputChanged(ts);
 
         EXPECT_EQ(invariant.nextInput(ts), colIndex);
-        solver->setValue(ts, colIndex, colIndexVal);
+        _solver->setValue(ts, colIndex, colIndexVal);
         invariant.notifyCurrentInputChanged(ts);
 
-        EXPECT_EQ(solver->value(ts, outputId),
+        EXPECT_EQ(_solver->value(ts, outputId),
                   computeOutput(ts, rowIndex, colIndex, rowOffset, colOffset));
 
-        const VarId curInput = invariant.nextInput(ts);
+        const VarViewId curInput = invariant.nextInput(ts);
         EXPECT_EQ(curInput,
                   getInput(rowIndexVal, colIndexVal, rowOffset, colOffset));
 
-        const Int oldInputVal = solver->value(ts, curInput);
+        const Int oldInputVal = _solver->value(ts, curInput);
         do {
-          solver->setValue(ts, curInput, inputDist(gen));
-        } while (solver->value(ts, curInput) == oldInputVal);
+          _solver->setValue(ts, curInput, inputDist(gen));
+        } while (_solver->value(ts, curInput) == oldInputVal);
 
         invariant.notifyCurrentInputChanged(ts);
-        EXPECT_EQ(solver->value(ts, outputId),
+        EXPECT_EQ(_solver->value(ts, outputId),
                   computeOutput(ts, rowIndex, colIndex, rowOffset, colOffset));
       }
     }
@@ -404,28 +397,28 @@ TEST_F(Element2dVarTest, Commit) {
 
     std::uniform_int_distribution<Int> colIndexDist(colIndexLb, colIndexUb);
 
-    solver->open();
-    const VarId rowIndex =
-        solver->makeIntVar(rowIndexValues.back(), rowIndexLb, rowIndexUb);
+    _solver->open();
+    const VarViewId rowIndex =
+        _solver->makeIntVar(rowIndexValues.back(), rowIndexLb, rowIndexUb);
 
-    const VarId colIndex =
-        solver->makeIntVar(colIndexValues.back(), colIndexLb, colIndexUb);
+    const VarViewId colIndex =
+        _solver->makeIntVar(colIndexValues.back(), colIndexLb, colIndexUb);
 
     for (size_t i = 0; i < numRows; ++i) {
       for (size_t j = 0; j < numCols; ++j) {
         inputMatrix.at(i).at(j) =
-            solver->makeIntVar(inputDist(gen), inputLb, inputUb);
+            _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
       }
     }
 
-    const VarId outputId = solver->makeIntVar(inputLb, inputLb, inputUb);
-    Element2dVar& invariant = solver->makeInvariant<Element2dVar>(
-        *solver, outputId, rowIndex, colIndex,
-        std::vector<std::vector<VarId>>(inputMatrix), rowOffset, colOffset);
-    solver->close();
+    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
+    Element2dVar& invariant = _solver->makeInvariant<Element2dVar>(
+        *_solver, outputId, rowIndex, colIndex,
+        std::vector<std::vector<VarViewId>>(inputMatrix), rowOffset, colOffset);
+    _solver->close();
 
-    Int committedRowIndexValue = solver->committedValue(rowIndex);
-    Int committedColIndexValue = solver->committedValue(colIndex);
+    Int committedRowIndexValue = _solver->committedValue(rowIndex);
+    Int committedColIndexValue = _solver->committedValue(colIndex);
 
     std::vector<std::vector<Int>> committedInputValues(
         numRows, std::vector<Int>(numCols));
@@ -433,79 +426,79 @@ TEST_F(Element2dVarTest, Commit) {
     for (size_t i = 0; i < numRows; ++i) {
       for (size_t j = 0; j < numCols; ++j) {
         committedInputValues.at(i).at(j) =
-            solver->committedValue(inputMatrix.at(i).at(j));
+            _solver->committedValue(inputMatrix.at(i).at(j));
       }
     }
 
-    Timestamp ts = solver->currentTimestamp();
+    Timestamp ts = _solver->currentTimestamp();
     for (const Int rowIndexVal : rowIndexValues) {
       for (const Int colIndexVal : colIndexValues) {
         ++ts;
 
-        ASSERT_EQ(solver->committedValue(rowIndex), committedRowIndexValue);
-        ASSERT_EQ(solver->committedValue(colIndex), committedColIndexValue);
+        ASSERT_EQ(_solver->committedValue(rowIndex), committedRowIndexValue);
+        ASSERT_EQ(_solver->committedValue(colIndex), committedColIndexValue);
 
         for (size_t i = 0; i < numRows; ++i) {
           for (size_t j = 0; j < numCols; ++j) {
-            ASSERT_EQ(solver->committedValue(inputMatrix.at(i).at(j)),
+            ASSERT_EQ(_solver->committedValue(inputMatrix.at(i).at(j)),
                       committedInputValues.at(i).at(j));
           }
         }
 
         // Change row index
-        solver->setValue(ts, rowIndex, rowIndexVal);
+        _solver->setValue(ts, rowIndex, rowIndexVal);
 
         // notify row index change
         invariant.notifyInputChanged(ts, LocalId(0));
 
         // incremental value from row index
-        Int notifiedOutput = solver->value(ts, outputId);
+        Int notifiedOutput = _solver->value(ts, outputId);
         invariant.recompute(ts);
 
-        ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
+        ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
         // Change col index
-        solver->setValue(ts, colIndex, colIndexVal);
+        _solver->setValue(ts, colIndex, colIndexVal);
 
         // notify col index change
         invariant.notifyInputChanged(ts, LocalId(0));
 
         // incremental value from col index
-        notifiedOutput = solver->value(ts, outputId);
+        notifiedOutput = _solver->value(ts, outputId);
         invariant.recompute(ts);
 
-        ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
+        ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
         // Change input
-        const VarId curInput =
+        const VarViewId curInput =
             getInput(rowIndexVal, colIndexVal, rowOffset, colOffset);
-        const Int oldInputVal = solver->value(ts, curInput);
+        const Int oldInputVal = _solver->value(ts, curInput);
         do {
-          solver->setValue(ts, curInput, inputDist(gen));
-        } while (solver->value(ts, curInput) == oldInputVal);
+          _solver->setValue(ts, curInput, inputDist(gen));
+        } while (_solver->value(ts, curInput) == oldInputVal);
 
         // notify input change
         invariant.notifyInputChanged(ts, LocalId(0));
 
         // incremental value from input
-        notifiedOutput = solver->value(ts, outputId);
+        notifiedOutput = _solver->value(ts, outputId);
         invariant.recompute(ts);
 
-        ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
+        ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
-        solver->commitIf(ts, rowIndex);
-        committedRowIndexValue = solver->value(ts, rowIndex);
-        solver->commitIf(ts, colIndex);
-        committedColIndexValue = solver->value(ts, colIndex);
-        solver->commitIf(ts, curInput);
+        _solver->commitIf(ts, VarId(rowIndex));
+        committedRowIndexValue = _solver->value(ts, rowIndex);
+        _solver->commitIf(ts, VarId(colIndex));
+        committedColIndexValue = _solver->value(ts, colIndex);
+        _solver->commitIf(ts, VarId(curInput));
         committedInputValues.at(zeroBasedRowIndex(rowIndexVal, rowOffset))
             .at(zeroBasedColIndex(colIndexVal, colOffset)) =
-            solver->value(ts, curInput);
-        solver->commitIf(ts, outputId);
+            _solver->value(ts, curInput);
+        _solver->commitIf(ts, VarId(outputId));
 
         invariant.commit(ts);
         invariant.recompute(ts + 1);
-        ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
+        ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
       }
     }
   }
@@ -518,12 +511,14 @@ class MockElement2dVar : public Element2dVar {
     registered = true;
     Element2dVar::registerVars();
   }
-  explicit MockElement2dVar(SolverBase& solver, VarId output, VarId index1,
-                            VarId index2,
-                            std::vector<std::vector<VarId>>&& varMatrix,
+  explicit MockElement2dVar(SolverBase& solver, VarViewId output,
+                            VarViewId index1, VarViewId index2,
+                            std::vector<std::vector<VarViewId>>&& varMatrix,
                             Int offset1, Int offset2)
       : Element2dVar(solver, output, index1, index2, std::move(varMatrix),
                      offset1, offset2) {
+    EXPECT_TRUE(output.isVar());
+
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return Element2dVar::recompute(timestamp);
     });
@@ -543,30 +538,30 @@ class MockElement2dVar : public Element2dVar {
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(Element2dVarTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!solver->isOpen()) {
-      solver->open();
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    std::vector<std::vector<VarId>> varMatrix(
-        numRows, std::vector<VarId>(numCols, NULL_ID));
+    std::vector<std::vector<VarViewId>> varMatrix(
+        numRows, std::vector<VarViewId>(numCols, NULL_ID));
     for (size_t i = 0; i < numRows; ++i) {
       for (size_t j = 0; j < numCols; ++j) {
         varMatrix.at(i).at(j) =
-            solver->makeIntVar(static_cast<Int>(i * numCols + j), -100, 100);
+            _solver->makeIntVar(static_cast<Int>(i * numCols + j), -100, 100);
       }
     }
-    VarId index1 = solver->makeIntVar(1, 1, static_cast<Int>(numRows));
-    VarId index2 = solver->makeIntVar(1, 1, static_cast<Int>(numCols));
-    VarId output = solver->makeIntVar(-10, -100, 100);
+    VarViewId index1 = _solver->makeIntVar(1, 1, static_cast<Int>(numRows));
+    VarViewId index2 = _solver->makeIntVar(1, 1, static_cast<Int>(numCols));
+    VarViewId output = _solver->makeIntVar(-10, -100, 100);
     testNotifications<MockElement2dVar>(
-        &solver->makeInvariant<MockElement2dVar>(
-            *solver, output, index1, index2, std::move(varMatrix), 1, 1),
+        &_solver->makeInvariant<MockElement2dVar>(
+            *_solver, output, index1, index2, std::move(varMatrix), 1, 1),
         {propMode, markingMode, 4, index1, 5, output});
   }
 }

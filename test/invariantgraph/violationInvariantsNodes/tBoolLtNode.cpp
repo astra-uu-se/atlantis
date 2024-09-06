@@ -1,6 +1,5 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolLtNode.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -13,24 +12,23 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolLtNode> {
   VarNodeId reifiedVarNodeId{NULL_NODE_ID};
   std::string reifiedIdentifier{"reified"};
 
-  bool isViolating() {
+  bool isViolating(bool isRegistered = false) {
+    if (isRegistered) {
+      const bool aVal = varNode(aVarNodeId).isFixed()
+                            ? varNode(aVarNodeId).inDomain(bool{true})
+                            : _solver->currentValue(varId(aVarNodeId)) == 0;
+      const bool bVal = varNode(bVarNodeId).isFixed()
+                            ? varNode(bVarNodeId).inDomain(bool{true})
+                            : _solver->currentValue(varId(bVarNodeId)) == 0;
+      // !(a < b) <=> a >= b
+      return aVal || !bVal;
+    }
     const VarNode& aNode = varNode(aVarNodeId);
     const VarNode& bNode = varNode(bVarNodeId);
 
     const bool aVal = aNode.inDomain(bool{true});
     const bool bVal = bNode.inDomain(bool{true});
 
-    // !(a < b) <=> a >= b
-    return aVal || !bVal;
-  }
-
-  bool isViolating(propagation::Solver& solver) {
-    const bool aVal = varNode(aVarNodeId).isFixed()
-                          ? varNode(aVarNodeId).inDomain(bool{true})
-                          : solver.currentValue(varId(aVarNodeId)) == 0;
-    const bool bVal = varNode(bVarNodeId).isFixed()
-                          ? varNode(bVarNodeId).inDomain(bool{true})
-                          : solver.currentValue(varId(bVarNodeId)) == 0;
     // !(a < b) <=> a >= b
     return aVal || !bVal;
   }
@@ -65,11 +63,12 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolLtNode> {
 
     if (isReified()) {
       reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
-      createInvariantNode(aVarNodeId, bVarNodeId, reifiedVarNodeId);
+      createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
+                          reifiedVarNodeId);
     } else if (shouldHold()) {
-      createInvariantNode(aVarNodeId, bVarNodeId, true);
+      createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId, true);
     } else {
-      createInvariantNode(aVarNodeId, bVarNodeId, false);
+      createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId, false);
     }
   }
 };
@@ -92,37 +91,36 @@ TEST_P(BoolLtNodeTestFixture, construction) {
 }
 
 TEST_P(BoolLtNodeTestFixture, application) {
-  propagation::Solver solver;
-  solver.open();
-  addInputVarsToSolver(solver);
+  _solver->open();
+  addInputVarsToSolver();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  EXPECT_EQ(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-  invNode().registerOutputVars(*_invariantGraph, solver);
+  EXPECT_EQ(invNode().violationVarId(), propagation::NULL_ID);
+  invNode().registerOutputVars();
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  EXPECT_NE(invNode().violationVarId(*_invariantGraph), propagation::NULL_ID);
-  invNode().registerNode(*_invariantGraph, solver);
-  solver.close();
+  EXPECT_NE(invNode().violationVarId(), propagation::NULL_ID);
+  invNode().registerNode();
+  _solver->close();
 
   // aVarNodeId and bVarNodeId
-  EXPECT_LE(solver.searchVars().size(), 2);
+  EXPECT_LE(_solver->searchVars().size(), 2);
 
   // aVarNodeId, bVarNodeId and the violation
-  EXPECT_LE(solver.numVars(), 3);
+  EXPECT_LE(_solver->numVars(), 3);
 
   // equal
-  EXPECT_EQ(solver.numInvariants(), 1);
+  EXPECT_EQ(_solver->numInvariants(), 1);
 
-  EXPECT_EQ(solver.lowerBound(invNode().violationVarId(*_invariantGraph)), 0);
-  EXPECT_EQ(solver.upperBound(invNode().violationVarId(*_invariantGraph)), 1);
+  EXPECT_EQ(_solver->lowerBound(invNode().violationVarId()), 0);
+  EXPECT_EQ(_solver->upperBound(invNode().violationVarId()), 1);
 }
 
 TEST_P(BoolLtNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  invNode().updateState(*_invariantGraph);
+  invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
@@ -138,15 +136,15 @@ TEST_P(BoolLtNodeTestFixture, updateState) {
 
 TEST_P(BoolLtNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-  invNode().updateState(*_invariantGraph);
+  invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
-    EXPECT_TRUE(invNode().canBeReplaced(*_invariantGraph));
-    EXPECT_TRUE(invNode().replace(*_invariantGraph));
-    invNode().deactivate(*_invariantGraph);
+    EXPECT_TRUE(invNode().canBeReplaced());
+    EXPECT_TRUE(invNode().replace());
+    invNode().deactivate();
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
   } else {
-    EXPECT_FALSE(invNode().canBeReplaced(*_invariantGraph));
+    EXPECT_FALSE(invNode().canBeReplaced());
   }
 }
 
@@ -155,8 +153,8 @@ TEST_P(BoolLtNodeTestFixture, propagation) {
     return;
   }
   propagation::Solver solver;
-  _invariantGraph->apply(solver);
-  _invariantGraph->close(solver);
+  _invariantGraph->construct();
+  _invariantGraph->close();
 
   if (shouldBeReplaced() && varId(reifiedIdentifier) == propagation::NULL_ID) {
     EXPECT_TRUE(isReified());
@@ -181,7 +179,7 @@ TEST_P(BoolLtNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarId> inputVarIds;
+  std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& inputVarNodeId :
        std::array<VarNodeId, 2>{aVarNodeId, bVarNodeId}) {
     if (!varNode(inputVarNodeId).isFixed()) {
@@ -190,27 +188,27 @@ TEST_P(BoolLtNodeTestFixture, propagation) {
     }
   }
 
-  const propagation::VarId violVarId =
+  const propagation::VarViewId violVarId =
       isReified() ? varId(reifiedIdentifier)
                   : _invariantGraph->totalViolationVarId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 
-  std::vector<Int> inputVals = makeInputVals(solver, inputVarIds);
+  std::vector<Int> inputVals = makeInputVals(inputVarIds);
 
-  while (increaseNextVal(solver, inputVarIds, inputVals)) {
-    solver.beginMove();
-    setVarVals(solver, inputVarIds, inputVals);
-    solver.endMove();
+  while (increaseNextVal(inputVarIds, inputVals)) {
+    _solver->beginMove();
+    setVarVals(inputVarIds, inputVals);
+    _solver->endMove();
 
-    solver.beginProbe();
-    solver.query(violVarId);
-    solver.endProbe();
+    _solver->beginProbe();
+    _solver->query(violVarId);
+    _solver->endProbe();
 
-    expectVarVals(solver, inputVarIds, inputVals);
+    expectVarVals(inputVarIds, inputVals);
 
-    const bool actual = solver.currentValue(violVarId) > 0;
-    const bool expected = isViolating(solver);
+    const bool actual = _solver->currentValue(violVarId) > 0;
+    const bool expected = isViolating(true);
 
     if (!shouldFail()) {
       EXPECT_EQ(actual, expected);

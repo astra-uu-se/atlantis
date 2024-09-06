@@ -12,18 +12,18 @@
 namespace atlantis {
 
 std::string toIntString(const search::Assignment& assignment,
-                        const std::variant<propagation::VarId, Int>& var) {
+                        const std::variant<propagation::VarViewId, Int>& var) {
   return std::to_string(
       std::holds_alternative<Int>(var)
           ? std::get<Int>(var)
-          : assignment.value(std::get<propagation::VarId>(var)));
+          : assignment.value(std::get<propagation::VarViewId>(var)));
 }
 
 std::string toBoolString(const search::Assignment& assignment,
-                         const std::variant<propagation::VarId, Int>& var) {
+                         const std::variant<propagation::VarViewId, Int>& var) {
   return ((std::holds_alternative<Int>(var)
                ? std::get<Int>(var)
-               : assignment.value(std::get<propagation::VarId>(var))) == 0)
+               : assignment.value(std::get<propagation::VarViewId>(var))) == 0)
              ? "true"
              : "false";
 }
@@ -107,12 +107,13 @@ void FznBackend::onFinishDefault(bool hadSol) {
 
 FznBackend::FznBackend(logging::Logger& logger,
                        std::filesystem::path&& modelFile)
-    : FznBackend(logger.timed<fznparser::Model>("parsing FlatZinc", [&] {
-        auto m = fznparser::parseFznFile(modelFile);
-        logger.debug("Found {:d} variable(s)", m.vars().size());
-        logger.debug("Found {:d} constraint(s)", m.constraints().size());
-        return m;
-      })) {}
+    : FznBackend(
+          logger.timedFunction<fznparser::Model>("parsing FlatZinc", [&] {
+            auto m = fznparser::parseFznFile(modelFile);
+            logger.debug("Found {:d} variable(s)", m.vars().size());
+            logger.debug("Found {:d} constraint(s)", m.constraints().size());
+            return m;
+          })) {}
 
 static propagation::ObjectiveDirection getObjectiveDirection(
     fznparser::ProblemType problemType) {
@@ -130,14 +131,15 @@ static propagation::ObjectiveDirection getObjectiveDirection(
 search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   fznparser::ProblemType problemType = _model.solveType().problemType();
 
+  propagation::Solver solver;
+
   // TODO: we should improve the initialisation in order to avoid the need for
   // breaking the dynamic cycles
-  invariantgraph::FznInvariantGraph invariantGraph(true);
-  logger.timed<void>("building invariant graph",
-                     [&] { return invariantGraph.build(_model); });
+  invariantgraph::FznInvariantGraph invariantGraph(solver, true);
+  logger.timedProcedure("building invariant graph",
+                        [&] { invariantGraph.build(_model); });
 
-  propagation::Solver solver;
-  invariantGraph.apply(solver);
+  invariantGraph.construct();
   auto neighbourhood = invariantGraph.neighbourhood();
 
   neighbourhood.printNeighbourhood(logger);
@@ -147,7 +149,7 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   auto violation = searchObjective.registerNode(
       invariantGraph.totalViolationVarId(), invariantGraph.objectiveVarId());
 
-  invariantGraph.close(solver);
+  invariantGraph.close();
 
   const Int objectiveOptimalValue =
       _model.isSatisfactionProblem()
@@ -185,7 +187,7 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   auto schedule = _annealingScheduleFactory.create();
   search::Annealer annealer(assignment, random, *schedule);
 
-  return logger.timed<search::SearchStatistics>(
+  return logger.timedFunction<search::SearchStatistics>(
       "search", [&] { return search.run(searchController, annealer, logger); });
 }
 

@@ -18,19 +18,19 @@ namespace atlantis::benchmark {
 
 class GolombRuler : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
+  std::shared_ptr<propagation::Solver> solver;
   std::mt19937 gen;
 
   size_t markCount{0};
 
-  std::vector<propagation::VarId> marks;
-  std::vector<propagation::VarId> differences;
+  std::vector<propagation::VarViewId> marks;
+  std::vector<propagation::VarViewId> differences;
 
-  std::vector<propagation::VarId> violations;
-  propagation::VarId totalViolation;
+  std::vector<propagation::VarViewId> violations;
+  VarViewId totalViolation{propagation::NULL_ID};
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     markCount = state.range(0);
     const size_t ub = markCount * markCount;
@@ -72,14 +72,15 @@ class GolombRuler : public ::benchmark::Fixture {
     assert(differences.size() == ((markCount - 1) * (markCount)) / 2);
 
     Int maxViol = 0;
-    for (propagation::VarId viol : differences) {
+    for (propagation::VarViewId viol : differences) {
       maxViol += solver->upperBound(viol);
     }
 
     // differences must be unique
     totalViolation = solver->makeIntVar(0, 0, maxViol);
     solver->makeViolationInvariant<propagation::AllDifferent>(
-        *solver, totalViolation, std::vector<propagation::VarId>(differences));
+        *solver, totalViolation,
+        std::vector<propagation::VarViewId>(differences));
 
     solver->close();
   }

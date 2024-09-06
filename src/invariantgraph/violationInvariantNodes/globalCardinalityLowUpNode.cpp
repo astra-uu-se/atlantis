@@ -13,71 +13,78 @@
 namespace atlantis::invariantgraph {
 
 GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
-    std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
-    std::vector<Int>&& low, std::vector<Int>&& up, VarNodeId r)
-    : ViolationInvariantNode({}, std::move(x), r),
+    IInvariantGraph& graph, std::vector<VarNodeId>&& x,
+    std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
+    VarNodeId r)
+    : ViolationInvariantNode(graph, {}, std::move(x), r),
       _cover(std::move(cover)),
       _low(std::move(low)),
       _up(std::move(up)) {}
 
 GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
-    std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
-    std::vector<Int>&& low, std::vector<Int>&& up, bool shouldHold)
-    : ViolationInvariantNode({}, std::move(x), shouldHold),
+    IInvariantGraph& graph, std::vector<VarNodeId>&& x,
+    std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
+    bool shouldHold)
+    : ViolationInvariantNode(graph, {}, std::move(x), shouldHold),
       _cover(std::move(cover)),
       _low(std::move(low)),
       _up(std::move(up)) {}
 
-void GlobalCardinalityLowUpNode::init(InvariantGraph& graph,
-                                      const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
-  assert(!isReified() ||
-         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
-  assert(std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
+void GlobalCardinalityLowUpNode::init(InvariantNodeId id) {
+  ViolationInvariantNode::init(id);
+  assert(
+      !isReified() ||
+      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(
+      std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+                  [&](const VarNodeId vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
+  assert(
+      std::all_of(staticInputVarNodeIds().begin(),
+                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
-void GlobalCardinalityLowUpNode::registerOutputVars(
-    InvariantGraph& graph, propagation::SolverBase& solver) {
-  if (violationVarId(graph) == propagation::NULL_ID) {
+void GlobalCardinalityLowUpNode::registerOutputVars() {
+  if (violationVarId() == propagation::NULL_ID) {
     if (!shouldHold()) {
-      _intermediate = solver.makeIntVar(
+      _intermediate = solver().makeIntVar(
           0, 0, static_cast<Int>(staticInputVarNodeIds().size()));
-      setViolationVarId(graph, solver.makeIntView<propagation::NotEqualConst>(
-                                   solver, _intermediate, 0));
+      setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
+          solver(), _intermediate, 0));
     } else {
-      registerViolation(graph, solver);
+      registerViolation();
     }
   }
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                     [&](const VarNodeId vId) {
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
-void GlobalCardinalityLowUpNode::registerNode(InvariantGraph& graph,
-                                              propagation::SolverBase& solver) {
-  std::vector<propagation::VarId> inputVarIds;
+void GlobalCardinalityLowUpNode::registerNode() {
+  std::vector<propagation::VarViewId> inputVarIds;
+  assert(violationVarId() != propagation::NULL_ID);
+  assert(shouldHold() || _intermediate != propagation::NULL_ID);
+  assert(shouldHold() ? violationVarId().isVar() : _intermediate.isVar());
+
   std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
                  std::back_inserter(inputVarIds),
-                 [&](const auto& id) { return graph.varId(id); });
+                 [&](const auto& id) { return invariantGraph().varId(id); });
 
   if (shouldHold()) {
-    solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
-        solver, violationVarId(graph), std::move(inputVarIds),
+    solver().makeInvariant<propagation::GlobalCardinalityLowUp>(
+        solver(), violationVarId(), std::move(inputVarIds),
         std::vector<Int>(_cover), std::vector<Int>(_low),
         std::vector<Int>(_up));
   } else {
-    solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
-        solver, _intermediate, std::move(inputVarIds), std::vector<Int>(_cover),
-        std::vector<Int>(_low), std::vector<Int>(_up));
+    solver().makeInvariant<propagation::GlobalCardinalityLowUp>(
+        solver(), _intermediate, std::move(inputVarIds),
+        std::vector<Int>(_cover), std::vector<Int>(_low),
+        std::vector<Int>(_up));
   }
 }
 

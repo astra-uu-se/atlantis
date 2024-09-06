@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include "../testHelper.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/annealing/annealerContainer.hpp"
 #include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
 
@@ -11,27 +10,27 @@ using namespace atlantis::search;
 
 class CircuitNeighbourhoodTest : public ::testing::Test {
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  std::shared_ptr<search::Assignment> assignment;
-  search::RandomProvider random{123456789};
+  std::shared_ptr<propagation::Solver> _solver;
+  std::shared_ptr<search::Assignment> _assignment;
+  search::RandomProvider _random{123456789};
 
   std::vector<search::SearchVar> next;
 
   void SetUp() override {
-    solver = std::make_unique<propagation::Solver>();
+    _solver = std::make_unique<propagation::Solver>();
 
-    solver->open();
+    _solver->open();
     for (auto i = 0u; i < 4; ++i) {
-      propagation::VarId var = solver->makeIntVar(1, 1, 4);
+      propagation::VarViewId var = _solver->makeIntVar(1, 1, 4);
       next.emplace_back(var, SearchDomain(1, 4));
     }
 
-    propagation::VarId objective = solver->makeIntVar(0, 0, 0);
-    propagation::VarId violation = solver->makeIntVar(0, 0, 0);
-    solver->close();
+    propagation::VarViewId objective = _solver->makeIntVar(0, 0, 0);
+    propagation::VarViewId violation = _solver->makeIntVar(0, 0, 0);
+    _solver->close();
 
-    assignment = std::make_unique<search::Assignment>(
-        *solver, objective, violation, propagation::ObjectiveDirection::NONE,
+    _assignment = std::make_shared<search::Assignment>(
+        *_solver, objective, violation, propagation::ObjectiveDirection::NONE,
         0);
   }
 
@@ -40,7 +39,7 @@ class CircuitNeighbourhoodTest : public ::testing::Test {
     Int current = 0;
 
     do {
-      current = solver->committedValue(next[current].solverId()) - 1;
+      current = _solver->committedValue(next[current].solverId()) - 1;
       count++;
     } while (current != 0 && count <= static_cast<Int>(next.size()));
 
@@ -52,8 +51,8 @@ TEST_F(CircuitNeighbourhoodTest, all_values_are_initialised) {
   search::neighbourhoods::CircuitNeighbourhood neighbourhood(
       (std::vector<search::SearchVar>(next)));
 
-  assignment->assign(
-      [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
+  _assignment->assign(
+      [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
 
   expectCycle();
 }
@@ -64,8 +63,8 @@ TEST_F(CircuitNeighbourhoodTest, fixed_vars_are_considered) {
   search::neighbourhoods::CircuitNeighbourhood neighbourhood(
       (std::vector<search::SearchVar>(next)));
 
-  assignment->assign(
-      [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
+  _assignment->assign(
+      [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
 
   expectCycle();
 }
@@ -75,15 +74,15 @@ TEST_F(CircuitNeighbourhoodTest, moves_maintain_circuit) {
 
   search::neighbourhoods::CircuitNeighbourhood neighbourhood(
       (std::vector<search::SearchVar>(next)));
-  assignment->assign(
-      [&](auto& modifier) { neighbourhood.initialise(random, modifier); });
+  _assignment->assign(
+      [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
 
   auto schedule = search::AnnealerContainer::cooling(0.99, 4);
-  AlwaysAcceptingAnnealer annealer(*assignment, random, *schedule);
+  AlwaysAcceptingAnnealer annealer(*_assignment, _random, *schedule);
 
   for (auto i = 0; i < CONFIDENCE; i++) {
-    random.seed(std::time(nullptr));
-    neighbourhood.randomMove(random, *assignment, annealer);
+    _random.seed(std::time(nullptr));
+    neighbourhood.randomMove(_random, *_assignment, annealer);
   }
 }
 

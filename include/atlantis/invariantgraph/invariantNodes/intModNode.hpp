@@ -1,23 +1,20 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
 class IntModNode : public InvariantNode {
  public:
-  IntModNode(VarNodeId numerator, VarNodeId denominator, VarNodeId remainder);
+  IntModNode(IInvariantGraph& graph,
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+             VarNodeId numerator, VarNodeId denominator, VarNodeId remainder);
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void init(InvariantNodeId) override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
+
+  void registerNode() override;
 
   [[nodiscard]] VarNodeId numerator() const;
   [[nodiscard]] VarNodeId denominator() const;

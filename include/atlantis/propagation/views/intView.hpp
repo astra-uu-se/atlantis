@@ -13,10 +13,10 @@ class IntView : public View {
   friend class SolverBase;
 
  public:
-  explicit IntView(SolverBase& solver, VarId parentId)
+  explicit IntView(SolverBase& solver, VarViewId parentId)
       : View(solver, parentId) {}
 
-  void init(VarId id) { _id = id; }
+  void init(ViewId id) { _id = id; }
 
   [[nodiscard]] virtual Int value(Timestamp) = 0;
   [[nodiscard]] virtual Int committedValue() = 0;

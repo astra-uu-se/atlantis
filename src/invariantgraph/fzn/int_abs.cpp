@@ -8,8 +8,8 @@ namespace atlantis::invariantgraph::fzn {
 
 bool int_abs(FznInvariantGraph& graph, const fznparser::IntArg& var,
              const fznparser::IntArg& absVar) {
-  graph.addInvariantNode(std::make_unique<IntAbsNode>(
-      graph.retrieveVarNode(var), graph.retrieveVarNode(absVar)));
+  graph.addInvariantNode(std::make_shared<IntAbsNode>(
+      graph, graph.retrieveVarNode(var), graph.retrieveVarNode(absVar)));
   return true;
 }
 

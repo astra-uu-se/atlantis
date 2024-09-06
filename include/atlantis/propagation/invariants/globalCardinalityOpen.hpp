@@ -13,7 +13,7 @@ namespace atlantis::propagation {
 class GlobalCardinalityOpen : public Invariant {
  private:
   std::vector<VarId> _outputs;
-  std::vector<VarId> _inputs;
+  std::vector<VarViewId> _inputs;
   std::vector<Int> _cover;
   std::vector<Int> _coverVarIndex;
   std::vector<CommittableInt> _counts;
@@ -24,7 +24,12 @@ class GlobalCardinalityOpen : public Invariant {
 
  public:
   GlobalCardinalityOpen(SolverBase&, std::vector<VarId>&& outputs,
-                        std::vector<VarId>&& inputs, std::vector<Int>&& cover);
+                        std::vector<VarViewId>&& inputs,
+                        std::vector<Int>&& cover);
+
+  GlobalCardinalityOpen(SolverBase&, std::vector<VarViewId>&& outputs,
+                        std::vector<VarViewId>&& inputs,
+                        std::vector<Int>&& cover);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
@@ -32,7 +37,7 @@ class GlobalCardinalityOpen : public Invariant {
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

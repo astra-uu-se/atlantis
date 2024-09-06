@@ -12,20 +12,23 @@ namespace atlantis::propagation {
 
 class BoolAllEqual : public ViolationInvariant {
  protected:
-  std::vector<VarId> _vars;
+  std::vector<VarViewId> _vars;
   CommittableInt _numTrue;
   std::vector<CommittableInt> _varNotified;
 
  public:
   explicit BoolAllEqual(SolverBase&, VarId violationId,
-                        std::vector<VarId>&& vars);
+                        std::vector<VarViewId>&& vars);
+
+  explicit BoolAllEqual(SolverBase&, VarViewId violationId,
+                        std::vector<VarViewId>&& vars);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

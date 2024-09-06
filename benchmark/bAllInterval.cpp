@@ -14,52 +14,53 @@ namespace atlantis::benchmark {
 
 class AllInterval : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  std::vector<propagation::VarId> inputVarIds;
+  std::shared_ptr<propagation::Solver> _solver;
+  std::vector<propagation::VarViewId> inputVarIds;
   std::random_device rd;
   std::mt19937 gen;
 
   std::uniform_int_distribution<Int> distribution;
   size_t n{0};
 
-  propagation::VarId totalViolation = propagation::NULL_ID;
+  propagation::VarViewId totalViolation = propagation::NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    _solver = std::make_shared<propagation::Solver>();
     if (state.range(0) < 0) {
       throw std::runtime_error("n must be non-negative.");
     }
     n = state.range(0);
     inputVarIds.resize(n, propagation::NULL_ID);
-    std::vector<propagation::VarId> violationVars(n - 1, propagation::NULL_ID);
+    std::vector<propagation::VarViewId> violationVars(n - 1,
+                                                      propagation::NULL_ID);
     // number of constraints: n
     // total number of static input variables: 3 * n
-    solver->open();
+    _solver->open();
 
-    setSolverMode(*solver, static_cast<int>(state.range(1)));
+    setSolverMode(*_solver, static_cast<int>(state.range(1)));
 
     for (size_t i = 0; i < n; ++i) {
       assert(i < inputVarIds.size());
       inputVarIds[i] =
-          solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(n) - 1);
+          _solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(n) - 1);
     }
     // Creating n - 1 invariants, each having two inputs and one output
     for (size_t i = 0; i < n - 1; ++i) {
       assert(i < violationVars.size());
       violationVars[i] =
-          solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(n) - 1);
+          _solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(n) - 1);
       assert(i + 1 < inputVarIds.size());
-      solver->makeInvariant<propagation::AbsDiff>(
-          *solver, violationVars[i], inputVarIds[i], inputVarIds[i + 1]);
+      _solver->makeInvariant<propagation::AbsDiff>(
+          *_solver, violationVars[i], inputVarIds[i], inputVarIds[i + 1]);
     }
 
-    totalViolation = solver->makeIntVar(0, 0, static_cast<Int>(n));
+    totalViolation = _solver->makeIntVar(0, 0, static_cast<Int>(n));
     // Creating one invariant, taking n input variables and one output
-    solver->makeViolationInvariant<propagation::AllDifferent>(
-        *solver, totalViolation,
-        std::vector<propagation::VarId>(violationVars));
+    _solver->makeViolationInvariant<propagation::AllDifferent>(
+        *_solver, totalViolation,
+        std::vector<propagation::VarViewId>(violationVars));
 
-    solver->close();
+    _solver->close();
 
     gen = std::mt19937(rd());
 
@@ -77,24 +78,24 @@ BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(::benchmark::State& st) {
     assert(i < inputVarIds.size());
     const size_t j = distribution(gen);
     assert(j < inputVarIds.size());
-    const Int oldI = solver->committedValue(inputVarIds[i]);
-    const Int oldJ = solver->committedValue(inputVarIds[j]);
+    const Int oldI = _solver->committedValue(inputVarIds[i]);
+    const Int oldJ = _solver->committedValue(inputVarIds[j]);
     // Perform random swap
-    solver->beginMove();
-    solver->setValue(inputVarIds[i], oldJ);
-    solver->setValue(inputVarIds[j], oldI);
-    solver->endMove();
+    _solver->beginMove();
+    _solver->setValue(inputVarIds[i], oldJ);
+    _solver->setValue(inputVarIds[j], oldI);
+    _solver->endMove();
 
-    solver->beginProbe();
-    solver->query(totalViolation);
-    solver->endProbe();
+    _solver->beginProbe();
+    _solver->query(totalViolation);
+    _solver->endProbe();
     ++probes;
     assert(all_in_range(0, n - 1, [&](const size_t a) {
       return all_in_range(a + 1, n, [&](const size_t b) {
-        return solver->committedValue(inputVarIds.at(a)) !=
-                   solver->committedValue(inputVarIds.at(b)) &&
-               solver->currentValue(inputVarIds.at(a)) !=
-                   solver->currentValue(inputVarIds.at(b));
+        return _solver->committedValue(inputVarIds.at(a)) !=
+                   _solver->committedValue(inputVarIds.at(b)) &&
+               _solver->currentValue(inputVarIds.at(a)) !=
+                   _solver->currentValue(inputVarIds.at(b));
       });
     }));
   }
@@ -107,16 +108,16 @@ BENCHMARK_DEFINE_F(AllInterval, probe_all_swap)(::benchmark::State& st) {
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
       for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
-        const Int oldI = solver->committedValue(inputVarIds[i]);
-        const Int oldJ = solver->committedValue(inputVarIds[j]);
-        solver->beginMove();
-        solver->setValue(inputVarIds[i], oldJ);
-        solver->setValue(inputVarIds[j], oldI);
-        solver->endMove();
+        const Int oldI = _solver->committedValue(inputVarIds[i]);
+        const Int oldJ = _solver->committedValue(inputVarIds[j]);
+        _solver->beginMove();
+        _solver->setValue(inputVarIds[i], oldJ);
+        _solver->setValue(inputVarIds[j], oldI);
+        _solver->endMove();
 
-        solver->beginProbe();
-        solver->query(totalViolation);
-        solver->endProbe();
+        _solver->beginProbe();
+        _solver->query(totalViolation);
+        _solver->endProbe();
 
         ++probes;
       }
@@ -133,17 +134,17 @@ BENCHMARK_DEFINE_F(AllInterval, commit_single_swap)(::benchmark::State& st) {
     assert(i < inputVarIds.size());
     const size_t j = distribution(gen);
     assert(j < inputVarIds.size());
-    const Int oldI = solver->committedValue(inputVarIds[i]);
-    const Int oldJ = solver->committedValue(inputVarIds[j]);
+    const Int oldI = _solver->committedValue(inputVarIds[i]);
+    const Int oldJ = _solver->committedValue(inputVarIds[j]);
     // Perform random swap
-    solver->beginMove();
-    solver->setValue(inputVarIds[i], oldJ);
-    solver->setValue(inputVarIds[j], oldI);
-    solver->endMove();
+    _solver->beginMove();
+    _solver->setValue(inputVarIds[i], oldJ);
+    _solver->setValue(inputVarIds[j], oldI);
+    _solver->endMove();
 
-    solver->beginCommit();
-    solver->query(totalViolation);
-    solver->endCommit();
+    _solver->beginCommit();
+    _solver->query(totalViolation);
+    _solver->endCommit();
 
     ++commits;
   }

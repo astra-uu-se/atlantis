@@ -12,15 +12,17 @@ namespace atlantis::propagation {
  */
 class BinaryMin : public Invariant {
  private:
-  VarId _output, _x, _y;
+  VarId _output;
+  VarViewId _x, _y;
 
  public:
-  explicit BinaryMin(SolverBase&, VarId output, VarId x, VarId y);
+  explicit BinaryMin(SolverBase&, VarId output, VarViewId x, VarViewId y);
+  explicit BinaryMin(SolverBase&, VarViewId output, VarViewId x, VarViewId y);
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

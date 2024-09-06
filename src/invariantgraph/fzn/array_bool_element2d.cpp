@@ -42,8 +42,8 @@ bool array_bool_element2d(FznInvariantGraph& graph,
     }
   }
 
-  graph.addInvariantNode(std::make_unique<ArrayElement2dNode>(
-      graph.retrieveVarNode(idx1), graph.retrieveVarNode(idx2),
+  graph.addInvariantNode(std::make_shared<ArrayElement2dNode>(
+      graph, graph.retrieveVarNode(idx1), graph.retrieveVarNode(idx2),
       std::move(parMatrix), graph.retrieveVarNode(output), offset1, offset2));
   return true;
 }

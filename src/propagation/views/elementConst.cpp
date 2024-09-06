@@ -5,7 +5,7 @@
 
 namespace atlantis::propagation {
 
-ElementConst::ElementConst(SolverBase& solver, VarId parentId,
+ElementConst::ElementConst(SolverBase& solver, VarViewId parentId,
                            std::vector<Int>&& array, Int offset)
     : IntView(solver, parentId), _array(std::move(array)), _offset(offset) {}
 

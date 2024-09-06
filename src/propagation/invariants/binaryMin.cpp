@@ -4,8 +4,14 @@
 
 namespace atlantis::propagation {
 
-BinaryMin::BinaryMin(SolverBase& solver, VarId output, VarId x, VarId y)
+BinaryMin::BinaryMin(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
+
+BinaryMin::BinaryMin(SolverBase& solver, VarViewId output, VarViewId x,
+                     VarViewId y)
+    : BinaryMin(solver, VarId(output), x, y) {
+  assert(output.isVar());
+}
 
 void BinaryMin::registerVars() {
   assert(_id != NULL_ID);
@@ -25,7 +31,7 @@ void BinaryMin::recompute(Timestamp ts) {
               std::min(_solver.value(ts, _x), _solver.value(ts, _y)));
 }
 
-VarId BinaryMin::nextInput(Timestamp ts) {
+VarViewId BinaryMin::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

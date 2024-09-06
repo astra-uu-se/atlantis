@@ -13,8 +13,8 @@ using namespace atlantis::propagation;
 TEST(Int2BoolViewTest, simple) {
   Solver solver;
   solver.open();
-  const VarId varId = solver.makeIntVar(0, 0, 1);
-  const VarId viewId = solver.makeIntView<Int2BoolView>(solver, varId);
+  const VarViewId varId = solver.makeIntVar(0, 0, 1);
+  const VarViewId viewId = solver.makeIntView<Int2BoolView>(solver, varId);
   const std::array<Int, 5> values{0, 0, 1, 1, 0};
   solver.close();
 

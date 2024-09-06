@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "../benchmark.hpp"
-#include "atlantis/misc/logging.hpp"
 #include "atlantis/propagation/invariants/elementVar.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/solver.hpp"
@@ -20,12 +19,12 @@ class ElementLinearTree : public ::benchmark::Fixture {
  private:
   struct TreeNode {
     size_t level;
-    propagation::VarId id;
+    VarViewId id{propagation::NULL_ID};
   };
 
   void createTree() {
     std::stack<TreeNode> treeNodes;
-    propagation::VarId output = solver->makeIntVar(0, lb, ub);
+    propagation::VarViewId output = solver->makeIntVar(0, lb, ub);
     elementInputVars.push_back(output);
 
     treeNodes.push({1, output});
@@ -35,7 +34,7 @@ class ElementLinearTree : public ::benchmark::Fixture {
 #endif
 
     while (!treeNodes.empty()) {
-      std::vector<propagation::VarId> linearInputs(linearArgumentCount);
+      std::vector<propagation::VarViewId> linearInputs(linearArgumentCount);
       for (size_t i = 0; i < linearArgumentCount; ++i) {
         linearInputs[i] = solver->makeIntVar(0, lb, ub);
       }
@@ -45,12 +44,12 @@ class ElementLinearTree : public ::benchmark::Fixture {
 #endif
       treeNodes.pop();
       if (cur.level < treeHeight - 1) {
-        for (propagation::VarId var : linearInputs) {
+        for (propagation::VarViewId var : linearInputs) {
           treeNodes.push({cur.level + 1, var});
         }
       } else {
         assert(cur.level == treeHeight - 1);
-        for (propagation::VarId var : linearInputs) {
+        for (propagation::VarViewId var : linearInputs) {
           decisionVars.push_back(var);
         }
       }
@@ -65,13 +64,14 @@ class ElementLinearTree : public ::benchmark::Fixture {
   }
 
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  std::vector<propagation::VarId>
+  std::shared_ptr<propagation::Solver> solver;
+  std::vector<propagation::VarViewId>
       elementInputVars;  // Ouput of each tree is input to Element.
-  std::vector<propagation::VarId> decisionVars;  // Shared input vars to trees.
+  std::vector<propagation::VarViewId>
+      decisionVars;  // Shared input vars to trees.
 
-  propagation::VarId elementIndexVar = propagation::NULL_ID;
-  propagation::VarId elementOutputVar = propagation::NULL_ID;
+  propagation::VarViewId elementIndexVar = propagation::NULL_ID;
+  propagation::VarViewId elementOutputVar = propagation::NULL_ID;
 
   std::random_device rd;
   std::mt19937 gen;
@@ -85,7 +85,7 @@ class ElementLinearTree : public ::benchmark::Fixture {
   int ub{0};
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
 
     lb = 0;
     ub = 1000;
@@ -104,13 +104,10 @@ class ElementLinearTree : public ::benchmark::Fixture {
     for (Int i = 0; i < treeCount; ++i) {
       createTree();
     }
-    logDebug("Created " << treeCount << " trees of height " << treeHeight
-                        << ", each non-leaf node having " << linearArgumentCount
-                        << " children");
 
     solver->makeInvariant<propagation::ElementVar>(
         *solver, elementOutputVar, elementIndexVar,
-        std::vector<propagation::VarId>(elementInputVars));
+        std::vector<propagation::VarViewId>(elementInputVars));
     solver->close();
     gen = std::mt19937(rd());
     decisionVarIndexDist =

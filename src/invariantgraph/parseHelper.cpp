@@ -1,5 +1,10 @@
 #include "parseHelper.hpp"
 
+#include <algorithm>
+#include <fznparser/model.hpp>
+#include <optional>
+#include <variant>
+
 namespace atlantis::invariantgraph {
 
 std::vector<invariantgraph::VarNodeId> &&append(
@@ -34,7 +39,7 @@ std::vector<invariantgraph::VarNodeId> concat(
 }
 
 static std::vector<std::pair<size_t, Int>> allDifferent(
-    InvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
+    IInvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
   // pruned[i] = <index, value> where index is the index of the static
   // variable with singleton domain {value}.
   std::vector<std::pair<size_t, Int>> fixed;
@@ -71,7 +76,7 @@ static std::vector<std::pair<size_t, Int>> allDifferent(
 }
 
 std::vector<VarNodeId> pruneAllDifferentFree(
-    InvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
+    IInvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
   std::vector<bool> isFree(inputVarNodeIds.size(), true);
   for (const auto &[index, _] : fixed) {
@@ -88,7 +93,7 @@ std::vector<VarNodeId> pruneAllDifferentFree(
 }
 
 std::vector<VarNodeId> pruneAllDifferentFixed(
-    InvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
+    IInvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
   std::vector<bool> isFree(inputVarNodeIds.size(), true);
   for (const auto &[index, _] : fixed) {

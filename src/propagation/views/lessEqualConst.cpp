@@ -5,7 +5,7 @@ namespace atlantis::propagation {
 static inline Int compute(Int var, Int val) {
   return std::max<Int>(0, var - val);
 }
-LessEqualConst::LessEqualConst(SolverBase& solver, VarId parentId, Int val)
+LessEqualConst::LessEqualConst(SolverBase& solver, VarViewId parentId, Int val)
     : IntView(solver, parentId), _val(val) {}
 Int LessEqualConst::value(Timestamp ts) {
   return compute(_solver.value(ts, _parentId), _val);

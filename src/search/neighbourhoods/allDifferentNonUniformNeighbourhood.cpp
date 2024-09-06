@@ -174,7 +174,7 @@ bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
                                                      size_t value2Index) {
   // var 1:
   assert(var1Index < _vars.size());
-  const propagation::VarId var1 = _vars[var1Index].solverId();
+  const propagation::VarViewId var1 = _vars[var1Index].solverId();
   const Int value1 = assignment.value(var1);
   assert(isValueIndexOccupied(toValueIndex(value1)));
   assert(_valueIndexToVarIndex.at(toValueIndex(value1)) == var1Index);
@@ -197,7 +197,7 @@ bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
   assert(var1 == _vars.at(_valueIndexToVarIndex.at(value1Index)).solverId());
   assert(var2Index == _valueIndexToVarIndex.at(value2Index));
   const Int value2 = toValue(value2Index);
-  const propagation::VarId var2 = _vars.at(var2Index).solverId();
+  const propagation::VarViewId var2 = _vars.at(var2Index).solverId();
   assert(var2 == _vars.at(_valueIndexToVarIndex.at(value2Index)).solverId());
 
   assert(assignment.value(var1) == value1);
@@ -231,7 +231,7 @@ bool AllDifferentNonUniformNeighbourhood::assignValue(Assignment& assignment,
   assert(newValueIndex < _valueIndexToVarIndex.size());
   assert(_valueIndexToVarIndex[newValueIndex] == _vars.size());
   assert(varIndex < _vars.size());
-  const propagation::VarId var = _vars[varIndex].solverId();
+  const propagation::VarViewId var = _vars[varIndex].solverId();
   const Int oldValue = assignment.value(var);
   const size_t oldValueIndex = toValueIndex(oldValue);
 

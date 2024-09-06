@@ -19,11 +19,11 @@ namespace atlantis::benchmark {
 
 class TSP : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  std::vector<propagation::VarId> pred;
-  std::vector<propagation::VarId> timeToPred;
+  std::shared_ptr<propagation::Solver> solver;
+  std::vector<propagation::VarViewId> pred;
+  std::vector<propagation::VarViewId> timeToPred;
   std::vector<std::vector<Int>> durations;
-  propagation::VarId totalDist;
+  VarViewId totalDist{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;
@@ -33,7 +33,7 @@ class TSP : public ::benchmark::Fixture {
   const int MAX_TIME = 100000;
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
     n = state.range(0);
 
     if (n < 3) {
@@ -51,8 +51,8 @@ class TSP : public ::benchmark::Fixture {
       }
     }
 
-    pred = std::vector<propagation::VarId>(n, propagation::NULL_ID);
-    timeToPred = std::vector<propagation::VarId>(n, propagation::NULL_ID);
+    pred = std::vector<propagation::VarViewId>(n, propagation::NULL_ID);
+    timeToPred = std::vector<propagation::VarViewId>(n, propagation::NULL_ID);
 
     for (Int i = 0; i < n; ++i) {
       const Int initVal = (i - 1 + n) % n;
@@ -74,22 +74,22 @@ class TSP : public ::benchmark::Fixture {
     // totalDist = sum(timeToPred)
     totalDist = solver->makeIntVar(0, 0, MAX_TIME);
     solver->makeInvariant<propagation::Linear>(
-        *solver, totalDist, std::vector<propagation::VarId>(timeToPred));
+        *solver, totalDist, std::vector<propagation::VarViewId>(timeToPred));
 
     solver->close();
-    assert(
-        std::all_of(pred.begin(), pred.end(), [&](const propagation::VarId p) {
-          return solver->lowerBound(p) == 0;
-        }));
-    assert(
-        std::all_of(pred.begin(), pred.end(), [&](const propagation::VarId p) {
-          return solver->upperBound(p) == n;
-        }));
-    assert(
-        std::all_of(pred.begin(), pred.end(), [&](const propagation::VarId p) {
-          return 0 <= solver->committedValue(p) &&
-                 solver->committedValue(p) < n;
-        }));
+    assert(std::all_of(pred.begin(), pred.end(),
+                       [&](const propagation::VarViewId p) {
+                         return solver->lowerBound(p) == 0;
+                       }));
+    assert(std::all_of(pred.begin(), pred.end(),
+                       [&](const propagation::VarViewId p) {
+                         return solver->upperBound(p) == n;
+                       }));
+    assert(std::all_of(pred.begin(), pred.end(),
+                       [&](const propagation::VarViewId p) {
+                         return 0 <= solver->committedValue(p) &&
+                                solver->committedValue(p) < n;
+                       }));
 
     gen = std::mt19937(rd());
 

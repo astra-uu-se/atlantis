@@ -9,8 +9,8 @@ namespace atlantis::invariantgraph::fzn {
 bool bool_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                  const std::shared_ptr<fznparser::BoolVarArray>& inputs,
                  Int bound) {
-  graph.addInvariantNode(std::make_unique<BoolLinEqNode>(
-      std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
+  graph.addInvariantNode(std::make_shared<BoolLinEqNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
   return true;
 }
 

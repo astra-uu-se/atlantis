@@ -9,33 +9,37 @@
 
 namespace atlantis::invariantgraph {
 
-BoolLeNode::BoolLeNode(VarNodeId a, VarNodeId b, VarNodeId r)
-    : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, r) {}
+BoolLeNode::BoolLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+                       VarNodeId r)
+    : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, r) {}
 
-BoolLeNode::BoolLeNode(VarNodeId a, VarNodeId b, bool shouldHold)
-    : ViolationInvariantNode(std::vector<VarNodeId>{a, b}, shouldHold) {}
+BoolLeNode::BoolLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+                       bool shouldHold)
+    : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
-void BoolLeNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  ViolationInvariantNode::init(graph, id);
-  assert(!isReified() ||
-         !graph.varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(std::none_of(staticInputVarNodeIds().begin(),
-                      staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                        return graph.varNodeConst(vId).isIntVar();
-                      }));
+void BoolLeNode::init(InvariantNodeId id) {
+  ViolationInvariantNode::init(id);
+  assert(
+      !isReified() ||
+      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(
+      std::none_of(staticInputVarNodeIds().begin(),
+                   staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
+                     return invariantGraphConst().varNodeConst(vId).isIntVar();
+                   }));
 }
 
-void BoolLeNode::updateState(InvariantGraph& graph) {
-  ViolationInvariantNode::updateState(graph);
+void BoolLeNode::updateState() {
+  ViolationInvariantNode::updateState();
   if (staticInputVarNodeIds().size() < 2) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  VarNode& aNode = graph.varNode(a());
-  VarNode& bNode = graph.varNode(b());
+  VarNode& aNode = invariantGraph().varNode(a());
+  VarNode& bNode = invariantGraph().varNode(b());
   if (a() == b()) {
     if (isReified()) {
-      fixReified(graph, true);
+      fixReified(true);
     } else if (!shouldHold()) {
       throw InconsistencyException("BoolLeNode neg: a == b");
     }
@@ -52,7 +56,7 @@ void BoolLeNode::updateState(InvariantGraph& graph) {
     const bool isViolated =
         aNode.inDomain(bool{true}) && bNode.inDomain(bool{false});
     if (isReified()) {
-      fixReified(graph, !isViolated);
+      fixReified(!isViolated);
     } else if (isViolated == shouldHold()) {
       throw InconsistencyException(shouldHold() ? "BoolLeNode: a > b"
                                                 : "BoolLeNode neg: a <= b");
@@ -65,7 +69,7 @@ void BoolLeNode::updateState(InvariantGraph& graph) {
                              (bNode.isFixed() && bNode.inDomain(bool{true}));
     if (isSatisfied) {
       if (isReified()) {
-        fixReified(graph, isSatisfied);
+        fixReified(isSatisfied);
       } else if (!shouldHold()) {
         throw InconsistencyException("BoolLeNode neg: a <= b");
       }
@@ -74,53 +78,54 @@ void BoolLeNode::updateState(InvariantGraph& graph) {
   }
 }
 
-bool BoolLeNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool BoolLeNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
   assert(isReified());
-  if (graph.varNode(a()).isFixed()) {
-    assert(graph.varNode(a()).inDomain(bool{true}));
-    graph.replaceVarNode(reifiedViolationNodeId(), b());
+  if (invariantGraph().varNode(a()).isFixed()) {
+    assert(invariantGraph().varNode(a()).inDomain(bool{true}));
+    invariantGraph().replaceVarNode(reifiedViolationNodeId(), b());
   } else {
-    assert(graph.varNode(b()).isFixed() &&
-           graph.varNode(b()).inDomain(bool{false}));
-    graph.addInvariantNode(
-        std::make_unique<BoolNotNode>(a(), reifiedViolationNodeId()));
+    assert(invariantGraph().varNode(b()).isFixed() &&
+           invariantGraph().varNode(b()).inDomain(bool{false}));
+    invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(
+        invariantGraph(), a(), reifiedViolationNodeId()));
   }
   return true;
 }
 
-bool BoolLeNode::canBeReplaced(const InvariantGraph& graph) const {
+bool BoolLeNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
          staticInputVarNodeIds().size() == 2 &&
-         (isReified() && graph.varNodeConst(a()).isFixed() !=
-                             graph.varNodeConst(b()).isFixed());
+         (isReified() && invariantGraphConst().varNodeConst(a()).isFixed() !=
+                             invariantGraphConst().varNodeConst(b()).isFixed());
 }
 
-void BoolLeNode::registerOutputVars(InvariantGraph& graph,
-                                    propagation::SolverBase& solver) {
-  registerViolation(graph, solver);
+void BoolLeNode::registerOutputVars() {
+  registerViolation();
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                     [&](const VarNodeId vId) {
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
-void BoolLeNode::registerNode(InvariantGraph& graph,
-                              propagation::SolverBase& solver) {
-  assert(violationVarId(graph) != propagation::NULL_ID);
-  assert(graph.varId(a()) != propagation::NULL_ID);
-  assert(graph.varId(b()) != propagation::NULL_ID);
+void BoolLeNode::registerNode() {
+  assert(violationVarId() != propagation::NULL_ID);
+  assert(invariantGraph().varId(a()) != propagation::NULL_ID);
+  assert(invariantGraph().varId(b()) != propagation::NULL_ID);
+  assert(violationVarId().isVar());
 
   if (shouldHold()) {
-    solver.makeViolationInvariant<propagation::BoolLessEqual>(
-        solver, violationVarId(graph), graph.varId(a()), graph.varId(b()));
+    solver().makeViolationInvariant<propagation::BoolLessEqual>(
+        solver(), violationVarId(), invariantGraph().varId(a()),
+        invariantGraph().varId(b()));
   } else {
     assert(!isReified());
-    solver.makeViolationInvariant<propagation::BoolLessThan>(
-        solver, violationVarId(graph), graph.varId(b()), graph.varId(a()));
+    solver().makeViolationInvariant<propagation::BoolLessThan>(
+        solver(), violationVarId(), invariantGraph().varId(b()),
+        invariantGraph().varId(a()));
   }
 }
 

@@ -18,19 +18,22 @@ namespace atlantis::propagation {
 class ForAll : public Invariant {
  private:
   VarId _output;
-  std::vector<VarId> _varArray;
+  std::vector<VarViewId> _varArray;
 
   PriorityList _localPriority;
 
  public:
-  explicit ForAll(SolverBase&, VarId output, std::vector<VarId>&& varArray);
+  explicit ForAll(SolverBase&, VarId output, std::vector<VarViewId>&& varArray);
+
+  explicit ForAll(SolverBase&, VarViewId output,
+                  std::vector<VarViewId>&& varArray);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

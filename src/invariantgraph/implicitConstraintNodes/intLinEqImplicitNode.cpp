@@ -3,30 +3,30 @@
 #include <numeric>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/search/neighbourhoods/intLinEqNeighbourhood.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntLinEqImplicitNode::IntLinEqImplicitNode(std::vector<Int>&& coeffs,
+IntLinEqImplicitNode::IntLinEqImplicitNode(IInvariantGraph& graph,
+                                           std::vector<Int>&& coeffs,
                                            std::vector<VarNodeId>&& inputVars,
                                            Int offset)
-    : ImplicitConstraintNode(std::move(inputVars)),
+    : ImplicitConstraintNode(graph, std::move(inputVars)),
       _coeffs(std::move(coeffs)),
       _offset(offset) {}
 
-void IntLinEqImplicitNode::init(InvariantGraph& graph,
-                                const InvariantNodeId& id) {
-  ImplicitConstraintNode::init(graph, id);
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
+void IntLinEqImplicitNode::init(InvariantNodeId id) {
+  ImplicitConstraintNode::init(id);
+  assert(
+      std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
+                  [&](const VarNodeId vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
 std::shared_ptr<search::neighbourhoods::Neighbourhood>
-IntLinEqImplicitNode::createNeighbourhood(InvariantGraph& graph,
-                                          propagation::SolverBase& solver) {
+IntLinEqImplicitNode::createNeighbourhood() {
   if (outputVarNodeIds().size() <= 1) {
     return nullptr;
   }
@@ -35,7 +35,7 @@ IntLinEqImplicitNode::createNeighbourhood(InvariantGraph& graph,
   searchVars.reserve(outputVarNodeIds().size());
 
   for (const auto& nId : outputVarNodeIds()) {
-    auto& varNode = graph.varNode(nId);
+    auto& varNode = invariantGraph().varNode(nId);
     assert(varNode.varId() != propagation::NULL_ID);
     searchVars.emplace_back(varNode.varId(),
                             SearchDomain{varNode.constDomain().lowerBound(),
@@ -44,7 +44,7 @@ IntLinEqImplicitNode::createNeighbourhood(InvariantGraph& graph,
   }
 
   return std::make_shared<search::neighbourhoods::IntLinEqNeighbourhood>(
-      std::vector<Int>{_coeffs}, std::move(searchVars), _offset, solver);
+      std::vector<Int>{_coeffs}, std::move(searchVars), _offset);
 }
 
 }  // namespace atlantis::invariantgraph

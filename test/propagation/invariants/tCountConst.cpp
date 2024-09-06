@@ -2,13 +2,8 @@
 #include <gtest/gtest.h>
 #include <rapidcheck/gtest.h>
 
-#include <limits>
-#include <random>
-#include <vector>
-
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/invariants/countConst.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/types.hpp"
 
 namespace atlantis::testing {
@@ -18,10 +13,10 @@ using namespace atlantis::propagation;
 class CountConstTest : public InvariantTest {
  public:
   Int computeOutput(const Timestamp ts, const Int y,
-                    const std::vector<VarId>& vars) {
+                    const std::vector<VarViewId>& vars) {
     std::vector<Int> values(vars.size(), 0);
     for (size_t i = 0; i < vars.size(); ++i) {
-      values.at(i) = solver->value(ts, vars.at(i));
+      values.at(i) = _solver->value(ts, vars.at(i));
     }
     return computeOutput(y, values);
   }
@@ -38,29 +33,29 @@ class CountConstTest : public InvariantTest {
 TEST_F(CountConstTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-10, 0}, {-5, 5}, {0, 10}, {15, 20}};
-  solver->open();
+  _solver->open();
 
   const Int y = 10;
-  std::vector<VarId> inputs{solver->makeIntVar(0, 0, 10),
-                            solver->makeIntVar(0, 0, 10),
-                            solver->makeIntVar(0, 0, 10)};
-  const VarId outputId = solver->makeIntVar(0, 0, 2);
-  CountConst& invariant = solver->makeInvariant<CountConst>(
-      *solver, outputId, y, std::vector<VarId>(inputs));
+  std::vector<VarViewId> inputs{_solver->makeIntVar(0, 0, 10),
+                                _solver->makeIntVar(0, 0, 10),
+                                _solver->makeIntVar(0, 0, 10)};
+  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
+  CountConst& invariant = _solver->makeInvariant<CountConst>(
+      *_solver, outputId, y, std::vector<VarViewId>(inputs));
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_TRUE(aLb <= aUb);
-    solver->updateBounds(inputs.at(0), aLb, aUb, false);
+    _solver->updateBounds(VarId(inputs.at(0)), aLb, aUb, false);
     for (const auto& [bLb, bUb] : boundVec) {
       EXPECT_TRUE(bLb <= bUb);
-      solver->updateBounds(inputs.at(1), bLb, bUb, false);
+      _solver->updateBounds(VarId(inputs.at(1)), bLb, bUb, false);
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_TRUE(cLb <= cUb);
-        solver->updateBounds(inputs.at(2), cLb, cUb, false);
+        _solver->updateBounds(VarId(inputs.at(2)), cLb, cUb, false);
         invariant.updateBounds(false);
 
-        ASSERT_GE(0, solver->lowerBound(outputId));
-        ASSERT_LE(inputs.size(), solver->upperBound(outputId));
+        ASSERT_GE(0, _solver->lowerBound(outputId));
+        ASSERT_LE(inputs.size(), _solver->upperBound(outputId));
       }
     }
   }
@@ -75,32 +70,32 @@ TEST_F(CountConstTest, Recompute) {
   std::uniform_int_distribution<Int> dist(lb, ub);
 
   for (Int y = lb; y <= ub; ++y) {
-    solver->open();
+    _solver->open();
 
-    const VarId a = solver->makeIntVar(dist(gen), lb, ub);
-    const VarId b = solver->makeIntVar(dist(gen), lb, ub);
-    const VarId c = solver->makeIntVar(dist(gen), lb, ub);
+    const VarViewId a = _solver->makeIntVar(dist(gen), lb, ub);
+    const VarViewId b = _solver->makeIntVar(dist(gen), lb, ub);
+    const VarViewId c = _solver->makeIntVar(dist(gen), lb, ub);
 
-    std::vector<VarId> inputs{a, b, c};
+    std::vector<VarViewId> inputs{a, b, c};
 
-    const VarId outputId = solver->makeIntVar(
+    const VarViewId outputId = _solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
 
-    CountConst& invariant = solver->makeInvariant<CountConst>(
-        *solver, outputId, y, std::vector<VarId>(inputs));
-    solver->close();
+    CountConst& invariant = _solver->makeInvariant<CountConst>(
+        *_solver, outputId, y, std::vector<VarViewId>(inputs));
+    _solver->close();
 
     for (Int aVal = lb; aVal <= ub; ++aVal) {
       for (Int bVal = lb; bVal <= ub; ++bVal) {
         for (Int cVal = lb; cVal <= ub; ++cVal) {
-          solver->setValue(solver->currentTimestamp(), a, aVal);
-          solver->setValue(solver->currentTimestamp(), b, bVal);
-          solver->setValue(solver->currentTimestamp(), c, cVal);
+          _solver->setValue(_solver->currentTimestamp(), a, aVal);
+          _solver->setValue(_solver->currentTimestamp(), b, bVal);
+          _solver->setValue(_solver->currentTimestamp(), c, cVal);
           const Int expectedOutput =
-              computeOutput(solver->currentTimestamp(), y, inputs);
-          invariant.recompute(solver->currentTimestamp());
+              computeOutput(_solver->currentTimestamp(), y, inputs);
+          invariant.recompute(_solver->currentTimestamp());
           EXPECT_EQ(expectedOutput,
-                    solver->value(solver->currentTimestamp(), outputId));
+                    _solver->value(_solver->currentTimestamp(), outputId));
         }
       }
     }
@@ -113,32 +108,32 @@ TEST_F(CountConstTest, NotifyInputChanged) {
   const Int ub = 10;
   std::uniform_int_distribution<Int> dist(lb, ub);
 
-  const Timestamp ts = solver->currentTimestamp() + (ub - lb) + 2;
+  const Timestamp ts = _solver->currentTimestamp() + (ub - lb) + 2;
 
   for (Int y = lb; y <= ub; ++y) {
-    EXPECT_NE(ts, solver->currentTimestamp());
-    solver->open();
-    std::vector<VarId> inputs(numInputs, NULL_ID);
+    EXPECT_NE(ts, _solver->currentTimestamp());
+    _solver->open();
+    std::vector<VarViewId> inputs(numInputs, NULL_ID);
     for (size_t i = 0; i < numInputs; ++i) {
-      inputs.at(i) = solver->makeIntVar(dist(gen), lb, ub);
+      inputs.at(i) = _solver->makeIntVar(dist(gen), lb, ub);
     }
-    const VarId outputId = solver->makeIntVar(
+    const VarViewId outputId = _solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-    CountConst& invariant = solver->makeInvariant<CountConst>(
-        *solver, outputId, y, std::vector<VarId>(inputs));
-    solver->close();
-    EXPECT_NE(ts, solver->currentTimestamp());
+    CountConst& invariant = _solver->makeInvariant<CountConst>(
+        *_solver, outputId, y, std::vector<VarViewId>(inputs));
+    _solver->close();
+    EXPECT_NE(ts, _solver->currentTimestamp());
 
     for (size_t i = 0; i < inputs.size(); ++i) {
-      const Int oldVal = solver->value(ts, inputs.at(i));
+      const Int oldVal = _solver->value(ts, VarId(inputs.at(i)));
       do {
-        solver->setValue(ts, inputs.at(i), dist(gen));
-      } while (oldVal == solver->value(ts, inputs.at(i)));
+        _solver->setValue(ts, inputs.at(i), dist(gen));
+      } while (oldVal == _solver->value(ts, inputs.at(i)));
 
       const Int expectedOutput = computeOutput(ts, y, inputs);
 
       invariant.notifyInputChanged(ts, LocalId(i));
-      EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
+      EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
     }
   }
 }
@@ -150,37 +145,45 @@ TEST_F(CountConstTest, NextInput) {
   const Int y = 0;
   std::uniform_int_distribution<Int> dist(lb, ub);
 
-  std::vector<VarId> inputs(numInputs, NULL_ID);
+  std::vector<VarViewId> inputs(numInputs, NULL_ID);
 
-  solver->open();
+  _solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = solver->makeIntVar(dist(gen), lb, ub);
+    inputs.at(i) = _solver->makeIntVar(dist(gen), lb, ub);
   }
-  const VarId outputId = solver->makeIntVar(0, std::numeric_limits<Int>::min(),
-                                            std::numeric_limits<Int>::max());
-  CountConst& invariant = solver->makeInvariant<CountConst>(
-      *solver, outputId, y, std::vector<VarId>(inputs));
-  solver->close();
+  const VarViewId outputId = _solver->makeIntVar(
+      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
+  CountConst& invariant = _solver->makeInvariant<CountConst>(
+      *_solver, outputId, y, std::vector<VarViewId>(inputs));
+  _solver->close();
 
   std::shuffle(inputs.begin(), inputs.end(), rng);
 
-  const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
+  const VarViewId minVarId =
+      *std::min_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
+  const VarViewId maxVarId =
+      *std::max_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
 
-  for (Timestamp ts = solver->currentTimestamp() + 1;
-       ts < solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(maxVarId + 1, false);
+  for (Timestamp ts = _solver->currentTimestamp() + 1;
+       ts < _solver->currentTimestamp() + 4; ++ts) {
+    std::vector<bool> notified(size_t(maxVarId) + 1, false);
     for (size_t i = 0; i < numInputs; ++i) {
-      const VarId varId = invariant.nextInput(ts);
+      const VarViewId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
-      EXPECT_TRUE(minVarId <= varId);
-      EXPECT_TRUE(varId <= maxVarId);
-      EXPECT_FALSE(notified.at(varId));
-      notified[varId] = true;
+      EXPECT_LE(size_t(minVarId), size_t(varId));
+      EXPECT_GE(size_t(maxVarId), size_t(varId));
+      EXPECT_FALSE(notified.at(size_t(varId)));
+      notified.at(size_t(varId)) = true;
     }
     EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t varId = minVarId; varId <= maxVarId; ++varId) {
-      EXPECT_TRUE(notified.at(varId));
+    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
+      EXPECT_TRUE(notified.at(i));
     }
   }
 }
@@ -191,32 +194,32 @@ TEST_F(CountConstTest, NotifyCurrentInputChanged) {
   const Int ub = 10;
   std::uniform_int_distribution<Int> dist(lb, ub);
 
-  std::vector<VarId> inputs(numInputs, NULL_ID);
-  solver->open();
+  std::vector<VarViewId> inputs(numInputs, NULL_ID);
+  _solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = solver->makeIntVar(dist(gen), lb, ub);
+    inputs.at(i) = _solver->makeIntVar(dist(gen), lb, ub);
   }
 
   for (Int y = lb; y <= ub; ++y) {
-    if (!solver->isOpen()) {
-      solver->open();
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    const VarId outputId = solver->makeIntVar(
+    const VarViewId outputId = _solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-    CountConst& invariant = solver->makeInvariant<CountConst>(
-        *solver, outputId, y, std::vector<VarId>(inputs));
-    solver->close();
+    CountConst& invariant = _solver->makeInvariant<CountConst>(
+        *_solver, outputId, y, std::vector<VarViewId>(inputs));
+    _solver->close();
 
-    for (Timestamp ts = solver->currentTimestamp() + 1;
-         ts < solver->currentTimestamp() + 4; ++ts) {
-      for (const VarId& varId : inputs) {
+    for (Timestamp ts = _solver->currentTimestamp() + 1;
+         ts < _solver->currentTimestamp() + 4; ++ts) {
+      for (const VarViewId& varId : inputs) {
         EXPECT_EQ(invariant.nextInput(ts), varId);
-        const Int oldVal = solver->value(ts, varId);
+        const Int oldVal = _solver->value(ts, varId);
         do {
-          solver->setValue(ts, varId, dist(gen));
-        } while (solver->value(ts, varId) == oldVal);
+          _solver->setValue(ts, varId, dist(gen));
+        } while (_solver->value(ts, varId) == oldVal);
         invariant.notifyCurrentInputChanged(ts);
-        EXPECT_EQ(solver->value(ts, outputId), computeOutput(ts, y, inputs));
+        EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, y, inputs));
       }
     }
   }
@@ -228,64 +231,64 @@ TEST_F(CountConstTest, Commit) {
   const Int ub = 10;
   std::uniform_int_distribution<Int> dist(lb, ub);
 
-  std::vector<VarId> inputs(numInputs, NULL_ID);
+  std::vector<VarViewId> inputs(numInputs, NULL_ID);
   std::vector<size_t> indices(numInputs, 0);
   std::vector<Int> committedValues(numInputs, 0);
 
-  solver->open();
+  _solver->open();
   for (size_t i = 0; i < numInputs; ++i) {
     indices.at(i) = i;
-    inputs.at(i) = solver->makeIntVar(dist(gen), lb, ub);
+    inputs.at(i) = _solver->makeIntVar(dist(gen), lb, ub);
   }
 
   for (Int y = lb; y <= ub; ++y) {
-    if (!solver->isOpen()) {
-      solver->open();
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    const VarId outputId = solver->makeIntVar(
+    const VarViewId outputId = _solver->makeIntVar(
         0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-    CountConst& invariant = solver->makeInvariant<CountConst>(
-        *solver, outputId, y, std::vector<VarId>(inputs));
+    CountConst& invariant = _solver->makeInvariant<CountConst>(
+        *_solver, outputId, y, std::vector<VarViewId>(inputs));
 
-    solver->close();
+    _solver->close();
 
     for (size_t i = 0; i < numInputs; ++i) {
-      committedValues.at(i) = solver->committedValue(inputs.at(i));
+      committedValues.at(i) = _solver->committedValue(inputs.at(i));
     }
 
     std::shuffle(indices.begin(), indices.end(), rng);
 
-    EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
-              computeOutput(solver->currentTimestamp(), y, inputs));
+    EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
+              computeOutput(_solver->currentTimestamp(), y, inputs));
 
     for (const size_t i : indices) {
-      Timestamp ts = solver->currentTimestamp() + Timestamp(i);
+      Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
       for (size_t j = 0; j < numInputs; ++j) {
         // Check that we do not accidentally commit:
-        ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
+        ASSERT_EQ(_solver->committedValue(inputs.at(j)), committedValues.at(j));
       }
 
       const Int oldVal = committedValues.at(i);
       do {
-        solver->setValue(ts, inputs.at(i), dist(gen));
-      } while (oldVal == solver->value(ts, inputs.at(i)));
+        _solver->setValue(ts, inputs.at(i), dist(gen));
+      } while (oldVal == _solver->value(ts, inputs.at(i)));
 
       // notify changes
       invariant.notifyInputChanged(ts, LocalId(i));
 
       // incremental value
-      const Int notifiedOutput = solver->value(ts, outputId);
+      const Int notifiedOutput = _solver->value(ts, outputId);
       invariant.recompute(ts);
 
-      ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
+      ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
-      solver->commitIf(ts, inputs.at(i));
-      committedValues.at(i) = solver->value(ts, inputs.at(i));
-      solver->commitIf(ts, outputId);
+      _solver->commitIf(ts, VarId(inputs.at(i)));
+      committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
+      _solver->commitIf(ts, VarId(outputId));
 
       invariant.commit(ts);
       invariant.recompute(ts + 1);
-      ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
+      ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
     }
   }
 }
@@ -297,9 +300,11 @@ class MockCountConst : public CountConst {
     registered = true;
     CountConst::registerVars();
   }
-  explicit MockCountConst(SolverBase& solver, VarId output, Int y,
-                          std::vector<VarId>&& varArray)
+  explicit MockCountConst(SolverBase& solver, VarViewId output, Int y,
+                          std::vector<VarViewId>&& varArray)
       : CountConst(solver, output, y, std::move(varArray)) {
+    EXPECT_TRUE(output.isVar());
+
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return CountConst::recompute(timestamp);
     });
@@ -319,28 +324,28 @@ class MockCountConst : public CountConst {
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(CountConstTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!solver->isOpen()) {
-      solver->open();
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
     const size_t numArgs = 10;
     const Int y = 5;
-    std::vector<VarId> varArray;
+    std::vector<VarViewId> varArray;
     for (size_t value = 1; value <= numArgs; ++value) {
-      varArray.push_back(solver->makeIntVar(static_cast<Int>(value), 1,
-                                            static_cast<Int>(numArgs)));
+      varArray.push_back(_solver->makeIntVar(static_cast<Int>(value), 1,
+                                             static_cast<Int>(numArgs)));
     }
-    const VarId modifiedVarId = varArray.front();
-    const VarId output = solver->makeIntVar(-10, -100, numArgs * numArgs);
+    const VarViewId modifiedVarId = varArray.front();
+    const VarViewId output = _solver->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockCountConst>(
-        &solver->makeInvariant<MockCountConst>(*solver, output, y,
-                                               std::move(varArray)),
+        &_solver->makeInvariant<MockCountConst>(*_solver, output, y,
+                                                std::move(varArray)),
         {propMode, markingMode, numArgs + 1, modifiedVarId, 5, output});
   }
 }

@@ -19,13 +19,13 @@ namespace atlantis::benchmark {
 
 class TSPTW : public ::benchmark::Fixture {
  public:
-  std::unique_ptr<propagation::Solver> solver;
-  std::vector<propagation::VarId> pred;
-  std::vector<propagation::VarId> timeToPred;
-  std::vector<propagation::VarId> arrivalTimePred;
-  std::vector<propagation::VarId> arrivalTime;
+  std::shared_ptr<propagation::Solver> solver;
+  std::vector<propagation::VarViewId> pred;
+  std::vector<propagation::VarViewId> timeToPred;
+  std::vector<propagation::VarViewId> arrivalTimePred;
+  std::vector<propagation::VarViewId> arrivalTime;
   std::vector<std::vector<Int>> durations;
-  propagation::VarId totalDist;
+  VarViewId totalDist{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;
@@ -34,11 +34,11 @@ class TSPTW : public ::benchmark::Fixture {
   Int n{0};
   const int MAX_TIME = 100000;
 
-  std::vector<propagation::VarId> violations;
-  propagation::VarId totalViolation;
+  std::vector<propagation::VarViewId> violations;
+  VarViewId totalViolation{propagation::NULL_ID};
 
   void SetUp(const ::benchmark::State& state) override {
-    solver = std::make_unique<propagation::Solver>();
+    solver = std::make_shared<propagation::Solver>();
     // First location is the dummy location:
     n = state.range(0) + 1;
 
@@ -58,10 +58,11 @@ class TSPTW : public ::benchmark::Fixture {
       }
     }
 
-    pred = std::vector<propagation::VarId>(n);
-    arrivalTime = std::vector<propagation::VarId>(n);
-    timeToPred = std::vector<propagation::VarId>(n, propagation::NULL_ID);
-    arrivalTimePred = std::vector<propagation::VarId>(n, propagation::NULL_ID);
+    pred = std::vector<propagation::VarViewId>(n);
+    arrivalTime = std::vector<propagation::VarViewId>(n);
+    timeToPred = std::vector<propagation::VarViewId>(n, propagation::NULL_ID);
+    arrivalTimePred =
+        std::vector<propagation::VarViewId>(n, propagation::NULL_ID);
 
     for (Int i = 0; i < n; ++i) {
       const Int initVal = (i - 1 + n) % n;
@@ -93,7 +94,7 @@ class TSPTW : public ::benchmark::Fixture {
       // arrivalTimePred[i] = arrivalTime[pred[i]]
       solver->makeInvariant<propagation::ElementVar>(
           *solver, arrivalTimePred[i], pred[i],
-          std::vector<propagation::VarId>(arrivalTime), 0);
+          std::vector<propagation::VarViewId>(arrivalTime), 0);
       // arrivalTime[i] = arrivalTimePred[i] + timeToPred[i]
       solver->makeInvariant<propagation::Plus>(
           *solver, arrivalTime[i], arrivalTimePred[i], timeToPred[i]);
@@ -106,9 +107,9 @@ class TSPTW : public ::benchmark::Fixture {
     timeToPred.erase(timeToPred.begin());
     assert(timeToPred.front() != propagation::NULL_ID);
     solver->makeInvariant<propagation::Linear>(
-        *solver, totalDist, std::vector<propagation::VarId>(timeToPred));
+        *solver, totalDist, std::vector<propagation::VarViewId>(timeToPred));
 
-    violations = std::vector<propagation::VarId>{};
+    violations = std::vector<propagation::VarViewId>{};
     for (int i = 1; i < n; ++i) {
       violations.emplace_back(solver->makeIntView<propagation::LessEqualConst>(
           *solver, arrivalTime[i], 100));
@@ -116,24 +117,25 @@ class TSPTW : public ::benchmark::Fixture {
 
     totalViolation = solver->makeIntVar(0, 0, MAX_TIME * n);
     solver->makeInvariant<propagation::Linear>(
-        *solver, totalViolation, std::vector<propagation::VarId>(violations));
+        *solver, totalViolation,
+        std::vector<propagation::VarViewId>(violations));
 
     solver->close();
     assert(solver->lowerBound(pred.front()) == 1);
     assert(solver->upperBound(pred.back()) == n - 2);
     assert(std::all_of(pred.begin() + 1, pred.end(),
-                       [&](const propagation::VarId p) {
+                       [&](const propagation::VarViewId p) {
                          return solver->lowerBound(p) == 0;
                        }));
     assert(std::all_of(pred.begin(), pred.end() - 1,
-                       [&](const propagation::VarId p) {
+                       [&](const propagation::VarViewId p) {
                          return solver->upperBound(p) == n - 1;
                        }));
-    assert(
-        std::all_of(pred.begin(), pred.end(), [&](const propagation::VarId p) {
-          return 0 <= solver->committedValue(p) &&
-                 solver->committedValue(p) < n;
-        }));
+    assert(std::all_of(pred.begin(), pred.end(),
+                       [&](const propagation::VarViewId p) {
+                         return 0 <= solver->committedValue(p) &&
+                                solver->committedValue(p) < n;
+                       }));
 
     gen = std::mt19937(rd());
 

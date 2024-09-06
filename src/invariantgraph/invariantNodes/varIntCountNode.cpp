@@ -11,17 +11,21 @@
 
 namespace atlantis::invariantgraph {
 
-VarIntCountNode::VarIntCountNode(std::vector<VarNodeId>&& vars,
+VarIntCountNode::VarIntCountNode(IInvariantGraph& graph,
+                                 std::vector<VarNodeId>&& vars,
                                  VarNodeId needle, VarNodeId count)
-    : InvariantNode({count}, append(std::move(vars), needle)) {}
+    : InvariantNode(graph, {count}, append(std::move(vars), needle)) {}
 
-void VarIntCountNode::init(InvariantGraph& graph, const InvariantNodeId& id) {
-  InvariantNode::init(graph, id);
-  assert(graph.varNodeConst(outputVarNodeIds().front()).isIntVar());
-  assert(std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).isIntVar();
-                     }));
+void VarIntCountNode::init(InvariantNodeId id) {
+  InvariantNode::init(id);
+  assert(invariantGraphConst()
+             .varNodeConst(outputVarNodeIds().front())
+             .isIntVar());
+  assert(
+      std::all_of(staticInputVarNodeIds().begin(),
+                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
+                    return invariantGraphConst().varNodeConst(vId).isIntVar();
+                  }));
 }
 
 std::vector<VarNodeId> VarIntCountNode::haystack() const {
@@ -36,47 +40,49 @@ VarNodeId VarIntCountNode::needle() const {
   return staticInputVarNodeIds().back();
 }
 
-bool VarIntCountNode::canBeReplaced(const InvariantGraph& graph) const {
+bool VarIntCountNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         graph.varNodeConst(needle()).isFixed();
+         invariantGraphConst().varNodeConst(needle()).isFixed();
 }
 
-bool VarIntCountNode::replace(InvariantGraph& graph) {
-  if (!canBeReplaced(graph)) {
+bool VarIntCountNode::replace() {
+  if (!canBeReplaced()) {
     return false;
   }
 
-  graph.addInvariantNode(std::make_unique<IntCountNode>(
-      haystack(), graph.varNodeConst(needle()).lowerBound(),
+  invariantGraph().addInvariantNode(std::make_shared<IntCountNode>(
+      invariantGraph(), haystack(),
+      invariantGraphConst().varNodeConst(needle()).lowerBound(),
       outputVarNodeIds().front()));
 
   return true;
 }
 
-void VarIntCountNode::registerOutputVars(InvariantGraph& graph,
-                                         propagation::SolverBase& solver) {
-  makeSolverVar(solver, graph.varNode(outputVarNodeIds().front()));
+void VarIntCountNode::registerOutputVars() {
+  makeSolverVar(outputVarNodeIds().front());
   assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId& vId) {
-                       return graph.varNodeConst(vId).varId() !=
+                     [&](const VarNodeId vId) {
+                       return invariantGraphConst().varNodeConst(vId).varId() !=
                               propagation::NULL_ID;
                      }));
 }
 
-void VarIntCountNode::registerNode(InvariantGraph& graph,
-                                   propagation::SolverBase& solver) {
-  assert(graph.varId(outputVarNodeIds().front()) != propagation::NULL_ID);
+void VarIntCountNode::registerNode() {
+  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
+         propagation::NULL_ID);
+  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
 
   std::vector<VarNodeId> h = haystack();
-  std::vector<propagation::VarId> solverVars;
+  std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(h.size());
 
-  std::transform(h.begin(), h.end(), std::back_inserter(solverVars),
-                 [&](const VarNodeId node) { return graph.varId(node); });
+  std::transform(
+      h.begin(), h.end(), std::back_inserter(solverVars),
+      [&](const VarNodeId node) { return invariantGraph().varId(node); });
 
-  solver.makeInvariant<propagation::Count>(
-      solver, graph.varId(outputVarNodeIds().front()), graph.varId(needle()),
-      std::move(solverVars));
+  solver().makeInvariant<propagation::Count>(
+      solver(), invariantGraph().varId(outputVarNodeIds().front()),
+      invariantGraph().varId(needle()), std::move(solverVars));
 }
 
 }  // namespace atlantis::invariantgraph

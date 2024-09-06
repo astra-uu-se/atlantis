@@ -8,7 +8,7 @@ static inline Int compute(Int var, Int val) {
   return std::max<Int>(0, val - var);
 }
 
-GreaterEqualConst::GreaterEqualConst(SolverBase &solver, VarId parentId,
+GreaterEqualConst::GreaterEqualConst(SolverBase &solver, VarViewId parentId,
                                      Int val)
     : IntView(solver, parentId), _val(val) {}
 

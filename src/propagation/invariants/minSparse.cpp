@@ -6,12 +6,18 @@
 namespace atlantis::propagation {
 
 MinSparse::MinSparse(SolverBase& solver, VarId output,
-                     std::vector<VarId>&& varArray)
+                     std::vector<VarViewId>&& varArray)
     : Invariant(solver),
       _output(output),
       _varArray(std::move(varArray)),
       _localPriority(_varArray.size()) {
   assert(!_varArray.empty());
+}
+
+MinSparse::MinSparse(SolverBase& solver, VarViewId output,
+                     std::vector<VarViewId>&& varArray)
+    : MinSparse(solver, VarId(output), std::move(varArray)) {
+  assert(output.isVar());
 }
 
 void MinSparse::registerVars() {
@@ -25,7 +31,7 @@ void MinSparse::registerVars() {
 void MinSparse::updateBounds(bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::max();
-  for (const VarId& input : _varArray) {
+  for (const VarViewId& input : _varArray) {
     lb = std::min(lb, _solver.lowerBound(input));
     ub = std::min(ub, _solver.upperBound(input));
   }
@@ -44,7 +50,7 @@ void MinSparse::notifyInputChanged(Timestamp ts, LocalId id) {
   updateValue(ts, _output, _localPriority.minPriority(ts));
 }
 
-VarId MinSparse::nextInput(Timestamp ts) {
+VarViewId MinSparse::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index < _varArray.size()) {

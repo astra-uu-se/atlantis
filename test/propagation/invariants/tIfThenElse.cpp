@@ -1,11 +1,5 @@
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
-#include <vector>
-
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/invariants/ifThenElse.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
@@ -13,19 +7,20 @@ using namespace atlantis::propagation;
 
 class IfThenElseTest : public InvariantTest {
  public:
-  Int computeOutput(Timestamp ts, std::array<VarId, 3> inputs) {
-    return computeOutput(solver->value(ts, inputs.at(0)),
-                         solver->value(ts, inputs.at(1)),
-                         solver->value(ts, inputs.at(2)));
+  Int computeOutput(Timestamp ts, std::array<VarViewId, 3> inputs) {
+    return computeOutput(_solver->value(ts, inputs.at(0)),
+                         _solver->value(ts, inputs.at(1)),
+                         _solver->value(ts, inputs.at(2)));
   }
 
   static Int computeOutput(std::array<Int, 3> inputs) {
     return computeOutput(inputs.at(0), inputs.at(1), inputs.at(2));
   }
 
-  Int computeOutput(Timestamp ts, const VarId b, const VarId x, const VarId y) {
-    return computeOutput(solver->value(ts, b), solver->value(ts, x),
-                         solver->value(ts, y));
+  Int computeOutput(Timestamp ts, const VarViewId b, const VarViewId x,
+                    const VarViewId y) {
+    return computeOutput(_solver->value(ts, b), _solver->value(ts, x),
+                         _solver->value(ts, y));
   }
 
   static Int computeOutput(const Int bVal, const Int xVal, const Int yVal) {
@@ -40,33 +35,33 @@ TEST_F(IfThenElseTest, UpdateBounds) {
   const Int yUb = 1000;
   EXPECT_TRUE(xLb <= xUb);
 
-  solver->open();
-  const VarId b = solver->makeIntVar(0, 0, 10);
-  const VarId x = solver->makeIntVar(yUb, yLb, yUb);
-  const VarId y = solver->makeIntVar(yUb, yLb, yUb);
-  const VarId outputId =
-      solver->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
+  _solver->open();
+  const VarViewId b = _solver->makeIntVar(0, 0, 10);
+  const VarViewId x = _solver->makeIntVar(yUb, yLb, yUb);
+  const VarViewId y = _solver->makeIntVar(yUb, yLb, yUb);
+  const VarViewId outputId =
+      _solver->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
   IfThenElse& invariant =
-      solver->makeInvariant<IfThenElse>(*solver, outputId, b, x, y);
-  solver->close();
+      _solver->makeInvariant<IfThenElse>(*_solver, outputId, b, x, y);
+  _solver->close();
 
   std::vector<std::pair<Int, Int>> bBounds{{0, 0}, {0, 100}, {1, 10000}};
 
   for (const auto& [bLb, bUb] : bBounds) {
     EXPECT_TRUE(bLb <= bUb);
-    solver->updateBounds(b, bLb, bUb, false);
+    _solver->updateBounds(VarId(b), bLb, bUb, false);
     invariant.updateBounds(false);
     if (bLb == 0 && bUb == 0) {
-      EXPECT_EQ(solver->lowerBound(outputId), solver->lowerBound(x));
-      EXPECT_EQ(solver->upperBound(outputId), solver->upperBound(x));
+      EXPECT_EQ(_solver->lowerBound(outputId), _solver->lowerBound(x));
+      EXPECT_EQ(_solver->upperBound(outputId), _solver->upperBound(x));
     } else if (bLb > 0) {
-      EXPECT_EQ(solver->lowerBound(outputId), solver->lowerBound(y));
-      EXPECT_EQ(solver->upperBound(outputId), solver->upperBound(y));
+      EXPECT_EQ(_solver->lowerBound(outputId), _solver->lowerBound(y));
+      EXPECT_EQ(_solver->upperBound(outputId), _solver->upperBound(y));
     } else {
-      EXPECT_EQ(solver->lowerBound(outputId),
-                std::max(solver->lowerBound(x), solver->lowerBound(y)));
-      EXPECT_EQ(solver->upperBound(outputId),
-                std::min(solver->upperBound(x), solver->upperBound(y)));
+      EXPECT_EQ(_solver->lowerBound(outputId),
+                std::max(_solver->lowerBound(x), _solver->lowerBound(y)));
+      EXPECT_EQ(_solver->upperBound(outputId),
+                std::min(_solver->upperBound(x), _solver->upperBound(y)));
     }
   }
 }
@@ -82,26 +77,26 @@ TEST_F(IfThenElseTest, Recompute) {
   EXPECT_TRUE(xLb <= xUb);
   EXPECT_TRUE(yLb <= yUb);
 
-  solver->open();
-  const VarId b = solver->makeIntVar(bLb, bLb, bUb);
-  const VarId x = solver->makeIntVar(yUb, yLb, yUb);
-  const VarId y = solver->makeIntVar(yUb, yLb, yUb);
-  const VarId outputId =
-      solver->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
+  _solver->open();
+  const VarViewId b = _solver->makeIntVar(bLb, bLb, bUb);
+  const VarViewId x = _solver->makeIntVar(yUb, yLb, yUb);
+  const VarViewId y = _solver->makeIntVar(yUb, yLb, yUb);
+  const VarViewId outputId =
+      _solver->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
   IfThenElse& invariant =
-      solver->makeInvariant<IfThenElse>(*solver, outputId, b, x, y);
-  solver->close();
+      _solver->makeInvariant<IfThenElse>(*_solver, outputId, b, x, y);
+  _solver->close();
   for (Int bVal = bLb; bVal <= bUb; ++bVal) {
     for (Int xVal = xLb; xVal <= xUb; ++xVal) {
       for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-        solver->setValue(solver->currentTimestamp(), b, bVal);
-        solver->setValue(solver->currentTimestamp(), x, xVal);
-        solver->setValue(solver->currentTimestamp(), y, yVal);
+        _solver->setValue(_solver->currentTimestamp(), b, bVal);
+        _solver->setValue(_solver->currentTimestamp(), x, xVal);
+        _solver->setValue(_solver->currentTimestamp(), y, yVal);
 
         const Int expectedOutput = computeOutput(bVal, xVal, yVal);
-        invariant.recompute(solver->currentTimestamp());
+        invariant.recompute(_solver->currentTimestamp());
         EXPECT_EQ(expectedOutput,
-                  solver->value(solver->currentTimestamp(), outputId));
+                  _solver->value(_solver->currentTimestamp(), outputId));
       }
     }
   }
@@ -115,27 +110,27 @@ TEST_F(IfThenElseTest, NotifyInputChanged) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(bLb <= bUb);
 
-  solver->open();
-  std::array<VarId, 3> inputs{solver->makeIntVar(bLb, bLb, bUb),
-                              solver->makeIntVar(ub, lb, ub),
-                              solver->makeIntVar(ub, lb, ub)};
-  VarId outputId = solver->makeIntVar(0, 0, ub - lb);
-  IfThenElse& invariant = solver->makeInvariant<IfThenElse>(
-      *solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  solver->close();
+  _solver->open();
+  std::array<VarViewId, 3> inputs{_solver->makeIntVar(bLb, bLb, bUb),
+                                  _solver->makeIntVar(ub, lb, ub),
+                                  _solver->makeIntVar(ub, lb, ub)};
+  VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
+  IfThenElse& invariant = _solver->makeInvariant<IfThenElse>(
+      *_solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+  _solver->close();
 
-  Timestamp ts = solver->currentTimestamp();
+  Timestamp ts = _solver->currentTimestamp();
 
   for (Int bVal = bLb; bVal <= bUb; ++bVal) {
     for (Int val = lb; val <= ub; ++val) {
       for (size_t i = 1; i < inputs.size(); ++i) {
         ++ts;
-        solver->setValue(ts, inputs.at(0), bVal);
-        solver->setValue(ts, inputs.at(i), val);
+        _solver->setValue(ts, inputs.at(0), bVal);
+        _solver->setValue(ts, inputs.at(i), val);
         const Int expectedOutput = computeOutput(ts, inputs);
 
         invariant.notifyInputChanged(ts, LocalId(i));
-        EXPECT_EQ(expectedOutput, solver->value(ts, outputId));
+        EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
       }
     }
   }
@@ -149,36 +144,44 @@ TEST_F(IfThenElseTest, NextInput) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(bLb <= bUb);
 
-  solver->open();
-  const std::array<VarId, 3> inputs = {solver->makeIntVar(bLb, bLb, bUb),
-                                       solver->makeIntVar(lb, lb, ub),
-                                       solver->makeIntVar(ub, lb, ub)};
-  const VarId outputId = solver->makeIntVar(0, 0, 2);
-  const VarId minVarId = *std::min_element(inputs.begin(), inputs.end());
-  const VarId maxVarId = *std::max_element(inputs.begin(), inputs.end());
-  IfThenElse& invariant = solver->makeInvariant<IfThenElse>(
-      *solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  solver->close();
+  _solver->open();
+  const std::array<VarViewId, 3> inputs = {_solver->makeIntVar(bLb, bLb, bUb),
+                                           _solver->makeIntVar(lb, lb, ub),
+                                           _solver->makeIntVar(ub, lb, ub)};
+  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
+  const VarViewId minVarId =
+      *std::min_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
+  const VarViewId maxVarId =
+      *std::max_element(inputs.begin(), inputs.end(),
+                        [&](const VarViewId& a, const VarViewId& b) {
+                          return size_t(a) < size_t(b);
+                        });
+  IfThenElse& invariant = _solver->makeInvariant<IfThenElse>(
+      *_solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+  _solver->close();
 
-  for (Timestamp ts = solver->currentTimestamp() + 1;
-       ts < solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(maxVarId + 1, false);
+  for (Timestamp ts = _solver->currentTimestamp() + 1;
+       ts < _solver->currentTimestamp() + 4; ++ts) {
+    std::vector<bool> notified(size_t(maxVarId) + 1, false);
     // First input is b,
     // Second input is x if b = 0, otherwise y:
     for (size_t i = 0; i < 2; ++i) {
-      const VarId varId = invariant.nextInput(ts);
+      const VarViewId varId = invariant.nextInput(ts);
       EXPECT_NE(varId, NULL_ID);
-      EXPECT_TRUE(minVarId <= varId);
-      EXPECT_TRUE(varId <= maxVarId);
-      EXPECT_FALSE(notified.at(varId));
-      notified[varId] = true;
+      EXPECT_LE(size_t(minVarId), size_t(varId));
+      EXPECT_GE(size_t(maxVarId), size_t(varId));
+      EXPECT_FALSE(notified.at(size_t(varId)));
+      notified.at(size_t(varId)) = true;
     }
     EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    const Int bVal = solver->value(ts, inputs.at(0));
+    const Int bVal = _solver->value(ts, inputs.at(0));
 
-    EXPECT_TRUE(notified.at(inputs.at(0)));
-    EXPECT_TRUE(notified.at(inputs.at(bVal == 0 ? 1 : 2)));
-    EXPECT_FALSE(notified.at(inputs.at(bVal == 0 ? 2 : 1)));
+    EXPECT_TRUE(notified.at(size_t(inputs.at(0))));
+    EXPECT_TRUE(notified.at(size_t(inputs.at(bVal == 0 ? 1 : 2))));
+    EXPECT_FALSE(notified.at(size_t(inputs.at(bVal == 0 ? 2 : 1))));
   }
 }
 
@@ -190,34 +193,34 @@ TEST_F(IfThenElseTest, NotifyCurrentInputChanged) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(bLb <= bUb);
 
-  solver->open();
+  _solver->open();
   std::uniform_int_distribution<Int> valueDist(lb, ub);
   std::uniform_int_distribution<Int> bDist(bLb, bUb);
 
-  const std::array<VarId, 3> inputs = {
-      solver->makeIntVar(bLb, bLb, bLb),
-      solver->makeIntVar(valueDist(gen), lb, ub),
-      solver->makeIntVar(valueDist(gen), lb, ub)};
-  const VarId outputId = solver->makeIntVar(0, 0, ub - lb);
-  IfThenElse& invariant = solver->makeInvariant<IfThenElse>(
-      *solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  solver->close();
+  const std::array<VarViewId, 3> inputs = {
+      _solver->makeIntVar(bLb, bLb, bLb),
+      _solver->makeIntVar(valueDist(gen), lb, ub),
+      _solver->makeIntVar(valueDist(gen), lb, ub)};
+  const VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
+  IfThenElse& invariant = _solver->makeInvariant<IfThenElse>(
+      *_solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+  _solver->close();
 
-  for (Timestamp ts = solver->currentTimestamp() + 1;
-       ts < solver->currentTimestamp() + 4; ++ts) {
+  for (Timestamp ts = _solver->currentTimestamp() + 1;
+       ts < _solver->currentTimestamp() + 4; ++ts) {
     for (size_t i = 0; i < 2; ++i) {
-      const Int bOld = solver->value(ts, inputs.at(0));
-      const VarId curInput = invariant.nextInput(ts);
+      const Int bOld = _solver->value(ts, inputs.at(0));
+      const VarViewId curInput = invariant.nextInput(ts);
       EXPECT_EQ(curInput, inputs.at(i == 0 ? 0 : bOld == 0 ? 1 : 2));
 
-      const Int oldVal = solver->value(ts, curInput);
+      const Int oldVal = _solver->value(ts, curInput);
       do {
-        solver->setValue(ts, curInput, i == 0 ? bDist(gen) : valueDist(gen));
-      } while (solver->value(ts, curInput) == oldVal);
+        _solver->setValue(ts, curInput, i == 0 ? bDist(gen) : valueDist(gen));
+      } while (_solver->value(ts, curInput) == oldVal);
 
       invariant.notifyCurrentInputChanged(ts);
 
-      EXPECT_EQ(solver->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, inputs));
     }
   }
 }
@@ -230,55 +233,55 @@ TEST_F(IfThenElseTest, Commit) {
   EXPECT_TRUE(lb <= ub);
   EXPECT_TRUE(bLb <= bUb);
 
-  solver->open();
+  _solver->open();
   std::uniform_int_distribution<Int> bDist(bLb, bUb);
   std::uniform_int_distribution<Int> valueDist(lb, ub);
 
   std::array<size_t, 3> indices{0, 1, 2};
   std::array<Int, 3> committedValues{bDist(gen), valueDist(gen),
                                      valueDist(gen)};
-  std::array<VarId, 3> inputs{
-      solver->makeIntVar(committedValues.at(0), bLb, bUb),
-      solver->makeIntVar(committedValues.at(1), lb, ub),
-      solver->makeIntVar(committedValues.at(2), lb, ub)};
+  std::array<VarViewId, 3> inputs{
+      _solver->makeIntVar(committedValues.at(0), bLb, bUb),
+      _solver->makeIntVar(committedValues.at(1), lb, ub),
+      _solver->makeIntVar(committedValues.at(2), lb, ub)};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  VarId outputId = solver->makeIntVar(0, 0, 2);
-  IfThenElse& invariant = solver->makeInvariant<IfThenElse>(
-      *solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  solver->close();
+  VarViewId outputId = _solver->makeIntVar(0, 0, 2);
+  IfThenElse& invariant = _solver->makeInvariant<IfThenElse>(
+      *_solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
+  _solver->close();
 
-  EXPECT_EQ(solver->value(solver->currentTimestamp(), outputId),
-            computeOutput(solver->currentTimestamp(), inputs));
+  EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
+            computeOutput(_solver->currentTimestamp(), inputs));
 
   for (const size_t i : indices) {
-    Timestamp ts = solver->currentTimestamp() + Timestamp(1 + i);
+    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputs.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(solver->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(_solver->committedValue(inputs.at(j)), committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      solver->setValue(ts, inputs.at(i), i == 0 ? bDist(gen) : valueDist(gen));
-    } while (oldVal == solver->value(ts, inputs.at(i)));
+      _solver->setValue(ts, inputs.at(i), i == 0 ? bDist(gen) : valueDist(gen));
+    } while (oldVal == _solver->value(ts, inputs.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = solver->value(ts, outputId);
+    const Int notifiedOutput = _solver->value(ts, outputId);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, solver->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
 
-    solver->commitIf(ts, inputs.at(i));
-    committedValues.at(i) = solver->value(ts, inputs.at(i));
-    solver->commitIf(ts, outputId);
+    _solver->commitIf(ts, VarId(inputs.at(i)));
+    committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
+    _solver->commitIf(ts, VarId(outputId));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, solver->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
   }
 }
 
@@ -289,9 +292,11 @@ class MockIfThenElse : public IfThenElse {
     registered = true;
     IfThenElse::registerVars();
   }
-  explicit MockIfThenElse(SolverBase& solver, VarId output, VarId b, VarId x,
-                          VarId y)
+  explicit MockIfThenElse(SolverBase& solver, VarViewId output, VarViewId b,
+                          VarViewId x, VarViewId y)
       : IfThenElse(solver, output, b, x, y) {
+    EXPECT_TRUE(output.isVar());
+
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return IfThenElse::recompute(timestamp);
     });
@@ -311,22 +316,22 @@ class MockIfThenElse : public IfThenElse {
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarId, nextInput, (Timestamp), (override));
+  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
   MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
 TEST_F(IfThenElseTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!solver->isOpen()) {
-      solver->open();
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    const VarId b = solver->makeIntVar(0, -100, 100);
-    const VarId x = solver->makeIntVar(0, 0, 4);
-    const VarId y = solver->makeIntVar(5, 5, 9);
-    const VarId output = solver->makeIntVar(3, 0, 9);
+    const VarViewId b = _solver->makeIntVar(0, -100, 100);
+    const VarViewId x = _solver->makeIntVar(0, 0, 4);
+    const VarViewId y = _solver->makeIntVar(5, 5, 9);
+    const VarViewId output = _solver->makeIntVar(3, 0, 9);
     testNotifications<MockIfThenElse>(
-        &solver->makeInvariant<MockIfThenElse>(*solver, output, b, x, y),
+        &_solver->makeInvariant<MockIfThenElse>(*_solver, output, b, x, y),
         {propMode, markingMode, 3, b, 5, output});
   }
 }

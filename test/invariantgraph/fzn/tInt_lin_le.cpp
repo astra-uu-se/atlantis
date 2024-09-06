@@ -104,10 +104,10 @@ TEST_F(int_lin_leTest, construction) {
 TEST_F(int_lin_leTest, propagation) {
   generateSimple();
   int_lin_le(*_invariantGraph, _model->constraints().front());
-  _invariantGraph->apply(*_solver);
-  _invariantGraph->close(*_solver);
+  _invariantGraph->construct();
+  _invariantGraph->close();
 
-  std::vector<propagation::VarId> inputVarIds = getVarIds(inputIdentifiers);
+  std::vector<propagation::VarViewId> inputVarIds = getVarIds(inputIdentifiers);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
 

@@ -10,24 +10,29 @@
 namespace atlantis::propagation {
 
 /**
- * Invariant for output <- if b = 0 then x else y
+ * Invariant for output <- if _condition = 0 then _thenVar else _elseVar
  *
  */
 
 class IfThenElse : public Invariant {
  private:
-  VarId _output, _b;
-  std::array<const VarId, 2> _xy;
+  VarId _output;
+  VarViewId _condition;
+  std::array<const VarViewId, 2> _branches;
 
  public:
-  explicit IfThenElse(SolverBase&, VarId output, VarId b, VarId x, VarId y);
+  explicit IfThenElse(SolverBase&, VarId output, VarViewId condition,
+                      VarViewId thenVar, VarViewId elseVar);
+
+  explicit IfThenElse(SolverBase&, VarViewId output, VarViewId condition,
+                      VarViewId thenVar, VarViewId elseVar);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
-  [[nodiscard]] VarId dynamicInputVar(Timestamp) const noexcept override;
+  [[nodiscard]] VarViewId dynamicInputVar(Timestamp) const noexcept override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
-  VarId nextInput(Timestamp) override;
+  VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 };
 

@@ -13,7 +13,7 @@ class ScalarView : public IntView {
   Int _offset;
 
  public:
-  explicit ScalarView(SolverBase& solver, VarId parentId, Int factor,
+  explicit ScalarView(SolverBase& solver, VarViewId parentId, Int factor,
                       Int offset = 0);
 
   [[nodiscard]] Int value(Timestamp) override;

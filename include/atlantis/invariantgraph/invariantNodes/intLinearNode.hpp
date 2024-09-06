@@ -1,35 +1,30 @@
 #pragma once
 
-#include <vector>
-
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
 class IntLinearNode : public InvariantNode {
  private:
   std::vector<Int> _coeffs;
   Int _offset;
-  propagation::VarId _intermediate{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  IntLinearNode(std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-                VarNodeId output, Int offset = 0);
+  IntLinearNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
+                std::vector<VarNodeId>&& vars, VarNodeId output,
+                Int offset = 0);
 
-  void init(InvariantGraph&, const InvariantNodeId&) override;
+  void init(InvariantNodeId) override;
 
-  void updateState(InvariantGraph&) override;
+  void updateState() override;
 
-  [[nodiscard]] bool canBeMadeImplicit(const InvariantGraph&) const override;
+  [[nodiscard]] bool canBeMadeImplicit() const override;
 
-  [[nodiscard]] bool makeImplicit(InvariantGraph&) override;
+  [[nodiscard]] bool makeImplicit() override;
 
-  void registerOutputVars(InvariantGraph&, propagation::SolverBase&) override;
+  void registerOutputVars() override;
 
-  void registerNode(InvariantGraph&, propagation::SolverBase&) override;
+  void registerNode() override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 };
