@@ -89,21 +89,30 @@ class InvariantTest : public ::testing::Test {
     return inputVals;
   }
 
-  size_t trySetNextInputVarVal(const std::vector<VarViewId>& inputVars,
-                               std::vector<Int>& inputVals) {
-    EXPECT_EQ(inputVars.size(), inputVals.size());
-    for (size_t i = 0; i < inputVars.size(); ++i) {
-      if (inputVals.at(i) < _solver->upperBound(inputVars.at(i))) {
-        inputVals.at(i) += 1;
-        _solver->setValue(inputVars.at(i), inputVals.at(i));
-        return i;
-      } else {
-        EXPECT_EQ(inputVals.at(i), _solver->upperBound(inputVars.at(i)));
-        inputVals.at(i) = _solver->lowerBound(inputVars.at(i));
+  bool increaseNextVal(const std::vector<propagation::VarViewId>& varIds,
+                       std::vector<Int>& inputVals) const {
+    EXPECT_EQ(varIds.size(), inputVals.size());
+    for (Int i = static_cast<Int>(inputVals.size() - 1); i >= 0; --i) {
+      if (varIds.at(i) == propagation::NULL_ID) {
+        continue;
       }
-      inputVals.at(i) = solve_r->lowerBound(inputVars.at(i));
+      if (inputVals.at(i) < _solver->upperBound(varIds.at(i))) {
+        ++inputVals.at(i);
+        return true;
+      }
+      inputVals.at(i) = _solver->lowerBound(varIds.at(i));
     }
     return false;
+  }
+
+  void setVarVals(const std::vector<propagation::VarViewId>& varIds,
+                  const std::vector<Int>& vals) const {
+    EXPECT_EQ(varIds.size(), vals.size());
+    for (size_t i = 0; i < varIds.size(); ++i) {
+      if (varIds.at(i) != propagation::NULL_ID) {
+        _solver->setValue(varIds.at(i), vals.at(i));
+      }
+    }
   }
 
   size_t trySetMinDiffInputVarVal(const std::vector<VarViewId>& inputVars,

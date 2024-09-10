@@ -417,10 +417,10 @@ class MockElement2dConst : public Element2dConst {
     registered = true;
     Element2dConst::registerVars();
   }
-  explicit MockElement2dVar(SolverBase& solver, VarViewId output,
-                            VarViewId index1, VarViewId index2,
-                            std::vector<std::vector<Int>>&& matrix, Int offset1,
-                            Int offset2)
+  explicit MockElement2dConst(SolverBase& solver, VarViewId output,
+                              VarViewId index1, VarViewId index2,
+                              std::vector<std::vector<Int>>&& matrix,
+                              Int offset1, Int offset2)
       : Element2dConst(solver, output, index1, index2, std::move(matrix),
                        offset1, offset2) {
     EXPECT_TRUE(output.isVar());
@@ -463,8 +463,8 @@ TEST_F(Element2dConstTest, SolverIntegration) {
     VarViewId index1 = _solver->makeIntVar(1, 1, static_cast<Int>(numRows));
     VarViewId index2 = _solver->makeIntVar(1, 1, static_cast<Int>(numCols));
     VarViewId output = _solver->makeIntVar(-10, -100, 100);
-    testNotifications<MockElement2dVar>(
-        &_solver->makeInvariant<MockElement2dVar>(
+    testNotifications<MockElement2dConst>(
+        &_solver->makeInvariant<MockElement2dConst>(
             *_solver, output, index1, index2, std::move(parMatrix), 1, 1),
         {propMode, markingMode, 3, index1, 5, output});
   }

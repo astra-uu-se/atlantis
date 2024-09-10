@@ -257,7 +257,7 @@ bool PropagationGraph::containsStaticCycle() {
     }
   }
   assert(all_in_range(0, numVars(),
-                      [&](const size_t varId) { return visited.at(varId); }));
+                      [&](const VarId varId) { return visited.at(varId); }));
   return false;
 }
 
@@ -319,25 +319,25 @@ void PropagationGraph::partitionIntoLayers() {
 
   std::stack<VarId> stack;
 
-  std::vector<bool> onStack(numVars() + 1, false);
-  std::vector<Int> lowlink(numVars() + 1, -1);
-  std::vector<Int> index(numVars() + 1, -1);
-  std::vector<Int> componentIndex(numVars() + 1, -1);
+  std::vector<bool> onStack(numVars(), false);
+  std::vector<Int> lowlink(numVars(), -1);
+  std::vector<Int> index(numVars(), -1);
+  std::vector<Int> componentIndex(numVars(), -1);
   std::vector<std::vector<size_t>> components;
 
-  const std::function<void(size_t)> strongconnect = [&](const size_t v) {
-    assert(0 < v && v < numVars() + 1);
-    assert(index[v] == -1);
-    index[v] = unusedIndex;
-    lowlink[v] = unusedIndex;
+  const std::function<void(VarId)> strongconnect = [&](const VarId varId) {
+    assert(varId < numVars());
+    assert(index[varId] == -1);
+    index[varId] = unusedIndex;
+    lowlink[varId] = unusedIndex;
     ++unusedIndex;
-    stack.push(v);
-    onStack[v] = true;
+    stack.push(varId);
+    onStack[varId] = true;
 
     for (char c = 0; c < 2; ++c) {
       for (const auto& outArc :
-           c == 0 ? outgoingArcs(v).outgoingStatic()
-                  : outgoingArcs(v).outgoingDynamic().arcs()) {
+           c == 0 ? outgoingArcs(varId).outgoingStatic()
+                  : outgoingArcs(varId).outgoingDynamic().arcs()) {
         if (outArc.invariantId() == NULL_ID) {
           // self cycle
           continue;
@@ -345,16 +345,16 @@ void PropagationGraph::partitionIntoLayers() {
         for (const auto& w : varsDefinedBy(outArc.invariantId())) {
           if (index[size_t{w}] == -1) {
             strongconnect(size_t{w});
-            lowlink[v] = std::min(lowlink[v], lowlink[size_t{w}]);
+            lowlink[varId] = std::min(lowlink[varId], lowlink[size_t{w}]);
           } else if (onStack[size_t{w}]) {
-            lowlink[v] = std::min(lowlink[v], index[size_t{w}]);
+            lowlink[varId] = std::min(lowlink[varId], index[size_t{w}]);
           }
         }
       }
     }
-    if (lowlink[v] == index[v]) {
-      if (stack.top() == v) {
-        onStack[v] = false;
+    if (lowlink[varId] == index[varId]) {
+      if (stack.top() == varId) {
+        onStack[varId] = false;
         stack.pop();
         return;
       }
@@ -366,46 +366,46 @@ void PropagationGraph::partitionIntoLayers() {
         componentIndex[w] = unusedComponent;
         components.back().emplace_back(w);
         stack.pop();
-      } while (w != v);
+      } while (w != varId);
       ++unusedComponent;
     }
   };
 
-  for (size_t v = 1; v <= numVars(); ++v) {
-    if (index[v] == -1) {
-      strongconnect(v);
+  for (VarId varId = 0; varId < numVars(); ++varId) {
+    if (index[varId] == -1) {
+      strongconnect(varId);
     }
   }
 
-  std::vector<bool> visited(numVars() + 1, false);
+  std::vector<bool> visited(numVars(), false);
 
   // Step 2, partition into layers:
-  const std::function<void(size_t)> partition = [&](const VarId v) {
-    if (definingInvariant(v) == NULL_ID) {
-      _varLayerIndex[v].layer = 0;
+  const std::function<void(size_t)> partition = [&](const VarId varId) {
+    if (definingInvariant(varId) == NULL_ID) {
+      _varLayerIndex[varId].layer = 0;
       return;
     }
-    if (visited[v]) {
+    if (visited[varId]) {
       return;
     }
-    visited[v] = true;
-    if (componentIndex[v] >= 0) {
-      for (const size_t w : components[componentIndex[v]]) {
+    visited[varId] = true;
+    if (componentIndex[varId] >= 0) {
+      for (const size_t w : components[componentIndex[varId]]) {
         visited[w] = true;
       }
       size_t sccLayer = 0;
-      for (const size_t w : components[componentIndex[v]]) {
+      for (const size_t w : components[componentIndex[varId]]) {
         const InvariantId defInv = definingInvariant(VarId{w});
         assert(defInv != NULL_ID);
         for (const auto& staticInputId : staticInputVars(defInv)) {
-          if (componentIndex[staticInputId] != componentIndex[v]) {
+          if (componentIndex[staticInputId] != componentIndex[varId]) {
             partition(staticInputId);
             sccLayer =
                 std::max(sccLayer, _varLayerIndex[staticInputId].layer + 1);
           }
         }
         for (const auto& dynamicInput : dynamicInputVars(defInv)) {
-          if (componentIndex[dynamicInput.varId] != componentIndex[v]) {
+          if (componentIndex[dynamicInput.varId] != componentIndex[varId]) {
             partition(dynamicInput.varId);
             sccLayer = std::max(sccLayer,
                                 _varLayerIndex[dynamicInput.varId].layer + 1);
@@ -413,40 +413,43 @@ void PropagationGraph::partitionIntoLayers() {
         }
       }
       assert(sccLayer > 0);
-      for (const size_t w : components[componentIndex[v]]) {
+      for (const size_t w : components[componentIndex[varId]]) {
         _varLayerIndex[VarId{w}].layer = sccLayer;
       }
     } else {
-      for (const auto& staticInputId : staticInputVars(definingInvariant(v))) {
+      for (const auto& staticInputId :
+           staticInputVars(definingInvariant(varId))) {
         partition(staticInputId);
-        _varLayerIndex[v].layer = std::max(
-            _varLayerIndex[v].layer,
+        _varLayerIndex[varId].layer = std::max(
+            _varLayerIndex[varId].layer,
             _varLayerIndex[staticInputId].layer +
                 static_cast<size_t>(componentIndex[staticInputId] >= 0));
       }
-      for (const auto& dynamicInput : dynamicInputVars(definingInvariant(v))) {
+      for (const auto& dynamicInput :
+           dynamicInputVars(definingInvariant(varId))) {
         partition(dynamicInput.varId);
-        _varLayerIndex[v].layer = std::max(
-            _varLayerIndex[v].layer,
+        _varLayerIndex[varId].layer = std::max(
+            _varLayerIndex[varId].layer,
             _varLayerIndex[dynamicInput.varId].layer +
                 static_cast<size_t>(componentIndex[dynamicInput.varId] >= 0));
       }
     }
   };
 
-  for (size_t v = 1; v <= numVars(); ++v) {
-    if (!visited[v]) {
-      partition(v);
+  for (VarId varId = 0; varId < numVars(); ++varId) {
+    if (!visited[varId]) {
+      partition(varId);
     }
   }
 
   _varsInLayer.clear();
-  for (size_t v = 1; v <= numVars(); ++v) {
-    while (_varLayerIndex[v].layer >= _varsInLayer.size()) {
+  for (VarId varId = 0; varId < numVars(); ++varId) {
+    while (_varLayerIndex[varId].layer >= _varsInLayer.size()) {
       _varsInLayer.emplace_back();
     }
-    _varLayerIndex[v].index = _varsInLayer[_varLayerIndex[v].layer].size();
-    _varsInLayer[_varLayerIndex[v].layer].emplace_back(v);
+    _varLayerIndex[varId].index =
+        _varsInLayer[_varLayerIndex[varId].layer].size();
+    _varsInLayer[_varLayerIndex[varId].layer].emplace_back(varId);
   }
 
   _layerHasDynamicCycle.assign(numLayers(), false);

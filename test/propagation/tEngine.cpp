@@ -567,15 +567,15 @@ TEST_F(SolverTest, TestSimpleDynamicCycleQuery) {
   VarViewId x3Plus3 = solver->makeIntView<IntOffsetView>(*solver, x3, 3);
 
   // x1 = [base, x1 + 1, x2 + 2, x3 + 3][i1]:
-  solver->makeInvariant<ElementVar>(
+  const auto& inv1 = solver->makeInvariant<ElementVar>(
       *solver, x1, i1,
       std::vector<VarViewId>({base, x1Plus1, x2Plus2, x3Plus3}));
   // x2 = [base, x1 + 1, x2 + 2, x3 + 3][i2]:
-  solver->makeInvariant<ElementVar>(
+  const auto& inv2 = solver->makeInvariant<ElementVar>(
       *solver, x2, i2,
       std::vector<VarViewId>({base, x1Plus1, x2Plus2, x3Plus3}));
   // x3 = [base, x1 + 1, x2 + 2, x3 + 3][i3]:
-  solver->makeInvariant<ElementVar>(
+  const auto& inv3 = solver->makeInvariant<ElementVar>(
       *solver, x3, i3,
       std::vector<VarViewId>({base, x1Plus1, x2Plus2, x3Plus3}));
 

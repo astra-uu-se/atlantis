@@ -310,12 +310,12 @@ void Solver::propagateOnClose() {
     }
   }
 
-  for (size_t i = 1; i <= _propGraph.numVars(); ++i) {
+  for (VarId i = 0; i < _propGraph.numVars(); ++i) {
     commitIf(_currentTimestamp, VarId{i});
     _propGraph.commitOutgoingArcs(_currentTimestamp, VarId{i});
   }
 
-  for (size_t i = 1; i <= _propGraph.numVars(); ++i) {
+  for (VarId i = 0; i < _propGraph.numVars(); ++i) {
     commitIf(_currentTimestamp, VarId{i});
     _propGraph.commitOutgoingArcs(_currentTimestamp, VarId{i});
   }

@@ -1,3 +1,7 @@
+#include <gtest/gtest.h>
+#include <rapidcheck/gen/Numeric.h>
+#include <rapidcheck/gtest.h>
+
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/invariants/element2dVar.hpp"
 
@@ -507,32 +511,32 @@ TEST_F(Element2dVarTest, Commit) {
 }
 
 TEST_F(Element2dVarTest, Prop) {
-  solver->open();
+  _solver->open();
   const size_t numRows = 2;
   const size_t numCols = 2;
-  std::vector<std::vector<VarId>> varMatrix(
-      numRows, std::vector<VarId>(numCols, NULL_ID));
+  std::vector<std::vector<VarViewId>> varMatrix(
+      numRows, std::vector<VarViewId>(numCols, NULL_ID));
 
   for (size_t i = 0; i < numRows; ++i) {
     for (size_t j = 0; j < numCols; ++j) {
-      varMatrix.at(i).at(j) = solver->makeIntVar(0, 0, 5);
+      varMatrix.at(i).at(j) = _solver->makeIntVar(0, 0, 5);
     }
   }
 
-  const VarId index1 = solver->makeIntVar(1, 1, 2);
-  const VarId index2 = solver->makeIntVar(1, 1, 2);
+  const VarViewId index1 = _solver->makeIntVar(1, 1, 2);
+  const VarViewId index2 = _solver->makeIntVar(1, 1, 2);
 
   const Int offset1 = 1;
   const Int offset2 = 1;
 
-  const VarId output = solver->makeIntVar(0, 0, 100);
+  const VarViewId output = _solver->makeIntVar(0, 0, 100);
 
-  auto& inv = solver->makeInvariant<Element2dVar>(
-      *solver, output, index1, index2,
-      std::vector<std::vector<VarId>>{varMatrix}, offset1, offset2);
-  solver->close();
+  auto& inv = _solver->makeInvariant<Element2dVar>(
+      *_solver, output, index1, index2,
+      std::vector<std::vector<VarViewId>>(varMatrix), offset1, offset2);
+  _solver->close();
 
-  std::vector<VarId> inputVars;
+  std::vector<VarViewId> inputVars;
   inputVars.reserve(numRows * numCols + 2);
   for (size_t i = 0; i < numRows; ++i) {
     for (size_t j = 0; j < numCols; ++j) {
@@ -542,25 +546,140 @@ TEST_F(Element2dVarTest, Prop) {
   inputVars.push_back(index1);
   inputVars.push_back(index2);
 
-  std::vector<Int> inputVals = makeInputVals(inputVars);
+  std::vector<Int> inputVals = createInputVals(inputVars);
 
   while (increaseNextVal(inputVars, inputVals)) {
-    solver->beginMove();
+    _solver->beginMove();
     setVarVals(inputVars, inputVals);
-    solver->endMove();
+    _solver->endMove();
 
-    solver->beginCommit();
-    solver->query(output);
-    solver->endCommit();
+    _solver->beginCommit();
+    _solver->query(output);
+    _solver->endCommit();
 
-    const Int actual = solver->committedValue(output);
+    const Int actual = _solver->committedValue(output);
     const Int index1Val = inputVals.at(inputVals.size() - 2) - offset1;
     const Int index2Val = inputVals.back() - offset2;
-    RC_ASSERT(inv.dynamicInputVar(solver->currentTimestamp()) ==
+    RC_ASSERT(inv.dynamicInputVar(_solver->currentTimestamp()) ==
               varMatrix.at(index1Val).at(index2Val));
     const Int expected = inputVals.at(index1Val * numCols + index2Val);
     if (expected != actual) {
       RC_ASSERT(expected == actual);
+    }
+  }
+}
+
+RC_GTEST_FIXTURE_PROP(Element2dVarTest, rapidcheck, ()) {
+  _solver->open();
+
+  const Int lb = -100;
+  const Int ub = 100;
+
+  const Int numRows = *rc::gen::inRange<Int>(2, 5);
+  const Int numCols = *rc::gen::inRange<Int>(2, 5);
+
+  const Int rowOffset = *rc::gen::inRange<Int>(-10, 10);
+  const Int colOffset = *rc::gen::inRange<Int>(-10, 10);
+
+  std::vector<std::vector<VarViewId>> varMatrix(numRows,
+                                                std::vector<VarViewId>());
+
+  for (Int r = 0; r < numRows; ++r) {
+    varMatrix.at(r).reserve(numCols);
+    for (Int c = 0; c < numCols; ++c) {
+      varMatrix.at(r).emplace_back(
+          _solver->makeIntVar(r * numRows + c, lb, ub));
+    }
+  }
+
+  const Int rowUb = numRows + rowOffset - 1;
+  const Int colUb = numCols + colOffset - 1;
+
+  VarViewId rowIndex = _solver->makeIntVar(rowOffset, rowOffset, rowUb);
+  VarViewId colIndex = _solver->makeIntVar(colOffset, colOffset, colUb);
+
+  VarViewId output = _solver->makeIntVar(0, 0, 0);
+
+  _solver->makeInvariant<Element2dVar>(
+      *_solver, output, rowIndex, colIndex,
+      std::vector<std::vector<VarViewId>>(varMatrix), rowOffset, colOffset);
+
+  _solver->close();
+
+  std::vector<VarViewId> modifiedVars{rowIndex, colIndex, VarViewId(NULL_ID),
+                                      VarViewId(NULL_ID)};
+  const size_t numMoves = 10;
+  const size_t numProbes = 100;
+
+  for (size_t m = numMoves; m > 0; --m) {
+    const Int committedRow = _solver->committedValue(rowIndex);
+    RC_ASSERT(committedRow >= rowOffset);
+    RC_ASSERT(committedRow < numRows + rowOffset);
+    const Int committedCol = _solver->committedValue(colIndex);
+    RC_ASSERT(committedCol >= colOffset);
+    RC_ASSERT(committedCol < numRows + colOffset);
+
+    modifiedVars.at(2) =
+        varMatrix.at(committedRow - rowOffset).at(committedCol - colOffset);
+
+    for (size_t p = numProbes; p > 0; --p) {
+      RC_ASSERT(committedRow == _solver->committedValue(rowIndex));
+      RC_ASSERT(committedCol == _solver->committedValue(colIndex));
+
+      RC_ASSERT(_solver->committedValue(output) ==
+                _solver->committedValue(modifiedVars.at(2)));
+
+      _solver->beginMove();
+
+      const bool modifyRow = *rc::gen::arbitrary<bool>();
+      const Int newRow = modifyRow
+                             ? *rc::gen::inRange(rowOffset, numRows + rowOffset)
+                             : committedRow;
+      if (modifyRow) {
+        _solver->setValue(rowIndex, newRow);
+      }
+
+      const bool modifyCol = *rc::gen::arbitrary<bool>();
+      const Int newCol = modifyCol
+                             ? *rc::gen::inRange(rowOffset, numRows + rowOffset)
+                             : committedCol;
+      if (modifyCol) {
+        _solver->setValue(colIndex, newCol);
+      }
+
+      const bool modifyCommitted = *rc::gen::arbitrary<bool>();
+      if (modifyCommitted) {
+        const Int newCommittedVal = *rc::gen::inRange(lb, ub + 1);
+        _solver->setValue(modifiedVars.at(2), newCommittedVal);
+      }
+
+      modifiedVars.at(3) =
+          varMatrix.at(newRow - rowOffset).at(newCol - colOffset);
+
+      const bool modifyNew = *rc::gen::arbitrary<bool>();
+      if (modifyNew) {
+        const Int newCurVal = *rc::gen::inRange(lb, ub + 1);
+        _solver->setValue(modifiedVars.at(2), newCurVal);
+      }
+
+      _solver->close();
+
+      if (p != 1) {
+        _solver->beginProbe();
+      } else {
+        _solver->beginMove();
+      }
+      _solver->query(output);
+      if (p != 1) {
+        _solver->endProbe();
+      } else {
+        _solver->endMove();
+      }
+      RC_ASSERT(_solver->currentValue(modifiedVars.at(3)) ==
+                _solver->currentValue(output));
+    }
+    for (const VarViewId& id : modifiedVars) {
+      RC_ASSERT(_solver->currentValue(id) == _solver->committedValue(id));
     }
   }
 }
@@ -621,8 +740,8 @@ TEST_F(Element2dVarTest, SolverIntegration) {
     VarViewId index2 = _solver->makeIntVar(1, 1, static_cast<Int>(numCols));
     VarViewId output = _solver->makeIntVar(-10, -100, 100);
     MockElement2dVar invariant =
-        MockElement2dVar(*solver, output, index1, index2,
-                         std::vector<std::vector<VarId>>(varMatrix), 1, 1);
+        MockElement2dVar(*_solver, output, index1, index2,
+                         std::vector<std::vector<VarViewId>>(varMatrix), 1, 1);
 
     testNotifications<MockElement2dVar>(
         &_solver->makeInvariant<MockElement2dVar>(
