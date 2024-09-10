@@ -418,8 +418,8 @@ TEST_F(Element2dConstTest, SolverIntegration) {
     VarViewId index1 = _solver->makeIntVar(1, 1, numRows);
     VarViewId index2 = _solver->makeIntVar(1, 1, numCols);
     VarViewId output = _solver->makeIntVar(-10, -100, 100);
-    testNotifications<MockElement2dVar>(
-        &_solver->makeInvariant<MockElement2dVar>(
+    testNotifications<MockElement2dConst>(
+        &_solver->makeInvariant<MockElement2dConst>(
             *_solver, output, index1, index2, std::move(parMatrix), 1, 1),
         {propMode, markingMode, 3, index1, 5, output});
   }

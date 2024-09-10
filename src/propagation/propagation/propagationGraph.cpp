@@ -333,24 +333,24 @@ static std::vector<bool> partitionIntoLayersUsingSCC(
     if (visited[v]) {
       return;
     }
-    visited[v] = true;
-    if (componentIndex[v] >= 0) {
-      for (const size_t w : components[componentIndex[v]]) {
+    visited[varId] = true;
+    if (componentIndex[varId] >= 0) {
+      for (const size_t w : components[componentIndex[varId]]) {
         visited[w] = true;
       }
       size_t sccLayer = 0;
-      for (const size_t w : components[componentIndex[v]]) {
+      for (const size_t w : components[componentIndex[varId]]) {
         const InvariantId defInv = definingInvariant(VarId{w});
         assert(defInv != NULL_ID);
         for (const auto& staticInputId : staticInputVars(defInv)) {
-          if (componentIndex[staticInputId] != componentIndex[v]) {
+          if (componentIndex[staticInputId] != componentIndex[varId]) {
             partition(staticInputId);
             sccLayer =
                 std::max(sccLayer, _varLayerIndex[staticInputId].layer + 1);
           }
         }
         for (const auto& dynamicInput : dynamicInputVars(defInv)) {
-          if (componentIndex[dynamicInput.varId] != componentIndex[v]) {
+          if (componentIndex[dynamicInput.varId] != componentIndex[varId]) {
             partition(dynamicInput.varId);
             sccLayer = std::max(sccLayer,
                                 _varLayerIndex[dynamicInput.varId].layer + 1);
@@ -358,30 +358,32 @@ static std::vector<bool> partitionIntoLayersUsingSCC(
         }
       }
       assert(sccLayer > 0);
-      for (const size_t w : components[componentIndex[v]]) {
+      for (const size_t w : components[componentIndex[varId]]) {
         _varLayerIndex[VarId{w}].layer = sccLayer;
       }
     } else {
-      for (const auto& staticInputId : staticInputVars(definingInvariant(v))) {
+      for (const auto& staticInputId :
+           staticInputVars(definingInvariant(varId))) {
         partition(staticInputId);
-        _varLayerIndex[v].layer = std::max(
-            _varLayerIndex[v].layer,
+        _varLayerIndex[varId].layer = std::max(
+            _varLayerIndex[varId].layer,
             _varLayerIndex[staticInputId].layer +
                 static_cast<size_t>(componentIndex[staticInputId] >= 0));
       }
-      for (const auto& dynamicInput : dynamicInputVars(definingInvariant(v))) {
+      for (const auto& dynamicInput :
+           dynamicInputVars(definingInvariant(varId))) {
         partition(dynamicInput.varId);
-        _varLayerIndex[v].layer = std::max(
-            _varLayerIndex[v].layer,
+        _varLayerIndex[varId].layer = std::max(
+            _varLayerIndex[varId].layer,
             _varLayerIndex[dynamicInput.varId].layer +
                 static_cast<size_t>(componentIndex[dynamicInput.varId] >= 0));
       }
     }
   };
 
-  for (size_t v = 1; v <= numVars(); ++v) {
-    if (!visited[v]) {
-      partition(v);
+  for (VarId varId = 0; varId < numVars(); ++varId) {
+    if (!visited[varId]) {
+      partition(varId);
     }
   }
   return layerHasSCC;

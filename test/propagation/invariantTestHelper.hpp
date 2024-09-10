@@ -98,6 +98,16 @@ class InvariantTest : public ::testing::Test {
   size_t trySetNextInputVarVal(const std::vector<VarViewId>& inputVars,
                                std::vector<Int>& inputVals) const;
 
+  void setVarVals(const std::vector<propagation::VarViewId>& varIds,
+                  const std::vector<Int>& vals) const {
+    EXPECT_EQ(varIds.size(), vals.size());
+    for (size_t i = 0; i < varIds.size(); ++i) {
+      if (varIds.at(i) != propagation::NULL_ID) {
+        _solver->setValue(varIds.at(i), vals.at(i));
+      }
+    }
+  }
+
   size_t trySetMinDiffInputVarVal(const std::vector<VarViewId>& inputVars,
                                   std::vector<Int>& inputVals) const;
 
