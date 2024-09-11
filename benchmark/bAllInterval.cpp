@@ -40,9 +40,8 @@ class AllInterval : public ::benchmark::Fixture {
     setSolverMode(*_solver, static_cast<int>(state.range(1)));
 
     for (size_t i = 0; i < n; ++i) {
-      assert(i < inputVarIds.size());
-      inputVarIds[i] =
-          _solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(n) - 1);
+      inputVarIds.emplace_back(
+          _solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(n) - 1));
     }
     // Creating n - 1 invariants, each having two inputs and one output
     for (size_t i = 0; i < n - 1; ++i) {
