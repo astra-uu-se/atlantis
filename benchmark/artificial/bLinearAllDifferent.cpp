@@ -21,9 +21,9 @@ class LinearAllDifferent : public ::benchmark::Fixture {
   std::mt19937 gen;
 
   std::uniform_int_distribution<size_t> decionVarIndexDist;
-  size_t varCount{0};
+  size_t inputCount{0};
 
-  propagation::VarViewId violation = propagation::NULL_ID;
+  propagation::VarViewId violation{propagation::NULL_ID};
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_shared<propagation::Solver>();
@@ -32,35 +32,35 @@ class LinearAllDifferent : public ::benchmark::Fixture {
     size_t increment;
 
     if (overlappingLinears) {
-      varCount = state.range(1);
-      linearOutputVars.reserve(varCount - 1);
+      inputCount = state.range(1);
+      linearOutputVars.reserve(inputCount - 1);
       increment = 1;
     } else {
-      varCount = state.range(1) - (state.range(1) % 2);
-      linearOutputVars.reserve(varCount / 2);
+      inputCount = state.range(1) - (state.range(1) % 2);
+      linearOutputVars.reserve(inputCount / 2);
       increment = 2;
     }
 
     solver->open();
     setSolverMode(*solver, static_cast<int>(state.range(2)));
 
-    decisionVars.reserve(varCount);
+    decisionVars.reserve(inputCount);
 
-    for (size_t i = 0; i < varCount; ++i) {
-      decisionVars.push_back(solver->makeIntVar(
-          static_cast<Int>(i), 0, static_cast<Int>(varCount) - 1));
+    for (size_t i = 0; i < inputCount; ++i) {
+      decisionVars.emplace_back(solver->makeIntVar(
+          static_cast<Int>(i), 0, static_cast<Int>(inputCount) - 1));
     }
 
-    for (size_t i = 0; i < varCount - 1; i += increment) {
-      linearOutputVars.push_back(solver->makeIntVar(
-          static_cast<Int>(i), 0, 2 * (static_cast<Int>(varCount) - 1)));
+    for (size_t i = 0; i < inputCount - 1; i += increment) {
+      linearOutputVars.emplace_back(solver->makeIntVar(
+          static_cast<Int>(i), 0, 2 * (static_cast<Int>(inputCount) - 1)));
       solver->makeInvariant<propagation::Linear>(
           *solver, linearOutputVars.back(),
           std::vector<propagation::VarViewId>{decisionVars.at(i),
                                               decisionVars.at(i + 1)});
     }
 
-    violation = solver->makeIntVar(0, 0, static_cast<Int>(varCount));
+    violation = solver->makeIntVar(0, 0, static_cast<Int>(inputCount));
     solver->makeViolationInvariant<propagation::AllDifferent>(
         *solver, violation, std::move(linearOutputVars));
 
@@ -68,7 +68,8 @@ class LinearAllDifferent : public ::benchmark::Fixture {
 
     gen = std::mt19937(rd());
 
-    decionVarIndexDist = std::uniform_int_distribution<size_t>{0, varCount - 1};
+    decionVarIndexDist =
+        std::uniform_int_distribution<size_t>{0, inputCount - 1};
   }
 
   void TearDown(const ::benchmark::State&) override { decisionVars.clear(); }
@@ -104,8 +105,8 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, probe_all_swap)
 (::benchmark::State& st) {
   size_t probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
-    for (size_t i = 0; i < varCount; ++i) {
-      for (size_t j = i + 1; j < varCount; ++j) {
+    for (size_t i = 0; i < inputCount; ++i) {
+      for (size_t j = i + 1; j < inputCount; ++j) {
         solver->beginMove();
         solver->setValue(decisionVars.at(i),
                          solver->committedValue(decisionVars.at(j)));
@@ -153,28 +154,16 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, commit_single_swap)
 
 /*
 
-static void arguments(::benchmark::internal::Benchmark* benchmark) {
-  for (int overlapping = 0; overlapping <= 1; ++overlapping) {
-    for (int varCount = 2; varCount <= 16; varCount *= 2) {
-      for (Int mode = 0; mode <= 3; ++mode) {
-        benchmark->Args({overlapping, varCount, mode});
-      }
-#ifndef NDEBUG
-      return;
-#endif
-    }
-  }
-}
-
 BENCHMARK_REGISTER_F(LinearAllDifferent, probe_single_swap)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 
 /*
 BENCHMARK_REGISTER_F(LinearAllDifferent, probe_all_swap)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 /*
-BENCHMARK_REGISTER_F(LinearAllDifferent, commit_single_swap)->Apply(arguments);
+BENCHMARK_REGISTER_F(LinearAllDifferent,
+commit_single_swap)->Apply(defaultTreeArguments);
 //*/
 }  // namespace atlantis::benchmark

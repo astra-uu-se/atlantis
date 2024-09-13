@@ -19,13 +19,13 @@ class ElementLinearTree : public ::benchmark::Fixture {
  private:
   struct TreeNode {
     size_t level;
-    VarViewId id{propagation::NULL_ID};
+    propagation::VarViewId id{propagation::NULL_ID};
   };
 
   void createTree() {
     std::stack<TreeNode> treeNodes;
     propagation::VarViewId output = solver->makeIntVar(0, lb, ub);
-    elementInputVars.push_back(output);
+    elementInputVars.emplace_back(output);
 
     treeNodes.push({1, output});
 
@@ -34,13 +34,14 @@ class ElementLinearTree : public ::benchmark::Fixture {
 #endif
 
     while (!treeNodes.empty()) {
-      std::vector<propagation::VarViewId> linearInputs(linearArgumentCount);
-      for (size_t i = 0; i < linearArgumentCount; ++i) {
-        linearInputs[i] = solver->makeIntVar(0, lb, ub);
+      std::vector<propagation::VarViewId> linearInputs;
+      linearInputs.reserve(argumentCount);
+      for (size_t i = 0; i < argumentCount; ++i) {
+        linearInputs.emplace_back(solver->makeIntVar(0, lb, ub));
       }
       TreeNode cur = treeNodes.top();
 #ifndef NDEBUG
-      numNodes += linearArgumentCount;
+      numNodes += argumentCount;
 #endif
       treeNodes.pop();
       if (cur.level < treeHeight - 1) {
@@ -50,14 +51,14 @@ class ElementLinearTree : public ::benchmark::Fixture {
       } else {
         assert(cur.level == treeHeight - 1);
         for (propagation::VarViewId var : linearInputs) {
-          decisionVars.push_back(var);
+          decisionVars.emplace_back(var);
         }
       }
       solver->makeInvariant<propagation::Linear>(*solver, cur.id,
                                                  std::move(linearInputs));
     }
 #ifndef NDEBUG
-    if (linearArgumentCount == 2) {
+    if (argumentCount == 2) {
       assert(numNodes == (size_t(1) << treeHeight) - 1);
     }
 #endif
@@ -78,21 +79,17 @@ class ElementLinearTree : public ::benchmark::Fixture {
   std::uniform_int_distribution<size_t> decisionVarIndexDist;
   std::uniform_int_distribution<Int> decisionVarValueDist;
   std::uniform_int_distribution<Int> elementVarValueDist;
-  Int treeCount{0};      // number of trees and width of element
+  Int treeCount{3};      // number of trees and width of element
   size_t treeHeight{0};  // height of each tree
-  size_t linearArgumentCount{0};
-  int lb{0};
-  int ub{0};
+  size_t argumentCount;
+  Int lb{0};
+  Int ub{1000};
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_shared<propagation::Solver>();
 
-    lb = 0;
-    ub = 1000;
-
-    linearArgumentCount = 2;  // state.range(0);
-    treeCount = state.range(0);
-    treeHeight = state.range(1);
+    treeHeight = state.range(0);
+    argumentCount = state.range(1);
 
     solver->open();
     setSolverMode(*solver, static_cast<int>(state.range(2)));
@@ -179,14 +176,15 @@ static void arguments(::benchmark::internal::Benchmark* benchmark) {
     }
   }
 }
+*/
 
 BENCHMARK_REGISTER_F(ElementLinearTree, probe_single_non_index_var)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 
 BENCHMARK_REGISTER_F(ElementLinearTree, probe_single_index_var)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 
 //*/
 }  // namespace atlantis::benchmark

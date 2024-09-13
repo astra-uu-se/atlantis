@@ -5,10 +5,12 @@
 #include <utility>
 #include <vector>
 
+#include "atlantis/propagation/invariants/binaryMax.hpp"
 #include "atlantis/propagation/invariants/element2dConst.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/invariants/plus.hpp"
 #include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/views/elementConst.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/views/lessEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
@@ -22,8 +24,11 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
   std::vector<propagation::VarViewId> tour;
   std::vector<propagation::VarViewId> timeTo;
   std::vector<propagation::VarViewId> arrivalTime;
+  std::vector<propagation::VarViewId> earliestVisitingTime;
+  std::vector<propagation::VarViewId> latestVisitingTime;
+  std::vector<propagation::VarViewId> departureTime;
   std::vector<std::vector<Int>> dist;
-  VarViewId totalDist{propagation::NULL_ID};
+  propagation::VarViewId totalDist{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;
@@ -33,7 +38,7 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
   const int MAX_TIME = 100000;
 
   std::vector<propagation::VarViewId> violations;
-  VarViewId totalViolation{propagation::NULL_ID};
+  propagation::VarViewId totalViolation{propagation::NULL_ID};
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_shared<propagation::Solver>();
@@ -59,10 +64,27 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
     timeTo.emplace_back(propagation::NULL_ID);
     arrivalTime.emplace_back(solver->makeIntVar(0, 0, 0));
 
+    std::vector<Int> earliestVisit(n, 100);
+    std::vector<Int> latestVisit(n, 200);
+
+    earliestVisitingTime.reserve(n);
+    latestVisitingTime.reserve(n);
+    for (int i = 0; i < n; ++i) {
+      earliestVisitingTime.emplace_back(
+          solver->makeIntView<propagation::ElementConst>(
+              *solver, tour[i], std::vector<Int>(earliestVisit)));
+      latestVisitingTime.emplace_back(
+          solver->makeIntView<propagation::ElementConst>(
+              *solver, tour[i], std::vector<Int>(latestVisit)));
+    }
+
+    departureTime.emplace_back(earliestVisitingTime[0]);
+
     for (int i = 1; i < n; ++i) {
       tour.emplace_back(solver->makeIntVar(i, 0, n - 1));
       timeTo.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
       arrivalTime.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
+      departureTime.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
     }
 
     assert(all_in_range(0, n - 1, [&](const size_t a) {
@@ -82,22 +104,25 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
       solver->makeInvariant<propagation::Element2dConst>(
           *solver, timeTo[i], tour[i - 1], tour[i],
           std::vector<std::vector<Int>>(dist), 0, 0);
-      // arrivalTime[i] = arrivalTime[i - 1] + timeTo[i];
+
+      // departureTime[i] = max(arrivalTime[i], earliestVisitingTime[i])
+      solver->makeInvariant<propagation::BinaryMax>(
+          *solver, departureTime[i], arrivalTime[i], earliestVisitingTime[i]);
+
+      // arrivalTime[i] = departureTime[i - 1] + timeTo[i];
       solver->makeInvariant<propagation::Plus>(*solver, arrivalTime[i],
-                                               arrivalTime[i - 1], timeTo[i]);
+                                               departureTime[i - 1], timeTo[i]);
     }
 
-    // remove dummy from distance:
-    timeTo.erase(timeTo.begin());
-    // totalDist = sum(timeTo)
-    totalDist = solver->makeIntVar(0, 0, MAX_TIME);
-    solver->makeInvariant<propagation::Linear>(
-        *solver, totalDist, std::vector<propagation::VarViewId>(timeTo));
+    violations.reserve(n);
 
     for (int i = 1; i < n; ++i) {
-      violations.emplace_back(solver->makeIntView<propagation::LessEqualConst>(
-          *solver, arrivalTime[i], 100));
+      violations.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
+      solver->makeInvariant<propagation::LessEqual>(
+          *solver, violations[n], arrivalTime[i], latestVisitingTime[i]);
     }
+
+    totalDist = departureTime.back();
 
     totalViolation = solver->makeIntVar(0, 0, MAX_TIME * n);
     solver->makeInvariant<propagation::Linear>(
@@ -198,6 +223,51 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
       static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
+BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_swap)(::benchmark::State& st) {
+  size_t probes = 0;
+  assert(all_in_range(0, n, [&](const size_t a) {
+    const Int curA = solver->committedValue(tour.at(a));
+    return all_in_range(a + 1, n, [&](const size_t b) {
+      const Int curB = solver->committedValue(tour.at(b));
+      if (curA == curB) {
+        return false;
+      }
+      return curA != curB;
+    });
+  }));
+
+  for ([[maybe_unused]] const auto& _ : st) {
+    const size_t a = rand_in_range(0, n - 1, gen);
+    const size_t temp = rand_in_range(0, n - 2, gen);
+    const size_t b = temp == a ? n - 1 : temp;
+
+    solver->beginMove();
+    solver->setValue(tour[a], solver->committedValue(tour[b]));
+    solver->setValue(tour[b], solver->committedValue(tour[a]));
+
+    assert(all_in_range(0, n, [&](const size_t i) {
+      const Int curI = solver->currentValue(tour.at(i));
+      return all_in_range(i + 1, n, [&](const size_t j) {
+        const Int curJ = solver->currentValue(tour.at(j));
+        if (curI == curJ) {
+          return false;
+        }
+        return curI != curJ;
+      });
+    }));
+    solver->endMove();
+
+    solver->beginProbe();
+    solver->query(totalDist);
+    solver->query(totalViolation);
+    solver->endProbe();
+    assert(solver->currentValue(totalDist) == computeDistance());
+    ++probes;
+  }
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+}
+
 BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_all_relocate)(::benchmark::State& st) {
   size_t probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
@@ -221,7 +291,7 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_all_relocate)(::benchmark::State& st) {
 }
 
 //*
-BENCHMARK_REGISTER_F(TSPTWAllDiff, probe_three_opt)
+BENCHMARK_REGISTER_F(TSPTWAllDiff, probe_swap)
     ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 

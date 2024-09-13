@@ -27,8 +27,10 @@ endif()
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   # If we are debugging then add debugging flag
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g2 -O0")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g0 -O3 -DNDEBUG ")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g0 -O3 -DNDEBUG")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
 endif()
 
 # ----------------------------------------------------------------------------
@@ -229,6 +231,11 @@ if(BUILD_BENCHMARKS)
   FetchContent_MakeAvailable(googletest googlebenchmark)
 
   file(GLOB_RECURSE BENCHMARK_SRC_FILES ${PROJECT_SOURCE_DIR}/benchmark/*.cpp ${PROJECT_SOURCE_DIR}/benchmark/*.h ${PROJECT_SOURCE_DIR}/benchmark/*.hpp)
+  string(FIND CMAKE_CXX_FLAGS "-DNDEBUG" NDEBUG_FLAG)
+
+  if(NDEBUG_FLAG)
+    message("NDEBUG flag")
+  endif()
 
   add_executable(runBenchmarks ${BENCHMARK_SRC_FILES})
 

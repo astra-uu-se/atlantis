@@ -18,10 +18,10 @@ namespace atlantis::benchmark {
 class ExtremeDynamic : public ::benchmark::Fixture {
  public:
   std::shared_ptr<propagation::Solver> solver;
-  VarViewId staticInputVar{propagation::NULL_ID};
+  propagation::VarViewId staticInputVar{propagation::NULL_ID};
   std::vector<propagation::VarViewId> dynamicInputVars;
   std::vector<propagation::VarViewId> outputVars;
-  VarViewId objective{propagation::NULL_ID};
+  propagation::VarViewId objective{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;

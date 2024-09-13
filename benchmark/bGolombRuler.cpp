@@ -27,7 +27,7 @@ class GolombRuler : public ::benchmark::Fixture {
   std::vector<propagation::VarViewId> differences;
 
   std::vector<propagation::VarViewId> violations;
-  VarViewId totalViolation{propagation::NULL_ID};
+  propagation::VarViewId totalViolation{propagation::NULL_ID};
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_shared<propagation::Solver>();

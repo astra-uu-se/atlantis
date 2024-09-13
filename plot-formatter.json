@@ -47,8 +47,8 @@
         "probe_single_index_var": "index variable"
       },
       "argument_order": [
-        "Tree Count",
         "Tree Height",
+        "Sum static input count",
         "PROPAGATION_MODE"
       ]
     },
@@ -105,7 +105,7 @@
       ]
     },
     "LinearTree": {
-      "model_name": "Linear Tree",
+      "model_name": "Sum Tree",
       "abbreviation": "LT",
       "yscale": "log",
       "method_name": {
@@ -119,8 +119,8 @@
         "probe_all_move_query_rnd": "all - query random"
       },
       "argument_order": [
-        "Linear input count",
         "Tree Height",
+        "Sum input count",
         "PROPAGATION_MODE"
       ]
     },
@@ -208,6 +208,24 @@
         "PROPAGATION_MODE"
       ]
     },
+    "TSP": {
+      "model_name": "Travelling Salesperson (without Time Windows)",
+      "abbreviation": "TSP",
+      "label": "Tour",
+      "yscale": "log",
+      "group": 0,
+      "method_name": {
+        "probe_three_opt": "single Three-opt",
+        "probe_all_swap": "all Three-opts"
+      },
+      "argument_order": [
+        "n",
+        "PROPAGATION_MODE"
+      ],
+      "compare": [
+        "TSPTWAllDiff"
+      ]
+    },
     "TSPTW": {
       "model_name": "Travelling Salesperson with Time Windows",
       "abbreviation": "TSPTW",
@@ -227,9 +245,9 @@
       ]
     },
     "TSPTWAllDiff": {
-      "model_name": "Travelling Salesperson with Time Windows",
+      "model_name": "Travelling Salesperson with Time Windows\n(Sequence Model)",
       "abbreviation": "TSPTW",
-      "ignore": true,
+      "ignore": false,
       "label": "Sequence",
       "yscale": "log",
       "group": 0,
@@ -238,7 +256,7 @@
         "probe_all_swap": "all Three-opts"
       },
       "argument_order": [
-        "Location count",
+        "n",
         "PROPAGATION_MODE"
       ],
       "compare": [

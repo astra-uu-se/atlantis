@@ -6,7 +6,7 @@
 
 namespace atlantis::benchmark {
 
-inline propagation::PropagationMode intToPropagationMode(int state) {
+inline propagation::PropagationMode intToPropagationMode(Int state) {
   switch (state) {
     case 3:
     case 2:
@@ -19,7 +19,7 @@ inline propagation::PropagationMode intToPropagationMode(int state) {
 }
 
 inline propagation::OutputToInputMarkingMode intToOutputToInputMarkingMode(
-    int state) {
+    Int state) {
   switch (state) {
     case 3:
       return propagation::OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION;
@@ -32,7 +32,7 @@ inline propagation::OutputToInputMarkingMode intToOutputToInputMarkingMode(
   }
 }
 
-inline void setSolverMode(propagation::Solver& solver, const int state) {
+inline void setSolverMode(propagation::Solver& solver, const Int state) {
   solver.setPropagationMode(intToPropagationMode(state));
   solver.setOutputToInputMarkingMode(intToOutputToInputMarkingMode(state));
 }
@@ -50,9 +50,9 @@ inline bool all_in_range(size_t minInclusive, size_t maxExclusive,
 }
 
 inline void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
-  int n = 16;
+  Int n = 16;
   while (n <= 1024) {
-    for (int mode = 0; mode <= 3; ++mode) {
+    for (Int mode = 0; mode <= 3; ++mode) {
       benchmark->Args({n, mode});
     }
     if (n < 32) {
@@ -69,4 +69,28 @@ inline void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
 #endif
   }
 }
+
+inline Int int_pow(Int base, Int exponent) {
+  if (exponent <= 0) {
+    return 1;
+  }
+  Int power = base;
+  for (Int i = 1; i < exponent; ++i) {
+    power *= base;
+  }
+  return power;
+}
+
+inline void defaultTreeArguments(::benchmark::internal::Benchmark* benchmark) {
+  Int treeHeight = 4;
+  for (Int argumentCount = 2; argumentCount <= 10; ++argumentCount) {
+    for (Int mode = 0; mode <= 3; ++mode) {
+      benchmark->Args({treeHeight, argumentCount, mode});
+    }
+#ifndef NDEBUG
+    return;
+#endif
+  }
+}
+
 }  // namespace atlantis::benchmark
