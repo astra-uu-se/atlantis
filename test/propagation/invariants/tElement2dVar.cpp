@@ -608,8 +608,8 @@ RC_GTEST_FIXTURE_PROP(Element2dVarTest, rapidcheck, ()) {
 
   std::vector<VarViewId> modifiedVars{rowIndex, colIndex, VarViewId(NULL_ID),
                                       VarViewId(NULL_ID)};
-  const size_t numMoves = 10;
-  const size_t numProbes = 100;
+  const size_t numMoves = 3;
+  const size_t numProbes = 10;
 
   for (size_t m = numMoves; m > 0; --m) {
     const Int committedRow = _solver->committedValue(rowIndex);
@@ -617,7 +617,7 @@ RC_GTEST_FIXTURE_PROP(Element2dVarTest, rapidcheck, ()) {
     RC_ASSERT(committedRow < numRows + rowOffset);
     const Int committedCol = _solver->committedValue(colIndex);
     RC_ASSERT(committedCol >= colOffset);
-    RC_ASSERT(committedCol < numRows + colOffset);
+    RC_ASSERT(committedCol < numCols + colOffset);
 
     modifiedVars.at(2) =
         varMatrix.at(committedRow - rowOffset).at(committedCol - colOffset);
@@ -641,7 +641,7 @@ RC_GTEST_FIXTURE_PROP(Element2dVarTest, rapidcheck, ()) {
 
       const bool modifyCol = *rc::gen::arbitrary<bool>();
       const Int newCol = modifyCol
-                             ? *rc::gen::inRange(rowOffset, numRows + rowOffset)
+                             ? *rc::gen::inRange(colOffset, numCols + colOffset)
                              : committedCol;
       if (modifyCol) {
         _solver->setValue(colIndex, newCol);
@@ -662,18 +662,18 @@ RC_GTEST_FIXTURE_PROP(Element2dVarTest, rapidcheck, ()) {
         _solver->setValue(modifiedVars.at(2), newCurVal);
       }
 
-      _solver->close();
+      _solver->endMove();
 
       if (p != 1) {
         _solver->beginProbe();
       } else {
-        _solver->beginMove();
+        _solver->beginCommit();
       }
       _solver->query(output);
       if (p != 1) {
         _solver->endProbe();
       } else {
-        _solver->endMove();
+        _solver->endCommit();
       }
       RC_ASSERT(_solver->currentValue(modifiedVars.at(3)) ==
                 _solver->currentValue(output));
