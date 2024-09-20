@@ -31,7 +31,7 @@ class CarSequencing : public ::benchmark::Fixture {
   std::vector<std::vector<Int>> carFeature;
 
   std::vector<propagation::VarViewId> sequence;
-  propagation::VarViewId totalViolation{propagation::NULL_ID};
+  VarViewId totalViolation{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;
@@ -133,10 +133,15 @@ class CarSequencing : public ::benchmark::Fixture {
     std::vector<propagation::VarViewId> featureElemSum;
     // introducing variables linear in numCars
     featureElemSum.reserve(numFeatures * numCars);
+    // introducing variables linear in numCars (numFeatures is a constant)
+    std::vector<std::vector<propagation::VarViewId>> featureElem(numFeatures);
+    for (size_t o = 0; o < numFeatures; ++o) {
+      featureElem.at(o) =
+          std::vector<propagation::VarViewId>(numCars, propagation::NULL_ID);
+    }
 
     for (Int i = 0; i < static_cast<Int>(numCars); ++i) {
-      sequence.emplace_back(
-          _solver->makeIntVar(i, 0, static_cast<Int>(numCars) - 1));
+      sequence.at(i) = _solver->makeIntVar(i, 0, static_cast<Int>(numCars) - 1);
     }
 
     for (size_t o = 0; o < numFeatures; ++o) {

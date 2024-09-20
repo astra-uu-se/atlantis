@@ -23,7 +23,7 @@ class TSP : public ::benchmark::Fixture {
   std::vector<propagation::VarViewId> pred;
   std::vector<propagation::VarViewId> timeToPred;
   std::vector<std::vector<Int>> durations;
-  propagation::VarViewId totalDist{propagation::NULL_ID};
+  VarViewId totalDist{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;
@@ -59,9 +59,8 @@ class TSP : public ::benchmark::Fixture {
 
     for (Int i = 0; i < n; ++i) {
       const Int initVal = (i - 1 + n) % n;
-      pred.emplace_back(
-          solver->makeIntVar(initVal, 0 + static_cast<Int>(i == 0),
-                             n - 1 - static_cast<Int>(i == n - 1)));
+      pred[i] = solver->makeIntVar(initVal, 0 + static_cast<Int>(i == 0),
+                                   n - 1 - static_cast<Int>(i == n - 1));
       assert(solver->committedValue(pred.at(i)) == (i - 1 + n) % n);
       assert(solver->currentValue(pred.at(i)) == (i - 1 + n) % n);
     }
@@ -71,8 +70,8 @@ class TSP : public ::benchmark::Fixture {
 
     for (int i = 0; i < n; ++i) {
       // timeToPred[i] = durations[i][pred[i]]
-      timeToPred.emplace_back(solver->makeIntView<propagation::ElementConst>(
-          *solver, pred[i], std::vector<Int>(durations[i]), 0));
+      timeToPred[i] = solver->makeIntView<propagation::ElementConst>(
+          *solver, pred[i], std::vector<Int>(durations[i]), 0);
     }
 
     // totalDist = sum(timeToPred)
@@ -81,13 +80,13 @@ class TSP : public ::benchmark::Fixture {
         *solver, totalDist, std::vector<propagation::VarViewId>(timeToPred));
 
     solver->close();
-    assert(std::all_of(pred.begin() + 1, pred.end(),
+    assert(std::all_of(pred.begin(), pred.end(),
                        [&](const propagation::VarViewId p) {
                          return solver->lowerBound(p) == 0;
                        }));
-    assert(std::all_of(pred.begin(), pred.end() - 1,
+    assert(std::all_of(pred.begin(), pred.end(),
                        [&](const propagation::VarViewId p) {
-                         return solver->upperBound(p) == n - 1;
+                         return solver->upperBound(p) == n;
                        }));
     assert(std::all_of(pred.begin(), pred.end(),
                        [&](const propagation::VarViewId p) {

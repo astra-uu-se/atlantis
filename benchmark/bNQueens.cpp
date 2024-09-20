@@ -49,13 +49,11 @@ class Queens : public ::benchmark::Fixture {
     q_offset_plus.reserve(n);
 
     for (Int i = 0; i < n; ++i) {
-      queens.emplace_back(solver->makeIntVar(i, 0, n - 1));
-      q_offset_minus.emplace_back(
-          solver->makeIntView<propagation::IntOffsetView>(*solver, queens.at(i),
-                                                          -i));
-      q_offset_plus.emplace_back(
-          solver->makeIntView<propagation::IntOffsetView>(*solver, queens.at(i),
-                                                          i));
+      queens.at(i) = solver->makeIntVar(i, 0, n - 1);
+      q_offset_minus.at(i) = solver->makeIntView<propagation::IntOffsetView>(
+          *solver, queens.at(i), -i);
+      q_offset_plus.at(i) = solver->makeIntView<propagation::IntOffsetView>(
+          *solver, queens.at(i), i);
     }
 
     violation1 = solver->makeIntVar(0, 0, n);

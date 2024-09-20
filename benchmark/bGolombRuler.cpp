@@ -27,7 +27,7 @@ class GolombRuler : public ::benchmark::Fixture {
   std::vector<propagation::VarViewId> differences;
 
   std::vector<propagation::VarViewId> violations;
-  propagation::VarViewId totalViolation{propagation::NULL_ID};
+  VarViewId totalViolation{propagation::NULL_ID};
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_shared<propagation::Solver>();
@@ -39,9 +39,6 @@ class GolombRuler : public ::benchmark::Fixture {
 
     solver->open();
     setSolverMode(*solver, static_cast<int>(state.range(1)));
-
-    marks.clear();
-    marks.reserve(markCount);
 
     // Let first mark equal 0
     marks.emplace_back(solver->makeIntVar(0, 0, 0));
@@ -57,7 +54,6 @@ class GolombRuler : public ::benchmark::Fixture {
       marks.emplace_back(solver->makeIntVar(markVal, markLb, markUb));
       prevVal = markVal;
     }
-    assert(marks.size() == markCount);
 
     differences.reserve(((markCount - 1) * (markCount)) / 2);
 
@@ -104,6 +100,8 @@ BENCHMARK_DEFINE_F(GolombRuler, probe_single)(::benchmark::State& st) {
 
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i <= lastIndex; ++i) {
+      assert(i <= lastIndex);
+
       std::swap<size_t>(
           indices[i], indices[rand_in_range(std::min<size_t>(i + 1, lastIndex),
                                             lastIndex, gen)]);

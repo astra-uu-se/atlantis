@@ -40,7 +40,7 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
   const int MAX_TIME = 100000;
 
   std::vector<propagation::VarViewId> violations;
-  propagation::VarViewId totalViolation{propagation::NULL_ID};
+  VarViewId totalViolation{propagation::NULL_ID};
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_shared<propagation::Solver>();
