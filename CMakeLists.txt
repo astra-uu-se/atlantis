@@ -231,11 +231,6 @@ if(BUILD_BENCHMARKS)
   FetchContent_MakeAvailable(googletest googlebenchmark)
 
   file(GLOB_RECURSE BENCHMARK_SRC_FILES ${PROJECT_SOURCE_DIR}/benchmark/*.cpp ${PROJECT_SOURCE_DIR}/benchmark/*.h ${PROJECT_SOURCE_DIR}/benchmark/*.hpp)
-  string(FIND CMAKE_CXX_FLAGS "-DNDEBUG" NDEBUG_FLAG)
-
-  if(NDEBUG_FLAG)
-    message("NDEBUG flag")
-  endif()
 
   add_executable(runBenchmarks ${BENCHMARK_SRC_FILES})
 

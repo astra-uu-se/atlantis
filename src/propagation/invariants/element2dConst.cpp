@@ -35,8 +35,8 @@ Element2dConst::Element2dConst(SolverBase& solver, VarViewId output,
 
 void Element2dConst::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _indices[0], LocalId(0), false);
-  _solver.registerInvariantInput(_id, _indices[1], LocalId(0), false);
+  _solver.registerInvariantInput(_id, _indices[0], LocalId{0}, false);
+  _solver.registerInvariantInput(_id, _indices[1], LocalId{1}, false);
   registerDefinedVar(_output);
 }
 
@@ -74,6 +74,7 @@ void Element2dConst::recompute(Timestamp ts) {
          static_cast<size_t>(_dimensions[0]));
   assert(safeIndex2(_solver.value(ts, _indices[1])) <
          static_cast<size_t>(_dimensions[1]));
+
   updateValue(ts, _output,
               _matrix[safeIndex1(_solver.value(ts, _indices[0]))]
                      [safeIndex2(_solver.value(ts, _indices[1]))]);

@@ -21,13 +21,15 @@ namespace atlantis::benchmark {
 class TSPTWAllDiff : public ::benchmark::Fixture {
  public:
   std::shared_ptr<propagation::Solver> solver;
-  std::vector<propagation::VarViewId> tour;
+  std::vector<propagation::VarViewId> sequence;
   std::vector<propagation::VarViewId> timeTo;
   std::vector<propagation::VarViewId> arrivalTime;
   std::vector<propagation::VarViewId> earliestVisitingTime;
   std::vector<propagation::VarViewId> latestVisitingTime;
   std::vector<propagation::VarViewId> departureTime;
   std::vector<std::vector<Int>> dist;
+  std::vector<Int> earliestVisit;
+  std::vector<Int> latestVisit;
   propagation::VarViewId totalDist{propagation::NULL_ID};
 
   std::random_device rd;
@@ -52,45 +54,40 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
     solver->open();
 
     setSolverMode(*solver, static_cast<int>(state.range(1)));
+    dist.clear();
 
-    for (int i = 1; i <= n; ++i) {
+    for (Int i = 1; i <= n; ++i) {
       dist.emplace_back();
       for (int j = 1; j <= n; ++j) {
         dist.back().push_back(i * j);
       }
     }
 
-    tour.emplace_back(solver->makeIntVar(0, 0, n - 1));
+    sequence.clear();
+    timeTo.clear();
+    arrivalTime.clear();
+    earliestVisitingTime.clear();
+    latestVisitingTime.clear();
+    departureTime.clear();
+    earliestVisit.clear();
+    latestVisit.clear();
+
+    sequence.emplace_back(solver->makeIntVar(0, 0, n - 1));
     timeTo.emplace_back(propagation::NULL_ID);
     arrivalTime.emplace_back(solver->makeIntVar(0, 0, 0));
+    departureTime.emplace_back(propagation::NULL_ID);
 
-    std::vector<Int> earliestVisit(n, 100);
-    std::vector<Int> latestVisit(n, 200);
-
-    earliestVisitingTime.reserve(n);
-    latestVisitingTime.reserve(n);
-    for (int i = 0; i < n; ++i) {
-      earliestVisitingTime.emplace_back(
-          solver->makeIntView<propagation::ElementConst>(
-              *solver, tour[i], std::vector<Int>(earliestVisit)));
-      latestVisitingTime.emplace_back(
-          solver->makeIntView<propagation::ElementConst>(
-              *solver, tour[i], std::vector<Int>(latestVisit)));
-    }
-
-    departureTime.emplace_back(earliestVisitingTime[0]);
-
-    for (int i = 1; i < n; ++i) {
-      tour.emplace_back(solver->makeIntVar(i, 0, n - 1));
+    for (Int i = 1; i < n; ++i) {
+      sequence.emplace_back(solver->makeIntVar(i, 0, n - 1));
       timeTo.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
       arrivalTime.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
       departureTime.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
     }
 
     assert(all_in_range(0, n - 1, [&](const size_t a) {
-      const Int curA = solver->currentValue(tour.at(a));
+      const Int curA = solver->currentValue(sequence.at(a));
       return all_in_range(a + 1, n, [&](const size_t b) {
-        const Int curB = solver->currentValue(tour.at(b));
+        const Int curB = solver->currentValue(sequence.at(b));
         if (curA == curB) {
           return false;
         }
@@ -98,47 +95,67 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
       });
     }));
 
-    // Ignore index 0
-    for (int i = 1; i < n; ++i) {
-      // timeTo[i] = dist[tour[i - 1]][tour[i]]
-      solver->makeInvariant<propagation::Element2dConst>(
-          *solver, timeTo[i], tour[i - 1], tour[i],
-          std::vector<std::vector<Int>>(dist), 0, 0);
+    earliestVisit.resize(n, 100);
+    latestVisit.resize(n, 200);
 
-      // departureTime[i] = max(arrivalTime[i], earliestVisitingTime[i])
-      solver->makeInvariant<propagation::BinaryMax>(
-          *solver, departureTime[i], arrivalTime[i], earliestVisitingTime[i]);
+    earliestVisitingTime.reserve(n);
+    latestVisitingTime.reserve(n);
+    for (Int i = 0; i < n; ++i) {
+      earliestVisitingTime.emplace_back(
+          solver->makeIntView<propagation::ElementConst>(
+              *solver, sequence[i], std::vector<Int>(earliestVisit), 0));
+      latestVisitingTime.emplace_back(
+          solver->makeIntView<propagation::ElementConst>(
+              *solver, sequence[i], std::vector<Int>(latestVisit), 0));
+    }
+
+    assert(departureTime[0] == propagation::NULL_ID);
+
+    departureTime[0] = earliestVisitingTime[0];
+
+    // Ignore index 0
+    for (Int i = 1; i < n; ++i) {
+      // timeTo[i] = dist[sequence[i - 1]][sequence[i]]
+      solver->makeInvariant<propagation::Element2dConst>(
+          *solver, timeTo[i], sequence[i - 1], sequence[i],
+          std::vector<std::vector<Int>>(dist), 0, 0);
 
       // arrivalTime[i] = departureTime[i - 1] + timeTo[i];
       solver->makeInvariant<propagation::Plus>(*solver, arrivalTime[i],
                                                departureTime[i - 1], timeTo[i]);
+
+      // departureTime[i] = max(arrivalTime[i], earliestVisitingTime[i])
+      solver->makeInvariant<propagation::BinaryMax>(
+          *solver, departureTime[i], arrivalTime[i], earliestVisitingTime[i]);
     }
 
-    violations.reserve(n);
+    violations.reserve(n - 1);
 
-    for (int i = 1; i < n; ++i) {
+    for (Int i = 1; i < n; ++i) {
       violations.emplace_back(solver->makeIntVar(0, 0, MAX_TIME));
-      solver->makeInvariant<propagation::LessEqual>(
-          *solver, violations[n], arrivalTime[i], latestVisitingTime[i]);
+      // violations[i - 1] = arrivalTime[i] <= latestVisitingTime[i];
+      solver->makeViolationInvariant<propagation::LessEqual>(
+          *solver, violations.back(), arrivalTime[i], latestVisitingTime[i]);
     }
-
-    totalDist = departureTime.back();
 
     totalViolation = solver->makeIntVar(0, 0, MAX_TIME * n);
     solver->makeInvariant<propagation::Linear>(
         *solver, totalViolation,
         std::vector<propagation::VarViewId>(violations));
 
+    totalDist = departureTime.back();
+
     solver->close();
-    assert(std::all_of(tour.begin(), tour.end(),
+    assert(computeDistance() > 0);
+    assert(std::all_of(sequence.begin(), sequence.end(),
                        [&](const propagation::VarViewId p) {
                          return solver->lowerBound(p) == 0;
                        }));
-    assert(std::all_of(tour.begin(), tour.end(),
+    assert(std::all_of(sequence.begin(), sequence.end(),
                        [&](const propagation::VarViewId p) {
                          return solver->upperBound(p) == n - 1;
                        }));
-    assert(std::all_of(tour.begin(), tour.end(),
+    assert(std::all_of(sequence.begin(), sequence.end(),
                        [&](const propagation::VarViewId p) {
                          return 0 <= solver->committedValue(p) &&
                                 solver->committedValue(p) <= n - 1;
@@ -150,30 +167,46 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
   }
 
   void TearDown(const ::benchmark::State&) override {
-    tour.clear();
+    dist.clear();
+    sequence.clear();
     timeTo.clear();
     arrivalTime.clear();
-    dist.clear();
-    violations.clear();
+    earliestVisitingTime.clear();
+    latestVisitingTime.clear();
+    departureTime.clear();
+    earliestVisit.clear();
+    latestVisit.clear();
   }
 
   Int computeDistance() {
-    Int tot = 0;
-    // Ignore wrapping from last to first location
+    std::vector<Int> departure(n, 0);
+    departure.at(0) = std::max(
+        earliestVisit.at(solver->currentValue(sequence.at(0))), Int{0});
+    assert(departure.at(0) == solver->currentValue(departureTime.at(0)));
+
     for (Int i = 1; i < n; ++i) {
-      tot += dist.at(solver->currentValue(tour.at(i - 1)))
-                 .at(solver->currentValue(tour.at(i)));
+      const Int pred = solver->currentValue(sequence.at(i - 1));
+      const Int cur = solver->currentValue(sequence.at(i));
+
+      const Int travelTime = dist.at(pred).at(cur);
+      assert(travelTime == solver->currentValue(timeTo.at(i)));
+
+      const Int arrival = departure.at(i - 1) + travelTime;
+      assert(arrival == solver->currentValue(arrivalTime.at(i)));
+
+      departure.at(i) = std::max(earliestVisit.at(cur), arrival);
+      assert(departure.at(i) == solver->currentValue(departureTime.at(i)));
     }
-    return tot;
+    return departure.back();
   }
 };
 
 BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
   size_t probes = 0;
   assert(all_in_range(0, n, [&](const size_t a) {
-    const Int curA = solver->committedValue(tour.at(a));
+    const Int curA = solver->committedValue(sequence.at(a));
     return all_in_range(a + 1, n, [&](const size_t b) {
-      const Int curB = solver->committedValue(tour.at(b));
+      const Int curB = solver->committedValue(sequence.at(b));
       if (curA == curB) {
         return false;
       }
@@ -194,16 +227,16 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
     size_t cur = b;
 
     for (size_t i = d; i <= e; ++i) {
-      solver->setValue(tour[cur++], solver->committedValue(tour[i]));
+      solver->setValue(sequence[cur++], solver->committedValue(sequence[i]));
     }
     for (size_t i = b; i < d; ++i) {
-      solver->setValue(tour[cur++], solver->committedValue(tour[i]));
+      solver->setValue(sequence[cur++], solver->committedValue(sequence[i]));
     }
 
     assert(all_in_range(0, n, [&](const size_t i) {
-      const Int curI = solver->currentValue(tour.at(i));
+      const Int curI = solver->currentValue(sequence.at(i));
       return all_in_range(i + 1, n, [&](const size_t j) {
-        const Int curJ = solver->currentValue(tour.at(j));
+        const Int curJ = solver->currentValue(sequence.at(j));
         if (curI == curJ) {
           return false;
         }
@@ -216,6 +249,7 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
     solver->query(totalDist);
     solver->query(totalViolation);
     solver->endProbe();
+
     assert(solver->currentValue(totalDist) == computeDistance());
     ++probes;
   }
@@ -226,9 +260,9 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_three_opt)(::benchmark::State& st) {
 BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_swap)(::benchmark::State& st) {
   size_t probes = 0;
   assert(all_in_range(0, n, [&](const size_t a) {
-    const Int curA = solver->committedValue(tour.at(a));
+    const Int curA = solver->committedValue(sequence.at(a));
     return all_in_range(a + 1, n, [&](const size_t b) {
-      const Int curB = solver->committedValue(tour.at(b));
+      const Int curB = solver->committedValue(sequence.at(b));
       if (curA == curB) {
         return false;
       }
@@ -242,13 +276,13 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_swap)(::benchmark::State& st) {
     const size_t b = temp == a ? n - 1 : temp;
 
     solver->beginMove();
-    solver->setValue(tour[a], solver->committedValue(tour[b]));
-    solver->setValue(tour[b], solver->committedValue(tour[a]));
+    solver->setValue(sequence[a], solver->committedValue(sequence[b]));
+    solver->setValue(sequence[b], solver->committedValue(sequence[a]));
 
     assert(all_in_range(0, n, [&](const size_t i) {
-      const Int curI = solver->currentValue(tour.at(i));
+      const Int curI = solver->currentValue(sequence.at(i));
       return all_in_range(i + 1, n, [&](const size_t j) {
-        const Int curJ = solver->currentValue(tour.at(j));
+        const Int curJ = solver->currentValue(sequence.at(j));
         if (curI == curJ) {
           return false;
         }
@@ -261,6 +295,7 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_swap)(::benchmark::State& st) {
     solver->query(totalDist);
     solver->query(totalViolation);
     solver->endProbe();
+
     assert(solver->currentValue(totalDist) == computeDistance());
     ++probes;
   }
@@ -271,11 +306,11 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_swap)(::benchmark::State& st) {
 BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_all_relocate)(::benchmark::State& st) {
   size_t probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
-    for (int i = 0; i < n; ++i) {
+    for (Int i = 0; i < n; ++i) {
       for (int j = i + 1; j < n; ++j) {
         solver->beginMove();
-        solver->setValue(tour[i], solver->committedValue(tour[j]));
-        solver->setValue(tour[j], solver->committedValue(tour[i]));
+        solver->setValue(sequence[i], solver->committedValue(sequence[j]));
+        solver->setValue(sequence[j], solver->committedValue(sequence[i]));
         solver->endMove();
 
         solver->beginProbe();

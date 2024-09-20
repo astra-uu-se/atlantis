@@ -21,12 +21,15 @@ namespace atlantis::benchmark {
 class TSPTW : public ::benchmark::Fixture {
  public:
   std::shared_ptr<propagation::Solver> solver;
+  std::vector<std::vector<Int>> durations;
+
   std::vector<propagation::VarViewId> pred;
   std::vector<propagation::VarViewId> timeToPred;
   std::vector<propagation::VarViewId> arrivalTime;
   std::vector<propagation::VarViewId> departureTime;
   std::vector<propagation::VarViewId> departureTimePred;
-  std::vector<std::vector<Int>> durations;
+  std::vector<propagation::VarViewId> violations;
+
   propagation::VarViewId objective{propagation::NULL_ID};
 
   std::random_device rd;
@@ -36,7 +39,6 @@ class TSPTW : public ::benchmark::Fixture {
   Int n{0};
   const int MAX_TIME = 100000;
 
-  std::vector<propagation::VarViewId> violations;
   propagation::VarViewId totalViolation{propagation::NULL_ID};
 
   void SetUp(const ::benchmark::State& state) override {
@@ -52,6 +54,14 @@ class TSPTW : public ::benchmark::Fixture {
 
     setSolverMode(*solver, static_cast<int>(state.range(1)));
 
+    durations.clear();
+    pred.clear();
+    timeToPred.clear();
+    arrivalTime.clear();
+    departureTime.clear();
+    departureTimePred.clear();
+    violations.clear();
+
     for (Int i = 0; i < n; ++i) {
       durations.emplace_back(n + 1, 0);
       for (int j = 0; j < n; ++j) {
@@ -60,12 +70,6 @@ class TSPTW : public ::benchmark::Fixture {
     }
     // add dummy row:
     durations.emplace_back(n + 1, 0);
-
-    pred.clear();
-    arrivalTime.clear();
-    timeToPred.clear();
-    departureTimePred.clear();
-    violations.clear();
 
     pred.reserve(n);
     arrivalTime.reserve(n);
@@ -118,7 +122,8 @@ class TSPTW : public ::benchmark::Fixture {
           *solver, arrivalTime[i], departureTimePred[i], timeToPred[i]);
     }
 
-    // The objective is the departure time of the dummy location:
+    // The objective is the departure time of the location preceding the dummy
+    // location departureTimePred[pred[n]]
     objective = solver->makeIntVar(0, 0, MAX_TIME * n);
     solver->makeInvariant<propagation::ElementVar>(
         *solver, objective, pred[n],
@@ -152,11 +157,12 @@ class TSPTW : public ::benchmark::Fixture {
   }
 
   void TearDown(const ::benchmark::State&) override {
+    durations.clear();
     pred.clear();
     timeToPred.clear();
-    departureTimePred.clear();
     arrivalTime.clear();
-    durations.clear();
+    departureTime.clear();
+    departureTimePred.clear();
     violations.clear();
   }
 
@@ -198,23 +204,13 @@ BENCHMARK_DEFINE_F(TSPTW, probe_three_opt)(::benchmark::State& st) {
 
   size_t probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
-    Int i = -1;
-    Int j = -1;
-    for (size_t index1 = 0; i < 0 && index1 <= static_cast<size_t>(n);
-         ++index1) {
-      std::swap(indexVec1[index1], indexVec1[randInRange(index1, n)]);
-      const Int tmpI = indexVec1[index1];
-      for (size_t index2 = 0; index2 <= static_cast<size_t>(n); ++index2) {
-        std::swap(indexVec2[index2],
-                  indexVec2[randInRange(index2, static_cast<size_t>(n))]);
-        const Int tmpJ = indexVec2[index2];
-        if (tmpI != tmpJ && solver->committedValue(pred[tmpI]) != tmpJ) {
-          i = tmpI;
-          j = tmpJ;
-          break;
-        }
-      }
-    }
+    const Int i = randInRange(0, n);
+    Int tmp = randInRange(0, n - 2);
+    tmp = (tmp == i || tmp == solver->committedValue(pred[i])) ? (n - 1) : tmp;
+    tmp = (tmp == i || tmp == solver->committedValue(pred[i])) ? n : tmp;
+    assert(tmp != i && tmp != solver->committedValue(pred[i]));
+    const Int j = tmp;
+
     assert(0 <= i && i <= n);
     assert(0 <= j && j <= n);
     solver->beginMove();
