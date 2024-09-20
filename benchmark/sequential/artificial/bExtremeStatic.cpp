@@ -18,7 +18,7 @@ class ExtremeStatic : public ::benchmark::Fixture {
  public:
   std::shared_ptr<propagation::Solver> solver;
   std::vector<propagation::VarViewId> staticInputVars;
-  propagation::VarViewId objective{propagation::NULL_ID};
+  VarViewId objective{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;

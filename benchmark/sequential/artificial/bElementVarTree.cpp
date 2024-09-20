@@ -74,7 +74,7 @@ class ElementVarTree : public ::benchmark::Fixture {
 
  public:
   std::shared_ptr<propagation::Solver> solver;
-  propagation::VarViewId output{propagation::NULL_ID};
+  VarViewId output{propagation::NULL_ID};
 
   std::vector<propagation::VarViewId> vars;
   std::vector<propagation::VarViewId> searchVars;

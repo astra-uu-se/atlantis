@@ -19,7 +19,7 @@ class ElementLinearTree : public ::benchmark::Fixture {
  private:
   struct TreeNode {
     size_t level;
-    propagation::VarViewId id{propagation::NULL_ID};
+    VarViewId id{propagation::NULL_ID};
   };
 
   void createTree() {
