@@ -12,11 +12,11 @@ namespace atlantis::logging {
 class Logger;
 
 enum class Level : uint8_t {
-  ERR = 0,
-  WARN = 1,
-  INFO = 2,
-  DEBUG = 3,
-  TRACE = 4
+  LVL_ERROR = 0,
+  LVL_WARNING = 1,
+  LVL_INFO = 2,
+  LVL_DEBUG = 3,
+  LVL_TRACE = 4
 };
 
 class LogScopeWrapper {
@@ -83,12 +83,12 @@ class Logger {
 
   template <typename Action>
   void timedProcedure(const char* title, Action&& action) {
-    timedProcedure<Action>(Level::INFO, title, std::move(action));
+    timedProcedure<Action>(Level::LVL_INFO, title, std::move(action));
   }
 
   template <typename ReturnType, typename Action>
   ReturnType timedFunction(const char* title, Action action) {
-    return timedFunction<ReturnType, Action>(Level::INFO, title,
+    return timedFunction<ReturnType, Action>(Level::LVL_INFO, title,
                                              std::move(action));
   }
 
@@ -129,27 +129,27 @@ class Logger {
 
   template <typename... T>
   void trace(fmt::format_string<T...> format, T&&... args) {
-    log(Level::TRACE, format, std::forward<T>(args)...);
+    log(Level::LVL_TRACE, format, std::forward<T>(args)...);
   }
 
   template <typename... T>
   void debug(fmt::format_string<T...> format, T&&... args) {
-    log(Level::DEBUG, format, std::forward<T>(args)...);
+    log(Level::LVL_DEBUG, format, std::forward<T>(args)...);
   }
 
   template <typename... T>
   void info(fmt::format_string<T...> format, T&&... args) {
-    log(Level::INFO, format, std::forward<T>(args)...);
+    log(Level::LVL_INFO, format, std::forward<T>(args)...);
   }
 
   template <typename... T>
   void warn(fmt::format_string<T...> format, T&&... args) {
-    log(Level::WARN, format, std::forward<T>(args)...);
+    log(Level::LVL_WARNING, format, std::forward<T>(args)...);
   }
 
   template <typename... T>
   void err(fmt::format_string<T...> format, T&&... args) {
-    log(Level::ERR, format, std::forward<T>(args)...);
+    log(Level::LVL_ERROR, format, std::forward<T>(args)...);
   }
 
   inline void increaseIndentation() noexcept {
@@ -163,15 +163,15 @@ class Logger {
  private:
   inline static const char* levelString(Level level) {
     switch (level) {
-      case Level::ERR:
-        return "ERR";
-      case Level::WARN:
-        return "WARN";
-      case Level::INFO:
+      case Level::LVL_ERROR:
+        return "ERROR";
+      case Level::LVL_WARNING:
+        return "WARNING";
+      case Level::LVL_INFO:
         return "INFO";
-      case Level::DEBUG:
+      case Level::LVL_DEBUG:
         return "DEBUG";
-      case Level::TRACE:
+      case Level::LVL_TRACE:
         return "TRACE";
     }
 

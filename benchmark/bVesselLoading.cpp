@@ -41,7 +41,7 @@ class VesselLoading : public ::benchmark::Fixture {
   std::vector<propagation::VarViewId> left;
   std::vector<propagation::VarViewId> bottom;
 
-  VarViewId totalViolation{propagation::NULL_ID};
+  propagation::VarViewId totalViolation{propagation::NULL_ID};
 
   std::uniform_int_distribution<size_t> indexDistr;
   std::uniform_int_distribution<Int> orientationDistr;
@@ -67,11 +67,19 @@ class VesselLoading : public ::benchmark::Fixture {
     // conClass[i]  = container i class:
     std::vector<size_t> conClass(containerCount);
 
-    orientation.resize(containerCount);
-    left.resize(containerCount);
-    std::vector<propagation::VarViewId> right(containerCount);
-    bottom.resize(containerCount);
-    std::vector<propagation::VarViewId> top(containerCount);
+    orientation.clear();
+    orientation.reserve(containerCount);
+
+    left.clear();
+    left.reserve(containerCount);
+
+    std::vector<propagation::VarViewId> right;
+    right.reserve(containerCount);
+
+    bottom.clear();
+    bottom.reserve(containerCount);
+    std::vector<propagation::VarViewId> top;
+    top.reserve(containerCount);
 
     // Create containerCount containers
     for (size_t i = 0; i < containerCount; ++i) {
@@ -82,11 +90,15 @@ class VesselLoading : public ::benchmark::Fixture {
       // Create variables
       Int m = std::min(static_cast<Int>(conWidth[i]),
                        static_cast<Int>(conLength[i]));
-      orientation[i] = solver->makeIntVar(0, 0, 1);
-      left[i] = solver->makeIntVar(0, 0, static_cast<Int>(vesselWidth) - m);
-      right[i] = solver->makeIntVar(m, m, static_cast<Int>(vesselWidth));
-      bottom[i] = solver->makeIntVar(0, 0, static_cast<Int>(vesselLength) - m);
-      top[i] = solver->makeIntVar(m, m, static_cast<Int>(vesselLength));
+      orientation.emplace_back(solver->makeIntVar(0, 0, 1));
+      left.emplace_back(
+          solver->makeIntVar(0, 0, static_cast<Int>(vesselWidth) - m));
+      right.emplace_back(
+          solver->makeIntVar(m, m, static_cast<Int>(vesselWidth)));
+      bottom.emplace_back(
+          solver->makeIntVar(0, 0, static_cast<Int>(vesselLength) - m));
+      top.emplace_back(
+          solver->makeIntVar(m, m, static_cast<Int>(vesselLength)));
     }
 
     // Create random min separation distance between classes.

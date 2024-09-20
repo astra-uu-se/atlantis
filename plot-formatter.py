@@ -756,6 +756,7 @@ class PlotFormatter:
         name_parts: str = benchmark['run_name'].split('/')
         model_name: str = name_parts[0]
         if not re.search(self.models_re, model_name):
+            logging.info(f"Skipping {model_name}")
             return None
 
         method_name: str = name_parts[1]
@@ -789,11 +790,6 @@ class PlotFormatter:
         probes_per_second = benchmark['probes_per_second']
 
         model = Model(model_name, settings)
-
-        logging.info('\t'.join([model_name,
-                                str(problem_instance),
-                                int_to_propagation_mode(propagation_mode),
-                                str(probes_per_second)]))
 
         model.create_method(method_name)\
              .create_propagation_mode_collection(identifier)\

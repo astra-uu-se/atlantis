@@ -47,15 +47,15 @@ class MagicSquare : public ::benchmark::Fixture {
 
     setSolverMode(*solver, static_cast<int>(state.range(1)));
 
-    square.reserve(n);
+    square.resize(n, std::vector<propagation::VarViewId>{});
     flat.reserve(n * n);
 
     for (Int i = 0; i < n; ++i) {
-      square.emplace_back(n);
+      square[i].reserve(n);
       for (Int j = 0; j < n; ++j) {
         const auto var = solver->makeIntVar(i * n + j + 1, 1, n2);
-        square[i].at(j) = var;
-        flat.push_back(var);
+        square[i].emplace_back(var);
+        flat.emplace_back(var);
       }
     }
     assert(static_cast<size_t>(n) == square.size());
@@ -68,46 +68,49 @@ class MagicSquare : public ::benchmark::Fixture {
       const propagation::VarViewId rowSum = solver->makeIntVar(0, 0, n2 * n);
       solver->makeInvariant<propagation::Linear>(
           *solver, rowSum, std::vector<propagation::VarViewId>(square[i]));
-      violations.push_back(solver->makeIntView<propagation::EqualConst>(
+      violations.emplace_back(solver->makeIntView<propagation::EqualConst>(
           *solver, rowSum, magicSum));
     }
 
     // Column
     for (Int i = 0; i < n; ++i) {
       const propagation::VarViewId colSum = solver->makeIntVar(0, 0, n2 * n);
-      std::vector<propagation::VarViewId> col(n);
+      std::vector<propagation::VarViewId> col;
+      col.reserve(n);
       for (Int j = 0; j < n; ++j) {
         assert(square[j].size() == static_cast<size_t>(n));
-        col.at(j) = square[j][i];
+        col.emplace_back(square[j][i]);
       }
       solver->makeInvariant<propagation::Linear>(*solver, colSum,
                                                  std::move(col));
-      violations.push_back(solver->makeIntView<propagation::EqualConst>(
+      violations.emplace_back(solver->makeIntView<propagation::EqualConst>(
           *solver, colSum, magicSum));
     }
 
     // downDiag
     const propagation::VarViewId downDiagSum = solver->makeIntVar(0, 0, n2 * n);
-    std::vector<propagation::VarViewId> downDiag(n);
+    std::vector<propagation::VarViewId> downDiag;
+    downDiag.reserve(n);
     for (Int j = 0; j < n; ++j) {
       assert(square[j].size() == static_cast<size_t>(n));
-      downDiag.at(j) = square[j][j];
+      downDiag.emplace_back(square[j][j]);
     }
     solver->makeInvariant<propagation::Linear>(*solver, downDiagSum,
                                                std::move(downDiag));
-    violations.push_back(solver->makeIntView<propagation::EqualConst>(
+    violations.emplace_back(solver->makeIntView<propagation::EqualConst>(
         *solver, downDiagSum, magicSum));
 
     // upDiag
     const propagation::VarViewId upDiagSum = solver->makeIntVar(0, 0, n2 * n);
-    std::vector<propagation::VarViewId> upDiag(n);
+    std::vector<propagation::VarViewId> upDiag;
+    upDiag.reserve(n);
     for (Int j = 0; j < n; ++j) {
       assert(square[n - j - 1].size() == static_cast<size_t>(n));
-      upDiag.at(j) = square[n - j - 1][j];
+      upDiag.emplace_back(square[n - j - 1][j]);
     }
     solver->makeInvariant<propagation::Linear>(*solver, upDiagSum,
                                                std::move(upDiag));
-    violations.push_back(solver->makeIntView<propagation::EqualConst>(
+    violations.emplace_back(solver->makeIntView<propagation::EqualConst>(
         *solver, upDiagSum, magicSum));
 
     // total violation

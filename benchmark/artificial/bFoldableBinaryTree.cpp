@@ -25,22 +25,22 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
   }
   propagation::VarViewId createTree() {
     propagation::VarViewId output = solver->makeIntVar(0, lb, ub);
-    vars.push_back(output);
+    vars.emplace_back(output);
 
     propagation::VarViewId prev = output;
 
     for (size_t level = 0; level < treeHeight; ++level) {
       propagation::VarViewId left = solver->makeIntVar(0, lb, ub);
       propagation::VarViewId right = solver->makeIntVar(0, lb, ub);
-      vars.push_back(left);
-      vars.push_back(right);
+      vars.emplace_back(left);
+      vars.emplace_back(right);
 
       solver->makeInvariant<propagation::Linear>(
           *solver, prev, std::vector<propagation::VarViewId>{left, right});
       if (level == treeHeight - 1) {
-        decisionVars.push_back(left);
+        decisionVars.emplace_back(left);
       }
-      decisionVars.push_back(right);
+      decisionVars.emplace_back(right);
       prev = left;
     }
     assert(decisionVars.size() == treeHeight + 1);
@@ -51,7 +51,7 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
   std::shared_ptr<propagation::Solver> solver;
   std::vector<propagation::VarViewId> vars;
   std::vector<propagation::VarViewId> decisionVars;
-  VarViewId queryVar{propagation::NULL_ID};
+  propagation::VarViewId queryVar{propagation::NULL_ID};
   std::random_device rd;
 
   std::mt19937 genValue;
@@ -59,8 +59,8 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
   std::uniform_int_distribution<Int> decisionVarValueDist;
 
   size_t treeHeight{0};
-  Int lb{0};
-  Int ub{0};
+  Int lb{-2};
+  Int ub{2};
 
   void probe(::benchmark::State& st, size_t moveCount);
   void probeRnd(::benchmark::State& st, size_t moveCount);
@@ -71,8 +71,6 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
     solver = std::make_shared<propagation::Solver>();
 
     treeHeight = state.range(0);  // Tree height
-    lb = -1000;
-    ub = 1000;
 
     solver->open();
     setSolverMode(*solver, static_cast<int>(state.range(1)));
@@ -126,9 +124,6 @@ void FoldableBinaryTree::probeRnd(::benchmark::State& st, size_t moveCount) {
 
     solver->beginMove();
     for (size_t i = 0; i < moveCount; ++i) {
-      if (i >= decisionVars.size()) {
-        logWarning("i: " << i);
-      }
       solver->setValue(decisionVars.at(i), decisionVarValueDist(genValue));
     }
     solver->endMove();
@@ -240,37 +235,26 @@ BENCHMARK_DEFINE_F(FoldableBinaryTree, commit_move_all_query_rnd)
 // Probing
 // ------------------------------------------
 
-static void arguments(::benchmark::internal::Benchmark* benchmark) {
-  for (int treeHeight = 2; treeHeight <= 10; treeHeight += 2) {
-    for (Int mode = 0; mode <= 3; ++mode) {
-      benchmark->Args({treeHeight, mode});
-    }
-#ifndef NDEBUG
-    return;
-#endif
-  }
-}
-
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_single)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_single_query_rnd)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 
 /*
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_double)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_double_query_rnd)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_all)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 BENCHMARK_REGISTER_F(FoldableBinaryTree, probe_all_query_rnd)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 
 /*
 // -----------------------------------------

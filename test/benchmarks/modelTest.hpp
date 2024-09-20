@@ -15,7 +15,7 @@ static void testModelFile(const char* modelFile,
                           std::optional<std::uint_fast32_t> seed = {}) {
   std::filesystem::path modelFilePath(
       (std::string(FZN_DIR) + "/" + modelFile).c_str());
-  logging::Logger logger(stdout, logging::Level::ERR);
+  logging::Logger logger(stdout, logging::Level::LVL_ERROR);
   FznBackend backend(logger, std::move(modelFilePath));
   if (seed.has_value()) {
     backend.setRandomSeed(seed.value());

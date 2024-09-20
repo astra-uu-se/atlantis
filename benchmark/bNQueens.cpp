@@ -40,16 +40,22 @@ class Queens : public ::benchmark::Fixture {
     solver->open();
     setSolverMode(*solver, static_cast<int>(state.range(1)));
     // the total number of variables is linear in n
-    queens = std::vector<propagation::VarViewId>(n);
-    q_offset_minus = std::vector<propagation::VarViewId>(n);
-    q_offset_plus = std::vector<propagation::VarViewId>(n);
+    queens.clear();
+    q_offset_minus.clear();
+    q_offset_plus.clear();
+
+    queens.reserve(n);
+    q_offset_minus.reserve(n);
+    q_offset_plus.reserve(n);
 
     for (Int i = 0; i < n; ++i) {
-      queens.at(i) = solver->makeIntVar(i, 0, n - 1);
-      q_offset_minus.at(i) = solver->makeIntView<propagation::IntOffsetView>(
-          *solver, queens.at(i), -i);
-      q_offset_plus.at(i) = solver->makeIntView<propagation::IntOffsetView>(
-          *solver, queens.at(i), i);
+      queens.emplace_back(solver->makeIntVar(i, 0, n - 1));
+      q_offset_minus.emplace_back(
+          solver->makeIntView<propagation::IntOffsetView>(*solver, queens.at(i),
+                                                          -i));
+      q_offset_plus.emplace_back(
+          solver->makeIntView<propagation::IntOffsetView>(*solver, queens.at(i),
+                                                          i));
     }
 
     violation1 = solver->makeIntVar(0, 0, n);

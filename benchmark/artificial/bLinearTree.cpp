@@ -19,28 +19,29 @@ class LinearTree : public ::benchmark::Fixture {
  private:
   struct TreeNode {
     size_t level;
-    VarViewId id{propagation::NULL_ID};
+    propagation::VarViewId id{propagation::NULL_ID};
   };
 
   void createTree() {
     std::stack<TreeNode> treeNodes;
     output = solver->makeIntVar(0, lb, ub);
     treeNodes.push({1, output});
-    vars.push_back(output);
+    vars.emplace_back(output);
 
 #ifndef NDEBUG
     size_t numNodes = 1;
 #endif
 
     while (!treeNodes.empty()) {
-      std::vector<propagation::VarViewId> linearInputs(linearArgumentCount);
-      for (size_t i = 0; i < linearArgumentCount; ++i) {
-        linearInputs[i] = solver->makeIntVar(0, lb, ub);
-        vars.push_back(linearInputs[i]);
+      std::vector<propagation::VarViewId> linearInputs;
+      linearInputs.reserve(inputCount);
+      for (size_t i = 0; i < inputCount; ++i) {
+        linearInputs.emplace_back(solver->makeIntVar(0, lb, ub));
+        vars.emplace_back(linearInputs[i]);
       }
       TreeNode cur = treeNodes.top();
 #ifndef NDEBUG
-      numNodes += linearArgumentCount;
+      numNodes += inputCount;
 #endif
       treeNodes.pop();
       if (cur.level < treeHeight - 1) {
@@ -50,14 +51,14 @@ class LinearTree : public ::benchmark::Fixture {
       } else {
         assert(cur.level == treeHeight - 1);
         for (propagation::VarViewId var : linearInputs) {
-          decisionVars.push_back(var);
+          decisionVars.emplace_back(var);
         }
       }
       solver->makeInvariant<propagation::Linear>(*solver, cur.id,
                                                  std::move(linearInputs));
     }
 #ifndef NDEBUG
-    if (linearArgumentCount == 2) {
+    if (inputCount == 2) {
       assert(numNodes == (size_t(1) << treeHeight) - 1);
     }
 #endif
@@ -65,7 +66,7 @@ class LinearTree : public ::benchmark::Fixture {
 
  public:
   std::shared_ptr<propagation::Solver> solver;
-  VarViewId output{propagation::NULL_ID};
+  propagation::VarViewId output{propagation::NULL_ID};
 
   std::vector<propagation::VarViewId> vars;
   std::vector<propagation::VarViewId>
@@ -79,10 +80,10 @@ class LinearTree : public ::benchmark::Fixture {
   std::uniform_int_distribution<size_t> varIndexDist;
   std::uniform_int_distribution<Int> decisionVarValueDist;
 
-  size_t linearArgumentCount{0};
+  size_t inputCount{0};
   size_t treeHeight{0};
-  Int lb{0};
-  Int ub{0};
+  Int lb{-1000};
+  Int ub{1000};
 
   void probe(::benchmark::State& st, size_t numMoves);
   void probeRnd(::benchmark::State& st, size_t numMoves);
@@ -92,10 +93,8 @@ class LinearTree : public ::benchmark::Fixture {
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_unique<propagation::Solver>();
 
-    linearArgumentCount = state.range(0);
-    treeHeight = state.range(1);
-    lb = -1000;
-    ub = 1000;
+    treeHeight = state.range(0);
+    inputCount = state.range(1);
 
     solver->open();
     setSolverMode(*solver, static_cast<int>(state.range(2)));
@@ -122,7 +121,7 @@ void LinearTree::probe(::benchmark::State& st, size_t numMoves) {
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       solver->beginMove();
-      solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
+      solver->setValue(decisionVars[decisionVarIndexDist(gen)],
                        decisionVarValueDist(gen));
       solver->endMove();
     }
@@ -212,7 +211,7 @@ BENCHMARK_DEFINE_F(LinearTree, probe_swap)(::benchmark::State& st) {
 BENCHMARK_DEFINE_F(LinearTree, probe_swap_query_rnd)
 (::benchmark::State& st) { probeRnd(std::ref(st), 2); }
 
-BENCHMARK_DEFINE_F(LinearTree, probe_all_move)(::benchmark::State& st) {
+BENCHMARK_DEFINE_F(LinearTree, probe_all)(::benchmark::State& st) {
   probe(std::ref(st), decisionVars.size());
 }
 
@@ -241,55 +240,50 @@ BENCHMARK_DEFINE_F(LinearTree, probe_all_query_rnd)
 
 /*
 
-static void arguments(::benchmark::internal::Benchmark* benchmark) {
-  for (int treeHeight = 2; treeHeight <= 12; treeHeight += 2) {
-    for (Int mode = 0; mode <= 3; ++mode) {
-      benchmark->Args({2, treeHeight, mode});
-    }
-#ifndef NDEBUG
-    break;
-#endif
-  }
-}
-
 // -----------------------------------------
 // Probing
 // -----------------------------------------
 
-BENCHMARK_REGISTER_F(LinearTree, probe_single)
-    ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
 BENCHMARK_REGISTER_F(LinearTree, probe_single_query_rnd)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 
-//*/
-/*
+
 BENCHMARK_REGISTER_F(LinearTree, probe_swap)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
+//*/
+
+BENCHMARK_REGISTER_F(LinearTree, probe_single)
+    ->Unit(::benchmark::kMillisecond)
+    ->Apply(defaultTreeArguments);
+
+/*
+BENCHMARK_REGISTER_F(LinearTree, probe_all)
+    ->Unit(::benchmark::kMillisecond)
+    ->Apply(defaultTreeArguments);
+
 BENCHMARK_REGISTER_F(LinearTree, probe_swap_query_rnd)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, probe_all_move)
-    ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 BENCHMARK_REGISTER_F(LinearTree, probe_all_query_rnd)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
 
 /*
 // -----------------------------------------
 // Commit
 // -----------------------------------------
 
-BENCHMARK_REGISTER_F(LinearTree, commit_single)->Apply(arguments);
+BENCHMARK_REGISTER_F(LinearTree, commit_single)->Apply(defaultTreeArguments);
 BENCHMARK_REGISTER_F(LinearTree, commit_single_query_rnd)
-    ->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, commit_swap)->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, commit_swap_query_rnd)->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, commit_all_move)->Apply(arguments);
-BENCHMARK_REGISTER_F(LinearTree, commit_all_query_rnd)->Apply(arguments);
+    ->Apply(defaultTreeArguments);
+BENCHMARK_REGISTER_F(LinearTree, commit_swap)->Apply(defaultTreeArguments);
+BENCHMARK_REGISTER_F(LinearTree,
+commit_swap_query_rnd)->Apply(defaultTreeArguments);
+BENCHMARK_REGISTER_F(LinearTree, commit_all_move)->Apply(defaultTreeArguments);
+BENCHMARK_REGISTER_F(LinearTree,
+commit_all_query_rnd)->Apply(defaultTreeArguments);
 
 //*/
 }  // namespace atlantis::benchmark

@@ -31,8 +31,8 @@ class AllInterval : public ::benchmark::Fixture {
     }
     n = state.range(0);
     inputVarIds.resize(n, propagation::NULL_ID);
-    std::vector<propagation::VarViewId> violationVars(n - 1,
-                                                      propagation::NULL_ID);
+    std::vector<propagation::VarViewId> violationVars;
+    violationVars.reserve(n - 1);
     // number of constraints: n
     // total number of static input variables: 3 * n
     _solver->open();
@@ -46,9 +46,8 @@ class AllInterval : public ::benchmark::Fixture {
     }
     // Creating n - 1 invariants, each having two inputs and one output
     for (size_t i = 0; i < n - 1; ++i) {
-      assert(i < violationVars.size());
-      violationVars[i] =
-          _solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(n) - 1);
+      violationVars.emplace_back(
+          _solver->makeIntVar(static_cast<Int>(i), 0, static_cast<Int>(n) - 1));
       assert(i + 1 < inputVarIds.size());
       _solver->makeInvariant<propagation::AbsDiff>(
           *_solver, violationVars[i], inputVarIds[i], inputVarIds[i + 1]);

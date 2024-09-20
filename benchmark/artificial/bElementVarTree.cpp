@@ -19,83 +19,98 @@ class ElementVarTree : public ::benchmark::Fixture {
  private:
   struct TreeNode {
     size_t level;
-    VarViewId id{propagation::NULL_ID};
+    Int indexVal{-1};
+    propagation::VarViewId id{propagation::NULL_ID};
   };
 
   void createTree() {
-    std::stack<TreeNode> treeNodes;
-    output = solver->makeIntVar(0, 0, static_cast<Int>(elementSize) - 1);
-    vars.push_back(output);
+    dynamicSearchVars.reserve(dynamicInputCount);
 
-    treeNodes.push({1, output});
+    for (size_t i = 0; i < dynamicInputCount; ++i) {
+      dynamicSearchVars.emplace_back(
+          solver->makeIntVar(dynamicValDist(gen), lb, ub));
+      vars.emplace_back(dynamicSearchVars.back());
+      searchVars.emplace_back(dynamicSearchVars.back());
+    }
+
+    std::stack<TreeNode> treeNodes;
+    output = solver->makeIntVar(0, 0, static_cast<Int>(dynamicInputCount) - 1);
+    vars.emplace_back(output);
+
+    treeNodes.push({1, -1, output});
 
     while (!treeNodes.empty()) {
       TreeNode cur = treeNodes.top();
       treeNodes.pop();
 
-      propagation::VarViewId indexVar =
-          solver->makeIntVar(cur.level < treeHeight - 1 ? 0 : valueDist(gen), 0,
-                             static_cast<Int>(elementSize) - 1);
+      propagation::VarViewId indexVar = solver->makeIntVar(
+          cur.indexVal < 0 ? staticValDist(gen) : cur.indexVal, 0,
+          static_cast<Int>(dynamicInputCount) - 1);
 
-      if (cur.level < treeHeight - 1) {
-        treeNodes.push({cur.level + 1, indexVar});
-      } else {
-        assert(cur.level == treeHeight - 1);
-        decisionVars.push_back(indexVar);
-        indexDecisionVars.push_back(indexVar);
-      }
+      searchVars.emplace_back(indexVar);
+      staticSearchVars.emplace_back(indexVar);
 
-      std::vector<propagation::VarViewId> elementInputs(elementSize,
-                                                        propagation::NULL_ID);
+      std::vector<propagation::VarViewId> elementInputs;
+      elementInputs.reserve(dynamicInputCount);
 
-      for (size_t i = 0; i < elementInputs.size(); ++i) {
-        elementInputs[i] = solver->makeIntVar(
-            static_cast<Int>(i), 0, static_cast<Int>(elementInputs.size()));
+      for (size_t i = 0; i < dynamicInputCount; ++i) {
         if (cur.level < treeHeight - 1) {
-          treeNodes.push({cur.level + 1, elementInputs[i]});
+          elementInputs.emplace_back(solver->makeIntVar(
+              static_cast<Int>(i), 0, static_cast<Int>(dynamicInputCount) - 1));
+          treeNodes.push(
+              {cur.level + 1,
+               cur.indexVal >= 0 ? cur.indexVal : static_cast<Int>(i),
+               elementInputs[i]});
         } else {
           assert(cur.level == treeHeight - 1);
-          decisionVars.push_back(elementInputs[i]);
+          elementInputs.emplace_back(dynamicSearchVars[i]);
         }
       }
 
-      solver->makeInvariant<propagation::ElementVar>(*solver, cur.id, indexVar,
-                                                     std::move(elementInputs));
+      solver->makeInvariant<propagation::ElementVar>(
+          *solver, cur.id, indexVar, std::move(elementInputs), 0);
     }
   }
 
  public:
   std::shared_ptr<propagation::Solver> solver;
-  VarViewId output{propagation::NULL_ID};
+  propagation::VarViewId output{propagation::NULL_ID};
 
   std::vector<propagation::VarViewId> vars;
-  std::vector<propagation::VarViewId> decisionVars;
-  std::vector<propagation::VarViewId> indexDecisionVars;
+  std::vector<propagation::VarViewId> searchVars;
+  std::vector<propagation::VarViewId> staticSearchVars;
+  std::vector<propagation::VarViewId> dynamicSearchVars;
 
   std::random_device rd;
 
   std::mt19937 gen;
 
-  std::uniform_int_distribution<size_t> decisionVarIndexDist;
-  std::uniform_int_distribution<size_t> varIndexDist;
-  std::uniform_int_distribution<size_t> indexDecisionVarIndexDist;
-  std::uniform_int_distribution<Int> valueDist;
+  std::uniform_int_distribution<size_t> dynamicVarDist;
+  std::uniform_int_distribution<size_t> staticVarDist;
+
+  std::uniform_int_distribution<Int> staticValDist;
+  std::uniform_int_distribution<Int> dynamicValDist;
 
   size_t treeHeight{0};
-  size_t elementSize{0};
+  size_t dynamicInputCount{0};
+
+  Int lb{-1000};
+  Int ub{1000};
 
   void probe(::benchmark::State& st, size_t numMoves);
+  void probeStatic(::benchmark::State& st, size_t numMoves);
   void commit(::benchmark::State& st, size_t numMoves);
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_shared<propagation::Solver>();
 
     treeHeight = state.range(0);
-    elementSize = state.range(1);  // number of element inputs
+    dynamicInputCount = state.range(1);  // number of element inputs
 
     gen = std::mt19937(rd());
-    valueDist = std::uniform_int_distribution<Int>(
-        0, static_cast<Int>(elementSize) - 1);
+    staticValDist = std::uniform_int_distribution<Int>(
+        0, static_cast<Int>(dynamicInputCount) - 1);
+    dynamicValDist = std::uniform_int_distribution<Int>(lb, ub);
 
     solver->open();
     setSolverMode(*solver, static_cast<int>(state.range(2)));
@@ -104,17 +119,17 @@ class ElementVarTree : public ::benchmark::Fixture {
 
     solver->close();
 
-    decisionVarIndexDist =
-        std::uniform_int_distribution<size_t>(0, decisionVars.size() - 1);
-    indexDecisionVarIndexDist =
-        std::uniform_int_distribution<size_t>(0, indexDecisionVars.size() - 1);
-    varIndexDist = std::uniform_int_distribution<size_t>(0, vars.size() - 1);
+    dynamicVarDist =
+        std::uniform_int_distribution<size_t>(0, dynamicSearchVars.size() - 1);
+    staticVarDist =
+        std::uniform_int_distribution<size_t>(0, staticSearchVars.size() - 1);
   }
 
   void TearDown(const ::benchmark::State&) override {
     vars.clear();
-    decisionVars.clear();
-    indexDecisionVars.clear();
+    searchVars.clear();
+    staticSearchVars.clear();
+    dynamicSearchVars.clear();
   }
 };
 
@@ -123,8 +138,28 @@ void ElementVarTree::probe(::benchmark::State& st, size_t numMoves) {
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       solver->beginMove();
-      solver->setValue(decisionVars.at(decisionVarIndexDist(gen)),
-                       valueDist(gen));
+      solver->setValue(dynamicSearchVars[dynamicVarDist(gen)],
+                       dynamicValDist(gen));
+      solver->endMove();
+    }
+
+    solver->beginProbe();
+    solver->query(output);
+    solver->endProbe();
+    ++probes;
+  }
+
+  st.counters["probes_per_second"] = ::benchmark::Counter(
+      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+}
+
+void ElementVarTree::probeStatic(::benchmark::State& st, size_t numMoves) {
+  size_t probes = 0;
+  for ([[maybe_unused]] const auto& _ : st) {
+    for (size_t i = 0; i < numMoves; ++i) {
+      solver->beginMove();
+      solver->setValue(staticSearchVars[staticVarDist(gen)],
+                       staticValDist(gen));
       solver->endMove();
     }
 
@@ -143,8 +178,8 @@ void ElementVarTree::commit(::benchmark::State& st, size_t numMoves) {
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
       solver->beginMove();
-      solver->setValue(indexDecisionVars.at(indexDecisionVarIndexDist(gen)),
-                       valueDist(gen));
+      solver->setValue(staticSearchVars.at(staticVarDist(gen)),
+                       staticValDist(gen));
       solver->endMove();
     }
 
@@ -167,7 +202,11 @@ BENCHMARK_DEFINE_F(ElementVarTree, probe_double)(::benchmark::State& st) {
 }
 
 BENCHMARK_DEFINE_F(ElementVarTree, probe_all)(::benchmark::State& st) {
-  probe(std::ref(st), indexDecisionVars.size());
+  probe(std::ref(st), staticSearchVars.size());
+}
+
+BENCHMARK_DEFINE_F(ElementVarTree, probe_all_static)(::benchmark::State& st) {
+  probeStatic(std::ref(st), staticSearchVars.size());
 }
 
 BENCHMARK_DEFINE_F(ElementVarTree, commit_single)
@@ -178,18 +217,19 @@ BENCHMARK_DEFINE_F(ElementVarTree, commit_double)(::benchmark::State& st) {
 }
 
 BENCHMARK_DEFINE_F(ElementVarTree, commit_all)(::benchmark::State& st) {
-  commit(std::ref(st), indexDecisionVars.size());
+  commit(std::ref(st), staticSearchVars.size());
 }
 
 /*
 
 static void arguments(::benchmark::internal::Benchmark* benchmark) {
   for (int treeHeight = 2; treeHeight <= 10; treeHeight += 2) {
-    for (int elementSize = 2;
-         elementSize <= 10 && std::pow(treeHeight, elementSize) <= 2048;
-         ++elementSize) {
+    for (int dynamicInputCount = 2;
+         dynamicInputCount <= 10 && std::pow(treeHeight, dynamicInputCount) <=
+2048;
+         ++dynamicInputCount) {
       for (Int mode = 0; mode <= 3; ++mode) {
-        benchmark->Args({treeHeight, elementSize, mode});
+        benchmark->Args({treeHeight, dynamicInputCount, mode});
       }
 #ifndef NDEBUG
       return;
@@ -197,21 +237,28 @@ static void arguments(::benchmark::internal::Benchmark* benchmark) {
     }
   }
 }
-
+*/
 // -----------------------------------------
 // Probing
 // -----------------------------------------
-
 BENCHMARK_REGISTER_F(ElementVarTree, probe_single)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
+
 /*
-BENCHMARK_REGISTER_F(ElementVarTree, probe_double)
+BENCHMARK_REGISTER_F(ElementVarTree, probe_all_static)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
+
+/*
 BENCHMARK_REGISTER_F(ElementVarTree, probe_all)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(arguments);
+    ->Apply(defaultTreeArguments);
+
+
+BENCHMARK_REGISTER_F(ElementVarTree, probe_double)
+    ->Unit(::benchmark::kMillisecond)
+    ->Apply(defaultTreeArguments);
 
 //*/
 
@@ -222,9 +269,9 @@ BENCHMARK_REGISTER_F(ElementVarTree, probe_all)
 
 static void commitArguments(::benchmark::internal::Benchmark* benchmark) {
   for (int treeHeight = 6; treeHeight <= 6; treeHeight += 2) {
-    for (int elementSize = 2; elementSize * treeHeight <= 12;
-         elementSize += 2) {
-      benchmark->Args({treeHeight, elementSize. 0});
+    for (int dynamicInputCount = 2; dynamicInputCount * treeHeight <= 12;
+         dynamicInputCount += 2) {
+      benchmark->Args({treeHeight, dynamicInputCount. 0});
     }
   }
 }

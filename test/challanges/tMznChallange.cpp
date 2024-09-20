@@ -36,7 +36,7 @@ void logModelName(const std::string& modelPath, bool skipping, size_t index,
 
 static void testChallange(const std::string& fznFilePath) {
   std::filesystem::path modelFilePath(fznFilePath);
-  logging::Logger logger(stdout, logging::Level::DEBUG);
+  logging::Logger logger(stdout, logging::Level::LVL_DEBUG);
   FznBackend backend(logger, std::move(modelFilePath));
   backend.setTimelimit(std::chrono::milliseconds(1000));
   auto statistics = backend.solve(logger);

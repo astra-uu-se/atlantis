@@ -105,20 +105,20 @@ int main(int argc, char* argv[]) {
 
 atlantis::logging::Level getLogLevel(cxxopts::ParseResult& result) {
   if (result.count("log-level") != 1) {
-    return atlantis::logging::Level::WARN;
+    return atlantis::logging::Level::LVL_WARNING;
   }
 
   switch (result["log-level"].as<uint8_t>()) {
     case 0:
-      return atlantis::logging::Level::ERR;
+      return atlantis::logging::Level::LVL_ERROR;
     case 1:
-      return atlantis::logging::Level::WARN;
+      return atlantis::logging::Level::LVL_WARNING;
     case 2:
-      return atlantis::logging::Level::INFO;
+      return atlantis::logging::Level::LVL_INFO;
     case 3:
-      return atlantis::logging::Level::DEBUG;
+      return atlantis::logging::Level::LVL_DEBUG;
     case 4:
-      return atlantis::logging::Level::TRACE;
+      return atlantis::logging::Level::LVL_TRACE;
     default:
       throw cxxopts::OptionException("The log level should be 0, 1, 2 or 3.");
   }
