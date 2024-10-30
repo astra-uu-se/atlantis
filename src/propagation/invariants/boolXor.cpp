@@ -31,7 +31,20 @@ void BoolXor::registerVars() {
 }
 
 void BoolXor::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_output, 0, 1, widenOnly);
+  Int lb = 0;
+  Int ub = 1;
+  const bool xIsZero = _solver.upperBound(_x) == 0;
+  const bool xIsOne = _solver.lowerBound(_x) > 0;
+  const bool yIsZero = _solver.upperBound(_y) == 0;
+  const bool yIsOne = _solver.lowerBound(_y) > 0;
+  if ((xIsZero || xIsOne) && (yIsZero || yIsOne)) {
+    if (xIsZero == yIsZero || xIsOne == yIsOne) {
+      lb = 1;
+    } else {
+      ub = 0;
+    }
+  }
+  _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
 void BoolXor::recompute(Timestamp ts) {

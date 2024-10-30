@@ -12,6 +12,7 @@
 #include "atlantis/propagation/invariants/elementVar.hpp"
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
+#include "atlantis/utils/pow.hpp"
 
 namespace atlantis::benchmark {
 
@@ -225,7 +226,7 @@ BENCHMARK_DEFINE_F(ElementVarTree, commit_all)(::benchmark::State& st) {
 static void arguments(::benchmark::internal::Benchmark* benchmark) {
   for (int treeHeight = 2; treeHeight <= 10; treeHeight += 2) {
     for (int dynamicInputCount = 2;
-         dynamicInputCount <= 10 && std::pow(treeHeight, dynamicInputCount) <=
+         dynamicInputCount <= 10 && pow(treeHeight, dynamicInputCount) <=
 2048;
          ++dynamicInputCount) {
       for (Int mode = 0; mode <= 3; ++mode) {

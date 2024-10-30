@@ -2,6 +2,8 @@
 
 #include <initializer_list>
 
+#include "atlantis/utils/pow.hpp"
+
 namespace atlantis::propagation {
 
 Int ExpView::value(Timestamp ts) {
@@ -13,9 +15,8 @@ Int ExpView::committedValue() {
 }
 
 Int ExpView::lowerBound() const {
-  return std::min(
-      std::initializer_list<Int>{0, pow(_power, _solver.lowerBound(_parentId)),
-                                 pow(_power, _solver.upperBound(_parentId))});
+  return std::min(Int{0}, std::min(pow(_power, _solver.lowerBound(_parentId)),
+                                   pow(_power, _solver.upperBound(_parentId))));
 }
 
 Int ExpView::upperBound() const {

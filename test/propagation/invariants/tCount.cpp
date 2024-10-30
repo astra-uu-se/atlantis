@@ -7,19 +7,70 @@ using namespace atlantis::propagation;
 
 class CountTest : public InvariantTest {
  public:
-  Int computeOutput(const Timestamp ts, const VarViewId y,
-                    const std::vector<VarViewId>& vars) {
-    std::vector<Int> values(vars.size(), 0);
-    for (size_t i = 0; i < vars.size(); ++i) {
-      values.at(i) = _solver->value(ts, vars.at(i));
+  Int haystackSize{3};
+  std::vector<VarViewId> haystackVars;
+  VarViewId needleVar{NULL_ID};
+  VarViewId outputVar{NULL_ID};
+  Int haystackVarLb{-10};
+  Int haystackVarUb{10};
+  Int needleVarLb{-10};
+  Int needleVarUb{10};
+  std::uniform_int_distribution<Int> haystackVarDist;
+  std::uniform_int_distribution<Int> needleVarDist;
+
+  Count& generate(bool generateInputVars = true) {
+    haystackVarDist =
+        std::uniform_int_distribution<Int>(haystackVarLb, haystackVarUb);
+    needleVarDist =
+        std::uniform_int_distribution<Int>(needleVarLb, needleVarUb);
+
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    return computeOutput(_solver->value(ts, y), values);
+    if (generateInputVars) {
+      haystackVars.clear();
+      haystackVars.reserve(haystackSize);
+
+      for (Int i = 0; i < haystackSize; ++i) {
+        haystackVars.emplace_back(
+            makeIntVar(haystackVarLb, haystackVarUb, haystackVarDist));
+      }
+      needleVar = makeIntVar(needleVarLb, needleVarUb, needleVarDist);
+    }
+
+    outputVar = _solver->makeIntVar(0, 0, 0);
+
+    Count& invariant = _solver->makeInvariant<Count>(
+        *_solver, outputVar, needleVar, std::vector<VarViewId>(haystackVars));
+
+    _solver->close();
+    return invariant;
   }
 
-  static Int computeOutput(const Int y, const std::vector<Int>& values) {
+  Int computeOutput(Timestamp ts) {
+    std::vector<Int> values(haystackVars.size(), 0);
+    for (size_t i = 0; i < haystackVars.size(); ++i) {
+      values.at(i) = _solver->value(ts, haystackVars.at(i));
+    }
+    return computeOutput(_solver->value(ts, needleVar), values);
+  }
+
+  Int computeOutput(bool committedValue = false) {
+    std::vector<Int> values(haystackVars.size(), 0);
+    for (size_t i = 0; i < haystackVars.size(); ++i) {
+      values.at(i) = committedValue
+                         ? _solver->committedValue(haystackVars.at(i))
+                         : _solver->currentValue(haystackVars.at(i));
+    }
+    return computeOutput(committedValue ? _solver->committedValue(needleVar)
+                                        : _solver->currentValue(needleVar),
+                         values);
+  }
+
+  Int computeOutput(Int needleVal, const std::vector<Int>& values) {
     Int count = 0;
     for (Int value : values) {
-      if (value == y) {
+      if (value == needleVal) {
         ++count;
       }
     }
@@ -32,30 +83,29 @@ TEST_F(CountTest, UpdateBounds) {
       {-20, -15}, {-10, 0}, {-5, 5}, {0, 10}, {15, 20}};
   _solver->open();
 
-  const VarViewId y = _solver->makeIntVar(0, 0, 10);
-  std::vector<VarViewId> vars{_solver->makeIntVar(0, 0, 10),
-                              _solver->makeIntVar(0, 0, 10),
-                              _solver->makeIntVar(0, 0, 10)};
-  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
-  Count& invariant = _solver->makeInvariant<Count>(
-      *_solver, outputId, y, std::vector<VarViewId>(vars));
+  haystackVars = std::vector<VarViewId>{_solver->makeIntVar(0, 0, 10),
+                                        _solver->makeIntVar(0, 0, 10),
+                                        _solver->makeIntVar(0, 0, 10)};
+  needleVar = _solver->makeIntVar(0, 0, 10);
+
+  auto& invariant = generate(false);
 
   for (const auto& [yLb, yUb] : boundVec) {
-    EXPECT_TRUE(yLb <= yUb);
-    _solver->updateBounds(VarId(y), yLb, yUb, false);
+    EXPECT_LE(yLb, yUb);
+    _solver->updateBounds(VarId(needleVar), yLb, yUb, false);
     for (const auto& [aLb, aUb] : boundVec) {
-      EXPECT_TRUE(aLb <= aUb);
-      _solver->updateBounds(VarId(vars.at(0)), aLb, aUb, false);
+      EXPECT_LE(aLb, aUb);
+      _solver->updateBounds(VarId(haystackVars.at(0)), aLb, aUb, false);
       for (const auto& [bLb, bUb] : boundVec) {
-        EXPECT_TRUE(bLb <= bUb);
-        _solver->updateBounds(VarId(vars.at(1)), bLb, bUb, false);
+        EXPECT_LE(bLb, bUb);
+        _solver->updateBounds(VarId(haystackVars.at(1)), bLb, bUb, false);
         for (const auto& [cLb, cUb] : boundVec) {
-          EXPECT_TRUE(cLb <= cUb);
-          _solver->updateBounds(VarId(vars.at(2)), cLb, cUb, false);
+          EXPECT_LE(cLb, cUb);
+          _solver->updateBounds(VarId(haystackVars.at(2)), cLb, cUb, false);
           invariant.updateBounds(false);
 
-          ASSERT_GE(0, _solver->lowerBound(outputId));
-          ASSERT_LE(vars.size(), _solver->upperBound(outputId));
+          ASSERT_GE(0, _solver->lowerBound(outputVar));
+          ASSERT_LE(haystackVars.size(), _solver->upperBound(outputVar));
         }
       }
     }
@@ -63,240 +113,200 @@ TEST_F(CountTest, UpdateBounds) {
 }
 
 TEST_F(CountTest, Recompute) {
-  const Int lb = -5;
-  const Int ub = 5;
+  generateState = GenerateState::LB;
 
-  ASSERT_TRUE(lb <= ub);
+  haystackSize = 3;
 
-  std::uniform_int_distribution<Int> dist(lb, ub);
+  std::pair<Int, Int> inputBound{-1, 1};
+  std::vector<std::pair<Int, Int>> haystackBounds(haystackSize, inputBound);
 
   _solver->open();
 
-  const VarViewId y = _solver->makeIntVar(dist(gen), lb, ub);
-  const VarViewId a = _solver->makeIntVar(dist(gen), lb, ub);
-  const VarViewId b = _solver->makeIntVar(dist(gen), lb, ub);
-  const VarViewId c = _solver->makeIntVar(dist(gen), lb, ub);
+  needleVar = _solver->makeIntVar(inputBound.first, inputBound.first,
+                                  inputBound.second);
 
-  std::vector<VarViewId> inputs{a, b, c};
+  haystackVars = makeVars(haystackBounds);
 
-  const VarViewId outputId = _solver->makeIntVar(
-      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
+  auto& invariant = generate(false);
 
-  Count& invariant = _solver->makeInvariant<Count>(
-      *_solver, outputId, y, std::vector<VarViewId>(inputs));
-  _solver->close();
+  // add needle to inputs:
+  std::vector<VarViewId> inputVars(haystackVars);
+  inputVars.emplace_back(needleVar);
 
-  for (Int yVal = lb; yVal <= ub; ++yVal) {
-    for (Int aVal = lb; aVal <= ub; ++aVal) {
-      for (Int bVal = lb; bVal <= ub; ++bVal) {
-        for (Int cVal = lb; cVal <= ub; ++cVal) {
-          _solver->setValue(_solver->currentTimestamp(), y, yVal);
-          _solver->setValue(_solver->currentTimestamp(), a, aVal);
-          _solver->setValue(_solver->currentTimestamp(), b, bVal);
-          _solver->setValue(_solver->currentTimestamp(), c, cVal);
-          const Int expectedOutput =
-              computeOutput(_solver->currentTimestamp(), y, inputs);
-          invariant.recompute(_solver->currentTimestamp());
-          EXPECT_EQ(expectedOutput,
-                    _solver->value(_solver->currentTimestamp(), outputId));
-        }
-      }
-    }
+  auto inputVals = makeValVector(inputVars);
+
+  Timestamp ts = _solver->currentTimestamp();
+
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
+
+    const Int expectedOutput = computeOutput(ts);
+    invariant.recompute(ts);
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(CountTest, NotifyInputChanged) {
-  _solver->open();
-  const size_t numInputs = 3;
-  const Int lb = -10;
-  const Int ub = 10;
-  std::uniform_int_distribution<Int> dist(lb, ub);
+  generateState = GenerateState::LB;
 
-  std::vector<VarViewId> inputs(numInputs, NULL_ID);
-  const VarViewId y = _solver->makeIntVar(dist(gen), lb, ub);
-  for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = _solver->makeIntVar(dist(gen), lb, ub);
-  }
-  const VarViewId outputId = _solver->makeIntVar(
-      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-  Count& invariant = _solver->makeInvariant<Count>(
-      *_solver, outputId, y, std::vector<VarViewId>(inputs));
-  _solver->close();
+  auto& invariant = generate();
 
-  const Timestamp ts = _solver->currentTimestamp() + 1;
+  std::vector<VarViewId> inputVars(haystackVars);
+  inputVars.emplace_back(needleVar);
 
-  std::vector<VarViewId> allInputs(inputs);
-  allInputs.emplace_back(y);
+  auto inputVals = makeValVector(inputVars);
 
-  for (size_t i = 0; i < allInputs.size(); ++i) {
-    const Int oldVal = _solver->value(ts, allInputs.at(i));
-    do {
-      _solver->setValue(ts, allInputs.at(i), dist(gen));
-    } while (oldVal == _solver->value(ts, allInputs.at(i)));
+  Timestamp ts = _solver->currentTimestamp();
 
-    const Int expectedOutput = computeOutput(ts, y, inputs);
+  Int i{-1};
 
+  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
+
+    const Int expectedOutput = computeOutput(ts);
     invariant.notifyInputChanged(ts, LocalId(i));
-    EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(CountTest, NextInput) {
-  const size_t numInputs = 100;
-  const Int lb = -10;
-  const Int ub = 10;
-  std::uniform_int_distribution<Int> dist(lb, ub);
+  haystackSize = 100;
+  auto& invariant = generate();
 
-  std::vector<VarViewId> inputs(numInputs, NULL_ID);
+  std::vector<VarViewId> inputVars(haystackVars);
+  inputVars.emplace_back(needleVar);
 
-  _solver->open();
-  const VarViewId y = _solver->makeIntVar(dist(gen), lb, ub);
-  for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = _solver->makeIntVar(dist(gen), lb, ub);
-  }
-  const VarViewId outputId = _solver->makeIntVar(
-      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-  Count& invariant = _solver->makeInvariant<Count>(
-      *_solver, outputId, y, std::vector<VarViewId>(inputs));
-  _solver->close();
-
-  std::shuffle(inputs.begin(), inputs.end(), rng);
-
-  const VarViewId minVarId =
-      std::min(y,
-               *std::min_element(inputs.begin(), inputs.end(),
-                                 [&](const VarViewId& a, const VarViewId& b) {
-                                   return size_t(a) < size_t(b);
-                                 }),
-               [&](const VarViewId& a, const VarViewId& b) {
-                 return size_t(a) < size_t(b);
-               });
-  const VarViewId maxVarId =
-      std::max(y,
-               *std::max_element(inputs.begin(), inputs.end(),
-                                 [&](const VarViewId& a, const VarViewId& b) {
-                                   return size_t(a) < size_t(b);
-                                 }),
-               [&](const VarViewId& a, const VarViewId& b) {
-                 return size_t(a) < size_t(b);
-               });
-
-  for (Timestamp ts = _solver->currentTimestamp() + 1;
-       ts < _solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(size_t(maxVarId) + 1, false);
-    for (size_t i = 0; i <= numInputs; ++i) {
-      const VarViewId varId = invariant.nextInput(ts);
-      EXPECT_NE(varId, NULL_ID);
-      EXPECT_LE(size_t(minVarId), size_t(varId));
-      EXPECT_GE(size_t(maxVarId), size_t(varId));
-      EXPECT_FALSE(notified.at(size_t(varId)));
-      notified.at(size_t(varId)) = true;
-    }
-    EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
-      EXPECT_TRUE(notified.at(i));
-    }
-  }
+  expectNextInput(inputVars, invariant);
 }
 
 TEST_F(CountTest, NotifyCurrentInputChanged) {
-  const size_t numInputs = 100;
-  const Int lb = -10;
-  const Int ub = 10;
-  std::uniform_int_distribution<Int> dist(lb, ub);
+  haystackSize = 100;
+  auto& invariant = generate();
 
-  std::vector<VarViewId> inputs(numInputs, NULL_ID);
-  _solver->open();
-  const VarViewId y = _solver->makeIntVar(dist(gen), lb, ub);
-  for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = _solver->makeIntVar(dist(gen), lb, ub);
-  }
-
-  const VarViewId outputId = _solver->makeIntVar(
-      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-  Count& invariant = _solver->makeInvariant<Count>(
-      *_solver, outputId, y, std::vector<VarViewId>(inputs));
-  _solver->close();
-
-  std::vector<VarViewId> allInputs(inputs);
-  allInputs.emplace_back(y);
+  std::vector<VarViewId> inputVars(haystackVars);
+  inputVars.emplace_back(needleVar);
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    for (const VarViewId& varId : allInputs) {
+    for (const VarViewId& varId : inputVars) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = _solver->value(ts, varId);
       do {
-        _solver->setValue(ts, varId, dist(gen));
+        _solver->setValue(
+            ts, varId,
+            varId != needleVar ? haystackVarDist(gen) : needleVarDist(gen));
       } while (_solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, y, inputs));
+      EXPECT_EQ(_solver->value(ts, outputVar), computeOutput(ts));
     }
   }
 }
 
 TEST_F(CountTest, Commit) {
-  const size_t numInputs = 100;
-  const Int lb = -10;
-  const Int ub = 10;
-  std::uniform_int_distribution<Int> dist(lb, ub);
-  std::vector<VarViewId> inputs(numInputs, NULL_ID);
-  std::vector<size_t> indices(numInputs + 1, 0);
-  std::vector<Int> committedValues(numInputs + 1, 0);
+  haystackSize = 100;
 
-  _solver->open();
-  for (size_t i = 0; i < numInputs; ++i) {
-    indices.at(i) = i;
-    committedValues.at(i) = dist(gen);
-    inputs.at(i) = _solver->makeIntVar(committedValues.at(i), lb, ub);
-  }
-  indices.back() = numInputs;
-  committedValues.back() = dist(gen);
-  const VarViewId y = _solver->makeIntVar(committedValues.back(), lb, ub);
+  auto& invariant = generate();
 
-  const VarViewId outputId = _solver->makeIntVar(
-      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-  Count& invariant = _solver->makeInvariant<Count>(
-      *_solver, outputId, y, std::vector<VarViewId>(inputs));
-
+  std::vector<size_t> indices(haystackSize + 1);
+  std::iota(indices.begin(), indices.end(), 0);
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  _solver->close();
-  std::vector<VarViewId> allInputs(inputs);
-  allInputs.emplace_back(y);
+  std::vector<VarViewId> inputVars(haystackVars);
+  inputVars.emplace_back(needleVar);
 
-  EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
-            computeOutput(_solver->currentTimestamp(), y, inputs));
+  std::vector<Int> committedValues(haystackSize + 1, 0);
+  for (Int i = 0; i < haystackSize; ++i) {
+    committedValues.at(i) = _solver->committedValue(haystackVars.at(i));
+  }
+  committedValues.back() = _solver->committedValue(needleVar);
+
+  EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
     Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
-    for (size_t j = 0; j < numInputs; ++j) {
+    for (size_t j = 0; j < committedValues.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(_solver->committedValue(allInputs.at(j)),
+      ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
                 committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      _solver->setValue(ts, allInputs.at(i), dist(gen));
-    } while (oldVal == _solver->value(ts, allInputs.at(i)));
+      _solver->setValue(ts, inputVars.at(i),
+                        static_cast<Int>(i) < haystackSize
+                            ? haystackVarDist(gen)
+                            : needleVarDist(gen));
+    } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = _solver->value(ts, outputId);
+    const Int notifiedOutput = _solver->value(ts, outputVar);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(allInputs.at(i)));
-    committedValues.at(i) = _solver->value(ts, allInputs.at(i));
-    _solver->commitIf(ts, VarId(outputId));
+    _solver->commitIf(ts, VarId(inputVars.at(i)));
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
+    _solver->commitIf(ts, VarId(outputVar));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputVar));
+  }
+}
+
+RC_GTEST_FIXTURE_PROP(CountTest, rapidcheck, ()) {
+  haystackSize = *rc::gen::inRange(1, 100);
+
+  haystackVarLb = *rc::gen::inRange(std::numeric_limits<Int>::min(),
+                                    std::numeric_limits<Int>::max() - 200);
+
+  haystackVarUb = *rc::gen::inRange(haystackVarLb + 1, haystackVarLb + 200);
+
+  needleVarLb = *rc::gen::inRange(std::numeric_limits<Int>::min(),
+                                  std::numeric_limits<Int>::max() - 100);
+  needleVarUb = *rc::gen::inRange(needleVarLb + 1, needleVarLb + 100);
+
+  generate();
+
+  const size_t numCommits = 3;
+  const size_t numProbes = 10;
+
+  for (size_t c = 0; c < numCommits; ++c) {
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
+
+    for (size_t p = 0; p <= numProbes; ++p) {
+      _solver->beginMove();
+      _solver->beginMove();
+      for (size_t i = 0; i < haystackVars.size(); ++i) {
+        if (*rc::gen::arbitrary<bool>()) {
+          _solver->setValue(haystackVars.at(i), haystackVarDist(gen));
+        }
+      }
+      if (*rc::gen::arbitrary<bool>()) {
+        _solver->setValue(needleVar, needleVarDist(gen));
+      }
+
+      _solver->endMove();
+
+      if (p == numProbes) {
+        _solver->beginCommit();
+      } else {
+        _solver->beginProbe();
+      }
+      _solver->query(outputVar);
+      if (p == numProbes) {
+        _solver->endCommit();
+      } else {
+        _solver->endProbe();
+      }
+      RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());
+    }
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }
 }
 
@@ -307,9 +317,9 @@ class MockCount : public Count {
     registered = true;
     Count::registerVars();
   }
-  explicit MockCount(SolverBase& solver, VarViewId output, VarViewId y,
+  explicit MockCount(SolverBase& solver, VarViewId output, VarViewId needleVar,
                      std::vector<VarViewId>&& varArray)
-      : Count(solver, output, y, std::move(varArray)) {
+      : Count(solver, output, needleVar, std::move(varArray)) {
     EXPECT_TRUE(output.isVar());
 
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
@@ -342,7 +352,7 @@ TEST_F(CountTest, SolverIntegration) {
       _solver->open();
     }
     const size_t numArgs = 10;
-    const VarViewId y = _solver->makeIntVar(0, 0, numArgs);
+    const VarViewId needleVar = _solver->makeIntVar(0, 0, numArgs);
     std::vector<VarViewId> args;
     for (size_t value = 1; value <= numArgs; ++value) {
       args.push_back(_solver->makeIntVar(static_cast<Int>(value), 1,
@@ -351,7 +361,7 @@ TEST_F(CountTest, SolverIntegration) {
     const VarViewId modifiedVarId = args.front();
     const VarViewId output = _solver->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockCount>(
-        &_solver->makeInvariant<MockCount>(*_solver, output, y,
+        &_solver->makeInvariant<MockCount>(*_solver, output, needleVar,
                                            std::move(args)),
         {propMode, markingMode, numArgs + 2, modifiedVarId, 5, output});
   }

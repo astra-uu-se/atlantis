@@ -1,113 +1,116 @@
-#include <gtest/gtest.h>
-
-#include <random>
-#include <vector>
-
-#include "atlantis/propagation/solver.hpp"
+#include "../viewTestHelper.hpp"
 #include "atlantis/propagation/views/ifThenElseConst.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::propagation;
 
-class IfThenElseConstTest : public ::testing::Test {
- protected:
-  std::shared_ptr<Solver> _solver;
-  std::mt19937 gen;
-  std::default_random_engine rng;
-
+class IfThenElseConstTest : public ViewTest {
+ public:
   Int thenVal{0};
   Int elseVal{0};
-  const Int condLb = 0;
-  const Int condUb = 1;
-  const Int valueLb = std::numeric_limits<Int>::min();
-  const Int valueUb = std::numeric_limits<Int>::max();
+  Int condVal{0};
+  Int valueLb = std::numeric_limits<Int>::min();
+  Int valueUb = std::numeric_limits<Int>::max();
   std::uniform_int_distribution<Int> valueDist;
 
- public:
   void SetUp() override {
-    std::random_device rd;
-    gen = std::mt19937(rd());
-    _solver = std::make_unique<Solver>();
+    inputVarLb = 0;
+    inputVarUb = 1;
+    ViewTest::SetUp();
+  }
 
+  void generate() {
     valueDist = std::uniform_int_distribution<Int>(valueLb, valueUb);
     thenVal = valueDist(gen);
     elseVal = valueDist(gen);
+
+    _solver->open();
+    makeInputVar();
+    outputVar = _solver->makeIntView<IfThenElseConst>(
+        *_solver, inputVar, thenVal, elseVal, condVal);
+    _solver->close();
   }
 
-  Int computeOutput(const Timestamp ts, const VarViewId condVarId) {
-    return computeOutput(_solver->value(ts, condVarId));
-  }
-
-  Int computeOutput(const Int conditionVal) {
-    EXPECT_GE(conditionVal, 0);
-    return conditionVal == 0 ? thenVal : elseVal;
+  Int computeOutput(bool committedValue = false) {
+    return (committedValue ? _solver->committedValue(inputVar)
+                           : _solver->currentValue(inputVar)) == condVal
+               ? thenVal
+               : elseVal;
   }
 };
 
 TEST_F(IfThenElseConstTest, Bounds) {
-  _solver->open();
-  const VarViewId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
-  const VarViewId outputId = _solver->makeIntView<IfThenElseConst>(
-      *_solver, condVarId, thenVal, elseVal);
-  _solver->close();
+  std::vector<std::pair<Int, Int>> bounds{{0, 0}, {0, 1}};
+  std::vector<Int> condVals{-1, 0, 1};
 
-  EXPECT_EQ(std::min(thenVal, elseVal), _solver->lowerBound(outputId));
-  EXPECT_EQ(std::max(thenVal, elseVal), _solver->upperBound(outputId));
+  for (const auto& cv : condVals) {
+    condVal = cv;
+    generate();
+    for (const auto& [inputLb, inputUb] : bounds) {
+      _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
 
-  _solver->updateBounds(VarId(condVarId), 0, 0, false);
-  EXPECT_EQ(thenVal, _solver->lowerBound(outputId));
-  EXPECT_EQ(thenVal, _solver->upperBound(outputId));
-
-  _solver->updateBounds(VarId(condVarId), 1, 1, false);
-  EXPECT_EQ(elseVal, _solver->lowerBound(outputId));
-  EXPECT_EQ(elseVal, _solver->upperBound(outputId));
-}
-
-TEST_F(IfThenElseConstTest, Value) {
-  _solver->open();
-  const VarViewId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
-  const VarViewId outputId = _solver->makeIntView<IfThenElseConst>(
-      *_solver, condVarId, thenVal, elseVal);
-  _solver->close();
-
-  for (Int condVal = condLb; condVal <= condUb; ++condVal) {
-    _solver->setValue(_solver->currentTimestamp(), condVarId, condVal);
-    EXPECT_EQ(_solver->value(_solver->currentTimestamp(), condVarId), condVal);
-    const Int expectedOutput =
-        computeOutput(_solver->currentTimestamp(), condVarId);
-
-    EXPECT_EQ(expectedOutput,
-              _solver->value(_solver->currentTimestamp(), outputId));
+      if (inputLb <= condVal && condVal <= inputUb) {
+        // always then;
+        EXPECT_EQ(_solver->lowerBound(outputVar), thenVal);
+        EXPECT_EQ(_solver->upperBound(outputVar), thenVal);
+      } else if (condVal < inputLb || inputUb < condVal) {
+        // always else:
+        EXPECT_EQ(_solver->lowerBound(outputVar), elseVal);
+        EXPECT_EQ(_solver->upperBound(outputVar), elseVal);
+      } else {
+        EXPECT_EQ(_solver->lowerBound(outputVar), std::min(thenVal, elseVal));
+        EXPECT_EQ(_solver->upperBound(outputVar), std::max(thenVal, elseVal));
+      }
+    }
   }
 }
 
-TEST_F(IfThenElseConstTest, CommittedValue) {
-  std::vector<Int> condValues{0, 1};
-  std::shuffle(condValues.begin(), condValues.end(), rng);
+TEST_F(IfThenElseConstTest, Value) {
+  inputVarLb = -1;
+  inputVarUb = 1;
+  generate();
 
-  _solver->open();
-  const VarViewId condVarId = _solver->makeIntVar(condLb, condLb, condUb);
-  const VarViewId outputId = _solver->makeIntView<IfThenElseConst>(
-      *_solver, condVarId, thenVal, elseVal);
-  _solver->close();
+  for (Int inputVal = inputVarLb; inputVal <= inputVarUb; ++inputVal) {
+    _solver->setValue(_solver->currentTimestamp(), inputVar, condVal);
+    EXPECT_EQ(_solver->currentValue(inputVar), condVal);
+    const Int expectedOutput = computeOutput();
 
-  Int committedValue = _solver->committedValue(condVarId);
+    EXPECT_EQ(expectedOutput, _solver->currentValue(outputVar));
+  }
+}
 
-  for (size_t i = 0; i < condValues.size(); ++i) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
-    ASSERT_EQ(_solver->committedValue(condVarId), committedValue);
+TEST_F(IfThenElseConstTest, values) {
+  generate();
+  const std::vector<Int> values{0, 1, 0, 0, 1, 1, 0};
 
-    _solver->setValue(ts, condVarId, condValues[i]);
+  for (size_t m = 0; m < values.size(); ++m) {
+    const Int comVal = values.at(m);
 
-    const Int expectedOutput = computeOutput(condValues[i]);
+    EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
 
-    ASSERT_EQ(expectedOutput, _solver->value(ts, outputId));
+    for (size_t p = 0; p < values.size(); ++p) {
+      const Int curVal = values.at(p);
+      _solver->beginMove();
+      _solver->setValue(inputVar, curVal);
+      _solver->endMove();
 
-    _solver->commitIf(ts, VarId(condVarId));
-    committedValue = _solver->value(ts, condVarId);
-
-    ASSERT_EQ(expectedOutput, _solver->value(ts + 1, outputId));
+      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
+      if (p == values.size() - 1) {
+        _solver->beginMove();
+      } else {
+        _solver->beginProbe();
+      }
+      _solver->query(outputVar);
+      if (p == values.size() - 1) {
+        _solver->endMove();
+      } else {
+        _solver->endProbe();
+      }
+      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
+      EXPECT_EQ(_solver->committedValue(inputVar), comVal);
+      EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
+    }
   }
 }
 

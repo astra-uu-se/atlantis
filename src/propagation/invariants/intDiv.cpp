@@ -10,7 +10,7 @@ IntDiv::IntDiv(SolverBase& solver, VarId output, VarViewId numerator,
                VarViewId denominator)
     : Invariant(solver),
       _output(output),
-      _nominator(numerator),
+      _numerator(numerator),
       _denominator(denominator) {}
 
 IntDiv::IntDiv(SolverBase& solver, VarViewId output, VarViewId numerator,
@@ -21,14 +21,14 @@ IntDiv::IntDiv(SolverBase& solver, VarViewId output, VarViewId numerator,
 
 void IntDiv::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _nominator, 0, false);
+  _solver.registerInvariantInput(_id, _numerator, 0, false);
   _solver.registerInvariantInput(_id, _denominator, 0, false);
   registerDefinedVar(_output);
 }
 
 void IntDiv::updateBounds(bool widenOnly) {
-  const Int nomLb = _solver.lowerBound(_nominator);
-  const Int nomUb = _solver.upperBound(_nominator);
+  const Int nomLb = _solver.lowerBound(_numerator);
+  const Int nomUb = _solver.upperBound(_numerator);
   const Int denLb = _solver.lowerBound(_denominator);
   const Int denUb = _solver.upperBound(_denominator);
 
@@ -68,23 +68,21 @@ void IntDiv::close(Timestamp) {
   const Int denUb = _solver.upperBound(_denominator);
 
   assert(denLb != 0 || denUb != 0);
-  if (denLb <= 0 && 0 <= denUb) {
-    _zeroReplacement = denUb >= 1 ? 1 : -1;
-  }
+  _zeroReplacement = (denLb < 0 && 0 <= denUb) ? -1 : 1;
 }
 
 void IntDiv::recompute(Timestamp ts) {
   assert(_zeroReplacement != 0);
   const Int denominator = _solver.value(ts, _denominator);
   updateValue(ts, _output,
-              _solver.value(ts, _nominator) /
+              _solver.value(ts, _numerator) /
                   (denominator != 0 ? denominator : _zeroReplacement));
 }
 
 VarViewId IntDiv::nextInput(Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
-      return _nominator;
+      return _numerator;
     case 1:
       return _denominator;
     default:

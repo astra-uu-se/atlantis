@@ -50,7 +50,8 @@
         "Tree Height",
         "Sum static input count",
         "PROPAGATION_MODE"
-      ]
+      ],
+      "group": 1
     },
     "ElementVarTree": {
       "model_name": "Element Tree",
@@ -63,9 +64,10 @@
       },
       "argument_order": [
         "Tree Height",
-        "Element dynamic input count",
+        "$n$",
         "PROPAGATION_MODE"
-      ]
+      ],
+      "group": 2
     },
     "FoldableBinaryTree": {
       "model_name": "Foldable Binary Tree",
@@ -88,7 +90,8 @@
       "argument_order": [
         "Tree Height",
         "PROPAGATION_MODE"
-      ]
+      ],
+      "group": 1
     },
     "LinearAllDifferent": {
       "model_name": "Linear All Different",
@@ -102,7 +105,8 @@
         "Overlapping input variables",
         "Input variable count",
         "PROPAGATION_MODE"
-      ]
+      ],
+      "group": 1
     },
     "LinearTree": {
       "model_name": "Sum Tree",
@@ -120,9 +124,10 @@
       },
       "argument_order": [
         "Tree Height",
-        "Sum input count",
+        "$n$",
         "PROPAGATION_MODE"
-      ]
+      ],
+      "group": 1
     },
     "AllInterval": {
       "yscale": "log",
@@ -130,7 +135,8 @@
       "abbreviation": "AIS",
       "method_name": {
         "probe_single_swap": "single swap"
-      }
+      },
+      "group": 1
     },
     "CarSequencing": {
       "model_name": "Car Sequencing",
@@ -157,7 +163,7 @@
         "probe_single": "change single mark"
       },
       "argument_order": [
-        "n",
+        "$n$",
         "PROPAGATION_MODE"
       ]
     },
@@ -189,7 +195,7 @@
         "probe_all_swap": "all swaps"
       },
       "argument_order": [
-        "n",
+        "$n$",
         "PROPAGATION_MODE"
       ]
     },
@@ -204,12 +210,12 @@
         "probe_single_relocate": "relocate single container"
       },
       "argument_order": [
-        "n",
+        "$n$",
         "PROPAGATION_MODE"
       ]
     },
     "TSP": {
-      "model_name": "Travelling Salesperson (without Time Windows)",
+      "model_name": "Travelling Salesperson Problem",
       "abbreviation": "TSP",
       "label": "Tour",
       "yscale": "log",
@@ -219,7 +225,7 @@
         "probe_all_swap": "all Three-opts"
       },
       "argument_order": [
-        "n",
+        "$n$",
         "PROPAGATION_MODE"
       ],
       "compare": [
@@ -227,7 +233,7 @@
       ]
     },
     "TSPTW": {
-      "model_name": "Travelling Salesperson with Time Windows",
+      "model_name": "Travelling Salesperson Problem with Time Windows",
       "abbreviation": "TSPTW",
       "label": "Tour",
       "yscale": "log",
@@ -237,7 +243,7 @@
         "probe_all_swap": "all Three-opts"
       },
       "argument_order": [
-        "n",
+        "$n$",
         "PROPAGATION_MODE"
       ],
       "compare": [
@@ -245,7 +251,7 @@
       ]
     },
     "TSPTWAllDiff": {
-      "model_name": "Travelling Salesperson with Time Windows\n(Sequence Model)",
+      "model_name": "Travelling Salesperson Problem with Time Windows",
       "abbreviation": "TSPTW",
       "ignore": false,
       "label": "Sequence",
@@ -256,7 +262,7 @@
         "probe_all_swap": "all Three-opts"
       },
       "argument_order": [
-        "n",
+        "$n$",
         "PROPAGATION_MODE"
       ],
       "compare": [

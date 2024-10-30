@@ -183,7 +183,7 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
   EXPECT_FALSE(inputVals.empty());
 
-  while (increaseNextVal(inputVarIds, inputVals)) {
+  while (increaseNextVal(inputVarIds, inputVals) >= 0) {
     _solver->beginMove();
     setVarVals(inputVarIds, inputVals);
     _solver->endMove();

@@ -109,14 +109,14 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
 
   template <typename... Args>
   void createInvariantNode(Args&&... args) {
-    EXPECT_TRUE(_invNodeId == NULL_NODE_ID);
+    EXPECT_EQ(_invNodeId, NULL_NODE_ID);
     _invNodeId = _invariantGraph->addInvariantNode(
         std::make_unique<InvNode>(std::forward<Args>(args)...));
   }
 
   template <typename... Args>
   void createImplicitConstraintNode(Args&&... args) {
-    EXPECT_TRUE(_invNodeId == NULL_NODE_ID);
+    EXPECT_EQ(_invNodeId, NULL_NODE_ID);
     _invNodeId = _invariantGraph->addImplicitConstraintNode(
         std::make_unique<InvNode>(std::forward<Args>(args)...));
   }
@@ -282,8 +282,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return inputVals;
   }
 
-  bool increaseNextVal(const std::vector<propagation::VarViewId>& inputVars,
-                       std::vector<Int>& inputVals) {
+  Int increaseNextVal(const std::vector<propagation::VarViewId>& inputVars,
+                      std::vector<Int>& inputVals) {
     EXPECT_EQ(inputVars.size(), inputVals.size());
     for (Int i = static_cast<Int>(inputVals.size()) - 1; i >= 0; --i) {
       if (inputVars.at(i) == propagation::NULL_ID) {
@@ -291,11 +291,11 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       }
       if (inputVals.at(i) < _solver->upperBound(inputVars.at(i))) {
         ++inputVals.at(i);
-        return true;
+        return i;
       }
       inputVals.at(i) = _solver->lowerBound(inputVars.at(i));
     }
-    return false;
+    return -1;
   }
 
   void setVarVals(const std::vector<propagation::VarViewId>& inputVars,

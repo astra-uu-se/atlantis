@@ -7,229 +7,254 @@ using namespace atlantis::propagation;
 
 class BinaryMaxTest : public InvariantTest {
  public:
-  Int computeOutput(Timestamp ts, std::array<VarViewId, 2> inputs) {
-    return computeOutput(_solver->value(ts, inputs.at(0)),
-                         _solver->value(ts, inputs.at(1)));
-  }
+  VarViewId x{NULL_ID};
+  VarViewId y{NULL_ID};
+  Int xLb = std::numeric_limits<Int>::min();
+  Int xUb = std::numeric_limits<Int>::max();
+  Int yLb = std::numeric_limits<Int>::min();
+  Int yUb = std::numeric_limits<Int>::max();
+  VarViewId outputVar{NULL_ID};
 
-  static Int computeOutput(std::array<Int, 2> inputs) {
-    return computeOutput(inputs.at(0), inputs.at(1));
-  }
+  std::uniform_int_distribution<Int> xDist;
+  std::uniform_int_distribution<Int> yDist;
 
-  Int computeOutput(Timestamp ts, const VarViewId x, const VarViewId y) {
+  Int computeOutput(Timestamp ts) {
     return computeOutput(_solver->value(ts, x), _solver->value(ts, y));
+  }
+
+  Int computeOutput(bool committedValue = false) {
+    return computeOutput(
+        committedValue ? _solver->committedValue(x) : _solver->currentValue(x),
+        committedValue ? _solver->committedValue(y) : _solver->currentValue(y));
   }
 
   static Int computeOutput(const Int xVal, const Int yVal) {
     return std::max(xVal, yVal);
+  }
+
+  BinaryMax& generate() {
+    xDist = std::uniform_int_distribution<Int>(xLb, xUb);
+    yDist = std::uniform_int_distribution<Int>(yLb, yUb);
+
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    x = makeIntVar(xLb, xUb, xDist);
+    y = makeIntVar(yLb, yUb, yDist);
+    outputVar = _solver->makeIntVar(0, 0, 0);
+    BinaryMax& invariant =
+        _solver->makeInvariant<BinaryMax>(*_solver, outputVar, x, y);
+    _solver->close();
+    return invariant;
   }
 };
 
 TEST_F(BinaryMaxTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
+
+  auto& invariant = generate();
   _solver->open();
-  const VarViewId x = _solver->makeIntVar(
-      boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarViewId y = _solver->makeIntVar(
-      boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
-  BinaryMax& invariant =
-      _solver->makeInvariant<BinaryMax>(*_solver, outputId, x, y);
-  _solver->close();
 
   for (const auto& [xLb, xUb] : boundVec) {
-    EXPECT_TRUE(xLb <= xUb);
+    EXPECT_LE(xLb, xUb);
     _solver->updateBounds(VarId(x), xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
-      EXPECT_TRUE(yLb <= yUb);
+      EXPECT_LE(yLb, yUb);
       _solver->updateBounds(VarId(y), yLb, yUb, false);
-      _solver->open();
       invariant.updateBounds(false);
-      _solver->close();
-      EXPECT_EQ(_solver->lowerBound(outputId), std::max(xLb, yLb));
-      EXPECT_EQ(_solver->upperBound(outputId), std::max(xUb, yUb));
+
+      EXPECT_EQ(_solver->lowerBound(outputVar), std::max(xLb, yLb));
+      EXPECT_EQ(_solver->upperBound(outputVar), std::max(xUb, yUb));
     }
   }
 }
 
 TEST_F(BinaryMaxTest, Recompute) {
-  const Int xLb = 0;
-  const Int xUb = 10;
-  const Int yLb = 0;
-  const Int yUb = 5;
-  EXPECT_TRUE(xLb <= xUb);
-  EXPECT_TRUE(yLb <= yUb);
+  generateState = GenerateState::LB;
 
-  _solver->open();
-  const VarViewId x = _solver->makeIntVar(xUb, xLb, xUb);
-  const VarViewId y = _solver->makeIntVar(yUb, yLb, yUb);
-  const VarViewId outputId =
-      _solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
-  BinaryMax& invariant =
-      _solver->makeInvariant<BinaryMax>(*_solver, outputId, x, y);
-  _solver->close();
+  std::vector<std::pair<Int, Int>> inputBounds{{0, 10}, {0, 5}};
 
-  for (Int xVal = xLb; xVal <= xUb; ++xVal) {
-    for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-      _solver->setValue(_solver->currentTimestamp(), x, xVal);
-      _solver->setValue(_solver->currentTimestamp(), y, yVal);
+  xLb = 0;
+  xUb = 10;
+  yLb = 0;
+  yUb = 5;
 
-      const Int expectedOutput = computeOutput(xVal, yVal);
-      invariant.recompute(_solver->currentTimestamp());
-      EXPECT_EQ(expectedOutput,
-                _solver->value(_solver->currentTimestamp(), outputId));
-    }
+  auto& invariant = generate();
+
+  std::vector<VarViewId> inputVars{x, y};
+
+  auto inputVals = makeValVector(inputVars);
+
+  Timestamp ts = _solver->currentTimestamp();
+
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
+
+    const Int expectedOutput = computeOutput(ts);
+    invariant.recompute(ts);
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(BinaryMaxTest, NotifyInputChanged) {
-  const Int lb = -5;
-  const Int ub = 5;
-  EXPECT_TRUE(lb <= ub);
+  generateState = GenerateState::LB;
 
-  _solver->open();
-  std::array<VarViewId, 2> inputs{_solver->makeIntVar(ub, lb, ub),
-                                  _solver->makeIntVar(ub, lb, ub)};
-  VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
-  BinaryMax& invariant = _solver->makeInvariant<BinaryMax>(
-      *_solver, outputId, inputs.at(0), inputs.at(1));
-  _solver->close();
+  xLb = -5;
+  xUb = 5;
+  yLb = xLb;
+  yUb = xUb;
+  auto& invariant = generate();
+
+  std::vector<VarViewId> inputVars{x, y};
+
+  auto inputVals = makeValVector(inputVars);
 
   Timestamp ts = _solver->currentTimestamp();
 
-  for (Int val = lb; val <= ub; ++val) {
-    ++ts;
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      _solver->setValue(ts, inputs.at(i), val);
-      const Int expectedOutput = computeOutput(ts, inputs);
+  Int i{-1};
 
-      invariant.notifyInputChanged(ts, LocalId(i));
-      EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
-    }
+  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
+
+    const Int expectedOutput = computeOutput(ts);
+    invariant.notifyInputChanged(ts, LocalId(i));
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(BinaryMaxTest, NextInput) {
-  const Int lb = 5;
-  const Int ub = 10;
-  EXPECT_TRUE(lb <= ub);
+  xLb = 5;
+  xUb = 10;
+  yLb = xLb;
+  yUb = xUb;
+  auto& invariant = generate();
 
-  _solver->open();
-  const std::array<VarViewId, 2> inputs = {_solver->makeIntVar(lb, lb, ub),
-                                           _solver->makeIntVar(ub, lb, ub)};
-  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
-  const VarViewId minVarId =
-      *std::min_element(inputs.begin(), inputs.end(),
-                        [&](const VarViewId& a, const VarViewId& b) {
-                          return size_t(a) < size_t(b);
-                        });
-  const VarViewId maxVarId =
-      *std::max_element(inputs.begin(), inputs.end(),
-                        [&](const VarViewId& a, const VarViewId& b) {
-                          return size_t(a) < size_t(b);
-                        });
-  BinaryMax& invariant = _solver->makeInvariant<BinaryMax>(
-      *_solver, outputId, inputs.at(0), inputs.at(1));
-  _solver->close();
+  std::vector<VarViewId> inputVars{x, y};
 
-  for (Timestamp ts = _solver->currentTimestamp() + 1;
-       ts < _solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(size_t(maxVarId) + 1, false);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      const VarViewId varId = invariant.nextInput(ts);
-      EXPECT_NE(varId, NULL_ID);
-      EXPECT_LE(size_t(minVarId), size_t(varId));
-      EXPECT_GE(size_t(maxVarId), size_t(varId));
-      EXPECT_FALSE(notified.at(size_t(varId)));
-      notified.at(size_t(varId)) = true;
-    }
-    EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
-      EXPECT_TRUE(notified.at(i));
-    }
-  }
+  expectNextInput(inputVars, invariant);
 }
 
 TEST_F(BinaryMaxTest, NotifyCurrentInputChanged) {
-  const Int lb = -5;
-  const Int ub = 5;
-  EXPECT_TRUE(lb <= ub);
+  xLb = -5;
+  xUb = 5;
+  yLb = xLb;
+  yUb = xUb;
+  auto& invariant = generate();
 
-  _solver->open();
-  std::uniform_int_distribution<Int> valueDist(lb, ub);
-  const std::array<VarViewId, 2> inputs = {
-      _solver->makeIntVar(valueDist(gen), lb, ub),
-      _solver->makeIntVar(valueDist(gen), lb, ub)};
-  const VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
-  BinaryMax& invariant = _solver->makeInvariant<BinaryMax>(
-      *_solver, outputId, inputs.at(0), inputs.at(1));
-  _solver->close();
+  std::vector<VarViewId> inputVars{x, y};
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    for (const VarViewId& varId : inputs) {
+    for (const VarViewId& varId : inputVars) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = _solver->value(ts, varId);
       do {
-        _solver->setValue(ts, varId, valueDist(gen));
+        _solver->setValue(ts, varId, varId == x ? xDist(gen) : yDist(gen));
       } while (_solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(_solver->value(ts, outputVar), computeOutput(ts));
     }
   }
 }
 
 TEST_F(BinaryMaxTest, Commit) {
-  const Int lb = -10;
-  const Int ub = 10;
-  EXPECT_TRUE(lb <= ub);
+  xLb = -10;
+  xUb = 10;
+  yLb = xLb;
+  yUb = xUb;
+  auto& invariant = generate();
 
-  _solver->open();
-  std::uniform_int_distribution<Int> valueDist(lb, ub);
-  std::array<size_t, 2> indices{0, 1};
-  std::array<Int, 2> committedValues{valueDist(gen), valueDist(gen)};
-  std::array<VarViewId, 2> inputs{
-      _solver->makeIntVar(committedValues.at(0), lb, ub),
-      _solver->makeIntVar(committedValues.at(1), lb, ub)};
+  std::vector<VarViewId> inputVars{x, y};
+
+  std::vector<Int> committedValues(inputVars.size());
+  for (size_t i = 0; i < inputVars.size(); ++i) {
+    committedValues.at(i) = _solver->committedValue(inputVars.at(i));
+  }
+
+  std::vector<size_t> indices{0, 1};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  VarViewId outputId = _solver->makeIntVar(0, 0, 2);
-  BinaryMax& invariant = _solver->makeInvariant<BinaryMax>(
-      *_solver, outputId, inputs.at(0), inputs.at(1));
-  _solver->close();
-
-  EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
-            computeOutput(_solver->currentTimestamp(), inputs));
+  EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
     Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
-    for (size_t j = 0; j < inputs.size(); ++j) {
+    for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(_solver->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
+                committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      _solver->setValue(ts, inputs.at(i), valueDist(gen));
-    } while (oldVal == _solver->value(ts, inputs.at(i)));
+      _solver->setValue(ts, inputVars.at(i), i == 0 ? xDist(gen) : yDist(gen));
+    } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = _solver->value(ts, outputId);
+    const Int notifiedOutput = _solver->value(ts, outputVar);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputs.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
-    _solver->commitIf(ts, VarId(outputId));
+    _solver->commitIf(ts, VarId(inputVars.at(i)));
+    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
+    _solver->commitIf(ts, VarId(outputVar));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputVar));
+  }
+}
+
+RC_GTEST_FIXTURE_PROP(BinaryMaxTest, rapidcheck, ()) {
+  const Int xb1 = *rc::gen::arbitrary<Int>();
+  const Int xb2 = *rc::gen::arbitrary<Int>();
+  xLb = std::min(xb1, xb2);
+  xUb = std::max(xb1, xb2);
+
+  const Int yb1 = *rc::gen::arbitrary<Int>();
+  const Int yb2 = *rc::gen::arbitrary<Int>();
+  yLb = std::min(yb1, yb2);
+  yUb = std::max(yb1, yb2);
+
+  generate();
+
+  const size_t numCommits = 3;
+  const size_t numProbes = 10;
+
+  for (size_t c = 0; c < numCommits; ++c) {
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
+
+    for (size_t p = 0; p <= numProbes; ++p) {
+      _solver->beginMove();
+      if (*rc::gen::arbitrary<bool>()) {
+        _solver->setValue(x, xDist(gen));
+      }
+      if (*rc::gen::arbitrary<bool>()) {
+        _solver->setValue(y, yDist(gen));
+      }
+
+      _solver->endMove();
+
+      if (p == numProbes) {
+        _solver->beginCommit();
+      } else {
+        _solver->beginProbe();
+      }
+      _solver->query(outputVar);
+      if (p == numProbes) {
+        _solver->endCommit();
+      } else {
+        _solver->endProbe();
+      }
+      RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());
+    }
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }
 }
 

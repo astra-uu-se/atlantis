@@ -16,7 +16,7 @@ namespace atlantis::propagation {
 class IntDiv : public Invariant {
  private:
   VarId _output;
-  VarViewId _nominator, _denominator;
+  VarViewId _numerator, _denominator;
   Int _zeroReplacement{1};
 
  public:

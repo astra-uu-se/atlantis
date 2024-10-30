@@ -1,14 +1,14 @@
 #include "../viewTestHelper.hpp"
-#include "atlantis/propagation/views/bool2IntView.hpp"
+#include "atlantis/propagation/views/int2BoolView.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::propagation;
 
-class Bool2IntViewTest : public ViewTest {
+class Int2BoolViewTest : public ViewTest {
  public:
   void SetUp() override {
-    inputVarLb = 0;
+    inputVarLb = -1;
     inputVarUb = 2;
     ViewTest::SetUp();
   }
@@ -16,21 +16,23 @@ class Bool2IntViewTest : public ViewTest {
   void generate() {
     _solver->open();
     makeInputVar();
-    outputVar = _solver->makeIntView<Bool2IntView>(*_solver, inputVar);
+    outputVar = _solver->makeIntView<Int2BoolView>(*_solver, inputVar);
     _solver->close();
   }
 
   Int computeOutput(bool committedValue = false) {
     return (committedValue ? _solver->committedValue(inputVar)
-                           : _solver->currentValue(inputVar)) == 0
+                           : _solver->currentValue(inputVar)) <= 0
                ? 1
                : 0;
   }
 };
 
-TEST_F(Bool2IntViewTest, bounds) {
-  std::vector<std::pair<Int, Int>> bounds{{0, 0}, {0, 1}, {1, 1}, {1000, 1000}};
-  std::vector<std::pair<Int, Int>> expected{{1, 1}, {0, 1}, {0, 0}, {0, 0}};
+TEST_F(Int2BoolViewTest, bounds) {
+  std::vector<std::pair<Int, Int>> bounds{
+      {-100, -100}, {0, 0}, {0, 1}, {1, 1}, {1000, 1000}};
+  std::vector<std::pair<Int, Int>> expected{
+      {1, 1}, {1, 1}, {0, 1}, {0, 0}, {0, 0}};
   EXPECT_EQ(bounds.size(), expected.size());
   generate();
 
@@ -48,7 +50,7 @@ TEST_F(Bool2IntViewTest, bounds) {
   }
 }
 
-TEST_F(Bool2IntViewTest, values) {
+TEST_F(Int2BoolViewTest, values) {
   generate();
   const std::vector<Int> values{0, 1, 0, 0, 1, 1, 0};
 
@@ -79,7 +81,6 @@ TEST_F(Bool2IntViewTest, values) {
       EXPECT_EQ(_solver->committedValue(inputVar), comVal);
       EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
     }
-    EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
   }
 }
 

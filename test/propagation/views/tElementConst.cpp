@@ -1,135 +1,118 @@
-#include <gtest/gtest.h>
-
-#include <random>
-#include <vector>
-
-#include "atlantis/propagation/solver.hpp"
+#include "../viewTestHelper.hpp"
 #include "atlantis/propagation/views/elementConst.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::propagation;
 
-class ElementConstTest : public ::testing::Test {
- protected:
-  std::shared_ptr<Solver> _solver;
-  std::mt19937 gen;
-  std::default_random_engine rng;
+class ElementConstTest : public ViewTest {
+ public:
+  Int numValues = 1000;
+  Int offset{1};
 
-  const size_t numValues = 1000;
-  const Int valueLb = std::numeric_limits<Int>::min();
-  const Int valueUb = std::numeric_limits<Int>::max();
-  Int indexLb = 1;
-  Int indexUb = static_cast<Int>(numValues);
+  Int valueLb = std::numeric_limits<Int>::min();
+  Int valueUb = std::numeric_limits<Int>::max();
   std::vector<Int> values;
   std::uniform_int_distribution<Int> valueDist;
-  std::uniform_int_distribution<Int> indexDist;
 
- public:
+  Int indexLb() const { return offset; }
+  Int indexUb() const { return offset + numValues - 1; }
+
   void SetUp() override {
-    std::random_device rd;
-    gen = std::mt19937(rd());
-    _solver = std::make_shared<Solver>();
+    inputVarLb = indexLb();
+    inputVarUb = indexUb();
+    ViewTest::SetUp();
+  }
 
-    values.resize(numValues, 0);
+  void TearDown() override {
+    ViewTest::TearDown();
+    values.clear();
+  }
+
+  Int toZeroIndex(bool committedValue = false) const {
+    return (committedValue ? _solver->committedValue(inputVar)
+                           : _solver->currentValue(inputVar)) -
+           offset;
+  }
+
+  Int computeOutput(bool committedValue = false) {
+    return values.at(toZeroIndex(committedValue));
+  }
+
+  void generate() {
+    values.resize(numValues);
     valueDist = std::uniform_int_distribution<Int>(valueLb, valueUb);
-    indexDist = std::uniform_int_distribution<Int>(indexLb, indexUb);
     for (long& value : values) {
       value = valueDist(gen);
     }
-  }
 
-  void TearDown() override { values.clear(); }
-
-  Int computeOutput(const Timestamp ts, const VarViewId index) {
-    return computeOutput(_solver->value(ts, index));
-  }
-
-  Int computeOutput(const Int indexVal) {
-    EXPECT_TRUE(1 <= indexVal);
-    EXPECT_TRUE(static_cast<size_t>(indexVal) <= values.size());
-    return values.at(indexVal - 1);
+    _solver->open();
+    makeInputVar();
+    outputVar = _solver->makeIntView<ElementConst>(
+        *_solver, inputVar, std::vector<Int>(values), offset);
+    _solver->close();
   }
 };
 
-TEST_F(ElementConstTest, Bounds) {
-  EXPECT_TRUE(valueLb <= valueUb);
-  EXPECT_TRUE(indexLb <= indexUb);
+TEST_F(ElementConstTest, bounds) {
+  std::vector<Int> offsets = {-100, 0, 1, 100};
+  for (const Int o : offsets) {
+    offset = o;
+    generate();
 
-  _solver->open();
-  const VarViewId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarViewId outputId = _solver->makeIntView<ElementConst>(
-      *_solver, index, std::vector<Int>(values));
-  _solver->close();
+    for (Int minIndex = indexLb(); minIndex <= numValues; ++minIndex) {
+      for (Int maxIndex = numValues; maxIndex >= minIndex; --maxIndex) {
+        _solver->updateBounds(VarId(inputVar), minIndex, maxIndex, false);
 
-  const Int ub = 100;
+        Int minVal = std::numeric_limits<Int>::max();
+        Int maxVal = std::numeric_limits<Int>::min();
 
-  for (Int minIndex = indexLb; minIndex <= ub; ++minIndex) {
-    for (Int maxIndex = ub; maxIndex >= minIndex; --maxIndex) {
-      _solver->updateBounds(VarId(index), minIndex, maxIndex, false);
-      Int minVal = std::numeric_limits<Int>::max();
-      Int maxVal = std::numeric_limits<Int>::min();
-      for (Int i = minIndex - 1; i < maxIndex; ++i) {
-        minVal = std::min(minVal, values.at(i));
-        maxVal = std::max(maxVal, values.at(i));
+        for (Int index = minIndex; index <= maxIndex; ++index) {
+          minVal = std::min(minVal, values.at(toZeroIndex(index)));
+          maxVal = std::max(maxVal, values.at(toZeroIndex(index)));
+        }
+        EXPECT_EQ(minVal, _solver->lowerBound(outputVar));
+        EXPECT_EQ(maxVal, _solver->upperBound(outputVar));
       }
-      EXPECT_EQ(minVal, _solver->lowerBound(outputId));
-      EXPECT_EQ(maxVal, _solver->upperBound(outputId));
     }
   }
 }
 
-TEST_F(ElementConstTest, Value) {
-  EXPECT_TRUE(valueLb <= valueUb);
-  EXPECT_TRUE(indexLb <= indexUb);
+RC_GTEST_FIXTURE_PROP(ElementConstTest, rapidcheck, ()) {
+  numValues = *rc::gen::inRange(1, 100);
+  offset = *rc::gen::inRange(std::numeric_limits<Int>::min(),
+                             std::numeric_limits<Int>::max() - numValues);
 
-  _solver->open();
-  const VarViewId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarViewId outputId = _solver->makeIntView<ElementConst>(
-      *_solver, index, std::vector<Int>(values));
-  _solver->close();
+  generate();
 
-  for (Int val = indexLb; val <= indexUb; ++val) {
-    _solver->setValue(_solver->currentTimestamp(), index, val);
-    EXPECT_EQ(_solver->value(_solver->currentTimestamp(), index), val);
-    const Int expectedOutput =
-        computeOutput(_solver->currentTimestamp(), index);
+  const size_t numCommits = 3;
+  const size_t numProbes = 10;
 
-    EXPECT_EQ(expectedOutput,
-              _solver->value(_solver->currentTimestamp(), outputId));
-  }
-}
+  for (size_t c = 0; c < numCommits; ++c) {
+    for (size_t p = 0; p <= numProbes; ++p) {
+      _solver->beginMove();
+      _solver->beginMove();
+      _solver->setValue(inputVar, inputVarDist(gen));
+      _solver->endMove();
 
-TEST_F(ElementConstTest, CommittedValue) {
-  EXPECT_TRUE(valueLb <= valueUb);
-  EXPECT_TRUE(indexLb <= indexUb);
+      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
+      _solver->endMove();
 
-  std::vector<Int> indexValues(numValues);
-  std::iota(indexValues.begin(), indexValues.end(), 1);
-  std::shuffle(indexValues.begin(), indexValues.end(), rng);
-
-  _solver->open();
-  const VarViewId index = _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-  const VarViewId outputId = _solver->makeIntView<ElementConst>(
-      *_solver, index, std::vector<Int>(values));
-  _solver->close();
-
-  Int committedValue = _solver->committedValue(index);
-
-  for (size_t i = 0; i < indexValues.size(); ++i) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
-    ASSERT_EQ(_solver->committedValue(index), committedValue);
-
-    _solver->setValue(ts, index, indexValues[i]);
-
-    const Int expectedOutput = computeOutput(indexValues[i]);
-
-    ASSERT_EQ(expectedOutput, _solver->value(ts, outputId));
-
-    _solver->commitIf(ts, VarId(index));
-    committedValue = _solver->value(ts, index);
-
-    ASSERT_EQ(expectedOutput, _solver->value(ts + 1, outputId));
+      if (p == numProbes) {
+        _solver->beginCommit();
+      } else {
+        _solver->beginProbe();
+      }
+      _solver->query(outputVar);
+      if (p == numProbes) {
+        _solver->endCommit();
+      } else {
+        _solver->endProbe();
+      }
+      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
+      EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
+    }
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }
 }
 

@@ -1,89 +1,96 @@
-#include <gtest/gtest.h>
-#include <rapidcheck/gtest.h>
-
-#include <limits>
-#include <memory>
-#include <vector>
-
-#include "atlantis/propagation/solver.hpp"
+#include "../viewTestHelper.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::propagation;
 
-class notEqualViewConst : public ::testing::Test {
- protected:
-  std::shared_ptr<Solver> _solver;
+class NotEqualConstTest : public ViewTest {
+ public:
+  Int value{0};
 
-  void SetUp() override { _solver = std::make_shared<Solver>(); }
+  void SetUp() override {
+    inputVarLb = -5;
+    inputVarUb = 5;
+    ViewTest::SetUp();
+  }
+
+  void generate() {
+    _solver->open();
+    makeInputVar();
+    outputVar = _solver->makeIntView<NotEqualConst>(*_solver, inputVar, value);
+    _solver->close();
+  }
+
+  Int computeOutput(bool committedValue = false) {
+    return value == (committedValue ? _solver->committedValue(inputVar)
+                                    : _solver->currentValue(inputVar))
+               ? 0
+               : 1;
+  }
 };
 
-RC_GTEST_FIXTURE_PROP(notEqualViewConst, simple, (Int a, Int b)) {
-  if (!_solver->isOpen()) {
-    _solver->open();
+TEST_F(NotEqualConstTest, bounds) {
+  std::vector<std::pair<Int, Int>> bounds{
+      {-1000, -1000}, {-1000, 0}, {0, 0}, {0, 1000}, {1000, 1000}};
+  std::vector<Int> values{-1001, -1000, -999, -1, 0, 1, 999, 1000, 1001};
+
+  for (const auto v : values) {
+    value = v;
+    generate();
+
+    for (size_t i = 0; i < bounds.size(); ++i) {
+      const auto& [inputLb, inputUb] = bounds.at(i);
+      EXPECT_LE(inputLb, inputUb);
+
+      _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
+
+      const Int expectedLb = std::min<Int>(0, v - inputLb);
+      const Int expectedUb = std::min<Int>(0, v - inputUb);
+
+      EXPECT_EQ(_solver->lowerBound(outputVar), expectedLb);
+      EXPECT_EQ(_solver->upperBound(outputVar), expectedUb);
+    }
   }
-  const VarViewId varId = _solver->makeIntVar(a, a, a);
-  const VarViewId violationId =
-      _solver->makeIntView<NotEqualConst>(*_solver, varId, b);
-  RC_ASSERT(_solver->committedValue(violationId) == static_cast<Int>(a == b));
 }
 
-RC_GTEST_FIXTURE_PROP(notEqualViewConst, singleton, (Int a, Int b)) {
-  if (!_solver->isOpen()) {
-    _solver->open();
-  }
-  const VarViewId varId = _solver->makeIntVar(a, a, a);
-  const VarViewId violationId =
-      _solver->makeIntView<NotEqualConst>(*_solver, varId, b);
-  RC_ASSERT(_solver->committedValue(violationId) == static_cast<Int>(a == b));
-  RC_ASSERT(_solver->lowerBound(violationId) ==
-            _solver->committedValue(violationId));
-  RC_ASSERT(_solver->upperBound(violationId) ==
-            _solver->committedValue(violationId));
-}
+RC_GTEST_FIXTURE_PROP(NotEqualConstTest, rapidcheck, ()) {
+  const Int v1 = *rc::gen::arbitrary<Int>();
+  const Int v2 = *rc::gen::arbitrary<Int>();
 
-RC_GTEST_FIXTURE_PROP(notEqualViewConst, interval, (Int a)) {
-  const Int size = 5;
-  Int lb, ub;
-  if ((a > 0) && (size > std::numeric_limits<Int>::max() - a)) {
-    lb = std::numeric_limits<Int>::max() - 2 * size;
-    ub = std::numeric_limits<Int>::max();
-  } else if ((a < 0) && (size < std::numeric_limits<Int>::max() - a)) {
-    lb = std::numeric_limits<Int>::min();
-    ub = std::numeric_limits<Int>::min() + 2 * size;
-  } else {
-    lb = a - size;
-    ub = a + size;
-  }
+  inputVarLb = std::min(v1, v2);
+  inputVarUb = std::max(v1, v2);
 
-  const Int b = lb + size;
+  generate();
 
-  _solver->open();
-  const VarViewId varId = _solver->makeIntVar(ub, lb, ub);
-  const VarViewId violationId =
-      _solver->makeIntView<NotEqualConst>(*_solver, varId, b);
-  _solver->close();
+  const size_t numCommits = 3;
+  const size_t numProbes = 10;
 
-  const Int violLb = _solver->lowerBound(violationId);
-  const Int violUb = _solver->upperBound(violationId);
+  for (size_t c = 0; c < numCommits; ++c) {
+    for (size_t p = 0; p <= numProbes; ++p) {
+      _solver->beginMove();
+      _solver->beginMove();
+      _solver->setValue(inputVar, inputVarDist(gen));
+      _solver->endMove();
 
-  for (Int val = lb; val <= ub; ++val) {
-    _solver->beginMove();
-    _solver->setValue(varId, val);
-    _solver->endMove();
-    _solver->beginProbe();
-    _solver->query(violationId);
-    _solver->endProbe();
+      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
+      _solver->endMove();
 
-    const Int actual = _solver->currentValue(violationId);
-    const Int expected = static_cast<Int>(val == b);
-
-    RC_ASSERT(_solver->lowerBound(violationId) == violLb);
-    RC_ASSERT(_solver->upperBound(violationId) == violUb);
-    RC_ASSERT(actual == expected);
-    RC_ASSERT(violLb <= actual);
-    RC_ASSERT(violUb >= actual);
+      if (p == numProbes) {
+        _solver->beginCommit();
+      } else {
+        _solver->beginProbe();
+      }
+      _solver->query(outputVar);
+      if (p == numProbes) {
+        _solver->endCommit();
+      } else {
+        _solver->endProbe();
+      }
+      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
+      EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
+    }
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }
 }
 

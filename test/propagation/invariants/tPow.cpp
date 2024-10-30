@@ -1,5 +1,6 @@
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/invariants/pow.hpp"
+#include "atlantis/utils/pow.hpp"
 
 namespace atlantis::testing {
 
@@ -7,67 +8,66 @@ using namespace atlantis::propagation;
 
 class PowTest : public InvariantTest {
  public:
-  Int computeOutput(Timestamp ts, const std::array<VarViewId, 2>& inputs) {
-    return computeOutput(ts, inputs, 1);
-  }
-  Int computeOutput(Timestamp ts, const std::array<VarViewId, 2>& inputs,
-                    Int zeroReplacement) {
-    return computeOutput(_solver->value(ts, inputs.at(0)),
-                         _solver->value(ts, inputs.at(1)), zeroReplacement);
-  }
+  VarViewId base{NULL_ID};
+  VarViewId exponent{NULL_ID};
+  Int baseLb{-2};
+  Int baseUb{2};
+  Int exponentLb{-2};
+  Int exponentUb{2};
+  VarViewId outputVar{NULL_ID};
 
-  static Int computeOutput(const std::array<Int, 2>& inputs) {
-    return computeOutput(inputs.at(0), inputs.at(1), 1);
-  }
+  std::uniform_int_distribution<Int> baseDist;
+  std::uniform_int_distribution<Int> exponentDist;
 
-  static Int computeOutput(const std::array<Int, 2>& inputs,
-                           Int zeroReplacement) {
-    return computeOutput(inputs.at(0), inputs.at(1), zeroReplacement);
-  }
+  Pow& generate() {
+    baseDist = std::uniform_int_distribution<Int>(baseLb, baseUb);
+    exponentDist = std::uniform_int_distribution<Int>(exponentLb, exponentUb);
 
-  Int computeOutput(Timestamp ts, const VarViewId base,
-                    const VarViewId exponent) {
-    return computeOutput(ts, base, exponent, 1);
-  }
-
-  Int computeOutput(Timestamp ts, const VarViewId base,
-                    const VarViewId exponent, Int zeroReplacement) {
-    return computeOutput(_solver->value(ts, base), _solver->value(ts, exponent),
-                         zeroReplacement);
-  }
-
-  static Int computeOutput(const Int baseVal, const Int expVal) {
-    return computeOutput(baseVal, expVal, 1);
-  }
-
-  static Int computeOutput(const Int baseVal, const Int expVal,
-                           Int zeroReplacement) {
-    if (baseVal == 0 && expVal < 0) {
-      return static_cast<Int>(std::pow(zeroReplacement, expVal));
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    return static_cast<Int>(std::pow(baseVal, expVal));
+    base = makeIntVar(baseLb, baseUb, baseDist);
+    exponent = makeIntVar(exponentLb, exponentUb, exponentDist);
+    outputVar = _solver->makeIntVar(0, 0, 0);
+    Pow& invariant =
+        _solver->makeInvariant<Pow>(*_solver, outputVar, base, exponent);
+    _solver->close();
+    return invariant;
+  }
+
+  Int zeroReplacement() const {
+    // base is always negative
+    return baseUb <= 0 ? -1 : 1;
+  }
+
+  Int computeOutput(bool committedValue = false) {
+    return computeOutput(committedValue ? _solver->committedValue(base)
+                                        : _solver->currentValue(base),
+                         committedValue ? _solver->committedValue(exponent)
+                                        : _solver->currentValue(exponent));
+  }
+
+  Int computeOutput(Timestamp ts) {
+    return computeOutput(_solver->value(ts, base),
+                         _solver->value(ts, exponent));
+  }
+
+  Int computeOutput(Int baseVal, Int expVal) {
+    return pow_zero_replacement(baseVal, expVal, zeroReplacement());
   }
 };
 
 TEST_F(PowTest, UpdateBounds) {
+  auto& invariant = generate();
+
   std::vector<std::pair<Int, Int>> boundVec{
       {-8, -5}, {-3, 0}, {-2, 2}, {0, 3}, {5, 8}};
-  _solver->open();
-  const VarViewId base = _solver->makeIntVar(
-      boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarViewId exponent = _solver->makeIntVar(
-      boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarViewId outputId = _solver->makeIntVar(
-      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-  Pow& invariant =
-      _solver->makeInvariant<Pow>(*_solver, outputId, base, exponent);
-  _solver->close();
 
   for (const auto& [baseLb, baseUb] : boundVec) {
-    EXPECT_TRUE(baseLb <= baseUb);
+    EXPECT_LE(baseLb, baseUb);
     _solver->updateBounds(VarId(base), baseLb, baseUb, false);
     for (const auto& [expLb, expUb] : boundVec) {
-      EXPECT_TRUE(expLb <= expUb);
+      EXPECT_LE(expLb, expUb);
       _solver->updateBounds(VarId(exponent), expLb, expUb, false);
       _solver->open();
       _solver->close();
@@ -76,12 +76,12 @@ TEST_F(PowTest, UpdateBounds) {
         for (Int expVal = expLb; expVal <= expUb; ++expVal) {
           _solver->setValue(_solver->currentTimestamp(), exponent, expVal);
           invariant.recompute(_solver->currentTimestamp());
-          const Int o = _solver->value(_solver->currentTimestamp(), outputId);
-          if (o < _solver->lowerBound(outputId) ||
-              _solver->upperBound(outputId) < o) {
+          const Int o = _solver->currentValue(outputVar);
+          if (o < _solver->lowerBound(outputVar) ||
+              _solver->upperBound(outputVar) < o) {
             invariant.updateBounds(false);
-            ASSERT_GE(o, _solver->lowerBound(outputId));
-            ASSERT_LE(o, _solver->upperBound(outputId));
+            ASSERT_GE(o, _solver->lowerBound(outputVar));
+            ASSERT_LE(o, _solver->upperBound(outputVar));
           }
         }
       }
@@ -90,182 +90,171 @@ TEST_F(PowTest, UpdateBounds) {
 }
 
 TEST_F(PowTest, Recompute) {
-  const Int baseLb = 0;
-  const Int baseUb = 10;
-  const Int expLb = 0;
-  const Int expUb = 5;
-  EXPECT_TRUE(baseLb <= baseUb);
-  EXPECT_TRUE(expLb <= expUb);
+  generateState = GenerateState::LB;
 
-  _solver->open();
-  const VarViewId base = _solver->makeIntVar(baseUb, baseLb, baseUb);
-  const VarViewId exponent = _solver->makeIntVar(expUb, expLb, expUb);
-  const VarViewId outputId =
-      _solver->makeIntVar(0, 0, std::max(baseUb - expLb, expUb - baseLb));
-  Pow& invariant =
-      _solver->makeInvariant<Pow>(*_solver, outputId, base, exponent);
-  _solver->close();
+  auto& invariant = generate();
 
-  for (Int baseVal = baseLb; baseVal <= baseUb; ++baseVal) {
-    for (Int expVal = expLb; expVal <= expUb; ++expVal) {
-      _solver->setValue(_solver->currentTimestamp(), base, baseVal);
-      _solver->setValue(_solver->currentTimestamp(), exponent, expVal);
+  std::vector<VarViewId> inputVars{base, exponent};
 
-      const Int expectedOutput = computeOutput(baseVal, expVal);
-      invariant.recompute(_solver->currentTimestamp());
-      EXPECT_EQ(expectedOutput,
-                _solver->value(_solver->currentTimestamp(), outputId));
-    }
+  auto inputVals = makeValVector(inputVars);
+
+  Timestamp ts = _solver->currentTimestamp();
+
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
+
+    const Int expectedOutput = computeOutput(ts);
+    invariant.recompute(ts);
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(PowTest, NotifyInputChanged) {
-  const Int lb = -5;
-  const Int ub = 5;
-  EXPECT_TRUE(lb <= ub);
+  generateState = GenerateState::LB;
 
-  _solver->open();
-  std::array<VarViewId, 2> inputs{_solver->makeIntVar(ub, lb, ub),
-                                  _solver->makeIntVar(ub, lb, ub)};
-  VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
-  Pow& invariant = _solver->makeInvariant<Pow>(*_solver, outputId, inputs.at(0),
-                                               inputs.at(1));
-  _solver->close();
+  auto& invariant = generate();
+
+  std::vector<VarViewId> inputVars{base, exponent};
+
+  auto inputVals = makeValVector(inputVars);
 
   Timestamp ts = _solver->currentTimestamp();
 
-  for (Int val = lb; val <= ub; ++val) {
-    ++ts;
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      _solver->setValue(ts, inputs.at(i), val);
-      const Int expectedOutput = computeOutput(ts, inputs, 1);
+  Int i{-1};
 
-      invariant.notifyInputChanged(ts, LocalId(i));
-      EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
-    }
+  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
+
+    const Int expectedOutput = computeOutput(ts);
+    invariant.notifyInputChanged(ts, LocalId(i));
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(PowTest, NextInput) {
-  const Int lb = 5;
-  const Int ub = 10;
-  EXPECT_TRUE(lb <= ub);
+  auto& invariant = generate();
 
-  _solver->open();
-  const std::array<VarViewId, 2> inputs = {_solver->makeIntVar(lb, lb, ub),
-                                           _solver->makeIntVar(ub, lb, ub)};
-  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
-  const VarViewId minVarId =
-      *std::min_element(inputs.begin(), inputs.end(),
-                        [&](const VarViewId& a, const VarViewId& b) {
-                          return size_t(a) < size_t(b);
-                        });
-  const VarViewId maxVarId =
-      *std::max_element(inputs.begin(), inputs.end(),
-                        [&](const VarViewId& a, const VarViewId& b) {
-                          return size_t(a) < size_t(b);
-                        });
-  Pow& invariant = _solver->makeInvariant<Pow>(*_solver, outputId, inputs.at(0),
-                                               inputs.at(1));
-  _solver->close();
+  std::vector<VarViewId> inputVars{base, exponent};
 
-  for (Timestamp ts = _solver->currentTimestamp() + 1;
-       ts < _solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(size_t(maxVarId) + 1, false);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      const VarViewId varId = invariant.nextInput(ts);
-      EXPECT_NE(varId, NULL_ID);
-      EXPECT_LE(size_t(minVarId), size_t(varId));
-      EXPECT_GE(size_t(maxVarId), size_t(varId));
-      EXPECT_FALSE(notified.at(size_t(varId)));
-      notified.at(size_t(varId)) = true;
-    }
-    EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
-      EXPECT_TRUE(notified.at(i));
-    }
-  }
+  expectNextInput(inputVars, invariant);
 }
 
 TEST_F(PowTest, NotifyCurrentInputChanged) {
-  const Int lb = -5;
-  const Int ub = 5;
-  EXPECT_TRUE(lb <= ub);
+  auto& invariant = generate();
 
-  _solver->open();
-  std::uniform_int_distribution<Int> valueDist(lb, ub);
-  const std::array<VarViewId, 2> inputs = {
-      _solver->makeIntVar(valueDist(gen), lb, ub),
-      _solver->makeIntVar(valueDist(gen), lb, ub)};
-  const VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
-  Pow& invariant = _solver->makeInvariant<Pow>(*_solver, outputId, inputs.at(0),
-                                               inputs.at(1));
-  _solver->close();
+  std::vector<VarViewId> inputVars{base, exponent};
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    for (const VarViewId& varId : inputs) {
+    for (const VarViewId& varId : inputVars) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = _solver->value(ts, varId);
       do {
-        _solver->setValue(ts, varId, valueDist(gen));
+        _solver->setValue(ts, varId,
+                          varId == base ? baseDist(gen) : exponentDist(gen));
       } while (_solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(_solver->value(ts, outputVar), computeOutput(ts));
     }
   }
 }
 
 TEST_F(PowTest, Commit) {
-  const Int lb = -10;
-  const Int ub = 10;
-  EXPECT_TRUE(lb <= ub);
+  auto& invariant = generate();
 
-  _solver->open();
-  std::uniform_int_distribution<Int> valueDist(lb, ub);
-  std::array<size_t, 2> indices{0, 1};
-  std::array<Int, 2> committedValues{valueDist(gen), valueDist(gen)};
-  std::array<VarViewId, 2> inputs{
-      _solver->makeIntVar(committedValues.at(0), lb, ub),
-      _solver->makeIntVar(committedValues.at(1), lb, ub)};
+  std::vector<VarViewId> inputVars{base, exponent};
+
+  std::vector<size_t> indices{0, 1};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  VarViewId outputId = _solver->makeIntVar(0, 0, 2);
-  Pow& invariant = _solver->makeInvariant<Pow>(*_solver, outputId, inputs.at(0),
-                                               inputs.at(1));
-  _solver->close();
+  std::vector<Int> committedValues{_solver->committedValue(base),
+                                   _solver->committedValue(exponent)};
 
-  EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
-            computeOutput(_solver->currentTimestamp(), inputs));
+  EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
     Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
-    for (size_t j = 0; j < inputs.size(); ++j) {
+    for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(_solver->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
+                committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      _solver->setValue(ts, inputs.at(i), valueDist(gen));
-    } while (oldVal == _solver->value(ts, inputs.at(i)));
+      _solver->setValue(ts, inputVars.at(i),
+                        i == 0 ? baseDist(gen) : exponentDist(gen));
+    } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = _solver->value(ts, outputId);
+    const Int notifiedOutput = _solver->value(ts, outputVar);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputs.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
-    _solver->commitIf(ts, VarId(outputId));
+    _solver->commitIf(ts, VarId(inputVars.at(i)));
+    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
+    _solver->commitIf(ts, VarId(outputVar));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputVar));
+  }
+}
+
+RC_GTEST_FIXTURE_PROP(PowTest, rapidcheck, ()) {
+  _solver->open();
+
+  const Int b1 = *rc::gen::inRange<Int>(-10, 11);
+  const Int b2 = *rc::gen::inRange<Int>(-10, 11);
+  baseLb = std::min(b1, b2);
+  baseUb = std::min(b1, b2);
+
+  const Int e1 = *rc::gen::inRange<Int>(-10, 11);
+  const Int e2 = *rc::gen::inRange<Int>(-10, 11);
+
+  exponentLb = *rc::gen::inRange<Int>(e1, e2);
+  exponentUb = *rc::gen::inRange<Int>(e1, e2);
+
+  generate();
+
+  const size_t numCommits = 3;
+  const size_t numProbes = 10;
+
+  for (size_t c = 0; c < numCommits; ++c) {
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
+
+    for (size_t p = 0; p <= numProbes; ++p) {
+      _solver->beginMove();
+      _solver->beginMove();
+      if (*rc::gen::arbitrary<bool>()) {
+        _solver->setValue(base, baseDist(gen));
+      }
+      if (*rc::gen::arbitrary<bool>()) {
+        _solver->setValue(exponent, exponentDist(gen));
+      }
+
+      _solver->endMove();
+
+      if (p == numProbes) {
+        _solver->beginCommit();
+      } else {
+        _solver->beginProbe();
+      }
+      _solver->query(outputVar);
+      if (p == numProbes) {
+        _solver->endCommit();
+      } else {
+        _solver->endProbe();
+      }
+      RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());
+    }
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }
 }
 

@@ -67,6 +67,7 @@ class Logger {
   template <typename Action>
   void beginScopeProcedure(Level level, LogScopeWrapper& logScopeWrapper,
                            Action&& action) {
+    logScopeWrapper.begin(*this, level);
     action();
     logScopeWrapper.end(*this, level);
   }

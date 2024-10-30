@@ -70,17 +70,6 @@ inline void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
   }
 }
 
-inline Int int_pow(Int base, Int exponent) {
-  if (exponent <= 0) {
-    return 1;
-  }
-  Int power = base;
-  for (Int i = 1; i < exponent; ++i) {
-    power *= base;
-  }
-  return power;
-}
-
 inline void defaultTreeArguments(::benchmark::internal::Benchmark* benchmark) {
   Int treeHeight = 4;
   for (Int argumentCount = 2; argumentCount <= 10; ++argumentCount) {

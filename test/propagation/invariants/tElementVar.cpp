@@ -7,306 +7,325 @@ using namespace atlantis::propagation;
 
 class ElementVarTest : public InvariantTest {
  protected:
-  const size_t numValues = 100;
-  const Int inputLb = std::numeric_limits<Int>::min();
-  const Int inputUb = std::numeric_limits<Int>::max();
+  Int numDynamicVars{100};
+  Int offset{1};
+
   std::vector<Int> offsets{-10, 0, 10};
-  std::vector<VarViewId> inputs;
-  std::uniform_int_distribution<Int> inputDist;
+  std::uniform_int_distribution<Int> dynamicInputDist;
+  std::uniform_int_distribution<Int> indexDist;
+
+  std::vector<VarViewId> dynamicInputs;
+  VarViewId indexVar{NULL_ID};
+  VarViewId outputVar{NULL_ID};
+
+  Int indexLb() const { return offset; }
+  Int indexUb() const { return offset + numDynamicVars - 1; }
 
  public:
   void SetUp() override {
     InvariantTest::SetUp();
-    inputs.resize(numValues, NULL_ID);
-    inputDist = std::uniform_int_distribution<Int>(inputLb, inputUb);
+    dynamicInputDist = std::uniform_int_distribution<Int>(
+        std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
   }
 
   void TearDown() override {
     InvariantTest::TearDown();
-    inputs.clear();
+    dynamicInputs.clear();
   }
 
-  [[nodiscard]] size_t zeroBasedIndex(const Int indexVal,
-                                      const Int offset) const {
+  ElementVar& generate() {
+    dynamicInputs.resize(numDynamicVars, NULL_ID);
+    for (Int i = 0; i < numDynamicVars; ++i) {
+      dynamicInputs.at(i) =
+          makeIntVar(std::numeric_limits<Int>::min(),
+                     std::numeric_limits<Int>::max(), dynamicInputDist);
+    }
+
+    indexDist = std::uniform_int_distribution<Int>(indexLb(), indexUb());
+
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    indexVar = makeIntVar(indexLb(), indexUb(), indexDist);
+    outputVar = _solver->makeIntVar(0, 0, 0);
+
+    ElementVar& invariant = _solver->makeInvariant<ElementVar>(
+        *_solver, outputVar, indexVar, std::vector<VarViewId>(dynamicInputs),
+        offset);
+    _solver->close();
+
+    return invariant;
+  }
+
+  [[nodiscard]] size_t zeroBasedIndex(Int indexVal) const {
     EXPECT_LE(offset, indexVal);
-    EXPECT_LT(indexVal - offset, static_cast<Int>(numValues));
+    EXPECT_LT(indexVal - offset, static_cast<Int>(numDynamicVars));
     return indexVal - offset;
   }
 
-  VarViewId getInput(const Int indexVal, const Int offset) {
-    return inputs.at(zeroBasedIndex(indexVal, offset));
+  VarViewId getInput(Int indexVal) {
+    return dynamicInputs.at(zeroBasedIndex(indexVal));
   }
 
-  Int computeOutput(const Timestamp ts, const VarViewId index,
-                    const Int offset) {
-    return computeOutput(ts, _solver->value(ts, index), offset);
+  Int computeOutput(Timestamp ts) {
+    return computeOutput(ts, _solver->value(ts, indexVar));
   }
 
-  Int computeOutput(const Timestamp ts, const Int indexVal, const Int offset) {
-    return _solver->value(ts, getInput(indexVal, offset));
+  Int computeOutput(Timestamp ts, Int indexVal) {
+    return _solver->value(ts, getInput(indexVal));
+  }
+
+  Int computeOutput(bool committedValue = false) {
+    return committedValue ? _solver->committedValue(
+                                getInput(_solver->committedValue(indexVar)))
+                          : _solver->currentValue(
+                                getInput(_solver->currentValue(indexVar)));
   }
 };
 
 TEST_F(ElementVarTest, UpdateBounds) {
-  EXPECT_TRUE(inputLb <= inputUb);
-  for (const Int offset : offsets) {
-    const Int indexLb = offset;
-    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
-    EXPECT_TRUE(indexLb <= indexUb);
+  EXPECT_LE(std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
+  for (const Int o : offsets) {
+    offset = o;
 
-    std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
+    auto& invariant = generate();
 
-    _solver->open();
-    const VarViewId index =
-        _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (auto& input : inputs) {
-      input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
-    }
-    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
-    _solver->close();
-
-    for (Int minIndex = indexLb; minIndex <= indexUb; ++minIndex) {
-      for (Int maxIndex = indexUb; maxIndex >= minIndex; --maxIndex) {
-        _solver->updateBounds(VarId(index), minIndex, maxIndex, false);
+    for (Int minIndex = indexLb(); minIndex <= indexUb(); ++minIndex) {
+      for (Int maxIndex = indexUb(); maxIndex >= minIndex; --maxIndex) {
+        _solver->updateBounds(VarId(indexVar), minIndex, maxIndex, false);
         invariant.updateBounds(false);
         Int minVal = std::numeric_limits<Int>::max();
         Int maxVal = std::numeric_limits<Int>::min();
         for (Int indexVal = minIndex; indexVal <= maxIndex; ++indexVal) {
-          minVal =
-              std::min(minVal, _solver->lowerBound(getInput(indexVal, offset)));
-          maxVal =
-              std::max(maxVal, _solver->upperBound(getInput(indexVal, offset)));
+          minVal = std::min(minVal, _solver->lowerBound(getInput(indexVal)));
+          maxVal = std::max(maxVal, _solver->upperBound(getInput(indexVal)));
         }
-        EXPECT_EQ(minVal, _solver->lowerBound(outputId));
-        EXPECT_EQ(maxVal, _solver->upperBound(outputId));
+        EXPECT_EQ(minVal, _solver->lowerBound(outputVar));
+        EXPECT_EQ(maxVal, _solver->upperBound(outputVar));
       }
     }
   }
 }
 
 TEST_F(ElementVarTest, Recompute) {
-  EXPECT_TRUE(inputLb <= inputUb);
-  for (const Int offset : offsets) {
-    const Int indexLb = offset;
-    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
-    EXPECT_TRUE(indexLb <= indexUb);
+  generateState = GenerateState::LB;
 
-    std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
+  EXPECT_LE(std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
+  for (const Int o : offsets) {
+    offset = o;
 
-    _solver->open();
-    const VarViewId index =
-        _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (auto& input : inputs) {
-      input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
-    }
-    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
-    _solver->close();
+    auto& invariant = generate();
 
-    for (Int indexVal = indexLb; indexVal <= indexUb; ++indexVal) {
-      _solver->setValue(_solver->currentTimestamp(), index, indexVal);
-      EXPECT_EQ(_solver->value(_solver->currentTimestamp(), index), indexVal);
+    Timestamp ts = _solver->currentTimestamp();
 
-      const Int expectedOutput =
-          computeOutput(_solver->currentTimestamp(), index, offset);
-      invariant.recompute(_solver->currentTimestamp());
-      EXPECT_EQ(_solver->value(_solver->currentTimestamp(), index), indexVal);
+    for (Int indexVal = indexLb(); indexVal <= indexUb(); ++indexVal) {
+      ++ts;
+      _solver->setValue(_solver->currentTimestamp(), indexVar, indexVal);
+      EXPECT_EQ(_solver->currentValue(indexVar), indexVal);
 
-      EXPECT_EQ(expectedOutput,
-                _solver->value(_solver->currentTimestamp(), outputId));
+      const Int expectedOutput = computeOutput(ts);
+      invariant.recompute(ts);
+      EXPECT_EQ(_solver->currentValue(indexVar), indexVal);
+
+      EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
     }
   }
 }
 
 TEST_F(ElementVarTest, NotifyInputChanged) {
-  EXPECT_TRUE(inputLb <= inputUb);
-  for (const Int offset : offsets) {
-    const Int indexLb = offset;
-    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
-    EXPECT_TRUE(indexLb <= indexUb);
+  generateState = GenerateState::LB;
 
-    std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
+  for (const Int o : offsets) {
+    offset = o;
 
-    _solver->open();
-    const VarViewId index =
-        _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (auto& input : inputs) {
-      input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
-    }
-    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
-    _solver->close();
+    auto& invariant = generate();
 
     Timestamp ts = _solver->currentTimestamp();
 
-    for (Int indexVal = indexLb; indexVal <= indexUb; ++indexVal) {
+    for (Int indexVal = indexLb(); indexVal <= indexUb(); ++indexVal) {
       ++ts;
-      _solver->setValue(ts, index, indexVal);
-      const Int expectedOutput = computeOutput(ts, index, offset);
+      _solver->setValue(ts, indexVar, indexVal);
 
-      invariant.notifyInputChanged(ts, LocalId(0));
-      EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
+      const Int expectedOutput = computeOutput(ts);
+      invariant.notifyInputChanged(ts, LocalId(numDynamicVars));
+      EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
     }
   }
 }
 
 TEST_F(ElementVarTest, NextInput) {
-  EXPECT_TRUE(inputLb <= inputUb);
-  for (const Int offset : offsets) {
-    const Int indexLb = offset;
-    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
-    EXPECT_TRUE(indexLb <= indexUb);
+  EXPECT_LE(std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
+  for (const Int o : offsets) {
+    offset = o;
 
-    std::uniform_int_distribution<Int> indexDist(indexLb, indexUb);
-
-    _solver->open();
-    const VarViewId index =
-        _solver->makeIntVar(indexDist(gen), indexLb, indexUb);
-    for (auto& input : inputs) {
-      input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
-    }
-    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
-    _solver->close();
+    auto& invariant = generate();
 
     for (Timestamp ts = _solver->currentTimestamp() + 1;
          ts < _solver->currentTimestamp() + 4; ++ts) {
-      EXPECT_EQ(invariant.nextInput(ts), index);
+      EXPECT_EQ(invariant.nextInput(ts), indexVar);
       EXPECT_EQ(invariant.nextInput(ts),
-                getInput(_solver->value(ts, index), offset));
+                getInput(_solver->value(ts, indexVar)));
       EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
     }
   }
 }
 
 TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
-  EXPECT_TRUE(inputLb <= inputUb);
+  EXPECT_LE(std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
   Timestamp t0 = _solver->currentTimestamp() +
-                 (numValues * static_cast<Int>(offsets.size())) + 1;
-  for (const Int offset : offsets) {
-    const Int indexLb = offset;
-    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
-    EXPECT_TRUE(indexLb <= indexUb);
+                 (numDynamicVars * static_cast<Int>(offsets.size())) + 1;
+  for (const Int o : offsets) {
+    offset = o;
 
-    std::vector<Int> indexValues(numValues, 0);
-    std::iota(indexValues.begin(), indexValues.end(), offset);
+    auto& invariant = generate();
+
+    std::vector<Int> indexValues(numDynamicVars);
+    std::iota(indexValues.begin(), indexValues.end(), indexLb());
     std::shuffle(indexValues.begin(), indexValues.end(), rng);
-
-    _solver->open();
-    const VarViewId index =
-        _solver->makeIntVar(indexValues.back(), indexLb, indexUb);
-    for (auto& input : inputs) {
-      input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
-    }
-    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
-    _solver->close();
 
     for (size_t i = 0; i < indexValues.size(); ++i) {
       const Int indexVal = indexValues.at(i);
       Timestamp ts = t0 + Timestamp(i);
-      EXPECT_EQ(invariant.nextInput(ts), index);
-      _solver->setValue(ts, index, indexVal);
+      EXPECT_EQ(invariant.nextInput(ts), indexVar);
+      _solver->setValue(ts, indexVar, indexVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, index, offset));
+      EXPECT_EQ(_solver->value(ts, outputVar), computeOutput(ts));
 
       const VarViewId curInput = invariant.nextInput(ts);
-      EXPECT_EQ(curInput, getInput(indexVal, offset));
+      EXPECT_EQ(curInput, getInput(indexVal));
 
       const Int oldInputVal = _solver->value(ts, curInput);
       do {
-        _solver->setValue(ts, curInput, inputDist(gen));
+        _solver->setValue(ts, curInput, dynamicInputDist(gen));
       } while (_solver->value(ts, curInput) == oldInputVal);
 
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, index, offset));
+      EXPECT_EQ(_solver->value(ts, outputVar), computeOutput(ts));
     }
   }
 }
 
 TEST_F(ElementVarTest, Commit) {
-  EXPECT_TRUE(inputLb <= inputUb);
-  for (const Int offset : offsets) {
-    const Int indexLb = offset;
-    const Int indexUb = static_cast<Int>(numValues) - 1 + offset;
-    EXPECT_TRUE(indexLb <= indexUb);
+  EXPECT_LE(std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
+  for (const Int o : offsets) {
+    offset = o;
 
-    std::vector<Int> indexValues(numValues);
-    std::iota(indexValues.begin(), indexValues.end(), offset);
-    std::shuffle(indexValues.begin(), indexValues.end(), rng);
+    auto& invariant = generate();
 
-    _solver->open();
-    const VarViewId index =
-        _solver->makeIntVar(indexValues.back(), indexLb, indexUb);
-    for (auto& input : inputs) {
-      input = _solver->makeIntVar(inputDist(gen), inputLb, inputUb);
-    }
-    const VarViewId outputId = _solver->makeIntVar(inputLb, inputLb, inputUb);
-    ElementVar& invariant = _solver->makeInvariant<ElementVar>(
-        *_solver, outputId, index, std::vector<VarViewId>(inputs), offset);
-    _solver->close();
+    Int committedIndexValue = _solver->committedValue(indexVar);
 
-    Int committedIndexValue = _solver->committedValue(index);
-
-    std::vector<Int> committedInputValues(inputs.size());
+    std::vector<Int> committedInputValues(dynamicInputs.size());
     for (size_t i = 0; i < committedInputValues.size(); ++i) {
-      committedInputValues.at(i) = _solver->committedValue(inputs.at(i));
+      committedInputValues.at(i) = _solver->committedValue(dynamicInputs.at(i));
     }
+
+    std::vector<Int> indexValues(numDynamicVars);
+    std::iota(indexValues.begin(), indexValues.end(), indexLb());
+    std::shuffle(indexValues.begin(), indexValues.end(), rng);
 
     for (size_t i = 0; i < indexValues.size(); ++i) {
       const Int indexVal = indexValues.at(i);
       Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
-      ASSERT_EQ(_solver->committedValue(index), committedIndexValue);
-      for (size_t j = 0; j < inputs.size(); ++j) {
-        ASSERT_EQ(_solver->committedValue(inputs.at(j)),
+      ASSERT_EQ(_solver->committedValue(indexVar), committedIndexValue);
+      for (size_t j = 0; j < dynamicInputs.size(); ++j) {
+        ASSERT_EQ(_solver->committedValue(dynamicInputs.at(j)),
                   committedInputValues.at(j));
       }
 
       // Change Index
-      _solver->setValue(ts, index, indexVal);
+      _solver->setValue(ts, indexVar, indexVal);
 
-      // notify index change
+      // notify indexVar change
       invariant.notifyInputChanged(ts, LocalId(0));
 
-      // incremental value from index
-      Int notifiedOutput = _solver->value(ts, outputId);
+      // incremental value from indexVar
+      Int notifiedOutput = _solver->value(ts, outputVar);
       invariant.recompute(ts);
 
-      ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
+      ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
       // Change input
-      const VarViewId curInput = getInput(indexVal, offset);
+      const VarViewId curInput = getInput(indexVal);
       const Int oldInputVal = _solver->value(ts, curInput);
       do {
-        _solver->setValue(ts, curInput, inputDist(gen));
+        _solver->setValue(ts, curInput, dynamicInputDist(gen));
       } while (_solver->value(ts, curInput) == oldInputVal);
 
       // notify input change
       invariant.notifyInputChanged(ts, LocalId(indexVal));
 
       // incremental value from input
-      notifiedOutput = _solver->value(ts, outputId);
+      notifiedOutput = _solver->value(ts, outputVar);
       invariant.recompute(ts);
 
-      ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
+      ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-      _solver->commitIf(ts, VarId(index));
-      committedIndexValue = _solver->value(ts, index);
+      _solver->commitIf(ts, VarId(indexVar));
+      committedIndexValue = _solver->value(ts, indexVar);
       _solver->commitIf(ts, VarId(curInput));
-      committedInputValues.at(zeroBasedIndex(indexVal, offset)) =
+      committedInputValues.at(zeroBasedIndex(indexVal)) =
           _solver->value(ts, curInput);
-      _solver->commitIf(ts, VarId(outputId));
+      _solver->commitIf(ts, VarId(outputVar));
 
       invariant.commit(ts);
       invariant.recompute(ts + 1);
-      ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
+      ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputVar));
     }
+  }
+}
+
+RC_GTEST_FIXTURE_PROP(ElementVarTest, rapidcheck, ()) {
+  numDynamicVars = *rc::gen::inRange<Int>(1, 1000);
+
+  offset = *rc::gen::inRange(std::numeric_limits<Int>::min() + 200,
+                             std::numeric_limits<Int>::max() - 200);
+
+  std::vector<VarViewId> inputVars;
+  inputVars.reserve(numDynamicVars + 1);
+
+  generate();
+
+  std::vector<std::uniform_int_distribution<Int>> dists;
+  dists.reserve(numDynamicVars + 1);
+
+  for (const VarViewId& dynId : dynamicInputs) {
+    inputVars.emplace_back(dynId);
+    dists.emplace_back(dynamicInputDist);
+  }
+
+  inputVars.emplace_back(indexVar);
+  dists.emplace_back(indexDist);
+
+  const size_t numCommits = 3;
+  const size_t numProbes = 10;
+
+  for (size_t c = 0; c < numCommits; ++c) {
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
+
+    for (size_t p = 0; p <= numProbes; ++p) {
+      _solver->beginMove();
+      _solver->beginMove();
+      for (size_t i = 0; i < inputVars.size(); ++i) {
+        if (*rc::gen::arbitrary<bool>()) {
+          _solver->setValue(inputVars.at(i), dists.at(i)(gen));
+        }
+      }
+      _solver->endMove();
+
+      if (p == numProbes) {
+        _solver->beginCommit();
+      } else {
+        _solver->beginProbe();
+      }
+      _solver->query(outputVar);
+      if (p == numProbes) {
+        _solver->endCommit();
+      } else {
+        _solver->endProbe();
+      }
+      RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());
+    }
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }
 }
 
@@ -317,9 +336,10 @@ class MockElementVar : public ElementVar {
     registered = true;
     ElementVar::registerVars();
   }
-  explicit MockElementVar(SolverBase& solver, VarViewId output, VarViewId index,
-                          std::vector<VarViewId>&& varArray, Int offset)
-      : ElementVar(solver, output, index, std::move(varArray), offset) {
+  explicit MockElementVar(SolverBase& solver, VarViewId output,
+                          VarViewId indexVar, std::vector<VarViewId>&& varArray,
+                          Int offset)
+      : ElementVar(solver, output, indexVar, std::move(varArray), offset) {
     EXPECT_TRUE(output.isVar());
 
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {

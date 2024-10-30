@@ -7,45 +7,62 @@ using namespace atlantis::propagation;
 
 class LessEqualTest : public InvariantTest {
  public:
-  Int computeViolation(Timestamp ts, std::array<VarViewId, 2> inputs) {
-    return computeViolation(_solver->value(ts, inputs.at(0)),
-                            _solver->value(ts, inputs.at(1)));
+  VarViewId x{NULL_ID};
+  VarViewId y{NULL_ID};
+  Int xLb{-2};
+  Int xUb{2};
+  Int yLb{-2};
+  Int yUb{2};
+  VarViewId outputVar{NULL_ID};
+
+  std::uniform_int_distribution<Int> xDist;
+  std::uniform_int_distribution<Int> yDist;
+
+  Int computeOutput(Timestamp ts) {
+    return computeOutput(_solver->value(ts, x), _solver->value(ts, y));
   }
 
-  static Int computeViolation(std::array<Int, 2> inputs) {
-    return computeViolation(inputs.at(0), inputs.at(1));
+  Int computeOutput(bool committedValue = false) {
+    return computeOutput(
+        committedValue ? _solver->committedValue(x) : _solver->currentValue(x),
+        committedValue ? _solver->committedValue(y) : _solver->currentValue(y));
   }
 
-  Int computeViolation(Timestamp ts, const VarViewId x, const VarViewId y) {
-    return computeViolation(_solver->value(ts, x), _solver->value(ts, y));
-  }
-
-  static Int computeViolation(const Int xVal, const Int yVal) {
+  Int computeOutput(const Int xVal, const Int yVal) {
     if (xVal <= yVal) {
       return 0;
     }
     return xVal - yVal;
+  }
+
+  LessEqual& generate() {
+    xDist = std::uniform_int_distribution<Int>(xLb, xUb);
+    yDist = std::uniform_int_distribution<Int>(yLb, yUb);
+
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    x = makeIntVar(xLb, xUb, xDist);
+    y = makeIntVar(yLb, yUb, yDist);
+    outputVar = _solver->makeIntVar(0, 0, 0);
+    LessEqual& invariant =
+        _solver->makeInvariant<LessEqual>(*_solver, outputVar, x, y);
+    _solver->close();
+    return invariant;
   }
 };
 
 TEST_F(LessEqualTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
-  _solver->open();
-  const VarViewId x = _solver->makeIntVar(
-      boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarViewId y = _solver->makeIntVar(
-      boundVec.front().first, boundVec.front().first, boundVec.front().second);
-  const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
-  LessEqual& invariant =
-      _solver->makeViolationInvariant<LessEqual>(*_solver, violationId, x, y);
-  _solver->close();
+
+  auto& invariant = generate();
 
   for (const auto& [xLb, xUb] : boundVec) {
-    EXPECT_TRUE(xLb <= xUb);
+    EXPECT_LE(xLb, xUb);
     _solver->updateBounds(VarId(x), xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
-      EXPECT_TRUE(yLb <= yUb);
+      EXPECT_LE(yLb, yUb);
       _solver->updateBounds(VarId(y), yLb, yUb, false);
       invariant.updateBounds(false);
       std::vector<Int> violations;
@@ -55,195 +72,185 @@ TEST_F(LessEqualTest, UpdateBounds) {
           _solver->setValue(_solver->currentTimestamp(), y, yVal);
           invariant.updateBounds(false);
           invariant.recompute(_solver->currentTimestamp());
-          violations.emplace_back(
-              _solver->value(_solver->currentTimestamp(), violationId));
+          violations.emplace_back(_solver->currentValue(outputVar));
         }
       }
       const auto& [minViol, maxViol] =
           std::minmax_element(violations.begin(), violations.end());
-      ASSERT_EQ(*minViol, _solver->lowerBound(violationId));
-      ASSERT_EQ(*maxViol, _solver->upperBound(violationId));
+      ASSERT_EQ(*minViol, _solver->lowerBound(outputVar));
+      ASSERT_EQ(*maxViol, _solver->upperBound(outputVar));
     }
   }
 }
 
 TEST_F(LessEqualTest, Recompute) {
-  const Int xLb = -100;
-  const Int xUb = 25;
-  const Int yLb = -25;
-  const Int yUb = 50;
+  generateState = GenerateState::LB;
 
-  EXPECT_TRUE(xLb <= xUb);
-  EXPECT_TRUE(yLb <= yUb);
-  _solver->open();
-  const VarViewId x = _solver->makeIntVar(xUb, xLb, xUb);
-  const VarViewId y = _solver->makeIntVar(yUb, yLb, yUb);
-  const VarViewId violationId =
-      _solver->makeIntVar(0, 0, std::max(xUb - yLb, yUb - xLb));
-  LessEqual& invariant =
-      _solver->makeViolationInvariant<LessEqual>(*_solver, violationId, x, y);
-  _solver->close();
+  auto& invariant = generate();
 
-  for (Int xVal = xLb; xVal <= xUb; ++xVal) {
-    for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-      _solver->setValue(_solver->currentTimestamp(), x, xVal);
-      _solver->setValue(_solver->currentTimestamp(), y, yVal);
+  std::vector<VarViewId> inputVars{x, y};
 
-      const Int expectedViolation = computeViolation(xVal, yVal);
-      invariant.recompute(_solver->currentTimestamp());
-      EXPECT_EQ(expectedViolation,
-                _solver->value(_solver->currentTimestamp(), violationId));
-    }
+  auto inputVals = makeValVector(inputVars);
+
+  Timestamp ts = _solver->currentTimestamp();
+
+  Int i{-1};
+
+  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
+
+    const Int expectedOutput = computeOutput();
+    invariant.notifyInputChanged(ts, LocalId(i));
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(LessEqualTest, NotifyInputChanged) {
-  const Int lb = -50;
-  const Int ub = 50;
-  EXPECT_TRUE(lb <= ub);
+  generateState = GenerateState::LB;
 
-  _solver->open();
-  std::array<VarViewId, 2> inputs{_solver->makeIntVar(ub, lb, ub),
-                                  _solver->makeIntVar(ub, lb, ub)};
-  const VarViewId violationId = _solver->makeIntVar(0, 0, ub - lb);
-  LessEqual& invariant = _solver->makeViolationInvariant<LessEqual>(
-      *_solver, violationId, inputs.at(0), inputs.at(1));
-  _solver->close();
+  auto& invariant = generate();
 
-  for (Int val = lb; val <= ub; ++val) {
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      _solver->setValue(_solver->currentTimestamp(), inputs.at(i), val);
-      const Int expectedViolation =
-          computeViolation(_solver->currentTimestamp(), inputs);
+  std::vector<VarViewId> inputVars{x, y};
 
-      invariant.notifyInputChanged(_solver->currentTimestamp(), LocalId(i));
-      EXPECT_EQ(expectedViolation,
-                _solver->value(_solver->currentTimestamp(), violationId));
-    }
+  auto inputVals = makeValVector(inputVars);
+
+  Timestamp ts = _solver->currentTimestamp();
+
+  Int i{-1};
+
+  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
+
+    const Int expectedOutput = computeOutput();
+    invariant.notifyInputChanged(ts, LocalId(i));
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(LessEqualTest, NextInput) {
-  const Int lb = -10;
-  const Int ub = 10;
-  EXPECT_TRUE(lb <= ub);
+  auto& invariant = generate();
 
-  _solver->open();
-  const std::array<VarViewId, 2> inputs = {_solver->makeIntVar(0, lb, ub),
-                                           _solver->makeIntVar(1, lb, ub)};
-  const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
-  const VarViewId minVarId =
-      *std::min_element(inputs.begin(), inputs.end(),
-                        [&](const VarViewId& a, const VarViewId& b) {
-                          return size_t(a) < size_t(b);
-                        });
-  const VarViewId maxVarId =
-      *std::max_element(inputs.begin(), inputs.end(),
-                        [&](const VarViewId& a, const VarViewId& b) {
-                          return size_t(a) < size_t(b);
-                        });
+  std::vector<VarViewId> inputVars{x, y};
 
-  LessEqual& invariant = _solver->makeViolationInvariant<LessEqual>(
-      *_solver, violationId, inputs.at(0), inputs.at(1));
-  _solver->close();
-
-  for (Timestamp ts = _solver->currentTimestamp() + 1;
-       ts < _solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(size_t(maxVarId) + 1, false);
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      const VarViewId varId = invariant.nextInput(ts);
-      EXPECT_NE(varId, NULL_ID);
-      EXPECT_LE(size_t(minVarId), size_t(varId));
-      EXPECT_GE(size_t(maxVarId), size_t(varId));
-      EXPECT_FALSE(notified.at(size_t(varId)));
-      notified.at(size_t(varId)) = true;
-    }
-    EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
-      EXPECT_TRUE(notified.at(i));
-    }
-  }
+  expectNextInput(inputVars, invariant);
 }
 
 TEST_F(LessEqualTest, NotifyCurrentInputChanged) {
-  const Int lb = -10;
-  const Int ub = 10;
-  EXPECT_TRUE(lb <= ub);
+  auto& invariant = generate();
 
-  _solver->open();
-  std::uniform_int_distribution<Int> valueDist(lb, ub);
-  const std::array<VarViewId, 2> inputs = {
-      _solver->makeIntVar(valueDist(gen), lb, ub),
-      _solver->makeIntVar(valueDist(gen), lb, ub)};
-  const VarViewId violationId = _solver->makeIntVar(0, 0, ub - lb);
-  LessEqual& invariant = _solver->makeViolationInvariant<LessEqual>(
-      *_solver, violationId, inputs.at(0), inputs.at(1));
-  _solver->close();
+  std::vector<VarViewId> inputVars{x, y};
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    for (const VarViewId& varId : inputs) {
+    for (const VarViewId& varId : inputVars) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = _solver->value(ts, varId);
       do {
-        _solver->setValue(ts, varId, valueDist(gen));
+        _solver->setValue(ts, varId, varId == x ? xDist(gen) : yDist(gen));
       } while (_solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(_solver->value(ts, violationId), computeViolation(ts, inputs));
+      EXPECT_EQ(_solver->value(ts, outputVar), computeOutput(ts));
     }
   }
 }
 
 TEST_F(LessEqualTest, Commit) {
-  const Int lb = -10;
-  const Int ub = 10;
-  EXPECT_TRUE(lb <= ub);
+  auto& invariant = generate();
 
-  _solver->open();
-  std::uniform_int_distribution<Int> valueDist(lb, ub);
-  std::array<size_t, 2> indices{0, 1};
-  std::array<Int, 2> committedValues{valueDist(gen), valueDist(gen)};
-  std::array<VarViewId, 2> inputs{
-      _solver->makeIntVar(committedValues.at(0), lb, ub),
-      _solver->makeIntVar(committedValues.at(1), lb, ub)};
+  std::vector<VarViewId> inputVars{x, y};
+
+  std::vector<size_t> indices{0, 1};
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  const VarViewId violationId = _solver->makeIntVar(0, 0, 2);
-  LessEqual& invariant = _solver->makeViolationInvariant<LessEqual>(
-      *_solver, violationId, inputs.at(0), inputs.at(1));
-  _solver->close();
+  std::vector<Int> committedValues{_solver->committedValue(x),
+                                   _solver->committedValue(y)};
 
-  EXPECT_EQ(_solver->value(_solver->currentTimestamp(), violationId),
-            computeViolation(_solver->currentTimestamp(), inputs));
+  EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
     Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
-    for (size_t j = 0; j < inputs.size(); ++j) {
+    for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(_solver->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
+                committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      _solver->setValue(ts, inputs.at(i), valueDist(gen));
-    } while (oldVal == _solver->value(ts, inputs.at(i)));
+      _solver->setValue(ts, inputVars.at(i), i == 0 ? xDist(gen) : yDist(gen));
+    } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedViolation = _solver->value(ts, violationId);
+    const Int notifiedOutput = _solver->value(ts, outputVar);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedViolation, _solver->value(ts, violationId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputs.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
-    _solver->commitIf(ts, VarId(violationId));
+    _solver->commitIf(ts, VarId(inputVars.at(i)));
+    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
+    _solver->commitIf(ts, VarId(outputVar));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedViolation, _solver->value(ts + 1, violationId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputVar));
+  }
+}
+
+RC_GTEST_FIXTURE_PROP(LessEqualTest, rapidcheck, ()) {
+  _solver->open();
+
+  const Int x1 = *rc::gen::arbitrary<Int>();
+  const Int x2 = *rc::gen::arbitrary<Int>();
+  xLb = std::min(x1, x2);
+  xUb = std::min(x1, x2);
+
+  const Int y1 =
+      std::numeric_limits<Int>::min() - std::min(Int{0}, std::min(x1, x2));
+  const Int y2 =
+      std::numeric_limits<Int>::max() - std::max(Int{0}, std::max(x1, x2));
+
+  yLb = *rc::gen::inRange<Int>(y1, y2);
+  yUb = *rc::gen::inRange<Int>(y1, y2);
+
+  generate();
+
+  const size_t numCommits = 3;
+  const size_t numProbes = 10;
+
+  for (size_t c = 0; c < numCommits; ++c) {
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
+
+    for (size_t p = 0; p <= numProbes; ++p) {
+      _solver->beginMove();
+      _solver->beginMove();
+      if (*rc::gen::arbitrary<bool>()) {
+        _solver->setValue(x, xDist(gen));
+      }
+      if (*rc::gen::arbitrary<bool>()) {
+        _solver->setValue(y, yDist(gen));
+      }
+
+      _solver->endMove();
+
+      if (p == numProbes) {
+        _solver->beginCommit();
+      } else {
+        _solver->beginProbe();
+      }
+      _solver->query(outputVar);
+      if (p == numProbes) {
+        _solver->endCommit();
+      } else {
+        _solver->endProbe();
+      }
+      RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());
+    }
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }
 }
 
@@ -254,10 +261,10 @@ class MockLessEqual : public LessEqual {
     registered = true;
     LessEqual::registerVars();
   }
-  explicit MockLessEqual(SolverBase& solver, VarViewId violationId, VarViewId x,
+  explicit MockLessEqual(SolverBase& solver, VarViewId outputVar, VarViewId x,
                          VarViewId y)
-      : LessEqual(solver, violationId, x, y) {
-    EXPECT_TRUE(violationId.isVar());
+      : LessEqual(solver, outputVar, x, y) {
+    EXPECT_TRUE(outputVar.isVar());
 
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return LessEqual::recompute(timestamp);
@@ -288,8 +295,8 @@ TEST_F(LessEqualTest, SolverIntegration) {
     if (!_solver->isOpen()) {
       _solver->open();
     }
-    const VarViewId x = _solver->makeIntVar(5, -100, 100);
-    const VarViewId y = _solver->makeIntVar(0, -100, 100);
+    x = _solver->makeIntVar(5, -100, 100);
+    y = _solver->makeIntVar(0, -100, 100);
     const VarViewId viol = _solver->makeIntVar(0, 0, 200);
     testNotifications<MockLessEqual>(
         &_solver->makeViolationInvariant<MockLessEqual>(*_solver, viol, x, y),

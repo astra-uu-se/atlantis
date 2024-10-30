@@ -2,6 +2,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rapidcheck/gtest.h>
 
 #include <deque>
 #include <random>
@@ -67,8 +68,11 @@ struct NotificationData {
   propagation::VarViewId queryVarId{NULL_ID};
 };
 
+enum struct GenerateState : uint8_t { RANDOM, LB, UB };
+
 class InvariantTest : public ::testing::Test {
  protected:
+  GenerateState generateState{GenerateState::RANDOM};
   std::shared_ptr<propagation::Solver> _solver;
   std::mt19937 gen;
   std::default_random_engine rng;
@@ -80,6 +84,14 @@ class InvariantTest : public ::testing::Test {
            OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC},
           {PropagationMode::OUTPUT_TO_INPUT,
            OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION}};
+
+  VarViewId makeIntVar(Int lb, Int ub,
+                       std::uniform_int_distribution<Int>& dist) {
+    const Int val = generateState == GenerateState::RANDOM
+                        ? dist(gen)
+                        : (generateState == GenerateState::LB ? lb : ub);
+    return _solver->makeIntVar(val, lb, ub);
+  }
 
   std::vector<Int> createInputVals(const std::vector<VarViewId>& inputVars) {
     std::vector<Int> inputVals(inputVars.size());
@@ -129,6 +141,154 @@ class InvariantTest : public ::testing::Test {
     return inputVars.size();
   }
 
+  std::vector<Int> makeValVector(
+      const std::vector<std::pair<Int, Int>>& bounds) {
+    std::vector<Int> vals(bounds.size());
+    for (size_t i = 0; i < bounds.size(); ++i) {
+      vals.at(i) = bounds.at(i).first;
+    }
+    return vals;
+  }
+
+  std::vector<propagation::VarViewId> makeVars(
+      const std::vector<Int>& vals,
+      const std::vector<std::pair<Int, Int>>& bounds) {
+    std::vector<propagation::VarViewId> vars;
+    EXPECT_EQ(vals.size(), bounds.size());
+    vars.reserve(vals.size());
+    for (size_t i = 0; i < vals.size(); ++i) {
+      EXPECT_GE(vals.at(i), bounds.at(i).first);
+      EXPECT_LE(vals.at(i), bounds.at(i).second);
+      vars.emplace_back(_solver->makeIntVar(vals.at(i), bounds.at(i).first,
+                                            bounds.at(i).second));
+    }
+    return vars;
+  }
+
+  std::vector<propagation::VarViewId> makeVars(size_t numVars, Int lb, Int ub) {
+    EXPECT_LE(lb, ub);
+    std::vector<propagation::VarViewId> vars;
+    vars.reserve(numVars);
+    for (size_t i = 0; i < numVars; ++i) {
+      vars.emplace_back(_solver->makeIntVar(lb, lb, ub));
+    }
+    return vars;
+  }
+
+  std::vector<propagation::VarViewId> makeVars(
+      const std::vector<std::pair<Int, Int>>& bounds) {
+    std::vector<propagation::VarViewId> vars;
+    vars.reserve(bounds.size());
+    for (const auto& [lb, ub] : bounds) {
+      EXPECT_LE(lb, ub);
+      vars.emplace_back(_solver->makeIntVar(lb, lb, ub));
+    }
+    return vars;
+  }
+
+  std::vector<Int> makeValVector(const std::vector<VarViewId>& inputVars) {
+    std::vector<Int> vals(inputVars.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      EXPECT_NE(inputVars.at(i), NULL_ID);
+      vals.at(i) = _solver->lowerBound(inputVars.at(i));
+    }
+    return vals;
+  }
+
+  propagation::VarViewId getMinVarViewId(
+      const std::vector<VarViewId>& vars) const {
+    return *std::min_element(vars.begin(), vars.end(),
+                             [&](const VarViewId& a, const VarViewId& b) {
+                               return size_t(a) < size_t(b);
+                             });
+  }
+
+  propagation::VarViewId getMaxVarViewId(
+      const std::vector<VarViewId>& vars) const {
+    return *std::max_element(vars.begin(), vars.end(),
+                             [&](const VarViewId& a, const VarViewId& b) {
+                               return size_t(a) < size_t(b);
+                             });
+  }
+
+  void expectNextInput(const std::vector<VarViewId>& inputVars,
+                       Invariant& invariant) {
+    for (const auto& id : inputVars) {
+      EXPECT_TRUE(id.isVar());
+    }
+    const auto minVarId = size_t(getMinVarViewId(inputVars));
+    const auto maxVarId = size_t(getMaxVarViewId(inputVars));
+
+    for (Timestamp ts = _solver->currentTimestamp() + 1;
+         ts < _solver->currentTimestamp() + 4; ++ts) {
+      std::vector<bool> notified(maxVarId - minVarId + 1, false);
+      for (size_t i = 0; i < inputVars.size(); ++i) {
+        const size_t varId = size_t(invariant.nextInput(ts));
+        EXPECT_NE(varId, NULL_ID);
+        EXPECT_LE(minVarId, varId);
+        EXPECT_GE(maxVarId, varId);
+        EXPECT_FALSE(notified.at(varId - minVarId));
+        notified.at(varId - minVarId) = true;
+      }
+      EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
+      for (size_t i = 0; i <= maxVarId - minVarId; ++i) {
+        EXPECT_TRUE(notified.at(i));
+      }
+    }
+  }
+
+  Int increaseNextVal(const std::vector<std::pair<Int, Int>>& bounds,
+                      std::vector<Int>& vals) {
+    EXPECT_EQ(bounds.size(), vals.size());
+    for (Int i = static_cast<Int>(vals.size()) - 1; i >= 0; --i) {
+      EXPECT_GE(vals.at(i), bounds.at(i).first);
+      EXPECT_LE(vals.at(i), bounds.at(i).second);
+      if (vals.at(i) < bounds.at(i).second) {
+        ++vals.at(i);
+        return i;
+      }
+      vals.at(i) = bounds.at(i).first;
+    }
+    return -1;
+  }
+
+  Int increaseNextVal(const std::vector<propagation::VarViewId>& varIds,
+                      std::vector<Int>& inputVals) const {
+    EXPECT_EQ(varIds.size(), inputVals.size());
+    for (Int i = static_cast<Int>(inputVals.size() - 1); i >= 0; --i) {
+      if (varIds.at(i) == propagation::NULL_ID) {
+        continue;
+      }
+      if (inputVals.at(i) < _solver->upperBound(varIds.at(i))) {
+        ++inputVals.at(i);
+        return i;
+      }
+      inputVals.at(i) = _solver->lowerBound(varIds.at(i));
+    }
+    return -1;
+  }
+
+  void setVarVals(Timestamp ts,
+                  const std::vector<propagation::VarViewId>& inputVars,
+                  const std::vector<Int>& vals) {
+    EXPECT_EQ(inputVars.size(), vals.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      if (inputVars.at(i) != propagation::NULL_ID) {
+        _solver->setValue(ts, inputVars.at(i), vals.at(i));
+      }
+    }
+  }
+
+  void setVarVals(const std::vector<propagation::VarViewId>& inputVars,
+                  const std::vector<Int>& vals) {
+    EXPECT_EQ(inputVars.size(), vals.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      if (inputVars.at(i) != propagation::NULL_ID) {
+        _solver->setValue(inputVars.at(i), vals.at(i));
+      }
+    }
+  }
+
   template <class T>
   void testNotifications(T* invariant, NotificationData data) {
     EXPECT_CALL(*invariant, recompute(::testing::_)).Times(AtLeast(1));
@@ -171,6 +331,7 @@ class InvariantTest : public ::testing::Test {
     std::random_device rd;
     gen = std::mt19937(rd());
     _solver = std::make_unique<propagation::Solver>();
+    generateState = GenerateState::RANDOM;
   }
 };
 

@@ -12,6 +12,7 @@
 #include "atlantis/propagation/invariants/elementVar.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/solver.hpp"
+#include "atlantis/utils/pow.hpp"
 
 namespace atlantis::benchmark {
 
@@ -166,7 +167,7 @@ BENCHMARK_DEFINE_F(ElementLinearTree, probe_single_index_var)
 static void arguments(::benchmark::internal::Benchmark* benchmark) {
   for (int treeCount = 2; treeCount <= 10; treeCount += 2) {
     for (int treeHeight = 2;
-         treeHeight <= 10 && std::pow(treeHeight, 2) <= 2048; treeHeight += 2) {
+         treeHeight <= 10 && pow(treeHeight, 2) <= 2048; treeHeight += 2) {
       for (Int mode = 0; mode <= 3; ++mode) {
         benchmark->Args({treeCount, treeHeight, mode});
       }

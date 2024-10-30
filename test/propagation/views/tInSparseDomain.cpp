@@ -19,11 +19,11 @@ class InSparseDomainTest : public ::testing::Test {
   std::default_random_engine rng;
 
  public:
-  Int computeViolation(Timestamp ts, VarViewId var,
-                       const std::vector<DomainEntry>& domain) {
-    return computeViolation(_solver->value(ts, var), domain);
+  Int computeOutput(Timestamp ts, VarViewId var,
+                    const std::vector<DomainEntry>& domain) {
+    return computeOutput(_solver->value(ts, var), domain);
   }
-  static Int computeViolation(Int val, const std::vector<DomainEntry>& domain) {
+  static Int computeOutput(Int val, const std::vector<DomainEntry>& domain) {
     Int viol = std::numeric_limits<Int>::max();
     for (const auto& [lb, ub] : domain) {
       if (lb <= val && val <= ub) {
@@ -57,7 +57,7 @@ TEST_F(InSparseDomainTest, Bounds) {
       continue;
     }
     for (const auto& [xLb, xUb] : domainVec) {
-      EXPECT_TRUE(xLb <= xUb);
+      EXPECT_LE(xLb, xUb);
       if (!_solver->isOpen()) {
         _solver->open();
       }
@@ -69,8 +69,7 @@ TEST_F(InSparseDomainTest, Bounds) {
       std::vector<Int> violations;
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
         _solver->setValue(_solver->currentTimestamp(), x, xVal);
-        violations.emplace_back(
-            _solver->value(_solver->currentTimestamp(), violationId));
+        violations.emplace_back(_solver->currentValue(violationId));
       }
       const auto& [minViol, maxViol] =
           std::minmax_element(violations.begin(), violations.end());
@@ -99,8 +98,7 @@ TEST_F(InSparseDomainTest, Value) {
     _solver->close();
     for (Int val = lb; val <= ub; ++val) {
       _solver->setValue(_solver->currentTimestamp(), x, val);
-      EXPECT_EQ(computeViolation(val, dom),
-                _solver->value(_solver->currentTimestamp(), violationId));
+      EXPECT_EQ(computeOutput(val, dom), _solver->currentValue(violationId));
     }
   }
 }
@@ -139,7 +137,7 @@ TEST_F(InSparseDomainTest, CommittedValue) {
 
       _solver->setValue(ts, x, values[i]);
 
-      const Int expectedViol = computeViolation(values[i], dom);
+      const Int expectedViol = computeOutput(values[i], dom);
 
       ASSERT_EQ(expectedViol, _solver->value(ts, violationId));
 

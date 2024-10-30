@@ -96,8 +96,8 @@ class FznTestBase : public ::testing::Test {
     return inputVals;
   }
 
-  bool increaseNextVal(const std::vector<propagation::VarViewId>& varIds,
-                       std::vector<Int>& inputVals) const {
+  Int increaseNextVal(const std::vector<propagation::VarViewId>& varIds,
+                      std::vector<Int>& inputVals) const {
     EXPECT_EQ(varIds.size(), inputVals.size());
     for (Int i = static_cast<Int>(inputVals.size() - 1); i >= 0; --i) {
       if (varIds.at(i) == propagation::NULL_ID) {
@@ -105,11 +105,11 @@ class FznTestBase : public ::testing::Test {
       }
       if (inputVals.at(i) < _solver->upperBound(varIds.at(i))) {
         ++inputVals.at(i);
-        return true;
+        return i;
       }
       inputVals.at(i) = _solver->lowerBound(varIds.at(i));
     }
-    return false;
+    return -1;
   }
 
   void setVarVals(const std::vector<propagation::VarViewId>& varIds,

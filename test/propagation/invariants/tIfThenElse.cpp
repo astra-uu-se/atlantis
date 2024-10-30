@@ -7,281 +7,286 @@ using namespace atlantis::propagation;
 
 class IfThenElseTest : public InvariantTest {
  public:
-  Int computeOutput(Timestamp ts, std::array<VarViewId, 3> inputs) {
-    return computeOutput(_solver->value(ts, inputs.at(0)),
-                         _solver->value(ts, inputs.at(1)),
-                         _solver->value(ts, inputs.at(2)));
+  VarViewId conditionVar{NULL_ID};
+  VarViewId thenVar{NULL_ID};
+  VarViewId elseVar{NULL_ID};
+  Int conditionLb{0};
+  Int conditionUb{1};
+  Int thenLb{-3};
+  Int thenUb{-1};
+  Int elseLb{1};
+  Int elseUb{3};
+  VarViewId outputVar{NULL_ID};
+
+  std::uniform_int_distribution<Int> conditionDist;
+  std::uniform_int_distribution<Int> thenDist;
+  std::uniform_int_distribution<Int> elseDist;
+
+  Int computeOutput(Timestamp ts) {
+    return computeOutput(_solver->value(ts, conditionVar),
+                         _solver->value(ts, thenVar),
+                         _solver->value(ts, elseVar));
   }
 
-  static Int computeOutput(std::array<Int, 3> inputs) {
-    return computeOutput(inputs.at(0), inputs.at(1), inputs.at(2));
+  Int computeOutput(bool committedValue = false) {
+    return computeOutput(committedValue ? _solver->committedValue(conditionVar)
+                                        : _solver->currentValue(conditionVar),
+                         committedValue ? _solver->committedValue(thenVar)
+                                        : _solver->currentValue(thenVar),
+                         committedValue ? _solver->committedValue(elseVar)
+                                        : _solver->currentValue(elseVar));
   }
 
-  Int computeOutput(Timestamp ts, const VarViewId b, const VarViewId x,
-                    const VarViewId y) {
-    return computeOutput(_solver->value(ts, b), _solver->value(ts, x),
-                         _solver->value(ts, y));
+  static Int computeOutput(Int conditionVal, Int thenVal, Int elseVal) {
+    return conditionVal == 0 ? thenVal : elseVal;
   }
 
-  static Int computeOutput(const Int bVal, const Int xVal, const Int yVal) {
-    return bVal == 0 ? xVal : yVal;
+  IfThenElse& generate() {
+    conditionDist =
+        std::uniform_int_distribution<Int>(conditionLb, conditionUb);
+    thenDist = std::uniform_int_distribution<Int>(thenLb, thenUb);
+    elseDist = std::uniform_int_distribution<Int>(elseLb, elseUb);
+
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    conditionVar = makeIntVar(conditionLb, conditionUb, conditionDist);
+    thenVar = makeIntVar(thenLb, thenUb, thenDist);
+    elseVar = makeIntVar(elseLb, elseUb, elseDist);
+    outputVar = _solver->makeIntVar(0, 0, 0);
+    IfThenElse& invariant = _solver->makeInvariant<IfThenElse>(
+        *_solver, outputVar, conditionVar, thenVar, elseVar);
+    _solver->close();
+    return invariant;
   }
 };
 
 TEST_F(IfThenElseTest, UpdateBounds) {
-  const Int xLb = 0;
-  const Int xUb = 10;
-  const Int yLb = 100;
-  const Int yUb = 1000;
-  EXPECT_TRUE(xLb <= xUb);
+  auto& invariant = generate();
 
-  _solver->open();
-  const VarViewId b = _solver->makeIntVar(0, 0, 10);
-  const VarViewId x = _solver->makeIntVar(yUb, yLb, yUb);
-  const VarViewId y = _solver->makeIntVar(yUb, yLb, yUb);
-  const VarViewId outputId =
-      _solver->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
-  IfThenElse& invariant =
-      _solver->makeInvariant<IfThenElse>(*_solver, outputId, b, x, y);
-  _solver->close();
+  std::vector<std::pair<Int, Int>> cBounds{{0, 0}, {0, 100}, {1, 10000}};
 
-  std::vector<std::pair<Int, Int>> bBounds{{0, 0}, {0, 100}, {1, 10000}};
-
-  for (const auto& [bLb, bUb] : bBounds) {
-    EXPECT_TRUE(bLb <= bUb);
-    _solver->updateBounds(VarId(b), bLb, bUb, false);
+  for (const auto& [cLb, cUb] : cBounds) {
+    EXPECT_LE(cLb, cUb);
+    _solver->updateBounds(VarId(conditionVar), cLb, cUb, false);
     invariant.updateBounds(false);
-    if (bLb == 0 && bUb == 0) {
-      EXPECT_EQ(_solver->lowerBound(outputId), _solver->lowerBound(x));
-      EXPECT_EQ(_solver->upperBound(outputId), _solver->upperBound(x));
-    } else if (bLb > 0) {
-      EXPECT_EQ(_solver->lowerBound(outputId), _solver->lowerBound(y));
-      EXPECT_EQ(_solver->upperBound(outputId), _solver->upperBound(y));
+    if (cLb == 0 && cUb == 0) {
+      EXPECT_EQ(_solver->lowerBound(outputVar), _solver->lowerBound(thenVar));
+      EXPECT_EQ(_solver->upperBound(outputVar), _solver->upperBound(thenVar));
+    } else if (cLb > 0) {
+      EXPECT_EQ(_solver->lowerBound(outputVar), _solver->lowerBound(elseVar));
+      EXPECT_EQ(_solver->upperBound(outputVar), _solver->upperBound(elseVar));
     } else {
-      EXPECT_EQ(_solver->lowerBound(outputId),
-                std::max(_solver->lowerBound(x), _solver->lowerBound(y)));
-      EXPECT_EQ(_solver->upperBound(outputId),
-                std::min(_solver->upperBound(x), _solver->upperBound(y)));
+      EXPECT_EQ(
+          _solver->lowerBound(outputVar),
+          std::max(_solver->lowerBound(thenVar), _solver->lowerBound(elseVar)));
+      EXPECT_EQ(
+          _solver->upperBound(outputVar),
+          std::min(_solver->upperBound(thenVar), _solver->upperBound(elseVar)));
     }
   }
 }
 
 TEST_F(IfThenElseTest, Recompute) {
-  const Int bLb = 0;
-  const Int bUb = 5;
-  const Int xLb = 0;
-  const Int xUb = 10;
-  const Int yLb = 0;
-  const Int yUb = 5;
-  EXPECT_TRUE(bLb <= bUb);
-  EXPECT_TRUE(xLb <= xUb);
-  EXPECT_TRUE(yLb <= yUb);
+  generateState = GenerateState::LB;
 
-  _solver->open();
-  const VarViewId b = _solver->makeIntVar(bLb, bLb, bUb);
-  const VarViewId x = _solver->makeIntVar(yUb, yLb, yUb);
-  const VarViewId y = _solver->makeIntVar(yUb, yLb, yUb);
-  const VarViewId outputId =
-      _solver->makeIntVar(0, std::min(xLb, yLb), std::max(xUb, yUb));
-  IfThenElse& invariant =
-      _solver->makeInvariant<IfThenElse>(*_solver, outputId, b, x, y);
-  _solver->close();
-  for (Int bVal = bLb; bVal <= bUb; ++bVal) {
-    for (Int xVal = xLb; xVal <= xUb; ++xVal) {
-      for (Int yVal = yLb; yVal <= yUb; ++yVal) {
-        _solver->setValue(_solver->currentTimestamp(), b, bVal);
-        _solver->setValue(_solver->currentTimestamp(), x, xVal);
-        _solver->setValue(_solver->currentTimestamp(), y, yVal);
+  auto& invariant = generate();
 
-        const Int expectedOutput = computeOutput(bVal, xVal, yVal);
-        invariant.recompute(_solver->currentTimestamp());
-        EXPECT_EQ(expectedOutput,
-                  _solver->value(_solver->currentTimestamp(), outputId));
-      }
-    }
+  std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
+
+  auto inputVals = makeValVector(inputVars);
+
+  Timestamp ts = _solver->currentTimestamp();
+
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
+
+    const Int expectedOutput = computeOutput(ts);
+    invariant.recompute(ts);
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(IfThenElseTest, NotifyInputChanged) {
-  const Int lb = -5;
-  const Int ub = 5;
-  const Int bLb = 0;
-  const Int bUb = 5;
-  EXPECT_TRUE(lb <= ub);
-  EXPECT_TRUE(bLb <= bUb);
+  generateState = GenerateState::LB;
 
-  _solver->open();
-  std::array<VarViewId, 3> inputs{_solver->makeIntVar(bLb, bLb, bUb),
-                                  _solver->makeIntVar(ub, lb, ub),
-                                  _solver->makeIntVar(ub, lb, ub)};
-  VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
-  IfThenElse& invariant = _solver->makeInvariant<IfThenElse>(
-      *_solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  _solver->close();
+  auto& invariant = generate();
+
+  std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
+
+  auto inputVals = makeValVector(inputVars);
 
   Timestamp ts = _solver->currentTimestamp();
 
-  for (Int bVal = bLb; bVal <= bUb; ++bVal) {
-    for (Int val = lb; val <= ub; ++val) {
-      for (size_t i = 1; i < inputs.size(); ++i) {
-        ++ts;
-        _solver->setValue(ts, inputs.at(0), bVal);
-        _solver->setValue(ts, inputs.at(i), val);
-        const Int expectedOutput = computeOutput(ts, inputs);
+  Int i{-1};
 
-        invariant.notifyInputChanged(ts, LocalId(i));
-        EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
-      }
-    }
+  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
+
+    const Int expectedOutput = computeOutput(ts);
+    invariant.notifyInputChanged(ts, LocalId(i));
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(IfThenElseTest, NextInput) {
-  const Int lb = 5;
-  const Int ub = 10;
-  const Int bLb = 0;
-  const Int bUb = 5;
-  EXPECT_TRUE(lb <= ub);
-  EXPECT_TRUE(bLb <= bUb);
+  auto& invariant = generate();
 
-  _solver->open();
-  const std::array<VarViewId, 3> inputs = {_solver->makeIntVar(bLb, bLb, bUb),
-                                           _solver->makeIntVar(lb, lb, ub),
-                                           _solver->makeIntVar(ub, lb, ub)};
-  const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
-  const VarViewId minVarId =
-      *std::min_element(inputs.begin(), inputs.end(),
-                        [&](const VarViewId& a, const VarViewId& b) {
-                          return size_t(a) < size_t(b);
-                        });
-  const VarViewId maxVarId =
-      *std::max_element(inputs.begin(), inputs.end(),
-                        [&](const VarViewId& a, const VarViewId& b) {
-                          return size_t(a) < size_t(b);
-                        });
-  IfThenElse& invariant = _solver->makeInvariant<IfThenElse>(
-      *_solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  _solver->close();
+  std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
+
+  const size_t minVarId = size_t(getMinVarViewId(inputVars));
+  const size_t maxVarId = size_t(getMaxVarViewId(inputVars));
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(size_t(maxVarId) + 1, false);
-    // First input is b,
-    // Second input is x if b = 0, otherwise y:
+    std::vector<bool> notified(maxVarId - minVarId + 1, false);
+    // First input is conditionVar,
+    // Second input is thenVar if conditionVar = 0, otherwise elseVar:
     for (size_t i = 0; i < 2; ++i) {
-      const VarViewId varId = invariant.nextInput(ts);
+      const size_t varId = size_t(invariant.nextInput(ts));
       EXPECT_NE(varId, NULL_ID);
-      EXPECT_LE(size_t(minVarId), size_t(varId));
-      EXPECT_GE(size_t(maxVarId), size_t(varId));
-      EXPECT_FALSE(notified.at(size_t(varId)));
-      notified.at(size_t(varId)) = true;
+      EXPECT_LE(minVarId, varId);
+      EXPECT_GE(maxVarId, varId);
+      EXPECT_FALSE(notified.at(varId - minVarId));
+      notified.at(varId - minVarId) = true;
     }
     EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    const Int bVal = _solver->value(ts, inputs.at(0));
+    const Int conditionVal = _solver->value(ts, conditionVar);
 
-    EXPECT_TRUE(notified.at(size_t(inputs.at(0))));
-    EXPECT_TRUE(notified.at(size_t(inputs.at(bVal == 0 ? 1 : 2))));
-    EXPECT_FALSE(notified.at(size_t(inputs.at(bVal == 0 ? 2 : 1))));
+    EXPECT_TRUE(notified.at(size_t(conditionVar)));
+    EXPECT_TRUE(notified.at(size_t(conditionVal == 0 ? thenVar : elseVar)));
+    EXPECT_FALSE(notified.at(size_t(conditionVal != 0 ? thenVar : elseVar)));
   }
 }
 
 TEST_F(IfThenElseTest, NotifyCurrentInputChanged) {
-  const Int lb = -5;
-  const Int ub = 5;
-  const Int bLb = 0;
-  const Int bUb = 5;
-  EXPECT_TRUE(lb <= ub);
-  EXPECT_TRUE(bLb <= bUb);
-
-  _solver->open();
-  std::uniform_int_distribution<Int> valueDist(lb, ub);
-  std::uniform_int_distribution<Int> bDist(bLb, bUb);
-
-  const std::array<VarViewId, 3> inputs = {
-      _solver->makeIntVar(bLb, bLb, bLb),
-      _solver->makeIntVar(valueDist(gen), lb, ub),
-      _solver->makeIntVar(valueDist(gen), lb, ub)};
-  const VarViewId outputId = _solver->makeIntVar(0, 0, ub - lb);
-  IfThenElse& invariant = _solver->makeInvariant<IfThenElse>(
-      *_solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  _solver->close();
+  auto& invariant = generate();
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
     for (size_t i = 0; i < 2; ++i) {
-      const Int bOld = _solver->value(ts, inputs.at(0));
+      const Int conditionVal = _solver->value(ts, conditionVar);
       const VarViewId curInput = invariant.nextInput(ts);
-      EXPECT_EQ(curInput, inputs.at(i == 0 ? 0 : bOld == 0 ? 1 : 2));
+      EXPECT_EQ(curInput, i == 0 ? conditionVar
+                                 : (conditionVal == 0 ? thenVar : elseVar));
 
       const Int oldVal = _solver->value(ts, curInput);
       do {
-        _solver->setValue(ts, curInput, i == 0 ? bDist(gen) : valueDist(gen));
+        _solver->setValue(ts, curInput,
+                          i == 0 ? conditionDist(gen)
+                                 : (i == 1 ? thenDist(gen) : elseDist(gen)));
       } while (_solver->value(ts, curInput) == oldVal);
 
       invariant.notifyCurrentInputChanged(ts);
 
-      EXPECT_EQ(_solver->value(ts, outputId), computeOutput(ts, inputs));
+      EXPECT_EQ(_solver->value(ts, outputVar), computeOutput(ts));
     }
   }
 }
 
 TEST_F(IfThenElseTest, Commit) {
-  const Int lb = -10;
-  const Int ub = 10;
-  const Int bLb = 0;
-  const Int bUb = 5;
-  EXPECT_TRUE(lb <= ub);
-  EXPECT_TRUE(bLb <= bUb);
+  auto& invariant = generate();
+  std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
 
-  _solver->open();
-  std::uniform_int_distribution<Int> bDist(bLb, bUb);
-  std::uniform_int_distribution<Int> valueDist(lb, ub);
-
-  std::array<size_t, 3> indices{0, 1, 2};
-  std::array<Int, 3> committedValues{bDist(gen), valueDist(gen),
-                                     valueDist(gen)};
-  std::array<VarViewId, 3> inputs{
-      _solver->makeIntVar(committedValues.at(0), bLb, bUb),
-      _solver->makeIntVar(committedValues.at(1), lb, ub),
-      _solver->makeIntVar(committedValues.at(2), lb, ub)};
+  std::vector<size_t> indices(inputVars.size());
+  std::iota(indices.begin(), indices.end(), 0);
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  VarViewId outputId = _solver->makeIntVar(0, 0, 2);
-  IfThenElse& invariant = _solver->makeInvariant<IfThenElse>(
-      *_solver, outputId, inputs.at(0), inputs.at(1), inputs.at(2));
-  _solver->close();
+  std::vector<Int> committedValues(inputVars.size());
+  for (size_t i = 0; i < inputVars.size(); ++i) {
+    committedValues.at(i) = _solver->committedValue(inputVars.at(i));
+  }
 
-  EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
-            computeOutput(_solver->currentTimestamp(), inputs));
+  EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
     Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
-    for (size_t j = 0; j < inputs.size(); ++j) {
+    for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(_solver->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
+                committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      _solver->setValue(ts, inputs.at(i), i == 0 ? bDist(gen) : valueDist(gen));
-    } while (oldVal == _solver->value(ts, inputs.at(i)));
+      _solver->setValue(ts, inputVars.at(i),
+                        i == 0 ? conditionDist(gen)
+                               : (i == 1 ? thenDist(gen) : elseDist(gen)));
+    } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = _solver->value(ts, outputId);
+    const Int notifiedOutput = _solver->value(ts, outputVar);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputs.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
-    _solver->commitIf(ts, VarId(outputId));
+    _solver->commitIf(ts, VarId(inputVars.at(i)));
+    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
+    _solver->commitIf(ts, VarId(outputVar));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputVar));
+  }
+}
+
+RC_GTEST_FIXTURE_PROP(IfThenElseTest, rapidcheck, ()) {
+  const Int c1 = *rc::gen::arbitrary<Int>();
+  const Int c2 = *rc::gen::arbitrary<Int>();
+  conditionLb = std::min(c1, c2);
+  conditionUb = std::max(c1, c2);
+
+  const Int t1 = *rc::gen::arbitrary<Int>();
+  const Int t2 = *rc::gen::arbitrary<Int>();
+  thenLb = std::min(t1, t2);
+  thenUb = std::max(t1, t2);
+
+  const Int e1 = *rc::gen::arbitrary<Int>();
+  const Int e2 = *rc::gen::arbitrary<Int>();
+  elseLb = std::min(e1, e2);
+  elseUb = std::max(e1, e2);
+
+  generate();
+
+  const size_t numCommits = 3;
+  const size_t numProbes = 10;
+
+  for (size_t c = 0; c < numCommits; ++c) {
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
+
+    for (size_t p = 0; p <= numProbes; ++p) {
+      _solver->beginMove();
+      _solver->beginMove();
+      if (*rc::gen::arbitrary<bool>()) {
+        _solver->setValue(conditionVar, conditionDist(gen));
+      }
+      if (*rc::gen::arbitrary<bool>()) {
+        _solver->setValue(thenVar, thenDist(gen));
+      }
+      if (*rc::gen::arbitrary<bool>()) {
+        _solver->setValue(elseVar, elseDist(gen));
+      }
+      _solver->endMove();
+
+      if (p == numProbes) {
+        _solver->beginCommit();
+      } else {
+        _solver->beginProbe();
+      }
+      _solver->query(outputVar);
+      if (p == numProbes) {
+        _solver->endCommit();
+      } else {
+        _solver->endProbe();
+      }
+      RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());
+    }
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }
 }
 

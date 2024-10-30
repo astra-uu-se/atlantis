@@ -15,4 +15,4 @@ class AlwaysAcceptingAnnealer : public search::Annealer {
   [[nodiscard]] bool accept(Int) override { return true; }
 };
 
-}
+}  // namespace atlantis::testing

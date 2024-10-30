@@ -133,7 +133,7 @@ TEST_P(ArrayVarElementNodeTestFixture, propagation) {
 
   EXPECT_EQ(inputVarIds.size(), inputVals.size());
 
-  while (increaseNextVal(inputVarIds, inputVals)) {
+  while (increaseNextVal(inputVarIds, inputVals) >= 0) {
     _solver->beginMove();
     setVarVals(inputVarIds, inputVals);
     _solver->endMove();

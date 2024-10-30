@@ -222,7 +222,7 @@ TEST_P(BoolClauseNodeTestFixture, propagation) {
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
 
-  while (increaseNextVal(inputVarIds, inputVals)) {
+  while (increaseNextVal(inputVarIds, inputVals) >= 0) {
     _solver->beginMove();
     setVarVals(inputVarIds, inputVals);
     _solver->endMove();

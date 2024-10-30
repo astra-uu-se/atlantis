@@ -10,52 +10,91 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class BoolLinearTest : public InvariantTest {
- protected:
-  const size_t numInputs = 1000;
-  Int inputLb = 0;
-  Int inputUb = std::numeric_limits<Int>::max();
-  Int coeffLb = -10000;
-  Int coeffUb = 10000;
-  std::vector<VarViewId> inputs;
-  std::vector<Int> coeffs;
-  std::uniform_int_distribution<Int> inputValueDist;
-  std::uniform_int_distribution<Int> coeffDist;
-
  public:
+  Int numInputVars{3};
+  Int inputVarLb{0};
+  Int inputVarUb{2};
+  Int coeffLb{-10000};
+  Int coeffUb{10000};
+  std::vector<VarViewId> inputVars;
+  std::vector<Int> coeffs;
+  std::uniform_int_distribution<Int> inputVarDist;
+  std::uniform_int_distribution<Int> coeffDist;
+  VarViewId outputVar{NULL_ID};
+
   void SetUp() override {
     InvariantTest::SetUp();
 
-    inputs.resize(numInputs, NULL_ID);
-    coeffs.resize(numInputs, 0);
-    std::vector<Int> bounds{0,
-                            (inputUb / static_cast<Int>(numInputs)) / coeffLb,
-                            (inputUb / static_cast<Int>(numInputs)) / coeffUb};
-    const auto [lb, ub] = std::minmax_element(bounds.begin(), bounds.end());
-    inputLb = std::max<Int>(0, *lb);
-    inputUb = *ub;
-    inputValueDist = std::uniform_int_distribution<Int>(inputLb, inputUb);
-    coeffDist = std::uniform_int_distribution<Int>(coeffLb, coeffUb);
+    inputVars.resize(numInputVars, NULL_ID);
+    coeffs.resize(numInputVars, 0);
   }
 
   void TearDown() override {
     InvariantTest::TearDown();
-    inputs.clear();
+    inputVars.clear();
   }
 
-  Int computeOutput(const Timestamp ts, const std::vector<VarViewId>& violVars,
-                    const std::vector<Int>& coefficients) {
-    std::vector<Int> values(violVars.size(), 0);
-    for (size_t i = 0; i < violVars.size(); ++i) {
-      values.at(i) = _solver->value(ts, violVars.at(i));
+  BoolLinear& generate(bool generateInputVars = true,
+                       bool generateCoeffs = true) {
+    inputVars.resize(numInputVars, NULL_ID);
+    coeffs.resize(numInputVars, 0);
+    if (!_solver->isOpen()) {
+      _solver->open();
     }
-    return computeOutput(values, coefficients);
+    if (generateInputVars) {
+      inputVarLb = 0;
+      inputVarUb = 1;
+
+      coeffLb =
+          std::numeric_limits<Int>::max() / static_cast<Int>(numInputVars);
+      coeffUb =
+          std::numeric_limits<Int>::min() / static_cast<Int>(numInputVars);
+      inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
+
+      inputVars.clear();
+      inputVars.reserve(numInputVars);
+      for (Int i = 0; i < numInputVars; ++i) {
+        inputVars.emplace_back(
+            makeIntVar(inputVarLb, inputVarUb, inputVarDist));
+      }
+    } else {
+      inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
+    }
+    coeffDist = std::uniform_int_distribution<Int>(coeffLb, coeffUb);
+    if (generateCoeffs) {
+      coeffs.resize(numInputVars);
+      for (Int i = 0; i < numInputVars; ++i) {
+        coeffs.at(i) = coeffDist(gen);
+      }
+    }
+    auto& invariant = _solver->makeInvariant<BoolLinear>(
+        *_solver, outputVar, std::vector<Int>(coeffs),
+        std::vector<VarViewId>(inputVars));
+    _solver->close();
+    return invariant;
   }
 
-  static Int computeOutput(const std::vector<Int>& violations,
-                           const std::vector<Int>& coefficients) {
+  Int computeOutput(Timestamp ts) {
+    std::vector<Int> values(inputVars.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      values.at(i) = _solver->value(ts, inputVars.at(i));
+    }
+    return computeOutput(values);
+  }
+
+  Int computeOutput(bool committedValue = false) {
+    std::vector<Int> values(inputVars.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      values.at(i) = committedValue ? _solver->committedValue(inputVars.at(i))
+                                    : _solver->currentValue(inputVars.at(i));
+    }
+    return computeOutput(values);
+  }
+
+  Int computeOutput(const std::vector<Int>& violations) {
     Int sum = 0;
     for (size_t i = 0; i < violations.size(); ++i) {
-      sum += static_cast<Int>(violations.at(i) == 0) * coefficients.at(i);
+      sum += static_cast<Int>(violations.at(i) == 0) * coeffs.at(i);
     }
     return sum;
   }
@@ -65,7 +104,7 @@ TEST_F(BoolLinearTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {0, 0}, {0, 1}, {0, 100}, {150, 250}};
   std::vector<Int> coefVec{-1000, -1, 0, 1, 1000};
-  _solver->open();
+  numInputVars = 3;
 
   for (const Int aCoef : coefVec) {
     for (const Int bCoef : coefVec) {
@@ -73,18 +112,17 @@ TEST_F(BoolLinearTest, UpdateBounds) {
         std::vector<VarViewId> vars{_solver->makeIntVar(0, 0, 10),
                                     _solver->makeIntVar(0, 0, 10),
                                     _solver->makeIntVar(0, 0, 10)};
-        const VarViewId outputId = _solver->makeIntVar(0, 0, 2);
-        BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
-            *_solver, outputId, std::vector<Int>{aCoef, bCoef, cCoef},
-            std::vector<VarViewId>(vars));
+        auto& invariant = generate(true, false);
+        _solver->open();
+
         for (const auto& [aLb, aUb] : boundVec) {
-          EXPECT_TRUE(aLb <= aUb);
+          EXPECT_LE(aLb, aUb);
           _solver->updateBounds(VarId(vars.at(0)), aLb, aUb, false);
           for (const auto& [bLb, bUb] : boundVec) {
-            EXPECT_TRUE(bLb <= bUb);
+            EXPECT_LE(bLb, bUb);
             _solver->updateBounds(VarId(vars.at(1)), bLb, bUb, false);
             for (const auto& [cLb, cUb] : boundVec) {
-              EXPECT_TRUE(cLb <= cUb);
+              EXPECT_LE(cLb, cUb);
               _solver->updateBounds(VarId(vars.at(2)), cLb, cUb, false);
               invariant.updateBounds(false);
 
@@ -101,8 +139,8 @@ TEST_F(BoolLinearTest, UpdateBounds) {
               const Int cMax = std::max(static_cast<Int>(cLb == 0) * cCoef,
                                         static_cast<Int>(cUb == 0) * cCoef);
 
-              ASSERT_EQ(aMin + bMin + cMin, _solver->lowerBound(outputId));
-              ASSERT_EQ(aMax + bMax + cMax, _solver->upperBound(outputId));
+              ASSERT_EQ(aMin + bMin + cMin, _solver->lowerBound(outputVar));
+              ASSERT_EQ(aMax + bMax + cMax, _solver->upperBound(outputVar));
             }
           }
         }
@@ -112,202 +150,113 @@ TEST_F(BoolLinearTest, UpdateBounds) {
 }
 
 TEST_F(BoolLinearTest, Recompute) {
-  const Int iLb = 0;
-  const Int iUb = 10;
-  const Int cLb = -10;
-  const Int cUb = 10;
+  generateState = GenerateState::LB;
 
-  ASSERT_TRUE(iLb <= iUb);
-  ASSERT_TRUE(cLb <= cUb);
+  numInputVars = 4;
 
-  std::uniform_int_distribution<Int> iDist(iLb, iUb);
-  std::uniform_int_distribution<Int> cDist(cLb, cUb);
+  auto& invariant = generate();
 
-  _solver->open();
+  auto inputVals = makeValVector(inputVars);
 
-  const VarViewId a = _solver->makeIntVar(iDist(gen), iLb, iUb);
-  const VarViewId b = _solver->makeIntVar(iDist(gen), iLb, iUb);
-  const VarViewId c = _solver->makeIntVar(iDist(gen), iLb, iUb);
+  Timestamp ts = _solver->currentTimestamp();
 
-  inputs = std::vector<VarViewId>{a, b, c};
-  coeffs = std::vector<Int>{cDist(gen), cDist(gen), cDist(gen)};
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
 
-  const VarViewId outputId = _solver->makeIntVar(
-      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-
-  BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
-      *_solver, outputId, std::vector<Int>(coeffs),
-      std::vector<VarViewId>(inputs));
-  _solver->close();
-
-  for (Int aVal = iLb; aVal <= iUb; ++aVal) {
-    for (Int bVal = iLb; bVal <= iUb; ++bVal) {
-      for (Int cVal = iLb; cVal <= iUb; ++cVal) {
-        _solver->setValue(_solver->currentTimestamp(), a, aVal);
-        _solver->setValue(_solver->currentTimestamp(), b, bVal);
-        _solver->setValue(_solver->currentTimestamp(), c, cVal);
-        const Int expectedOutput =
-            computeOutput(_solver->currentTimestamp(), inputs, coeffs);
-        invariant.recompute(_solver->currentTimestamp());
-        EXPECT_EQ(expectedOutput,
-                  _solver->value(_solver->currentTimestamp(), outputId));
-      }
-    }
+    const Int expectedOutput = computeOutput(ts);
+    invariant.recompute(ts);
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(BoolLinearTest, NotifyInputChanged) {
-  _solver->open();
-  for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = _solver->makeIntVar(inputValueDist(gen), inputLb, inputUb);
-    coeffs.at(i) = coeffDist(gen);
-  }
-  const VarViewId outputId = _solver->makeIntVar(
-      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-  BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
-      *_solver, outputId, std::vector<Int>(coeffs),
-      std::vector<VarViewId>(inputs));
-  _solver->close();
+  generateState = GenerateState::LB;
 
-  Timestamp ts = _solver->currentTimestamp() + 1;
+  auto& invariant = generate();
 
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    const Int oldVal = _solver->value(ts, VarId(inputs.at(i)));
-    do {
-      _solver->setValue(ts, inputs.at(i), inputValueDist(gen));
-    } while (oldVal == _solver->value(ts, inputs.at(i)));
+  auto inputVals = makeValVector(inputVars);
 
-    const Int expectedOutput = computeOutput(ts, inputs, coeffs);
+  Timestamp ts = _solver->currentTimestamp();
 
+  Int i{-1};
+
+  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+    ++ts;
+    setVarVals(ts, inputVars, inputVals);
+
+    const Int expectedOutput = computeOutput(ts);
     invariant.notifyInputChanged(ts, LocalId(i));
-    EXPECT_EQ(expectedOutput, _solver->value(ts, outputId));
+    EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
 
 TEST_F(BoolLinearTest, NextInput) {
-  _solver->open();
-  for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = _solver->makeIntVar(inputValueDist(gen), inputLb, inputUb);
-    coeffs.at(i) = coeffDist(gen);
-  }
+  auto& invariant = generate();
 
-  const VarViewId minVarId =
-      *std::min_element(inputs.begin(), inputs.end(),
-                        [&](const VarViewId& a, const VarViewId& b) {
-                          return size_t(a) < size_t(b);
-                        });
-  const VarViewId maxVarId =
-      *std::max_element(inputs.begin(), inputs.end(),
-                        [&](const VarViewId& a, const VarViewId& b) {
-                          return size_t(a) < size_t(b);
-                        });
-
-  std::shuffle(inputs.begin(), inputs.end(), rng);
-
-  const VarViewId outputId = _solver->makeIntVar(
-      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-  BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
-      *_solver, outputId, std::vector<Int>(coeffs),
-      std::vector<VarViewId>(inputs));
-
-  for (Timestamp ts = _solver->currentTimestamp() + 1;
-       ts < _solver->currentTimestamp() + 4; ++ts) {
-    std::vector<bool> notified(size_t(maxVarId) + 1, false);
-    for (size_t i = 0; i < numInputs; ++i) {
-      const VarViewId varId = invariant.nextInput(ts);
-      EXPECT_NE(varId, NULL_ID);
-      EXPECT_LE(size_t(minVarId), size_t(varId));
-      EXPECT_GE(size_t(maxVarId), size_t(varId));
-      EXPECT_FALSE(notified.at(size_t(varId)));
-      notified.at(size_t(varId)) = true;
-    }
-    EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
-    for (size_t i = size_t(minVarId); i <= size_t(maxVarId); ++i) {
-      EXPECT_TRUE(notified.at(i));
-    }
-  }
+  expectNextInput(inputVars, invariant);
 }
 
 TEST_F(BoolLinearTest, NotifyCurrentInputChanged) {
-  _solver->open();
-  for (size_t i = 0; i < numInputs; ++i) {
-    inputs.at(i) = _solver->makeIntVar(inputValueDist(gen), inputLb, inputUb);
-    coeffs.at(i) = coeffDist(gen);
-  }
-  const VarViewId outputId = _solver->makeIntVar(
-      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-  BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
-      *_solver, outputId, std::vector<Int>(coeffs),
-      std::vector<VarViewId>(inputs));
-  _solver->close();
+  auto& invariant = generate();
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
-    for (const VarViewId& varId : inputs) {
+    for (const VarViewId& varId : inputVars) {
       EXPECT_EQ(invariant.nextInput(ts), varId);
       const Int oldVal = _solver->value(ts, varId);
       do {
-        _solver->setValue(ts, varId, inputValueDist(gen));
+        _solver->setValue(ts, varId, inputVarDist(gen));
       } while (_solver->value(ts, varId) == oldVal);
       invariant.notifyCurrentInputChanged(ts);
-      EXPECT_EQ(_solver->value(ts, outputId),
-                computeOutput(ts, inputs, coeffs));
+      EXPECT_EQ(_solver->value(ts, outputVar), computeOutput(ts));
     }
   }
 }
 
 TEST_F(BoolLinearTest, Commit) {
-  std::vector<size_t> indices(numInputs, 0);
-  std::vector<Int> committedValues(numInputs, 0);
+  auto& invariant = generate();
 
-  _solver->open();
-  for (size_t i = 0; i < numInputs; ++i) {
-    indices.at(i) = i;
-    const Int inputVal = inputValueDist(gen);
-    committedValues.at(i) = inputVal;
-    coeffs.at(i) = coeffDist(gen);
-    inputs.at(i) = _solver->makeIntVar(inputVal, inputLb, inputUb);
-  }
+  std::vector<size_t> indices(numInputVars);
+  std::iota(indices.begin(), indices.end(), 0);
   std::shuffle(indices.begin(), indices.end(), rng);
 
-  const VarViewId outputId = _solver->makeIntVar(
-      0, std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-  BoolLinear& invariant = _solver->makeInvariant<BoolLinear>(
-      *_solver, outputId, std::vector<Int>(coeffs),
-      std::vector<VarViewId>(inputs));
-  _solver->close();
+  std::vector<Int> committedValues(inputVars.size());
+  for (size_t i = 0; i < inputVars.size(); ++i) {
+    committedValues.at(i) = _solver->committedValue(inputVars.at(i));
+  }
 
-  EXPECT_EQ(_solver->value(_solver->currentTimestamp(), outputId),
-            computeOutput(_solver->currentTimestamp(), inputs, coeffs));
+  EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
     Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
-    for (size_t j = 0; j < numInputs; ++j) {
+    for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
-      ASSERT_EQ(_solver->committedValue(inputs.at(j)), committedValues.at(j));
+      ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
+                committedValues.at(j));
     }
 
     const Int oldVal = committedValues.at(i);
     do {
-      _solver->setValue(ts, inputs.at(i), inputValueDist(gen));
-    } while (oldVal == _solver->value(ts, inputs.at(i)));
+      _solver->setValue(ts, inputVars.at(i), inputVarDist(gen));
+    } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
     invariant.notifyInputChanged(ts, LocalId(i));
 
     // incremental value
-    const Int notifiedOutput = _solver->value(ts, outputId);
+    const Int notifiedOutput = _solver->value(ts, outputVar);
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputs.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputs.at(i)));
-    _solver->commitIf(ts, VarId(outputId));
+    _solver->commitIf(ts, VarId(inputVars.at(i)));
+    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
+    _solver->commitIf(ts, VarId(outputVar));
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputId));
+    ASSERT_EQ(notifiedOutput, _solver->value(ts + 1, outputVar));
   }
 }
 
@@ -360,6 +309,53 @@ RC_GTEST_FIXTURE_PROP(BoolLinearTest, ShouldAlwaysBeSum,
   const Int actual = _solver->committedValue(output);
   if (expected != actual) {
     RC_ASSERT(expected == actual);
+  }
+}
+
+RC_GTEST_FIXTURE_PROP(BoolLinearTest, rapidcheck, ()) {
+  numInputVars = *rc::gen::inRange<Int>(1, 5);
+
+  generate();
+
+  std::vector<std::uniform_int_distribution<Int>> valDists;
+  valDists.reserve(numInputVars);
+
+  for (Int i = 0; i < numInputVars; ++i) {
+    const Int v1 = *rc::gen::inRange<Int>(0, 1);
+    const Int v2 = *rc::gen::inRange<Int>(0, 1);
+    valDists.emplace_back(std::min(v1, v2), std::max(v1, v2));
+  }
+
+  const size_t numCommits = 3;
+  const size_t numProbes = 10;
+
+  for (size_t c = 0; c < numCommits; ++c) {
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
+
+    for (size_t p = 0; p <= numProbes; ++p) {
+      _solver->beginMove();
+      _solver->beginMove();
+      for (size_t i = 0; i < inputVars.size(); ++i) {
+        if (*rc::gen::arbitrary<bool>()) {
+          _solver->setValue(inputVars.at(i), valDists.at(i)(gen));
+        }
+      }
+      _solver->endMove();
+
+      if (p == numProbes) {
+        _solver->beginCommit();
+      } else {
+        _solver->beginProbe();
+      }
+      _solver->query(outputVar);
+      if (p == numProbes) {
+        _solver->endCommit();
+      } else {
+        _solver->endProbe();
+      }
+      RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());
+    }
+    RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }
 }
 

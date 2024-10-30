@@ -15,7 +15,7 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
   std::vector<std::string> inputIdentifiers;
   VarNodeId reifiedVarNodeId{NULL_NODE_ID};
   std::string reifiedIdentifier{"reified"};
-  Int numInputs = 4;
+  Int numInputVars{4};
 
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
@@ -43,8 +43,8 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
     inputVarNodeIds.clear();
-    inputVarNodeIds.reserve(numInputs);
-    for (Int i = 0; i < numInputs; ++i) {
+    inputVarNodeIds.reserve(numInputVars);
+    for (Int i = 0; i < numInputVars; ++i) {
       inputIdentifiers.emplace_back("input_" + std::to_string(i));
       inputVarNodeIds.emplace_back(
           retrieveBoolVarNode(inputIdentifiers.back()));
@@ -106,9 +106,9 @@ TEST_P(ArrayBoolOrNodeTestFixture, application) {
   invNode().registerNode();
   _solver->close();
 
-  EXPECT_EQ(_solver->searchVars().size(), numInputs);
+  EXPECT_EQ(_solver->searchVars().size(), numInputVars);
 
-  EXPECT_EQ(_solver->numVars(), numInputs + 1);
+  EXPECT_EQ(_solver->numVars(), numInputVars + 1);
 
   EXPECT_EQ(_solver->numInvariants(), 1);
 }
@@ -197,7 +197,7 @@ TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
 
-  while (increaseNextVal(inputVarIds, inputVals)) {
+  while (increaseNextVal(inputVarIds, inputVals) >= 0) {
     _solver->beginMove();
     setVarVals(inputVarIds, inputVals);
     _solver->endMove();
