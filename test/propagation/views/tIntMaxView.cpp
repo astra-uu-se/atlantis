@@ -68,7 +68,6 @@ RC_GTEST_FIXTURE_PROP(IntMaxViewTest, rapidcheck, ()) {
   for (size_t c = 0; c < numCommits; ++c) {
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      _solver->beginMove();
       _solver->setValue(inputVar, inputVarDist(gen));
       _solver->endMove();
 

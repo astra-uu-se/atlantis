@@ -273,7 +273,6 @@ RC_GTEST_FIXTURE_PROP(IntDivTest, rapidcheck, ()) {
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      _solver->beginMove();
       if (*rc::gen::arbitrary<bool>()) {
         _solver->setValue(numerator, numeratorDist(gen));
       }

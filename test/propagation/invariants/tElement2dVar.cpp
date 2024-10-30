@@ -423,7 +423,6 @@ RC_GTEST_FIXTURE_PROP(Element2dVarTest, rapidcheck, ()) {
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      _solver->beginMove();
       for (size_t i = 0; i < dynamicInputVars.size(); ++i) {
         if (*rc::gen::arbitrary<bool>()) {
           _solver->setValue(dynamicInputVars.at(i), dynamicVarDist(gen));

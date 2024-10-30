@@ -279,7 +279,6 @@ RC_GTEST_FIXTURE_PROP(LinearTest, rapidcheck, ()) {
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      _solver->beginMove();
       for (size_t i = 0; i < inputVars.size(); ++i) {
         if (*rc::gen::arbitrary<bool>()) {
           _solver->setValue(inputVars.at(i), inputVarDist(gen));
