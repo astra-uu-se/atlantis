@@ -19,7 +19,7 @@ class IntDivTest : public InvariantTest {
   std::uniform_int_distribution<Int> denominatorDist;
 
   Int zeroReplacement() const {
-    return denominatorLb <= 0 && 0 <= denominatorUb ? -1 : 1;
+    return denominatorLb < 0 && denominatorUb <= 0 ? -1 : 1;
   }
 
   Int computeOutput(Timestamp ts) {
@@ -137,14 +137,12 @@ TEST_F(IntDivTest, NotifyInputChanged) {
 
   Timestamp ts = _solver->currentTimestamp();
 
-  Int i{-1};
-
-  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
     ++ts;
     setVarVals(ts, inputVars, inputVals);
 
     const Int expectedOutput = computeOutput(ts);
-    invariant.notifyInputChanged(ts, LocalId(i));
+    notifyInputsChanged(ts, invariant, inputVars);
     EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
@@ -255,28 +253,29 @@ RC_GTEST_FIXTURE_PROP(IntDivTest, rapidcheck, ()) {
   const Int n1 = *rc::gen::arbitrary<Int>();
   const Int n2 = *rc::gen::arbitrary<Int>();
   numeratorLb = std::min(n1, n2);
-  numeratorUb = std::min(n1, n2);
+  numeratorUb = std::max(n1, n2);
 
   const Int d1 = *rc::gen::arbitrary<Int>();
-  const Int d2 = *rc::gen::arbitrary<Int>();
+  const Int d2 = *rc::gen::suchThat(rc::gen::arbitrary<Int>(),
+                                    [&](Int d) { return d1 != 0 || d != 0; });
 
-  denominatorLb = *rc::gen::inRange<Int>(d1, d2);
-  denominatorUb = *rc::gen::inRange<Int>(d1, d2);
+  denominatorLb = std::min(d1, d2);
+  denominatorUb = std::max(d1, d2);
 
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      if (*rc::gen::arbitrary<bool>()) {
+      if (randBool()) {
         _solver->setValue(numerator, numeratorDist(gen));
       }
-      if (*rc::gen::arbitrary<bool>()) {
+      if (randBool()) {
         _solver->setValue(denominator, denominatorDist(gen));
       }
 

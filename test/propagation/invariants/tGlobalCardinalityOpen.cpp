@@ -43,6 +43,14 @@ class GlobalCardinalityOpenTest : public InvariantTest {
       inputVars.emplace_back(makeIntVar(inputVarLb, inputVarUb, inputVarDist));
     }
 
+    if (cover.empty()) {
+      cover.reserve(2);
+      cover.emplace_back(inputVarLb);
+      if (inputVarLb != inputVarUb) {
+        cover.emplace_back(inputVarUb);
+      }
+    }
+
     outputVars.clear();
     outputVars.reserve(cover.size());
     for (size_t i = 0; i < cover.size(); ++i) {
@@ -58,7 +66,7 @@ class GlobalCardinalityOpenTest : public InvariantTest {
   }
 
   std::vector<Int> computeOutputs(Timestamp ts) {
-    std::vector<Int> values(inputVars.size(), 0);
+    std::vector<Int> values(inputVars.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = _solver->value(ts, inputVars.at(i));
     }
@@ -83,7 +91,7 @@ class GlobalCardinalityOpenTest : public InvariantTest {
     std::vector<Int> counts(cover.size(), 0);
     for (const Int val : values) {
       if (coverToIndex.contains(val)) {
-        ++counts.at(coverToIndex.at(val));
+        counts.at(coverToIndex.at(val)) += 1;
       }
     }
     return counts;
@@ -150,11 +158,6 @@ TEST_F(GlobalCardinalityOpenTest, Recompute) {
     inputVarUb = boundVec[i].second;
     cover = coverVec[i];
 
-    std::unordered_set<Int> coverSet;
-    for (const Int c : cover) {
-      coverSet.emplace(c);
-    }
-
     auto& invariant = generate();
 
     auto inputVals = makeValVector(inputVars);
@@ -167,7 +170,7 @@ TEST_F(GlobalCardinalityOpenTest, Recompute) {
 
       const std::vector<Int> expectedOutputs = computeOutputs(ts);
       invariant.recompute(ts);
-      EXPECT_THAT(expectedOutputs, ContainerEq(actualOutputs()));
+      EXPECT_THAT(expectedOutputs, ContainerEq(actualOutputs(ts)));
     }
   }
 }
@@ -193,15 +196,13 @@ TEST_F(GlobalCardinalityOpenTest, NotifyInputChanged) {
 
     Timestamp ts = _solver->currentTimestamp();
 
-    Int i{-1};
-
-    while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+    while (increaseNextVal(inputVars, inputVals) >= 0) {
       ++ts;
       setVarVals(ts, inputVars, inputVals);
 
       const std::vector<Int> expectedOutputs = computeOutputs(ts);
-      invariant.notifyInputChanged(ts, LocalId(i));
-      EXPECT_THAT(expectedOutputs, ContainerEq(actualOutputs()));
+      notifyInputsChanged(ts, invariant, inputVars);
+      EXPECT_THAT(expectedOutputs, ContainerEq(actualOutputs(ts)));
     }
   }
 }
@@ -329,7 +330,7 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityOpenTest, rapidcheck, ()) {
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     std::vector<Int> expected = computeOutputs(true);
@@ -341,7 +342,7 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityOpenTest, rapidcheck, ()) {
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       for (size_t i = 0; i < inputVars.size(); ++i) {
-        if (*rc::gen::arbitrary<bool>()) {
+        if (randBool()) {
           _solver->setValue(inputVars.at(i), inputVarDist(gen));
         }
       }

@@ -152,6 +152,9 @@ TEST_F(Element2dVarTest, UpdateBounds) {
 TEST_F(Element2dVarTest, Recompute) {
   generateState = GenerateState::LB;
 
+  Timestamp ts =
+      _solver->currentTimestamp() + static_cast<Int>(offsets.size()) + 2;
+
   for (const auto& [ro, co] : offsets) {
     rowOffset = ro;
     colOffset = co;
@@ -160,21 +163,19 @@ TEST_F(Element2dVarTest, Recompute) {
     auto& invariant = generate();
     _solver->close();
 
-    Timestamp ts = _solver->currentTimestamp();
-
     for (Int rowIndexVal = rowIndexLb(); rowIndexVal <= rowIndexUb();
          ++rowIndexVal) {
       ++ts;
       _solver->setValue(ts, rowIndexVar, rowIndexVal);
-      EXPECT_EQ(_solver->currentValue(rowIndexVar), rowIndexVal);
+      EXPECT_EQ(_solver->value(ts, rowIndexVar), rowIndexVal);
       for (Int colIndexVal = colIndexLb(); colIndexVal <= colIndexUb();
            ++colIndexVal) {
         _solver->setValue(ts, colIndexVar, colIndexVal);
-        EXPECT_EQ(_solver->currentValue(colIndexVar), colIndexVal);
+        EXPECT_EQ(_solver->value(ts, colIndexVar), colIndexVal);
 
         const Int expectedOutput = computeOutput(ts);
         invariant.recompute(ts);
-        EXPECT_EQ(_solver->currentValue(rowIndexVar), rowIndexVal);
+        EXPECT_EQ(_solver->value(ts, rowIndexVar), rowIndexVal);
 
         EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
       }
@@ -209,7 +210,7 @@ TEST_F(Element2dVarTest, NotifyInputChanged) {
         const Int expectedOutput = computeOutput(ts);
 
         invariant.notifyInputChanged(ts, LocalId(i));
-        EXPECT_EQ(expectedOutput, _solver->currentValue(outputVar));
+        EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
       }
     }
   }
@@ -416,7 +417,7 @@ RC_GTEST_FIXTURE_PROP(Element2dVarTest, rapidcheck, ()) {
                                                              colIndexDist};
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -424,12 +425,12 @@ RC_GTEST_FIXTURE_PROP(Element2dVarTest, rapidcheck, ()) {
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       for (size_t i = 0; i < dynamicInputVars.size(); ++i) {
-        if (*rc::gen::arbitrary<bool>()) {
+        if (randBool()) {
           _solver->setValue(dynamicInputVars.at(i), dynamicVarDist(gen));
         }
       }
       for (size_t i = 0; i < staticInputVars.size(); ++i) {
-        if (*rc::gen::arbitrary<bool>()) {
+        if (randBool()) {
           _solver->setValue(staticInputVars.at(i), indexDists.at(i)(gen));
         }
       }

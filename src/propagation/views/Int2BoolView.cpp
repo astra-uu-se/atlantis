@@ -16,10 +16,12 @@ Int Int2BoolView::committedValue() {
 }
 
 Int Int2BoolView::lowerBound() const {
-  return _solver.lowerBound(_parentId) > 0 ? 0 : 1;
+  // The integer can be positive <-> the violation can be 0:
+  return _solver.upperBound(_parentId) > 0 ? 0 : 1;
 }
 Int Int2BoolView::upperBound() const {
-  return _solver.upperBound(_parentId) <= 0 ? 1 : 0;
+  // The integer can be negative <-> the violation can be 1:
+  return _solver.lowerBound(_parentId) <= 0 ? 1 : 0;
 }
 
 }  // namespace atlantis::propagation

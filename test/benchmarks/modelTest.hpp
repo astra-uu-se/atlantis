@@ -21,7 +21,7 @@ static void testModelFile(const char* modelFile,
   if (seed.has_value()) {
     backend.setRandomSeed(seed.value());
   }
-  backend.setTimelimit(std::chrono::seconds(5));
+  backend.setTimelimit(std::chrono::seconds(2));
   auto statistics = backend.solve(logger);
   // Don't log to std::cout, since that would interfere with MiniZinc.
   statistics.display(std::cerr);

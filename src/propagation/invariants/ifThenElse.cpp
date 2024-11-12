@@ -30,12 +30,21 @@ VarViewId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
 }
 
 void IfThenElse::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_output,
-                       std::min(_solver.lowerBound(_branches[0]),
-                                _solver.lowerBound(_branches[1])),
-                       std::max(_solver.upperBound(_branches[0]),
-                                _solver.upperBound(_branches[1])),
-                       widenOnly);
+  if (_solver.lowerBound(_condition) == 0 &&
+      _solver.upperBound(_condition) == 0) {
+    _solver.updateBounds(_output, _solver.lowerBound(_branches[0]),
+                         _solver.upperBound(_branches[0]), widenOnly);
+  } else if (_solver.lowerBound(_condition) > 0) {
+    _solver.updateBounds(_output, _solver.lowerBound(_branches[1]),
+                         _solver.upperBound(_branches[1]), widenOnly);
+  } else {
+    _solver.updateBounds(_output,
+                         std::min(_solver.lowerBound(_branches[0]),
+                                  _solver.lowerBound(_branches[1])),
+                         std::max(_solver.upperBound(_branches[0]),
+                                  _solver.upperBound(_branches[1])),
+                         widenOnly);
+  }
 }
 
 void IfThenElse::recompute(Timestamp ts) {

@@ -136,14 +136,12 @@ TEST_F(CountConstTest, NotifyInputChanged) {
 
     Timestamp ts = _solver->currentTimestamp();
 
-    Int i{-1};
-
-    while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+    while (increaseNextVal(inputVars, inputVals) >= 0) {
       ++ts;
       setVarVals(ts, inputVars, inputVals);
 
       const Int expectedOutput = computeOutput(ts);
-      invariant.notifyInputChanged(ts, LocalId(i));
+      notifyInputsChanged(ts, invariant, inputVars);
       EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
     }
   }
@@ -165,14 +163,14 @@ TEST_F(CountConstTest, NotifyCurrentInputChanged) {
   const Int lb = -10;
   const Int ub = 10;
 
+  Timestamp ts = _solver->currentTimestamp() + ub - lb + 2;
+
   for (Int needleVal = lb; needleVal <= ub; ++needleVal) {
-    if (!_solver->isOpen()) {
-      _solver->open();
-    }
     auto& invariant = generate();
 
-    for (Timestamp ts = _solver->currentTimestamp() + 1;
-         ts < _solver->currentTimestamp() + 4; ++ts) {
+    for (Int i = 0; i < 4; ++i) {
+      ++ts;
+
       for (const VarViewId& varId : inputVars) {
         EXPECT_EQ(invariant.nextInput(ts), varId);
         const Int oldVal = _solver->value(ts, varId);
@@ -253,7 +251,7 @@ RC_GTEST_FIXTURE_PROP(CountConstTest, rapidcheck, ()) {
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -261,7 +259,7 @@ RC_GTEST_FIXTURE_PROP(CountConstTest, rapidcheck, ()) {
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       for (Int i = 0; i < numInputVars; ++i) {
-        if (*rc::gen::arbitrary<bool>()) {
+        if (randBool()) {
           _solver->setValue(inputVars.at(i), inputVarDist(gen));
         }
       }

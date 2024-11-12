@@ -68,7 +68,7 @@ void IntDiv::close(Timestamp) {
   const Int denUb = _solver.upperBound(_denominator);
 
   assert(denLb != 0 || denUb != 0);
-  _zeroReplacement = (denLb < 0 && 0 <= denUb) ? -1 : 1;
+  _zeroReplacement = (denLb < 0 && denUb <= 0) ? -1 : 1;
 }
 
 void IntDiv::recompute(Timestamp ts) {

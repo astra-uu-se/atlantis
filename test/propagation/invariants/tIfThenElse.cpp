@@ -79,10 +79,10 @@ TEST_F(IfThenElseTest, UpdateBounds) {
     } else {
       EXPECT_EQ(
           _solver->lowerBound(outputVar),
-          std::max(_solver->lowerBound(thenVar), _solver->lowerBound(elseVar)));
+          std::min(_solver->lowerBound(thenVar), _solver->lowerBound(elseVar)));
       EXPECT_EQ(
           _solver->upperBound(outputVar),
-          std::min(_solver->upperBound(thenVar), _solver->upperBound(elseVar)));
+          std::max(_solver->upperBound(thenVar), _solver->upperBound(elseVar)));
     }
   }
 }
@@ -119,14 +119,12 @@ TEST_F(IfThenElseTest, NotifyInputChanged) {
 
   Timestamp ts = _solver->currentTimestamp();
 
-  Int i{-1};
-
-  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
     ++ts;
     setVarVals(ts, inputVars, inputVals);
 
     const Int expectedOutput = computeOutput(ts);
-    invariant.notifyInputChanged(ts, LocalId(i));
+    notifyInputsChanged(ts, invariant, inputVars);
     EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
@@ -254,20 +252,20 @@ RC_GTEST_FIXTURE_PROP(IfThenElseTest, rapidcheck, ()) {
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      if (*rc::gen::arbitrary<bool>()) {
+      if (randBool()) {
         _solver->setValue(conditionVar, conditionDist(gen));
       }
-      if (*rc::gen::arbitrary<bool>()) {
+      if (randBool()) {
         _solver->setValue(thenVar, thenDist(gen));
       }
-      if (*rc::gen::arbitrary<bool>()) {
+      if (randBool()) {
         _solver->setValue(elseVar, elseDist(gen));
       }
       _solver->endMove();

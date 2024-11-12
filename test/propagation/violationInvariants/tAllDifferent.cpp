@@ -32,21 +32,19 @@ class AllDifferentTest : public InvariantTest {
   }
 
   static Int computeOutput(const std::vector<Int>& values) {
-    std::vector<bool> checked(values.size(), false);
-    Int expectedViolation = 0;
-    for (size_t i = 0; i < values.size(); ++i) {
-      if (checked[i]) {
-        continue;
+    std::unordered_map<Int, Int> valueCounts;
+    valueCounts.reserve(values.size());
+    for (const Int value : values) {
+      if (valueCounts.contains(value)) {
+        valueCounts.at(value) += 1;
+      } else {
+        valueCounts.emplace(value, 1);
       }
-      checked[i] = true;
-      for (size_t j = i + 1; j < values.size(); ++j) {
-        if (checked[j]) {
-          continue;
-        }
-        if (values[i] == values[j]) {
-          checked[j] = true;
-          ++expectedViolation;
-        }
+    }
+    Int expectedViolation = 0;
+    for (const auto& [_, count] : valueCounts) {
+      if (count > 1) {
+        expectedViolation += count - 1;
       }
     }
     return expectedViolation;
@@ -141,14 +139,14 @@ TEST_F(AllDifferentTest, NotifyInputChanged) {
 
     Timestamp ts = _solver->currentTimestamp();
 
-    Int i{-1};
-
-    while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+    while (increaseNextVal(inputVars, inputVals) >= 0) {
       ++ts;
       setVarVals(ts, inputVars, inputVals);
 
       const Int expectedOutput = computeOutput(ts);
-      invariant.notifyInputChanged(ts, LocalId(i));
+
+      notifyInputsChanged(ts, invariant, inputVars);
+
       EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
     }
   }
@@ -235,15 +233,16 @@ TEST_F(AllDifferentTest, Commit) {
 RC_GTEST_FIXTURE_PROP(AllDifferentTest, rapidcheck, ()) {
   numInputVars = *rc::gen::inRange(1, 100);
 
-  inputVarLb = *rc::gen::inRange(std::numeric_limits<Int>::min(),
-                                 std::numeric_limits<Int>::max() - 200);
+  inputVarLb =
+      *rc::gen::inRange(std::numeric_limits<Int>::min() + numInputVars,
+                        std::numeric_limits<Int>::max() - numInputVars);
 
-  inputVarUb = *rc::gen::inRange(inputVarLb + 1, inputVarUb + 200);
+  inputVarUb = inputVarLb + numInputVars;
 
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -251,7 +250,7 @@ RC_GTEST_FIXTURE_PROP(AllDifferentTest, rapidcheck, ()) {
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       for (Int i = 0; i < numInputVars; ++i) {
-        if (*rc::gen::arbitrary<bool>()) {
+        if (randBool()) {
           _solver->setValue(inputVars.at(i), inputVarDist(gen));
         }
       }

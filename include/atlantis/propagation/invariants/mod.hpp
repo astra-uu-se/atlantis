@@ -15,7 +15,6 @@ class Mod : public Invariant {
  private:
   VarId _output;
   VarViewId _numerator, _denominator;
-  Int _zeroReplacement{1};
 
  public:
   explicit Mod(SolverBase&, VarId output, VarViewId numerator,

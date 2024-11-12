@@ -71,6 +71,9 @@ struct NotificationData {
 enum struct GenerateState : uint8_t { RANDOM, LB, UB };
 
 class InvariantTest : public ::testing::Test {
+ private:
+  std::uniform_int_distribution<unsigned char> binaryDist;
+
  protected:
   GenerateState generateState{GenerateState::RANDOM};
   std::shared_ptr<propagation::Solver> _solver;
@@ -289,6 +292,17 @@ class InvariantTest : public ::testing::Test {
     }
   }
 
+  void notifyInputsChanged(
+      Timestamp ts, Invariant& invariant,
+      const std::vector<propagation::VarViewId>& inputVars) {
+    for (LocalId i = 0; i < inputVars.size(); ++i) {
+      if (_solver->value(ts, inputVars.at(i)) !=
+          _solver->committedValue(inputVars.at(i))) {
+        invariant.notifyInputChanged(ts, i);
+      }
+    }
+  }
+
   template <class T>
   void testNotifications(T* invariant, NotificationData data) {
     EXPECT_CALL(*invariant, recompute(::testing::_)).Times(AtLeast(1));
@@ -326,12 +340,15 @@ class InvariantTest : public ::testing::Test {
     _solver->open();
   }
 
+  bool randBool() { return binaryDist(gen) == 1; }
+
  public:
   void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
     _solver = std::make_unique<propagation::Solver>();
     generateState = GenerateState::RANDOM;
+    binaryDist = std::uniform_int_distribution<unsigned char>(0, 1);
   }
 };
 

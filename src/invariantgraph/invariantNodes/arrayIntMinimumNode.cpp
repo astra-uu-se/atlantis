@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/propagation/invariants/minSparse.hpp"
+#include "atlantis/propagation/invariants/min.hpp"
 #include "atlantis/propagation/views/intMinView.hpp"
 
 namespace atlantis::invariantgraph {
@@ -110,7 +110,7 @@ void ArrayIntMinimumNode::registerNode() {
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
   assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
-  solver().makeInvariant<propagation::MinSparse>(
+  solver().makeInvariant<propagation::Min>(
       solver(), invariantGraph().varId(outputVarNodeIds().front()),
       std::move(solverVars));
 }

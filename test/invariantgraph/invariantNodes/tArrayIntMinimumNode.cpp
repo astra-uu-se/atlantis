@@ -103,7 +103,7 @@ TEST_P(ArrayIntMinimumNodeTestFixture, application) {
   // x1, x2 and outputVarNodeId
   EXPECT_EQ(_solver->numVars(), 4);
 
-  // maxSparse
+  // min
   EXPECT_EQ(_solver->numInvariants(), 1);
 }
 

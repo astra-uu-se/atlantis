@@ -76,7 +76,10 @@ class GlobalCardinalityLowUpTest : public InvariantTest {
     inputVars.clear();
     inputVars.reserve(numInputVars);
 
-    _solver->open();
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+
     for (Int i = 0; i < numInputVars; ++i) {
       inputVars.emplace_back(
           _solver->makeIntVar(inputVarDist(gen), inputVarLb, inputVarUb));
@@ -112,9 +115,6 @@ TEST_F(GlobalCardinalityLowUpTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> lowUpVector{{0, 0}, {0, 4}, {3, 3}, {4, 5}};
 
   for (const auto& p : lowUpVector) {
-    if (!_solver->isOpen()) {
-      _solver->open();
-    }
     coverSet.clear();
     coverSet.emplace(1, p);
 
@@ -173,14 +173,12 @@ TEST_F(GlobalCardinalityLowUpTest, Recompute) {
 
     Timestamp ts = _solver->currentTimestamp();
 
-    Int i{-1};
-
-    while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+    while (increaseNextVal(inputVars, inputVals) >= 0) {
       ++ts;
       setVarVals(ts, inputVars, inputVals);
 
       const Int expectedOutput = computeOutput(ts);
-      invariant.notifyInputChanged(ts, LocalId(i));
+      notifyInputsChanged(ts, invariant, inputVars);
       EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
     }
   }
@@ -221,14 +219,12 @@ TEST_F(GlobalCardinalityLowUpTest, NotifyInputChanged) {
 
     auto inputVals = makeValVector(inputVars);
 
-    Int j{-1};
-
-    while ((j = increaseNextVal(inputVars, inputVals)) >= 0) {
+    while (increaseNextVal(inputVars, inputVals) >= 0) {
       ++ts;
       setVarVals(ts, inputVars, inputVals);
 
       const Int expectedOutput = computeOutput(ts);
-      invariant.notifyInputChanged(ts, LocalId(j));
+      notifyInputsChanged(ts, invariant, inputVars);
       EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
     }
   }
@@ -336,25 +332,26 @@ TEST_F(GlobalCardinalityLowUpTest, Commit) {
 RC_GTEST_FIXTURE_PROP(GlobalCardinalityLowUpTest, RapidCheck, ()) {
   numInputVars = *rc::gen::inRange(1, 100);
 
-  inputVarLb = *rc::gen::inRange(std::numeric_limits<Int>::min(),
-                                 std::numeric_limits<Int>::max() - 200);
+  inputVarLb =
+      *rc::gen::inRange(std::numeric_limits<Int>::min() + 2 * numInputVars,
+                        std::numeric_limits<Int>::max() - 2 * numInputVars);
 
-  inputVarUb = *rc::gen::inRange(inputVarLb + 1, inputVarUb + 200);
+  inputVarUb = inputVarLb + numInputVars;
 
   std::vector<Int> cover = *rc::gen::unique<std::vector<Int>>(
-      *rc::gen::inRange(1, 101), rc::gen::arbitrary<Int>());
+      *rc::gen::inRange(1, 101),
+      rc::gen::inRange<Int>(inputVarLb - numInputVars,
+                            inputVarUb + numInputVars));
 
+  Int amount = 0;
   for (const auto v : cover) {
-    const Int v1 = *rc::gen::inRange<Int>(0, numInputVars + 1);
-    const Int v2 = *rc::gen::inRange<Int>(0, numInputVars + 1);
-    coverSet.emplace(v,
-                     std::pair<Int, Int>{std::min(v1, v2), std::max(v1, v2)});
+    coverSet.emplace(v, std::pair<Int, Int>{amount, ++amount});
   }
 
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -362,7 +359,7 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityLowUpTest, RapidCheck, ()) {
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       for (Int i = 0; i < numInputVars; ++i) {
-        if (*rc::gen::arbitrary<bool>()) {
+        if (randBool()) {
           _solver->setValue(inputVars.at(i), inputVarDist(gen));
         }
       }

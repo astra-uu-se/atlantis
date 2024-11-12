@@ -4,7 +4,7 @@
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/propagation/invariants/boolAnd.hpp"
-#include "atlantis/propagation/invariants/forAll.hpp"
+#include "atlantis/propagation/invariants/max.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {
@@ -135,7 +135,7 @@ void ArrayBoolAndNode::registerNode() {
         solver(), !shouldHold() ? _intermediate : violationVarId(),
         solverVars.front(), solverVars.back());
   } else {
-    solver().makeInvariant<propagation::ForAll>(
+    solver().makeInvariant<propagation::Max>(
         solver(), !shouldHold() ? _intermediate : violationVarId(),
         std::move(solverVars));
   }

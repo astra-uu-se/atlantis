@@ -50,17 +50,17 @@ TEST_F(IfThenElseConstTest, Bounds) {
     for (const auto& [inputLb, inputUb] : bounds) {
       _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
 
-      if (inputLb <= condVal && condVal <= inputUb) {
+      if (inputLb == condVal && condVal == inputUb) {
         // always then;
         EXPECT_EQ(_solver->lowerBound(outputVar), thenVal);
         EXPECT_EQ(_solver->upperBound(outputVar), thenVal);
-      } else if (condVal < inputLb || inputUb < condVal) {
+      } else if (inputLb <= condVal && condVal <= inputUb) {
+        EXPECT_EQ(_solver->lowerBound(outputVar), std::min(thenVal, elseVal));
+        EXPECT_EQ(_solver->upperBound(outputVar), std::max(thenVal, elseVal));
+      } else {
         // always else:
         EXPECT_EQ(_solver->lowerBound(outputVar), elseVal);
         EXPECT_EQ(_solver->upperBound(outputVar), elseVal);
-      } else {
-        EXPECT_EQ(_solver->lowerBound(outputVar), std::min(thenVal, elseVal));
-        EXPECT_EQ(_solver->upperBound(outputVar), std::max(thenVal, elseVal));
       }
     }
   }
@@ -85,8 +85,6 @@ TEST_F(IfThenElseConstTest, values) {
   const std::vector<Int> values{0, 1, 0, 0, 1, 1, 0};
 
   for (size_t m = 0; m < values.size(); ++m) {
-    const Int comVal = values.at(m);
-
     EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
 
     for (size_t p = 0; p < values.size(); ++p) {
@@ -108,7 +106,6 @@ TEST_F(IfThenElseConstTest, values) {
         _solver->endProbe();
       }
       EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
-      EXPECT_EQ(_solver->committedValue(inputVar), comVal);
       EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
     }
   }

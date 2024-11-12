@@ -36,11 +36,10 @@ void Mod::close(Timestamp) {
 }
 
 void Mod::recompute(Timestamp ts) {
-  assert(_zeroReplacement != 0);
   const Int denominator = _solver.value(ts, _denominator);
   updateValue(ts, _output,
               _solver.value(ts, _numerator) %
-                  std::abs(denominator != 0 ? denominator : _zeroReplacement));
+                  std::abs(denominator != 0 ? denominator : 1));
 }
 
 void Mod::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }

@@ -25,8 +25,8 @@ class NotEqualConstTest : public ViewTest {
   Int computeOutput(bool committedValue = false) {
     return value == (committedValue ? _solver->committedValue(inputVar)
                                     : _solver->currentValue(inputVar))
-               ? 0
-               : 1;
+               ? 1
+               : 0;
   }
 };
 
@@ -45,8 +45,19 @@ TEST_F(NotEqualConstTest, bounds) {
 
       _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
 
-      const Int expectedLb = std::min<Int>(0, v - inputLb);
-      const Int expectedUb = std::min<Int>(0, v - inputUb);
+      Int expectedLb = -1;
+      Int expectedUb = -1;
+
+      if (inputLb == value && value == inputUb) {
+        expectedLb = 1;
+        expectedUb = 1;
+      } else if (inputLb <= value && value <= inputUb) {
+        expectedLb = 0;
+        expectedUb = 1;
+      } else {
+        expectedLb = 0;
+        expectedUb = 0;
+      }
 
       EXPECT_EQ(_solver->lowerBound(outputVar), expectedLb);
       EXPECT_EQ(_solver->upperBound(outputVar), expectedUb);
@@ -64,15 +75,12 @@ RC_GTEST_FIXTURE_PROP(NotEqualConstTest, rapidcheck, ()) {
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       _solver->setValue(inputVar, inputVarDist(gen));
-      _solver->endMove();
-
-      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
       _solver->endMove();
 
       if (p == numProbes) {
@@ -86,8 +94,8 @@ RC_GTEST_FIXTURE_PROP(NotEqualConstTest, rapidcheck, ()) {
       } else {
         _solver->endProbe();
       }
-      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
-      EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
+      RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());
+      RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
     }
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }

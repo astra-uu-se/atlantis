@@ -3,12 +3,8 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/propagation/invariants/exists.hpp"
-#include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
-#include "atlantis/propagation/violationInvariants/equal.hpp"
 #include "atlantis/propagation/violationInvariants/globalCardinalityLowUp.hpp"
-#include "atlantis/propagation/violationInvariants/notEqual.hpp"
 
 namespace atlantis::invariantgraph {
 

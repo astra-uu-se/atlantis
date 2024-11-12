@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/propagation/invariants/maxSparse.hpp"
+#include "atlantis/propagation/invariants/max.hpp"
 #include "atlantis/propagation/views/intMaxView.hpp"
 
 namespace atlantis::invariantgraph {
@@ -110,7 +110,7 @@ void ArrayIntMaximumNode::registerNode() {
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
   assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
-  solver().makeInvariant<propagation::MaxSparse>(
+  solver().makeInvariant<propagation::Max>(
       solver(), invariantGraph().varId(outputVarNodeIds().front()),
       std::move(solverVars));
 }

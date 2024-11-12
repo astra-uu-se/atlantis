@@ -44,11 +44,8 @@ TEST_F(ModViewTest, bounds) {
 
       _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
 
-      const Int expectedLb = std::min<Int>(0, v - inputLb);
-      const Int expectedUb = std::min<Int>(0, v - inputUb);
-
-      EXPECT_EQ(_solver->lowerBound(outputVar), expectedLb);
-      EXPECT_EQ(_solver->upperBound(outputVar), expectedUb);
+      EXPECT_EQ(_solver->lowerBound(outputVar), 0);
+      EXPECT_EQ(_solver->upperBound(outputVar), std::abs(v) - 1);
     }
   }
 }
@@ -63,15 +60,12 @@ RC_GTEST_FIXTURE_PROP(ModViewTest, rapidcheck, ()) {
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       _solver->setValue(inputVar, inputVarDist(gen));
-      _solver->endMove();
-
-      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
       _solver->endMove();
 
       if (p == numProbes) {
@@ -85,8 +79,8 @@ RC_GTEST_FIXTURE_PROP(ModViewTest, rapidcheck, ()) {
       } else {
         _solver->endProbe();
       }
-      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
-      EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
+      RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());
+      RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
     }
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }

@@ -17,7 +17,18 @@ Int Bool2IntView::committedValue() {
   return convert(_solver.committedValue(_parentId));
 }
 
-Int Bool2IntView::lowerBound() const { return 0; }
-Int Bool2IntView::upperBound() const { return 1; }
+Int Bool2IntView::lowerBound() const {
+  return (_solver.lowerBound(_parentId) == 0 &&
+          _solver.upperBound(_parentId) == 0)
+             ? 1
+             : 0;
+}
+
+Int Bool2IntView::upperBound() const {
+  return (_solver.lowerBound(_parentId) <= 0 &&
+          _solver.upperBound(_parentId) >= 0)
+             ? 1
+             : 0;
+}
 
 }  // namespace atlantis::propagation

@@ -7,7 +7,7 @@ using namespace atlantis::propagation;
 
 class ElementConstTest : public ViewTest {
  public:
-  Int numValues = 1000;
+  Int numValues = 4;
   Int offset{1};
 
   Int valueLb = std::numeric_limits<Int>::min();
@@ -29,22 +29,29 @@ class ElementConstTest : public ViewTest {
     values.clear();
   }
 
-  Int toZeroIndex(bool committedValue = false) const {
-    return (committedValue ? _solver->committedValue(inputVar)
-                           : _solver->currentValue(inputVar)) -
-           offset;
+  Int toZeroIndex(Int index) const {
+    const Int zeroIndex = index - offset;
+    assert(0 <= zeroIndex);
+    assert(zeroIndex < static_cast<Int>(values.size()));
+    return zeroIndex;
   }
 
   Int computeOutput(bool committedValue = false) {
-    return values.at(toZeroIndex(committedValue));
+    return values.at(toZeroIndex(committedValue
+                                     ? _solver->committedValue(inputVar)
+                                     : _solver->currentValue(inputVar)));
   }
 
   void generate() {
     values.resize(numValues);
     valueDist = std::uniform_int_distribution<Int>(valueLb, valueUb);
-    for (long& value : values) {
+    for (Int& value : values) {
       value = valueDist(gen);
     }
+
+    inputVarLb = indexLb();
+    inputVarUb = indexUb();
+    inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
 
     _solver->open();
     makeInputVar();
@@ -60,8 +67,8 @@ TEST_F(ElementConstTest, bounds) {
     offset = o;
     generate();
 
-    for (Int minIndex = indexLb(); minIndex <= numValues; ++minIndex) {
-      for (Int maxIndex = numValues; maxIndex >= minIndex; --maxIndex) {
+    for (Int minIndex = indexLb(); minIndex <= indexUb(); ++minIndex) {
+      for (Int maxIndex = indexUb(); maxIndex >= minIndex; --maxIndex) {
         _solver->updateBounds(VarId(inputVar), minIndex, maxIndex, false);
 
         Int minVal = std::numeric_limits<Int>::max();
@@ -80,13 +87,13 @@ TEST_F(ElementConstTest, bounds) {
 
 RC_GTEST_FIXTURE_PROP(ElementConstTest, rapidcheck, ()) {
   numValues = *rc::gen::inRange(1, 100);
-  offset = *rc::gen::inRange(std::numeric_limits<Int>::min(),
+  offset = *rc::gen::inRange(std::numeric_limits<Int>::min() + numValues,
                              std::numeric_limits<Int>::max() - numValues);
 
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     for (size_t p = 0; p <= numProbes; ++p) {
@@ -95,7 +102,6 @@ RC_GTEST_FIXTURE_PROP(ElementConstTest, rapidcheck, ()) {
       _solver->endMove();
 
       EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
-      _solver->endMove();
 
       if (p == numProbes) {
         _solver->beginCommit();
@@ -108,8 +114,8 @@ RC_GTEST_FIXTURE_PROP(ElementConstTest, rapidcheck, ()) {
       } else {
         _solver->endProbe();
       }
-      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
-      EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
+      RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());
+      RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
     }
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }

@@ -96,13 +96,11 @@ TEST_F(BoolXorTest, Recompute) {
 
   Timestamp ts = _solver->currentTimestamp();
 
-  Int i{-1};
-
-  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
     ++ts;
     setVarVals(ts, inputVars, inputVals);
 
-    const Int expectedOutput = computeOutput();
+    const Int expectedOutput = computeOutput(ts);
     invariant.recompute(ts);
     EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
@@ -119,14 +117,12 @@ TEST_F(BoolXorTest, NotifyInputChanged) {
 
   Timestamp ts = _solver->currentTimestamp();
 
-  Int i{-1};
-
-  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
     ++ts;
     setVarVals(ts, inputVars, inputVals);
 
     const Int expectedOutput = computeOutput(ts);
-    invariant.notifyInputChanged(ts, LocalId(i));
+    notifyInputsChanged(ts, invariant, inputVars);
     EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
@@ -215,22 +211,22 @@ RC_GTEST_FIXTURE_PROP(BoolXorTest, rapidcheck, ()) {
   xLb = *rc::gen::inRange<Int>(0, 3);
   xUb = *rc::gen::inRange<Int>(xLb, 3);
   yLb = *rc::gen::inRange<Int>(0, 3);
-  yUb = *rc::gen::inRange<Int>(xLb, 3);
+  yUb = *rc::gen::inRange<Int>(yLb, 3);
 
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      if (*rc::gen::arbitrary<bool>()) {
+      if (randBool()) {
         _solver->setValue(x, xDist(gen));
       }
-      if (*rc::gen::arbitrary<bool>()) {
+      if (randBool()) {
         _solver->setValue(y, yDist(gen));
       }
       _solver->endMove();

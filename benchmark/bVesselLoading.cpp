@@ -4,9 +4,9 @@
 #include <utility>
 #include <vector>
 
-#include "atlantis/propagation/invariants/exists.hpp"
 #include "atlantis/propagation/invariants/ifThenElse.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/invariants/min.hpp"
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
@@ -210,12 +210,13 @@ class VesselLoading : public ::benchmark::Fixture {
           solver->makeViolationInvariant<propagation::LessEqual>(
               *solver, isBelow, top[j], bottomSep);
 
-          solver->makeInvariant<propagation::Exists>(
+          solver->makeInvariant<propagation::Min>(
               *solver,
               violations.emplace_back(solver->makeIntVar(
                   0, 0, static_cast<Int>(vesselLength + vesselWidth))),
               std::vector<propagation::VarViewId>{isRightOf, isLeftOf, isAbove,
-                                                  isBelow});
+                                                  isBelow},
+              Int{0});
         }
       }
     }

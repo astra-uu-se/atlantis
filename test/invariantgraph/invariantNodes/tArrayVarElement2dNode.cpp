@@ -128,33 +128,33 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   const propagation::VarViewId outputId = varId(outputIdentifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
-  std::vector<propagation::VarViewId> idxVarIds;
-  std::vector<Int> idxVals;
+  std::vector<propagation::VarViewId> inputVarIds;
+  std::vector<Int> inputVals;
 
   for (const auto& idxVarNodeId :
        std::array<VarNodeId, 2>{idx1VarNodeId, idx2VarNodeId}) {
-    idxVarIds.emplace_back(varNode(idxVarNodeId).isFixed()
-                               ? propagation::NULL_ID
-                               : varId(idxVarNodeId));
-    idxVals.emplace_back(idxVarIds.back() == propagation::NULL_ID
-                             ? varNode(idxVarNodeId).lowerBound()
-                             : _solver->lowerBound(idxVarIds.back()));
+    inputVarIds.emplace_back(varNode(idxVarNodeId).isFixed()
+                                 ? propagation::NULL_ID
+                                 : varId(idxVarNodeId));
+    inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
+                               ? varNode(idxVarNodeId).lowerBound()
+                               : _solver->lowerBound(inputVarIds.back()));
   }
   for (const auto& row : varMatrixVarNodeIds) {
     for (const auto& nId : row) {
-      idxVarIds.emplace_back(varNode(nId).isFixed() ? propagation::NULL_ID
-                                                    : varId(nId));
-      idxVals.emplace_back(idxVarIds.back() == propagation::NULL_ID
-                               ? varNode(nId).lowerBound()
-                               : _solver->lowerBound(idxVarIds.back()));
+      inputVarIds.emplace_back(varNode(nId).isFixed() ? propagation::NULL_ID
+                                                      : varId(nId));
+      inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
+                                 ? varNode(nId).lowerBound()
+                                 : _solver->lowerBound(inputVarIds.back()));
     }
   }
 
-  EXPECT_EQ(idxVarIds.size(), idxVals.size());
+  EXPECT_EQ(inputVarIds.size(), inputVals.size());
 
-  while (increaseNextVal(idxVarIds, idxVals)) {
+  while (increaseNextVal(inputVarIds, inputVals) >= 0) {
     _solver->beginMove();
-    setVarVals(idxVarIds, idxVals);
+    setVarVals(inputVarIds, inputVals);
     _solver->endMove();
 
     _solver->beginProbe();
@@ -162,13 +162,13 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
     _solver->endProbe();
 
     const Int actual = _solver->currentValue(outputId);
-    const Int row = idxVals.at(0) - offsetIdx1;
-    const Int col = idxVals.at(1) - offsetIdx2;
+    const Int row = inputVals.at(0) - offsetIdx1;
+    const Int col = inputVals.at(1) - offsetIdx2;
 
     const Int index =
         2 + (row * static_cast<Int>(varMatrixVarNodeIds.front().size()) + col);
 
-    EXPECT_EQ(actual, idxVals.at(index));
+    EXPECT_EQ(actual, inputVals.at(index));
   }
 }
 

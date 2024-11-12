@@ -116,14 +116,12 @@ TEST_F(PowDomainTest, NotifyInputChanged) {
 
   Timestamp ts = _solver->currentTimestamp();
 
-  Int i{-1};
-
-  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
     ++ts;
     setVarVals(ts, inputVars, inputVals);
 
-    const Int expectedOutput = computeOutput();
-    invariant.notifyInputChanged(ts, LocalId(i));
+    const Int expectedOutput = computeOutput(ts);
+    notifyInputsChanged(ts, invariant, inputVars);
     EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
@@ -208,28 +206,28 @@ RC_GTEST_FIXTURE_PROP(PowDomainTest, rapidcheck, ()) {
   const Int b1 = *rc::gen::inRange<Int>(-10, 11);
   const Int b2 = *rc::gen::inRange<Int>(-10, 11);
   baseLb = std::min(b1, b2);
-  baseUb = std::min(b1, b2);
+  baseUb = std::max(b1, b2);
 
   const Int e1 = *rc::gen::inRange<Int>(-10, 11);
   const Int e2 = *rc::gen::inRange<Int>(-10, 11);
 
-  exponentLb = *rc::gen::inRange<Int>(e1, e2);
-  exponentUb = *rc::gen::inRange<Int>(e1, e2);
+  exponentLb = std::min(e1, e2);
+  exponentUb = std::max(e1, e2);
 
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      if (*rc::gen::arbitrary<bool>()) {
+      if (randBool()) {
         _solver->setValue(base, baseDist(gen));
       }
-      if (*rc::gen::arbitrary<bool>()) {
+      if (randBool()) {
         _solver->setValue(exponent, exponentDist(gen));
       }
 

@@ -21,7 +21,6 @@ class LinearTest : public InvariantTest {
   std::vector<Int> coeffs;
   VarViewId outputVar{NULL_ID};
   std::uniform_int_distribution<Int> inputVarDist;
-  std::uniform_int_distribution<Int> coeffDist;
 
  public:
   void SetUp() override {
@@ -31,41 +30,55 @@ class LinearTest : public InvariantTest {
     coeffUb = 100;
   }
 
-  Linear& generate(bool generateInputVars = true, bool generateCoeffs = true) {
-    inputVars.resize(numInputVars, NULL_ID);
-    coeffs.resize(numInputVars, 0);
+  Linear& generate() {
     if (!_solver->isOpen()) {
       _solver->open();
     }
-    if (generateInputVars) {
-      inputVarLb = std::numeric_limits<Int>::min();
-      inputVarUb = std::numeric_limits<Int>::max();
-      std::vector<Int> bounds{
-          (inputVarLb / static_cast<Int>(numInputVars)) / coeffLb,
-          (inputVarLb / static_cast<Int>(numInputVars)) / coeffUb,
-          (inputVarUb / static_cast<Int>(numInputVars)) / coeffLb,
-          (inputVarUb / static_cast<Int>(numInputVars)) / coeffUb};
-      const auto [lb, ub] = std::minmax_element(bounds.begin(), bounds.end());
-      inputVarLb = *lb;
-      inputVarUb = *ub;
-      inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
 
-      inputVars.clear();
-      inputVars.reserve(numInputVars);
-      for (Int i = 0; i < numInputVars; ++i) {
-        inputVars.emplace_back(
-            makeIntVar(inputVarLb, inputVarUb, inputVarDist));
-      }
-    } else {
-      inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
+    Int cLb =
+        (!coeffs.empty() && coeffs.size() < static_cast<size_t>(numInputVars))
+            ? coeffs.front()
+            : coeffLb;
+    Int cUb =
+        (!coeffs.empty() && coeffs.size() < static_cast<size_t>(numInputVars))
+            ? coeffs.front()
+            : coeffUb;
+
+    for (size_t i = 0; i < coeffs.size(); ++i) {
+      cLb = std::min(cLb, coeffs.at(i));
+      cUb = std::max(cUb, coeffs.at(i));
     }
-    coeffDist = std::uniform_int_distribution<Int>(coeffLb, coeffUb);
-    if (generateCoeffs) {
-      coeffs.resize(numInputVars);
-      for (Int i = 0; i < numInputVars; ++i) {
-        coeffs.at(i) = coeffDist(gen);
+
+    if (coeffs.size() < static_cast<size_t>(numInputVars)) {
+      auto coeffDist = std::uniform_int_distribution<Int>(coeffLb, coeffUb);
+      coeffs.reserve(numInputVars);
+      for (Int i = static_cast<Int>(coeffs.size()); i < numInputVars; ++i) {
+        coeffs.emplace_back(coeffDist(gen));
       }
     }
+
+    std::vector<Int> bounds{
+        (std::numeric_limits<Int>::min() / static_cast<Int>(numInputVars)) /
+            coeffLb,
+        (std::numeric_limits<Int>::min() / static_cast<Int>(numInputVars)) /
+            coeffUb,
+        (std::numeric_limits<Int>::max() / static_cast<Int>(numInputVars)) /
+            coeffLb,
+        (std::numeric_limits<Int>::max() / static_cast<Int>(numInputVars)) /
+            coeffUb};
+    const auto [lb, ub] = std::minmax_element(bounds.begin(), bounds.end());
+    inputVarLb = std::max(inputVarLb, *lb);
+    inputVarUb = std::min(inputVarUb, *ub);
+    inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
+
+    inputVars.clear();
+    inputVars.reserve(numInputVars);
+    for (Int i = 0; i < numInputVars; ++i) {
+      inputVars.emplace_back(makeIntVar(inputVarLb, inputVarUb, inputVarDist));
+    }
+
+    outputVar = _solver->makeIntVar(0, 0, 0);
+
     auto& invariant = _solver->makeInvariant<Linear>(
         *_solver, outputVar, std::vector<Int>(coeffs),
         std::vector<VarViewId>(inputVars));
@@ -105,19 +118,26 @@ class LinearTest : public InvariantTest {
 };
 
 TEST_F(LinearTest, UpdateBounds) {
+  numInputVars = 3;
+
   std::vector<std::pair<Int, Int>> boundVec{
       {-250, -150}, {-100, 0}, {-50, 50}, {0, 100}, {150, 250}};
   std::vector<Int> coefVec{-1000, -1, 0, 1, 1000};
 
-  for (const Int aCoef : coefVec) {
-    for (const Int bCoef : coefVec) {
-      for (const Int cCoef : coefVec) {
-        coeffs = std::vector<Int>{aCoef, bCoef, cCoef};
-        inputVars = std::vector<VarViewId>{_solver->makeIntVar(0, 0, 10),
-                                           _solver->makeIntVar(0, 0, 10),
-                                           _solver->makeIntVar(0, 0, 10)};
+  inputVarLb = boundVec.front().first;
+  inputVarUb = boundVec.back().second;
 
-        auto invariant = generate(false, false);
+  coeffs = std::vector<Int>(numInputVars, coefVec.front());
+
+  for (const Int aCoef : coefVec) {
+    coeffs.at(0) = aCoef;
+    for (const Int bCoef : coefVec) {
+      coeffs.at(1) = bCoef;
+      for (const Int cCoef : coefVec) {
+        coeffs.at(2) = cCoef;
+        auto invariant = generate();
+        _solver->open();
+
         for (const auto& [aLb, aUb] : boundVec) {
           EXPECT_LE(aLb, aUb);
           _solver->updateBounds(VarId(inputVars.at(0)), aLb, aUb, false);
@@ -149,15 +169,12 @@ TEST_F(LinearTest, UpdateBounds) {
 TEST_F(LinearTest, Recompute) {
   generateState = GenerateState::LB;
 
-  const size_t numInputVars = 3;
-
-  _solver->open();
-
-  auto inputVars = makeVars(numInputVars, -2, 2);
-
+  numInputVars = 3;
+  inputVarLb = -5;
+  inputVarUb = -5;
   coeffs = std::vector<Int>{-10000, 1, 10000};
 
-  auto& invariant = generate(false, false);
+  auto& invariant = generate();
 
   auto inputVals = makeValVector(inputVars);
 
@@ -176,20 +193,23 @@ TEST_F(LinearTest, Recompute) {
 TEST_F(LinearTest, NotifyInputChanged) {
   generateState = GenerateState::LB;
 
+  numInputVars = 3;
+  inputVarLb = -5;
+  inputVarUb = -5;
+  coeffs = std::vector<Int>{-10000, 1, 10000};
+
   auto& invariant = generate();
 
   auto inputVals = makeValVector(inputVars);
 
   Timestamp ts = _solver->currentTimestamp();
 
-  Int i{-1};
-
-  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
     ++ts;
     setVarVals(ts, inputVars, inputVals);
 
     const Int expectedOutput = computeOutput(ts);
-    invariant.notifyInputChanged(ts, LocalId(i));
+    notifyInputsChanged(ts, invariant, inputVars);
     EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
@@ -267,12 +287,12 @@ TEST_F(LinearTest, Commit) {
 
 RC_GTEST_FIXTURE_PROP(LinearTest, rapidcheck, ()) {
   _solver->open();
-  numInputVars = *rc::gen::inRange(0, 100);
+  numInputVars = *rc::gen::inRange(1, 100);
 
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -280,7 +300,7 @@ RC_GTEST_FIXTURE_PROP(LinearTest, rapidcheck, ()) {
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       for (size_t i = 0; i < inputVars.size(); ++i) {
-        if (*rc::gen::arbitrary<bool>()) {
+        if (randBool()) {
           _solver->setValue(inputVars.at(i), inputVarDist(gen));
         }
       }

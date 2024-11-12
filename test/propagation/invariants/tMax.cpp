@@ -1,16 +1,16 @@
 #include "../invariantTestHelper.hpp"
-#include "atlantis/propagation/invariants/min.hpp"
+#include "atlantis/propagation/invariants/max.hpp"
 
 namespace atlantis::testing {
 using ::rc::gen::inRange;
 
 using namespace atlantis::propagation;
 
-class ExistsTest : public InvariantTest {
+class MaxTest : public InvariantTest {
  public:
   Int numInputVars{3};
-  Int inputVarLb{0};
-  Int inputVarUb{5};
+  Int inputVarLb{-2};
+  Int inputVarUb{2};
   std::vector<VarViewId> inputVars;
   VarViewId outputVar{NULL_ID};
   std::uniform_int_distribution<Int> inputVarDist;
@@ -21,23 +21,23 @@ class ExistsTest : public InvariantTest {
   }
 
   Int computeOutput(bool committedValue = false) {
-    Int min_val = std::numeric_limits<Int>::max();
+    Int maxVal = std::numeric_limits<Int>::min();
     for (auto var : inputVars) {
-      min_val = std::min(min_val, committedValue ? _solver->committedValue(var)
-                                                 : _solver->currentValue(var));
+      maxVal = std::max(maxVal, committedValue ? _solver->committedValue(var)
+                                               : _solver->currentValue(var));
     }
-    return min_val;
+    return maxVal;
   }
 
   Int computeOutput(Timestamp ts) {
-    Int min_val = std::numeric_limits<Int>::max();
+    Int maxVal = std::numeric_limits<Int>::min();
     for (auto var : inputVars) {
-      min_val = std::min(min_val, _solver->value(ts, var));
+      maxVal = std::max(maxVal, _solver->value(ts, var));
     }
-    return min_val;
+    return maxVal;
   }
 
-  Min& generate() {
+  Max& generate() {
     inputVars.clear();
     inputVars.reserve(numInputVars);
 
@@ -50,15 +50,16 @@ class ExistsTest : public InvariantTest {
       inputVars.emplace_back(makeIntVar(inputVarLb, inputVarUb, inputVarDist));
     }
     outputVar = _solver->makeIntVar(0, 0, 0);
-    Min& invariant = _solver->makeInvariant<Min>(
-        *_solver, outputVar, std::vector<VarViewId>(inputVars), 0);
+    Max& invariant = _solver->makeInvariant<Max>(
+        *_solver, outputVar, std::vector<VarViewId>(inputVars));
     _solver->close();
     return invariant;
   }
 };
 
-TEST_F(ExistsTest, UpdateBounds) {
-  std::vector<std::pair<Int, Int>> boundVec{{0, 100}, {150, 250}};
+TEST_F(MaxTest, UpdateBounds) {
+  std::vector<std::pair<Int, Int>> boundVec{
+      {-100, -100}, {-100, 0}, {0, 0}, {0, 100}, {100, 100}};
   _solver->open();
 
   auto& invariant = generate();
@@ -75,16 +76,16 @@ TEST_F(ExistsTest, UpdateBounds) {
         _solver->updateBounds(VarId(inputVars.at(2)), cLb, cUb, false);
         invariant.updateBounds(false);
 
-        ASSERT_EQ(std::min(aLb, std::min(bLb, cLb)),
+        ASSERT_EQ(std::max(aLb, std::max(bLb, cLb)),
                   _solver->lowerBound(outputVar));
-        ASSERT_EQ(std::min(aUb, std::min(bUb, cUb)),
+        ASSERT_EQ(std::max(aUb, std::max(bUb, cUb)),
                   _solver->upperBound(outputVar));
       }
     }
   }
 }
 
-TEST_F(ExistsTest, Recompute) {
+TEST_F(MaxTest, Recompute) {
   generateState = GenerateState::LB;
 
   auto& invariant = generate();
@@ -103,7 +104,7 @@ TEST_F(ExistsTest, Recompute) {
   }
 }
 
-TEST_F(ExistsTest, NotifyInputChanged) {
+TEST_F(MaxTest, NotifyInputChanged) {
   generateState = GenerateState::LB;
 
   auto& invariant = generate();
@@ -122,8 +123,10 @@ TEST_F(ExistsTest, NotifyInputChanged) {
   }
 }
 
-TEST_F(ExistsTest, NextInput) {
+TEST_F(MaxTest, NextInput) {
   auto& invariant = generate();
+
+  EXPECT_EQ(_solver->upperBound(outputVar), inputVarUb);
 
   for (const auto& id : inputVars) {
     EXPECT_TRUE(id.isVar());
@@ -135,7 +138,7 @@ TEST_F(ExistsTest, NextInput) {
     const Timestamp ts =
         _solver->currentTimestamp() + static_cast<Timestamp>(i);
     for (Int j = 0; j < numInputVars; ++j) {
-      _solver->setValue(ts, inputVars.at(j), i == j ? 0 : 1);
+      _solver->setValue(ts, inputVars.at(j), i == j ? inputVarUb : inputVarLb);
     }
     std::vector<bool> notified(maxVarId - minVarId + 1, false);
     for (Int j = 0; j <= i; ++j) {
@@ -156,19 +159,23 @@ TEST_F(ExistsTest, NextInput) {
   }
 }
 
-TEST_F(ExistsTest, NotifyCurrentInputChanged) {
+TEST_F(MaxTest, NotifyCurrentInputChanged) {
   auto& invariant = generate();
+
+  EXPECT_EQ(_solver->upperBound(outputVar), inputVarUb);
+  EXPECT_GE(inputVarUb - inputVarLb, 2);
 
   for (Int i = 0; i < numInputVars; ++i) {
     const Timestamp ts =
         _solver->currentTimestamp() + static_cast<Timestamp>(i);
     for (Int j = 0; j < numInputVars; ++j) {
-      _solver->setValue(ts, inputVars.at(j), 1);
+      _solver->setValue(ts, inputVars.at(j), inputVarLb);
     }
     for (Int j = 0; j <= i; ++j) {
       EXPECT_EQ(invariant.nextInput(ts), inputVars.at(j));
-      EXPECT_EQ(_solver->value(ts, inputVars.at(j)), 1);
-      _solver->setValue(ts, inputVars.at(j), i == j ? 0 : 2);
+      EXPECT_EQ(_solver->value(ts, inputVars.at(j)), inputVarLb);
+      _solver->setValue(ts, inputVars.at(j),
+                        i == j ? inputVarUb : (inputVarUb - 1));
       invariant.notifyCurrentInputChanged(ts);
       EXPECT_EQ(_solver->value(ts, outputVar), computeOutput(ts));
     }
@@ -176,7 +183,7 @@ TEST_F(ExistsTest, NotifyCurrentInputChanged) {
   }
 }
 
-TEST_F(ExistsTest, Commit) {
+TEST_F(MaxTest, Commit) {
   auto& invariant = generate();
 
   std::vector<size_t> indices(numInputVars);
@@ -222,7 +229,7 @@ TEST_F(ExistsTest, Commit) {
   }
 }
 
-RC_GTEST_FIXTURE_PROP(ExistsTest, rapidcheck, ()) {
+RC_GTEST_FIXTURE_PROP(MaxTest, rapidcheck, ()) {
   numInputVars = *rc::gen::inRange(1, 100);
 
   generate();
@@ -259,34 +266,34 @@ RC_GTEST_FIXTURE_PROP(ExistsTest, rapidcheck, ()) {
   }
 }
 
-class MockExists : public Min {
+class MockExists : public Max {
  public:
   bool registered = false;
   void registerVars() override {
     registered = true;
-    Min::registerVars();
+    Max::registerVars();
   }
   explicit MockExists(SolverBase& solver, VarViewId output,
                       std::vector<VarViewId>&& varArray)
-      : Min(solver, output, std::move(varArray)) {
+      : Max(solver, output, std::move(varArray)) {
     EXPECT_TRUE(output.isVar());
 
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
-      return Min::recompute(timestamp);
+      return Max::recompute(timestamp);
     });
     ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
-      return Min::nextInput(timestamp);
+      return Max::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp timestamp) {
-          Min::notifyCurrentInputChanged(timestamp);
+          Max::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp timestamp, LocalId id) {
-          Min::notifyInputChanged(timestamp, id);
+          Max::notifyInputChanged(timestamp, id);
         });
     ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
-      Min::commit(timestamp);
+      Max::commit(timestamp);
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
@@ -295,7 +302,7 @@ class MockExists : public Min {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(ExistsTest, SolverIntegration) {
+TEST_F(MaxTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!_solver->isOpen()) {
       _solver->open();

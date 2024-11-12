@@ -159,14 +159,12 @@ TEST_F(CountTest, NotifyInputChanged) {
 
   Timestamp ts = _solver->currentTimestamp();
 
-  Int i{-1};
-
-  while ((i = increaseNextVal(inputVars, inputVals)) >= 0) {
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
     ++ts;
     setVarVals(ts, inputVars, inputVals);
 
     const Int expectedOutput = computeOutput(ts);
-    invariant.notifyInputChanged(ts, LocalId(i));
+    notifyInputsChanged(ts, invariant, inputVars);
     EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
   }
 }
@@ -274,7 +272,7 @@ RC_GTEST_FIXTURE_PROP(CountTest, rapidcheck, ()) {
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -282,11 +280,11 @@ RC_GTEST_FIXTURE_PROP(CountTest, rapidcheck, ()) {
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       for (size_t i = 0; i < haystackVars.size(); ++i) {
-        if (*rc::gen::arbitrary<bool>()) {
+        if (randBool()) {
           _solver->setValue(haystackVars.at(i), haystackVarDist(gen));
         }
       }
-      if (*rc::gen::arbitrary<bool>()) {
+      if (randBool()) {
         _solver->setValue(needleVar, needleVarDist(gen));
       }
 

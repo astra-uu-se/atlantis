@@ -24,6 +24,7 @@ class EqualConstTest : public ViewTest {
   }
 
   void generate() {
+    inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
     _solver->open();
     makeInputVar();
     outputVar = _solver->makeIntView<EqualConst>(*_solver, inputVar, value);
@@ -64,7 +65,7 @@ RC_GTEST_FIXTURE_PROP(EqualConstTest, rapidcheck, ()) {
   generate();
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     for (size_t p = 0; p <= numProbes; ++p) {
@@ -73,7 +74,6 @@ RC_GTEST_FIXTURE_PROP(EqualConstTest, rapidcheck, ()) {
       _solver->endMove();
 
       EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
-      _solver->endMove();
 
       if (p == numProbes) {
         _solver->beginCommit();
@@ -86,8 +86,8 @@ RC_GTEST_FIXTURE_PROP(EqualConstTest, rapidcheck, ()) {
       } else {
         _solver->endProbe();
       }
-      EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
-      EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
+      RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());
+      RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
     }
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }

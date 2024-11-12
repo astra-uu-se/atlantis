@@ -33,14 +33,14 @@ class ViewTest : public ::testing::Test {
 
  public:
   void makeInputVar() {
-    _solver->makeIntVar(inputVarLb, inputVarUb, inputVarDist(gen));
+    inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
+    inputVar = _solver->makeIntVar(inputVarDist(gen), inputVarLb, inputVarUb);
   }
 
   void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
     _solver = std::make_unique<propagation::Solver>();
-    inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
   }
 };
 

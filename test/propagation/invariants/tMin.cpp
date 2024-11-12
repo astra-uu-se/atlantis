@@ -6,11 +6,11 @@ using ::rc::gen::inRange;
 
 using namespace atlantis::propagation;
 
-class ExistsTest : public InvariantTest {
+class MinTest : public InvariantTest {
  public:
   Int numInputVars{3};
-  Int inputVarLb{0};
-  Int inputVarUb{5};
+  Int inputVarLb{-2};
+  Int inputVarUb{2};
   std::vector<VarViewId> inputVars;
   VarViewId outputVar{NULL_ID};
   std::uniform_int_distribution<Int> inputVarDist;
@@ -51,13 +51,13 @@ class ExistsTest : public InvariantTest {
     }
     outputVar = _solver->makeIntVar(0, 0, 0);
     Min& invariant = _solver->makeInvariant<Min>(
-        *_solver, outputVar, std::vector<VarViewId>(inputVars), 0);
+        *_solver, outputVar, std::vector<VarViewId>(inputVars));
     _solver->close();
     return invariant;
   }
 };
 
-TEST_F(ExistsTest, UpdateBounds) {
+TEST_F(MinTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{{0, 100}, {150, 250}};
   _solver->open();
 
@@ -84,7 +84,7 @@ TEST_F(ExistsTest, UpdateBounds) {
   }
 }
 
-TEST_F(ExistsTest, Recompute) {
+TEST_F(MinTest, Recompute) {
   generateState = GenerateState::LB;
 
   auto& invariant = generate();
@@ -103,7 +103,7 @@ TEST_F(ExistsTest, Recompute) {
   }
 }
 
-TEST_F(ExistsTest, NotifyInputChanged) {
+TEST_F(MinTest, NotifyInputChanged) {
   generateState = GenerateState::LB;
 
   auto& invariant = generate();
@@ -122,8 +122,10 @@ TEST_F(ExistsTest, NotifyInputChanged) {
   }
 }
 
-TEST_F(ExistsTest, NextInput) {
+TEST_F(MinTest, NextInput) {
   auto& invariant = generate();
+
+  EXPECT_EQ(_solver->lowerBound(outputVar), inputVarLb);
 
   for (const auto& id : inputVars) {
     EXPECT_TRUE(id.isVar());
@@ -135,7 +137,7 @@ TEST_F(ExistsTest, NextInput) {
     const Timestamp ts =
         _solver->currentTimestamp() + static_cast<Timestamp>(i);
     for (Int j = 0; j < numInputVars; ++j) {
-      _solver->setValue(ts, inputVars.at(j), i == j ? 0 : 1);
+      _solver->setValue(ts, inputVars.at(j), i == j ? inputVarLb : inputVarUb);
     }
     std::vector<bool> notified(maxVarId - minVarId + 1, false);
     for (Int j = 0; j <= i; ++j) {
@@ -156,19 +158,23 @@ TEST_F(ExistsTest, NextInput) {
   }
 }
 
-TEST_F(ExistsTest, NotifyCurrentInputChanged) {
+TEST_F(MinTest, NotifyCurrentInputChanged) {
   auto& invariant = generate();
+
+  EXPECT_EQ(_solver->lowerBound(outputVar), inputVarLb);
+  EXPECT_GE(inputVarUb - inputVarLb, 2);
 
   for (Int i = 0; i < numInputVars; ++i) {
     const Timestamp ts =
         _solver->currentTimestamp() + static_cast<Timestamp>(i);
     for (Int j = 0; j < numInputVars; ++j) {
-      _solver->setValue(ts, inputVars.at(j), 1);
+      _solver->setValue(ts, inputVars.at(j), inputVarUb);
     }
     for (Int j = 0; j <= i; ++j) {
       EXPECT_EQ(invariant.nextInput(ts), inputVars.at(j));
-      EXPECT_EQ(_solver->value(ts, inputVars.at(j)), 1);
-      _solver->setValue(ts, inputVars.at(j), i == j ? 0 : 2);
+      EXPECT_EQ(_solver->value(ts, inputVars.at(j)), inputVarUb);
+      _solver->setValue(ts, inputVars.at(j),
+                        i == j ? inputVarLb : (inputVarLb + 1));
       invariant.notifyCurrentInputChanged(ts);
       EXPECT_EQ(_solver->value(ts, outputVar), computeOutput(ts));
     }
@@ -176,7 +182,7 @@ TEST_F(ExistsTest, NotifyCurrentInputChanged) {
   }
 }
 
-TEST_F(ExistsTest, Commit) {
+TEST_F(MinTest, Commit) {
   auto& invariant = generate();
 
   std::vector<size_t> indices(numInputVars);
@@ -222,7 +228,7 @@ TEST_F(ExistsTest, Commit) {
   }
 }
 
-RC_GTEST_FIXTURE_PROP(ExistsTest, rapidcheck, ()) {
+RC_GTEST_FIXTURE_PROP(MinTest, rapidcheck, ()) {
   numInputVars = *rc::gen::inRange(1, 100);
 
   generate();
@@ -295,7 +301,7 @@ class MockExists : public Min {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(ExistsTest, SolverIntegration) {
+TEST_F(MinTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!_solver->isOpen()) {
       _solver->open();

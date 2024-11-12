@@ -6,7 +6,7 @@
 
 #include "atlantis/propagation/invariants/elementVar.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
-#include "atlantis/propagation/invariants/minSparse.hpp"
+#include "atlantis/propagation/invariants/min.hpp"
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/types.hpp"
@@ -298,7 +298,7 @@ TEST_F(SolverTest, ThisTestShouldNotBeHere) {
 
   VarViewId min = solver->makeIntVar(100, Int(-100), Int(100));
   // TODO: use some other invariants...
-  solver->makeInvariant<MinSparse>(*solver, min, std::vector<VarViewId>{X});
+  solver->makeInvariant<Min>(*solver, min, std::vector<VarViewId>{X});
 
   solver->close();
   EXPECT_EQ(solver->committedValue(min), 0);

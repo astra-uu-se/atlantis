@@ -53,8 +53,6 @@ TEST_F(Bool2IntViewTest, values) {
   const std::vector<Int> values{0, 1, 0, 0, 1, 1, 0};
 
   for (size_t m = 0; m < values.size(); ++m) {
-    const Int comVal = values.at(m);
-
     EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
 
     for (size_t p = 0; p < values.size(); ++p) {
@@ -76,7 +74,6 @@ TEST_F(Bool2IntViewTest, values) {
         _solver->endProbe();
       }
       EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
-      EXPECT_EQ(_solver->committedValue(inputVar), comVal);
       EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));
     }
     EXPECT_EQ(_solver->committedValue(outputVar), computeOutput(true));

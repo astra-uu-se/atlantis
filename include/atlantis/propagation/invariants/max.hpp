@@ -14,22 +14,24 @@ namespace atlantis::propagation {
  *
  */
 
-class MaxSparse : public Invariant {
+class Max : public Invariant {
  private:
   VarId _output;
   std::vector<VarViewId> _varArray;
-
-  PriorityList _localPriority;
+  std::vector<std::pair<CommittableInt, CommittableInt>> _linkedList;
+  CommittableInt _listHead;
+  CommittableInt _updatedMax;  // The min value of the probe.
+  Int _limit;
 
  public:
-  explicit MaxSparse(SolverBase&, VarId output,
-                     std::vector<VarViewId>&& varArray);
+  explicit Max(SolverBase&, VarId output, std::vector<VarViewId>&& varArray);
 
-  explicit MaxSparse(SolverBase&, VarViewId output,
-                     std::vector<VarViewId>&& varArray);
+  explicit Max(SolverBase&, VarViewId output,
+               std::vector<VarViewId>&& varArray);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
+  void close(Timestamp) override;
   void recompute(Timestamp) override;
   void notifyInputChanged(Timestamp, LocalId) override;
   void commit(Timestamp) override;

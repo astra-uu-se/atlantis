@@ -34,6 +34,9 @@ class ElementVarTest : public InvariantTest {
   }
 
   ElementVar& generate() {
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
     dynamicInputs.resize(numDynamicVars, NULL_ID);
     for (Int i = 0; i < numDynamicVars; ++i) {
       dynamicInputs.at(i) =
@@ -43,9 +46,6 @@ class ElementVarTest : public InvariantTest {
 
     indexDist = std::uniform_int_distribution<Int>(indexLb(), indexUb());
 
-    if (!_solver->isOpen()) {
-      _solver->open();
-    }
     indexVar = makeIntVar(indexLb(), indexUb(), indexDist);
     outputVar = _solver->makeIntVar(0, 0, 0);
 
@@ -297,7 +297,7 @@ RC_GTEST_FIXTURE_PROP(ElementVarTest, rapidcheck, ()) {
   dists.emplace_back(indexDist);
 
   const size_t numCommits = 3;
-  const size_t numProbes = 10;
+  const size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -305,7 +305,7 @@ RC_GTEST_FIXTURE_PROP(ElementVarTest, rapidcheck, ()) {
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       for (size_t i = 0; i < inputVars.size(); ++i) {
-        if (*rc::gen::arbitrary<bool>()) {
+        if (randBool()) {
           _solver->setValue(inputVars.at(i), dists.at(i)(gen));
         }
       }

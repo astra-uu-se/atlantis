@@ -5,7 +5,7 @@
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/propagation/invariants/boolOr.hpp"
-#include "atlantis/propagation/invariants/exists.hpp"
+#include "atlantis/propagation/invariants/min.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {
@@ -137,9 +137,9 @@ void ArrayBoolOrNode::registerNode() {
         solver(), !shouldHold() ? _intermediate : violationVarId(),
         solverVars.front(), solverVars.back());
   } else {
-    solver().makeInvariant<propagation::Exists>(
+    solver().makeInvariant<propagation::Min>(
         solver(), !shouldHold() ? _intermediate : violationVarId(),
-        std::move(solverVars));
+        std::move(solverVars), Int{0});
   }
 }
 
