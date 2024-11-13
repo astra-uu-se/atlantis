@@ -199,18 +199,13 @@ TEST_F(NotEqualTest, Commit) {
 RC_GTEST_FIXTURE_PROP(NotEqualTest, rapidcheck, ()) {
   _solver->open();
 
-  const Int x1 = *rc::gen::arbitrary<Int>();
-  const Int x2 = *rc::gen::arbitrary<Int>();
-  xLb = std::min(x1, x2);
-  xUb = std::max(x1, x2);
+  const auto xBounds = genBounds();
+  xLb = xBounds.first;
+  xUb = xBounds.second;
 
-  const Int y1 =
-      std::numeric_limits<Int>::min() - std::min(Int{0}, std::min(x1, x2));
-  const Int y2 =
-      std::numeric_limits<Int>::max() - std::max(Int{0}, std::max(x1, x2));
-
-  yLb = std::min(y1, y2);
-  yUb = std::max(y1, y2);
+  const auto yBounds = genBounds();
+  yLb = yBounds.first;
+  yUb = yBounds.second;
 
   generate();
 

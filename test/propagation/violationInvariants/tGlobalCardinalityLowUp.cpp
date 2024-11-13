@@ -2,6 +2,8 @@
 #include <gtest/gtest.h>
 #include <rapidcheck/gtest.h>
 
+#include <iostream>
+
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/violationInvariants/globalCardinalityLowUp.hpp"
 
@@ -332,21 +334,43 @@ TEST_F(GlobalCardinalityLowUpTest, Commit) {
 RC_GTEST_FIXTURE_PROP(GlobalCardinalityLowUpTest, RapidCheck, ()) {
   numInputVars = *rc::gen::inRange(1, 100);
 
-  inputVarLb =
-      *rc::gen::inRange(std::numeric_limits<Int>::min() + 2 * numInputVars,
-                        std::numeric_limits<Int>::max() - 2 * numInputVars);
+  inputVarLb = *rc::gen::inRange(
+      std::numeric_limits<Int>::min() + (2 * numInputVars),
+      std::numeric_limits<Int>::max() - (2 * numInputVars) + 1);
 
   inputVarUb = inputVarLb + numInputVars;
 
-  std::vector<Int> cover = *rc::gen::unique<std::vector<Int>>(
-      *rc::gen::inRange(1, 101),
-      rc::gen::inRange<Int>(inputVarLb - numInputVars,
-                            inputVarUb + numInputVars));
+  const Int coverRange = 100;
 
-  Int amount = 0;
-  for (const auto v : cover) {
-    coverSet.emplace(v, std::pair<Int, Int>{amount, ++amount});
+  const Int c1 = *rc::gen::inRange(inputVarLb - numInputVars,
+                                   inputVarUb + numInputVars + 1);
+  const Int c2 = (std::numeric_limits<Int>::max() - coverRange < c1)
+                     ? (c1 - coverRange)
+                     : (c1 + coverRange);
+
+  const Int coverLb = std::min(c1, c2);
+  const Int coverUb = std::max(c1, c2);
+
+  RC_ASSERT(coverLb + coverRange == coverUb);
+
+  std::cerr << "numInputVars: " << numInputVars
+            << "\ninputVarLb: " << inputVarLb << "\ninputVarUb: " << inputVarUb
+            << "\ncoverLb: " << coverLb << "; coverUb: " << coverUb;
+
+  std::vector<Int> cover(coverRange + 1);
+  std::iota(cover.begin(), cover.end(), coverLb);
+  RC_ASSERT(cover.front() == coverLb);
+  RC_ASSERT(cover.back() == coverUb);
+  std::shuffle(cover.begin(), cover.end(), rng);
+  cover.resize(*rc::gen::inRange<size_t>(size_t{1}, cover.size() + 1));
+
+  std::cerr << "\ncover: {";
+  for (const auto& [c, p] : coverSet) {
+    std::cerr << "<c: " << c << "; l: " << p.first << "; u: " << p.second
+              << ">, ";
   }
+
+  std::cerr << "}\n";
 
   generate();
 

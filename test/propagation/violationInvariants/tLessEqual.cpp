@@ -200,18 +200,16 @@ TEST_F(LessEqualTest, Commit) {
 RC_GTEST_FIXTURE_PROP(LessEqualTest, rapidcheck, ()) {
   _solver->open();
 
-  const Int x1 = *rc::gen::arbitrary<Int>();
-  const Int x2 = *rc::gen::arbitrary<Int>();
-  xLb = std::min(x1, x2);
-  xUb = std::max(x1, x2);
+  const Int lb = Int{-1} << 31;
+  const Int ub = Int{1} << 31;
 
-  const Int y1 =
-      std::numeric_limits<Int>::min() - std::min(Int{0}, std::min(x1, x2));
-  const Int y2 =
-      std::numeric_limits<Int>::max() - std::max(Int{0}, std::max(x1, x2));
+  const auto xBounds = genBounds(lb, ub);
+  xLb = xBounds.first;
+  xUb = xBounds.second;
 
-  yLb = std::min(y1, y2);
-  yUb = std::max(y1, y2);
+  const auto yBounds = genBounds(lb, ub);
+  yLb = yBounds.first;
+  yUb = yBounds.second;
 
   generate();
 

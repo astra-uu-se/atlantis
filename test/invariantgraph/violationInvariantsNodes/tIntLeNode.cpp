@@ -99,17 +99,15 @@ TEST_P(IntLeNodeTestFixture, updateState) {
   invNode().updateState();
   if (shouldBeSubsumed()) {
     // TODO: disabled for the MZN challange. This should be computed by Gecode.
-    // EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+    /*
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
-      // TODO: disabled for the MZN challange. This should be computed by
-      // Gecode.
-      // EXPECT_TRUE(varNode(reifiedVarNodeId).isFixed());
+      EXPECT_TRUE(varNode(reifiedVarNodeId).isFixed());
       const bool expected = isViolating();
       const bool actual = varNode(reifiedVarNodeId).inDomain(bool{false});
-      // TODO: disabled for the MZN challange. This should be computed by
-      // Gecode.
-      // EXPECT_EQ(expected, actual);
+      EXPECT_EQ(expected, actual);
     }
+    */
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
   }
@@ -139,22 +137,23 @@ TEST_P(IntLeNodeTestFixture, propagation) {
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();
+    // TODO: disabled for the MZN challange. This should be computed by Gecode
+    /*
     if (isReified()) {
-      // TODO: disabled for the MZN challange. This should be computed by
-      // Gecode. EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
+      EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
       const bool actual = varNode(reifiedIdentifier).inDomain({false});
-      // TODO: disabled for the MZN challange. This should be computed by
-      // Gecode.
-      // EXPECT_EQ(expected, actual);
+      EXPECT_EQ(expected, actual);
     }
+    */
     if (shouldHold()) {
       EXPECT_FALSE(expected);
     }
+    // TODO: disabled for the MZN challange. This should be computed by Gecode
+    /*
     if (shouldFail()) {
-      // TODO: disabled for the MZN challange. This should be computed by
-      // Gecode.
-      // EXPECT_TRUE(expected);
+      EXPECT_TRUE(expected);
     }
+    */
     return;
   }
 

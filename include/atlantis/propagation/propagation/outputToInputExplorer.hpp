@@ -15,9 +15,9 @@ class OutputToInputExplorer {
   Solver& _solver;
 
   std::vector<VarId> _varStack;
-  size_t _varStackIdx = 0;
+  size_t _varStackIdx;
   std::vector<InvariantId> _invariantStack;
-  size_t _invariantStackIdx = 0;
+  size_t _invariantStackIdx;
   std::vector<Timestamp> _varComputedAt;  // last timestamp when a VarID was
                                           // computed (i.e., will not change)
   std::vector<Timestamp> _invariantComputedAt;

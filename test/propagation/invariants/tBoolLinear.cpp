@@ -37,15 +37,23 @@ class BoolLinearTest : public InvariantTest {
     }
     inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
 
-    if (static_cast<Int>(coeffs.size()) < numInputVars) {
+    const Int cs = static_cast<Int>(coeffs.size());
+
+    if (cs < numInputVars) {
       Int coeffLb =
-          std::numeric_limits<Int>::max() / static_cast<Int>(numInputVars);
+          std::numeric_limits<Int>::min() / static_cast<Int>(numInputVars + 1);
       Int coeffUb =
-          std::numeric_limits<Int>::min() / static_cast<Int>(numInputVars);
+          std::numeric_limits<Int>::max() / static_cast<Int>(numInputVars + 1);
       auto coeffDist = std::uniform_int_distribution<Int>(coeffLb, coeffUb);
       coeffs.reserve(numInputVars);
-      for (Int i = static_cast<Int>(coeffs.size()); i < numInputVars; ++i) {
-        coeffs.emplace_back(coeffDist(gen));
+      for (Int i = 0; i < numInputVars; ++i) {
+        if (i < cs) {
+          if (coeffs.at(i) < coeffLb || coeffUb < coeffs.at(i)) {
+            coeffs.at(i) = coeffDist(gen);
+          }
+        } else {
+          coeffs.emplace_back(coeffDist(gen));
+        }
       }
     }
 

@@ -342,6 +342,18 @@ class InvariantTest : public ::testing::Test {
 
   bool randBool() { return binaryDist(gen) == 1; }
 
+  std::pair<Int, Int> genBounds(Int lb, Int ub) {
+    return *rc::gen::suchThat(
+        rc::gen::pair<Int, Int>(rc::gen::inRange<Int>(lb, ub),
+                                rc::gen::inRange<Int>(lb, ub)),
+        [](const std::pair<Int, Int>& p) { return p.first <= p.second; });
+  }
+
+  std::pair<Int, Int> genBounds() {
+    return genBounds(std::numeric_limits<Int>::min(),
+                     std::numeric_limits<Int>::max());
+  }
+
  public:
   void SetUp() override {
     std::random_device rd;

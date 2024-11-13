@@ -7,10 +7,10 @@ namespace atlantis::propagation {
 
 OutputToInputExplorer::OutputToInputExplorer(Solver& e, size_t expectedSize)
     : _solver(e),
-      _varStackIdx(0),
-      _invariantStackIdx(0),
       _varStack(),
+      _varStackIdx(0),
       _invariantStack(),
+      _invariantStackIdx(0),
       _varComputedAt(),
       _invariantComputedAt(),
       _invariantIsOnStack(),
