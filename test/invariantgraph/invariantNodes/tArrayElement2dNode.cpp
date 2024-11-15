@@ -94,13 +94,13 @@ TEST_P(ArrayElement2dNodeTestFixture, updateState) {
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(varNode(outputVar.id).isFixed());
+    EXPECT_TRUE(varNode(outputVar).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVar.id).lowerBound();
+    const Int actual = varNode(outputVar).lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_FALSE(varNode(outputVar.id).isFixed());
+    EXPECT_FALSE(varNode(outputVar).isFixed());
   }
 }
 
@@ -127,8 +127,8 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   if (outputNode.isFixed()) {
     const Int expected = outputNode.lowerBound();
     const Int actual =
-        parVal(parMatrix.at(varNode(idx1Var.id).lowerBound() - idx1Offset)
-                   .at(varNode(idx2Var.id).lowerBound() - idx2Offset));
+        parVal(parMatrix.at(varNode(idx1Var).lowerBound() - idx1Offset)
+                   .at(varNode(idx2Var).lowerBound() - idx2Offset));
     EXPECT_EQ(expected, actual);
     return;
   }
@@ -137,11 +137,10 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   const propagation::VarViewId outputId = varId(outputVar.identifier);
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& idxVarNodeId :
-       std::array<VarNodeId, 2>{idx1Var.id, idx2Var.id}) {
-    if (!varNode(idxVarNodeId).isFixed()) {
-      EXPECT_NE(varId(idxVarNodeId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(idxVarNodeId));
+  for (const auto& idx : std::array<Var, 2>{idx1Var, idx2Var}) {
+    if (!varNode(idx).isFixed()) {
+      EXPECT_NE(varId(idx), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(idx));
     }
   }
 

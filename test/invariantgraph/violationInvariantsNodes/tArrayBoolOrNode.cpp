@@ -71,15 +71,15 @@ TEST_P(ArrayBoolOrNodeTestFixture, updateState) {
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
-      EXPECT_TRUE(varNode(reifiedVar.id).isFixed());
+      EXPECT_TRUE(varNode(reifiedVar).isFixed());
       const bool expected = isViolating();
-      const bool actual = varNode(reifiedVar.id).inDomain(bool{false});
+      const bool actual = varNode(reifiedVar).inDomain(bool{false});
       EXPECT_EQ(expected, actual);
     }
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
-      EXPECT_FALSE(varNode(reifiedVar.id).isFixed());
+      EXPECT_FALSE(varNode(reifiedVar).isFixed());
     }
   }
 }

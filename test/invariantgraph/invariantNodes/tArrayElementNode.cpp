@@ -125,13 +125,13 @@ TEST_P(ArrayElementNodeTestFixture, updateState) {
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(varNode(outputVar.id).isFixed());
+    EXPECT_TRUE(varNode(outputVar).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVar.id).lowerBound();
+    const Int actual = varNode(outputVar).lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_FALSE(varNode(outputVar.id).isFixed());
+    EXPECT_FALSE(varNode(outputVar).isFixed());
   }
 }
 
@@ -141,7 +141,7 @@ TEST_P(ArrayElementNodeTestFixture, propagation) {
 
   VarNode& outputNode = varNode(outputVar.identifier);
   if (outputNode.isFixed()) {
-    const Int actual = varNode(outputVar.id).lowerBound();
+    const Int actual = varNode(outputVar).lowerBound();
     const Int expected = computeOutput(true);
 
     EXPECT_EQ(expected, actual);

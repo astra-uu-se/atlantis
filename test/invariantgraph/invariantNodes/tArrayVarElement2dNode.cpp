@@ -84,13 +84,11 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   std::vector<propagation::VarViewId> inputVarIds;
   std::vector<Int> inputVals;
 
-  for (const auto& idxVarNodeId :
-       std::array<VarNodeId, 2>{idx1Var.id, idx2Var.id}) {
-    inputVarIds.emplace_back(varNode(idxVarNodeId).isFixed()
-                                 ? propagation::NULL_ID
-                                 : varId(idxVarNodeId));
+  for (const auto& idx : std::array<Var, 2>{idx1Var, idx2Var}) {
+    inputVarIds.emplace_back(varNode(idx).isFixed() ? propagation::NULL_ID
+                                                    : varId(idx));
     inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
-                               ? varNode(idxVarNodeId).lowerBound()
+                               ? varNode(idx).lowerBound()
                                : _solver->lowerBound(inputVarIds.back()));
   }
   for (const auto& row : varMatrix) {

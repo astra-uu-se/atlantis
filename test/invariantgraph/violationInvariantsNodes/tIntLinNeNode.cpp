@@ -85,8 +85,8 @@ TEST_P(IntLinNeNodeTestFixture, updateState) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     const Int expected = isViolating();
     if (isReified()) {
-      EXPECT_TRUE(varNode(reifiedVar.id).isFixed());
-      const Int actual = varNode(reifiedVar.id).lowerBound();
+      EXPECT_TRUE(varNode(reifiedVar).isFixed());
+      const Int actual = varNode(reifiedVar).lowerBound();
       EXPECT_EQ(expected, actual);
     } else if (shouldHold()) {
       EXPECT_FALSE(expected);
@@ -96,7 +96,7 @@ TEST_P(IntLinNeNodeTestFixture, updateState) {
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
-      EXPECT_FALSE(varNode(reifiedVar.id).isFixed());
+      EXPECT_FALSE(varNode(reifiedVar).isFixed());
     }
   }
 }
