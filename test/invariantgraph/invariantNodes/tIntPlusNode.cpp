@@ -8,50 +8,51 @@ using ::testing::Contains;
 
 class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
  public:
-  std::vector<VarNodeId> inputVarNodeIds;
-  std::vector<std::string> inputIdentifiers{"input_1", "input_2"};
-  VarNodeId outputVarNodeId{NULL_NODE_ID};
-  std::string outputIdentifier{"output"};
+  std::vector<Var> inputVars;
+  Var outputVar{NULL_NODE_ID, "output"};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
       Int sum = 0;
-      for (const auto& identifier : inputIdentifiers) {
-        if (varNode(identifier).isFixed()) {
-          sum += varNode(identifier).lowerBound();
+      for (const auto& var : inputVars) {
+        if (varNode(var).isFixed()) {
+          sum += varNode(var).lowerBound();
         } else {
-          sum += _solver->currentValue(varId(identifier));
+          sum += _solver->currentValue(varId(var));
         }
       }
       return sum;
     }
     Int sum = 0;
-    for (const auto& identifier : inputIdentifiers) {
-      EXPECT_TRUE(varNode(identifier).isFixed());
-      sum += varNode(identifier).lowerBound();
+    for (const auto& var : inputVars) {
+      EXPECT_TRUE(varNode(var).isFixed());
+      sum += varNode(var).lowerBound();
     }
     return sum;
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    if (shouldBeSubsumed()) {
-      inputVarNodeIds = std::vector<VarNodeId>{
-          retrieveIntVarNode(1, 1, inputIdentifiers.front()),
-          retrieveIntVarNode(1, 1, inputIdentifiers.back())};
-    } else if (shouldBeReplaced()) {
-      inputVarNodeIds = std::vector<VarNodeId>{
-          retrieveIntVarNode(0, 0, inputIdentifiers.front()),
-          retrieveIntVarNode(-2, 2, inputIdentifiers.back())};
-    } else {
-      inputVarNodeIds = std::vector<VarNodeId>{
-          retrieveIntVarNode(-2, 2, inputIdentifiers.front()),
-          retrieveIntVarNode(-2, 2, inputIdentifiers.back())};
+    for (size_t i = 0; i < 2; ++i) {
+      inputVars.emplace_back(Var{NULL_NODE_ID, "input_" + std::to_string(i)});
     }
-    outputVarNodeId = retrieveIntVarNode(0, 10, outputIdentifier);
+    if (shouldBeSubsumed()) {
+      inputVars.at(0).id = retrieveIntVarNode(1, 1, inputVars.at(0).identifier);
+      inputVars.at(1).id = retrieveIntVarNode(1, 1, inputVars.at(1).identifier);
+    } else if (shouldBeReplaced()) {
+      inputVars.at(0).id = retrieveIntVarNode(0, 0, inputVars.at(0).identifier);
+      inputVars.at(1).id =
+          retrieveIntVarNode(-2, 2, inputVars.at(1).identifier);
+    } else {
+      inputVars.at(0).id =
+          retrieveIntVarNode(-2, 2, inputVars.at(0).identifier);
+      inputVars.at(1).id =
+          retrieveIntVarNode(-2, 2, inputVars.at(1).identifier);
+    }
+    outputVar.id = retrieveIntVarNode(0, 10, outputVar.identifier);
 
-    createInvariantNode(*_invariantGraph, inputVarNodeIds.front(),
-                        inputVarNodeIds.back(), outputVarNodeId);
+    createInvariantNode(*_invariantGraph, inputVars.at(0).id,
+                        inputVars.at(1).id, outputVar.id);
   }
 };
 
@@ -112,13 +113,13 @@ TEST_P(IntPlusNodeTestFixture, updateState) {
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
+    EXPECT_TRUE(varNode(outputVar).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).lowerBound();
+    const Int actual = varNode(outputVar).lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_FALSE(varNode(outputVarNodeId).isFixed());
+    EXPECT_FALSE(varNode(outputVar).isFixed());
   }
 }
 
@@ -151,25 +152,24 @@ TEST_P(IntPlusNodeTestFixture, propagation) {
   }
 
   if (shouldBeReplaced()) {
-    EXPECT_FALSE(varNode(outputIdentifier).isFixed());
+    EXPECT_FALSE(varNode(outputVar).isFixed());
     const VarNodeId addantVarNodeId =
-        varNode(varNode(inputIdentifiers.front()).isFixed()
-                    ? inputIdentifiers.back()
-                    : inputIdentifiers.front())
+        varNode(varNode(inputVars.front()).isFixed() ? inputVars.back()
+                                                     : inputVars.front())
             .varNodeId();
-    EXPECT_EQ(varNode(outputIdentifier).varNodeId(), addantVarNodeId);
+    EXPECT_EQ(varNode(outputVar).varNodeId(), addantVarNodeId);
     return;
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& identifiers : inputIdentifiers) {
-    if (!varNode(identifiers).isFixed()) {
-      EXPECT_NE(varId(identifiers), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(identifiers));
+  for (const auto& var : inputVars) {
+    if (!varNode(var).isFixed()) {
+      EXPECT_NE(varId(var), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(var));
     }
   }
 
-  const propagation::VarViewId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputVar);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);

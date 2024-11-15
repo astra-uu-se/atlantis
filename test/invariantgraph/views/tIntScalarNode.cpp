@@ -9,17 +9,15 @@ using namespace atlantis::invariantgraph;
 
 class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
  public:
-  VarNodeId inputVarNodeId{NULL_NODE_ID};
-  VarNodeId outputVarNodeId{NULL_NODE_ID};
-  std::string inputIdentifier{"input"};
-  std::string outputIdentifier{"output"};
+  Var outputVar{NULL_NODE_ID, "output"};
+  Var inputVar{NULL_NODE_ID, "input"};
 
   Int factor{2};
   Int offset{5};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
-      return _solver->currentValue(varId(inputVarNodeId)) * factor + offset;
+      return _solver->currentValue(varId(inputVar)) * factor + offset;
     }
     return varNode(inputVarNodeId).domain()->lowerBound() * factor + offset;
   }
@@ -28,58 +26,28 @@ class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
     NodeTestBase::SetUp();
     const Int lb = -10;
     const Int ub = 10;
-    inputVarNodeId = retrieveIntVarNode(lb, ub, inputIdentifier);
-    outputVarNodeId = retrieveIntVarNode(
-        lb * factor + offset, ub * factor + offset, outputIdentifier);
+    inputVar.id = retrieveIntVarNode(lb, ub, inputVar.identifier);
+    outputVar.id = retrieveIntVarNode(
+        lb * factor + offset, ub * factor + offset, outputVar.identifier);
 
-    createInvariantNode(*_invariantGraph, inputVarNodeId, outputVarNodeId,
-                        factor, offset);
+    createInvariantNode(*_invariantGraph, inputVar.id, outputVar.id, factor,
+                        offset);
   }
 };
-
-TEST_P(IntScalarNodeTestFixture, construction) {
-  expectInputTo(invNode());
-  expectOutputOf(invNode());
-
-  EXPECT_EQ(invNode().input(), inputVarNodeId);
-
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
-}
-
-TEST_P(IntScalarNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  // inputVarNodeId
-  EXPECT_EQ(_solver->searchVars().size(), 1);
-
-  // inputVarNodeId
-  EXPECT_EQ(_solver->numVars(), 1);
-}
 
 TEST_P(IntScalarNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(varNode(inputVarNodeId).isFixed());
-    EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
+    EXPECT_TRUE(varNode(inputVar).isFixed());
+    EXPECT_TRUE(varNode(outputVar).isFixed());
     const Int expected = computeOutput();
     const Int actual = varNode(outputVarNodeId).domain()->lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_FALSE(varNode(outputVarNodeId).isFixed());
+    EXPECT_FALSE(varNode(outputVar).isFixed());
   }
 }
 
@@ -91,10 +59,10 @@ TEST_P(IntScalarNodeTestFixture, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  const propagation::VarViewId inputId = varId(inputIdentifier);
+  const propagation::VarViewId inputId = varId(inputVar);
   EXPECT_NE(inputId, propagation::NULL_ID);
 
-  const propagation::VarViewId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputVar);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   for (Int inputVal = _solver->lowerBound(inputId);

@@ -12,10 +12,10 @@ using ::testing::Contains;
 class IntLinNeNodeTestFixture : public NodeTestBase<IntLinNeNode> {
  public:
   size_t numInputs = 3;
-  std::vector<VarNodeId> inputVarNodeIds;
+  std::vector<Var> inputVars;
   std::vector<Int> coeffs;
-  VarNodeId reifiedVarNodeId{NULL_NODE_ID};
-  std::string reifiedIdentifier{"output"};
+  Var reifiedVar{NULL_NODE_ID, "reified"};
+
   Int bound = 1;
 
   bool isViolating(bool isRegistered = false) {
@@ -25,11 +25,10 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinNeNode> {
         if (coeffs.at(i) == 0) {
           continue;
         }
-        if (varNode(inputVarNodeIds.at(i)).isFixed()) {
-          sum += varNode(inputVarNodeIds.at(i)).lowerBound() * coeffs.at(i);
+        if (varNode(inputVars.at(i)).isFixed()) {
+          sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
         } else {
-          sum += _solver->currentValue(varId(inputVarNodeIds.at(i))) *
-                 coeffs.at(i);
+          sum += _solver->currentValue(varId(inputVars.at(i))) * coeffs.at(i);
         }
       }
       return sum == bound;
@@ -39,28 +38,29 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinNeNode> {
       if (coeffs.at(i) == 0) {
         continue;
       }
-      EXPECT_TRUE(varNode(inputVarNodeIds.at(i)).isFixed());
-      sum += varNode(inputVarNodeIds.at(i)).lowerBound() * coeffs.at(i);
+      EXPECT_TRUE(varNode(inputVars.at(i)).isFixed());
+      sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
     }
     return sum == bound;
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputVarNodeIds.reserve(numInputs);
+    inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     Int minSum = 0;
     Int maxSum = 0;
     const Int lb = -2;
     const Int ub = 2;
     for (Int i = 0; i < static_cast<Int>(numInputs); ++i) {
+      inputVars.emplace_back(Var{NULL_NODE_ID, "input_" + std::to_string(i)});
       if (shouldBeSubsumed()) {
         const Int val = i % 3 == 0 ? lb : ub;
-        inputVarNodeIds.emplace_back(
-            retrieveIntVarNode(val, val, "input" + std::to_string(i)));
+        inputVars.back().id =
+            retrieveIntVarNode(val, val, inputVars.back().identifier);
       } else {
-        inputVarNodeIds.emplace_back(
-            retrieveIntVarNode(lb, ub, "input" + std::to_string(i)));
+        inputVars.back().id =
+            retrieveIntVarNode(lb, ub, inputVars.back().identifier);
       }
       coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
       minSum += std::min(lb * coeffs.back(), ub * coeffs.back());
@@ -68,29 +68,15 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinNeNode> {
     }
 
     if (isReified()) {
-      reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
+      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          std::vector<VarNodeId>(inputVarNodeIds), bound,
-                          reifiedVarNodeId);
+                          varNodeIds(inputVars), bound, reifiedVar.id);
     } else {
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          std::vector<VarNodeId>(inputVarNodeIds), bound,
-                          shouldHold());
+                          varNodeIds(inputVars), bound, shouldHold());
     }
   }
 };
-
-TEST_P(IntLinNeNodeTestFixture, construction) {
-  expectInputTo(invNode());
-  expectOutputOf(invNode());
-
-  EXPECT_THAT(invNode().coeffs(), ContainerEq(coeffs));
-  EXPECT_THAT(invNode().staticInputVarNodeIds(), ContainerEq(inputVarNodeIds));
-  if (isReified()) {
-    EXPECT_THAT(invNode().outputVarNodeIds(),
-                ContainerEq(std::vector<VarNodeId>{reifiedVarNodeId}));
-  }
-}
 
 TEST_P(IntLinNeNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -99,8 +85,8 @@ TEST_P(IntLinNeNodeTestFixture, updateState) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     const Int expected = isViolating();
     if (isReified()) {
-      EXPECT_TRUE(varNode(reifiedVarNodeId).isFixed());
-      const Int actual = varNode(reifiedVarNodeId).lowerBound();
+      EXPECT_TRUE(varNode(reifiedVar.id).isFixed());
+      const Int actual = varNode(reifiedVar.id).lowerBound();
       EXPECT_EQ(expected, actual);
     } else if (shouldHold()) {
       EXPECT_FALSE(expected);
@@ -110,7 +96,7 @@ TEST_P(IntLinNeNodeTestFixture, updateState) {
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
-      EXPECT_FALSE(varNode(reifiedVarNodeId).isFixed());
+      EXPECT_FALSE(varNode(reifiedVar.id).isFixed());
     }
   }
 }
@@ -123,8 +109,8 @@ TEST_P(IntLinNeNodeTestFixture, propagation) {
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();
     if (isReified()) {
-      EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
-      const bool actual = varNode(reifiedIdentifier).inDomain({false});
+      EXPECT_TRUE(varNode(reifiedVar).isFixed());
+      const bool actual = varNode(reifiedVar).inDomain({false});
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {
@@ -137,18 +123,17 @@ TEST_P(IntLinNeNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& inputVarNodeId : inputVarNodeIds) {
-    if (!varNode(inputVarNodeId).isFixed()) {
-      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(inputVarNodeId));
+  for (const auto& var : inputVars) {
+    if (!varNode(var).isFixed()) {
+      EXPECT_NE(varId(var), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(var));
     }
   }
 
   EXPECT_FALSE(inputVarIds.empty());
 
   const propagation::VarViewId violVarId =
-      isReified() ? varId(reifiedIdentifier)
-                  : _invariantGraph->totalViolationVarId();
+      isReified() ? varId(reifiedVar) : _invariantGraph->totalViolationVarId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 

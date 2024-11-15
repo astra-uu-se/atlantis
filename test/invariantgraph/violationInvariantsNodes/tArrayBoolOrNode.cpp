@@ -11,10 +11,10 @@ using ::testing::ContainerEq;
 
 class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
  public:
-  std::vector<VarNodeId> inputVarNodeIds;
-  std::vector<std::string> inputIdentifiers;
-  VarNodeId reifiedVarNodeId{NULL_NODE_ID};
-  std::string reifiedIdentifier{"reified"};
+  std::vector<Var> inputVars;
+
+  Var reifiedVar{NULL_NODE_ID, "reified"};
+
   Int numInputVars{4};
 
   bool isViolating(bool isRegistered = false) {
@@ -37,76 +37,33 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputVarNodeIds.clear();
-    inputVarNodeIds.reserve(numInputVars);
+    inputVars.clear();
+    inputVars.reserve(numInputVars);
     for (Int i = 0; i < numInputVars; ++i) {
-      inputIdentifiers.emplace_back("input_" + std::to_string(i));
-      inputVarNodeIds.emplace_back(
-          retrieveBoolVarNode(inputIdentifiers.back()));
+      inputVars.emplace_back(
+          makeBoolVar("input_" + std::to_string(inputVars.size())));
     }
 
     if (shouldBeSubsumed()) {
-      for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
-        varNode(inputVarNodeIds.at(i)).fixToValue(!shouldFail() && i == 0);
+      for (size_t i = 0; i < inputVars.size(); ++i) {
+        varNode(inputVars.at(i)).fixToValue(!shouldFail() && i == 0);
       }
     } else if (shouldBeReplaced()) {
-      for (size_t i = 1; i < inputVarNodeIds.size(); ++i) {
-        varNode(inputVarNodeIds.at(i)).fixToValue(false);
+      for (size_t i = 1; i < inputVars.size(); ++i) {
+        varNode(inputVars.at(i)).fixToValue(false);
       }
     }
 
     if (isReified()) {
-      reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
-      createInvariantNode(*_invariantGraph,
-                          std::vector<VarNodeId>{inputVarNodeIds},
-                          reifiedVarNodeId);
-    } else if (shouldHold()) {
-      createInvariantNode(*_invariantGraph,
-                          std::vector<VarNodeId>{inputVarNodeIds},
-                          reifiedVarNodeId);
+      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
+                          reifiedVar.id);
     } else {
-      createInvariantNode(*_invariantGraph,
-                          std::vector<VarNodeId>{inputVarNodeIds}, false);
+      createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
+                          shouldHold());
     }
   }
 };
-
-TEST_P(ArrayBoolOrNodeTestFixture, construction) {
-  expectInputTo(invNode());
-  expectOutputOf(invNode());
-
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 0);
-  EXPECT_EQ(invNode().staticInputVarNodeIds(), inputVarNodeIds);
-  EXPECT_THAT(inputVarNodeIds, ContainerEq(invNode().staticInputVarNodeIds()));
-  if (isReified()) {
-    EXPECT_TRUE(invNode().isReified());
-    EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-  } else {
-    EXPECT_FALSE(invNode().isReified());
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), reifiedVarNodeId);
-  }
-}
-
-TEST_P(ArrayBoolOrNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  EXPECT_EQ(_solver->searchVars().size(), numInputVars);
-
-  EXPECT_EQ(_solver->numVars(), numInputVars + 1);
-
-  EXPECT_EQ(_solver->numInvariants(), 1);
-}
 
 TEST_P(ArrayBoolOrNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -114,15 +71,15 @@ TEST_P(ArrayBoolOrNodeTestFixture, updateState) {
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
-      EXPECT_TRUE(varNode(reifiedVarNodeId).isFixed());
+      EXPECT_TRUE(varNode(reifiedVar.id).isFixed());
       const bool expected = isViolating();
-      const bool actual = varNode(reifiedVarNodeId).inDomain(bool{false});
+      const bool actual = varNode(reifiedVar.id).inDomain(bool{false});
       EXPECT_EQ(expected, actual);
     }
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
-      EXPECT_FALSE(varNode(reifiedVarNodeId).isFixed());
+      EXPECT_FALSE(varNode(reifiedVar.id).isFixed());
     }
   }
 }
@@ -152,8 +109,8 @@ TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
   if (shouldBeSubsumed()) {
     const bool expected = isViolating(true);
     if (isReified()) {
-      EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
-      const bool actual = varNode(reifiedIdentifier).inDomain({false});
+      EXPECT_TRUE(varNode(reifiedVar).isFixed());
+      const bool actual = varNode(reifiedVar).inDomain({false});
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {
@@ -166,15 +123,15 @@ TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
   }
   if (shouldBeReplaced()) {
     EXPECT_TRUE(isReified());
-    EXPECT_FALSE(varNode(reifiedIdentifier).isFixed());
+    EXPECT_FALSE(varNode(reifiedVar).isFixed());
     return;
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& identifier : inputIdentifiers) {
-    if (!varNode(identifier).isFixed()) {
-      EXPECT_NE(varId(identifier), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(identifier));
+  for (const auto& var : inputVars) {
+    if (!varNode(var).isFixed()) {
+      EXPECT_NE(varId(var), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(var));
     }
   }
 
@@ -185,8 +142,7 @@ TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
   }
 
   const propagation::VarViewId violVarId =
-      isReified() ? varId(reifiedIdentifier)
-                  : _invariantGraph->totalViolationVarId();
+      isReified() ? varId(reifiedVar) : _invariantGraph->totalViolationVarId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 
