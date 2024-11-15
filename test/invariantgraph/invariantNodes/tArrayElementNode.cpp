@@ -7,9 +7,8 @@ using namespace atlantis::invariantgraph;
 
 class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
  public:
-  VarNodeId idxVarNodeId{NULL_NODE_ID};
-  VarNodeId outputVarNodeId{NULL_NODE_ID};
-  std::string outputIdentifier{"output"};
+  Var idxVar{NULL_NODE_ID, "idx"};
+  Var outputVar{NULL_NODE_ID, "output"};
 
   Int offsetIdx = 1;
 
@@ -27,43 +26,42 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
-      EXPECT_TRUE(varNode(idxVarNodeId).isFixed() ||
-                  varId(idxVarNodeId) != propagation::NULL_ID);
-      return parVal(
-          parArray.at((varNode(idxVarNodeId).isFixed()
-                           ? varNode(idxVarNodeId).lowerBound()
-                           : _solver->currentValue(varId(idxVarNodeId))) -
-                      offsetIdx));
+      EXPECT_TRUE(varNode(idxVar).isFixed() ||
+                  varId(idxVar) != propagation::NULL_ID);
+      return parVal(parArray.at((varNode(idxVar).isFixed()
+                                     ? varNode(idxVar).lowerBound()
+                                     : _solver->currentValue(varId(idxVar))) -
+                                offsetIdx));
     }
-    EXPECT_TRUE(varNode(idxVarNodeId).isFixed());
-    return parVal(parArray.at(varNode(idxVarNodeId).lowerBound() - offsetIdx));
+    EXPECT_TRUE(varNode(idxVar).isFixed());
+    return parVal(parArray.at(varNode(idxVar).lowerBound() - offsetIdx));
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
 
-    idxVarNodeId = retrieveIntVarNode(
+    idxVar.id = retrieveIntVarNode(
         offsetIdx,
         shouldBeSubsumed()
             ? offsetIdx
             : (offsetIdx + static_cast<Int>(parArray.size()) - 1),
-        "idx");
+        idxVar.identifier);
 
     if (isIntElement()) {
       // int version of element
-      outputVarNodeId = retrieveIntVarNode(-2, 1, outputIdentifier);
+      outputVar.id = retrieveIntVarNode(-2, 1, outputVar.identifier);
       createInvariantNode(*_invariantGraph, std::vector<Int>{parArray},
-                          idxVarNodeId, outputVarNodeId, offsetIdx);
+                          idxVar.id, outputVar.id, offsetIdx);
     } else {
       // bool version of element
-      outputVarNodeId = retrieveBoolVarNode(outputIdentifier);
+      outputVar.id = retrieveBoolVarNode(outputVar.identifier);
       std::vector<bool> boolArray(parArray.size());
       boolArray.reserve(parArray.size());
       for (size_t i = 0; i < parArray.size(); ++i) {
         boolArray.at(i) = intParToBool(parArray.at(i));
       }
-      createInvariantNode(*_invariantGraph, std::move(boolArray), idxVarNodeId,
-                          outputVarNodeId, offsetIdx);
+      createInvariantNode(*_invariantGraph, std::move(boolArray), idxVar.id,
+                          outputVar.id, offsetIdx);
     }
   }
 };
@@ -127,13 +125,13 @@ TEST_P(ArrayElementNodeTestFixture, updateState) {
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
+    EXPECT_TRUE(varNode(outputVar.id).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).lowerBound();
+    const Int actual = varNode(outputVar.id).lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_FALSE(varNode(outputVarNodeId).isFixed());
+    EXPECT_FALSE(varNode(outputVar.id).isFixed());
   }
 }
 
@@ -141,19 +139,19 @@ TEST_P(ArrayElementNodeTestFixture, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  VarNode& outputNode = varNode(outputIdentifier);
+  VarNode& outputNode = varNode(outputVar.identifier);
   if (outputNode.isFixed()) {
-    const Int actual = varNode(outputVarNodeId).lowerBound();
+    const Int actual = varNode(outputVar.id).lowerBound();
     const Int expected = computeOutput(true);
 
     EXPECT_EQ(expected, actual);
     return;
   }
 
-  const propagation::VarViewId inputVarId = varId(idxVarNodeId);
+  const propagation::VarViewId inputVarId = varId(idxVar.id);
   EXPECT_NE(inputVarId, propagation::NULL_ID);
 
-  const propagation::VarViewId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputVar.identifier);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   for (Int inputVal = _solver->lowerBound(inputVarId);

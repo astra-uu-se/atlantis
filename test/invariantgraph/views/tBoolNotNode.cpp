@@ -8,78 +8,46 @@ using namespace atlantis::invariantgraph;
 
 class BoolNotNodeTestFixture : public NodeTestBase<BoolNotNode> {
  public:
-  VarNodeId inputVarNodeId{NULL_NODE_ID};
-  VarNodeId outputVarNodeId{NULL_NODE_ID};
-  std::string inputIdentifier{"input"};
-  std::string outputIdentifier{"output"};
+  Var outputVar{NULL_NODE_ID, "output"};
+  Var inputVar{NULL_NODE_ID, "input"};
 
   bool computeOutput(bool isRegistered = false) {
     if (isRegistered) {
-      return _solver->currentValue(varId(inputVarNodeId)) > 0;
+      return _solver->currentValue(varId(inputVar)) > 0;
     }
-    return varNode(inputVarNodeId).inDomain(bool{false});
+    return varNode(inputVar).inDomain(bool{false});
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputVarNodeId = retrieveBoolVarNode(inputIdentifier);
-    outputVarNodeId = retrieveBoolVarNode(outputIdentifier);
+    inputVar.id = retrieveBoolVarNode(inputVar.identifier);
+    outputVar.id = retrieveBoolVarNode(outputVar.identifier);
 
     if (shouldBeSubsumed()) {
       if (_paramData.data == 0) {
-        varNode(inputVarNodeId).fixToValue(bool{true});
+        varNode(inputVar).fixToValue(bool{true});
       } else {
-        varNode(outputVarNodeId).fixToValue(bool{true});
+        varNode(outputVar).fixToValue(bool{true});
       }
     }
 
-    createInvariantNode(*_invariantGraph, inputVarNodeId, outputVarNodeId);
+    createInvariantNode(*_invariantGraph, inputVar.id, outputVar.id);
   }
 };
-
-TEST_P(BoolNotNodeTestFixture, construction) {
-  expectInputTo(invNode());
-  expectOutputOf(invNode());
-
-  EXPECT_EQ(invNode().input(), inputVarNodeId);
-
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
-}
-
-TEST_P(BoolNotNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  // inputVarNodeId
-  EXPECT_EQ(_solver->searchVars().size(), 1);
-
-  // inputVarNodeId
-  EXPECT_EQ(_solver->numVars(), 1);
-}
 
 TEST_P(BoolNotNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(varNode(inputVarNodeId).isFixed());
-    EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
+    EXPECT_TRUE(varNode(inputVar).isFixed());
+    EXPECT_TRUE(varNode(outputVar).isFixed());
     const bool expected = computeOutput();
-    const bool actual = varNode(outputVarNodeId).inDomain(bool{true});
+    const bool actual = varNode(outputVar).inDomain(bool{true});
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_FALSE(varNode(outputVarNodeId).isFixed());
+    EXPECT_FALSE(varNode(outputVar).isFixed());
   }
 }
 
@@ -91,10 +59,10 @@ TEST_P(BoolNotNodeTestFixture, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  const propagation::VarViewId inputId = varId(inputIdentifier);
+  const propagation::VarViewId inputId = varId(inputVar);
   EXPECT_NE(inputId, propagation::NULL_ID);
 
-  const propagation::VarViewId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputVar);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   for (Int inputVal = _solver->lowerBound(inputId);

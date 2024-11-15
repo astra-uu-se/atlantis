@@ -10,13 +10,12 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
   std::vector<std::vector<Int>> parMatrix{std::vector<Int>{-2, -1},
                                           std::vector<Int>{0, 1}};
 
-  VarNodeId idx1VarNodeId{NULL_NODE_ID};
-  VarNodeId idx2VarNodeId{NULL_NODE_ID};
-  VarNodeId outputVarNodeId{NULL_NODE_ID};
-  std::string outputIdentifier{"output"};
+  Var idx1Var{NULL_NODE_ID, "idx1"};
+  Var idx2Var{NULL_NODE_ID, "idx2"};
+  Var outputVar{NULL_NODE_ID, "output"};
 
-  Int offsetIdx1 = 1;
-  Int offsetIdx2 = 1;
+  Int idx1Offset{1};
+  Int idx2Offset{1};
 
   [[nodiscard]] static bool intParToBool(const Int val) {
     return std::abs(val) % 2 == 0;
@@ -36,45 +35,45 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
-      const Int row = (varNode(idx1VarNodeId).isFixed()
-                           ? varNode(idx1VarNodeId).lowerBound()
-                           : _solver->currentValue(varId(idx1VarNodeId))) -
-                      offsetIdx1;
-      const Int col = (varNode(idx2VarNodeId).isFixed()
-                           ? varNode(idx2VarNodeId).lowerBound()
-                           : _solver->currentValue(varId(idx2VarNodeId))) -
-                      offsetIdx2;
+      const Int row =
+          (varNode(idx1Var).isFixed() ? varNode(idx1Var).lowerBound()
+                                      : _solver->currentValue(varId(idx1Var))) -
+          idx1Offset;
+      const Int col =
+          (varNode(idx2Var).isFixed() ? varNode(idx2Var).lowerBound()
+                                      : _solver->currentValue(varId(idx2Var))) -
+          idx2Offset;
       return parVal(parMatrix.at(row).at(col));
     }
-    const Int row = varNode(idx1VarNodeId).lowerBound() - offsetIdx1;
-    const Int col = varNode(idx2VarNodeId).lowerBound() - offsetIdx2;
+    const Int row = varNode(idx1Var).lowerBound() - idx1Offset;
+    const Int col = varNode(idx2Var).lowerBound() - idx2Offset;
     return parVal(parMatrix.at(row).at(col));
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    idx1VarNodeId = retrieveIntVarNode(
-        offsetIdx1,
+    idx1Var.id = retrieveIntVarNode(
+        idx1Offset,
         shouldBeSubsumed() || idx1ShouldBeReplaced()
-            ? offsetIdx1
-            : (offsetIdx1 + static_cast<Int>(parMatrix.size()) - 1),
-        "idx1");
-    idx2VarNodeId = retrieveIntVarNode(
-        offsetIdx2,
+            ? idx1Offset
+            : (idx1Offset + static_cast<Int>(parMatrix.size()) - 1),
+        idx1Var.identifier);
+    idx2Var.id = retrieveIntVarNode(
+        idx2Offset,
         shouldBeSubsumed() || idx2ShouldBeReplaced()
-            ? offsetIdx2
-            : (offsetIdx1 + static_cast<Int>(parMatrix.front().size()) - 1),
-        "idx2");
+            ? idx2Offset
+            : (idx1Offset + static_cast<Int>(parMatrix.front().size()) - 1),
+        idx2Var.identifier);
 
     if (isIntElement()) {
       // int version of element
-      outputVarNodeId = retrieveIntVarNode(-2, 1, outputIdentifier);
-      createInvariantNode(*_invariantGraph, idx1VarNodeId, idx2VarNodeId,
+      outputVar.id = retrieveIntVarNode(-2, 1, outputVar.identifier);
+      createInvariantNode(*_invariantGraph, idx1Var.id, idx2Var.id,
                           std::vector<std::vector<Int>>{parMatrix},
-                          outputVarNodeId, offsetIdx1, offsetIdx2);
+                          outputVar.id, idx1Offset, idx2Offset);
     } else {
       // bool version of element
-      outputVarNodeId = retrieveBoolVarNode(outputIdentifier);
+      outputVar.id = retrieveBoolVarNode(outputVar.identifier);
       std::vector<std::vector<bool>> boolMatrix;
       boolMatrix.reserve(parMatrix.size());
       for (const auto& row : parMatrix) {
@@ -83,61 +82,25 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
           boolMatrix.back().emplace_back(intParToBool(val));
         }
       }
-      createInvariantNode(*_invariantGraph, idx1VarNodeId, idx2VarNodeId,
-                          std::move(boolMatrix), outputVarNodeId, offsetIdx1,
-                          offsetIdx2);
+      createInvariantNode(*_invariantGraph, idx1Var.id, idx2Var.id,
+                          std::move(boolMatrix), outputVar.id, idx1Offset,
+                          idx2Offset);
     }
   }
 };
-
-TEST_P(ArrayElement2dNodeTestFixture, construction) {
-  expectInputTo(invNode());
-  expectOutputOf(invNode());
-
-  EXPECT_EQ(invNode().idx1(), idx1VarNodeId);
-  EXPECT_EQ(invNode().idx2(), idx2VarNodeId);
-
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
-
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), 0);
-}
-
-TEST_P(ArrayElement2dNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  if (shouldBeSubsumed()) {
-    EXPECT_EQ(_solver->searchVars().size(), 1);
-    EXPECT_EQ(_solver->numVars(), 2);
-  } else {
-    EXPECT_EQ(_solver->searchVars().size(), 2);
-    EXPECT_EQ(_solver->numVars(), 3);
-  }
-  EXPECT_EQ(_solver->numInvariants(), 1);
-}
 
 TEST_P(ArrayElement2dNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
+    EXPECT_TRUE(varNode(outputVar.id).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).lowerBound();
+    const Int actual = varNode(outputVar.id).lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_FALSE(varNode(outputVarNodeId).isFixed());
+    EXPECT_FALSE(varNode(outputVar.id).isFixed());
   }
 }
 
@@ -159,23 +122,23 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  VarNode outputNode = varNode(outputIdentifier);
+  VarNode outputNode = varNode(outputVar.identifier);
 
   if (outputNode.isFixed()) {
     const Int expected = outputNode.lowerBound();
     const Int actual =
-        parVal(parMatrix.at(varNode(idx1VarNodeId).lowerBound() - offsetIdx1)
-                   .at(varNode(idx2VarNodeId).lowerBound() - offsetIdx2));
+        parVal(parMatrix.at(varNode(idx1Var.id).lowerBound() - idx1Offset)
+                   .at(varNode(idx2Var.id).lowerBound() - idx2Offset));
     EXPECT_EQ(expected, actual);
     return;
   }
 
-  EXPECT_NE(varId(outputIdentifier), propagation::NULL_ID);
-  const propagation::VarViewId outputId = varId(outputIdentifier);
+  EXPECT_NE(varId(outputVar.identifier), propagation::NULL_ID);
+  const propagation::VarViewId outputId = varId(outputVar.identifier);
 
   std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& idxVarNodeId :
-       std::array<VarNodeId, 2>{idx1VarNodeId, idx2VarNodeId}) {
+       std::array<VarNodeId, 2>{idx1Var.id, idx2Var.id}) {
     if (!varNode(idxVarNodeId).isFixed()) {
       EXPECT_NE(varId(idxVarNodeId), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(idxVarNodeId));

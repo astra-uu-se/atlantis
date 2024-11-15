@@ -15,15 +15,14 @@ using ::testing::ContainerEq;
 class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
  public:
   Int numInputs = 4;
-  std::vector<VarNodeId> inputVarNodeIds;
-  std::vector<std::string> inputIdentifiers;
+  std::vector<Var> inputVars;
 
   bool isViolating(bool) {
     std::vector<Int> values(numInputs, -1);
-    for (size_t i = 0; i < inputIdentifiers.size(); i++) {
-      values.at(i) = varNode(inputIdentifiers.at(i)).isFixed()
-                         ? varNode(inputIdentifiers.at(i)).lowerBound()
-                         : _solver->currentValue(varId(inputIdentifiers.at(i)));
+    for (size_t i = 0; i < inputVars.size(); i++) {
+      values.at(i) = varNode(inputVars.at(i)).isFixed()
+                         ? varNode(inputVars.at(i)).lowerBound()
+                         : _solver->currentValue(varId(inputVars.at(i)));
     }
     std::vector<bool> visited(numInputs, false);
     Int curNode = 1;
@@ -46,13 +45,12 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
           domain.emplace_back(j + 1);
         }
       }
-      inputIdentifiers.emplace_back("input_" + std::to_string(i));
-      inputVarNodeIds.emplace_back(
-          retrieveIntVarNode(std::move(domain), inputIdentifiers.back()));
+      inputVars.emplace_back(
+          makeIntVar(std::move(domain), "input_" + std::to_string(i)));
     }
     if (shouldBeReplaced()) {
-      for (const auto& inputVarNodeId : inputVarNodeIds) {
-        _invariantGraph->root().addSearchVarNode(inputVarNodeId);
+      for (const auto& var : inputVars) {
+        _invariantGraph->root().addSearchVarNode(var.id);
       }
     }
     createInvariantNode(*_invariantGraph,
@@ -85,14 +83,14 @@ TEST_P(CircuitNodeTestFixture, propagation) {
   _invariantGraph->construct();
   for (Int i = 0; i < numInputs; i++) {
     const Int val = 1 + ((i + 1) % numInputs);
-    _solver->setValue(varId(inputIdentifiers.at(i)), val);
+    _solver->setValue(varId(inputVars.at(i)), val);
   }
   _invariantGraph->close();
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& inputVarNodeId : inputVarNodeIds) {
-    EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-    inputVarIds.emplace_back(varId(inputVarNodeId));
+  for (const auto& var : inputVars) {
+    EXPECT_NE(varId(var), propagation::NULL_ID);
+    inputVarIds.emplace_back(varId(var));
   }
 
   const propagation::VarViewId violVarId =

@@ -13,18 +13,17 @@ using ::testing::ContainerEq;
 class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
  public:
   Int numInputs{4};
-  std::vector<VarNodeId> inputVarNodeIds;
-  std::vector<std::string> inputIdentifiers;
-  VarNodeId reifiedVarNodeId{NULL_NODE_ID};
-  std::string reifiedIdentifier{"reified"};
+  std::vector<Var> inputVars;
+
+  Var reifiedVar{NULL_NODE_ID, "reified"};
 
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
       bool allSameVarNodeId = true;
-      for (size_t i = 0; i < inputIdentifiers.size(); ++i) {
-        for (size_t j = i + 1; j < inputIdentifiers.size(); ++j) {
-          if (varNode(inputIdentifiers.at(i)).varNodeId() !=
-              varNode(inputIdentifiers.at(j)).varNodeId()) {
+      for (size_t i = 0; i < inputVars.size(); ++i) {
+        for (size_t j = i + 1; j < inputVars.size(); ++j) {
+          if (varNode(inputVars.at(i)).varNodeId() !=
+              varNode(inputVars.at(j)).varNodeId()) {
             allSameVarNodeId = false;
             break;
           }
@@ -36,16 +35,16 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
       if (allSameVarNodeId) {
         return false;
       }
-      for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
+      for (size_t i = 0; i < inputVars.size(); ++i) {
         const bool iVal =
-            varNode(inputVarNodeIds.at(i)).isFixed()
-                ? varNode(inputVarNodeIds.at(i)).inDomain(bool{true})
-                : _solver->currentValue(varId(inputVarNodeIds.at(i))) == 0;
-        for (size_t j = i + 1; j < inputVarNodeIds.size(); ++j) {
+            varNode(inputVars.at(i)).isFixed()
+                ? varNode(inputVars.at(i)).inDomain(bool{true})
+                : _solver->currentValue(varId(inputVars.at(i))) == 0;
+        for (size_t j = i + 1; j < inputVars.size(); ++j) {
           const bool jVal =
-              varNode(inputVarNodeIds.at(j)).isFixed()
-                  ? varNode(inputVarNodeIds.at(j)).inDomain(bool{true})
-                  : _solver->currentValue(varId(inputVarNodeIds.at(j))) == 0;
+              varNode(inputVars.at(j)).isFixed()
+                  ? varNode(inputVars.at(j)).inDomain(bool{true})
+                  : _solver->currentValue(varId(inputVars.at(j))) == 0;
           if (iVal != jVal) {
             return true;
           }
@@ -54,10 +53,10 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
       return false;
     }
     bool allSameVarNodeId = true;
-    for (size_t i = 0; i < inputIdentifiers.size(); ++i) {
-      for (size_t j = i + 1; j < inputIdentifiers.size(); ++j) {
-        if (varNode(inputIdentifiers.at(i)).varNodeId() !=
-            varNode(inputIdentifiers.at(j)).varNodeId()) {
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      for (size_t j = i + 1; j < inputVars.size(); ++j) {
+        if (varNode(inputVars.at(i)).varNodeId() !=
+            varNode(inputVars.at(j)).varNodeId()) {
           allSameVarNodeId = false;
           break;
         }
@@ -69,10 +68,10 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
     if (allSameVarNodeId) {
       return false;
     }
-    for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
-      for (size_t j = i + 1; j < inputVarNodeIds.size(); ++j) {
-        if (varNode(inputVarNodeIds.at(i)).inDomain(bool{true}) !=
-            varNode(inputVarNodeIds.at(j)).inDomain(bool{true})) {
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      for (size_t j = i + 1; j < inputVars.size(); ++j) {
+        if (varNode(inputVars.at(i)).inDomain(bool{true}) !=
+            varNode(inputVars.at(j)).inDomain(bool{true})) {
           return true;
         }
       }
@@ -85,31 +84,24 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
     numInputs = !shouldBeReplaced() || shouldHold() ? 4 : 2;
 
     for (Int i = 0; i < numInputs; ++i) {
-      inputIdentifiers.emplace_back("input_" + std::to_string(i));
-      inputVarNodeIds.emplace_back(
-          retrieveBoolVarNode(inputIdentifiers.back()));
+      inputVars.emplace_back(
+          makeBoolVar("input_" + std::to_string(inputVars.size())));
       if (shouldBeSubsumed()) {
         const bool val = shouldHold() || i == 0;
-        varNode(inputIdentifiers.back()).fixToValue(val);
+        varNode(inputVars.back()).fixToValue(val);
       }
     }
     if (!shouldBeMadeImplicit()) {
-      for (const auto& inputVarNodeId : inputVarNodeIds) {
-        _invariantGraph->root().addSearchVarNode(inputVarNodeId);
+      for (const auto& var : inputVars) {
+        _invariantGraph->root().addSearchVarNode(var.id);
       }
     }
     if (isReified()) {
-      reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
-      createInvariantNode(*_invariantGraph,
-                          std::vector<VarNodeId>{inputVarNodeIds},
-                          reifiedVarNodeId, !shouldBeReplaced());
-    } else if (shouldHold()) {
-      createInvariantNode(*_invariantGraph,
-                          std::vector<VarNodeId>{inputVarNodeIds}, true,
-                          !shouldBeReplaced());
+      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
+                          reifiedVar.id, !shouldBeReplaced());
     } else {
-      createInvariantNode(*_invariantGraph,
-                          std::vector<VarNodeId>{inputVarNodeIds}, false,
+      createInvariantNode(*_invariantGraph, varNodeIds(inputVars), shouldHold(),
                           !shouldBeReplaced());
     }
   }
@@ -163,15 +155,15 @@ TEST_P(BoolAllEqualNodeTestFixture, updateState) {
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
-      EXPECT_TRUE(varNode(reifiedVarNodeId).isFixed());
+      EXPECT_TRUE(varNode(reifiedVar.id).isFixed());
       const bool expected = isViolating();
-      const bool actual = varNode(reifiedVarNodeId).inDomain(bool{false});
+      const bool actual = varNode(reifiedVar.id).inDomain(bool{false});
       EXPECT_EQ(expected, actual);
     }
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
-      EXPECT_FALSE(varNode(reifiedVarNodeId).isFixed());
+      EXPECT_FALSE(varNode(reifiedVar.id).isFixed());
     }
   }
 }
@@ -201,8 +193,8 @@ TEST_P(BoolAllEqualNodeTestFixture, propagation) {
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();
     if (isReified()) {
-      EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
-      const bool actual = varNode(reifiedIdentifier).inDomain({false});
+      EXPECT_TRUE(varNode(reifiedVar).isFixed());
+      const bool actual = varNode(reifiedVar).inDomain({false});
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {
@@ -215,9 +207,9 @@ TEST_P(BoolAllEqualNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& inputIdentifier : inputIdentifiers) {
-    if (!varNode(inputIdentifier).isFixed()) {
-      const propagation::VarViewId inputVarId = varId(inputIdentifier);
+  for (const auto& var : inputVars) {
+    if (!varNode(var).isFixed()) {
+      const propagation::VarViewId inputVarId = varId(var);
       EXPECT_NE(inputVarId, propagation::NULL_ID);
       const bool inVec =
           std::ranges::any_of(inputVarIds.begin(), inputVarIds.end(),
@@ -231,8 +223,7 @@ TEST_P(BoolAllEqualNodeTestFixture, propagation) {
   }
 
   const propagation::VarViewId violVarId =
-      isReified() ? varId(reifiedIdentifier)
-                  : _invariantGraph->totalViolationVarId();
+      isReified() ? varId(reifiedVar) : _invariantGraph->totalViolationVarId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 

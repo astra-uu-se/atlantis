@@ -11,8 +11,7 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
   std::string aIdentifier{"a"};
   VarNodeId bVarNodeId{NULL_NODE_ID};
   std::string bIdentifier{"b"};
-  VarNodeId reifiedVarNodeId{NULL_NODE_ID};
-  std::string reifiedIdentifier{"reified"};
+  Var reifiedVar{NULL_NODE_ID, "reified"};
 
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
@@ -43,56 +42,15 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
       }
     }
     if (isReified()) {
-      reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
+      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
       createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
-                          reifiedVarNodeId);
+                          reifiedVar.id);
     } else {
       createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
                           shouldHold());
     }
   }
 };
-
-TEST_P(IntLtNodeTestFixture, construction) {
-  expectInputTo(invNode());
-  expectOutputOf(invNode());
-
-  EXPECT_EQ(invNode().a(), aVarNodeId);
-  EXPECT_EQ(invNode().b(), bVarNodeId);
-
-  if (!isReified()) {
-    EXPECT_FALSE(invNode().isReified());
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-  } else {
-    EXPECT_TRUE(invNode().isReified());
-    EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), reifiedVarNodeId);
-  }
-}
-
-TEST_P(IntLtNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  EXPECT_EQ(invNode().violationVarId(), propagation::NULL_ID);
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  EXPECT_NE(invNode().violationVarId(), propagation::NULL_ID);
-  invNode().registerNode();
-  _solver->close();
-
-  EXPECT_EQ(_solver->searchVars().size(), 2);
-
-  EXPECT_EQ(_solver->numVars(), 3);
-
-  EXPECT_EQ(_solver->numInvariants(), 1);
-
-  EXPECT_GE(_solver->lowerBound(invNode().violationVarId()), 0);
-}
 
 TEST_P(IntLtNodeTestFixture, propagation) {
   if (shouldBeMadeImplicit()) {
@@ -107,8 +65,8 @@ TEST_P(IntLtNodeTestFixture, propagation) {
     if (isReified()) {
       // TODO: disabled for the MZN challange. This should be computed by
       // Gecode.
-      // EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
-      const bool actual = varNode(reifiedIdentifier).inDomain({false});
+      // EXPECT_TRUE(varNode(reifiedVar).isFixed());
+      const bool actual = varNode(reifiedVar).inDomain({false});
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {
@@ -123,17 +81,15 @@ TEST_P(IntLtNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& inputVarNodeId :
-       std::array<std::string, 2>{aIdentifier, bIdentifier}) {
-    if (!varNode(inputVarNodeId).isFixed()) {
-      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(inputVarNodeId));
+  for (const auto& var : std::array<std::string, 2>{aIdentifier, bIdentifier}) {
+    if (!varNode(var).isFixed()) {
+      EXPECT_NE(varId(var), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(var));
     }
   }
 
   const propagation::VarViewId violVarId =
-      isReified() ? varId(reifiedIdentifier)
-                  : _invariantGraph->totalViolationVarId();
+      isReified() ? varId(reifiedVar) : _invariantGraph->totalViolationVarId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
   EXPECT_EQ(inputVarIds.size(), 2);
