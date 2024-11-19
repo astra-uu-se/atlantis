@@ -8,8 +8,8 @@ using ::testing::Contains;
 
 class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
  public:
-  std::vector<Var> inputVars;
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::vector<std::string> inputVars;
+  std::string outputVar{"output"};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
@@ -31,28 +31,24 @@ class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
     return sum;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     for (size_t i = 0; i < 2; ++i) {
-      inputVars.emplace_back(Var{NULL_NODE_ID, "input_" + std::to_string(i)});
+      inputVars.emplace_back("input_" + std::to_string(i));
     }
     if (shouldBeSubsumed()) {
-      inputVars.at(0).id = retrieveIntVarNode(1, 1, inputVars.at(0).identifier);
-      inputVars.at(1).id = retrieveIntVarNode(1, 1, inputVars.at(1).identifier);
+      retrieveIntVarNode(1, 1, inputVars.at(0));
+      retrieveIntVarNode(1, 1, inputVars.at(1));
     } else if (shouldBeReplaced()) {
-      inputVars.at(0).id = retrieveIntVarNode(0, 0, inputVars.at(0).identifier);
-      inputVars.at(1).id =
-          retrieveIntVarNode(-2, 2, inputVars.at(1).identifier);
+      retrieveIntVarNode(0, 0, inputVars.at(0));
+      retrieveIntVarNode(-2, 2, inputVars.at(1));
     } else {
-      inputVars.at(0).id =
-          retrieveIntVarNode(-2, 2, inputVars.at(0).identifier);
-      inputVars.at(1).id =
-          retrieveIntVarNode(-2, 2, inputVars.at(1).identifier);
+      retrieveIntVarNode(-2, 2, inputVars.at(0));
+      retrieveIntVarNode(-2, 2, inputVars.at(1));
     }
-    outputVar.id = retrieveIntVarNode(0, 10, outputVar.identifier);
+    retrieveIntVarNode(0, 10, outputVar);
 
-    createInvariantNode(*_invariantGraph, inputVars.at(0).id,
-                        inputVars.at(1).id, outputVar.id);
+    createInvariantNode(*_invariantGraph, varNodeId(inputVars.at(0)),
+                        varNodeId(inputVars.at(1)), varNodeId(outputVar));
   }
 };
 
@@ -109,6 +105,7 @@ TEST_P(IntPlusNodeTestFixture, application) {
 }
 
 TEST_P(IntPlusNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -124,6 +121,7 @@ TEST_P(IntPlusNodeTestFixture, updateState) {
 }
 
 TEST_P(IntPlusNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -138,6 +136,7 @@ TEST_P(IntPlusNodeTestFixture, replace) {
 }
 
 TEST_P(IntPlusNodeTestFixture, propagation) {
+  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

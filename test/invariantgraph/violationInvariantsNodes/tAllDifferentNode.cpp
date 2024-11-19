@@ -16,8 +16,8 @@ using ::testing::ContainerEq;
 class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
  public:
   Int numInputs = 4;
-  std::vector<Var> inputVars;
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::vector<std::string> inputVars;
+  std::string reifiedVar{"reified"};
 
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
@@ -51,25 +51,24 @@ class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
     return false;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
-
+  void generate() {
     for (Int i = 0; i < numInputs - 1; ++i) {
+      inputVars.emplace_back("input_" + std::to_string(i));
       if (shouldBeSubsumed()) {
-        inputVars.emplace_back(makeIntVar(i, i, "input_" + std::to_string(i)));
+        retrieveIntVarNode(i, i, inputVars.back());
       } else {
-        inputVars.emplace_back(makeIntVar(-2, 2, "input_" + std::to_string(i)));
+        retrieveIntVarNode(-2, 2, inputVars.back());
       }
     }
     if (!shouldBeMadeImplicit()) {
       for (const auto& var : inputVars) {
-        _invariantGraph->root().addSearchVarNode(var.id);
+        _invariantGraph->root().addSearchVarNode(varNodeId(var));
       }
     }
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          reifiedVar.id);
+                          varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           shouldHold());
@@ -124,6 +123,7 @@ TEST_P(AllDifferentNodeTestFixture, application) {
 }
 
 TEST_P(AllDifferentNodeTestFixture, makeImplicit) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeMadeImplicit()) {
@@ -136,6 +136,7 @@ TEST_P(AllDifferentNodeTestFixture, makeImplicit) {
 }
 
 TEST_P(AllDifferentNodeTestFixture, propagation) {
+  generate();
   if (shouldBeMadeImplicit()) {
     return;
   }

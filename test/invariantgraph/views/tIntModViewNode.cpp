@@ -9,8 +9,8 @@ using namespace atlantis::invariantgraph;
 
 class IntModViewNodeTestFixture : public NodeTestBase<IntModViewNode> {
  public:
-  Var outputVar{NULL_NODE_ID, "output"};
-  Var inputVar{NULL_NODE_ID, "input"};
+  std::string outputVar{"output"};
+  std::string inputVar{"input"};
 
   Int denominator{5};
 
@@ -22,19 +22,19 @@ class IntModViewNodeTestFixture : public NodeTestBase<IntModViewNode> {
            std::abs(denominator);
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     const Int lb = shouldBeSubsumed() ? 5 : -10;
     const Int ub = shouldBeSubsumed() ? 5 : 10;
-    inputVar.id = retrieveIntVarNode(lb, ub, inputVar.identifier);
-    outputVar.id = retrieveIntVarNode(0, 5, outputVar.identifier);
+    retrieveIntVarNode(lb, ub, inputVar);
+    retrieveIntVarNode(0, 5, outputVar);
 
-    createInvariantNode(*_invariantGraph, inputVar.id, outputVar.id,
-                        denominator);
+    createInvariantNode(*_invariantGraph, varNodeId(inputVar),
+                        varNodeId(outputVar), denominator);
   }
 };
 
 TEST_P(IntModViewNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -51,6 +51,7 @@ TEST_P(IntModViewNodeTestFixture, updateState) {
 }
 
 TEST_P(IntModViewNodeTestFixture, propagation) {
+  generate();
   if (shouldBeSubsumed()) {
     return;
   }

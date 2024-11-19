@@ -12,9 +12,9 @@ using ::testing::Contains;
 class BoolLinLeNodeTestFixture : public NodeTestBase<BoolLinLeNode> {
  public:
   size_t numInputs = 3;
-  std::vector<Var> inputVars;
+  std::vector<std::string> inputVars;
   std::vector<Int> coeffs;
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::string reifiedVar{"reified"};
   Int bound = 0;
 
   bool isViolating(bool isRegistered = false) {
@@ -46,12 +46,12 @@ class BoolLinLeNodeTestFixture : public NodeTestBase<BoolLinLeNode> {
     return sum > bound;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     for (Int i = 0; i < static_cast<Int>(numInputs); ++i) {
-      inputVars.emplace_back(makeBoolVar("input_" + std::to_string(i)));
+      inputVars.emplace_back("input_" + std::to_string(i));
+      retrieveBoolVarNode(inputVars.back());
       if (shouldBeSubsumed()) {
         varNode(inputVars.back()).fixToValue(bool{i % 3 == 0});
       }
@@ -59,9 +59,9 @@ class BoolLinLeNodeTestFixture : public NodeTestBase<BoolLinLeNode> {
     }
 
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          varNodeIds(inputVars), bound, reifiedVar.id);
+                          varNodeIds(inputVars), bound, varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                           varNodeIds(inputVars), bound, shouldHold());
@@ -70,6 +70,7 @@ class BoolLinLeNodeTestFixture : public NodeTestBase<BoolLinLeNode> {
 };
 
 TEST_P(BoolLinLeNodeTestFixture, propagation) {
+  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

@@ -7,9 +7,9 @@ using namespace atlantis::invariantgraph;
 
 class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
  public:
-  Var numeratorVar{NULL_NODE_ID, "numerator"};
-  Var denominatorVar{NULL_NODE_ID, "denominator"};
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::string numeratorVar{"numerator"};
+  std::string denominatorVar{"denominator"};
+  std::string outputVar{"output"};
 
   Int denominatorVal(bool isRegistered = false) {
     if (isRegistered) {
@@ -33,22 +33,22 @@ class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
     return denominator != 0 ? numerator / denominator : 0;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
-    numeratorVar.id = retrieveIntVarNode(-2, 2, numeratorVar.identifier);
+  void generate() {
+    retrieveIntVarNode(-2, 2, numeratorVar);
     if (shouldBeReplaced()) {
-      denominatorVar.id = retrieveIntVarNode(1, 1, denominatorVar.identifier);
+      retrieveIntVarNode(1, 1, denominatorVar);
     } else {
-      denominatorVar.id = retrieveIntVarNode(-2, 2, denominatorVar.identifier);
+      retrieveIntVarNode(-2, 2, denominatorVar);
     }
-    outputVar.id = retrieveIntVarNode(-2, 2, outputVar.identifier);
+    retrieveIntVarNode(-2, 2, outputVar);
 
-    createInvariantNode(*_invariantGraph, numeratorVar.id, denominatorVar.id,
-                        outputVar.id);
+    createInvariantNode(*_invariantGraph, varNodeId(numeratorVar),
+                        varNodeId(denominatorVar), varNodeId(outputVar));
   }
 };
 
 TEST_P(IntDivNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -63,6 +63,7 @@ TEST_P(IntDivNodeTestFixture, replace) {
 }
 
 TEST_P(IntDivNodeTestFixture, propagation) {
+  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();
@@ -74,7 +75,8 @@ TEST_P(IntDivNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : std::array<Var, 2>{numeratorVar, denominatorVar}) {
+  for (const auto& var :
+       std::array<std::string, 2>{numeratorVar, denominatorVar}) {
     if (!varNode(var).isFixed()) {
       EXPECT_NE(varId(var), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));

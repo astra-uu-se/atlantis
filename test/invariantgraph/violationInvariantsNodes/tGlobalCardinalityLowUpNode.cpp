@@ -12,11 +12,11 @@ using ::testing::ContainerEq;
 class GlobalCardinalityLowUpNodeTestFixture
     : public NodeTestBase<GlobalCardinalityLowUpNode> {
  public:
-  std::vector<Var> inputVars;
+  std::vector<std::string> inputVars;
   const std::vector<Int> cover{2, 6};
   const std::vector<Int> low{0, 1};
   const std::vector<Int> up{1, 2};
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::string reifiedVar{"reified"};
 
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
@@ -57,18 +57,17 @@ class GlobalCardinalityLowUpNodeTestFixture
     return false;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
-    inputVars.emplace_back(
-        makeIntVar(5, 10, "x_" + std::to_string(inputVars.size())));
-    inputVars.emplace_back(
-        makeIntVar(2, 7, "x_" + std::to_string(inputVars.size())));
+  void generate() {
+    inputVars = {"x_0", "x_1"};
+    retrieveIntVarNode(5, 10, inputVars.at(0));
+
+    retrieveIntVarNode(2, 7, inputVars.at(1));
 
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           std::vector<Int>{cover}, std::vector<Int>{low},
-                          std::vector<Int>{up}, reifiedVar.id);
+                          std::vector<Int>{up}, varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           std::vector<Int>{cover}, std::vector<Int>{low},
@@ -78,6 +77,7 @@ class GlobalCardinalityLowUpNodeTestFixture
 };
 
 TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
+  generate();
   if (shouldBeMadeImplicit()) {
     return;
   }

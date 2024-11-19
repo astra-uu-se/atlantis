@@ -7,8 +7,8 @@ using namespace atlantis::invariantgraph;
 
 class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
  public:
-  Var idxVar{NULL_NODE_ID, "idx"};
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::string idxVar{"idx"};
+  std::string outputVar{"output"};
 
   Int offsetIdx = 1;
 
@@ -37,31 +37,29 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
     return parVal(parArray.at(varNode(idxVar).lowerBound() - offsetIdx));
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
-
-    idxVar.id = retrieveIntVarNode(
+  void generate() {
+    retrieveIntVarNode(
         offsetIdx,
         shouldBeSubsumed()
             ? offsetIdx
             : (offsetIdx + static_cast<Int>(parArray.size()) - 1),
-        idxVar.identifier);
+        idxVar);
 
     if (isIntElement()) {
       // int version of element
-      outputVar.id = retrieveIntVarNode(-2, 1, outputVar.identifier);
+      retrieveIntVarNode(-2, 1, outputVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>{parArray},
-                          idxVar.id, outputVar.id, offsetIdx);
+                          varNodeId(idxVar), varNodeId(outputVar), offsetIdx);
     } else {
       // bool version of element
-      outputVar.id = retrieveBoolVarNode(outputVar.identifier);
+      retrieveBoolVarNode(outputVar);
       std::vector<bool> boolArray(parArray.size());
       boolArray.reserve(parArray.size());
       for (size_t i = 0; i < parArray.size(); ++i) {
         boolArray.at(i) = intParToBool(parArray.at(i));
       }
-      createInvariantNode(*_invariantGraph, std::move(boolArray), idxVar.id,
-                          outputVar.id, offsetIdx);
+      createInvariantNode(*_invariantGraph, std::move(boolArray),
+                          varNodeId(idxVar), varNodeId(outputVar), offsetIdx);
     }
   }
 };
@@ -121,6 +119,7 @@ TEST_P(ArrayElementNodeTestFixture, application) {
 }
 
 TEST_P(ArrayElementNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -136,10 +135,11 @@ TEST_P(ArrayElementNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayElementNodeTestFixture, propagation) {
+  generate();
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  VarNode& outputNode = varNode(outputVar.identifier);
+  VarNode& outputNode = varNode(outputVar);
   if (outputNode.isFixed()) {
     const Int actual = varNode(outputVar).lowerBound();
     const Int expected = computeOutput(true);
@@ -148,10 +148,10 @@ TEST_P(ArrayElementNodeTestFixture, propagation) {
     return;
   }
 
-  const propagation::VarViewId inputVarId = varId(idxVar.id);
+  const propagation::VarViewId inputVarId = varId(idxVar);
   EXPECT_NE(inputVarId, propagation::NULL_ID);
 
-  const propagation::VarViewId outputId = varId(outputVar.identifier);
+  const propagation::VarViewId outputId = varId(outputVar);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   for (Int inputVal = _solver->lowerBound(inputVarId);

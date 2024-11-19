@@ -10,8 +10,8 @@ class ArrayIntMaximumNodeTestFixture
     : public NodeTestBase<ArrayIntMaximumNode> {
  public:
   Int numInputs = 3;
-  std::vector<Var> inputVars;
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::vector<std::string> inputVars;
+  std::string outputVar{"output"};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
@@ -27,14 +27,12 @@ class ArrayIntMaximumNodeTestFixture
     }
     Int val = std::numeric_limits<Int>::min();
     for (const auto& var : inputVars) {
-      val = std::max(val, varNode(var.identifier).upperBound());
+      val = std::max(val, varNode(var).upperBound());
     }
     return val;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
-
+  void generate() {
     std::vector<std::pair<Int, Int>> bounds;
 
     if (shouldBeSubsumed()) {
@@ -45,16 +43,18 @@ class ArrayIntMaximumNodeTestFixture
       bounds = {{0, 5}, {2, 2}, {-5, 0}};
     }
     for (const auto& [lb, ub] : bounds) {
-      inputVars.emplace_back(
-          makeIntVar(lb, ub, "input_" + std::to_string(inputVars.size())));
+      inputVars.emplace_back("input_" + std::to_string(inputVars.size()));
+      retrieveIntVarNode(lb, ub, inputVars.back());
     }
-    outputVar.id = retrieveIntVarNode(-5, 5, outputVar.identifier);
+    retrieveIntVarNode(-5, 5, outputVar);
 
-    createInvariantNode(*_invariantGraph, varNodeIds(inputVars), outputVar.id);
+    createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
+                        varNodeId(outputVar));
   }
 };
 
 TEST_P(ArrayIntMaximumNodeTestFixture, updateState) {
+  generate();
   Int minVal = std::numeric_limits<Int>::max();
   Int maxVal = std::numeric_limits<Int>::min();
   for (const auto& var : inputVars) {
@@ -80,6 +80,7 @@ TEST_P(ArrayIntMaximumNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayIntMaximumNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -94,6 +95,7 @@ TEST_P(ArrayIntMaximumNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
+  generate();
   Int lb = std::numeric_limits<Int>::min();
   for (const auto& var : inputVars) {
     lb = std::max(lb, varNode(var).lowerBound());
@@ -115,8 +117,8 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
     return;
   }
   if (shouldBeReplaced()) {
-    EXPECT_FALSE(varNode(outputVar.identifier).isFixed());
-    EXPECT_EQ(varId(outputVar.identifier), propagation::NULL_ID);
+    EXPECT_FALSE(varNode(outputVar).isFixed());
+    EXPECT_EQ(varId(outputVar), propagation::NULL_ID);
     return;
   }
 
@@ -128,7 +130,7 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
     }
   }
 
-  VarNode& outputNode = varNode(outputVar.identifier);
+  VarNode& outputNode = varNode(outputVar);
 
   if (outputNode.isFixed()) {
     const Int expected = outputNode.lowerBound();
@@ -137,9 +139,9 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
     return;
   }
 
-  EXPECT_NE(varId(outputVar.identifier), propagation::NULL_ID);
+  EXPECT_NE(varId(outputVar), propagation::NULL_ID);
 
-  const propagation::VarViewId outputId = varId(outputVar.identifier);
+  const propagation::VarViewId outputId = varId(outputVar);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
 

@@ -9,8 +9,8 @@ class ArrayIntMinimumNodeTestFixture
     : public NodeTestBase<ArrayIntMinimumNode> {
  public:
   Int numInputs = 3;
-  std::vector<Var> inputVars;
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::vector<std::string> inputVars;
+  std::string outputVar{"output"};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
@@ -31,9 +31,7 @@ class ArrayIntMinimumNodeTestFixture
     return val;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
-
+  void generate() {
     std::vector<std::pair<Int, Int>> bounds;
 
     if (shouldBeSubsumed()) {
@@ -45,16 +43,18 @@ class ArrayIntMinimumNodeTestFixture
       bounds = {{-5, 0}, {-2, -2}, {0, 5}};
     }
     for (const auto& [lb, ub] : bounds) {
-      inputVars.emplace_back(
-          makeIntVar(lb, ub, "input_" + std::to_string(inputVars.size())));
+      inputVars.emplace_back("input_" + std::to_string(inputVars.size()));
+      retrieveIntVarNode(lb, ub, inputVars.back());
     }
-    outputVar.id = retrieveIntVarNode(-5, 5, outputVar.identifier);
+    retrieveIntVarNode(-5, 5, outputVar);
 
-    createInvariantNode(*_invariantGraph, varNodeIds(inputVars), outputVar.id);
+    createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
+                        varNodeId(outputVar));
   }
 };
 
 TEST_P(ArrayIntMinimumNodeTestFixture, updateState) {
+  generate();
   Int minVal = std::numeric_limits<Int>::min();
   Int maxVal = std::numeric_limits<Int>::max();
   for (const auto& var : inputVars) {
@@ -80,6 +80,7 @@ TEST_P(ArrayIntMinimumNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayIntMinimumNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -94,6 +95,7 @@ TEST_P(ArrayIntMinimumNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayIntMinimumNodeTestFixture, propagation) {
+  generate();
   Int ub = std::numeric_limits<Int>::max();
   for (const auto& var : inputVars) {
     ub = std::min(ub, varNode(var).upperBound());

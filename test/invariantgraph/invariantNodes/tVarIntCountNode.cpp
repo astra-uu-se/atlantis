@@ -10,9 +10,9 @@ using ::testing::ContainerEq;
 class VarIntCountNodeTestFixture : public NodeTestBase<VarIntCountNode> {
  public:
   Int numInputs = 3;
-  std::vector<Var> inputVars;
-  Var needleVar{NULL_NODE_ID, "needle"};
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::vector<std::string> inputVars;
+  std::string needleVar{"needle"};
+  std::string outputVar{"output"};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
@@ -46,25 +46,22 @@ class VarIntCountNodeTestFixture : public NodeTestBase<VarIntCountNode> {
     return occurrences;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     inputVars.reserve(3);
-    inputVars.emplace_back(
-        makeIntVar(2, 5, "input_" + std::to_string(inputVars.size())));
-    inputVars.emplace_back(
-        makeIntVar(3, 5, "input_" + std::to_string(inputVars.size())));
-    inputVars.emplace_back(
-        makeIntVar(4, 5, "input_" + std::to_string(inputVars.size())));
+    inputVars = {"input_0", "input_1", "input_2"};
+    retrieveIntVarNode(2, 5, inputVars.at(0));
+    retrieveIntVarNode(3, 5, inputVars.at(1));
+    retrieveIntVarNode(4, 5, inputVars.at(2));
     if (shouldBeReplaced()) {
-      needleVar.id = retrieveIntVarNode(2, 2, needleVar.identifier);
+      retrieveIntVarNode(2, 2, needleVar);
     } else {
-      needleVar.id = retrieveIntVarNode(2, 5, needleVar.identifier);
+      retrieveIntVarNode(2, 5, needleVar);
     }
 
-    outputVar.id = retrieveIntVarNode(0, 2, outputVar.identifier);
+    retrieveIntVarNode(0, 2, outputVar);
 
-    createInvariantNode(*_invariantGraph, varNodeIds(inputVars), needleVar.id,
-                        outputVar.id);
+    createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
+                        varNodeId(needleVar), varNodeId(outputVar));
   }
 };
 
@@ -111,6 +108,7 @@ TEST_P(VarIntCountNodeTestFixture, application) {
 }
 
 TEST_P(VarIntCountNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -125,6 +123,7 @@ TEST_P(VarIntCountNodeTestFixture, replace) {
 }
 
 TEST_P(VarIntCountNodeTestFixture, propagation) {
+  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();
@@ -139,8 +138,8 @@ TEST_P(VarIntCountNodeTestFixture, propagation) {
       continue;
     }
     if (varNode(needleVar).isFixed()) {
-      const Int needleVar = varNode(needleVar).lowerBound();
-      if (!varNode(var).inDomain(needleVar)) {
+      const Int needleVal = varNode(needleVar).lowerBound();
+      if (!varNode(var).inDomain(needleVal)) {
         continue;
       }
     }

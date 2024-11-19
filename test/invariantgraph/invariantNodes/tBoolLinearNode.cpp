@@ -9,9 +9,9 @@ using ::testing::ContainerEq;
 class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
  public:
   size_t numInputs = 3;
-  std::vector<Var> inputVars;
+  std::vector<std::string> inputVars;
   std::vector<Int> coeffs;
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::string outputVar{"output"};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
@@ -43,14 +43,14 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
     return sum;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     Int minSum = 0;
     Int maxSum = 0;
     for (size_t i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back(makeBoolVar("input_" + std::to_string(i)));
+      inputVars.emplace_back("input_" + std::to_string(i));
+      retrieveBoolVarNode(inputVars.back());
       if (shouldBeSubsumed()) {
         varNode(inputVars.back()).fixToValue(bool{i % 2 == 0});
       }
@@ -59,14 +59,15 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
       maxSum += std::max<Int>(coeffs.back(), 0);
     }
 
-    outputVar.id = retrieveIntVarNode(minSum, maxSum, outputVar.identifier);
+    retrieveIntVarNode(minSum, maxSum, outputVar);
 
     createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                        varNodeIds(inputVars), outputVar.id);
+                        varNodeIds(inputVars), varNodeId(outputVar));
   }
 };
 
 TEST_P(BoolLinearNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -82,6 +83,7 @@ TEST_P(BoolLinearNodeTestFixture, updateState) {
 }
 
 TEST_P(BoolLinearNodeTestFixture, propagation) {
+  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

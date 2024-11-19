@@ -10,9 +10,9 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
   std::vector<std::vector<Int>> parMatrix{std::vector<Int>{-2, -1},
                                           std::vector<Int>{0, 1}};
 
-  Var idx1Var{NULL_NODE_ID, "idx1"};
-  Var idx2Var{NULL_NODE_ID, "idx2"};
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::string idx1Var{"idx1"};
+  std::string idx2Var{"idx2"};
+  std::string outputVar{"output"};
 
   Int idx1Offset{1};
   Int idx2Offset{1};
@@ -50,30 +50,38 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
     return parVal(parMatrix.at(row).at(col));
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
-    idx1Var.id = retrieveIntVarNode(
+  void generate() {
+    retrieveIntVarNode(
         idx1Offset,
         shouldBeSubsumed() || idx1ShouldBeReplaced()
             ? idx1Offset
             : (idx1Offset + static_cast<Int>(parMatrix.size()) - 1),
-        idx1Var.identifier);
-    idx2Var.id = retrieveIntVarNode(
+        idx1Var);
+    retrieveIntVarNode(
         idx2Offset,
         shouldBeSubsumed() || idx2ShouldBeReplaced()
             ? idx2Offset
             : (idx1Offset + static_cast<Int>(parMatrix.front().size()) - 1),
-        idx2Var.identifier);
+        idx2Var);
 
     if (isIntElement()) {
       // int version of element
-      outputVar.id = retrieveIntVarNode(-2, 1, outputVar.identifier);
-      createInvariantNode(*_invariantGraph, idx1Var.id, idx2Var.id,
+      Int lb = std::numeric_limits<Int>::max();
+      Int ub = std::numeric_limits<Int>::max();
+      for (const auto& row : parMatrix) {
+        const auto [mn, mx] = std::minmax(row.begin(), row.end());
+        lb = std::min(lb, *mn);
+        ub = std::max(ub, *mx);
+      }
+
+      retrieveIntVarNode(lb, ub, outputVar);
+      createInvariantNode(*_invariantGraph, varNodeId(idx1Var),
+                          varNodeId(idx2Var),
                           std::vector<std::vector<Int>>{parMatrix},
-                          outputVar.id, idx1Offset, idx2Offset);
+                          varNodeId(outputVar), idx1Offset, idx2Offset);
     } else {
       // bool version of element
-      outputVar.id = retrieveBoolVarNode(outputVar.identifier);
+      retrieveBoolVarNode(outputVar);
       std::vector<std::vector<bool>> boolMatrix;
       boolMatrix.reserve(parMatrix.size());
       for (const auto& row : parMatrix) {
@@ -82,14 +90,15 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
           boolMatrix.back().emplace_back(intParToBool(val));
         }
       }
-      createInvariantNode(*_invariantGraph, idx1Var.id, idx2Var.id,
-                          std::move(boolMatrix), outputVar.id, idx1Offset,
-                          idx2Offset);
+      createInvariantNode(*_invariantGraph, varNodeId(idx1Var),
+                          varNodeId(idx2Var), std::move(boolMatrix),
+                          varNodeId(outputVar), idx1Offset, idx2Offset);
     }
   }
 };
 
 TEST_P(ArrayElement2dNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -105,6 +114,7 @@ TEST_P(ArrayElement2dNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayElement2dNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -119,10 +129,11 @@ TEST_P(ArrayElement2dNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayElement2dNodeTestFixture, propagation) {
+  generate();
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  VarNode outputNode = varNode(outputVar.identifier);
+  VarNode outputNode = varNode(outputVar);
 
   if (outputNode.isFixed()) {
     const Int expected = outputNode.lowerBound();
@@ -133,11 +144,11 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
     return;
   }
 
-  EXPECT_NE(varId(outputVar.identifier), propagation::NULL_ID);
-  const propagation::VarViewId outputId = varId(outputVar.identifier);
+  EXPECT_NE(varId(outputVar), propagation::NULL_ID);
+  const propagation::VarViewId outputId = varId(outputVar);
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& idx : std::array<Var, 2>{idx1Var, idx2Var}) {
+  for (const auto& idx : std::array<std::string, 2>{idx1Var, idx2Var}) {
     if (!varNode(idx).isFixed()) {
       EXPECT_NE(varId(idx), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(idx));
@@ -173,5 +184,62 @@ INSTANTIATE_TEST_CASE_P(
                       ParamData{InvariantNodeAction::SUBSUME, 2},
                       ParamData{InvariantNodeAction::REPLACE, 2},
                       ParamData{InvariantNodeAction::REPLACE, 3}));
+
+RC_GTEST_PROP(ArrayElement2dNodeTest, RapidCheck, ()) {
+  /*
+  const size_t numRows = *rc::gen::inRange<size_t>(1, 4);
+  const size_t numCols = *rc::gen::inRange<size_t>(1, 4);
+
+  idx1Offset = *rc::gen::inRange<Int>(
+      std::numeric_limits<Int>::min() + static_cast<Int>(numRows) + 1,
+      std::numeric_limits<Int>::max() - static_cast<Int>(numRows));
+  idx2Offset = *rc::gen::inRange<Int>(
+      std::numeric_limits<Int>::min() + static_cast<Int>(numCols) + 1,
+      std::numeric_limits<Int>::max() - static_cast<Int>(numCols));
+
+  parMatrix.resize(numRows);
+  for (size_t i = 0; i < numRows; ++i) {
+    params.at(i).resize(numCols);
+    for (size_t j = 0; j < numCols; ++j) {
+      params.at(i).at(j) = *rc::gen::arbitrary<Int>();
+    }
+  }
+
+  generate();
+
+  const size_t numCommits = 3;
+  const size_t numProbes = 3;
+
+  for (size_t c = 0; c < numCommits; ++c) {
+    RC_ASSERT(_solver->committedValue(varId(outputVar)) == computeOutput(true));
+
+    for (size_t p = 0; p <= numProbes; ++p) {
+      _solver->beginMove();
+      if (randBool()) {
+        _solver->setValue(varId(idx1Var), idx1Dist(gen));
+      }
+      if (randBool()) {
+        _solver->setValue(varId(idx2Var), idx2Dist(gen));
+      }
+
+      _solver->endMove();
+
+      if (p == numProbes) {
+        _solver->beginCommit();
+      } else {
+        _solver->beginProbe();
+      }
+      _solver->query(varId(outputVar));
+      if (p == numProbes) {
+        _solver->endCommit();
+      } else {
+        _solver->endProbe();
+      }
+      RC_ASSERT(_solver->currentValue(varId(outputVar)) == computeOutput());
+    }
+    RC_ASSERT(_solver->committedValue(varId(outputVar)) == computeOutput(true));
+  }
+  */
+}
 
 }  // namespace atlantis::testing

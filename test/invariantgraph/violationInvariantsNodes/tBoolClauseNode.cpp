@@ -7,9 +7,9 @@ using namespace atlantis::invariantgraph;
 
 class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
  public:
-  std::vector<Var> asVars;
-  std::vector<Var> bsVars;
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::vector<std::string> asVars;
+  std::vector<std::string> bsVars;
+  std::string reifiedVar{"reified"};
 
   Int numAs{2};
   Int numBs{2};
@@ -18,7 +18,7 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
     if (isRegistered) {
       for (const auto& a : asVars) {
         for (const auto& b : bsVars) {
-          if (a.identifier == b.identifier) {
+          if (a == b) {
             return false;
           }
         }
@@ -65,8 +65,7 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
     return true;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     asVars.clear();
     bsVars.clear();
     numAs = 2;
@@ -83,22 +82,24 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
     bsVars.reserve(numBs);
 
     for (Int i = 0; i < numAs; ++i) {
-      asVars.emplace_back(makeBoolVar("a_" + std::to_string(i)));
+      asVars.emplace_back("a_" + std::to_string(i));
+      retrieveBoolVarNode(asVars.back());
       if (shouldBeSubsumed() && (_paramData.data != 0 || i != 0)) {
         varNode(asVars.back()).fixToValue(!shouldFail());
       }
     }
     for (Int i = 0; i < numBs; ++i) {
-      bsVars.emplace_back(makeBoolVar("b_" + std::to_string(i)));
+      bsVars.emplace_back("b_" + std::to_string(i));
+      retrieveBoolVarNode(bsVars.back());
       if (shouldBeSubsumed() && (_paramData.data != 1 || i != 0)) {
         varNode(bsVars.back()).fixToValue(shouldFail());
       }
     }
 
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(asVars),
-                          varNodeIds(bsVars), reifiedVar.id);
+                          varNodeIds(bsVars), varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, varNodeIds(asVars),
                           varNodeIds(bsVars), shouldHold());
@@ -107,6 +108,7 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
 };
 
 TEST_P(BoolClauseNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -126,6 +128,7 @@ TEST_P(BoolClauseNodeTestFixture, updateState) {
 }
 
 TEST_P(BoolClauseNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -140,6 +143,7 @@ TEST_P(BoolClauseNodeTestFixture, replace) {
 }
 
 TEST_P(BoolClauseNodeTestFixture, propagation) {
+  generate();
   if (shouldBeMadeImplicit()) {
     return;
   }
