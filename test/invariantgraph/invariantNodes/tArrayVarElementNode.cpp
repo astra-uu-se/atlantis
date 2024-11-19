@@ -8,39 +8,42 @@ using namespace atlantis::invariantgraph;
 class ArrayVarElementNodeTestFixture
     : public NodeTestBase<ArrayVarElementNode> {
  public:
-  std::vector<Var> varArray;
+  std::vector<std::string> varArray;
 
-  Var idxVar{NULL_NODE_ID, "idx"};
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::string idxVar{"idx"};
+  std::string outputVar{"output"};
 
   Int offsetIdx = 1;
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data == 0; }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
+    varArray = {"x1", "x2", "x3"};
     if (isIntElement()) {
-      varArray = {makeIntVar(-2, 0, "x1"), makeIntVar(-1, 1, "x2"),
-                  makeIntVar(0, 2, "x3")};
-      outputVar.id = retrieveIntVarNode(-2, 2, outputVar.identifier);
+      retrieveIntVarNode(-2, 0, varArray.at(0));
+      retrieveIntVarNode(-1, 1, varArray.at(1));
+      retrieveIntVarNode(0, 2, varArray.at(2));
+      retrieveIntVarNode(-2, 2, outputVar);
     } else {
-      varArray = {makeBoolVar("x1"), makeBoolVar("x2"), makeBoolVar("x3")};
-      outputVar.id = retrieveBoolVarNode(outputVar.identifier);
+      for (const auto& identifier : varArray) {
+        retrieveBoolVarNode(identifier);
+      }
+      retrieveBoolVarNode(outputVar);
     }
 
-    idxVar.id = retrieveIntVarNode(
-        offsetIdx,
-        shouldBeReplaced()
-            ? offsetIdx
-            : (static_cast<Int>(varArray.size()) - 1 + offsetIdx),
-        idxVar.identifier);
+    retrieveIntVarNode(offsetIdx,
+                       shouldBeReplaced() ? offsetIdx
+                                          : (static_cast<Int>(varArray.size()) -
+                                             1 + offsetIdx),
+                       idxVar);
 
-    createInvariantNode(*_invariantGraph, idxVar.id, varNodeIds(varArray),
-                        outputVar.id, offsetIdx);
+    createInvariantNode(*_invariantGraph, varNodeId(idxVar),
+                        varNodeIds(varArray), varNodeId(outputVar), offsetIdx);
   }
 };
 
 TEST_P(ArrayVarElementNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -55,6 +58,7 @@ TEST_P(ArrayVarElementNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayVarElementNodeTestFixture, propagation) {
+  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

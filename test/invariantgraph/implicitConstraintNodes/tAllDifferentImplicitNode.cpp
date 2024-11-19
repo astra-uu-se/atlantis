@@ -14,8 +14,7 @@ class AllDifferentImplicitNodeTestFixture
   VarNodeId c{NULL_NODE_ID};
   VarNodeId d{NULL_NODE_ID};
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     a = retrieveIntVarNode(2, 7, "a");
     b = retrieveIntVarNode(2, 7, "b");
     c = retrieveIntVarNode(2, 7, "c");
@@ -34,6 +33,7 @@ TEST_P(AllDifferentImplicitNodeTestFixture, construction) {
 }
 
 TEST_P(AllDifferentImplicitNodeTestFixture, application) {
+  generate();
   _solver->open();
   for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);

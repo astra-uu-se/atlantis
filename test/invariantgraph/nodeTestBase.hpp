@@ -2,6 +2,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rapidcheck/gtest.h>
 
 #include <unordered_map>
 #include <utility>
@@ -17,11 +18,6 @@
 namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
-
-struct Var {
-  VarNodeId id{NULL_NODE_ID};
-  std::string identifier{};
-};
 
 class UnitInvariantNode : public InvariantNode {
  public:
@@ -136,36 +132,21 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
         _invariantGraph->implicitConstraintNode(_invNodeId));
   }
 
-  Var makeIntVar(Int lb, Int ub, std::string&& identifier) {
-    auto id = retrieveIntVarNode(lb, ub, identifier);
-    return Var{id, std::move(identifier)};
-  }
-
-  Var makeIntVar(std::vector<Int>&& domain, std::string&& identifier) {
-    auto id = retrieveIntVarNode(std::move(domain), identifier);
-    return Var{id, std::move(identifier)};
-  }
-
-  Var makeBoolVar(std::string&& identifier) {
-    auto id = retrieveBoolVarNode(identifier);
-    return Var{id, std::move(identifier)};
-  }
-
-  std::vector<VarNodeId> varNodeIds(const std::vector<Var>& vars) {
+  std::vector<VarNodeId> varNodeIds(const std::vector<std::string>& vars) {
     std::vector<VarNodeId> ids(vars.size());
     for (size_t i = 0; i < vars.size(); ++i) {
-      ids[i] = vars[i].id;
+      ids[i] = varNodeId(vars[i]);
     }
     return ids;
   }
 
   std::vector<std::vector<VarNodeId>> varNodeIds(
-      const std::vector<std::vector<Var>>& vars) {
+      const std::vector<std::vector<std::string>>& vars) {
     std::vector<std::vector<VarNodeId>> ids(vars.size());
     for (size_t i = 0; i < vars.size(); ++i) {
       ids.at(i).resize(vars.at(i).size());
       for (size_t j = 0; j < vars.at(i).size(); ++j) {
-        ids.at(i).at(j) = vars.at(i).at(j).id;
+        ids.at(i).at(j) = varNodeId(vars.at(i).at(j));
       }
     }
     return ids;
@@ -197,18 +178,12 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->varNodeId(identifier);
   }
 
-  VarNode& varNode(const Var& var) { return varNode(var.identifier); }
-
   VarNode& varNode(const std::string& identifier) {
     return _invariantGraph->varNode(identifier);
   }
 
   [[nodiscard]] VarNode& varNode(VarNodeId varNodeId) {
     return _invariantGraph->varNode(varNodeId);
-  }
-
-  propagation::VarViewId varId(const Var& var) {
-    return varNode(var.identifier).varId();
   }
 
   propagation::VarViewId varId(const std::string& identifier) {

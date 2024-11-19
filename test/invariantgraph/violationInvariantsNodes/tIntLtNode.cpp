@@ -11,7 +11,7 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
   std::string aIdentifier{"a"};
   VarNodeId bVarNodeId{NULL_NODE_ID};
   std::string bIdentifier{"b"};
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::string reifiedVar{"reified"};
 
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
@@ -28,8 +28,7 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
            varNode(bIdentifier).lowerBound();
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     aVarNodeId = retrieveIntVarNode(-5, 5, aIdentifier);
     bVarNodeId = retrieveIntVarNode(-5, 5, bIdentifier);
     if (shouldBeSubsumed()) {
@@ -42,9 +41,9 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
       }
     }
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
-                          reifiedVar.id);
+                          varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
                           shouldHold());
@@ -53,6 +52,7 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
 };
 
 TEST_P(IntLtNodeTestFixture, propagation) {
+  generate();
   if (shouldBeMadeImplicit()) {
     return;
   }

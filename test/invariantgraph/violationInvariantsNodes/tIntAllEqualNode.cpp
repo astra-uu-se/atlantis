@@ -13,9 +13,9 @@ using ::testing::ContainerEq;
 class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
  public:
   Int numInputs{4};
-  std::vector<Var> inputVars;
+  std::vector<std::string> inputVars;
 
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::string reifiedVar{"reified"};
 
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
@@ -77,30 +77,27 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
     return false;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     numInputs = 4;
 
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back(Var{NULL_NODE_ID, "input_" + std::to_string(i)});
+      inputVars.emplace_back("input_" + std::to_string(i));
       if (shouldBeSubsumed()) {
         const Int val = shouldHold() ? 0 : i;
-        inputVars.back().id =
-            retrieveIntVarNode(val, val, inputVars.back().identifier);
+        retrieveIntVarNode(val, val, inputVars.back());
       } else {
-        inputVars.back().id =
-            retrieveIntVarNode(-2, 2, inputVars.back().identifier);
+        retrieveIntVarNode(-2, 2, inputVars.back());
       }
     }
     if (!shouldBeMadeImplicit()) {
       for (const auto& var : inputVars) {
-        _invariantGraph->root().addSearchVarNode(var.id);
+        _invariantGraph->root().addSearchVarNode(varNodeId(var));
       }
     }
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          reifiedVar.id, true);
+                          varNodeId(reifiedVar), true);
     } else {
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars), shouldHold(),
                           true);
@@ -151,6 +148,7 @@ TEST_P(IntAllEqualNodeTestFixture, application) {
 }
 
 TEST_P(IntAllEqualNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -170,6 +168,7 @@ TEST_P(IntAllEqualNodeTestFixture, updateState) {
 }
 
 TEST_P(IntAllEqualNodeTestFixture, propagation) {
+  generate();
   if (shouldBeMadeImplicit()) {
     return;
   }

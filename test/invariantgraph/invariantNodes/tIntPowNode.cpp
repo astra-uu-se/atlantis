@@ -7,9 +7,9 @@ using namespace atlantis::invariantgraph;
 
 class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
  public:
-  Var baseVar{NULL_NODE_ID, "base"};
-  Var exponentVar{NULL_NODE_ID, "exponent"};
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::string baseVar{"base"};
+  std::string exponentVar{"exponent"};
+  std::string outputVar{"output"};
 
   [[nodiscard]] static Int int_exp(Int baseVal, Int exponentVal) {
     if (exponentVal == 0) {
@@ -50,18 +50,18 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
     return int_exp(baseVal, exponentVal);
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
-    baseVar.id = retrieveIntVarNode(0, 10, baseVar.identifier);
-    exponentVar.id = retrieveIntVarNode(0, 10, exponentVar.identifier);
-    outputVar.id = retrieveIntVarNode(0, 10, outputVar.identifier);
+  void generate() {
+    retrieveIntVarNode(0, 10, baseVar);
+    retrieveIntVarNode(0, 10, exponentVar);
+    retrieveIntVarNode(0, 10, outputVar);
 
-    createInvariantNode(*_invariantGraph, baseVar.id, exponentVar.id,
-                        outputVar.id);
+    createInvariantNode(*_invariantGraph, varNodeId(baseVar),
+                        varNodeId(exponentVar), varNodeId(outputVar));
   }
 };
 
 TEST_P(IntPowNodeTestFixture, propagation) {
+  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();
@@ -74,7 +74,7 @@ TEST_P(IntPowNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : std::array<Var, 2>{baseVar, exponentVar}) {
+  for (const auto& var : std::array<std::string, 2>{baseVar, exponentVar}) {
     if (!varNode(var).isFixed()) {
       EXPECT_NE(varId(var), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));

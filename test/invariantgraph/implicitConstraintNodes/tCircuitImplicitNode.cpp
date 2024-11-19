@@ -14,8 +14,7 @@ class CircuitImplicitNodeTestFixture
   VarNodeId c{NULL_NODE_ID};
   VarNodeId d{NULL_NODE_ID};
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     a = retrieveIntVarNode(1, 4, "a");
     b = retrieveIntVarNode(1, 4, "b");
     c = retrieveIntVarNode(1, 4, "c");
@@ -34,6 +33,7 @@ TEST_P(CircuitImplicitNodeTestFixture, construction) {
 }
 
 TEST_P(CircuitImplicitNodeTestFixture, application) {
+  generate();
   _solver->open();
   for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);

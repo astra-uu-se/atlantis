@@ -9,8 +9,8 @@ using namespace atlantis::invariantgraph;
 
 class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
  public:
-  Var outputVar{NULL_NODE_ID, "output"};
-  Var inputVar{NULL_NODE_ID, "input"};
+  std::string outputVar{"output"};
+  std::string inputVar{"input"};
 
   Int factor{2};
   Int offset{5};
@@ -22,20 +22,19 @@ class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
     return varNode(inputVarNodeId).domain()->lowerBound() * factor + offset;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     const Int lb = -10;
     const Int ub = 10;
-    inputVar.id = retrieveIntVarNode(lb, ub, inputVar.identifier);
-    outputVar.id = retrieveIntVarNode(
-        lb * factor + offset, ub * factor + offset, outputVar.identifier);
+    retrieveIntVarNode(lb, ub, inputVar);
+    retrieveIntVarNode(lb * factor + offset, ub * factor + offset, outputVar);
 
-    createInvariantNode(*_invariantGraph, inputVar.id, outputVar.id, factor,
-                        offset);
+    createInvariantNode(*_invariantGraph, varNodeId(inputVar),
+                        varNodeId(outputVar), factor, offset);
   }
 };
 
 TEST_P(IntScalarNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -52,6 +51,7 @@ TEST_P(IntScalarNodeTestFixture, updateState) {
 }
 
 TEST_P(IntScalarNodeTestFixture, propagation) {
+  generate();
   if (shouldBeSubsumed()) {
     return;
   }

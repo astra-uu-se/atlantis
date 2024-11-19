@@ -11,9 +11,9 @@ using ::testing::ContainerEq;
 
 class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
  public:
-  std::vector<Var> inputVars;
+  std::vector<std::string> inputVars;
 
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::string reifiedVar{"reified"};
 
   Int numInputs = 4;
 
@@ -41,13 +41,12 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
     return false;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     inputVars.clear();
     inputVars.reserve(numInputs);
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back(
-          makeBoolVar("input_" + std::to_string(inputVars.size())));
+      inputVars.emplace_back("input_" + std::to_string(i));
+      retrieveBoolVarNode(inputVars.back());
     }
 
     if (shouldBeSubsumed()) {
@@ -61,9 +60,9 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
     }
 
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          reifiedVar.id);
+                          varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           shouldHold());
@@ -72,6 +71,7 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
 };
 
 TEST_P(ArrayBoolAndNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -91,6 +91,7 @@ TEST_P(ArrayBoolAndNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayBoolAndNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -105,6 +106,7 @@ TEST_P(ArrayBoolAndNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayBoolAndNodeTestFixture, propagation) {
+  generate();
   if (shouldBeMadeImplicit()) {
     return;
   }

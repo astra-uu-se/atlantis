@@ -9,7 +9,7 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolLtNode> {
  public:
   VarNodeId aVarNodeId{NULL_NODE_ID};
   VarNodeId bVarNodeId{NULL_NODE_ID};
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::string reifiedVar{"reified"};
 
   [[nodiscard]] bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
@@ -32,8 +32,7 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolLtNode> {
     return aVal || !bVal;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     aVarNodeId = retrieveBoolVarNode("a");
     if (shouldBeSubsumed() && _paramData.data == 2) {
       bVarNodeId = aVarNodeId;
@@ -61,9 +60,9 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolLtNode> {
     }
 
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
-                          reifiedVar.id);
+                          varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
                           shouldHold());
@@ -72,6 +71,7 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolLtNode> {
 };
 
 TEST_P(BoolLtNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -88,6 +88,7 @@ TEST_P(BoolLtNodeTestFixture, updateState) {
 }
 
 TEST_P(BoolLtNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -102,6 +103,7 @@ TEST_P(BoolLtNodeTestFixture, replace) {
 }
 
 TEST_P(BoolLtNodeTestFixture, propagation) {
+  generate();
   if (shouldBeMadeImplicit()) {
     return;
   }

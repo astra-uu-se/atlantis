@@ -15,7 +15,7 @@ using ::testing::ContainerEq;
 class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
  public:
   Int numInputs = 4;
-  std::vector<Var> inputVars;
+  std::vector<std::string> inputVars;
 
   bool isViolating(bool) {
     std::vector<Int> values(numInputs, -1);
@@ -34,10 +34,9 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
                                [](bool v) { return !v; });
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
-
+  void generate() {
     for (Int i = 0; i < numInputs; ++i) {
+      inputVars.emplace_back("input_" + std::to_string(i));
       std::vector<Int> domain;
       domain.reserve(numInputs - 1);
       for (Int j = 0; j < numInputs; ++j) {
@@ -45,12 +44,11 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
           domain.emplace_back(j + 1);
         }
       }
-      inputVars.emplace_back(
-          makeIntVar(std::move(domain), "input_" + std::to_string(i)));
+      retrieveIntVarNode(std::move(domain), inputVars.back());
     }
     if (shouldBeReplaced()) {
       for (const auto& var : inputVars) {
-        _invariantGraph->root().addSearchVarNode(var.id);
+        _invariantGraph->root().addSearchVarNode(varNodeId(var));
       }
     }
     createInvariantNode(*_invariantGraph,
@@ -59,6 +57,7 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
 };
 
 TEST_P(CircuitNodeTestFixture, makeImplicit) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeMadeImplicit()) {
@@ -71,7 +70,8 @@ TEST_P(CircuitNodeTestFixture, makeImplicit) {
 }
 
 TEST_P(CircuitNodeTestFixture, propagation) {
-  // Currently, we don't allow probes/moves that result in undeterminable
+  generate();  // Currently, we don't allow probes/moves that result in
+               // undeterminable
   // dynamic cycles. When the invariant graph is topologically sorted, then an
   // exception should be thrown, and the corresponding probe/move should be
   // ignored/skipped.

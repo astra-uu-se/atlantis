@@ -10,9 +10,9 @@ using ::testing::ContainerEq;
 class GlobalCardinalityNodeTestFixture
     : public NodeTestBase<GlobalCardinalityNode> {
  public:
-  std::vector<Var> inputVars;
+  std::vector<std::string> inputVars;
   std::vector<Int> cover{2, 4};
-  std::vector<Var> outputVars;
+  std::vector<std::string> outputVars;
 
   std::vector<Int> computeOutputs(bool isRegistered = false) {
     if (isRegistered) {
@@ -41,20 +41,23 @@ class GlobalCardinalityNodeTestFixture
     return outputVars;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
+    inputVars = {"input_1", "input_2"};
     if (shouldBeSubsumed()) {
-      inputVars = {makeIntVar(2, 2, "input1"),
-                   makeIntVar(std::vector<Int>{1, 3, 5}, "input2")};
+      retrieveIntVarNode(2, 2, inputVars.at(0));
+      retrieveIntVarNode(std::vector<Int>{1, 3, 5}, inputVars.at(1));
     } else if (shouldBeReplaced()) {
-      inputVars = {makeIntVar(1, 3, "input1"), makeIntVar(1, 3, "input2")};
+      retrieveIntVarNode(1, 3, inputVars.at(0));
+      retrieveIntVarNode(1, 3, inputVars.at(1));
     } else {
-      inputVars = {makeIntVar(1, 5, "input1"), makeIntVar(1, 5, "input2")};
+      retrieveIntVarNode(1, 5, inputVars.at(0));
+      retrieveIntVarNode(1, 5, inputVars.at(1));
     }
 
     for (size_t i = 0; i < cover.size(); ++i) {
-      outputVars.emplace_back(makeIntVar(0, static_cast<Int>(inputVars.size()),
-                                         "output" + std::to_string(i + 1)));
+      outputVars.emplace_back("output" + std::to_string(i + 1));
+      retrieveIntVarNode(0, static_cast<Int>(inputVars.size()),
+                         outputVars.back());
     }
 
     createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
@@ -63,6 +66,7 @@ class GlobalCardinalityNodeTestFixture
 };
 
 TEST_P(GlobalCardinalityNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -84,6 +88,7 @@ TEST_P(GlobalCardinalityNodeTestFixture, updateState) {
 }
 
 TEST_P(GlobalCardinalityNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -98,6 +103,7 @@ TEST_P(GlobalCardinalityNodeTestFixture, replace) {
 }
 
 TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
+  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

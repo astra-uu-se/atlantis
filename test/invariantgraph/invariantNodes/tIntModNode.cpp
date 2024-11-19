@@ -7,9 +7,9 @@ using namespace atlantis::invariantgraph;
 
 class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
  public:
-  Var numeratorVar{NULL_NODE_ID, "numerator"};
-  Var denominatorVar{NULL_NODE_ID, "denominator"};
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::string numeratorVar{"numerator"};
+  std::string denominatorVar{"denominator"};
+  std::string outputVar{"output"};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
@@ -27,18 +27,18 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
     return denominator != 0 ? numerator % denominator : 0;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
-    numeratorVar.id = retrieveIntVarNode(0, 6, numeratorVar.identifier);
-    denominatorVar.id = retrieveIntVarNode(1, 10, denominatorVar.identifier);
-    outputVar.id = retrieveIntVarNode(0, 10, outputVar.identifier);
+  void generate() {
+    retrieveIntVarNode(0, 6, numeratorVar);
+    retrieveIntVarNode(1, 10, denominatorVar);
+    retrieveIntVarNode(0, 10, outputVar);
 
-    createInvariantNode(*_invariantGraph, numeratorVar.id, denominatorVar.id,
-                        outputVar.id);
+    createInvariantNode(*_invariantGraph, varNodeId(numeratorVar),
+                        varNodeId(denominatorVar), varNodeId(outputVar));
   }
 };
 
 TEST_P(IntModNodeTestFixture, propagation) {
+  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();
@@ -51,7 +51,8 @@ TEST_P(IntModNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : std::array<Var, 2>{numeratorVar, denominatorVar}) {
+  for (const auto& var :
+       std::array<std::string, 2>{numeratorVar, denominatorVar}) {
     if (!varNode(var).isFixed()) {
       EXPECT_NE(varId(var), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));

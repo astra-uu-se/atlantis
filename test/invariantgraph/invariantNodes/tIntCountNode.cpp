@@ -10,8 +10,8 @@ using ::testing::ContainerEq;
 class IntCountNodeTestFixture : public NodeTestBase<IntCountNode> {
  public:
   Int numInputs = 3;
-  std::vector<Var> inputVars;
-  Var outputVar{NULL_NODE_ID, "output"};
+  std::vector<std::string> inputVars;
+  std::string outputVar{"output"};
 
   Int needle{2};
 
@@ -39,56 +39,48 @@ class IntCountNodeTestFixture : public NodeTestBase<IntCountNode> {
     return occurrences;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back(Var{NULL_NODE_ID, "input_" + std::to_string(i)});
+      inputVars.emplace_back("input_" + std::to_string(i));
     }
     if (shouldBeSubsumed()) {
       if (_paramData.data == 0) {
-        inputVars.at(0).id =
-            retrieveIntVarNode(0, 1, inputVars.at(0).identifier);
-        inputVars.at(1).id =
-            retrieveIntVarNode(std::vector<Int>{1, 3, 4, 5, 6, 7, 8, 9, 10},
-                               inputVars.at(1).identifier);
-        inputVars.at(2).id =
-            retrieveIntVarNode(std::vector<Int>{2}, inputVars.at(2).identifier);
-        outputVar.id = retrieveIntVarNode(0, 3, outputVar.identifier);
+        retrieveIntVarNode(0, 1, inputVars.at(0));
+
+        retrieveIntVarNode(std::vector<Int>{1, 3, 4, 5, 6, 7, 8, 9, 10},
+                           inputVars.at(1));
+
+        retrieveIntVarNode(std::vector<Int>{2}, inputVars.at(2));
+        retrieveIntVarNode(0, 3, outputVar);
       } else {
-        inputVars.at(0).id =
-            retrieveIntVarNode(2, 2, inputVars.at(0).identifier);
-        inputVars.at(1).id =
-            retrieveIntVarNode(1, 10, inputVars.at(1).identifier);
-        inputVars.at(2).id =
-            retrieveIntVarNode(1, 10, inputVars.at(2).identifier);
-        outputVar.id = retrieveIntVarNode(0, 1, outputVar.identifier);
+        retrieveIntVarNode(2, 2, inputVars.at(0));
+
+        retrieveIntVarNode(1, 10, inputVars.at(1));
+
+        retrieveIntVarNode(1, 10, inputVars.at(2));
+        retrieveIntVarNode(0, 1, outputVar);
       }
     } else {
       if (_paramData.data == 0) {
-        inputVars.at(0).id =
-            retrieveIntVarNode(1, 3, inputVars.at(0).identifier);
-        inputVars.at(1).id =
-            retrieveIntVarNode(std::vector<Int>{1, 3, 4, 5, 6, 7, 8, 9, 10},
-                               inputVars.at(1).identifier);
-        inputVars.at(2).id =
-            retrieveIntVarNode(std::vector<Int>{2}, inputVars.at(2).identifier);
-        outputVar.id = retrieveIntVarNode(1, 2, outputVar.identifier);
+        retrieveIntVarNode(1, 3, inputVars.at(0));
+
+        retrieveIntVarNode(std::vector<Int>{1, 3, 4, 5, 6, 7, 8, 9, 10},
+                           inputVars.at(1));
+
+        retrieveIntVarNode(std::vector<Int>{2}, inputVars.at(2));
+        retrieveIntVarNode(1, 2, outputVar);
       } else {
-        inputVars.at(0).id =
-            retrieveIntVarNode(1, 10, inputVars.at(0).identifier);
-        inputVars.at(1).id =
-            retrieveIntVarNode(1, 10, inputVars.at(1).identifier);
-        inputVars.at(2).id =
-            retrieveIntVarNode(1, 10, inputVars.at(2).identifier);
-        outputVar.id = retrieveIntVarNode(0, 3, outputVar.identifier);
+        retrieveIntVarNode(1, 10, inputVars.at(0));
+
+        retrieveIntVarNode(1, 10, inputVars.at(1));
+
+        retrieveIntVarNode(1, 10, inputVars.at(2));
+        retrieveIntVarNode(0, 3, outputVar);
       }
-    }
-    for (size_t i = 0; i < inputVars.size(); ++i) {
-      inputVars.at(i).identifier = "input_" + std::to_string(i);
     }
 
     createInvariantNode(*_invariantGraph, varNodeIds(inputVars), needle,
-                        outputVar.id);
+                        varNodeId(outputVar));
   }
 };  // namespace atlantis::testing
 
@@ -133,6 +125,7 @@ TEST_P(IntCountNodeTestFixture, application) {
 }
 
 TEST_P(IntCountNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -151,6 +144,7 @@ TEST_P(IntCountNodeTestFixture, updateState) {
 }
 
 TEST_P(IntCountNodeTestFixture, propagation) {
+  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

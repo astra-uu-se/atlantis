@@ -12,9 +12,9 @@ using ::testing::Contains;
 class IntLinLeNodeTestFixture : public NodeTestBase<IntLinLeNode> {
  public:
   size_t numInputs = 3;
-  std::vector<Var> inputVars;
+  std::vector<std::string> inputVars;
   std::vector<Int> coeffs;
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::string reifiedVar{"reified"};
 
   Int bound = 0;
 
@@ -44,29 +44,26 @@ class IntLinLeNodeTestFixture : public NodeTestBase<IntLinLeNode> {
     return sum > bound;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     const Int lb = -2;
     const Int ub = 2;
     for (Int i = 0; i < static_cast<Int>(numInputs); ++i) {
-      inputVars.emplace_back(Var{NULL_NODE_ID, "input_" + std::to_string(i)});
+      inputVars.emplace_back("input_" + std::to_string(i));
       if (shouldBeSubsumed()) {
         const Int val = i % 3 == 0 ? lb : ub;
-        inputVars.back().id =
-            retrieveIntVarNode(val, val, inputVars.back().identifier);
+        retrieveIntVarNode(val, val, inputVars.back());
       } else {
-        inputVars.back().id =
-            retrieveIntVarNode(lb, ub, inputVars.back().identifier);
+        retrieveIntVarNode(lb, ub, inputVars.back());
       }
       coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
     }
 
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          varNodeIds(inputVars), bound, reifiedVar.id);
+                          varNodeIds(inputVars), bound, varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                           varNodeIds(inputVars), bound, shouldHold());
@@ -75,6 +72,7 @@ class IntLinLeNodeTestFixture : public NodeTestBase<IntLinLeNode> {
 };
 
 TEST_P(IntLinLeNodeTestFixture, propagation) {
+  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

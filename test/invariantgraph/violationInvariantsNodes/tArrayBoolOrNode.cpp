@@ -11,9 +11,9 @@ using ::testing::ContainerEq;
 
 class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
  public:
-  std::vector<Var> inputVars;
+  std::vector<std::string> inputVars;
 
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::string reifiedVar{"reified"};
 
   Int numInputVars{4};
 
@@ -35,13 +35,12 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
         });
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     inputVars.clear();
     inputVars.reserve(numInputVars);
     for (Int i = 0; i < numInputVars; ++i) {
-      inputVars.emplace_back(
-          makeBoolVar("input_" + std::to_string(inputVars.size())));
+      inputVars.emplace_back("input_" + std::to_string(i));
+      retrieveBoolVarNode(inputVars.back());
     }
 
     if (shouldBeSubsumed()) {
@@ -55,9 +54,9 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
     }
 
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          reifiedVar.id);
+                          varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           shouldHold());
@@ -66,6 +65,7 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
 };
 
 TEST_P(ArrayBoolOrNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -85,6 +85,7 @@ TEST_P(ArrayBoolOrNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayBoolOrNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -99,6 +100,7 @@ TEST_P(ArrayBoolOrNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
+  generate();
   if (shouldBeMadeImplicit()) {
     return;
   }

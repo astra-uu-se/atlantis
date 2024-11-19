@@ -13,9 +13,9 @@ using ::testing::ContainerEq;
 class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
  public:
   Int numInputs{4};
-  std::vector<Var> inputVars;
+  std::vector<std::string> inputVars;
 
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::string reifiedVar{"reified"};
 
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
@@ -79,13 +79,12 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
     return false;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     numInputs = !shouldBeReplaced() || shouldHold() ? 4 : 2;
 
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back(
-          makeBoolVar("input_" + std::to_string(inputVars.size())));
+      inputVars.emplace_back("input_" + std::to_string(i));
+      retrieveBoolVarNode(inputVars.back());
       if (shouldBeSubsumed()) {
         const bool val = shouldHold() || i == 0;
         varNode(inputVars.back()).fixToValue(val);
@@ -93,13 +92,13 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
     }
     if (!shouldBeMadeImplicit()) {
       for (const auto& var : inputVars) {
-        _invariantGraph->root().addSearchVarNode(var.id);
+        _invariantGraph->root().addSearchVarNode(varNodeId(var));
       }
     }
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          reifiedVar.id, !shouldBeReplaced());
+                          varNodeId(reifiedVar), !shouldBeReplaced());
     } else {
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars), shouldHold(),
                           !shouldBeReplaced());
@@ -150,6 +149,7 @@ TEST_P(BoolAllEqualNodeTestFixture, application) {
 }
 
 TEST_P(BoolAllEqualNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -169,6 +169,7 @@ TEST_P(BoolAllEqualNodeTestFixture, updateState) {
 }
 
 TEST_P(BoolAllEqualNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -183,6 +184,7 @@ TEST_P(BoolAllEqualNodeTestFixture, replace) {
 }
 
 TEST_P(BoolAllEqualNodeTestFixture, propagation) {
+  generate();
   if (shouldBeMadeImplicit()) {
     return;
   }

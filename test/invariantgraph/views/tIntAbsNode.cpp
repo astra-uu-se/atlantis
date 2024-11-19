@@ -9,8 +9,8 @@ using namespace atlantis::invariantgraph;
 
 class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
  public:
-  Var outputVar{NULL_NODE_ID, "output"};
-  Var inputVar{NULL_NODE_ID, "input"};
+  std::string outputVar{"output"};
+  std::string inputVar{"input"};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
@@ -19,10 +19,9 @@ class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
     return std::abs(varNode(inputVarNodeId).domain()->lowerBound());
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
-    inputVar.id = retrieveIntVarNode(-10, 10, inputVar.identifier);
-    outputVar.id = retrieveIntVarNode(0, 10, outputVar.identifier);
+  void generate() {
+    retrieveIntVarNode(-10, 10, inputVar);
+    retrieveIntVarNode(0, 10, outputVar);
 
     if (shouldBeSubsumed()) {
       varNode(inputVar).fixToValue(Int{-5});
@@ -30,11 +29,13 @@ class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
       varNode(inputVarNodeId).domain()->removeBelow(0);
     }
 
-    createInvariantNode(*_invariantGraph, inputVar.id, outputVar.id);
+    createInvariantNode(*_invariantGraph, varNodeId(inputVar),
+                        varNodeId(outputVar));
   }
 };
 
 TEST_P(IntAbsNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -51,6 +52,7 @@ TEST_P(IntAbsNodeTestFixture, updateState) {
 }
 
 TEST_P(IntAbsNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -65,6 +67,7 @@ TEST_P(IntAbsNodeTestFixture, replace) {
 }
 
 TEST_P(IntAbsNodeTestFixture, propagation) {
+  generate();
   if (shouldBeSubsumed()) {
     return;
   }

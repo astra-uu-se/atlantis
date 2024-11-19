@@ -11,9 +11,9 @@ using ::testing::ContainerEq;
 
 class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
  public:
-  std::vector<Var> inputVars;
+  std::vector<std::string> inputVars;
 
-  Var reifiedVar{NULL_NODE_ID, "reified"};
+  std::string reifiedVar{"reified"};
 
   Int numInputs = 4;
 
@@ -51,13 +51,12 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
     return !trueFound;
   }
 
-  void SetUp() override {
-    NodeTestBase::SetUp();
+  void generate() {
     inputVars.clear();
     inputVars.reserve(numInputs);
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back(
-          makeBoolVar("input_" + std::to_string(inputVars.size())));
+      inputVars.emplace_back("input_" + std::to_string(i));
+      retrieveBoolVarNode(inputVars.back());
     }
 
     if (shouldBeSubsumed() || shouldBeReplaced()) {
@@ -70,9 +69,9 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
     }
 
     if (isReified()) {
-      reifiedVar.id = retrieveBoolVarNode(reifiedVar.identifier);
+      retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          reifiedVar.id);
+                          varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           shouldHold());
@@ -81,6 +80,7 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
 };
 
 TEST_P(ArrayBoolXorNodeTestFixture, updateState) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -100,6 +100,7 @@ TEST_P(ArrayBoolXorNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayBoolXorNodeTestFixture, replace) {
+  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -114,6 +115,7 @@ TEST_P(ArrayBoolXorNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayBoolXorNodeTestFixture, propagation) {
+  generate();
   if (shouldBeMadeImplicit()) {
     return;
   }
