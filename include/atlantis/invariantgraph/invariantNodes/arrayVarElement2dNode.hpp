@@ -6,21 +6,17 @@ namespace atlantis::invariantgraph {
 
 class ArrayVarElement2dNode : public InvariantNode {
  private:
-  size_t _numRows;
+  size_t _numCols;
   Int _offset1;
   Int _offset2;
 
  public:
-  ArrayVarElement2dNode(IInvariantGraph& graph,
-
-                        VarNodeId idx1, VarNodeId idx2,
+  ArrayVarElement2dNode(IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
                         std::vector<VarNodeId>&& flatVarMatrix,
-                        VarNodeId output, size_t numRows, Int offset1,
+                        VarNodeId output, size_t numCols, Int offset1,
                         Int offset2);
 
-  ArrayVarElement2dNode(IInvariantGraph& graph,
-
-                        VarNodeId idx1, VarNodeId idx2,
+  ArrayVarElement2dNode(IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
                         std::vector<std::vector<VarNodeId>>&& varMatrix,
                         VarNodeId output, Int offset1, Int offset2);
 
@@ -46,8 +42,8 @@ class ArrayVarElement2dNode : public InvariantNode {
     return staticInputVarNodeIds().back();
   }
 
-  size_t numCols() const noexcept {
-    return dynamicInputVarNodeIds().size() / _numRows;
+  size_t numRows() const noexcept {
+    return dynamicInputVarNodeIds().size() / _numCols;
   }
 };
 

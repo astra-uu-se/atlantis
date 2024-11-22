@@ -11,11 +11,11 @@ bool array_int_element2d(FznInvariantGraph& graph,
                          const fznparser::IntArg& idx1,
                          const fznparser::IntArg& idx2,
                          std::vector<Int>&& parVector,
-                         const fznparser::IntArg& output, const Int numRows,
+                         const fznparser::IntArg& output, const Int numCols,
                          const Int offset1, const Int offset2) {
-  if (numRows <= 0 || parVector.size() % numRows != 0) {
+  if (numCols <= 0 || parVector.size() % numCols != 0) {
     throw FznArgumentException(
-        "Constraint array_int_element2d the number of rows must be strictly "
+        "Constraint array_int_element2d the number of columns must be strictly "
         "positive and a divide the number of elements in the array.");
   }
 
@@ -33,11 +33,11 @@ bool array_int_element2d(FznInvariantGraph& graph,
         "the lower bound of the second index var.");
   }
 
-  const size_t numCols = parVector.size() / static_cast<size_t>(numRows);
+  const size_t numRows = parVector.size() / static_cast<size_t>(numCols);
 
   std::vector<std::vector<Int>> parMatrix(numRows, std::vector<Int>(numCols));
-  for (Int i = 0; i < numRows; ++i) {
-    for (size_t j = 0; j < numCols; ++j) {
+  for (size_t i = 0; i < numRows; ++i) {
+    for (Int j = 0; j < numCols; ++j) {
       parMatrix.at(i).at(j) = parVector.at(i * numCols + j);
     }
   }

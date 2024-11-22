@@ -11,16 +11,24 @@ predicate array_var_bool_element_nonshifted(var int: idx,
   let {
     int: offset = min(index_set(x));
     bool: all_params = is_fixed(x);
-  } in if all_params then array_bool_element_offset(idx, x, c, offset)
-    else array_var_bool_element_offset(idx, x, c, offset) endif;
+  } in if all_params then 
+    let {
+      array[index_set(x)] of bool: x_fixed = fix(x);
+    } in array_bool_element_offset(idx, x_fixed, c, offset)
+  else array_var_bool_element_offset(idx, x, c, offset) endif;
 
 predicate array_bool_element_offset(var int: idx,
-                                    array [int] of var bool: x,
+                                    array [int] of bool: x,
                                     var bool: c, int: offset);
 
 predicate array_var_bool_element_offset(var int: idx,
                                         array [int] of var bool: x,
                                         var bool: c, int: offset);
+
+predicate array_var_float_element_nonshifted(var int: idx,
+                                             array [int] of var float: x,
+                                             var float: c) = 
+  array_var_float_element((idx-(min(index_set(x))-1))::domain,array1d(x),c);
 
 predicate array_var_int_element_nonshifted(var int: idx,
                                            array [int] of var int: x,
@@ -28,11 +36,13 @@ predicate array_var_int_element_nonshifted(var int: idx,
   let {
     int: offset = min(index_set(x));
     bool: all_params = is_fixed(x);
-  } in if all_params then array_int_element_offset(idx, x, c, offset)
-    else array_var_int_element_offset(idx, x, c, offset) endif;
+  } in if all_params then let {
+      array[index_set(x)] of int: x_fixed = fix(x);
+    } in array_int_element_offset(idx, x_fixed, c, offset)
+  else array_var_int_element_offset(idx, x, c, offset) endif;
 
 predicate array_int_element_offset(var int: idx,
-                                   array [int] of var int: x,
+                                   array [int] of int: x,
                                    var int: c, int: offset);
 
 predicate array_var_int_element_offset(var int: idx,
@@ -40,5 +50,7 @@ predicate array_var_int_element_offset(var int: idx,
                                        var int: c, int: offset);
 
 
-predicate array_var_set_element_nonshifted(var int: idx, array[int] of var set of int: x, var set of int: c) =
+predicate array_var_set_element_nonshifted(var int: idx,
+                                           array[int] of var set of int: x,
+                                           var set of int: c) =
   array_var_set_element((idx-(min(index_set(x))-1))::domain,array1d(x),c);

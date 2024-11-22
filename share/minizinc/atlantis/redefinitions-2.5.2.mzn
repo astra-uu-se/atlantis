@@ -3,22 +3,24 @@ predicate array_var_bool_element2d_nonshifted(var int: idx1,
                                               array [int,int] of var bool: x,
                                               var bool: c) = 
   let {
-    int: num_rows = card(index_set_1of2(x));
+    int: num_cols = card(index_set_2of2(x));
     int: row_offset = min(index_set_1of2(x));
     int: col_offset = min(index_set_2of2(x));
     array[int] of var bool: x_flat = array1d(x);
     bool: all_params = is_fixed(x_flat);
   } in if all_params then 
-    array_bool_element2d_nonshifted_flat(idx1, idx2, x_flat, c, num_rows, row_offset, col_offset)
+    let {
+      array[int] of bool: x_flat_fixed = fix(x_flat);
+    } in array_bool_element2d_nonshifted_flat(idx1, idx2, x_flat_fixed, c, num_cols, row_offset, col_offset)
   else 
-    array_var_bool_element2d_nonshifted_flat(idx1, idx2, x_flat, c, num_rows, row_offset, col_offset)
+    array_var_bool_element2d_nonshifted_flat(idx1, idx2, x_flat, c, num_cols, row_offset, col_offset)
   endif; 
 
 predicate array_bool_element2d_nonshifted_flat(var int: idx1,
                                                var int: idx2,
-                                               array [int] of var bool: x,
+                                               array [int] of bool: x,
                                                var bool: c,
-                                               int: num_rows,
+                                               int: num_cols,
                                                int: row_offset,
                                                int: col_offset);
 
@@ -26,7 +28,7 @@ predicate array_var_bool_element2d_nonshifted_flat(var int: idx1,
                                                    var int: idx2,
                                                    array [int] of var bool: x,
                                                    var bool: c,
-                                                   int: num_rows,
+                                                   int: num_cols,
                                                    int: row_offset,
                                                    int: col_offset);
 
@@ -35,22 +37,24 @@ predicate array_var_int_element2d_nonshifted(var int: idx1,
                                              array [int,int] of var int: x,
                                              var int: c) = 
   let {
-    int: num_rows = card(index_set_1of2(x));
+    int: num_cols = card(index_set_2of2(x));
     int: row_offset = min(index_set_1of2(x));
     int: col_offset = min(index_set_2of2(x));
     array[int] of var int: x_flat = array1d(x);
     bool: all_params = is_fixed(x_flat);
   } in if all_params then 
-    array_int_element2d_nonshifted_flat(idx1, idx2, x_flat, c, num_rows, row_offset, col_offset)
+    let {
+      array[int] of int: x_flat_fixed = fix(x_flat);
+    } in array_int_element2d_nonshifted_flat(idx1, idx2, x_flat_fixed, c, num_cols, row_offset, col_offset)
   else 
-    array_var_int_element2d_nonshifted_flat(idx1, idx2, x_flat, c, num_rows, row_offset, col_offset)
+    array_var_int_element2d_nonshifted_flat(idx1, idx2, x_flat, c, num_cols, row_offset, col_offset)
   endif;
 
 predicate array_int_element2d_nonshifted_flat(var int: idx1,
                                               var int: idx2,
                                               array [int] of var int: x,
                                               var int: c,
-                                              int: num_rows,
+                                              int: num_cols,
                                               int: row_offset,
                                               int: col_offset);
 
@@ -58,7 +62,7 @@ predicate array_var_int_element2d_nonshifted_flat(var int: idx1,
                                                   var int: idx2,
                                                   array [int] of var int: x,
                                                   var int: c,
-                                                  int: num_rows,
+                                                  int: num_cols,
                                                   int: row_offset,
                                                   int: col_offset);
 
