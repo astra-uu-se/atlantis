@@ -43,8 +43,6 @@ class ImplicitConstraintNode : public virtual IImplicitConstraintNode,
   [[nodiscard]] std::shared_ptr<search::neighbourhoods::Neighbourhood>
   neighbourhood() override;
 
-  std::ostream& dotLangEntry(std::ostream&) const override;
-
  protected:
   virtual std::shared_ptr<search::neighbourhoods::Neighbourhood>
   createNeighbourhood() override = 0;

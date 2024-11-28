@@ -111,5 +111,11 @@ class IInvariantNode {
   virtual void markDynamicInputTo(VarNodeId node, bool registerHere) = 0;
 
   virtual void setState(InvariantNodeState) = 0;
+
+  virtual std::string dotLangIdentifier() const = 0;
+
+  virtual std::ostream& dotLangEdges(std::ostream&) const = 0;
+
+  virtual std::ostream& dotLangEntry(std::ostream&) const = 0;
 };
 }  // namespace atlantis::invariantgraph

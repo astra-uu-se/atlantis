@@ -1296,7 +1296,7 @@ void InvariantGraph::writeDotFile(std::ostream& o) const {
 
   for (const std::string& identifier : varIdentifiers) {
     const auto& vNode = varNodeConst(identifier);
-    visitedVarNodes.at(vNode.varNodeId().id) = true;
+    visitedVarNodes.at(vNode.varNodeId()) = true;
     if (!vNode.staticInputTo().empty() || !vNode.dynamicInputTo().empty() ||
         !vNode.definingNodes().empty()) {
       vNode.dotLangIdentifier(o, identifier);

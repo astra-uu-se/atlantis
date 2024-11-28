@@ -55,9 +55,8 @@ struct InvariantNodeId {
   }
   friend std::ostream& operator<<(std::ostream& os,
                                   const InvariantNodeId& invariantNodeId) {
-    os << (invariantNodeId.type == Type::IMPLICIT_CONSTRAINT ? "impl_"
-                                                             : "inv_");
-    return os << invariantNodeId.id;
+    return os << (invariantNodeId.isImplicitConstraint() ? "impl_" : "inv_")
+              << size_t(invariantNodeId);
   }
 
   bool operator!=(size_t other) const { return !(operator==(other)); }
