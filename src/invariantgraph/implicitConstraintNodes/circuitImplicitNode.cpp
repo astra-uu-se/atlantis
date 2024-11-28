@@ -9,8 +9,9 @@
 namespace atlantis::invariantgraph {
 
 CircuitImplicitNode::CircuitImplicitNode(IInvariantGraph& graph,
-                                         std::vector<VarNodeId>&& vars)
-    : ImplicitConstraintNode(graph, std::move(vars)) {
+                                         std::vector<VarNodeId>&& vars,
+                                         Int offset)
+    : ImplicitConstraintNode(graph, std::move(vars)), _offset(offset) {
   assert(outputVarNodeIds().size() > 1);
 }
 
@@ -67,7 +68,7 @@ CircuitImplicitNode::createNeighbourhood() {
                                         : VarNode::DomainType::NONE);
   }
   return std::make_shared<search::neighbourhoods::CircuitNeighbourhood>(
-      std::move(searchVars));
+      std::move(searchVars), _offset);
 }
 
 }  // namespace atlantis::invariantgraph

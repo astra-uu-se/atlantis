@@ -9,8 +9,12 @@
 namespace atlantis::invariantgraph {
 
 class CircuitImplicitNode : public ImplicitConstraintNode {
+ private:
+  Int _offset;
+
  public:
-  explicit CircuitImplicitNode(IInvariantGraph&, std::vector<VarNodeId>&&);
+  explicit CircuitImplicitNode(IInvariantGraph&, std::vector<VarNodeId>&&,
+                               Int offset);
 
   void init(InvariantNodeId) override;
 

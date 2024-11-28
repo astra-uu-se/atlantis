@@ -4,8 +4,12 @@
 
 namespace atlantis::invariantgraph {
 class CircuitNode : public ViolationInvariantNode {
+ private:
+  Int _offset;
+
  public:
-  explicit CircuitNode(IInvariantGraph& graph, std::vector<VarNodeId>&&);
+  explicit CircuitNode(IInvariantGraph& graph, std::vector<VarNodeId>&&,
+                       Int offset);
 
   void init(InvariantNodeId) override;
 

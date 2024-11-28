@@ -1,7 +1,6 @@
-% Ensure the circuit index set always starts at 1.
 predicate fzn_circuit(array[int] of var int: x) =
     let {
-       int: offset = min(index_set(x))-1
-    } in circuit_no_offset([ x[i] - offset | i in index_set(x) ]);
+       int: offset = min(index_set(x));
+    } in fzn_circuit_offset(x, offset);
 
-predicate circuit_no_offset(array[int] of var int: x);
+predicate fzn_circuit_offset(array[int] of var int: x, int: offset);

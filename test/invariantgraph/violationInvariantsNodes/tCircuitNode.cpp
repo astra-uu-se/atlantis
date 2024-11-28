@@ -55,7 +55,7 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
       }
     }
     createInvariantNode(*_invariantGraph,
-                        std::vector<VarNodeId>{inputVarNodeIds});
+                        std::vector<VarNodeId>{inputVarNodeIds}, 1);
   }
 };
 

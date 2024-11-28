@@ -11,8 +11,9 @@
 
 namespace atlantis::invariantgraph {
 
-CircuitNode::CircuitNode(IInvariantGraph& graph, std::vector<VarNodeId>&& vars)
-    : ViolationInvariantNode(graph, std::move(vars), true) {}
+CircuitNode::CircuitNode(IInvariantGraph& graph, std::vector<VarNodeId>&& vars,
+                         Int offset)
+    : ViolationInvariantNode(graph, std::move(vars), true), _offset(offset) {}
 
 void CircuitNode::init(InvariantNodeId id) {
   ViolationInvariantNode::init(id);
@@ -62,7 +63,8 @@ bool CircuitNode::makeImplicit() {
   }
   invariantGraph().addImplicitConstraintNode(
       std::make_shared<CircuitImplicitNode>(
-          invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
+          invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
+          _offset));
   return true;
 }
 
@@ -148,7 +150,7 @@ bool CircuitNode::replace() {
     // sansI[x[i]] = modulo[i]
     invariantGraph().addInvariantNode(std::make_shared<ArrayVarElementNode>(
         invariantGraph(), staticInputVarNodeIds().at(i), std::move(orderSansI),
-        modoluVars.at(i), 1));
+        modoluVars.at(i), _offset));
   }
 
   invariantGraph().addInvariantNode(std::make_shared<AllDifferentNode>(

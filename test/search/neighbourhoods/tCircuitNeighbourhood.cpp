@@ -49,7 +49,7 @@ class CircuitNeighbourhoodTest : public ::testing::Test {
 
 TEST_F(CircuitNeighbourhoodTest, all_values_are_initialised) {
   search::neighbourhoods::CircuitNeighbourhood neighbourhood(
-      (std::vector<search::SearchVar>(next)));
+      std::vector<search::SearchVar>(next), 1);
 
   _assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
@@ -61,7 +61,7 @@ TEST_F(CircuitNeighbourhoodTest, fixed_vars_are_considered) {
   next[1] = search::SearchVar(next[1].solverId(), SearchDomain({3}));
 
   search::neighbourhoods::CircuitNeighbourhood neighbourhood(
-      (std::vector<search::SearchVar>(next)));
+      std::vector<search::SearchVar>(next), 1);
 
   _assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
@@ -73,7 +73,7 @@ TEST_F(CircuitNeighbourhoodTest, moves_maintain_circuit) {
   static int CONFIDENCE = 1000;
 
   search::neighbourhoods::CircuitNeighbourhood neighbourhood(
-      (std::vector<search::SearchVar>(next)));
+      std::vector<search::SearchVar>(next), 1);
   _assignment->assign(
       [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
 

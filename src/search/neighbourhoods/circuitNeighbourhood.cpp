@@ -4,8 +4,9 @@
 
 namespace atlantis::search::neighbourhoods {
 
-CircuitNeighbourhood::CircuitNeighbourhood(std::vector<SearchVar>&& vars)
-    : _vars(std::move(vars)) {}
+CircuitNeighbourhood::CircuitNeighbourhood(std::vector<SearchVar>&& vars,
+                                           Int offset)
+    : _vars(std::move(vars)), _offset(offset) {}
 
 void CircuitNeighbourhood::initialise(RandomProvider& random,
                                       AssignmentModifier& modifications) {
@@ -115,13 +116,14 @@ bool CircuitNeighbourhood::randomMove(RandomProvider& random,
 }
 
 Int CircuitNeighbourhood::idx2Node(size_t nodeIdx) noexcept {
-  // Account for index sets starting at 1 instead of 0.
-  return static_cast<Int>(nodeIdx) + 1;
+  // Account for index sets starting at _offset instead of 0.
+  return static_cast<Int>(nodeIdx) + _offset;
 }
 
 size_t CircuitNeighbourhood::node2Idx(Int node) noexcept {
-  // Account for index sets starting at 1 instead of 0.
-  return static_cast<size_t>(node) - 1;
+  // Account for index sets starting at _offset instead of 0.
+  assert(node >= _offset);
+  return static_cast<size_t>(node - _offset);
 }
 
 }  // namespace atlantis::search::neighbourhoods

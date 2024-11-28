@@ -23,7 +23,7 @@ class CircuitImplicitNodeTestFixture
 
     std::vector<VarNodeId> vars{a, b, c, d};
 
-    createImplicitConstraintNode(*_invariantGraph, std::move(vars));
+    createImplicitConstraintNode(*_invariantGraph, std::move(vars), 1);
   }
 };
 
