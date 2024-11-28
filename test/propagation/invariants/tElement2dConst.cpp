@@ -377,11 +377,11 @@ class MockElement2dVar : public Element2dConst {
     Element2dConst::registerVars();
   }
   explicit MockElement2dVar(SolverBase& solver, VarViewId output,
-                            VarViewId index1, VarViewId index2,
+                            VarViewId drowIndex, VarViewId colIndex,
                             std::vector<std::vector<Int>>&& parMatrix,
-                            Int offset1, Int offset2)
-      : Element2dConst(solver, output, index1, index2, std::move(parMatrix),
-                       offset1, offset2) {
+                            Int rowOffset, Int colOffset)
+      : Element2dConst(solver, output, drowIndex, colIndex,
+                       std::move(parMatrix), rowOffset, colOffset) {
     EXPECT_TRUE(output.isVar());
 
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
@@ -420,13 +420,13 @@ TEST_F(Element2dConstTest, SolverIntegration) {
         parMatrix.at(i).at(j) = static_cast<Int>(i * numCols + j);
       }
     }
-    VarViewId index1 = _solver->makeIntVar(1, 1, numRows);
-    VarViewId index2 = _solver->makeIntVar(1, 1, numCols);
+    VarViewId drowIndex = _solver->makeIntVar(1, 1, numRows);
+    VarViewId colIndex = _solver->makeIntVar(1, 1, numCols);
     VarViewId output = _solver->makeIntVar(-10, -100, 100);
     testNotifications<MockElement2dVar>(
         &_solver->makeInvariant<MockElement2dVar>(
-            *_solver, output, index1, index2, std::move(parMatrix), 1, 1),
-        {propMode, markingMode, 3, index1, 5, output});
+            *_solver, output, drowIndex, colIndex, std::move(parMatrix), 1, 1),
+        {propMode, markingMode, 3, drowIndex, 5, output});
   }
 }
 

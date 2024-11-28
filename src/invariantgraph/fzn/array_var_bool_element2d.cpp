@@ -2,46 +2,56 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayElement2dNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElement2dNode.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool array_var_bool_element2d(
-    FznInvariantGraph& graph, const fznparser::IntArg& idx1,
-    const fznparser::IntArg& idx2,
+    FznInvariantGraph& graph, const fznparser::IntArg& rowIndex,
+    const fznparser::IntArg& colIndex,
     const std::shared_ptr<fznparser::BoolVarArray>& inputs,
-    const fznparser::BoolArg& output, Int numRows, Int offset1, Int offset2) {
-  if (numRows <= 0 || inputs->size() % numRows != 0) {
+    const fznparser::BoolArg& output, Int numCols, Int rowOffset,
+    Int colOffset) {
+  if (numCols <= 0 || inputs->size() % numCols != 0) {
     throw FznArgumentException(
-        "Constraint array_var_bool_element2d the number of rows must be "
+        "Constraint array_var_bool_element2d the number of columns must be "
         "strictly positive and a divide the number of elements in the array.");
   }
 
-  if (offset1 >
-      (idx1.isParameter() ? idx1.toParameter() : idx1.var()->lowerBound())) {
+  if (rowOffset > (rowIndex.isParameter() ? rowIndex.toParameter()
+                                          : rowIndex.var()->lowerBound())) {
     throw FznArgumentException(
         "Constraint array_var_bool_element2d the first offset cannot be "
         "greater than the lower bound of the first index var.");
   }
 
-  if (offset2 >
-      (idx2.isParameter() ? idx2.toParameter() : idx2.var()->lowerBound())) {
+  if (colOffset > (colIndex.isParameter() ? colIndex.toParameter()
+                                          : colIndex.var()->lowerBound())) {
     throw FznArgumentException(
         "Constraint array_var_bool_element2d the second offset cannot be "
         "greater than the lower bound of the second index var.");
   }
-
-  graph.addInvariantNode(std::make_shared<ArrayVarElement2dNode>(
-      graph, graph.retrieveVarNode(idx1), graph.retrieveVarNode(idx2),
-      graph.retrieveVarNodes(inputs), graph.retrieveVarNode(output),
-      static_cast<size_t>(numRows), offset1, offset2));
+  if (inputs->isFixed()) {
+    graph.addInvariantNode(std::make_shared<ArrayElement2dNode>(
+        graph, graph.retrieveVarNode(rowIndex), graph.retrieveVarNode(colIndex),
+        inputs->toParVector(), graph.retrieveVarNode(output),
+        static_cast<size_t>(numCols), rowOffset, colOffset));
+  } else {
+    graph.addInvariantNode(std::make_shared<ArrayVarElement2dNode>(
+        graph, graph.retrieveVarNode(rowIndex), graph.retrieveVarNode(colIndex),
+        graph.retrieveVarNodes(inputs), graph.retrieveVarNode(output),
+        static_cast<size_t>(numCols), rowOffset, colOffset));
+  }
   return true;
 }
 
 bool array_var_bool_element2d(FznInvariantGraph& graph,
                               const fznparser::Constraint& constraint) {
-  if (constraint.identifier() != "array_var_bool_element2d" &&
+  if (constraint.identifier() != "array_bool_element2d" &&
+      constraint.identifier() != "array_bool_element2d_nonshifted_flat" &&
+      constraint.identifier() != "array_var_bool_element2d" &&
       constraint.identifier() != "array_var_bool_element2d_nonshifted_flat") {
     return false;
   }

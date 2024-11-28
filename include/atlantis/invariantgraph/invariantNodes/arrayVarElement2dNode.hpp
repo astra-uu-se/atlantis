@@ -7,18 +7,20 @@ namespace atlantis::invariantgraph {
 class ArrayVarElement2dNode : public InvariantNode {
  private:
   size_t _numCols;
-  Int _offset1;
-  Int _offset2;
+  Int _rowOffset;
+  Int _colOffset;
 
  public:
-  ArrayVarElement2dNode(IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+  ArrayVarElement2dNode(IInvariantGraph& graph, VarNodeId rowIndex,
+                        VarNodeId colIndex,
                         std::vector<VarNodeId>&& flatVarMatrix,
-                        VarNodeId output, size_t numCols, Int offset1,
-                        Int offset2);
+                        VarNodeId output, size_t numCols, Int rowOffset,
+                        Int colOffset);
 
-  ArrayVarElement2dNode(IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
-                        std::vector<std::vector<VarNodeId>>&& varMatrix,
-                        VarNodeId output, Int offset1, Int offset2);
+  ArrayVarElement2dNode(IInvariantGraph& graph, VarNodeId rowIndex,
+                        VarNodeId colIndex,
+                        const std::vector<std::vector<VarNodeId>>& varMatrix,
+                        VarNodeId output, Int rowOffset, Int colOffset);
 
   void init(InvariantNodeId) override;
 
@@ -32,19 +34,24 @@ class ArrayVarElement2dNode : public InvariantNode {
 
   void registerNode() override;
 
-  [[nodiscard]] VarNodeId at(Int row, Int col);
+  [[nodiscard]] size_t flatIndex(Int row, Int col,
+                                 bool addOffsets = false) const;
 
-  [[nodiscard]] VarNodeId idx1() const noexcept {
+  [[nodiscard]] VarNodeId at(Int row, Int col, bool addOffsets = false) const;
+
+  [[nodiscard]] VarNodeId rowIndex() const noexcept {
     return staticInputVarNodeIds().front();
   }
 
-  [[nodiscard]] VarNodeId idx2() const noexcept {
+  [[nodiscard]] VarNodeId colIndex() const noexcept {
     return staticInputVarNodeIds().back();
   }
 
   size_t numRows() const noexcept {
     return dynamicInputVarNodeIds().size() / _numCols;
   }
+
+  size_t numCols() const noexcept { return _numCols; }
 };
 
 }  // namespace atlantis::invariantgraph

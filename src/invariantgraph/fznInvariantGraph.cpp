@@ -4,12 +4,8 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
-#include "atlantis/invariantgraph/fzn/array_bool_element.hpp"
-#include "atlantis/invariantgraph/fzn/array_bool_element2d.hpp"
 #include "atlantis/invariantgraph/fzn/array_bool_or.hpp"
 #include "atlantis/invariantgraph/fzn/array_bool_xor.hpp"
-#include "atlantis/invariantgraph/fzn/array_int_element.hpp"
-#include "atlantis/invariantgraph/fzn/array_int_element2d.hpp"
 #include "atlantis/invariantgraph/fzn/array_int_maximum.hpp"
 #include "atlantis/invariantgraph/fzn/array_int_minimum.hpp"
 #include "atlantis/invariantgraph/fzn/array_var_bool_element.hpp"
@@ -393,12 +389,8 @@ bool FznInvariantGraph::makeInvariantNode(
   }
 
   MAKE_INVARIANT(fzn::array_bool_and)
-  MAKE_INVARIANT(fzn::array_bool_element2d)
-  MAKE_INVARIANT(fzn::array_bool_element)
   MAKE_INVARIANT(fzn::array_bool_or)
   MAKE_INVARIANT(fzn::array_bool_xor)
-  MAKE_INVARIANT(fzn::array_int_element2d)
-  MAKE_INVARIANT(fzn::array_int_element)
   MAKE_INVARIANT(fzn::array_int_maximum)
   MAKE_INVARIANT(fzn::array_int_minimum)
   MAKE_INVARIANT(fzn::array_var_bool_element2d)

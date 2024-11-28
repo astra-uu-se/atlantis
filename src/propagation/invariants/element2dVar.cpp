@@ -14,23 +14,23 @@ static inline Int numCols(
   return varMatrix.empty() ? 0 : static_cast<Int>(varMatrix.front().size());
 }
 
-Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarViewId index1,
-                           VarViewId index2,
+Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarViewId rowIndex,
+                           VarViewId colIndex,
                            std::vector<std::vector<VarViewId>>&& varMatrix,
-                           Int offset1, Int offset2)
+                           Int rowOffset, Int colOffset)
     : Invariant(solver),
       _varMatrix(std::move(varMatrix)),
-      _indices{index1, index2},
+      _indices{rowIndex, colIndex},
       _dimensions{static_cast<Int>(_varMatrix.size()), numCols(_varMatrix)},
-      _offsets{offset1, offset2},
+      _offsets{rowOffset, colOffset},
       _output(output) {}
 
 Element2dVar::Element2dVar(SolverBase& solver, VarViewId output,
-                           VarViewId index1, VarViewId index2,
+                           VarViewId rowIndex, VarViewId colIndex,
                            std::vector<std::vector<VarViewId>>&& varMatrix,
-                           Int offset1, Int offset2)
-    : Element2dVar(solver, VarId(output), index1, index2, std::move(varMatrix),
-                   offset1, offset2) {
+                           Int rowOffset, Int colOffset)
+    : Element2dVar(solver, VarId(output), rowIndex, colIndex,
+                   std::move(varMatrix), rowOffset, colOffset) {
   assert(output.isVar());
 }
 

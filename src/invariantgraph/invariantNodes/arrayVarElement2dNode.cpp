@@ -19,20 +19,21 @@ static std::vector<VarNodeId> flatten(
 }
 
 ArrayVarElement2dNode::ArrayVarElement2dNode(
-    IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+    IInvariantGraph& graph, VarNodeId rowIndex, VarNodeId colIndex,
     std::vector<VarNodeId>&& flatVarMatrix, VarNodeId output, size_t numCols,
-    Int offset1, Int offset2)
-    : InvariantNode(graph, {output}, {idx1, idx2}, std::move(flatVarMatrix)),
+    Int rowOffset, Int colOffset)
+    : InvariantNode(graph, {output}, {rowIndex, colIndex},
+                    std::move(flatVarMatrix)),
       _numCols(numCols),
-      _offset1(offset1),
-      _offset2(offset2) {}
+      _rowOffset(rowOffset),
+      _colOffset(colOffset) {}
 
 ArrayVarElement2dNode::ArrayVarElement2dNode(
-    IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
-    std::vector<std::vector<VarNodeId>>&& varMatrix, VarNodeId output,
-    Int offset1, Int offset2)
-    : ArrayVarElement2dNode(graph, idx1, idx2, flatten(varMatrix), output,
-                            varMatrix.size(), offset1, offset2) {}
+    IInvariantGraph& graph, VarNodeId rowIndex, VarNodeId colIndex,
+    const std::vector<std::vector<VarNodeId>>& varMatrix, VarNodeId output,
+    Int rowOffset, Int colOffset)
+    : ArrayVarElement2dNode(graph, rowIndex, colIndex, flatten(varMatrix),
+                            output, varMatrix.size(), rowOffset, colOffset) {}
 
 void ArrayVarElement2dNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
@@ -51,51 +52,53 @@ void ArrayVarElement2dNode::init(InvariantNodeId id) {
                   }));
 }
 
-VarNodeId ArrayVarElement2dNode::at(Int row, Int col) {
-  assert(row >= _offset1 && col >= _offset2);
-  const size_t r = static_cast<size_t>(row - _offset1);
-  assert(r < _numCols);
-  const size_t c = static_cast<size_t>(col - _offset2);
-  assert(col >= 0);
-  const size_t pos = r * _numCols + c;
-  return dynamicInputVarNodeIds().at(pos);
+size_t ArrayVarElement2dNode::flatIndex(Int row, Int col,
+                                        bool addOffsets) const {
+  if (addOffsets) {
+    row += _rowOffset;
+    col += _colOffset;
+  }
+  assert(row >= _rowOffset && col >= _colOffset);
+  const size_t r = static_cast<size_t>(row - _rowOffset);
+  assert(r < numRows());
+  const size_t c = static_cast<size_t>(col - _colOffset);
+  assert(c < _numCols);
+  return r * _numCols + c;
+}
+
+VarNodeId ArrayVarElement2dNode::at(Int row, Int col, bool addOffsets) const {
+  return dynamicInputVarNodeIds().at(flatIndex(row, col, addOffsets));
 }
 
 void ArrayVarElement2dNode::updateState() {
-  VarNode& idx1Node = invariantGraph().varNode(idx1());
-  // idx1Node.removeValuesBelow(_offset1);
-  // idx1Node.removeValuesAbove(_offset1 + static_cast<Int>(_numCols) - 1);
+  VarNode& rowIndexNode = invariantGraph().varNode(rowIndex());
+  // rowIndexNode.removeValuesBelow(_rowOffset);
+  // rowIndexNode.removeValuesAbove(_rowOffset + static_cast<Int>(_numCols) -
+  // 1);
 
-  VarNode& idx2Node = invariantGraph().varNode(idx2());
-  // idx2Node.removeValuesBelow(_offset2);
-  // idx2Node.removeValuesAbove(_offset2 + static_cast<Int>(numCols()) - 1);
+  VarNode& colIndexNode = invariantGraph().varNode(colIndex());
+  // colIndexNode.removeValuesBelow(_colOffset);
+  // colIndexNode.removeValuesAbove(_colOffset + static_cast<Int>(numCols()) -
+  // 1);
 
   std::vector<VarNodeId> varNodeIdsToRemove;
   varNodeIdsToRemove.reserve(dynamicInputVarNodeIds().size());
 
   VarNodeId placeholder{NULL_NODE_ID};
 
-  for (Int row = _offset1; row < _offset1 + static_cast<Int>(numRows());
+  for (Int row = _rowOffset; row < _rowOffset + static_cast<Int>(numRows());
        ++row) {
-    const bool inDom1 = idx1Node.inDomain(row);
-    for (Int col = _offset2; col < _offset2 + static_cast<Int>(_numCols);
+    const bool inDom1 = rowIndexNode.inDomain(row);
+    for (Int col = _colOffset; col < _colOffset + static_cast<Int>(_numCols);
          ++col) {
-      if (inDom1 && idx2Node.inDomain(col)) {
+      if (inDom1 && colIndexNode.inDomain(col)) {
         continue;
       }
-      assert(row >= _offset1 && col >= _offset2);
-      const size_t r = static_cast<size_t>(row - _offset1);
-      assert(r < _numCols);
-      const size_t c = static_cast<size_t>(col - _offset2);
-      assert(col >= 0);
-      const size_t pos = r * _numCols + c;
-      if (invariantGraph()
-              .varNodeConst(_dynamicInputVarNodeIds.at(pos))
-              .isFixed()) {
+      if (invariantGraph().varNodeConst(at(row, col)).isFixed()) {
         continue;
       }
 
-      varNodeIdsToRemove.emplace_back(_dynamicInputVarNodeIds.at(pos));
+      varNodeIdsToRemove.emplace_back(at(row, col));
 
       if (placeholder == NULL_NODE_ID) {
         placeholder = invariantGraphConst()
@@ -104,7 +107,7 @@ void ArrayVarElement2dNode::updateState() {
                           ? invariantGraph().retrieveIntVarNode(0)
                           : invariantGraph().retrieveBoolVarNode(false);
       }
-      _dynamicInputVarNodeIds.at(pos) = placeholder;
+      _dynamicInputVarNodeIds.at(flatIndex(row, col)) = placeholder;
     }
   }
 
@@ -142,55 +145,50 @@ void ArrayVarElement2dNode::registerOutputVars() {
 
 bool ArrayVarElement2dNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         (invariantGraphConst().varNodeConst(idx1()).isFixed() ||
-          invariantGraphConst().varNodeConst(idx2()).isFixed());
+         (invariantGraphConst().varNodeConst(rowIndex()).isFixed() ||
+          invariantGraphConst().varNodeConst(colIndex()).isFixed());
 }
 
 bool ArrayVarElement2dNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  auto& idx1Node = invariantGraph().varNode(idx1());
-  auto& idx2Node = invariantGraph().varNode(idx2());
-  assert(idx1Node.isFixed() || idx2Node.isFixed());
-  if (idx1Node.isFixed() && idx2Node.isFixed()) {
-    const VarNodeId input = at(idx1Node.lowerBound(), idx2Node.lowerBound());
+  auto& rowIndexNode = invariantGraph().varNode(rowIndex());
+  auto& colIndexNode = invariantGraph().varNode(colIndex());
+  assert(rowIndexNode.isFixed() || colIndexNode.isFixed());
+  if (rowIndexNode.isFixed() && colIndexNode.isFixed()) {
+    const VarNodeId input =
+        at(rowIndexNode.lowerBound(), colIndexNode.lowerBound());
     invariantGraph().replaceVarNode(outputVarNodeIds().front(), input);
-  } else if (idx1Node.isFixed()) {
-    std::vector<VarNodeId> column;
-    column.reserve(_numCols);
+  } else if (rowIndexNode.isFixed()) {
+    std::vector<VarNodeId> colArray(_numCols);
     for (Int i = 0; i < static_cast<Int>(_numCols); ++i) {
-      column.emplace_back(at(idx1Node.lowerBound(), i + _offset2));
+      colArray[i] = at(rowIndexNode.lowerBound(), i + _colOffset);
     }
     invariantGraph().addInvariantNode(std::make_shared<ArrayVarElementNode>(
-        invariantGraph(), idx2(), std::move(column), outputVarNodeIds().front(),
-        _offset2));
+        invariantGraph(), colIndex(), std::move(colArray),
+        outputVarNodeIds().front(), _colOffset));
   } else {
-    assert(idx2Node.isFixed());
-    const Int numCols = dynamicInputVarNodeIds().size() / _numCols;
-    std::vector<VarNodeId> row;
-    row.reserve(numCols);
-    for (Int i = 0; i < numCols; ++i) {
-      row.emplace_back(at(i + _offset1, idx2Node.lowerBound()));
+    assert(colIndexNode.isFixed());
+    std::vector<VarNodeId> rowArray(numRows());
+    for (Int i = 0; i < static_cast<Int>(numRows()); ++i) {
+      rowArray[i] = at(i + _rowOffset, colIndexNode.lowerBound());
     }
     invariantGraph().addInvariantNode(std::make_shared<ArrayVarElementNode>(
-        invariantGraph(), idx1(), std::move(row), outputVarNodeIds().front(),
-        _offset1));
+        invariantGraph(), rowIndex(), std::move(rowArray),
+        outputVarNodeIds().front(), _rowOffset));
   }
   return true;
 }
 
 void ArrayVarElement2dNode::registerNode() {
-  const size_t numCols = dynamicInputVarNodeIds().size() / _numCols;
   std::vector<std::vector<propagation::VarViewId>> varMatrix(
-      _numCols, std::vector<propagation::VarViewId>{});
-  for (size_t i = 0; i < _numCols; ++i) {
-    varMatrix.at(i).reserve(numCols);
-    for (size_t j = 0; j < numCols; ++j) {
-      varMatrix.at(i).emplace_back(
-          invariantGraph()
-              .varNode(dynamicInputVarNodeIds().at(i * numCols + j))
-              .varId());
+      numRows(), std::vector<propagation::VarViewId>{});
+  for (size_t r = 0; r < numRows(); ++r) {
+    varMatrix.at(r).reserve(_numCols);
+    for (size_t c = 0; c < _numCols; ++c) {
+      varMatrix.at(r).emplace_back(
+          invariantGraph().varNode(at(r, c, true)).varId());
     }
   }
 
@@ -199,8 +197,8 @@ void ArrayVarElement2dNode::registerNode() {
   assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
   solver().makeInvariant<propagation::Element2dVar>(
       solver(), invariantGraph().varId(outputVarNodeIds().front()),
-      invariantGraph().varId(idx1()), invariantGraph().varId(idx2()),
-      std::move(varMatrix), _offset1, _offset2);
+      invariantGraph().varId(rowIndex()), invariantGraph().varId(colIndex()),
+      std::move(varMatrix), _rowOffset, _colOffset);
 }
 
 }  // namespace atlantis::invariantgraph

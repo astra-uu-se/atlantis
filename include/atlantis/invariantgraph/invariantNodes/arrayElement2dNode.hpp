@@ -6,19 +6,32 @@ namespace atlantis::invariantgraph {
 
 class ArrayElement2dNode : public InvariantNode {
  private:
-  std::vector<std::vector<Int>> _parMatrix;
-  Int _offset1;
-  Int _offset2;
+  std::vector<Int> _flatParMatrix;
+  size_t _numCols;
+  Int _rowOffset;
+  Int _colOffset;
   bool _isIntMatrix;
 
  public:
-  ArrayElement2dNode(IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
-                     std::vector<std::vector<Int>>&& parMatrix,
-                     VarNodeId output, Int offset1, Int offset2);
+  ArrayElement2dNode(IInvariantGraph& graph, VarNodeId rowIndex,
+                     VarNodeId colIndex,
+                     const std::vector<std::vector<Int>>& parMatrix,
+                     VarNodeId output, Int rowOffset, Int colOffset);
 
-  ArrayElement2dNode(IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
-                     std::vector<std::vector<bool>>&& parMatrix,
-                     VarNodeId output, Int offset1, Int offset2);
+  ArrayElement2dNode(IInvariantGraph& graph, VarNodeId rowIndex,
+                     VarNodeId colIndex, std::vector<Int>&& flatParMatrix,
+                     VarNodeId output, size_t numCols, Int rowOffset,
+                     Int colOffset);
+
+  ArrayElement2dNode(IInvariantGraph& graph, VarNodeId rowIndex,
+                     VarNodeId colIndex,
+                     const std::vector<std::vector<bool>>& parMatrix,
+                     VarNodeId output, Int rowOffset, Int colOffset);
+
+  ArrayElement2dNode(IInvariantGraph& graph, VarNodeId rowIndex,
+                     VarNodeId colIndex, const std::vector<bool>& flatParMatrix,
+                     VarNodeId output, size_t numCols, Int rowOffset,
+                     Int colOffset);
 
   void init(InvariantNodeId) override;
 
@@ -32,12 +45,23 @@ class ArrayElement2dNode : public InvariantNode {
 
   void registerNode() override;
 
-  [[nodiscard]] VarNodeId idx1() const noexcept {
+  [[nodiscard]] size_t flatIndex(Int row, Int col,
+                                 bool addOffsets = false) const;
+
+  [[nodiscard]] Int at(Int row, Int col, bool addOffsets = false) const;
+
+  [[nodiscard]] VarNodeId rowIndex() const noexcept {
     return staticInputVarNodeIds().front();
   }
 
-  [[nodiscard]] VarNodeId idx2() const noexcept {
+  [[nodiscard]] VarNodeId colIndex() const noexcept {
     return staticInputVarNodeIds().back();
+  }
+
+  [[nodiscard]] size_t numCols() const { return _numCols; }
+
+  [[nodiscard]] size_t numRows() const {
+    return _flatParMatrix.size() / _numCols;
   }
 };
 

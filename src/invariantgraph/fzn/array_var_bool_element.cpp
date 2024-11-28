@@ -2,6 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 
@@ -11,9 +12,15 @@ bool array_var_bool_element(
     FznInvariantGraph& graph, const fznparser::IntArg& index,
     const std::shared_ptr<fznparser::BoolVarArray>& inputs,
     const fznparser::BoolArg& output, Int offset) {
-  graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
-      graph, graph.retrieveVarNode(index), graph.retrieveVarNodes(inputs),
-      graph.retrieveVarNode(output), offset));
+  if (inputs->isFixed()) {
+    graph.addInvariantNode(std::make_shared<ArrayElementNode>(
+        graph, inputs->toParVector(), graph.retrieveVarNode(index),
+        graph.retrieveVarNode(output), offset));
+  } else {
+    graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+        graph, graph.retrieveVarNode(index), graph.retrieveVarNodes(inputs),
+        graph.retrieveVarNode(output), offset));
+  }
   return true;
 }
 

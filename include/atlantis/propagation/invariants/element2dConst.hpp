@@ -39,15 +39,15 @@ class Element2dConst : public Invariant {
   }
 
  public:
-  explicit Element2dConst(SolverBase&, VarId output, VarViewId index1,
-                          VarViewId index2,
+  explicit Element2dConst(SolverBase&, VarId output, VarViewId rowIndex,
+                          VarViewId colIndex,
                           std::vector<std::vector<Int>>&& matrix,
-                          Int offset1 = 1, Int offset2 = 1);
+                          Int rowOffset = 1, Int colOffset = 1);
 
-  explicit Element2dConst(SolverBase&, VarViewId output, VarViewId index1,
-                          VarViewId index2,
+  explicit Element2dConst(SolverBase&, VarViewId output, VarViewId rowIndex,
+                          VarViewId colIndex,
                           std::vector<std::vector<Int>>&& matrix,
-                          Int offset1 = 1, Int offset2 = 1);
+                          Int rowOffset = 1, Int colOffset = 1);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;

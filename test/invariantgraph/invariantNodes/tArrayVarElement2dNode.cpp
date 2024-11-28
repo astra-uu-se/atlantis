@@ -10,19 +10,19 @@ class ArrayVarElement2dNodeTestFixture
  public:
   std::vector<std::vector<VarNodeId>> varMatrixVarNodeIds;
 
-  VarNodeId idx1VarNodeId{NULL_NODE_ID};
-  VarNodeId idx2VarNodeId{NULL_NODE_ID};
+  VarNodeId rowIndexVarNodeId{NULL_NODE_ID};
+  VarNodeId colIndexVarNodeId{NULL_NODE_ID};
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
-  Int offsetIdx1 = 1;
-  Int offsetIdx2 = 1;
+  Int rowOffset = 1;
+  Int colOffset = 1;
 
   bool isIntElement() const { return _paramData.data <= 2; }
-  bool idx1ShouldBeReplaced() const {
+  bool rowIndexShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 0 || _paramData.data == 2);
   }
-  bool idx2ShouldBeReplaced() const {
+  bool colIndexShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 1 || _paramData.data == 3);
   }
 
@@ -41,24 +41,24 @@ class ArrayVarElement2dNodeTestFixture
       outputVarNodeId = retrieveBoolVarNode(outputIdentifier);
     }
 
-    idx1VarNodeId = retrieveIntVarNode(
-        offsetIdx1,
-        idx1ShouldBeReplaced()
-            ? offsetIdx1
-            : (offsetIdx1 + static_cast<Int>(varMatrixVarNodeIds.size()) - 1),
-        "idx1");
-    idx2VarNodeId = retrieveIntVarNode(
-        offsetIdx2,
-        idx2ShouldBeReplaced()
-            ? offsetIdx2
-            : (offsetIdx2 +
+    rowIndexVarNodeId = retrieveIntVarNode(
+        rowOffset,
+        rowIndexShouldBeReplaced()
+            ? rowOffset
+            : (rowOffset + static_cast<Int>(varMatrixVarNodeIds.size()) - 1),
+        "rowIndex");
+    colIndexVarNodeId = retrieveIntVarNode(
+        colOffset,
+        colIndexShouldBeReplaced()
+            ? colOffset
+            : (colOffset +
                static_cast<Int>(varMatrixVarNodeIds.front().size()) - 1),
-        "idx2");
+        "colIndex");
 
     createInvariantNode(
-        *_invariantGraph, idx1VarNodeId, idx2VarNodeId,
+        *_invariantGraph, rowIndexVarNodeId, colIndexVarNodeId,
         std::vector<std::vector<VarNodeId>>{varMatrixVarNodeIds},
-        outputVarNodeId, offsetIdx1, offsetIdx2);
+        outputVarNodeId, rowOffset, colOffset);
   }
 };
 
@@ -66,8 +66,8 @@ TEST_P(ArrayVarElement2dNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().idx1(), idx1VarNodeId);
-  EXPECT_EQ(invNode().idx2(), idx2VarNodeId);
+  EXPECT_EQ(invNode().rowIndex(), rowIndexVarNodeId);
+  EXPECT_EQ(invNode().colIndex(), colIndexVarNodeId);
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
   EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
@@ -96,10 +96,11 @@ TEST_P(ArrayVarElement2dNodeTestFixture, application) {
   invNode().registerNode();
   _solver->close();
 
-  // x00, x01, x10, x11, idx1VarNodeId, idx2VarNodeId
+  // x00, x01, x10, x11, rowIndexVarNodeId, colIndexVarNodeId
   EXPECT_EQ(_solver->searchVars().size(), 6);
 
-  // x00, x01, x10, x11, idx1VarNodeId, idx2VarNodeId, and outputVarNodeId
+  // x00, x01, x10, x11, rowIndexVarNodeId, colIndexVarNodeId, and
+  // outputVarNodeId
   EXPECT_EQ(_solver->numVars(), 7);
 
   // element2dVar
@@ -132,7 +133,7 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   std::vector<Int> inputVals;
 
   for (const auto& idxVarNodeId :
-       std::array<VarNodeId, 2>{idx1VarNodeId, idx2VarNodeId}) {
+       std::array<VarNodeId, 2>{rowIndexVarNodeId, colIndexVarNodeId}) {
     inputVarIds.emplace_back(varNode(idxVarNodeId).isFixed()
                                  ? propagation::NULL_ID
                                  : varId(idxVarNodeId));
@@ -162,8 +163,8 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
     _solver->endProbe();
 
     const Int actual = _solver->currentValue(outputId);
-    const Int row = inputVals.at(0) - offsetIdx1;
-    const Int col = inputVals.at(1) - offsetIdx2;
+    const Int row = inputVals.at(0) - rowOffset;
+    const Int col = inputVals.at(1) - colOffset;
 
     const Int index =
         2 + (row * static_cast<Int>(varMatrixVarNodeIds.front().size()) + col);

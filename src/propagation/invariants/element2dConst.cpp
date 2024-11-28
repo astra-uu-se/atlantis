@@ -14,22 +14,22 @@ static inline Int numCols(const std::vector<std::vector<Int>>& matrix) {
 }
 
 Element2dConst::Element2dConst(SolverBase& solver, VarId output,
-                               VarViewId index1, VarViewId index2,
+                               VarViewId rowIndex, VarViewId colIndex,
                                std::vector<std::vector<Int>>&& matrix,
-                               Int offset1, Int offset2)
+                               Int rowOffset, Int colOffset)
     : Invariant(solver),
       _matrix(std::move(matrix)),
-      _indices{index1, index2},
+      _indices{rowIndex, colIndex},
       _dimensions{static_cast<Int>(_matrix.size()), numCols(_matrix)},
-      _offsets{offset1, offset2},
+      _offsets{rowOffset, colOffset},
       _output(output) {}
 
 Element2dConst::Element2dConst(SolverBase& solver, VarViewId output,
-                               VarViewId index1, VarViewId index2,
+                               VarViewId rowIndex, VarViewId colIndex,
                                std::vector<std::vector<Int>>&& matrix,
-                               Int offset1, Int offset2)
-    : Element2dConst(solver, VarId(output), index1, index2, std::move(matrix),
-                     offset1, offset2) {
+                               Int rowOffset, Int colOffset)
+    : Element2dConst(solver, VarId(output), rowIndex, colIndex,
+                     std::move(matrix), rowOffset, colOffset) {
   assert(output.isVar());
 }
 

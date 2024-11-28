@@ -2,6 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 
@@ -11,15 +12,23 @@ bool array_var_int_element(
     FznInvariantGraph& graph, const fznparser::IntArg& index,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     const fznparser::IntArg& output, Int offset) {
-  graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
-      graph, graph.retrieveVarNode(index), graph.retrieveVarNodes(inputs),
-      graph.retrieveVarNode(output), offset));
+  if (inputs->isFixed()) {
+    graph.addInvariantNode(std::make_shared<ArrayElementNode>(
+        graph, inputs->toParVector(), graph.retrieveVarNode(index),
+        graph.retrieveVarNode(output), offset));
+  } else {
+    graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+        graph, graph.retrieveVarNode(index), graph.retrieveVarNodes(inputs),
+        graph.retrieveVarNode(output), offset));
+  }
   return true;
 }
 
 bool array_var_int_element(FznInvariantGraph& graph,
                            const fznparser::Constraint& constraint) {
-  if (constraint.identifier() != "array_var_int_element" &&
+  if (constraint.identifier() != "array_int_element" &&
+      constraint.identifier() != "array_var_int_element" &&
+      constraint.identifier() != "array_int_element_offset" &&
       constraint.identifier() != "array_var_int_element_offset" &&
       constraint.identifier() != "array_var_int_element_nonshifted") {
     return false;
@@ -30,7 +39,7 @@ bool array_var_int_element(FznInvariantGraph& graph,
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true)
   const auto& index = std::get<fznparser::IntArg>(constraint.arguments().at(0));
   Int offset = 1;
-  if (constraint.identifier() != "array_var_int_element_nonshifted") {
+  if (constraint.arguments().size() > 3) {
     FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, false)
     offset =
         std::get<fznparser::IntArg>(constraint.arguments().at(3)).toParameter();

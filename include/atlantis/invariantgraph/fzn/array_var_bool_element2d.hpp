@@ -8,10 +8,11 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool array_var_bool_element2d(
-    FznInvariantGraph&, const fznparser::IntArg& idx1,
-    const fznparser::IntArg& idx2,
+    FznInvariantGraph&, const fznparser::IntArg& rowIndex,
+    const fznparser::IntArg& colIndex,
     const std::shared_ptr<fznparser::BoolVarArray>& inputs,
-    const fznparser::BoolArg& output, Int numRows, Int offset1, Int offset2);
+    const fznparser::BoolArg& output, Int numCols, Int rowOffset,
+    Int colOffset);
 
 bool array_var_bool_element2d(FznInvariantGraph&, const fznparser::Constraint&);
 
