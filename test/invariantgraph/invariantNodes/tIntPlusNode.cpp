@@ -90,7 +90,8 @@ TEST_P(IntPlusNodeTestFixture, application) {
       EXPECT_FALSE(inputNode.isFixed());
     }
     if (!inputNode.isFixed()) {
-      EXPECT_THAT(_solver->searchVars(), Contains(varId(identifier)));
+      EXPECT_TRUE(varId(identifier).isVar());
+      EXPECT_THAT(_solver->searchVars(), Contains(size_t(varId(identifier))));
     }
   }
   EXPECT_LE(_solver->searchVars().size(), 2);

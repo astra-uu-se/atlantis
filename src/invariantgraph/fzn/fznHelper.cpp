@@ -142,7 +142,7 @@ std::vector<Int> getFixedValues(
       values.emplace_back(std::get<Int>(intVarArray->at(i)));
       continue;
     }
-    const auto& var =
+    const auto var =
         std::get<std::shared_ptr<const fznparser::IntVar>>(intVarArray->at(i));
 
     if (var->isFixed()) {
@@ -174,7 +174,7 @@ std::vector<bool> getFixedValues(
       values.emplace_back(std::get<bool>(boolVarArray->at(i)));
       continue;
     }
-    const auto& var = std::get<std::shared_ptr<const fznparser::BoolVar>>(
+    const auto var = std::get<std::shared_ptr<const fznparser::BoolVar>>(
         boolVarArray->at(i));
 
     if (var->isFixed()) {
@@ -193,7 +193,7 @@ std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
     if (std::holds_alternative<Int>(intVarArray->at(i))) {
       continue;
     }
-    const auto& var =
+    const auto var =
         std::get<std::shared_ptr<const fznparser::IntVar>>(intVarArray->at(i));
 
     if (!var->isFixed()) {
@@ -212,7 +212,7 @@ std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
     if (std::holds_alternative<bool>(boolVarArray->at(i))) {
       continue;
     }
-    const auto& var = std::get<std::shared_ptr<const fznparser::BoolVar>>(
+    const auto var = std::get<std::shared_ptr<const fznparser::BoolVar>>(
         boolVarArray->at(i));
 
     if (!var->isFixed()) {

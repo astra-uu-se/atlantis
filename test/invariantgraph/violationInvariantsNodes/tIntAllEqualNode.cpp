@@ -146,8 +146,9 @@ TEST_P(IntAllEqualNodeTestFixture, application) {
   _solver->close();
 
   for (const auto& inputVarNodeId : inputVarNodeIds) {
+    EXPECT_TRUE(varId(inputVarNodeId).isVar());
     EXPECT_THAT(_solver->searchVars(),
-                ::testing::Contains(varId(inputVarNodeId)));
+                ::testing::Contains(size_t(varId(inputVarNodeId))));
   }
 
   EXPECT_GE(_solver->numVars(), size_t(invNode().violationVarId()));

@@ -60,7 +60,7 @@ class OutputToInputExplorer {
 
  public:
   OutputToInputExplorer() = delete;
-  OutputToInputExplorer(Solver& solver, size_t expectedSize);
+  OutputToInputExplorer(Solver& solver);
 
   void registerVar(VarId);
   void registerInvariant(InvariantId);

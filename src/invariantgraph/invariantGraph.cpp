@@ -366,7 +366,8 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
   assert(oldNode.definingNodes().empty());
 
   while (!oldNode.staticInputTo().empty()) {
-    const InvariantNodeId invNodeId = oldNode.staticInputTo().front();
+    [[maybe_unused]] const InvariantNodeId invNodeId =
+        oldNode.staticInputTo().front();
     invariantNode(oldNode.staticInputTo().front())
         .replaceStaticInputVarNode(oldNode.varNodeId(), newNode.varNodeId());
     assert(std::none_of(
@@ -386,7 +387,8 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
   assert(oldNode.staticInputTo().empty());
 
   while (!oldNode.dynamicInputTo().empty()) {
-    const InvariantNodeId invNodeId = oldNode.dynamicInputTo().front();
+    [[maybe_unused]] const InvariantNodeId invNodeId =
+        oldNode.dynamicInputTo().front();
     invariantNode(oldNode.dynamicInputTo().front())
         .replaceDynamicInputVarNode(oldNode.varNodeId(), newNode.varNodeId());
     assert(std::none_of(
@@ -1203,7 +1205,7 @@ void InvariantGraph::construct() {
 
 void InvariantGraph::close() { _solver.close(); }
 
-void InvariantGraph::sanity(bool oneDefInv) {
+void InvariantGraph::sanity([[maybe_unused]] bool oneDefInv) {
 #ifndef NDEBUG
   assert(varNodeConst(_boolVarNodeIndices.at(0)).isFixed());
   assert(varNodeConst(_boolVarNodeIndices.at(0)).inDomain(bool{false}));

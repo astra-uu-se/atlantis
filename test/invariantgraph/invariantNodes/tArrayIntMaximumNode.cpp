@@ -122,8 +122,9 @@ TEST_P(ArrayIntMaximumNodeTestFixture, updateState) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     // TODO: disabled for the MZN challange. This should be computed by Gecode.
     // EXPECT_TRUE(_invariantGraph->varNode(outputVarNodeId).isFixed());
-    const Int expected = computeOutput();
-    const Int actual = _invariantGraph->varNode(outputVarNodeId).lowerBound();
+    [[maybe_unused]] const Int expected = computeOutput();
+    [[maybe_unused]] const Int actual =
+        _invariantGraph->varNode(outputVarNodeId).lowerBound();
     // TODO: disabled for the MZN challange. This should be computed by Gecode.
     // EXPECT_EQ(expected, actual);
   } else {
@@ -158,8 +159,8 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
   _invariantGraph->close();
 
   if (shouldBeSubsumed()) {
-    const Int expected = computeOutput(true);
-    const Int actual = varNode(outputVarNodeId).lowerBound();
+    [[maybe_unused]] const Int expected = computeOutput(true);
+    [[maybe_unused]] const Int actual = varNode(outputVarNodeId).lowerBound();
     // TODO: disabled for the MZN challange. This should be computed by Gecode.
     // EXPECT_EQ(expected, actual);
     return;

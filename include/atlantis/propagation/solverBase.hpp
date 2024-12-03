@@ -18,8 +18,6 @@ class SolverBase {
  protected:
   enum class SolverState { IDLE, PROBE, MOVE, COMMIT, PROCESSING };
 
-  static const size_t ESTIMATED_NUM_OBJECTS = 1;
-
   Timestamp _currentTimestamp;
 
   bool _isOpen = true;

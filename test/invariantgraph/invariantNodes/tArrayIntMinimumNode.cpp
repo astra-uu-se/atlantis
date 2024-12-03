@@ -122,8 +122,9 @@ TEST_P(ArrayIntMinimumNodeTestFixture, updateState) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     // TODO: disabled for the MZN challange. This should be computed by Gecode.
     // EXPECT_TRUE(_invariantGraph->varNode(outputVarNodeId).isFixed());
-    const Int expected = computeOutput();
-    const Int actual = _invariantGraph->varNode(outputVarNodeId).upperBound();
+    [[maybe_unused]] const Int expected = computeOutput();
+    [[maybe_unused]] const Int actual =
+        _invariantGraph->varNode(outputVarNodeId).upperBound();
     // TODO: disabled for the MZN challange. This should be computed by Gecode.
     // EXPECT_EQ(expected, actual);
   } else {

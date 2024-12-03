@@ -109,18 +109,18 @@ include(FetchContent)
 FetchContent_Declare(
   fznparser
   GIT_REPOSITORY https://github.com/astra-uu-se/fznparser
-  GIT_TAG v1.0.1
+  GIT_TAG v1.0.3
 )
 FetchContent_Declare(
   cxxopts
   GIT_REPOSITORY https://github.com/jarro2783/cxxopts
-  GIT_TAG v3.0.0
+  GIT_TAG v3.2.0
 )
 
 FetchContent_Declare(
   fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt
-  GIT_TAG 8.1.1
+  GIT_TAG 11.0.2
 )
 
 FetchContent_MakeAvailable(cxxopts fznparser fmt)
@@ -161,7 +161,7 @@ if(BUILD_TESTS OR BUILD_BENCHMARKS)
   FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG release-1.11.0
+    GIT_TAG v1.15.2
   )
 
   # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -184,7 +184,7 @@ if(BUILD_TESTS)
 
   FetchContent_Declare(rapidcheck
     GIT_REPOSITORY https://github.com/emil-e/rapidcheck.git
-    GIT_TAG 33d15a858e3125f5af61a655f390f1cbc2f272ba
+    GIT_TAG ff6af6fc683159deb51c543b065eba14dfcf329b
   )
 
   FetchContent_MakeAvailable(googletest rapidcheck)
@@ -226,7 +226,7 @@ if(BUILD_BENCHMARKS)
   set(BENCHMARK_ENABLE_TESTING off) # to suppress benchmark internal tests
   FetchContent_Declare(googlebenchmark
     GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG e451e50e9b8af453f076dec10bd6890847f1624e)
+    GIT_TAG v1.9.1)
 
   FetchContent_MakeAvailable(googletest googlebenchmark)
 

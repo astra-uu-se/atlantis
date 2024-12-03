@@ -97,9 +97,10 @@ TEST_P(IntLinearNodeTestFixture, application) {
 
   EXPECT_LE(_solver->searchVars().size(), inputVarNodeIds.size());
 
-  for (const auto& inputVarNodeId : invNode().staticInputVarNodeIds()) {
+  for (const VarNodeId inputVarNodeId : invNode().staticInputVarNodeIds()) {
     EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-    EXPECT_THAT(_solver->searchVars(), Contains(varId(inputVarNodeId)));
+    EXPECT_TRUE(varId(inputVarNodeId).isVar());
+    EXPECT_THAT(_solver->searchVars(), Contains(size_t(varId(inputVarNodeId))));
   }
   EXPECT_LE(_solver->numVars(), inputVarNodeIds.size() + 1);
 

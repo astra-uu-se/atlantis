@@ -28,7 +28,7 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   for (Int i = static_cast<Int>(coeffs.size()) - 1; i >= 0; --i) {
     if (std::holds_alternative<std::shared_ptr<const fznparser::IntVar>>(
             inputs->at(i))) {
-      const auto& inputVar =
+      const auto inputVar =
           std::get<std::shared_ptr<const fznparser::IntVar>>(inputs->at(i));
       if (inputVar == definedVar) {
         definedVarCoeff += coeffs.at(i);
@@ -88,7 +88,7 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   for (Int i = static_cast<Int>(coeffs.size()) - 1; i >= 0; --i) {
     if (std::holds_alternative<std::shared_ptr<const fznparser::IntVar>>(
             inputs->at(i))) {
-      const auto& inputVar =
+      const auto inputVar =
           std::get<std::shared_ptr<const fznparser::IntVar>>(inputs->at(i));
       if (inputVar == definedVar) {
         definedVarCoeff += coeffs.at(i);

@@ -5,7 +5,7 @@
 
 namespace atlantis::propagation {
 
-OutputToInputExplorer::OutputToInputExplorer(Solver& e, size_t expectedSize)
+OutputToInputExplorer::OutputToInputExplorer(Solver& e)
     : _solver(e),
       _varStack(),
       _varStackIdx(0),
@@ -16,15 +16,7 @@ OutputToInputExplorer::OutputToInputExplorer(Solver& e, size_t expectedSize)
       _invariantIsOnStack(),
       _searchVarAncestors(),
       _onPropagationPath(),
-      _outputToInputMarkingMode(OutputToInputMarkingMode::NONE) {
-  _varStack.reserve(expectedSize);
-  _invariantStack.reserve(expectedSize);
-  _varComputedAt.reserve(expectedSize);
-  _invariantComputedAt.reserve(expectedSize);
-  _invariantIsOnStack.reserve(expectedSize);
-  _searchVarAncestors.reserve(expectedSize);
-  _onPropagationPath.reserve(expectedSize);
-}
+      _outputToInputMarkingMode(OutputToInputMarkingMode::NONE) {}
 
 void OutputToInputExplorer::outputToInputStaticMarking() {
   std::vector<bool> varVisited(_solver.numVars());
@@ -244,13 +236,14 @@ bool OutputToInputExplorer::pushNextInputVar() {
   return false;  // invariant has more input variables
 }
 
-void OutputToInputExplorer::registerVar(VarId id) {
+void OutputToInputExplorer::registerVar([[maybe_unused]] VarId id) {
   _varStack.emplace_back(NULL_ID);  // push back just to resize the stack!
   assert(id == _varComputedAt.size());
   _varComputedAt.emplace_back(NULL_TIMESTAMP);
 }
 
-void OutputToInputExplorer::registerInvariant(InvariantId invariantId) {
+void OutputToInputExplorer::registerInvariant(
+    [[maybe_unused]] InvariantId invariantId) {
   _invariantStack.emplace_back(NULL_ID);  // push back just to resize the stack!
   assert(invariantId == _invariantComputedAt.size());
   assert(invariantId == _invariantIsOnStack.size());

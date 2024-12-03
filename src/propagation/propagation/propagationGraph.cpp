@@ -39,7 +39,8 @@ PropagationGraph::PropagationGraph(const Store& store, size_t expectedSize)
   _varPosition.reserve(expectedSize);
 }
 
-void PropagationGraph::registerInvariant(InvariantId invariantId) {
+void PropagationGraph::registerInvariant(
+    [[maybe_unused]] InvariantId invariantId) {
   // Everything must be registered in sequence.
   assert(invariantId == _varsDefinedByInvariant.size());
   assert(invariantId == _isDynamicInvariant.size());
@@ -51,7 +52,7 @@ void PropagationGraph::registerInvariant(InvariantId invariantId) {
   ++_numInvariants;
 }
 
-void PropagationGraph::registerVar(VarId id) {
+void PropagationGraph::registerVar([[maybe_unused]] VarId id) {
   assert(id == _definingInvariant.size());
   assert(id == _listeningInvariantData.size());
   assert(id == _varLayerIndex.size());

@@ -17,93 +17,46 @@ class Store {
   std::vector<VarId> _intViewSourceId;
 
  public:
-  Store(size_t estimatedSize, [[maybe_unused]] size_t nullId)
-      : _intVars(), _invariants(), _intViews(), _intViewSourceId() {
-    _intVars.reserve(estimatedSize);
-    _invariants.reserve(estimatedSize);
-    _intViews.reserve(estimatedSize);
-    _intViewSourceId.reserve(estimatedSize);
-  }
+  Store();
 
-  [[nodiscard]] inline VarViewId createIntVar(Timestamp ts, Int initValue,
-                                              Int lowerBound, Int upperBound) {
-    VarId vId(_intVars.size());
-    const VarViewId newId = VarViewId(vId, false);
-    _intVars.emplace_back(ts, vId, initValue, lowerBound, upperBound);
-    return newId;
-  }
-  [[nodiscard]] inline InvariantId createInvariantFromPtr(
-      std::unique_ptr<Invariant>&& ptr) {
-    auto newId = InvariantId(_invariants.size());
-    ptr->setId(newId);
-    _invariants.emplace_back(std::move(ptr));
-    return newId;
-  }
+  VarViewId createIntVar(Timestamp ts, Int initValue, Int lowerBound,
+                         Int upperBound);
 
-  [[nodiscard]] inline VarViewId createIntViewFromPtr(
-      std::unique_ptr<IntView>&& ptr) {
-    const VarViewId newId = VarViewId(_intViews.size(), true);
-    ptr->setId(ViewId(newId));
-    const VarViewId parentId = ptr->parentId();
-    const VarViewId source =
-        parentId.isVar() ? parentId : _intViewSourceId[size_t(parentId)];
-    _intViews.emplace_back(std::move(ptr));
-    _intViewSourceId.emplace_back(VarId(source));
-    return newId;
-  }
+  InvariantId createInvariantFromPtr(std::unique_ptr<Invariant>&&);
 
-  inline IntVar& intVar(VarId id) { return _intVars[id]; }
+  VarViewId createIntViewFromPtr(std::unique_ptr<IntView>&&);
 
-  [[nodiscard]] inline const IntVar& constIntVar(VarId id) const {
-    return _intVars.at(id);
-  }
+  [[nodiscard]] IntVar& intVar(VarId);
 
-  inline IntView& intView(ViewId id) { return *(_intViews[id]); }
+  [[nodiscard]] const IntVar& constIntVar(VarId) const;
 
-  [[nodiscard]] const inline IntView& constIntView(ViewId id) const {
-    return *(_intViews.at(id));
-  }
+  [[nodiscard]] IntView& intView(ViewId);
 
-  [[nodiscard]] inline VarId sourceId(VarViewId id) const noexcept {
-    return id == NULL_ID
-               ? NULL_ID
-               : (id.isVar() ? VarId(id) : intViewSourceId(VarId(id)));
-  }
+  [[nodiscard]] const IntView& constIntView(ViewId) const;
 
-  [[nodiscard]] inline VarId intViewSourceId(ViewId id) const {
-    return _intViewSourceId.at(id);
-  }
+  [[nodiscard]] VarId sourceId(VarViewId) const noexcept;
 
-  inline Invariant& invariant(InvariantId invariantId) {
-    return *(_invariants[invariantId]);
-  }
+  [[nodiscard]] VarId intViewSourceId(ViewId) const;
 
-  [[nodiscard]] inline const Invariant& constInvariant(
-      InvariantId invariantId) const {
-    return *(_invariants.at(invariantId));
-  }
+  [[nodiscard]] Invariant& invariant(InvariantId);
 
-  inline std::vector<IntVar>::iterator intVarBegin() {
-    return _intVars.begin();
-  }
-  inline std::vector<IntVar>::iterator intVarEnd() { return _intVars.end(); }
-  inline std::vector<std::unique_ptr<Invariant>>::iterator invariantBegin() {
-    return _invariants.begin();
-  }
-  inline std::vector<std::unique_ptr<Invariant>>::iterator invariantEnd() {
-    return _invariants.end();
-  }
+  [[nodiscard]] const Invariant& constInvariant(InvariantId) const;
 
-  [[nodiscard]] inline size_t numVars() const { return _intVars.size(); }
+  [[nodiscard]] std::vector<IntVar>::iterator intVarBegin();
 
-  [[nodiscard]] inline size_t numInvariants() const {
-    return _invariants.size();
-  }
+  [[nodiscard]] std::vector<IntVar>::iterator intVarEnd();
 
-  [[nodiscard]] inline VarId dynamicInputVar(
-      Timestamp ts, InvariantId invariantId) const noexcept {
-    return sourceId(_invariants.at(invariantId)->dynamicInputVar(ts));
-  }
+  [[nodiscard]] std::vector<std::unique_ptr<Invariant>>::iterator
+  invariantBegin();
+
+  [[nodiscard]] std::vector<std::unique_ptr<Invariant>>::iterator
+  invariantEnd();
+
+  [[nodiscard]] size_t numVars() const;
+
+  [[nodiscard]] size_t numInvariants() const;
+
+  [[nodiscard]] VarId dynamicInputVar(Timestamp, InvariantId) const noexcept;
 };
 
 }  // namespace atlantis::propagation

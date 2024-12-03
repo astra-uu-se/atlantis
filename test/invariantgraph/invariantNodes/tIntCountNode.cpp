@@ -128,8 +128,8 @@ TEST_P(IntCountNodeTestFixture, updateState) {
     // disabled for the MZN challange. this should be computed by Gecode.
     // EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
 
-    const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).lowerBound();
+    [[maybe_unused]] const Int expected = computeOutput();
+    [[maybe_unused]] const Int actual = varNode(outputVarNodeId).lowerBound();
     // disabled for the MZN challange. this should be computed by Gecode.
     // EXPECT_EQ(expected, actual);
   } else {
@@ -156,8 +156,8 @@ TEST_P(IntCountNodeTestFixture, propagation) {
   // EXPECT_EQ(inputVarIds.empty(), shouldBeSubsumed());
 
   if (shouldBeSubsumed()) {
-    const Int expected = computeOutput();
-    const Int actual = varNode(outputIdentifier).lowerBound();
+    [[maybe_unused]] const Int expected = computeOutput();
+    [[maybe_unused]] const Int actual = varNode(outputIdentifier).lowerBound();
     // disabled for the MZN challange. this should be computed by Gecode.
     // EXPECT_EQ(expected, actual);
     return;

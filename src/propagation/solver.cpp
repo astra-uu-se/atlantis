@@ -9,12 +9,10 @@ namespace atlantis::propagation {
 
 Solver::Solver()
     : _propagationMode(PropagationMode::INPUT_TO_OUTPUT),
-      _propGraph(_store, ESTIMATED_NUM_OBJECTS),
-      _outputToInputExplorer(*this, ESTIMATED_NUM_OBJECTS),
+      _propGraph(_store),
+      _outputToInputExplorer(*this),
       _isEnqueued(),
-      _modifiedSearchVars() {
-  _isEnqueued.reserve(ESTIMATED_NUM_OBJECTS);
-}
+      _modifiedSearchVars() {}
 
 void Solver::open() {
   if (_isOpen) {

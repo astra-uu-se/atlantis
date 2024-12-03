@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
 
     // Don't log to std::cout, since that would interfere with MiniZinc.
     statistics.display(std::cerr);
-  } catch (const cxxopts::OptionException& e) {
+  } catch (const cxxopts::exceptions::exception& e) {
     std::cerr << "Error: " << e.what() << std::endl;
   } catch (const std::invalid_argument& e) {
     std::cerr << "Error: " << e.what() << std::endl;
@@ -130,6 +130,7 @@ atlantis::logging::Level getLogLevel(cxxopts::ParseResult& result) {
     case 4:
       return atlantis::logging::Level::LVL_TRACE;
     default:
-      throw cxxopts::OptionException("The log level should be 0, 1, 2 or 3.");
+      throw cxxopts::exceptions::exception(
+          "The log level should be 0, 1, 2 or 3.");
   }
 }

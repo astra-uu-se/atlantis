@@ -3,9 +3,7 @@
 namespace atlantis::propagation {
 
 SolverBase::SolverBase()
-    : _currentTimestamp(NULL_TIMESTAMP + 1),
-      _isOpen(false),
-      _store(ESTIMATED_NUM_OBJECTS, NULL_ID) {}
+    : _currentTimestamp(NULL_TIMESTAMP + 1), _isOpen(false), _store() {}
 
 //---------------------Registration---------------------
 
