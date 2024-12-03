@@ -6,7 +6,7 @@ namespace atlantis::testing {
 
 class AlwaysAcceptingAnnealer : public search::Annealer {
  public:
-  AlwaysAcceptingAnnealer(const search::Assignment& assignment,
+  AlwaysAcceptingAnnealer(search::Assignment& assignment,
                           search::RandomProvider& random,
                           search::AnnealingSchedule& schedule)
       : Annealer(assignment, random, schedule) {}

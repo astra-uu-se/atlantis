@@ -33,8 +33,9 @@ TEST_F(AllDifferentUniformNeighbourhoodTest, all_values_are_initialised) {
   search::neighbourhoods::AllDifferentUniformNeighbourhood neighbourhood(
       std::vector<search::SearchVar>(vars), std::vector<Int>{1, 2, 3, 4});
 
-  _assignment->assign(
-      [&](auto& modifier) { neighbourhood.initialise(_d, modifier); });
+  _assignment->assign([&]([[maybe_unused]] auto& modifier) {
+    neighbourhood.initialise(_d, *_assignment);
+  });
 
   for (const auto& var : vars) {
     EXPECT_TRUE(_solver->committedValue(var.solverId()) >= 1);

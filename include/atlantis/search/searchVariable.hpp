@@ -10,15 +10,18 @@ namespace atlantis::search {
 class SearchVar {
  private:
   SearchDomain _domain;
-  propagation::VarViewId _varId{propagation::NULL_ID};
+  propagation::VarId _varId{propagation::NULL_ID};
 
  public:
   explicit SearchVar(propagation::VarViewId varId, SearchDomain&& domain)
+      : _domain(std::move(domain)), _varId(propagation::VarId{varId}) {
+    assert(varId.isVar());
+  }
+
+  explicit SearchVar(propagation::VarId varId, SearchDomain&& domain)
       : _domain(std::move(domain)), _varId(varId) {}
 
-  [[nodiscard]] propagation::VarViewId solverId() const noexcept {
-    return _varId;
-  }
+  [[nodiscard]] propagation::VarId solverId() const noexcept { return _varId; }
 
   [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
   [[nodiscard]] const SearchDomain& constDomain() const noexcept {

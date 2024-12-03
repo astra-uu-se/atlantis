@@ -7,11 +7,16 @@
 
 namespace atlantis::search {
 
-template <unsigned int N>
 class Move {
+ private:
+  std::vector<std::pair<propagation::VarId, Int>> _assignment;
+
+  Cost _cost{0, 0, propagation::ObjectiveDirection::NONE};
+  bool _probed{false};
+
  public:
-  Move(std::array<propagation::VarViewId, N> vars, std::array<Int, N> values)
-      : _vars(std::move(vars)), _values(std::move(values)) {}
+  Move(std::vector<std::pair<propagation::VarId, Int>>&& assignment)
+      : _assignment(std::move(assignment)) {}
 
   /**
    * Probe the cost of this move on the given assignment. Will only probe the
@@ -20,11 +25,11 @@ class Move {
    * @param assignment The assignment to probe on.
    * @return The cost of the assignment if this move were committed.
    */
-  const Cost& probe(const Assignment& assignment) {
+  const Cost& probe(Assignment& assignment) {
     if (!_probed) {
-      _cost = assignment.probe([&](auto& modifier) {
-        for (size_t i = 0; i < N; i++) {
-          modifier.set(_vars[i], _values[i]);
+      _cost = assignment.probe([&]([[maybe_unused]] auto& modifier) {
+        for (const auto& [var, val] : _assignment) {
+          assignment.set(var, val);
         }
       });
 
@@ -40,19 +45,12 @@ class Move {
    * @param assignment The assignment to change.
    */
   void commit(Assignment& assignment) {
-    assignment.assign([&](auto& modifier) {
-      for (auto i = 0u; i < N; i++) {
-        modifier.set(_vars[i], _values[i]);
+    assignment.assign([&]([[maybe_unused]] auto& modifier) {
+      for (const auto& [var, val] : _assignment) {
+        assignment.set(var, val);
       }
     });
   }
-
- private:
-  std::array<propagation::VarViewId, N> _vars;
-  std::array<Int, N> _values;
-
-  Cost _cost{0, 0, propagation::ObjectiveDirection::NONE};
-  bool _probed{false};
 };
 
 }  // namespace atlantis::search

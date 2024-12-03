@@ -4,7 +4,7 @@
 
 namespace atlantis::search {
 
-Annealer::Annealer(const Assignment& assignment, RandomProvider& random,
+Annealer::Annealer(Assignment& assignment, RandomProvider& random,
                    AnnealingSchedule& schedule)
     : _assignment(assignment), _random(random), _schedule(schedule) {
   _statistics.bestCostOfPreviousRound = std::numeric_limits<Int>::max();

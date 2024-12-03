@@ -24,11 +24,8 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
   AllDifferentUniformNeighbourhood(std::vector<search::SearchVar>&& vars,
                                    std::vector<Int>&& domain);
 
-  void initialise(RandomProvider& random,
-                  AssignmentModifier& modifications) override;
-
-  bool randomMove(RandomProvider& random, Assignment& assignment,
-                  Annealer& annealer) override;
+  void initialise(RandomProvider&, Assignment&) override;
+  bool randomMove(RandomProvider&, Assignment&, Annealer&) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;

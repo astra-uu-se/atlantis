@@ -6,9 +6,9 @@ RandomNeighbourhood::RandomNeighbourhood(std::vector<SearchVar>&& vars)
     : _vars(std::move(vars)) {}
 
 void RandomNeighbourhood::initialise(RandomProvider& random,
-                                     AssignmentModifier& modifications) {
+                                     Assignment& assignment) {
   for (auto& var : _vars) {
-    modifications.set(var.solverId(), random.inDomain(var.domain()));
+    assignment.set(var.solverId(), random.inDomain(var.domain()));
   }
 }
 
@@ -17,9 +17,9 @@ bool RandomNeighbourhood::randomMove(RandomProvider& random,
                                      Annealer& annealer) {
   auto var = random.element(_vars);
 
-  return maybeCommit(
-      Move<1u>({var.solverId()}, {random.inDomain(var.domain())}), assignment,
-      annealer);
+  return maybeCommit(Move(std::vector<std::pair<propagation::VarId, Int>>{
+                         {var.solverId(), random.inDomain(var.domain())}}),
+                     assignment, annealer);
 }
 
 }  // namespace atlantis::search::neighbourhoods

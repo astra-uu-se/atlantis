@@ -14,8 +14,7 @@ using ::testing::ReturnRef;
 
 class MockNeighbourhood : public search::neighbourhoods::Neighbourhood {
  public:
-  MOCK_METHOD(void, initialise,
-              (search::RandomProvider&, search::AssignmentModifier&),
+  MOCK_METHOD(void, initialise, (search::RandomProvider&, search::Assignment&),
               (override));
 
   MOCK_METHOD(bool, randomMove,
@@ -55,14 +54,16 @@ TEST_F(NeighbourhoodCombinatorTest, initialise_calls_all_neighbourhoods) {
 
   propagation::Solver solver;
   search::RandomProvider random(123456789);
+  search::Assignment assignment(solver, propagation::NULL_ID,
+                                propagation::NULL_ID,
+                                propagation::ObjectiveDirection::NONE, Int{0});
 
   solver.beginMove();
-  search::AssignmentModifier modifier(solver);
 
-  EXPECT_CALL(*n1, initialise(Ref(random), Ref(modifier))).Times(1);
-  EXPECT_CALL(*n2, initialise(Ref(random), Ref(modifier))).Times(1);
+  EXPECT_CALL(*n1, initialise(Ref(random), Ref(assignment))).Times(1);
+  EXPECT_CALL(*n2, initialise(Ref(random), Ref(assignment))).Times(1);
 
-  combinator.initialise(random, modifier);
+  combinator.initialise(random, assignment);
   solver.endMove();
 }
 

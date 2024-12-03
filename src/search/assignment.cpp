@@ -13,14 +13,7 @@ Assignment::Assignment(propagation::Solver& solver,
       _violation(violation),
       _objective(objective),
       _objectiveDirection(objectiveDirection),
-      _objectiveOptimalValue(objectiveOptimalValue) {
-  _searchVars.reserve(solver.searchVars().size());
-  for (propagation::VarViewId varId : solver.searchVars()) {
-    if (solver.lowerBound(varId) != solver.upperBound(varId)) {
-      _searchVars.push_back(varId);
-    }
-  }
-}
+      _objectiveOptimalValue(objectiveOptimalValue) {}
 
 Int Assignment::value(propagation::VarViewId var) const noexcept {
   return _solver.committedValue(var);

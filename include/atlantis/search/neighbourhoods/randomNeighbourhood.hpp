@@ -16,11 +16,9 @@ class RandomNeighbourhood : public Neighbourhood {
  public:
   RandomNeighbourhood(std::vector<SearchVar>&& vars);
 
-  void initialise(RandomProvider& random,
-                  AssignmentModifier& modifications) override;
+  void initialise(RandomProvider&, Assignment&) override;
 
-  bool randomMove(RandomProvider& random, Assignment& assignment,
-                  Annealer& annealer) override;
+  bool randomMove(RandomProvider&, Assignment&, Annealer&) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;

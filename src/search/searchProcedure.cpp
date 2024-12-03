@@ -32,12 +32,12 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
   do {
     initialisations->increment();
 
-    logger.timedProcedure(logging::Level::LVL_TRACE, "initialise assignment",
-                          [&] {
-                            _assignment.assign([&](auto& modifications) {
-                              _neighbourhood.initialise(_random, modifications);
-                            });
-                          });
+    logger.timedProcedure(
+        logging::Level::LVL_TRACE, "initialise assignment", [&] {
+          _assignment.assign([&]([[maybe_unused]] auto& modifications) {
+            _neighbourhood.initialise(_random, _assignment);
+          });
+        });
 
     if (_assignment.satisfiesConstraints()) {
       controller.onSolution(_assignment);

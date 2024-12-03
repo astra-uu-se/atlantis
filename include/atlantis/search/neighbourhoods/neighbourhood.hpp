@@ -18,10 +18,9 @@ class Neighbourhood {
    * Initialise an assignment.
    *
    * @param random The source of randomness.
-   * @param modifications The modifications to the assignment.
+   * @param assignment The assignment to be modified.
    */
-  virtual void initialise(RandomProvider& random,
-                          AssignmentModifier& modifications) = 0;
+  virtual void initialise(RandomProvider& random, Assignment& assignment) = 0;
 
   /**
    * Make a random move on @p assignment. After a move is constructed, the
@@ -41,8 +40,7 @@ class Neighbourhood {
   [[nodiscard]] virtual const std::vector<SearchVar>& coveredVars() const = 0;
 
  protected:
-  template <unsigned int N>
-  bool maybeCommit(Move<N> move, Assignment& assignment, Annealer& annealer) {
+  bool maybeCommit(Move move, Assignment& assignment, Annealer& annealer) {
     try {
       if (annealer.acceptMove(move)) {
         move.commit(assignment);

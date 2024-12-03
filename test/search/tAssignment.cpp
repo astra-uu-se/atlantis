@@ -11,10 +11,10 @@ using namespace atlantis::search;
 
 class AssignmentTest : public ::testing::Test {
  public:
-  propagation::VarViewId a{propagation::NULL_ID};
-  propagation::VarViewId b{propagation::NULL_ID};
-  propagation::VarViewId c{propagation::NULL_ID};
-  propagation::VarViewId d{propagation::NULL_ID};
+  propagation::VarId a{propagation::NULL_ID};
+  propagation::VarId b{propagation::NULL_ID};
+  propagation::VarId c{propagation::NULL_ID};
+  propagation::VarId d{propagation::NULL_ID};
 
   propagation::VarViewId violation{propagation::NULL_ID};
 
@@ -26,14 +26,16 @@ class AssignmentTest : public ::testing::Test {
   // obj: minimise(a)
   void SetUp() override {
     solver.open();
-    a = solver.makeIntVar(0, 0, 10);
-    b = solver.makeIntVar(0, 0, 10);
-    c = solver.makeIntVar(0, 0, 10);
-    d = solver.makeIntVar(3, 3, 3);
+    a = propagation::VarId(solver.makeIntVar(0, 0, 10));
+    b = propagation::VarId(solver.makeIntVar(0, 0, 10));
+    c = propagation::VarId(solver.makeIntVar(0, 0, 10));
+    d = propagation::VarId(solver.makeIntVar(3, 3, 3));
     violation = solver.makeIntVar(0, 0, 10);
 
     solver.makeInvariant<propagation::Linear>(
-        solver, c, std::vector<propagation::VarViewId>{a, b});
+        solver, c,
+        std::vector<propagation::VarViewId>{propagation::VarViewId{a},
+                                            propagation::VarViewId{b}});
     solver.makeViolationInvariant<propagation::Equal>(solver, violation, c, d);
     solver.close();
   }
@@ -44,7 +46,7 @@ TEST_F(AssignmentTest, search_vars_are_identified) {
                                 propagation::ObjectiveDirection::MINIMIZE,
                                 solver.lowerBound(a)};
 
-  std::vector<propagation::VarViewId> expectedSearchVars{a, b};
+  std::vector<propagation::VarId> expectedSearchVars{a, b};
   EXPECT_EQ(assignment.searchVars(), expectedSearchVars);
 }
 
@@ -58,9 +60,9 @@ TEST_F(AssignmentTest, cost) {
   // c has value 0, which is 3 away from 3.
   EXPECT_EQ(assignment.cost().evaluate(1, 1), 3);
 
-  assignment.assign([&](auto& modifications) {
-    modifications.set(a, 2);
-    modifications.set(b, 1);
+  assignment.assign([&]([[maybe_unused]] auto& modifications) {
+    assignment.set(a, 2);
+    assignment.set(b, 1);
   });
 
   EXPECT_TRUE(assignment.cost().satisfiesConstraints());
@@ -74,9 +76,9 @@ TEST_F(AssignmentTest, assign_sets_values) {
                                 propagation::ObjectiveDirection::MINIMIZE,
                                 solver.lowerBound(a)};
 
-  assignment.assign([&](auto& modifications) {
-    modifications.set(a, 1);
-    modifications.set(b, 2);
+  assignment.assign([&]([[maybe_unused]] auto& modifications) {
+    assignment.set(a, 1);
+    assignment.set(b, 2);
   });
 
   EXPECT_EQ(assignment.value(a), 1);
@@ -88,9 +90,9 @@ TEST_F(AssignmentTest, probe) {
                                 propagation::ObjectiveDirection::MINIMIZE,
                                 solver.lowerBound(a)};
 
-  auto cost = assignment.probe([&](auto& modifications) {
-    modifications.set(a, 1);
-    modifications.set(b, 2);
+  auto cost = assignment.probe([&]([[maybe_unused]] auto& modifications) {
+    assignment.set(a, 1);
+    assignment.set(b, 2);
   });
 
   EXPECT_FALSE(assignment.cost().satisfiesConstraints());
@@ -107,9 +109,9 @@ TEST_F(AssignmentTest, satisfies_constraints) {
 
   EXPECT_FALSE(assignment.satisfiesConstraints());
 
-  assignment.assign([&](auto& modifications) {
-    modifications.set(a, 1);
-    modifications.set(b, 2);
+  assignment.assign([&]([[maybe_unused]] auto& modifications) {
+    assignment.set(a, 1);
+    assignment.set(b, 2);
   });
 
   EXPECT_TRUE(assignment.satisfiesConstraints());

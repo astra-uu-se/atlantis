@@ -19,7 +19,7 @@ IntLinEqNeighbourhood::IntLinEqNeighbourhood(std::vector<Int>&& coeffs,
 }
 
 void IntLinEqNeighbourhood::initialise(RandomProvider& random,
-                                       AssignmentModifier& modifications) {
+                                       Assignment& assignment) {
   for (Int i = 0; i < static_cast<Int>(_indices.size()) - 1; ++i) {
     std::swap<size_t>(_indices[i],
                       _indices[random.intInRange(i, _indices.size() - 1)]);
@@ -48,7 +48,7 @@ void IntLinEqNeighbourhood::initialise(RandomProvider& random,
       curSum = -curSum / _coeffs[_indices[i]];
       assert(_vars[index].domain().lowerBound() <= curSum);
       assert(_vars[index].domain().upperBound() >= curSum);
-      modifications.set(_vars[index].solverId(), curSum);
+      assignment.set(_vars[index].solverId(), curSum);
       curSum = 0;
       break;
     }
@@ -60,7 +60,7 @@ void IntLinEqNeighbourhood::initialise(RandomProvider& random,
         std::min(_vars[index].domain().upperBound(), std::max(val1, val2));
     assert(lb <= ub);
     const Int val = random.intInRange(lb, ub);
-    modifications.set(_vars[index].solverId(), val);
+    assignment.set(_vars[index].solverId(), val);
     curSum += _coeffs[index] * val;
     assert(curSum >= remainingBounds[index][0]);
     assert(curSum <= remainingBounds[index][1]);
@@ -98,10 +98,10 @@ bool IntLinEqNeighbourhood::randomMove(RandomProvider& random,
         assert(ub1 >= cur1 + diff);
         assert(lb2 <= cur2 - diff);
         assert(ub2 >= cur2 - diff);
-        return maybeCommit(
-            Move<2>({_vars[index1].solverId(), _vars[index2].solverId()},
-                    {cur1 + diff, cur2 - diff}),
-            assignment, annealer);
+        return maybeCommit(Move(std::vector<std::pair<propagation::VarId, Int>>{
+                               {_vars[index1].solverId(), cur1 + diff},
+                               {_vars[index2].solverId(), cur2 - diff}}),
+                           assignment, annealer);
       } else {
         const Int v1 = std::max(lb1 - cur1, lb2 - cur2);
         const Int v2 = std::min(ub1 - cur1, ub2 - cur2);
@@ -113,10 +113,10 @@ bool IntLinEqNeighbourhood::randomMove(RandomProvider& random,
         assert(ub1 >= cur1 + diff);
         assert(lb2 <= cur2 + diff);
         assert(ub2 >= cur2 + diff);
-        return maybeCommit(
-            Move<2>({_vars[index1].solverId(), _vars[index2].solverId()},
-                    {cur1 + diff, cur2 + diff}),
-            assignment, annealer);
+        return maybeCommit(Move(std::vector<std::pair<propagation::VarId, Int>>{
+                               {_vars[index1].solverId(), cur1 + diff},
+                               {_vars[index2].solverId(), cur2 + diff}}),
+                           assignment, annealer);
       }
     }
   }

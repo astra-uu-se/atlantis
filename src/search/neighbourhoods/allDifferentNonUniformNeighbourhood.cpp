@@ -45,8 +45,8 @@ static bool bipartiteMatching(
   return false;
 }
 
-void AllDifferentNonUniformNeighbourhood::initialise(
-    RandomProvider& random, AssignmentModifier& modifications) {
+void AllDifferentNonUniformNeighbourhood::initialise(RandomProvider& random,
+                                                     Assignment& assignment) {
   std::vector<std::vector<size_t>> forwardArcs(_vars.size());
   std::fill(_valueIndexToVarIndex.begin(), _valueIndexToVarIndex.end(),
             _vars.size());
@@ -94,8 +94,8 @@ void AllDifferentNonUniformNeighbourhood::initialise(
        ++valueIndex) {
     if (isValueIndexOccupied(valueIndex)) {
       assert(_valueIndexToVarIndex.at(valueIndex) < _vars.size());
-      modifications.set(_vars[_valueIndexToVarIndex[valueIndex]].solverId(),
-                        toValue(valueIndex));
+      assignment.set(_vars[_valueIndexToVarIndex[valueIndex]].solverId(),
+                     toValue(valueIndex));
     }
   }
 }
@@ -203,9 +203,12 @@ bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
   assert(assignment.value(var1) == value1);
   assert(assignment.value(var2) == value2);
 #endif
-  if (maybeCommit(Move<2>({var1, _vars[var2Index].solverId()},
-                          {toValue(value2Index), value1}),
-                  assignment, annealer)) {
+  if (maybeCommit(
+          Move(std::vector<std::pair<propagation::VarId, Int>>{
+              std::pair<propagation::VarId, Int>{var1, toValue(value2Index)},
+              std::pair<propagation::VarId, Int>{_vars[var2Index].solverId(),
+                                                 value1}}),
+          assignment, annealer)) {
     _valueIndexToVarIndex[toValueIndex(value1)] = var2Index;
     _valueIndexToVarIndex[value2Index] = var1Index;
     assert(var1Index == _valueIndexToVarIndex.at(value2Index));
@@ -231,15 +234,17 @@ bool AllDifferentNonUniformNeighbourhood::assignValue(Assignment& assignment,
   assert(newValueIndex < _valueIndexToVarIndex.size());
   assert(_valueIndexToVarIndex[newValueIndex] == _vars.size());
   assert(varIndex < _vars.size());
-  const propagation::VarViewId var = _vars[varIndex].solverId();
+  const auto var = _vars[varIndex].solverId();
   const Int oldValue = assignment.value(var);
   const size_t oldValueIndex = toValueIndex(oldValue);
 
   assert(oldValueIndex != newValueIndex);
   assert(_valueIndexToVarIndex.at(oldValueIndex) == varIndex);
 
-  if (maybeCommit(Move<1>({var}, {toValue(newValueIndex)}), assignment,
-                  annealer)) {
+  if (maybeCommit(
+          Move(std::vector<std::pair<propagation::VarId, Int>>{
+              std::pair<propagation::VarId, Int>{var, toValue(newValueIndex)}}),
+          assignment, annealer)) {
     _valueIndexToVarIndex[newValueIndex] = varIndex;
     _valueIndexToVarIndex[oldValueIndex] = _vars.size();
     return true;

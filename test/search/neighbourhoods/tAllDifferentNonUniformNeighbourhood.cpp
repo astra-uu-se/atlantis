@@ -11,7 +11,7 @@ using namespace atlantis::search;
 
 class AlwaysAcceptingAnnealer : public search::Annealer {
  public:
-  AlwaysAcceptingAnnealer(const search::Assignment& assignment,
+  AlwaysAcceptingAnnealer(search::Assignment& assignment,
                           search::RandomProvider& random,
                           search::AnnealingSchedule& schedule)
       : Annealer(assignment, random, schedule) {}
@@ -70,8 +70,9 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, Initialize) {
 
   std::unordered_set<Int> usedValues{};
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    _assignment->assign(
-        [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
+    _assignment->assign([&]([[maybe_unused]] auto& modifier) {
+      neighbourhood.initialise(_random, *_assignment);
+    });
     usedValues.clear();
     for (auto i = 0u; i < _vars.size(); ++i) {
       const Int value = _solver->committedValue(_vars.at(i).solverId());
@@ -95,8 +96,9 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, CanSwap) {
     }
   }
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    _assignment->assign(
-        [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
+    _assignment->assign([&]([[maybe_unused]] auto& modifier) {
+      neighbourhood.initialise(_random, *_assignment);
+    });
 
     for (size_t var1Index = 0; var1Index < _vars.size(); ++var1Index) {
       const Int value1 =
@@ -136,8 +138,9 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, Swap) {
     }
   }
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    _assignment->assign(
-        [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
+    _assignment->assign([&]([[maybe_unused]] auto& modifier) {
+      neighbourhood.initialise(_random, *_assignment);
+    });
 
     for (size_t var1Index = 0; var1Index < _vars.size(); ++var1Index) {
       const Int value1 =
@@ -177,8 +180,9 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, AssignValue) {
     }
   }
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    _assignment->assign(
-        [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
+    _assignment->assign([&]([[maybe_unused]] auto& modifier) {
+      neighbourhood.initialise(_random, *_assignment);
+    });
 
     for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
       for (const Int newValue : _domains.at(varIndex)) {
@@ -220,8 +224,9 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, RandomMove) {
     }
   }
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    _assignment->assign(
-        [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
+    _assignment->assign([&]([[maybe_unused]] auto& modifier) {
+      neighbourhood.initialise(_random, *_assignment);
+    });
 
     EXPECT_TRUE(neighbourhood.randomMove(_random, *_assignment, annealer));
   }

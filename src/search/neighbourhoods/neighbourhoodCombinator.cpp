@@ -33,9 +33,9 @@ NeighbourhoodCombinator::NeighbourhoodCombinator(
 }
 
 void NeighbourhoodCombinator::initialise(RandomProvider& random,
-                                         AssignmentModifier& modifications) {
+                                         Assignment& assignment) {
   for (const auto& neighbourhood : _neighbourhoods) {
-    neighbourhood->initialise(random, modifications);
+    neighbourhood->initialise(random, assignment);
   }
 }
 

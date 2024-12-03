@@ -15,7 +15,7 @@ namespace atlantis::search {
  */
 class Annealer {
  private:
-  const Assignment& _assignment;
+  Assignment& _assignment;
   RandomProvider& _random;
   AnnealingSchedule& _schedule;
 
@@ -29,8 +29,7 @@ class Annealer {
   UInt _objectiveWeight{1};
 
  public:
-  Annealer(const Assignment& assignment, RandomProvider& random,
-           AnnealingSchedule& schedule);
+  Annealer(Assignment&, RandomProvider&, AnnealingSchedule&);
 
   virtual ~Annealer() = default;
 
@@ -62,8 +61,7 @@ class Annealer {
    * @param move The move itself.
    * @return True if @p move should be committed, false otherwise.
    */
-  template <unsigned int N>
-  bool acceptMove(Move<N> move) {
+  bool acceptMove(Move move) {
     _attemptedMovesPerRound++;
 
     Int moveCost = evaluate(move.probe(_assignment));

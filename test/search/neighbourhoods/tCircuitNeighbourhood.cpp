@@ -51,8 +51,9 @@ TEST_F(CircuitNeighbourhoodTest, all_values_are_initialised) {
   search::neighbourhoods::CircuitNeighbourhood neighbourhood(
       std::vector<search::SearchVar>(next), 1);
 
-  _assignment->assign(
-      [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
+  _assignment->assign([&]([[maybe_unused]] auto& modifier) {
+    neighbourhood.initialise(_random, *_assignment);
+  });
 
   expectCycle();
 }
@@ -63,8 +64,9 @@ TEST_F(CircuitNeighbourhoodTest, fixed_vars_are_considered) {
   search::neighbourhoods::CircuitNeighbourhood neighbourhood(
       std::vector<search::SearchVar>(next), 1);
 
-  _assignment->assign(
-      [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
+  _assignment->assign([&]([[maybe_unused]] auto& modifier) {
+    neighbourhood.initialise(_random, *_assignment);
+  });
 
   expectCycle();
 }
@@ -74,8 +76,9 @@ TEST_F(CircuitNeighbourhoodTest, moves_maintain_circuit) {
 
   search::neighbourhoods::CircuitNeighbourhood neighbourhood(
       std::vector<search::SearchVar>(next), 1);
-  _assignment->assign(
-      [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
+  _assignment->assign([&]([[maybe_unused]] auto& modifier) {
+    neighbourhood.initialise(_random, *_assignment);
+  });
 
   auto schedule = search::AnnealerContainer::cooling(0.99, 4);
   AlwaysAcceptingAnnealer annealer(*_assignment, _random, *schedule);

@@ -38,8 +38,9 @@ TEST_F(IntLinEqNeighbourhoodTest, all_values_are_initialised) {
   search::neighbourhoods::IntLinEqNeighbourhood neighbourhood(
       std::vector<Int>{coeffs}, std::vector<search::SearchVar>{vars}, offset);
   for (size_t m = 0; m < 100; ++m) {
-    _assignment->assign(
-        [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
+    _assignment->assign([&]([[maybe_unused]] auto& modifier) {
+      neighbourhood.initialise(_random, *_assignment);
+    });
 
     Int sum = 0;
 
@@ -56,8 +57,9 @@ TEST_F(IntLinEqNeighbourhoodTest, randomMove) {
   search::neighbourhoods::IntLinEqNeighbourhood neighbourhood(
       std::vector<Int>{coeffs}, std::vector<search::SearchVar>{vars}, offset);
 
-  _assignment->assign(
-      [&](auto& modifier) { neighbourhood.initialise(_random, modifier); });
+  _assignment->assign([&]([[maybe_unused]] auto& modifier) {
+    neighbourhood.initialise(_random, *_assignment);
+  });
 
   Int sum = 0;
 

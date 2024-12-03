@@ -17,8 +17,8 @@ AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
   _domain.erase(std::unique(_domain.begin(), _domain.end()), _domain.end());
 }
 
-void AllDifferentUniformNeighbourhood::initialise(
-    RandomProvider& random, AssignmentModifier& modifications) {
+void AllDifferentUniformNeighbourhood::initialise(RandomProvider& random,
+                                                  Assignment& assignment) {
   /*
   For each index in 0.._vars.size() - 1: _domain[i] is the value assigned to
   _vars[i].
@@ -34,7 +34,7 @@ void AllDifferentUniformNeighbourhood::initialise(
         static_cast<size_t>(random.intInRange(i, _domain.size() - 1));
 
     // Assign variable _vars[i] the retrieved value:
-    modifications.set(_vars[i].solverId(), _domain[valIndex]);
+    assignment.set(_vars[i].solverId(), _domain[valIndex]);
 
     // the value assigned to _vars[i] is no longer free:
     std::swap(_domain[i], _domain[valIndex]);
@@ -67,8 +67,9 @@ bool AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
   Int value1 = assignment.value(var1);
   Int value2 = assignment.value(var2);
 
-  return maybeCommit(Move<2>({var1, var2}, {value2, value1}), assignment,
-                     annealer);
+  return maybeCommit(Move(std::vector<std::pair<propagation::VarId, Int>>{
+                         {var1, value2}, {var2, value1}}),
+                     assignment, annealer);
 }
 
 bool AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
@@ -80,9 +81,10 @@ bool AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
   const size_t selectedValIndex = static_cast<size_t>(random.intInRange(
       static_cast<Int>(_vars.size()), static_cast<Int>(_domain.size()) - 1));
 
-  if (maybeCommit(Move<1>({_vars[selectedVarIndex].solverId()},
-                          {_domain[selectedValIndex]}),
-                  assignment, annealer)) {
+  if (maybeCommit(
+          Move(std::vector<std::pair<propagation::VarId, Int>>{
+              {_vars[selectedVarIndex].solverId(), _domain[selectedValIndex]}}),
+          assignment, annealer)) {
     std::swap(_domain[selectedVarIndex], _domain[selectedValIndex]);
 #ifndef NDEBUG
     for (size_t i = 0; i < _vars.size(); ++i) {

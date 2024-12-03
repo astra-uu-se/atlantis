@@ -8,31 +8,9 @@
 
 namespace atlantis::search {
 
-class AssignmentModifier {
- private:
-  propagation::Solver& _solver;
-
- public:
-  explicit AssignmentModifier(propagation::Solver& solver) : _solver(solver) {
-    assert(solver.isMoving());
-  }
-
-  /**
-   * Assign a value to a variable. Overrides any modifications previously made
-   * to @p var.
-   *
-   * @param var The variable to assign.
-   * @param value The value to assign to the variable.
-   */
-  void set(propagation::VarViewId var, Int value) {
-    _solver.setValue(var, value);
-  }
-};
-
 class Assignment {
  private:
   propagation::Solver& _solver;
-  std::vector<propagation::VarViewId> _searchVars{};
   propagation::VarViewId _violation{propagation::NULL_ID};
   propagation::VarViewId _objective{propagation::NULL_ID};
   propagation::ObjectiveDirection _objectiveDirection;
@@ -106,22 +84,25 @@ class Assignment {
 
   [[nodiscard]] bool objectiveIsOptimal() const noexcept;
 
+  inline void set(propagation::VarId searchVarId, Int val) {
+    _solver.setValue(searchVarId, val);
+  }
+
   /**
    * @return The cost of the current assignment.
    */
   [[nodiscard]] Cost cost() const noexcept;
 
-  [[nodiscard]] const std::vector<propagation::VarViewId>& searchVars()
+  [[nodiscard]] const std::vector<propagation::VarId>& searchVars()
       const noexcept {
-    return _searchVars;
+    return _solver.searchVars();
   }
 
  private:
   template <typename Callback>
   void move(Callback modificationFunc) const {
     _solver.beginMove();
-    AssignmentModifier modifications(_solver);
-    modificationFunc(modifications);
+    modificationFunc(*this);
     _solver.endMove();
   }
 };

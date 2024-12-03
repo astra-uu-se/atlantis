@@ -9,7 +9,7 @@ CircuitNeighbourhood::CircuitNeighbourhood(std::vector<SearchVar>&& vars,
     : _vars(std::move(vars)), _offset(offset) {}
 
 void CircuitNeighbourhood::initialise(RandomProvider& random,
-                                      AssignmentModifier& modifications) {
+                                      Assignment& assignment) {
   Int numAvailable = _vars.size();
   std::vector<bool> idxIsAvailable(_vars.size(), true);
 
@@ -20,7 +20,7 @@ void CircuitNeighbourhood::initialise(RandomProvider& random,
 
       assert(idxIsAvailable.at(nextNodeIdx));
 
-      modifications.set(var.solverId(), nextNode);
+      assignment.set(var.solverId(), nextNode);
       idxIsAvailable[nextNodeIdx] = false;
       --numAvailable;
     }
@@ -60,13 +60,12 @@ void CircuitNeighbourhood::initialise(RandomProvider& random,
 
     assert(nextNodeIdx < _vars.size());
 
-    modifications.set(_vars[curNodeIdx].solverId(), idx2Node(nextNodeIdx));
+    assignment.set(_vars[curNodeIdx].solverId(), idx2Node(nextNodeIdx));
 
     curNodeIdx = nextNodeIdx;
   }
 
-  modifications.set(_vars[curNodeIdx].solverId(),
-                    idx2Node(availableIndices[0]));
+  assignment.set(_vars[curNodeIdx].solverId(), idx2Node(availableIndices[0]));
 }
 
 static size_t determineNewNext(RandomProvider& random, size_t node,
@@ -109,9 +108,10 @@ bool CircuitNeighbourhood::randomMove(RandomProvider& random,
     }
   }
 
-  Move<3> move({_vars[nodeIdx].solverId(), _vars[oldNextIdx].solverId(),
-                _vars[newNextIdx].solverId()},
-               {idx2Node(kIdx), idx2Node(lastIdx), idx2Node(oldNextIdx)});
+  Move move(std::vector<std::pair<propagation::VarId, Int>>{
+      {_vars[nodeIdx].solverId(), idx2Node(kIdx)},
+      {_vars[oldNextIdx].solverId(), idx2Node(lastIdx)},
+      {_vars[newNextIdx].solverId(), idx2Node(oldNextIdx)}});
   return annealer.acceptMove(move);
 }
 

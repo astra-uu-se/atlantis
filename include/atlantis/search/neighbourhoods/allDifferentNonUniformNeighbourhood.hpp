@@ -31,10 +31,8 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
                                       Int domainLb, Int domainUb,
                                       const propagation::SolverBase& solver);
 
-  void initialise(RandomProvider& random,
-                  AssignmentModifier& modifications) override;
-  bool randomMove(RandomProvider& random, Assignment& assignment,
-                  Annealer& annealer) override;
+  void initialise(RandomProvider&, Assignment&) override;
+  bool randomMove(RandomProvider&, Assignment&, Annealer&) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;
