@@ -2,8 +2,7 @@
 
 namespace atlantis::search {
 
-Cost::Cost(Int violationDegree, Int objective,
-           propagation::ObjectiveDirection direction)
+Cost::Cost(Int violationDegree, Int objective, ObjectiveDirection direction)
     : _violationDegree(violationDegree),
       _objective(objective),
       _objectiveWeightSign(static_cast<int>(direction)) {}

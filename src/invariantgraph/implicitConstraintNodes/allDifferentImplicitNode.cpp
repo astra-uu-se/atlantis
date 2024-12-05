@@ -78,8 +78,7 @@ AllDifferentImplicitNode::createNeighbourhood() {
     }
     return std::make_shared<
         search::neighbourhoods::AllDifferentNonUniformNeighbourhood>(
-        std::move(std::move(searchVars)), domainLb, domainUb,
-        invariantGraph().solver());
+        std::move(std::move(searchVars)), domainLb, domainUb);
   }
 }
 

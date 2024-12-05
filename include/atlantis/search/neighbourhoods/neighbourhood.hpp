@@ -2,9 +2,7 @@
 
 #include <vector>
 
-#include "atlantis/search/annealer.hpp"
-#include "atlantis/search/assignment.hpp"
-#include "atlantis/search/move.hpp"
+#include "atlantis/search/iAssignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
 
@@ -18,41 +16,24 @@ class Neighbourhood {
    * Initialise an assignment.
    *
    * @param random The source of randomness.
-   * @param assignment The assignment to be modified.
    */
-  virtual void initialise(RandomProvider& random, Assignment& assignment) = 0;
+  virtual void initialise(RandomProvider& random, IAssignment& assignment) = 0;
 
   /**
-   * Make a random move on @p assignment. After a move is constructed, the
-   * decision whether to apply it is taken by @p annealer.
+   * Make a random move.
    *
    * @param random The source of randomness.
-   * @param assignment The assignment to move on.
-   * @param annealer The annealer which decides whether to accept the move.
-   * @return True if a move was committed, false otherwise.
+   * @return the number of variables that were modified
    */
-  virtual bool randomMove(RandomProvider& random, Assignment& assignment,
-                          Annealer& annealer) = 0;
+  virtual size_t randomMove(RandomProvider& random,
+                            IAssignment& assignment) = 0;
 
   /**
    * @return The search variables covered by this neighbourhood.
    */
   [[nodiscard]] virtual const std::vector<SearchVar>& coveredVars() const = 0;
 
- protected:
-  bool maybeCommit(Move move, Assignment& assignment, Annealer& annealer) {
-    try {
-      if (annealer.acceptMove(move)) {
-        move.commit(assignment);
-        return true;
-      }
-    } catch (TopologicalOrderError&) {
-      // The probe contains one or more undeterminable dynamic cycles
-      return false;
-    }
-
-    return false;
-  }
+  virtual void commitIf(const IAssignment&) {};
 };
 
 }  // namespace atlantis::search::neighbourhoods

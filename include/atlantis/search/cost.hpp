@@ -14,8 +14,7 @@ class Cost {
   Int _objectiveWeightSign;
 
  public:
-  Cost(Int violationDegree, Int objective,
-       propagation::ObjectiveDirection direction);
+  Cost(Int violationDegree, Int objective, ObjectiveDirection direction);
 
   /**
    * @return True if this cost has no violated constraints.
@@ -36,6 +35,11 @@ class Cost {
                              UInt objectiveWeight) const noexcept;
 
   [[nodiscard]] std::string toString() const;
+
+  void set(Int violationDegree, Int objective) {
+    _violationDegree = violationDegree;
+    _objective = objective;
+  }
 };
 
 }  // namespace atlantis::search

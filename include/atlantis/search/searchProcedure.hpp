@@ -1,6 +1,7 @@
 #pragma once
 
 #include "atlantis/logging/logger.hpp"
+#include "atlantis/search/annealer.hpp"
 #include "atlantis/search/neighbourhoods/neighbourhood.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/randomProvider.hpp"
@@ -16,8 +17,14 @@ namespace atlantis::search {
  * Press, 2005.
  */
 class SearchProcedure {
+ private:
+  RandomProvider& _random;
+  IAssignment& _assignment;
+  neighbourhoods::Neighbourhood& _neighbourhood;
+  Objective _objective;
+
  public:
-  SearchProcedure(RandomProvider& random, Assignment& assignment,
+  SearchProcedure(RandomProvider& random, IAssignment& assignment,
                   neighbourhoods::Neighbourhood& neighbourhood,
                   Objective objective)
       : _random(random),
@@ -27,12 +34,6 @@ class SearchProcedure {
 
   SearchStatistics run(SearchController& controller, Annealer& annealer,
                        logging::Logger& logger);
-
- private:
-  RandomProvider& _random;
-  Assignment& _assignment;
-  neighbourhoods::Neighbourhood& _neighbourhood;
-  Objective _objective;
 };
 
 }  // namespace atlantis::search

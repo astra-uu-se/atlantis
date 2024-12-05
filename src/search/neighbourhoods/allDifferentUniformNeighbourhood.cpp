@@ -9,6 +9,9 @@ AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
     std::vector<SearchVar>&& vars, std::vector<Int>&& domain)
     : _vars(std::move(vars)),
       _domain(std::move(domain)),
+      _moveVarIdx(_vars.size()),
+      _moveValIdx(_domain.size()),
+      _curTimestamp(NULL_TIMESTAMP),
       _hasFreeValues(_domain.size() > _vars.size()) {
   assert(_vars.size() > 1);
   assert(_domain.size() >= _vars.size());
@@ -18,7 +21,7 @@ AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
 }
 
 void AllDifferentUniformNeighbourhood::initialise(RandomProvider& random,
-                                                  Assignment& assignment) {
+                                                  IAssignment& assignment) {
   /*
   For each index in 0.._vars.size() - 1: _domain[i] is the value assigned to
   _vars[i].
@@ -41,57 +44,67 @@ void AllDifferentUniformNeighbourhood::initialise(RandomProvider& random,
   }
 }
 
-bool AllDifferentUniformNeighbourhood::randomMove(RandomProvider& random,
-                                                  Assignment& assignment,
-                                                  Annealer& annealer) {
+size_t AllDifferentUniformNeighbourhood::randomMove(RandomProvider& random,
+                                                    IAssignment& assignment) {
   if (_hasFreeValues) {
     // A move is replacing the value of a variable with a free value:
-    return assignValue(random, assignment, annealer);
+    return assignValue(random, assignment);
   }
 
   // There are no free variables, a move consists of swapping the values of
   // two variables:
-  return swapValues(random, assignment, annealer);
+  return swapValues(random, assignment);
 }
 
-bool AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
-                                                  Assignment& assignment,
-                                                  Annealer& annealer) {
+size_t AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
+                                                    IAssignment& assignment) {
   size_t i = random.intInRange(0, static_cast<Int>(_vars.size()) - 1);
   size_t j = (i + random.intInRange(1, static_cast<Int>(_vars.size()) - 1)) %
              _vars.size();
 
-  auto var1 = _vars[i].solverId();
-  auto var2 = _vars[j].solverId();
+  _curTimestamp = NULL_TIMESTAMP;
 
-  Int value1 = assignment.value(var1);
-  Int value2 = assignment.value(var2);
+  assignment.set(_vars[i].solverId(),
+                 assignment.committedValue(_vars[j].solverId()));
+  assignment.set(_vars[j].solverId(),
+                 assignment.committedValue(_vars[i].solverId()));
 
-  return maybeCommit(Move(std::vector<std::pair<propagation::VarId, Int>>{
-                         {var1, value2}, {var2, value1}}),
-                     assignment, annealer);
+  return 2;
 }
 
-bool AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
-                                                   Assignment& assignment,
-                                                   Annealer& annealer) {
-  const size_t selectedVarIndex = static_cast<size_t>(
+size_t AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
+                                                     IAssignment& assignment) {
+  _moveVarIdx = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(_vars.size()) - 1));
 
-  const size_t selectedValIndex = static_cast<size_t>(random.intInRange(
-      static_cast<Int>(_vars.size()), static_cast<Int>(_domain.size()) - 1));
+  _moveValIdx = static_cast<size_t>(random.intInRange(
+      static_cast<Int>(_vars.size()), static_cast<Int>(_domain.size()) - 2));
 
-  if (maybeCommit(
-          Move(std::vector<std::pair<propagation::VarId, Int>>{
-              {_vars[selectedVarIndex].solverId(), _domain[selectedValIndex]}}),
-          assignment, annealer)) {
-    std::swap(_domain[selectedVarIndex], _domain[selectedValIndex]);
+  assignment.set(_vars[_moveVarIdx].solverId(), _domain[_moveValIdx]);
+  _curTimestamp = assignment.currentTimestamp();
+
+  return 1;
+}
+
+void AllDifferentUniformNeighbourhood::commitIf(const IAssignment& assignment) {
+  if (_curTimestamp == assignment.currentTimestamp()) {
+    assert(_moveVarIdx < _vars.size());
+    assert(_vars.size() <= _moveValIdx);
+    assert(_moveValIdx < _domain.size());
+
+    assert(assignment.committedValue(_vars[_moveVarIdx].solverId()) ==
+           _domain[_moveVarIdx]);
+    assert(assignment.currentValue(_vars[_moveVarIdx].solverId()) ==
+           _domain[_moveValIdx]);
+
+    std::swap(_domain[_moveVarIdx], _domain[_moveValIdx]);
+    _curTimestamp = NULL_TIMESTAMP;
 #ifndef NDEBUG
     for (size_t i = 0; i < _vars.size(); ++i) {
-      assert(assignment.value(_vars[i].solverId()) == _domain[i]);
+      assert(assignment.currentValue(_vars[i].solverId()) == _domain[i]);
       for (size_t j = i + 1; j < _vars.size(); ++j) {
-        assert(assignment.value(_vars[i].solverId()) !=
-               assignment.value(_vars[j].solverId()));
+        assert(assignment.currentValue(_vars[i].solverId()) !=
+               assignment.currentValue(_vars[j].solverId()));
       }
       for (size_t j = _vars.size(); j < _domain.size(); ++j) {
         assert(_domain[i] != _domain[j]);
@@ -103,10 +116,7 @@ bool AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
       }
     }
 #endif
-    return true;
   }
-
-  return false;
 }
 
 }  // namespace atlantis::search::neighbourhoods

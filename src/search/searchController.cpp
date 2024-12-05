@@ -2,7 +2,7 @@
 
 namespace atlantis::search {
 
-bool SearchController::shouldRun(const Assignment& assignment) {
+bool SearchController::shouldRun(const IAssignment& assignment) {
   if (_foundSolution &&
       (_isSatisfactionProblem || assignment.objectiveIsOptimal())) {
     return false;
@@ -17,7 +17,7 @@ bool SearchController::shouldRun(const Assignment& assignment) {
   return true;
 }
 
-void SearchController::onSolution(const Assignment& assignment) {
+void SearchController::onSolution(const IAssignment& assignment) {
   _foundSolution = true;
   _onSolution(assignment);
 }

@@ -10,7 +10,9 @@ namespace atlantis::search::neighbourhoods {
 
 NeighbourhoodCombinator::NeighbourhoodCombinator(
     std::vector<std::shared_ptr<Neighbourhood>>&& neighbourhoods)
-    : _neighbourhoods(std::move(neighbourhoods)) {
+    : _neighbourhoods(std::move(neighbourhoods)),
+      _curTimestamp(NULL_TIMESTAMP),
+      _curNeighbourhood(_neighbourhoods.size()) {
   assert(!_neighbourhoods.empty());
   size_t num_vars = 0;
   for (const auto& neighbourhood : _neighbourhoods) {
@@ -33,17 +35,18 @@ NeighbourhoodCombinator::NeighbourhoodCombinator(
 }
 
 void NeighbourhoodCombinator::initialise(RandomProvider& random,
-                                         Assignment& assignment) {
+                                         IAssignment& assignment) {
   for (const auto& neighbourhood : _neighbourhoods) {
     neighbourhood->initialise(random, assignment);
   }
 }
 
-bool NeighbourhoodCombinator::randomMove(RandomProvider& random,
-                                         Assignment& assignment,
-                                         Annealer& annealer) {
-  auto& neighbourhood = selectNeighbourhood(random);
-  return neighbourhood.randomMove(random, assignment, annealer);
+size_t NeighbourhoodCombinator::randomMove(RandomProvider& random,
+                                           IAssignment& assignment) {
+  _curTimestamp = assignment.currentTimestamp();
+  _curNeighbourhood =
+      random.fromDistribution<size_t>(_neighbourhoodDistribution);
+  return _neighbourhoods[_curNeighbourhood]->randomMove(random, assignment);
 }
 
 void NeighbourhoodCombinator::printNeighbourhood(logging::Logger& logger) {
@@ -54,10 +57,11 @@ void NeighbourhoodCombinator::printNeighbourhood(logging::Logger& logger) {
   }
 }
 
-Neighbourhood& NeighbourhoodCombinator::selectNeighbourhood(
-    RandomProvider& random) {
-  auto idx = random.fromDistribution<size_t>(_neighbourhoodDistribution);
-  return *_neighbourhoods[idx];
+void NeighbourhoodCombinator::commitIf(const IAssignment& assignment) {
+  if (_curTimestamp == assignment.currentTimestamp() &&
+      _curNeighbourhood < _neighbourhoods.size()) {
+    _neighbourhoods[_curNeighbourhood]->commitIf(assignment);
+  }
 }
 
 }  // namespace atlantis::search::neighbourhoods

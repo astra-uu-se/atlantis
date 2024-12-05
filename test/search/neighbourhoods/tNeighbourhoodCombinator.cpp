@@ -1,96 +1,70 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "../testHelper.hpp"
+#include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/annealing/annealerContainer.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/neighbourhoods/neighbourhoodCombinator.hpp"
 
 namespace atlantis::testing {
 
-using namespace atlantis::search;
+using namespace atlantis::search::neighbourhoods;
 
 using ::testing::Ref;
 using ::testing::Return;
 using ::testing::ReturnRef;
 
-class MockNeighbourhood : public search::neighbourhoods::Neighbourhood {
- public:
-  MOCK_METHOD(void, initialise, (search::RandomProvider&, search::Assignment&),
-              (override));
-
-  MOCK_METHOD(bool, randomMove,
-              (search::RandomProvider&, search::Assignment&, search::Annealer&),
-              (override));
-
-  MOCK_METHOD(const std::vector<search::SearchVar>&, coveredVars, (),
-              (const override));
-};
-
 class NeighbourhoodCombinatorTest : public ::testing::Test {
  public:
-  std::vector<std::shared_ptr<search::neighbourhoods::Neighbourhood>> ns;
-  MockNeighbourhood* n1{nullptr};
-  MockNeighbourhood* n2{nullptr};
+  std::shared_ptr<propagation::Solver> _solver;
+  std::shared_ptr<Assignment> _assignment;
+  std::shared_ptr<MockNeighbourhood> n1;
+  std::shared_ptr<MockNeighbourhood> n2;
+  std::shared_ptr<NeighbourhoodCombinator> _combinator;
+  RandomProvider _random{123456789};
 
-  std::vector<search::SearchVar> vars{
-      search::SearchVar(propagation::NULL_ID, SearchDomain(0, 10))};
+  std::vector<SearchVar> vars{
+      SearchVar(propagation::NULL_ID, SearchDomain(0, 10))};
 
   void SetUp() override {
-    auto unique_n1 = std::make_unique<MockNeighbourhood>();
-    auto unique_n2 = std::make_unique<MockNeighbourhood>();
+    n1 = std::make_shared<MockNeighbourhood>();
+    EXPECT_CALL(*n1, coveredVars()).WillRepeatedly(ReturnRef(vars));
 
-    n1 = unique_n1.get();
-    n2 = unique_n2.get();
+    n2 = std::make_shared<MockNeighbourhood>();
+    EXPECT_CALL(*n2, coveredVars()).WillRepeatedly(ReturnRef(vars));
 
-    ns.push_back(std::move(unique_n1));
-    ns.push_back(std::move(unique_n2));
+    auto ns = std::vector<std::shared_ptr<Neighbourhood>>{n1, n2};
+
+    _combinator = std::make_shared<NeighbourhoodCombinator>(std::move(ns));
+
+    _solver = std::make_shared<propagation::Solver>();
+
+    _assignment = std::make_shared<Assignment>(
+        *_solver, *_combinator, propagation::NULL_ID, propagation::NULL_ID,
+        ObjectiveDirection::NONE, Int{0});
   }
 };
 
 TEST_F(NeighbourhoodCombinatorTest, initialise_calls_all_neighbourhoods) {
-  EXPECT_CALL(*n1, coveredVars()).WillRepeatedly(ReturnRef(vars));
-  EXPECT_CALL(*n2, coveredVars()).WillRepeatedly(ReturnRef(vars));
+  EXPECT_CALL(*n1, initialise(Ref(_random), Ref(*_assignment))).Times(1);
+  EXPECT_CALL(*n2, initialise(Ref(_random), Ref(*_assignment))).Times(1);
 
-  search::neighbourhoods::NeighbourhoodCombinator combinator(std::move(ns));
-
-  propagation::Solver solver;
-  search::RandomProvider random(123456789);
-  search::Assignment assignment(solver, propagation::NULL_ID,
-                                propagation::NULL_ID,
-                                propagation::ObjectiveDirection::NONE, Int{0});
-
-  solver.beginMove();
-
-  EXPECT_CALL(*n1, initialise(Ref(random), Ref(assignment))).Times(1);
-  EXPECT_CALL(*n2, initialise(Ref(random), Ref(assignment))).Times(1);
-
-  combinator.initialise(random, assignment);
-  solver.endMove();
+  _assignment->initialise(_random);
 }
 
 TEST_F(NeighbourhoodCombinatorTest,
        randomMove_calls_one_neighbourhood_and_forwards_result) {
-  EXPECT_CALL(*n1, coveredVars()).WillRepeatedly(ReturnRef(vars));
-  EXPECT_CALL(*n2, coveredVars()).WillRepeatedly(ReturnRef(vars));
-
-  search::neighbourhoods::NeighbourhoodCombinator combinator(std::move(ns));
-
-  propagation::Solver solver;
-  search::RandomProvider random(123456789);
-  search::Assignment assignment(solver, propagation::NULL_ID,
-                                propagation::NULL_ID,
-                                propagation::ObjectiveDirection::NONE, Int{0});
-
-  auto schedule = search::AnnealerContainer::cooling(0.95, 4);
-  search::Annealer annealer(assignment, random, *schedule);
+  auto schedule = AnnealerContainer::cooling(0.95, 4);
+  Annealer annealer(_random, *schedule, *_assignment);
   annealer.start();
 
-  EXPECT_CALL(*n1, randomMove(Ref(random), Ref(assignment), Ref(annealer)))
-      .Times(0);
+  EXPECT_CALL(*n1, randomMove(Ref(_random), Ref(*_assignment))).Times(0);
 
-  EXPECT_CALL(*n2, randomMove(Ref(random), Ref(assignment), Ref(annealer)))
+  EXPECT_CALL(*n2, randomMove(Ref(_random), Ref(*_assignment)))
       .WillOnce(Return(false));
 
-  combinator.randomMove(random, assignment, annealer);
+  _assignment->performProbe(_random);
 }
 
 }  // namespace atlantis::testing

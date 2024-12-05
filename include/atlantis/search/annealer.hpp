@@ -2,7 +2,7 @@
 
 #include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "atlantis/search/cost.hpp"
-#include "atlantis/search/move.hpp"
+#include "atlantis/search/iAssignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 
 namespace atlantis::search {
@@ -15,9 +15,9 @@ namespace atlantis::search {
  */
 class Annealer {
  private:
-  Assignment& _assignment;
   RandomProvider& _random;
   AnnealingSchedule& _schedule;
+  Cost _cost;
 
   UInt _requiredMovesPerRound{0};
   UInt _attemptedMovesPerRound{0};
@@ -29,7 +29,7 @@ class Annealer {
   UInt _objectiveWeight{1};
 
  public:
-  Annealer(Assignment&, RandomProvider&, AnnealingSchedule&);
+  Annealer(RandomProvider&, AnnealingSchedule&, const IAssignment&);
 
   virtual ~Annealer() = default;
 
@@ -61,11 +61,10 @@ class Annealer {
    * @param move The move itself.
    * @return True if @p move should be committed, false otherwise.
    */
-  bool acceptMove(Move move) {
+  bool acceptMove(const Cost& cost) {
     _attemptedMovesPerRound++;
 
-    Int moveCost = evaluate(move.probe(_assignment));
-    return accept(moveCost);
+    return accept(evaluate(cost));
   }
 
   [[nodiscard]] const RoundStatistics& currentRoundStatistics() {
@@ -75,7 +74,7 @@ class Annealer {
  protected:
   virtual bool accept(Int moveCost);
 
-  [[nodiscard]] inline Int evaluate(Cost cost) const {
+  [[nodiscard]] inline Int evaluate(const Cost& cost) const {
     return cost.evaluate(_violationWeight, _objectiveWeight);
   }
 };

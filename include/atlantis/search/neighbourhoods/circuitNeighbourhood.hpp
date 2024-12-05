@@ -15,8 +15,9 @@ class CircuitNeighbourhood : public Neighbourhood {
  public:
   explicit CircuitNeighbourhood(std::vector<search::SearchVar>&&, Int offset);
 
-  void initialise(RandomProvider&, Assignment&) override;
-  bool randomMove(RandomProvider&, Assignment&, Annealer&) override;
+  void initialise(RandomProvider&, IAssignment&) override;
+
+  size_t randomMove(RandomProvider&, IAssignment&) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;

@@ -5,13 +5,13 @@
 #include <optional>
 #include <vector>
 
-#include "atlantis/search/assignment.hpp"
+#include "atlantis/search/iAssignment.hpp"
 
 namespace atlantis::search {
 
 class SearchController {
  private:
-  std::function<void(const Assignment&)> _onSolution;
+  std::function<void(const IAssignment&)> _onSolution;
   std::function<void(bool)> _onFinish;
   std::optional<std::chrono::milliseconds> _timeout;
 
@@ -24,7 +24,7 @@ class SearchController {
   template <typename Rep, typename Period>
   SearchController(
       bool isSatisfactionProblem,
-      std::function<void(const Assignment&)>&& onSolution,
+      std::function<void(const IAssignment&)>&& onSolution,
       std::function<void(bool)>&& onFinish,
       std::optional<std::chrono::duration<Rep, Period>> timeout = {})
       : _onSolution(std::move(onSolution)),
@@ -37,8 +37,8 @@ class SearchController {
                 : std::nullopt),
         _isSatisfactionProblem(isSatisfactionProblem) {}
 
-  bool shouldRun(const Assignment&);
-  void onSolution(const Assignment&);
+  bool shouldRun(const IAssignment&);
+  void onSolution(const IAssignment&);
   void onFinish() const;
 };
 

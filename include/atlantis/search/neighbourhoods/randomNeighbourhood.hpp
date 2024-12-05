@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "atlantis/search/assignment.hpp"
+#include "atlantis/search/iAssignment.hpp"
 #include "atlantis/search/neighbourhoods//neighbourhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
@@ -16,9 +16,9 @@ class RandomNeighbourhood : public Neighbourhood {
  public:
   RandomNeighbourhood(std::vector<SearchVar>&& vars);
 
-  void initialise(RandomProvider&, Assignment&) override;
+  void initialise(RandomProvider&, IAssignment& assignment) override;
 
-  bool randomMove(RandomProvider&, Assignment&, Annealer&) override;
+  size_t randomMove(RandomProvider&, IAssignment& assignment) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;

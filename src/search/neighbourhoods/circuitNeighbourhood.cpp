@@ -9,7 +9,7 @@ CircuitNeighbourhood::CircuitNeighbourhood(std::vector<SearchVar>&& vars,
     : _vars(std::move(vars)), _offset(offset) {}
 
 void CircuitNeighbourhood::initialise(RandomProvider& random,
-                                      Assignment& assignment) {
+                                      IAssignment& assignment) {
   Int numAvailable = _vars.size();
   std::vector<bool> idxIsAvailable(_vars.size(), true);
 
@@ -90,29 +90,28 @@ static size_t determineNewNext(RandomProvider& random, size_t node,
   return newNext;
 }
 
-bool CircuitNeighbourhood::randomMove(RandomProvider& random,
-                                      Assignment& assignment,
-                                      Annealer& annealer) {
+size_t CircuitNeighbourhood::randomMove(RandomProvider& random,
+                                        IAssignment& assignment) {
   auto nodeIdx = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(_vars.size() - 1)));
-  auto oldNextIdx = node2Idx(assignment.value(_vars[nodeIdx].solverId()));
+  auto oldNextIdx =
+      node2Idx(assignment.committedValue(_vars[nodeIdx].solverId()));
 
   auto newNextIdx = determineNewNext(random, nodeIdx, oldNextIdx, _vars.size());
   assert(newNextIdx < _vars.size());
-  auto kIdx = node2Idx(assignment.value(_vars[oldNextIdx].solverId()));
-  auto lastIdx = node2Idx(assignment.value(_vars[newNextIdx].solverId()));
+  auto kIdx = node2Idx(assignment.committedValue(_vars[oldNextIdx].solverId()));
+  auto lastIdx =
+      node2Idx(assignment.committedValue(_vars[newNextIdx].solverId()));
 
   for (auto varIdx : {nodeIdx, oldNextIdx, newNextIdx}) {
     if (_vars[varIdx].isFixed()) {
-      return false;
+      return 0;
     }
   }
-
-  Move move(std::vector<std::pair<propagation::VarId, Int>>{
-      {_vars[nodeIdx].solverId(), idx2Node(kIdx)},
-      {_vars[oldNextIdx].solverId(), idx2Node(lastIdx)},
-      {_vars[newNextIdx].solverId(), idx2Node(oldNextIdx)}});
-  return annealer.acceptMove(move);
+  assignment.set(_vars[nodeIdx].solverId(), idx2Node(kIdx));
+  assignment.set(_vars[oldNextIdx].solverId(), idx2Node(lastIdx));
+  assignment.set(_vars[newNextIdx].solverId(), idx2Node(oldNextIdx));
+  return 3;
 }
 
 Int CircuitNeighbourhood::idx2Node(size_t nodeIdx) noexcept {

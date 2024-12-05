@@ -5,106 +5,66 @@
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/search/cost.hpp"
+#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
 
 namespace atlantis::search {
 
-class Assignment {
+class Assignment : public virtual IAssignment {
  private:
   propagation::Solver& _solver;
+  neighbourhoods::Neighbourhood& _neighbourhood;
   propagation::VarViewId _violation{propagation::NULL_ID};
   propagation::VarViewId _objective{propagation::NULL_ID};
-  propagation::ObjectiveDirection _objectiveDirection;
+  ObjectiveDirection _objectiveDirection;
   Int _objectiveOptimalValue;
 
  public:
   explicit Assignment(propagation::Solver& solver,
+                      neighbourhoods::Neighbourhood& neighbourhood,
                       propagation::VarViewId violation,
                       propagation::VarViewId objective,
-                      propagation::ObjectiveDirection objectiveDirection,
+                      ObjectiveDirection objectiveDirection,
                       Int objectiveOptimalValue);
 
-  /**
-   * Assign values to the variables in the assignment. This is supplied a
-   * callback, which receives a @p AssignmentModification instance, through
-   * which the variables can be changed. For example:
-   *
-   *     Assignment assignment;
-   *     assignment.assign([&](auto& modifications) {
-   *       modifications.set(a, 1);
-   *       modifications.set(b, 2);
-   *     });
-   *
-   * @param modificationFunc The callback which sets the variables and their
-   * new values.
-   */
-  template <typename Callback>
-  void assign(Callback modificationFunc) {
-    move(modificationFunc);
+  Cost initialise(RandomProvider&) override;
 
-    _solver.beginCommit();
-    _solver.query(_violation);
-    _solver.query(_objective);
-    _solver.endCommit();
-  }
+  Cost performProbe(RandomProvider&) override;
+
+  void commitLastProbe() override;
 
   /**
-   * Probe the cost of a modification to the assignment. Works similarly to
-   * assign(), but does not commit the modification.
-   *
-   * @param modificationFunc The callback which sets the variables to their
-   * new values for the probe.
-   * @return The cost of the assignment if the altered values were committed.
-   */
-  template <typename Callback>
-  Cost probe(Callback modificationFunc) const {
-    move(modificationFunc);
-
-    _solver.beginProbe();
-    _solver.query(_objective);
-    _solver.query(_violation);
-    _solver.endProbe();
-
-    return {_solver.currentValue(_violation), _solver.currentValue(_objective),
-            _objectiveDirection};
-  }
-
-  /**
-   * Get the value of a variable in the current assignment.
+   * Get the current value of a variable in the assignment.
    *
    * @param var The variable for which to query the value.
    * @return The value of @p var.
    */
-  [[nodiscard]] Int value(propagation::VarViewId var) const noexcept;
+  [[nodiscard]] Int currentValue(propagation::VarViewId) const override;
+
+  /**
+   * Get the committed of a variable in the assignment.
+   *
+   * @param var The variable for which to query the value.
+   * @return The value of @p var.
+   */
+  [[nodiscard]] Int committedValue(propagation::VarViewId) const override;
 
   /**
    * @return True if the current assignment satisfies all the constraints, false
    * otherwise.
    */
-  [[nodiscard]] bool satisfiesConstraints() const noexcept;
+  [[nodiscard]] bool satisfiesConstraints() const override;
 
-  [[nodiscard]] bool objectiveIsOptimal() const noexcept;
+  [[nodiscard]] bool objectiveIsOptimal() const override;
 
-  inline void set(propagation::VarId searchVarId, Int val) {
-    _solver.setValue(searchVarId, val);
-  }
-
-  /**
-   * @return The cost of the current assignment.
-   */
-  [[nodiscard]] Cost cost() const noexcept;
+  void set(propagation::VarId searchVarId, Int val) override;
 
   [[nodiscard]] const std::vector<propagation::VarId>& searchVars()
-      const noexcept {
-    return _solver.searchVars();
-  }
+      const override;
 
- private:
-  template <typename Callback>
-  void move(Callback modificationFunc) const {
-    _solver.beginMove();
-    modificationFunc(*this);
-    _solver.endMove();
-  }
+  [[nodiscard]] Timestamp currentTimestamp() const override;
+
+  [[nodiscard]] ObjectiveDirection objectiveDirection() const override;
 };
 
 }  // namespace atlantis::search

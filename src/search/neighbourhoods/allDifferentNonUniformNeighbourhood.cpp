@@ -5,15 +5,14 @@
 namespace atlantis::search::neighbourhoods {
 
 AllDifferentNonUniformNeighbourhood::AllDifferentNonUniformNeighbourhood(
-    std::vector<SearchVar>&& vars, Int domainLb, Int domainUb,
-    const propagation::SolverBase& solver)
+    std::vector<SearchVar>&& vars, Int domainLb, Int domainUb)
     : _vars(std::move(vars)),
       _varIndices(_vars.size()),
       _domainOffset(domainLb),
       _valueIndexToVarIndex(domainUb - domainLb + 1, _vars.size()),
       _domains(_vars.size()),
       _inDomain(_vars.size()),
-      _solver(solver) {
+      _curTimestamp(NULL_TIMESTAMP) {
   assert(_vars.size() > 1);
   std::iota(_varIndices.begin(), _varIndices.end(), 0u);
   assert(_valueIndexToVarIndex.size() >= _vars.size());
@@ -24,13 +23,13 @@ static bool bipartiteMatching(
     std::vector<size_t>& matching, std::vector<bool>& visited) {
   assert(varIndex < forwardArcs.size());
   assert(matching.size() == visited.size());
-  // Try each value
+  // Try each committedValue
   for (const size_t valueIndex : forwardArcs[varIndex]) {
     assert(valueIndex < visited.size());
-    // Has the value been visited?
+    // Has the committedValue been visited?
     if (!visited[valueIndex]) {
       visited[valueIndex] = true;
-      // If the value is not in the current matching, or if
+      // If the committedValue is not in the current matching, or if
       // there exists a matching where _vars[varIndex] = valueIndex +
       // _domainOffset:
       assert(matching[valueIndex] <= forwardArcs.size());
@@ -46,7 +45,7 @@ static bool bipartiteMatching(
 }
 
 void AllDifferentNonUniformNeighbourhood::initialise(RandomProvider& random,
-                                                     Assignment& assignment) {
+                                                     IAssignment& assignment) {
   std::vector<std::vector<size_t>> forwardArcs(_vars.size());
   std::fill(_valueIndexToVarIndex.begin(), _valueIndexToVarIndex.end(),
             _vars.size());
@@ -100,11 +99,9 @@ void AllDifferentNonUniformNeighbourhood::initialise(RandomProvider& random,
   }
 }
 
-bool AllDifferentNonUniformNeighbourhood::randomMove(RandomProvider& random,
-                                                     Assignment& assignment,
-                                                     Annealer& annealer) {
-  assert(sanity(assignment));
-  bool didMove = false;
+size_t AllDifferentNonUniformNeighbourhood::randomMove(
+    RandomProvider& random, IAssignment& assignment) {
+  assert(sanity(assignment, true));
 
   for (Int i = 0; i < static_cast<Int>(_varIndices.size()); ++i) {
     std::swap(_varIndices[i],
@@ -113,8 +110,8 @@ bool AllDifferentNonUniformNeighbourhood::randomMove(RandomProvider& random,
     const size_t var1Index = _varIndices[i];
 #ifndef NDEBUG
     {
-      const size_t value1Index =
-          toValueIndex(assignment.value(_vars.at(var1Index).solverId()));
+      const size_t value1Index = toValueIndex(
+          assignment.committedValue(_vars.at(var1Index).solverId()));
       assert(value1Index < _valueIndexToVarIndex.size());
       assert(var1Index == _valueIndexToVarIndex.at(value1Index));
     }
@@ -131,51 +128,51 @@ bool AllDifferentNonUniformNeighbourhood::randomMove(RandomProvider& random,
       }
       if (isValueIndexOccupied(value2Index)) {
         if (canSwap(assignment, var1Index, value2Index)) {
-          didMove = swapValues(assignment, annealer, var1Index, value2Index);
+          return swapValues(assignment, var1Index, value2Index);
         }
       } else {
-        didMove = assignValue(assignment, annealer, var1Index, value2Index);
+        return assignValue(assignment, var1Index, value2Index);
       }
     }
   }
-  assert(sanity(assignment));
-  return didMove;
+  assert(sanity(assignment, false));
+  return 0;
 }
 
 bool AllDifferentNonUniformNeighbourhood::canSwap(
-    const Assignment& assignment, size_t var1Index,
+    IAssignment& assignment, size_t var1Index,
     size_t value2Index) const noexcept {
   // var 1:
   assert(var1Index < _vars.size());
-  assert(_valueIndexToVarIndex.at(toValueIndex(
-             assignment.value(_vars[var1Index].solverId()))) == var1Index);
+  assert(_valueIndexToVarIndex.at(toValueIndex(assignment.committedValue(
+             _vars[var1Index].solverId()))) == var1Index);
 
   // var 2:
   assert(value2Index < _valueIndexToVarIndex.size());
   assert(isValueIndexOccupied(value2Index));
-  assert(
-      toValue(value2Index) ==
-      assignment.value(_vars[_valueIndexToVarIndex[value2Index]].solverId()));
+  assert(toValue(value2Index) ==
+         assignment.committedValue(
+             _vars[_valueIndexToVarIndex[value2Index]].solverId()));
 
   // sanity:
   assert(inDomain(var1Index, value2Index));
   assert(_valueIndexToVarIndex[value2Index] <= _inDomain.size());
   assert(value2Index < _inDomain.at(_valueIndexToVarIndex[value2Index]).size());
-  assert(toValueIndex(assignment.value(_vars[var1Index].solverId())) <
+  assert(toValueIndex(assignment.committedValue(_vars[var1Index].solverId())) <
          _inDomain.at(_valueIndexToVarIndex[value2Index]).size());
 
-  return inDomain(_valueIndexToVarIndex[value2Index],
-                  toValueIndex(assignment.value(_vars[var1Index].solverId())));
+  return inDomain(
+      _valueIndexToVarIndex[value2Index],
+      toValueIndex(assignment.committedValue(_vars[var1Index].solverId())));
 }
 
-bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
-                                                     Annealer& annealer,
-                                                     size_t var1Index,
-                                                     size_t value2Index) {
+size_t AllDifferentNonUniformNeighbourhood::swapValues(IAssignment& assignment,
+                                                       size_t var1Index,
+                                                       size_t value2Index) {
   // var 1:
   assert(var1Index < _vars.size());
-  const propagation::VarViewId var1 = _vars[var1Index].solverId();
-  const Int value1 = assignment.value(var1);
+  const auto var1 = _vars[var1Index].solverId();
+  const Int value1 = assignment.committedValue(var1);
   assert(isValueIndexOccupied(toValueIndex(value1)));
   assert(_valueIndexToVarIndex.at(toValueIndex(value1)) == var1Index);
 
@@ -183,16 +180,16 @@ bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
   assert(isValueIndexOccupied(value2Index));
   const size_t var2Index = _valueIndexToVarIndex[value2Index];
   assert(toValue(value2Index) ==
-         assignment.value(_vars.at(var2Index).solverId()));
+         assignment.committedValue(_vars.at(var2Index).solverId()));
 
   // sanity:
   assert(var1Index != var2Index);
   assert(toValue(value2Index) != value1);
   assert(inDomain(var2Index, toValueIndex(value1)));
   assert(inDomain(var1Index, value2Index));
+  const size_t value1Index = toValueIndex(value1);
 
 #ifndef NDEBUG
-  const size_t value1Index = toValueIndex(value1);
   assert(var1Index == _valueIndexToVarIndex.at(value1Index));
   assert(var1 == _vars.at(_valueIndexToVarIndex.at(value1Index)).solverId());
   assert(var2Index == _valueIndexToVarIndex.at(value2Index));
@@ -200,57 +197,81 @@ bool AllDifferentNonUniformNeighbourhood::swapValues(Assignment& assignment,
   const propagation::VarViewId var2 = _vars.at(var2Index).solverId();
   assert(var2 == _vars.at(_valueIndexToVarIndex.at(value2Index)).solverId());
 
-  assert(assignment.value(var1) == value1);
-  assert(assignment.value(var2) == value2);
+  assert(assignment.committedValue(var1) == value1);
+  assert(assignment.committedValue(var2) == value2);
 #endif
-  if (maybeCommit(
-          Move(std::vector<std::pair<propagation::VarId, Int>>{
-              std::pair<propagation::VarId, Int>{var1, toValue(value2Index)},
-              std::pair<propagation::VarId, Int>{_vars[var2Index].solverId(),
-                                                 value1}}),
-          assignment, annealer)) {
-    _valueIndexToVarIndex[toValueIndex(value1)] = var2Index;
-    _valueIndexToVarIndex[value2Index] = var1Index;
-    assert(var1Index == _valueIndexToVarIndex.at(value2Index));
-    assert(var2Index == _valueIndexToVarIndex.at(value1Index));
-    assert(var2 == _vars.at(_valueIndexToVarIndex.at(value1Index)).solverId());
-    assert(var1 == _vars.at(_valueIndexToVarIndex.at(value2Index)).solverId());
-    assert(var2 == _vars.at(_valueIndexToVarIndex.at(value1Index)).solverId());
-
-    assert(assignment.value(var1) == value2);
-    assert(assignment.value(var2) == value1);
-
-    assert(_valueIndexToVarIndex.at(value1Index) == var2Index);
-    assert(_valueIndexToVarIndex.at(value2Index) == var1Index);
-    return true;
-  }
-  return false;
+  assignment.set(_vars[var1Index].solverId(), toValue(value2Index));
+  assignment.set(_vars[var2Index].solverId(), toValue(value1Index));
+  _curMove[0] = var1Index;
+  _curMove[1] = var2Index;
+  _curTimestamp = assignment.currentTimestamp();
+  return 2;
 }
 
-bool AllDifferentNonUniformNeighbourhood::assignValue(Assignment& assignment,
-                                                      Annealer& annealer,
-                                                      size_t varIndex,
-                                                      size_t newValueIndex) {
+size_t AllDifferentNonUniformNeighbourhood::assignValue(IAssignment& assignment,
+                                                        size_t varIndex,
+                                                        size_t newValueIndex) {
   assert(newValueIndex < _valueIndexToVarIndex.size());
   assert(_valueIndexToVarIndex[newValueIndex] == _vars.size());
   assert(varIndex < _vars.size());
   const auto var = _vars[varIndex].solverId();
-  const Int oldValue = assignment.value(var);
+  const Int oldValue = assignment.committedValue(var);
   const size_t oldValueIndex = toValueIndex(oldValue);
 
   assert(oldValueIndex != newValueIndex);
   assert(_valueIndexToVarIndex.at(oldValueIndex) == varIndex);
 
-  if (maybeCommit(
-          Move(std::vector<std::pair<propagation::VarId, Int>>{
-              std::pair<propagation::VarId, Int>{var, toValue(newValueIndex)}}),
-          assignment, annealer)) {
-    _valueIndexToVarIndex[newValueIndex] = varIndex;
-    _valueIndexToVarIndex[oldValueIndex] = _vars.size();
-    return true;
+  assignment.set(var, toValue(newValueIndex));
+  _curMove[0] = varIndex;
+  _curMove[1] = newValueIndex;
+
+  assignment.set(var, toValue(newValueIndex));
+  return 1;
+}
+
+void AllDifferentNonUniformNeighbourhood::commitIf(
+    const IAssignment& assignment) {
+  if (assignment.currentTimestamp() != _curTimestamp) {
+    return;
   }
 
-  return false;
+  assert(_curMove[0] < _vars.size());
+
+  if (_curMove[1] < _vars.size()) {
+    assert(assignment.currentValue(_vars[_curMove[0]].solverId()) ==
+           assignment.committedValue(_vars[_curMove[1]].solverId()));
+    assert(assignment.currentValue(_vars[_curMove[1]].solverId()) ==
+           assignment.committedValue(_vars[_curMove[0]].solverId()));
+
+    const size_t value1Index =
+        toValueIndex(assignment.committedValue(_vars[_curMove[0]].solverId()));
+    const size_t value2Index =
+        toValueIndex(assignment.committedValue(_vars[_curMove[1]].solverId()));
+
+    assert(_curMove[0] == _valueIndexToVarIndex.at(value1Index));
+    assert(_curMove[1] == _valueIndexToVarIndex.at(value2Index));
+
+    _valueIndexToVarIndex[value1Index] = _curMove[1];
+    _valueIndexToVarIndex[value2Index] = _curMove[0];
+
+    assert(_curMove[0] == _valueIndexToVarIndex.at(value2Index));
+    assert(_curMove[1] == _valueIndexToVarIndex.at(value1Index));
+  } else {
+    assert(_curMove[1] < _valueIndexToVarIndex.size());
+
+    assert(_vars.size() == _valueIndexToVarIndex.at(_curMove[1]));
+    assert(_curMove[1] == toValueIndex(assignment.currentValue(
+                              _vars[_curMove[0]].solverId())));
+
+    const size_t oldValueIndex =
+        toValueIndex(assignment.committedValue(_vars[_curMove[0]].solverId()));
+
+    assert(oldValueIndex != _curMove[1]);
+
+    _valueIndexToVarIndex[_curMove[1]] = _curMove[0];
+    _valueIndexToVarIndex[oldValueIndex] = _vars.size();
+  }
+  _curTimestamp = NULL_TIMESTAMP;
 }
 
 }  // namespace atlantis::search::neighbourhoods

@@ -11,21 +11,25 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
  private:
   std::vector<search::SearchVar> _vars;
   std::vector<Int> _domain;
+  size_t _moveVarIdx;
+  size_t _moveValIdx;
+  Timestamp _curTimestamp;
   bool _hasFreeValues;
 
  private:
-  bool swapValues(RandomProvider& random, Assignment& assignment,
-                  Annealer& annealer);
+  size_t swapValues(RandomProvider&, IAssignment& assignment);
 
-  bool assignValue(RandomProvider& random, Assignment& assignment,
-                   Annealer& annealer);
+  size_t assignValue(RandomProvider&, IAssignment& assignment);
 
  public:
   AllDifferentUniformNeighbourhood(std::vector<search::SearchVar>&& vars,
                                    std::vector<Int>&& domain);
 
-  void initialise(RandomProvider&, Assignment&) override;
-  bool randomMove(RandomProvider&, Assignment&, Annealer&) override;
+  void initialise(RandomProvider&, IAssignment&) override;
+
+  size_t randomMove(RandomProvider&, IAssignment&) override;
+
+  void commitIf(const IAssignment&) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;

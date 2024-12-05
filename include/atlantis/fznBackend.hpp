@@ -9,7 +9,7 @@
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
-#include "atlantis/search/assignment.hpp"
+#include "atlantis/search/iAssignment.hpp"
 #include "atlantis/search/searchStatistics.hpp"
 
 namespace atlantis {
@@ -17,7 +17,7 @@ namespace atlantis {
 class FznBackend {
  public:
   static void onSolutionDefault(const invariantgraph::FznInvariantGraph&,
-                                const search::Assignment&);
+                                const search::IAssignment&);
   static void onFinishDefault(bool);
 
  private:
@@ -28,7 +28,7 @@ class FznBackend {
   std::optional<std::filesystem::path> _dotFilePath{};
 
   std::function<void(const invariantgraph::FznInvariantGraph&,
-                     const search::Assignment&)>
+                     const search::IAssignment&)>
       _onSolution = onSolutionDefault;
   std::function<void(bool)> _onFinish = onFinishDefault;
 
@@ -52,7 +52,7 @@ class FznBackend {
 
   void setOnSolution(
       std::function<void(const invariantgraph::FznInvariantGraph&,
-                         const search::Assignment&)>
+                         const search::IAssignment&)>
           onSolution) {
     _onSolution = onSolution;
   }

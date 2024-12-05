@@ -19,7 +19,7 @@ IntLinEqNeighbourhood::IntLinEqNeighbourhood(std::vector<Int>&& coeffs,
 }
 
 void IntLinEqNeighbourhood::initialise(RandomProvider& random,
-                                       Assignment& assignment) {
+                                       IAssignment& assignment) {
   for (Int i = 0; i < static_cast<Int>(_indices.size()) - 1; ++i) {
     std::swap<size_t>(_indices[i],
                       _indices[random.intInRange(i, _indices.size() - 1)]);
@@ -68,14 +68,13 @@ void IntLinEqNeighbourhood::initialise(RandomProvider& random,
   assert(curSum == 0);
 }
 
-bool IntLinEqNeighbourhood::randomMove(RandomProvider& random,
-                                       Assignment& assignment,
-                                       Annealer& annealer) {
+size_t IntLinEqNeighbourhood::randomMove(RandomProvider& random,
+                                         IAssignment& assignment) {
   for (Int i = 0; i < static_cast<Int>(_indices.size()) - 1; ++i) {
     std::swap<size_t>(_indices[i],
                       _indices[random.intInRange(i, _indices.size() - 1)]);
     const size_t index1 = _indices[i];
-    const Int cur1 = assignment.value(_vars[index1].solverId());
+    const Int cur1 = assignment.committedValue(_vars[index1].solverId());
     const Int lb1 = _vars[index1].domain().lowerBound();
     const Int ub1 = _vars[index1].domain().upperBound();
 
@@ -83,7 +82,7 @@ bool IntLinEqNeighbourhood::randomMove(RandomProvider& random,
       std::swap<size_t>(_indices[j],
                         _indices[random.intInRange(j, _indices.size() - 1)]);
       const size_t index2 = _indices[j];
-      const Int cur2 = assignment.value(_vars[index2].solverId());
+      const Int cur2 = assignment.committedValue(_vars[index2].solverId());
       const Int lb2 = _vars[index2].domain().lowerBound();
       const Int ub2 = _vars[index2].domain().upperBound();
 
@@ -98,10 +97,9 @@ bool IntLinEqNeighbourhood::randomMove(RandomProvider& random,
         assert(ub1 >= cur1 + diff);
         assert(lb2 <= cur2 - diff);
         assert(ub2 >= cur2 - diff);
-        return maybeCommit(Move(std::vector<std::pair<propagation::VarId, Int>>{
-                               {_vars[index1].solverId(), cur1 + diff},
-                               {_vars[index2].solverId(), cur2 - diff}}),
-                           assignment, annealer);
+        assignment.set(_vars[index1].solverId(), cur1 + diff);
+        assignment.set(_vars[index2].solverId(), cur2 - diff);
+        return 2;
       } else {
         const Int v1 = std::max(lb1 - cur1, lb2 - cur2);
         const Int v2 = std::min(ub1 - cur1, ub2 - cur2);
@@ -113,13 +111,12 @@ bool IntLinEqNeighbourhood::randomMove(RandomProvider& random,
         assert(ub1 >= cur1 + diff);
         assert(lb2 <= cur2 + diff);
         assert(ub2 >= cur2 + diff);
-        return maybeCommit(Move(std::vector<std::pair<propagation::VarId, Int>>{
-                               {_vars[index1].solverId(), cur1 + diff},
-                               {_vars[index2].solverId(), cur2 + diff}}),
-                           assignment, annealer);
+        assignment.set(_vars[index1].solverId(), cur1 + diff);
+        assignment.set(_vars[index2].solverId(), cur2 + diff);
+        return 2;
       }
     }
   }
-  return false;
+  return 0;
 }
 }  // namespace atlantis::search::neighbourhoods

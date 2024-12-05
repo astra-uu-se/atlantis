@@ -10,9 +10,6 @@
 
 namespace atlantis::propagation {
 
-using Timestamp = UInt;
-[[maybe_unused]] static Timestamp NULL_TIMESTAMP = Timestamp(0);
-
 using VarId = size_t;
 using ViewId = size_t;
 using InvariantId = size_t;
@@ -74,7 +71,5 @@ enum class OutputToInputMarkingMode : char {
   // variables and the set of search variables x depends on overlaps:
   OUTPUT_TO_INPUT_STATIC
 };
-
-enum class ObjectiveDirection : char { MINIMIZE = 1, MAXIMIZE = -1, NONE = 0 };
 
 }  // namespace atlantis::propagation
