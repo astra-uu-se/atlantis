@@ -1,13 +1,13 @@
-#include "atlantis/search/neighbourhoods/intLinEqNeighbourhood.hpp"
-
 #include <algorithm>
 #include <cassert>
 
-namespace atlantis::search::neighbourhoods {
+#include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
 
-IntLinEqNeighbourhood::IntLinEqNeighbourhood(std::vector<Int>&& coeffs,
-                                             std::vector<SearchVar>&& vars,
-                                             Int bound)
+namespace atlantis::search::neighborhoods {
+
+IntLinEqNeighborhood::IntLinEqNeighborhood(std::vector<Int>&& coeffs,
+                                           std::vector<SearchVar>&& vars,
+                                           Int bound)
     : _coeffs(coeffs),
       _vars(std::move(vars)),
       _offset(bound),
@@ -18,8 +18,8 @@ IntLinEqNeighbourhood::IntLinEqNeighbourhood(std::vector<Int>&& coeffs,
                      [](Int coeff) { return std::abs(coeff) == 1; }));
 }
 
-void IntLinEqNeighbourhood::initialize(RandomProvider& random,
-                                       IAssignment& assignment) {
+void IntLinEqNeighborhood::initialize(RandomProvider& random,
+                                      IAssignment& assignment) {
   for (Int i = 0; i < static_cast<Int>(_indices.size()) - 1; ++i) {
     std::swap<size_t>(_indices[i],
                       _indices[random.intInRange(i, _indices.size() - 1)]);
@@ -68,8 +68,8 @@ void IntLinEqNeighbourhood::initialize(RandomProvider& random,
   assert(curSum == 0);
 }
 
-size_t IntLinEqNeighbourhood::randomMove(RandomProvider& random,
-                                         IAssignment& assignment) {
+size_t IntLinEqNeighborhood::randomMove(RandomProvider& random,
+                                        IAssignment& assignment) {
   for (Int i = 0; i < static_cast<Int>(_indices.size()) - 1; ++i) {
     std::swap<size_t>(_indices[i],
                       _indices[random.intInRange(i, _indices.size() - 1)]);
@@ -119,4 +119,4 @@ size_t IntLinEqNeighbourhood::randomMove(RandomProvider& random,
   }
   return 0;
 }
-}  // namespace atlantis::search::neighbourhoods
+}  // namespace atlantis::search::neighborhoods

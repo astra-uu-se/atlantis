@@ -6,11 +6,11 @@
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
 
-namespace atlantis::search::neighbourhoods {
+namespace atlantis::search::neighborhoods {
 
-class Neighbourhood {
+class Neighborhood {
  public:
-  virtual ~Neighbourhood() = default;
+  virtual ~Neighborhood() = default;
 
   /**
    * Initialize an assignment.
@@ -29,11 +29,11 @@ class Neighbourhood {
                             IAssignment& assignment) = 0;
 
   /**
-   * @return The search variables covered by this neighbourhood.
+   * @return The search variables covered by this neighborhood.
    */
   [[nodiscard]] virtual const std::vector<SearchVar>& coveredVars() const = 0;
 
   virtual void commitIf(const IAssignment&) {};
 };
 
-}  // namespace atlantis::search::neighbourhoods
+}  // namespace atlantis::search::neighborhoods

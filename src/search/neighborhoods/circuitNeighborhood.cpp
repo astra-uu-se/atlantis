@@ -1,15 +1,15 @@
-#include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
-
 #include <algorithm>
 
-namespace atlantis::search::neighbourhoods {
+#include "atlantis/search/neighborhoods/circuitNeighborhood.hpp"
 
-CircuitNeighbourhood::CircuitNeighbourhood(std::vector<SearchVar>&& vars,
-                                           Int offset)
+namespace atlantis::search::neighborhoods {
+
+CircuitNeighborhood::CircuitNeighborhood(std::vector<SearchVar>&& vars,
+                                         Int offset)
     : _vars(std::move(vars)), _offset(offset) {}
 
-void CircuitNeighbourhood::initialize(RandomProvider& random,
-                                      IAssignment& assignment) {
+void CircuitNeighborhood::initialize(RandomProvider& random,
+                                     IAssignment& assignment) {
   Int numAvailable = _vars.size();
   std::vector<bool> idxIsAvailable(_vars.size(), true);
 
@@ -90,8 +90,8 @@ static size_t determineNewNext(RandomProvider& random, size_t node,
   return newNext;
 }
 
-size_t CircuitNeighbourhood::randomMove(RandomProvider& random,
-                                        IAssignment& assignment) {
+size_t CircuitNeighborhood::randomMove(RandomProvider& random,
+                                       IAssignment& assignment) {
   auto nodeIdx = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(_vars.size() - 1)));
   auto oldNextIdx =
@@ -114,15 +114,15 @@ size_t CircuitNeighbourhood::randomMove(RandomProvider& random,
   return 3;
 }
 
-Int CircuitNeighbourhood::idx2Node(size_t nodeIdx) noexcept {
+Int CircuitNeighborhood::idx2Node(size_t nodeIdx) noexcept {
   // Account for index sets starting at _offset instead of 0.
   return static_cast<Int>(nodeIdx) + _offset;
 }
 
-size_t CircuitNeighbourhood::node2Idx(Int node) noexcept {
+size_t CircuitNeighborhood::node2Idx(Int node) noexcept {
   // Account for index sets starting at _offset instead of 0.
   assert(node >= _offset);
   return static_cast<size_t>(node - _offset);
 }
 
-}  // namespace atlantis::search::neighbourhoods
+}  // namespace atlantis::search::neighborhoods

@@ -6,13 +6,13 @@
 #include "atlantis/search/annealer.hpp"
 #include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "atlantis/search/iAssignment.hpp"
-#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::search;
-using namespace atlantis::search::neighbourhoods;
+using namespace atlantis::search::neighborhoods;
 
 class AlwaysAcceptingAnnealer : public search::Annealer {
  public:
@@ -24,7 +24,7 @@ class AlwaysAcceptingAnnealer : public search::Annealer {
   [[nodiscard]] bool accept(Int) override { return true; }
 };
 
-class MockNeighbourhood : public Neighbourhood {
+class MockNeighborhood : public Neighborhood {
  public:
   MOCK_METHOD(void, initialize, (RandomProvider&, IAssignment&), (override));
 

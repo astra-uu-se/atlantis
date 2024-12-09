@@ -149,9 +149,9 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
     }
     dotFile.close();
   }
-  auto neighbourhood = invariantGraph.neighbourhood();
+  auto neighborhood = invariantGraph.neighborhood();
 
-  neighbourhood.printNeighbourhood(logger);
+  neighborhood.printNeighborhood(logger);
 
   search::Objective searchObjective(solver, problemType);
 
@@ -169,11 +169,11 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
 
   const auto objectiveDirection = getObjectiveDirection(problemType);
 
-  search::Assignment assignment(solver, neighbourhood, violation,
+  search::Assignment assignment(solver, neighborhood, violation,
                                 invariantGraph.objectiveVarId(),
                                 objectiveDirection, objectiveOptimalValue);
 
-  if (neighbourhood.coveredVars().empty()) {
+  if (neighborhood.coveredVars().empty()) {
     _onSolution(invariantGraph, assignment);
     _onFinish(true);
     return search::SearchStatistics{};
@@ -182,13 +182,12 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   logger.debug("Using seed {}.", _seed);
   search::RandomProvider random(_seed);
 
-  search::SearchProcedure search(random, assignment, neighbourhood,
+  search::SearchProcedure search(random, assignment, neighborhood,
                                  searchObjective);
 
-  auto onSolution =
-      [&](const search::IAssignment& a) {
-        _onSolution(invariantGraph, a);
-      };
+  auto onSolution = [&](const search::IAssignment& a) {
+    _onSolution(invariantGraph, a);
+  };
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
 
   search::SearchController searchController(_model.isSatisfactionProblem(),

@@ -3,11 +3,11 @@
 
 #include "../testHelper.hpp"
 #include "./testHelper.hpp"
-#include "atlantis/search/neighbourhoods/neighbourhoodCombinator.hpp"
+#include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
 
 namespace atlantis::testing {
 
-using namespace atlantis::search::neighbourhoods;
+using namespace atlantis::search::neighborhoods;
 
 using ::testing::AtMost;
 using ::testing::Exactly;
@@ -15,39 +15,39 @@ using ::testing::Ref;
 using ::testing::Return;
 using ::testing::ReturnRef;
 
-class NeighbourhoodCombinatorTest : public NeighbourhoodTestBase {
+class NeighborhoodCombinatorTest : public NeighborhoodTestBase {
  public:
-  std::shared_ptr<MockNeighbourhood> n1;
-  std::shared_ptr<MockNeighbourhood> n2;
-  std::shared_ptr<NeighbourhoodCombinator> _combinator;
+  std::shared_ptr<MockNeighborhood> n1;
+  std::shared_ptr<MockNeighborhood> n2;
+  std::shared_ptr<NeighborhoodCombinator> _combinator;
 
   std::vector<SearchVar> vars;
 
   void SetUp() override {
-    NeighbourhoodTestBase::SetUp();
+    NeighborhoodTestBase::SetUp();
 
     vars = std::vector<SearchVar>{
         SearchVar(propagation::NULL_ID, SearchDomain(0, 10))};
 
-    n1 = std::make_shared<MockNeighbourhood>();
+    n1 = std::make_shared<MockNeighborhood>();
     EXPECT_CALL(*n1, coveredVars()).WillRepeatedly(ReturnRef(vars));
 
-    n2 = std::make_shared<MockNeighbourhood>();
+    n2 = std::make_shared<MockNeighborhood>();
     EXPECT_CALL(*n2, coveredVars()).WillRepeatedly(ReturnRef(vars));
 
-    _combinator = std::make_shared<NeighbourhoodCombinator>(
-        std::vector<std::shared_ptr<Neighbourhood>>{n1, n2});
+    _combinator = std::make_shared<NeighborhoodCombinator>(
+        std::vector<std::shared_ptr<Neighborhood>>{n1, n2});
   }
 };
 
-TEST_F(NeighbourhoodCombinatorTest, initialize) {
+TEST_F(NeighborhoodCombinatorTest, initialize) {
   EXPECT_CALL(*n1, initialize(Ref(_random), Ref(*_assignment))).Times(1);
   EXPECT_CALL(*n2, initialize(Ref(_random), Ref(*_assignment))).Times(1);
 
   _combinator->initialize(_random, *_assignment);
 }
 
-TEST_F(NeighbourhoodCombinatorTest, randomMove) {
+TEST_F(NeighborhoodCombinatorTest, randomMove) {
   EXPECT_CALL(*n2, randomMove(Ref(_random), Ref(*_assignment)))
       .Times(AtMost(1))
       .WillOnce(Return(size_t{0}));
@@ -59,7 +59,7 @@ TEST_F(NeighbourhoodCombinatorTest, randomMove) {
   _combinator->randomMove(_random, *_assignment);
 }
 
-TEST_F(NeighbourhoodCombinatorTest, commitIf) {
+TEST_F(NeighborhoodCombinatorTest, commitIf) {
   EXPECT_CALL(*n2, randomMove(Ref(_random), Ref(*_assignment)))
       .Times(AtMost(1))
       .WillOnce(Return(size_t{0}));

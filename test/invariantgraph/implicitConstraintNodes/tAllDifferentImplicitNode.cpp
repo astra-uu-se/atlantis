@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
-#include "atlantis/search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
+#include "atlantis/search/neighborhoods/allDifferentUniformNeighborhood.hpp"
 
 namespace atlantis::testing {
 
@@ -53,11 +53,11 @@ TEST_P(AllDifferentImplicitNodeTestFixture, application) {
 
   EXPECT_EQ(_solver->numInvariants(), 0);
 
-  auto neighbourhood = invNode().neighbourhood();
+  auto neighborhood = invNode().neighborhood();
 
   EXPECT_TRUE(
-      dynamic_cast<search::neighbourhoods::AllDifferentUniformNeighbourhood*>(
-          neighbourhood.get()));
+      dynamic_cast<search::neighborhoods::AllDifferentUniformNeighborhood*>(
+          neighborhood.get()));
 }
 
 INSTANTIATE_TEST_SUITE_P(AllDifferentImplicitNodeTest,

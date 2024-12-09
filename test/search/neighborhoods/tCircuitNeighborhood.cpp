@@ -1,21 +1,21 @@
 #include <gtest/gtest.h>
 
 #include "./testHelper.hpp"
-#include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
+#include "atlantis/search/neighborhoods/circuitNeighborhood.hpp"
 
 namespace atlantis::testing {
 
-using namespace atlantis::search::neighbourhoods;
+using namespace atlantis::search::neighborhoods;
 
-class CircuitNeighbourhoodTest : public NeighbourhoodTestBase {
+class CircuitNeighborhoodTest : public NeighborhoodTestBase {
  public:
-  std::shared_ptr<CircuitNeighbourhood> _neighbourhood;
+  std::shared_ptr<CircuitNeighborhood> _neighborhood;
   Int _offset = 1;
 
   std::vector<SearchVar> next;
 
   void SetUp() override {
-    NeighbourhoodTestBase::SetUp();
+    NeighborhoodTestBase::SetUp();
 
     _solver->open();
     for (auto i = 0u; i < 4; ++i) {
@@ -25,7 +25,7 @@ class CircuitNeighbourhoodTest : public NeighbourhoodTestBase {
 
     _solver->close();
 
-    _neighbourhood = std::make_shared<CircuitNeighbourhood>(
+    _neighborhood = std::make_shared<CircuitNeighborhood>(
         std::vector<SearchVar>(next), _offset);
   }
 
@@ -45,30 +45,30 @@ class CircuitNeighbourhoodTest : public NeighbourhoodTestBase {
   }
 };
 
-TEST_F(CircuitNeighbourhoodTest, initialize) {
-  initialize(*_neighbourhood);
+TEST_F(CircuitNeighborhoodTest, initialize) {
+  initialize(*_neighborhood);
   expectHolds();
 
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    _neighbourhood->initialize(_random, *_assignment);
+    _neighborhood->initialize(_random, *_assignment);
     expectHolds();
   }
 }
 
-TEST_F(CircuitNeighbourhoodTest, randomMove) {
-  initialize(*_neighbourhood);
+TEST_F(CircuitNeighborhoodTest, randomMove) {
+  initialize(*_neighborhood);
   expectHolds();
 
   for (auto i = 0; i < 1000; i++) {
-    _neighbourhood->randomMove(_random, *_assignment);
+    _neighborhood->randomMove(_random, *_assignment);
     expectHolds();
   }
 }
 
-TEST_F(CircuitNeighbourhoodTest, commitIf) {
-  initialize(*_neighbourhood);
+TEST_F(CircuitNeighborhoodTest, commitIf) {
+  initialize(*_neighborhood);
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    commitIf(*_neighbourhood);
+    commitIf(*_neighborhood);
     expectHolds();
   }
 }

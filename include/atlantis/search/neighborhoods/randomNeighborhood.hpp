@@ -3,18 +3,18 @@
 #include <vector>
 
 #include "atlantis/search/iAssignment.hpp"
-#include "atlantis/search/neighbourhoods//neighbourhood.hpp"
+#include "atlantis/search/neighborhoods//neighborhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
 
-namespace atlantis::search::neighbourhoods {
+namespace atlantis::search::neighborhoods {
 
-class RandomNeighbourhood : public Neighbourhood {
+class RandomNeighborhood : public Neighborhood {
  private:
   std::vector<SearchVar> _vars;
 
  public:
-  RandomNeighbourhood(std::vector<SearchVar>&& vars);
+  RandomNeighborhood(std::vector<SearchVar>&& vars);
 
   void initialize(RandomProvider&, IAssignment& assignment) override;
 
@@ -25,4 +25,4 @@ class RandomNeighbourhood : public Neighbourhood {
   }
 };
 
-}  // namespace atlantis::search::neighbourhoods
+}  // namespace atlantis::search::neighborhoods

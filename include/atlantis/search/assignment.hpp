@@ -6,14 +6,14 @@
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/search/cost.hpp"
 #include "atlantis/search/iAssignment.hpp"
-#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/search/neighborhoods/neighborhood.hpp"
 
 namespace atlantis::search {
 
 class Assignment : public virtual IAssignment {
  private:
   propagation::Solver& _solver;
-  neighbourhoods::Neighbourhood& _neighbourhood;
+  neighborhoods::Neighborhood& _neighborhood;
   propagation::VarViewId _violation{propagation::NULL_ID};
   propagation::VarViewId _objective{propagation::NULL_ID};
   ObjectiveDirection _objectiveDirection;
@@ -21,7 +21,7 @@ class Assignment : public virtual IAssignment {
 
  public:
   explicit Assignment(propagation::Solver& solver,
-                      neighbourhoods::Neighbourhood& neighbourhood,
+                      neighborhoods::Neighborhood& neighborhood,
                       propagation::VarViewId violation,
                       propagation::VarViewId objective,
                       ObjectiveDirection objectiveDirection,

@@ -1,10 +1,10 @@
-#include "atlantis/search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
-
 #include <algorithm>
 
-namespace atlantis::search::neighbourhoods {
+#include "atlantis/search/neighborhoods/allDifferentNonUniformNeighborhood.hpp"
 
-AllDifferentNonUniformNeighbourhood::AllDifferentNonUniformNeighbourhood(
+namespace atlantis::search::neighborhoods {
+
+AllDifferentNonUniformNeighborhood::AllDifferentNonUniformNeighborhood(
     std::vector<SearchVar>&& vars, Int domainLb, Int domainUb)
     : _vars(std::move(vars)),
       _varIndices(_vars.size()),
@@ -44,8 +44,8 @@ static bool bipartiteMatching(
   return false;
 }
 
-void AllDifferentNonUniformNeighbourhood::initialize(RandomProvider& random,
-                                                     IAssignment& assignment) {
+void AllDifferentNonUniformNeighborhood::initialize(RandomProvider& random,
+                                                    IAssignment& assignment) {
   std::vector<std::vector<size_t>> forwardArcs(_vars.size());
   std::fill(_valueIndexToVarIndex.begin(), _valueIndexToVarIndex.end(),
             _vars.size());
@@ -99,8 +99,8 @@ void AllDifferentNonUniformNeighbourhood::initialize(RandomProvider& random,
   }
 }
 
-size_t AllDifferentNonUniformNeighbourhood::randomMove(
-    RandomProvider& random, IAssignment& assignment) {
+size_t AllDifferentNonUniformNeighborhood::randomMove(RandomProvider& random,
+                                                      IAssignment& assignment) {
   assert(sanity(assignment, true));
 
   for (Int i = 0; i < static_cast<Int>(_varIndices.size()); ++i) {
@@ -139,7 +139,7 @@ size_t AllDifferentNonUniformNeighbourhood::randomMove(
   return 0;
 }
 
-bool AllDifferentNonUniformNeighbourhood::canSwap(
+bool AllDifferentNonUniformNeighborhood::canSwap(
     IAssignment& assignment, size_t var1Index,
     size_t value2Index) const noexcept {
   // var 1:
@@ -166,9 +166,9 @@ bool AllDifferentNonUniformNeighbourhood::canSwap(
       toValueIndex(assignment.committedValue(_vars[var1Index].solverId())));
 }
 
-size_t AllDifferentNonUniformNeighbourhood::swapValues(IAssignment& assignment,
-                                                       size_t var1Index,
-                                                       size_t value2Index) {
+size_t AllDifferentNonUniformNeighborhood::swapValues(IAssignment& assignment,
+                                                      size_t var1Index,
+                                                      size_t value2Index) {
   // var 1:
   assert(var1Index < _vars.size());
   const auto var1 = _vars[var1Index].solverId();
@@ -201,9 +201,9 @@ size_t AllDifferentNonUniformNeighbourhood::swapValues(IAssignment& assignment,
   return 2;
 }
 
-size_t AllDifferentNonUniformNeighbourhood::assignValue(IAssignment& assignment,
-                                                        size_t varIndex,
-                                                        size_t newValueIndex) {
+size_t AllDifferentNonUniformNeighborhood::assignValue(IAssignment& assignment,
+                                                       size_t varIndex,
+                                                       size_t newValueIndex) {
   assert(newValueIndex < _valueIndexToVarIndex.size());
   assert(_valueIndexToVarIndex[newValueIndex] == _vars.size());
   assert(varIndex < _vars.size());
@@ -221,7 +221,7 @@ size_t AllDifferentNonUniformNeighbourhood::assignValue(IAssignment& assignment,
   return 1;
 }
 
-void AllDifferentNonUniformNeighbourhood::commitIf(
+void AllDifferentNonUniformNeighborhood::commitIf(
     const IAssignment& assignment) {
   if (assignment.currentTimestamp() != _curTimestamp) {
     return;
@@ -257,4 +257,4 @@ void AllDifferentNonUniformNeighbourhood::commitIf(
   _curTimestamp = NULL_TIMESTAMP;
 }
 
-}  // namespace atlantis::search::neighbourhoods
+}  // namespace atlantis::search::neighborhoods

@@ -4,8 +4,8 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
-#include "atlantis/search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
+#include "atlantis/search/neighborhoods/allDifferentNonUniformNeighborhood.hpp"
+#include "atlantis/search/neighborhoods/allDifferentUniformNeighborhood.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -22,8 +22,8 @@ void AllDifferentImplicitNode::init(InvariantNodeId id) {
                   }));
 }
 
-std::shared_ptr<search::neighbourhoods::Neighbourhood>
-AllDifferentImplicitNode::createNeighbourhood() {
+std::shared_ptr<search::neighborhoods::Neighborhood>
+AllDifferentImplicitNode::createNeighborhood() {
   if (outputVarNodeIds().size() <= 1) {
     return nullptr;
   }
@@ -63,7 +63,7 @@ AllDifferentImplicitNode::createNeighbourhood() {
     std::copy(vals.begin(), vals.end(), std::back_inserter(domainValues));
 
     return std::make_shared<
-        search::neighbourhoods::AllDifferentUniformNeighbourhood>(
+        search::neighborhoods::AllDifferentUniformNeighborhood>(
         std::move(searchVars), std::move(domainValues));
   } else {
     Int domainLb = std::numeric_limits<Int>::max();
@@ -77,7 +77,7 @@ AllDifferentImplicitNode::createNeighbourhood() {
       domainUb = std::max<Int>(domainUb, varNode.constDomain().upperBound());
     }
     return std::make_shared<
-        search::neighbourhoods::AllDifferentNonUniformNeighbourhood>(
+        search::neighborhoods::AllDifferentNonUniformNeighborhood>(
         std::move(std::move(searchVars)), domainLb, domainUb);
   }
 }

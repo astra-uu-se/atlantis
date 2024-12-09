@@ -7,13 +7,13 @@
 #include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "atlantis/search/cost.hpp"
 #include "atlantis/search/iAssignment.hpp"
-#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::search;
-using namespace atlantis::search::neighbourhoods;
+using namespace atlantis::search::neighborhoods;
 
 class SimpleAssignment : public virtual IAssignment {
  public:
@@ -26,9 +26,9 @@ class SimpleAssignment : public virtual IAssignment {
     return Cost(0, 0, ObjectiveDirection::NONE);
   }
 
-  void initialize(Neighbourhood& neighbourhood, RandomProvider& random) {
+  void initialize(Neighborhood& neighborhood, RandomProvider& random) {
     _solver->beginMove();
-    neighbourhood.initialize(random, *this);
+    neighborhood.initialize(random, *this);
     _solver->endMove();
     _solver->beginCommit();
     _solver->endCommit();
@@ -70,7 +70,7 @@ class SimpleAssignment : public virtual IAssignment {
   }
 };
 
-class NeighbourhoodTestBase : public ::testing::Test {
+class NeighborhoodTestBase : public ::testing::Test {
  public:
   std::shared_ptr<propagation::Solver> _solver;
   std::shared_ptr<SimpleAssignment> _assignment;
@@ -81,27 +81,27 @@ class NeighbourhoodTestBase : public ::testing::Test {
     _assignment = std::make_shared<SimpleAssignment>(_solver);
   }
 
-  void initialize(Neighbourhood& neighbourhood) {
+  void initialize(Neighborhood& neighborhood) {
     _solver->beginMove();
-    neighbourhood.initialize(_random, *_assignment);
+    neighborhood.initialize(_random, *_assignment);
     _solver->endMove();
     _solver->beginCommit();
     _solver->endCommit();
   }
 
-  void randomMove(Neighbourhood& neighbourhood) {
+  void randomMove(Neighborhood& neighborhood) {
     _solver->beginMove();
-    neighbourhood.randomMove(_random, *_assignment);
+    neighborhood.randomMove(_random, *_assignment);
     _solver->endMove();
     _solver->beginProbe();
     _solver->endProbe();
   }
 
-  void commitIf(Neighbourhood& neighbourhood) {
+  void commitIf(Neighborhood& neighborhood) {
     _solver->beginMove();
-    neighbourhood.randomMove(_random, *_assignment);
+    neighborhood.randomMove(_random, *_assignment);
     _solver->endMove();
-    neighbourhood.commitIf(*_assignment);
+    neighborhood.commitIf(*_assignment);
     _solver->beginCommit();
     _solver->endCommit();
   }

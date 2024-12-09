@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
 
 #include "./testHelper.hpp"
-#include "atlantis/search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
+#include "atlantis/search/neighborhoods/allDifferentUniformNeighborhood.hpp"
 
 namespace atlantis::testing {
 
-using namespace atlantis::search::neighbourhoods;
+using namespace atlantis::search::neighborhoods;
 
-class AllDifferentUniformNeighbourhoodTest : public NeighbourhoodTestBase {
+class AllDifferentUniformNeighborhoodTest : public NeighborhoodTestBase {
  public:
-  std::shared_ptr<AllDifferentUniformNeighbourhood> _neighbourhood;
+  std::shared_ptr<AllDifferentUniformNeighborhood> _neighborhood;
   std::vector<SearchVar> _vars;
 
   void expectHolds() {
@@ -50,7 +50,7 @@ class AllDifferentUniformNeighbourhoodTest : public NeighbourhoodTestBase {
   }
 
   void SetUp() override {
-    NeighbourhoodTestBase::SetUp();
+    NeighborhoodTestBase::SetUp();
     _solver->open();
 
     for (size_t i = 0; i < 4; ++i) {
@@ -59,24 +59,24 @@ class AllDifferentUniformNeighbourhoodTest : public NeighbourhoodTestBase {
     }
     _solver->close();
 
-    _neighbourhood =
-        std::make_shared<neighbourhoods::AllDifferentUniformNeighbourhood>(
+    _neighborhood =
+        std::make_shared<neighborhoods::AllDifferentUniformNeighborhood>(
             std::vector<SearchVar>(_vars), std::vector<Int>{1, 2, 3, 4, 5});
   }
 };
 
-TEST_F(AllDifferentUniformNeighbourhoodTest, initialize) {
+TEST_F(AllDifferentUniformNeighborhoodTest, initialize) {
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    initialize(*_neighbourhood);
+    initialize(*_neighborhood);
     expectHolds();
   }
 }
 
-TEST_F(AllDifferentUniformNeighbourhoodTest, swap) {
+TEST_F(AllDifferentUniformNeighborhoodTest, swap) {
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    initialize(*_neighbourhood);
+    initialize(*_neighborhood);
     expectHolds();
-    EXPECT_EQ(_neighbourhood->swapValues(_random, *_assignment), 2);
+    EXPECT_EQ(_neighborhood->swapValues(_random, *_assignment), 2);
     std::vector<propagation::VarId> modified;
     modified.reserve(2);
     for (const auto& var : _vars) {
@@ -94,11 +94,11 @@ TEST_F(AllDifferentUniformNeighbourhoodTest, swap) {
   }
 }
 
-TEST_F(AllDifferentUniformNeighbourhoodTest, assignValue) {
+TEST_F(AllDifferentUniformNeighborhoodTest, assignValue) {
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    initialize(*_neighbourhood);
+    initialize(*_neighborhood);
     expectHolds();
-    EXPECT_EQ(_neighbourhood->assignValue(_random, *_assignment), 1);
+    EXPECT_EQ(_neighborhood->assignValue(_random, *_assignment), 1);
     propagation::VarId modified{propagation::NULL_ID};
     for (const auto& var : _vars) {
       if (_solver->hasChanged(_solver->currentTimestamp(), var.solverId())) {
@@ -113,11 +113,11 @@ TEST_F(AllDifferentUniformNeighbourhoodTest, assignValue) {
   }
 }
 
-TEST_F(AllDifferentUniformNeighbourhoodTest, randomMove) {
-  initialize(*_neighbourhood);
+TEST_F(AllDifferentUniformNeighborhoodTest, randomMove) {
+  initialize(*_neighborhood);
   expectHolds();
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    commitIf(*_neighbourhood);
+    commitIf(*_neighborhood);
     expectHolds();
   }
 }

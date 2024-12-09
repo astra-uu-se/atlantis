@@ -3,7 +3,7 @@
 #include <utility>
 
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
-#include "atlantis/search/neighbourhoods/randomNeighbourhood.hpp"
+#include "atlantis/search/neighborhoods/randomNeighborhood.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -11,8 +11,8 @@ InvariantGraphRoot::InvariantGraphRoot(IInvariantGraph& graph,
                                        std::vector<VarNodeId>&& vars)
     : ImplicitConstraintNode(graph, std::move(vars)) {}
 
-std::shared_ptr<search::neighbourhoods::Neighbourhood>
-InvariantGraphRoot::createNeighbourhood() {
+std::shared_ptr<search::neighborhoods::Neighborhood>
+InvariantGraphRoot::createNeighborhood() {
   std::vector<search::SearchVar> searchVars;
   searchVars.reserve(outputVarNodeIds().size());
 
@@ -26,7 +26,7 @@ InvariantGraphRoot::createNeighbourhood() {
     node.setDomainType(VarNode::DomainType::NONE);
   }
 
-  return std::make_shared<search::neighbourhoods::RandomNeighbourhood>(
+  return std::make_shared<search::neighborhoods::RandomNeighborhood>(
       std::move(searchVars));
 }
 

@@ -4,7 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
-#include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
+#include "atlantis/search/neighborhoods/circuitNeighborhood.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -24,8 +24,8 @@ void CircuitImplicitNode::init(InvariantNodeId id) {
                   }));
 }
 
-std::shared_ptr<search::neighbourhoods::Neighbourhood>
-CircuitImplicitNode::createNeighbourhood() {
+std::shared_ptr<search::neighborhoods::Neighborhood>
+CircuitImplicitNode::createNeighborhood() {
   std::vector<search::SearchVar> searchVars;
   searchVars.reserve(outputVarNodeIds().size());
   std::vector<Int> freeIndices;
@@ -67,7 +67,7 @@ CircuitImplicitNode::createNeighbourhood() {
     varNode.setDomainType(enforceDomain ? VarNode::DomainType::DOMAIN
                                         : VarNode::DomainType::NONE);
   }
-  return std::make_shared<search::neighbourhoods::CircuitNeighbourhood>(
+  return std::make_shared<search::neighborhoods::CircuitNeighborhood>(
       std::move(searchVars), _offset);
 }
 

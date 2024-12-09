@@ -1,11 +1,11 @@
-#include "atlantis/search/neighbourhoods/allDifferentUniformNeighbourhood.hpp"
-
 #include <algorithm>
 #include <cassert>
 
-namespace atlantis::search::neighbourhoods {
+#include "atlantis/search/neighborhoods/allDifferentUniformNeighborhood.hpp"
 
-AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
+namespace atlantis::search::neighborhoods {
+
+AllDifferentUniformNeighborhood::AllDifferentUniformNeighborhood(
     std::vector<SearchVar>&& vars, std::vector<Int>&& domain)
     : _vars(std::move(vars)),
       _domain(std::move(domain)),
@@ -20,8 +20,8 @@ AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
   _domain.erase(std::unique(_domain.begin(), _domain.end()), _domain.end());
 }
 
-void AllDifferentUniformNeighbourhood::initialize(RandomProvider& random,
-                                                  IAssignment& assignment) {
+void AllDifferentUniformNeighborhood::initialize(RandomProvider& random,
+                                                 IAssignment& assignment) {
   /*
   For each index in 0.._vars.size() - 1: _domain[i] is the value assigned to
   _vars[i].
@@ -44,8 +44,8 @@ void AllDifferentUniformNeighbourhood::initialize(RandomProvider& random,
   }
 }
 
-size_t AllDifferentUniformNeighbourhood::randomMove(RandomProvider& random,
-                                                    IAssignment& assignment) {
+size_t AllDifferentUniformNeighborhood::randomMove(RandomProvider& random,
+                                                   IAssignment& assignment) {
   if (_hasFreeValues) {
     // A move is replacing the value of a variable with a free value:
     return assignValue(random, assignment);
@@ -56,8 +56,8 @@ size_t AllDifferentUniformNeighbourhood::randomMove(RandomProvider& random,
   return swapValues(random, assignment);
 }
 
-size_t AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
-                                                    IAssignment& assignment) {
+size_t AllDifferentUniformNeighborhood::swapValues(RandomProvider& random,
+                                                   IAssignment& assignment) {
   size_t i = random.intInRange(0, static_cast<Int>(_vars.size()) - 1);
   size_t j = (i + random.intInRange(1, static_cast<Int>(_vars.size()) - 1)) %
              _vars.size();
@@ -72,8 +72,8 @@ size_t AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
   return 2;
 }
 
-size_t AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
-                                                     IAssignment& assignment) {
+size_t AllDifferentUniformNeighborhood::assignValue(RandomProvider& random,
+                                                    IAssignment& assignment) {
   assert(_vars.size() < _domain.size());
 
   _moveVarIdx = static_cast<size_t>(
@@ -88,7 +88,7 @@ size_t AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
   return 1;
 }
 
-void AllDifferentUniformNeighbourhood::commitIf(const IAssignment& assignment) {
+void AllDifferentUniformNeighborhood::commitIf(const IAssignment& assignment) {
   if (_curTimestamp == assignment.currentTimestamp()) {
     assert(_moveVarIdx < _vars.size());
     assert(_vars.size() <= _moveValIdx);
@@ -121,4 +121,4 @@ void AllDifferentUniformNeighbourhood::commitIf(const IAssignment& assignment) {
   }
 }
 
-}  // namespace atlantis::search::neighbourhoods
+}  // namespace atlantis::search::neighborhoods

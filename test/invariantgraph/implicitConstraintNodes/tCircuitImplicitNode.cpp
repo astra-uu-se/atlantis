@@ -1,6 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/circuitImplicitNode.hpp"
-#include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
+#include "atlantis/search/neighborhoods/circuitNeighborhood.hpp"
 
 namespace atlantis::testing {
 
@@ -53,10 +53,10 @@ TEST_P(CircuitImplicitNodeTestFixture, application) {
 
   EXPECT_EQ(_solver->numInvariants(), 0);
 
-  auto neighbourhood = invNode().neighbourhood();
+  auto neighborhood = invNode().neighborhood();
 
-  EXPECT_TRUE(dynamic_cast<search::neighbourhoods::CircuitNeighbourhood*>(
-      neighbourhood.get()));
+  EXPECT_TRUE(dynamic_cast<search::neighborhoods::CircuitNeighborhood*>(
+      neighborhood.get()));
 }
 
 INSTANTIATE_TEST_CASE_P(CircuitImplicitNodeTest, CircuitImplicitNodeTestFixture,

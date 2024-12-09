@@ -3,15 +3,15 @@
 #include <unordered_set>
 
 #include "./testHelper.hpp"
-#include "atlantis/search/neighbourhoods/allDifferentNonUniformNeighbourhood.hpp"
+#include "atlantis/search/neighborhoods/allDifferentNonUniformNeighborhood.hpp"
 
 namespace atlantis::testing {
 
-using namespace atlantis::search::neighbourhoods;
+using namespace atlantis::search::neighborhoods;
 
-class AllDifferentNonUniformNeighbourhoodTest : public NeighbourhoodTestBase {
+class AllDifferentNonUniformNeighborhoodTest : public NeighborhoodTestBase {
  public:
-  std::shared_ptr<AllDifferentNonUniformNeighbourhood> _neighbourhood;
+  std::shared_ptr<AllDifferentNonUniformNeighborhood> _neighborhood;
 
   std::vector<SearchVar> _vars;
   std::vector<std::vector<Int>> _domains{
@@ -49,7 +49,7 @@ class AllDifferentNonUniformNeighbourhoodTest : public NeighbourhoodTestBase {
   }
 
   void SetUp() override {
-    NeighbourhoodTestBase::SetUp();
+    NeighborhoodTestBase::SetUp();
     _solver->open();
     for (const auto& domain : _domains) {
       const auto& [lb, ub] = std::minmax_element(domain.begin(), domain.end());
@@ -61,22 +61,22 @@ class AllDifferentNonUniformNeighbourhoodTest : public NeighbourhoodTestBase {
     }
     _solver->close();
 
-    _neighbourhood = std::make_shared<AllDifferentNonUniformNeighbourhood>(
+    _neighborhood = std::make_shared<AllDifferentNonUniformNeighborhood>(
         std::vector<SearchVar>(_vars), domainLb, domainUb);
   }
 };
 
-TEST_F(AllDifferentNonUniformNeighbourhoodTest, initialize) {
-  initialize(*_neighbourhood);
+TEST_F(AllDifferentNonUniformNeighborhoodTest, initialize) {
+  initialize(*_neighborhood);
   expectHolds();
 
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    _neighbourhood->initialize(_random, *_assignment);
+    _neighborhood->initialize(_random, *_assignment);
     expectHolds();
   }
 }
 
-TEST_F(AllDifferentNonUniformNeighbourhoodTest, canSwap) {
+TEST_F(AllDifferentNonUniformNeighborhoodTest, canSwap) {
   std::vector<std::unordered_set<Int>> setDomains(_domains.size());
   for (size_t i = 0u; i < _vars.size(); ++i) {
     setDomains.at(i) = std::unordered_set<Int>();
@@ -84,7 +84,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, canSwap) {
       setDomains.at(i).emplace(val);
     }
   }
-  initialize(*_neighbourhood);
+  initialize(*_neighborhood);
   expectHolds();
   for (size_t var1Index = 0; var1Index < _vars.size(); ++var1Index) {
     const Int value1 = _solver->committedValue(_vars.at(var1Index).solverId());
@@ -101,13 +101,13 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, canSwap) {
       const auto value2Index = static_cast<size_t>(value2 - domainLb);
       bool expected = setDomains.at(var2Index).contains(value1);
       bool actual =
-          _neighbourhood->canSwap(*_assignment, var1Index, value2Index);
+          _neighborhood->canSwap(*_assignment, var1Index, value2Index);
       EXPECT_EQ(expected, actual);
     }
   }
 }
 
-TEST_F(AllDifferentNonUniformNeighbourhoodTest, swap) {
+TEST_F(AllDifferentNonUniformNeighborhoodTest, swap) {
   std::vector<std::unordered_set<Int>> setDomains(_domains.size());
   for (size_t i = 0u; i < _vars.size(); ++i) {
     setDomains.at(i) = std::unordered_set<Int>();
@@ -117,7 +117,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, swap) {
   }
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
     for (size_t var1Index = 0; var1Index < _vars.size(); ++var1Index) {
-      initialize(*_neighbourhood);
+      initialize(*_neighborhood);
       expectHolds();
       const Int value1 =
           _solver->committedValue(_vars.at(var1Index).solverId());
@@ -133,14 +133,14 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, swap) {
         }
         const auto value2Index = static_cast<size_t>(value2 - domainLb);
         if (setDomains.at(var2Index).contains(value1)) {
-          _neighbourhood->swapValues(*_assignment, var1Index, value2Index);
+          _neighborhood->swapValues(*_assignment, var1Index, value2Index);
         }
       }
     }
   }
 }
 
-TEST_F(AllDifferentNonUniformNeighbourhoodTest, assignValue) {
+TEST_F(AllDifferentNonUniformNeighborhoodTest, assignValue) {
   std::vector<std::unordered_set<Int>> setDomains(_domains.size());
   for (size_t i = 0u; i < _vars.size(); ++i) {
     setDomains.at(i) = std::unordered_set<Int>();
@@ -149,7 +149,7 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, assignValue) {
     }
   }
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    initialize(*_neighbourhood);
+    initialize(*_neighborhood);
 
     for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
       for (const Int newValue : _domains.at(varIndex)) {
@@ -169,29 +169,29 @@ TEST_F(AllDifferentNonUniformNeighbourhoodTest, assignValue) {
         const auto newValueIndex = static_cast<size_t>(newValue - domainLb);
         EXPECT_EQ(oldValue,
                   _solver->committedValue(_vars.at(varIndex).solverId()));
-        _neighbourhood->assignValue(*_assignment, varIndex, newValueIndex);
+        _neighborhood->assignValue(*_assignment, varIndex, newValueIndex);
       }
     }
   }
 }
 
-TEST_F(AllDifferentNonUniformNeighbourhoodTest, randomMove) {
-  initialize(*_neighbourhood);
+TEST_F(AllDifferentNonUniformNeighborhoodTest, randomMove) {
+  initialize(*_neighborhood);
   expectHolds();
 
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    const size_t actual = _neighbourhood->randomMove(_random, *_assignment);
+    const size_t actual = _neighborhood->randomMove(_random, *_assignment);
     EXPECT_GE(actual, 1);
     EXPECT_LE(actual, 2);
     expectHolds();
   }
 }
 
-TEST_F(AllDifferentNonUniformNeighbourhoodTest, commitIf) {
-  initialize(*_neighbourhood);
+TEST_F(AllDifferentNonUniformNeighborhoodTest, commitIf) {
+  initialize(*_neighborhood);
   expectHolds();
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    commitIf(*_neighbourhood);
+    commitIf(*_neighborhood);
     expectHolds();
   }
 }

@@ -6,13 +6,13 @@
 namespace atlantis::search {
 
 Assignment::Assignment(propagation::Solver& solver,
-                       neighbourhoods::Neighbourhood& neighbourhood,
+                       neighborhoods::Neighborhood& neighborhood,
                        propagation::VarViewId violation,
                        propagation::VarViewId objective,
                        ObjectiveDirection objectiveDirection,
                        Int objectiveOptimalValue)
     : _solver(solver),
-      _neighbourhood(neighbourhood),
+      _neighborhood(neighborhood),
       _violation(violation),
       _objective(objective),
       _objectiveDirection(objectiveDirection),
@@ -20,7 +20,7 @@ Assignment::Assignment(propagation::Solver& solver,
 
 Cost Assignment::initialize(RandomProvider& randomProvider) {
   _solver.beginMove();
-  _neighbourhood.initialize(randomProvider, *this);
+  _neighborhood.initialize(randomProvider, *this);
   _solver.endMove();
 
   _solver.beginCommit();
@@ -40,7 +40,7 @@ Cost Assignment::initialize(RandomProvider& randomProvider) {
 
 Cost Assignment::performProbe(RandomProvider& randomProvider) {
   _solver.beginMove();
-  _neighbourhood.randomMove(randomProvider, *this);
+  _neighborhood.randomMove(randomProvider, *this);
   _solver.endMove();
 
   _solver.beginProbe();
@@ -61,7 +61,7 @@ Cost Assignment::performProbe(RandomProvider& randomProvider) {
 void Assignment::commitLastProbe() {
   const Timestamp ts = _solver.currentTimestamp();
 
-  _neighbourhood.commitIf(*this);
+  _neighborhood.commitIf(*this);
 
   _solver.beginMove();
   for (const auto varId : searchVars()) {

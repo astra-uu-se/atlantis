@@ -10,7 +10,7 @@
 #include "atlantis/propagation/views/inIntervalConst.hpp"
 #include "atlantis/propagation/views/inSparseDomain.hpp"
 #include "atlantis/propagation/views/lessEqualConst.hpp"
-#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/searchVariable.hpp"
 #include "atlantis/utils/variant.hpp"
 

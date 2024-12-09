@@ -7,7 +7,7 @@
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/propagation/types.hpp"
-#include "atlantis/search/neighbourhoods/neighbourhoodCombinator.hpp"
+#include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -161,7 +161,7 @@ class InvariantGraph : public virtual IInvariantGraph {
 
   [[nodiscard]] InvariantGraphRoot& root();
 
-  [[nodiscard]] search::neighbourhoods::NeighbourhoodCombinator neighbourhood()
+  [[nodiscard]] search::neighborhoods::NeighborhoodCombinator neighborhood()
       const;
 
   void writeDotFile(std::ostream&) const;

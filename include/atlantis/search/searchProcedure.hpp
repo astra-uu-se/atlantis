@@ -2,7 +2,7 @@
 
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealer.hpp"
-#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchController.hpp"
@@ -20,16 +20,16 @@ class SearchProcedure {
  private:
   RandomProvider& _random;
   IAssignment& _assignment;
-  neighbourhoods::Neighbourhood& _neighbourhood;
+  neighborhoods::Neighborhood& _neighborhood;
   Objective _objective;
 
  public:
   SearchProcedure(RandomProvider& random, IAssignment& assignment,
-                  neighbourhoods::Neighbourhood& neighbourhood,
+                  neighborhoods::Neighborhood& neighborhood,
                   Objective objective)
       : _random(random),
         _assignment(assignment),
-        _neighbourhood(neighbourhood),
+        _neighborhood(neighborhood),
         _objective(objective) {}
 
   SearchStatistics run(SearchController& controller, Annealer& annealer,

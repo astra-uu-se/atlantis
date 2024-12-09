@@ -1,16 +1,16 @@
 #include <gtest/gtest.h>
 
 #include "./testHelper.hpp"
-#include "atlantis/search/neighbourhoods/intLinEqNeighbourhood.hpp"
+#include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
 
 namespace atlantis::testing {
 
-using namespace atlantis::search::neighbourhoods;
+using namespace atlantis::search::neighborhoods;
 
-class IntLinEqNeighbourhoodTest : public NeighbourhoodTestBase {
+class IntLinEqNeighborhoodTest : public NeighborhoodTestBase {
  public:
   Int numVars = 4;
-  std::shared_ptr<IntLinEqNeighbourhood> _neighbourhood;
+  std::shared_ptr<IntLinEqNeighborhood> _neighborhood;
   RandomProvider _random{123456789};
 
   std::vector<Int> _coeffs;
@@ -18,7 +18,7 @@ class IntLinEqNeighbourhoodTest : public NeighbourhoodTestBase {
   Int _offset = 7;
 
   void SetUp() override {
-    NeighbourhoodTestBase::SetUp();
+    NeighborhoodTestBase::SetUp();
 
     _solver->open();
     for (Int i = 0; i < numVars; ++i) {
@@ -27,7 +27,7 @@ class IntLinEqNeighbourhoodTest : public NeighbourhoodTestBase {
       _coeffs.emplace_back(i % 2 == 0 ? 1 : -1);
     }
 
-    _neighbourhood = std::make_shared<neighbourhoods::IntLinEqNeighbourhood>(
+    _neighborhood = std::make_shared<neighborhoods::IntLinEqNeighborhood>(
         std::vector<Int>{_coeffs}, std::vector<SearchVar>{_vars}, _offset);
 
     _solver->close();
@@ -53,31 +53,31 @@ class IntLinEqNeighbourhoodTest : public NeighbourhoodTestBase {
   }
 };
 
-TEST_F(IntLinEqNeighbourhoodTest, initialise) {
-  initialize(*_neighbourhood);
+TEST_F(IntLinEqNeighborhoodTest, initialise) {
+  initialize(*_neighborhood);
   expectHolds();
 
   for (size_t m = 0; m < 100; ++m) {
-    _neighbourhood->initialize(_random, *_assignment);
+    _neighborhood->initialize(_random, *_assignment);
     expectHolds();
   }
 }
 
-TEST_F(IntLinEqNeighbourhoodTest, randomMove) {
+TEST_F(IntLinEqNeighborhoodTest, randomMove) {
   for (size_t m = 0; m < 100; ++m) {
-    initialize(*_neighbourhood);
+    initialize(*_neighborhood);
     expectHolds();
 
-    EXPECT_EQ(_neighbourhood->randomMove(_random, *_assignment), 2);
+    EXPECT_EQ(_neighborhood->randomMove(_random, *_assignment), 2);
     expectHolds();
   }
 }
 
-TEST_F(IntLinEqNeighbourhoodTest, commitIf) {
-  initialize(*_neighbourhood);
+TEST_F(IntLinEqNeighborhoodTest, commitIf) {
+  initialize(*_neighborhood);
   expectHolds();
   for (size_t m = 0; m < 100; ++m) {
-    commitIf(*_neighbourhood);
+    commitIf(*_neighborhood);
     expectHolds();
   }
 }

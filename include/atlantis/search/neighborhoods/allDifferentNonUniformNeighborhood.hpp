@@ -3,13 +3,13 @@
 #include <array>
 #include <cassert>
 
-#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
 
-namespace atlantis::search::neighbourhoods {
+namespace atlantis::search::neighborhoods {
 
-class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
+class AllDifferentNonUniformNeighborhood : public Neighborhood {
  private:
   std::vector<search::SearchVar> _vars;
   std::vector<size_t> _varIndices;
@@ -29,8 +29,8 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
   std::array<size_t, 2> _moveValueIndex;
 
  public:
-  AllDifferentNonUniformNeighbourhood(std::vector<search::SearchVar>&& vars,
-                                      Int domainLb, Int domainUb);
+  AllDifferentNonUniformNeighborhood(std::vector<search::SearchVar>&& vars,
+                                     Int domainLb, Int domainUb);
 
   void initialize(RandomProvider&, IAssignment&) override;
 
@@ -89,4 +89,4 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
 #endif
 };
 
-}  // namespace atlantis::search::neighbourhoods
+}  // namespace atlantis::search::neighborhoods

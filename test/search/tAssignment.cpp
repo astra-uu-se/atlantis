@@ -22,7 +22,7 @@ class AssignmentTest : public ::testing::Test {
   propagation::VarId d{propagation::NULL_ID};
   propagation::VarViewId violation{propagation::NULL_ID};
 
-  std::shared_ptr<MockNeighbourhood> _neighbourhood;
+  std::shared_ptr<MockNeighborhood> _neighborhood;
 
   std::shared_ptr<propagation::Solver> _solver;
 
@@ -48,12 +48,12 @@ class AssignmentTest : public ::testing::Test {
                                                         d);
     _solver->close();
 
-    _neighbourhood = std::make_shared<MockNeighbourhood>();
+    _neighborhood = std::make_shared<MockNeighborhood>();
   }
 };
 
 TEST_F(AssignmentTest, search_vars_are_identified) {
-  search::Assignment assignment(*_solver, *_neighbourhood, violation, a,
+  search::Assignment assignment(*_solver, *_neighborhood, violation, a,
                                 ObjectiveDirection::MINIMIZE,
                                 _solver->lowerBound(a));
 
@@ -62,7 +62,7 @@ TEST_F(AssignmentTest, search_vars_are_identified) {
 }
 
 TEST_F(AssignmentTest, assign_sets_values) {
-  search::Assignment assignment(*_solver, *_neighbourhood, violation, a,
+  search::Assignment assignment(*_solver, *_neighborhood, violation, a,
                                 ObjectiveDirection::MINIMIZE,
                                 _solver->lowerBound(a));
 
@@ -74,7 +74,7 @@ TEST_F(AssignmentTest, assign_sets_values) {
 }
 
 TEST_F(AssignmentTest, satisfies_constraints) {
-  search::Assignment assignment(*_solver, *_neighbourhood, violation, a,
+  search::Assignment assignment(*_solver, *_neighborhood, violation, a,
                                 ObjectiveDirection::MINIMIZE,
                                 _solver->lowerBound(a));
 
@@ -96,12 +96,12 @@ TEST_F(AssignmentTest, initialize) {
 
   RandomProvider random{123456};
 
-  search::Assignment assignment(*_solver, *_neighbourhood, violation, a,
+  search::Assignment assignment(*_solver, *_neighborhood, violation, a,
                                 ObjectiveDirection::MINIMIZE,
                                 _solver->lowerBound(a));
 
-  EXPECT_CALL(*_neighbourhood, coveredVars()).WillRepeatedly(ReturnRef(vars));
-  EXPECT_CALL(*_neighbourhood, initialize(Ref(random), Ref(assignment)))
+  EXPECT_CALL(*_neighborhood, coveredVars()).WillRepeatedly(ReturnRef(vars));
+  EXPECT_CALL(*_neighborhood, initialize(Ref(random), Ref(assignment)))
       .Times(1);
 
   assignment.initialize(random);

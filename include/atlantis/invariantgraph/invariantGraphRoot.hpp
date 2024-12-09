@@ -25,7 +25,7 @@ class InvariantGraphRoot : public ImplicitConstraintNode {
   virtual std::ostream& dotLangEdges(std::ostream&) const override;
 
  protected:
-  std::shared_ptr<search::neighbourhoods::Neighbourhood> createNeighbourhood()
+  std::shared_ptr<search::neighborhoods::Neighborhood> createNeighborhood()
       override;
   virtual std::string dotLangIdentifier() const override;
 };
