@@ -5,7 +5,7 @@ namespace atlantis::search::neighbourhoods {
 RandomNeighbourhood::RandomNeighbourhood(std::vector<SearchVar>&& vars)
     : _vars(std::move(vars)) {}
 
-void RandomNeighbourhood::initialise(RandomProvider& random,
+void RandomNeighbourhood::initialize(RandomProvider& random,
                                      IAssignment& assignment) {
   for (auto& var : _vars) {
     assignment.set(var.solverId(), random.inDomain(var.domain()));

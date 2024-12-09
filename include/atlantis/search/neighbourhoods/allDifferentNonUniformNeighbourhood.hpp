@@ -26,13 +26,13 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
   // inDomain[i][j] = the domain of _vars[i] contains value j + _offset
   std::vector<std::vector<bool>> _inDomain;
   Timestamp _curTimestamp;
-  std::array<size_t, 2> _curMove;
+  std::array<size_t, 2> _moveValueIndex;
 
  public:
   AllDifferentNonUniformNeighbourhood(std::vector<search::SearchVar>&& vars,
                                       Int domainLb, Int domainUb);
 
-  void initialise(RandomProvider&, IAssignment&) override;
+  void initialize(RandomProvider&, IAssignment&) override;
 
   size_t randomMove(RandomProvider&, IAssignment&) override;
 

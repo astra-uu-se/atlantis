@@ -20,7 +20,7 @@ AllDifferentUniformNeighbourhood::AllDifferentUniformNeighbourhood(
   _domain.erase(std::unique(_domain.begin(), _domain.end()), _domain.end());
 }
 
-void AllDifferentUniformNeighbourhood::initialise(RandomProvider& random,
+void AllDifferentUniformNeighbourhood::initialize(RandomProvider& random,
                                                   IAssignment& assignment) {
   /*
   For each index in 0.._vars.size() - 1: _domain[i] is the value assigned to
@@ -74,11 +74,13 @@ size_t AllDifferentUniformNeighbourhood::swapValues(RandomProvider& random,
 
 size_t AllDifferentUniformNeighbourhood::assignValue(RandomProvider& random,
                                                      IAssignment& assignment) {
+  assert(_vars.size() < _domain.size());
+
   _moveVarIdx = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(_vars.size()) - 1));
 
   _moveValIdx = static_cast<size_t>(random.intInRange(
-      static_cast<Int>(_vars.size()), static_cast<Int>(_domain.size()) - 2));
+      static_cast<Int>(_vars.size()), static_cast<Int>(_domain.size()) - 1));
 
   assignment.set(_vars[_moveVarIdx].solverId(), _domain[_moveValIdx]);
   _curTimestamp = assignment.currentTimestamp();

@@ -13,11 +13,11 @@ class Neighbourhood {
   virtual ~Neighbourhood() = default;
 
   /**
-   * Initialise an assignment.
+   * Initialize an assignment.
    *
    * @param random The source of randomness.
    */
-  virtual void initialise(RandomProvider& random, IAssignment& assignment) = 0;
+  virtual void initialize(RandomProvider& random, IAssignment& assignment) = 0;
 
   /**
    * Make a random move.

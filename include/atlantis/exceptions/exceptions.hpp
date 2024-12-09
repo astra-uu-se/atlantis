@@ -77,7 +77,7 @@ class FailedToInitialise : public std::runtime_error {
  public:
   explicit FailedToInitialise()
       : std::runtime_error(
-            "Failed to initialise, possibly due to cycle in invariant graph.") {
+            "Failed to initialize, possibly due to cycle in invariant graph.") {
   }
 };
 

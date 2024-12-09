@@ -18,7 +18,7 @@ IntLinEqNeighbourhood::IntLinEqNeighbourhood(std::vector<Int>&& coeffs,
                      [](Int coeff) { return std::abs(coeff) == 1; }));
 }
 
-void IntLinEqNeighbourhood::initialise(RandomProvider& random,
+void IntLinEqNeighbourhood::initialize(RandomProvider& random,
                                        IAssignment& assignment) {
   for (Int i = 0; i < static_cast<Int>(_indices.size()) - 1; ++i) {
     std::swap<size_t>(_indices[i],

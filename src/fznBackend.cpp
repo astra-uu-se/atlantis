@@ -44,7 +44,7 @@ void printIntVar(const search::IAssignment& assignment,
 std::string arrayVarPrefix(const std::vector<Int>& indexSetSizes) {
   std::string s = " = array" + std::to_string(indexSetSizes.size()) + "d(";
 
-  for (Int size : indexSetSizes) {
+  for (const Int size : indexSetSizes) {
     s += "1.." + std::to_string(size) + ", ";
   }
 
@@ -185,11 +185,11 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   search::SearchProcedure search(random, assignment, neighbourhood,
                                  searchObjective);
 
-  std::function<void(const search::IAssignment&)> onSolution =
-      [&](const search::IAssignment& assignment) {
-        _onSolution(invariantGraph, assignment);
+  auto onSolution =
+      [&](const search::IAssignment& a) {
+        _onSolution(invariantGraph, a);
       };
-  std::function<void(bool)> onFinish = [&](bool hadSol) { _onFinish(hadSol); };
+  auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
 
   search::SearchController searchController(_model.isSatisfactionProblem(),
                                             std::move(onSolution),

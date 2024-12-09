@@ -6,15 +6,7 @@
 #include "atlantis/fznBackend.hpp"
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 
-/**
- * @brief Read a duration in milliseconds from an input stream. Used to allow
- * cxxopts to parse the duration for us.
- *
- * @param is The input stream to parse from.
- * @param duration The reference to the value that holds the duration.
- * @return std::istream& The modified input stream.
- */
-atlantis::logging::Level getLogLevel(cxxopts::ParseResult& result);
+atlantis::logging::Level getLogLevel(const cxxopts::ParseResult&);
 
 int main(int argc, char* argv[]) {
   try {
@@ -81,13 +73,12 @@ int main(int argc, char* argv[]) {
 
     atlantis::FznBackend backend(logger, std::move(modelFilePath));
 
-    auto givenSeed = result["seed"].as<long>();
-    if (givenSeed >= 0) {
+    if (long givenSeed; (givenSeed = result["seed"].as<long>()) >= 0) {
       backend.setRandomSeed(static_cast<std::uint_fast32_t>(givenSeed));
     }
 
     if (result.count("time-limit") == 1) {
-      backend.setTimelimit(std::optional<std::chrono::milliseconds>{
+      backend.setTimelimit(std::optional{
           std::chrono::milliseconds(result["time-limit"].as<long>())});
     }
 
@@ -102,7 +93,7 @@ int main(int argc, char* argv[]) {
       backend.setDotFilePath(std::move(dotFilePath));
     }
 
-    auto statistics = backend.solve(logger);
+    const auto statistics = backend.solve(logger);
 
     // Don't log to std::cout, since that would interfere with MiniZinc.
     statistics.display(std::cerr);
@@ -113,7 +104,7 @@ int main(int argc, char* argv[]) {
   }
 }
 
-atlantis::logging::Level getLogLevel(cxxopts::ParseResult& result) {
+atlantis::logging::Level getLogLevel(const cxxopts::ParseResult& result) {
   if (result.count("log-level") != 1) {
     return atlantis::logging::Level::LVL_WARNING;
   }

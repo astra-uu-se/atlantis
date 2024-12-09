@@ -34,10 +34,10 @@ NeighbourhoodCombinator::NeighbourhoodCombinator(
       std::discrete_distribution<size_t>{weights.begin(), weights.end()};
 }
 
-void NeighbourhoodCombinator::initialise(RandomProvider& random,
+void NeighbourhoodCombinator::initialize(RandomProvider& random,
                                          IAssignment& assignment) {
   for (const auto& neighbourhood : _neighbourhoods) {
-    neighbourhood->initialise(random, assignment);
+    neighbourhood->initialize(random, assignment);
   }
 }
 

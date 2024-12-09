@@ -16,16 +16,15 @@ class AllDifferentUniformNeighbourhood : public Neighbourhood {
   Timestamp _curTimestamp;
   bool _hasFreeValues;
 
- private:
+ public:
   size_t swapValues(RandomProvider&, IAssignment& assignment);
 
   size_t assignValue(RandomProvider&, IAssignment& assignment);
 
- public:
   AllDifferentUniformNeighbourhood(std::vector<search::SearchVar>&& vars,
                                    std::vector<Int>&& domain);
 
-  void initialise(RandomProvider&, IAssignment&) override;
+  void initialize(RandomProvider&, IAssignment&) override;
 
   size_t randomMove(RandomProvider&, IAssignment&) override;
 

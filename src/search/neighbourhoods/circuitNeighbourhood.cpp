@@ -8,7 +8,7 @@ CircuitNeighbourhood::CircuitNeighbourhood(std::vector<SearchVar>&& vars,
                                            Int offset)
     : _vars(std::move(vars)), _offset(offset) {}
 
-void CircuitNeighbourhood::initialise(RandomProvider& random,
+void CircuitNeighbourhood::initialize(RandomProvider& random,
                                       IAssignment& assignment) {
   Int numAvailable = _vars.size();
   std::vector<bool> idxIsAvailable(_vars.size(), true);

@@ -90,7 +90,7 @@ TEST_F(AssignmentTest, satisfies_constraints) {
   EXPECT_TRUE(assignment.satisfiesConstraints());
 }
 
-TEST_F(AssignmentTest, initialise) {
+TEST_F(AssignmentTest, initialize) {
   std::vector<SearchVar> vars{
       SearchVar(propagation::NULL_ID, SearchDomain(0, 10))};
 
@@ -101,10 +101,10 @@ TEST_F(AssignmentTest, initialise) {
                                 _solver->lowerBound(a));
 
   EXPECT_CALL(*_neighbourhood, coveredVars()).WillRepeatedly(ReturnRef(vars));
-  EXPECT_CALL(*_neighbourhood, initialise(Ref(random), Ref(assignment)))
+  EXPECT_CALL(*_neighbourhood, initialize(Ref(random), Ref(assignment)))
       .Times(1);
 
-  assignment.initialise(random);
+  assignment.initialize(random);
 }
 
 }  // namespace atlantis::testing

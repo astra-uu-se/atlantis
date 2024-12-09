@@ -2,6 +2,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/annealer.hpp"
 #include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "atlantis/search/iAssignment.hpp"
@@ -25,9 +26,11 @@ class AlwaysAcceptingAnnealer : public search::Annealer {
 
 class MockNeighbourhood : public Neighbourhood {
  public:
-  MOCK_METHOD(void, initialise, (RandomProvider&, IAssignment&), (override));
+  MOCK_METHOD(void, initialize, (RandomProvider&, IAssignment&), (override));
 
   MOCK_METHOD(size_t, randomMove, (RandomProvider&, IAssignment&), (override));
+
+  MOCK_METHOD(void, commitIf, (const IAssignment&), (override));
 
   MOCK_METHOD(const std::vector<SearchVar>&, coveredVars, (), (const override));
 };

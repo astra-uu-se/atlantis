@@ -18,7 +18,7 @@ class IntLinEqNeighbourhood : public Neighbourhood {
   IntLinEqNeighbourhood(std::vector<Int>&& coeffs,
                         std::vector<search::SearchVar>&& vars, Int offset);
 
-  void initialise(RandomProvider&, IAssignment&) override;
+  void initialize(RandomProvider&, IAssignment&) override;
 
   size_t randomMove(RandomProvider&, IAssignment&) override;
 

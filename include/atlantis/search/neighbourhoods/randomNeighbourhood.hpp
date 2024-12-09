@@ -16,7 +16,7 @@ class RandomNeighbourhood : public Neighbourhood {
  public:
   RandomNeighbourhood(std::vector<SearchVar>&& vars);
 
-  void initialise(RandomProvider&, IAssignment& assignment) override;
+  void initialize(RandomProvider&, IAssignment& assignment) override;
 
   size_t randomMove(RandomProvider&, IAssignment& assignment) override;
 

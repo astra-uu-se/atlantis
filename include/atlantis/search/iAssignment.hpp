@@ -13,7 +13,7 @@ class IAssignment {
  public:
   virtual ~IAssignment() = default;
 
-  virtual Cost initialise(RandomProvider&) = 0;
+  virtual Cost initialize(RandomProvider&) = 0;
 
   virtual Cost performProbe(RandomProvider&) = 0;
 

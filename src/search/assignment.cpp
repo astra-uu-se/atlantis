@@ -18,9 +18,9 @@ Assignment::Assignment(propagation::Solver& solver,
       _objectiveDirection(objectiveDirection),
       _objectiveOptimalValue(objectiveOptimalValue) {}
 
-Cost Assignment::initialise(RandomProvider& randomProvider) {
+Cost Assignment::initialize(RandomProvider& randomProvider) {
   _solver.beginMove();
-  _neighbourhood.initialise(randomProvider, *this);
+  _neighbourhood.initialize(randomProvider, *this);
   _solver.endMove();
 
   _solver.beginCommit();

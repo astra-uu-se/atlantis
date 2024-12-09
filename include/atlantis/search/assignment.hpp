@@ -27,7 +27,7 @@ class Assignment : public virtual IAssignment {
                       ObjectiveDirection objectiveDirection,
                       Int objectiveOptimalValue);
 
-  Cost initialise(RandomProvider&) override;
+  Cost initialize(RandomProvider&) override;
 
   Cost performProbe(RandomProvider&) override;
 

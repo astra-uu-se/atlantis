@@ -44,7 +44,7 @@ static bool bipartiteMatching(
   return false;
 }
 
-void AllDifferentNonUniformNeighbourhood::initialise(RandomProvider& random,
+void AllDifferentNonUniformNeighbourhood::initialize(RandomProvider& random,
                                                      IAssignment& assignment) {
   std::vector<std::vector<size_t>> forwardArcs(_vars.size());
   std::fill(_valueIndexToVarIndex.begin(), _valueIndexToVarIndex.end(),
@@ -172,9 +172,10 @@ size_t AllDifferentNonUniformNeighbourhood::swapValues(IAssignment& assignment,
   // var 1:
   assert(var1Index < _vars.size());
   const auto var1 = _vars[var1Index].solverId();
-  const Int value1 = assignment.committedValue(var1);
-  assert(isValueIndexOccupied(toValueIndex(value1)));
-  assert(_valueIndexToVarIndex.at(toValueIndex(value1)) == var1Index);
+  const size_t value1Index = toValueIndex(assignment.committedValue(var1));
+  assert(value1Index != value2Index);
+  assert(isValueIndexOccupied(value1Index));
+  assert(_valueIndexToVarIndex.at(value1Index) == var1Index);
 
   // var 2:
   assert(isValueIndexOccupied(value2Index));
@@ -184,27 +185,19 @@ size_t AllDifferentNonUniformNeighbourhood::swapValues(IAssignment& assignment,
 
   // sanity:
   assert(var1Index != var2Index);
-  assert(toValue(value2Index) != value1);
-  assert(inDomain(var2Index, toValueIndex(value1)));
+  assert(toValue(value1Index) != toValue(value2Index));
+  assert(inDomain(var2Index, value1Index));
   assert(inDomain(var1Index, value2Index));
-  const size_t value1Index = toValueIndex(value1);
 
-#ifndef NDEBUG
-  assert(var1Index == _valueIndexToVarIndex.at(value1Index));
-  assert(var1 == _vars.at(_valueIndexToVarIndex.at(value1Index)).solverId());
-  assert(var2Index == _valueIndexToVarIndex.at(value2Index));
-  const Int value2 = toValue(value2Index);
-  const propagation::VarViewId var2 = _vars.at(var2Index).solverId();
-  assert(var2 == _vars.at(_valueIndexToVarIndex.at(value2Index)).solverId());
+  assert(assignment.committedValue(_vars.at(var2Index).solverId()) ==
+         toValue(value2Index));
 
-  assert(assignment.committedValue(var1) == value1);
-  assert(assignment.committedValue(var2) == value2);
-#endif
-  assignment.set(_vars[var1Index].solverId(), toValue(value2Index));
-  assignment.set(_vars[var2Index].solverId(), toValue(value1Index));
-  _curMove[0] = var1Index;
-  _curMove[1] = var2Index;
+  _moveValueIndex[0] = value1Index;
+  _moveValueIndex[1] = value2Index;
   _curTimestamp = assignment.currentTimestamp();
+
+  assignment.set(var1, toValue(value2Index));
+  assignment.set(_vars[var2Index].solverId(), toValue(value1Index));
   return 2;
 }
 
@@ -215,17 +208,16 @@ size_t AllDifferentNonUniformNeighbourhood::assignValue(IAssignment& assignment,
   assert(_valueIndexToVarIndex[newValueIndex] == _vars.size());
   assert(varIndex < _vars.size());
   const auto var = _vars[varIndex].solverId();
-  const Int oldValue = assignment.committedValue(var);
-  const size_t oldValueIndex = toValueIndex(oldValue);
+  const size_t oldValueIndex = toValueIndex(assignment.committedValue(var));
 
   assert(oldValueIndex != newValueIndex);
   assert(_valueIndexToVarIndex.at(oldValueIndex) == varIndex);
 
+  _moveValueIndex[0] = oldValueIndex;
+  _moveValueIndex[1] = newValueIndex;
+  _curTimestamp = assignment.currentTimestamp();
   assignment.set(var, toValue(newValueIndex));
-  _curMove[0] = varIndex;
-  _curMove[1] = newValueIndex;
 
-  assignment.set(var, toValue(newValueIndex));
   return 1;
 }
 
@@ -235,42 +227,33 @@ void AllDifferentNonUniformNeighbourhood::commitIf(
     return;
   }
 
-  assert(_curMove[0] < _vars.size());
+#ifndef NDEBUG
 
-  if (_curMove[1] < _vars.size()) {
-    assert(assignment.currentValue(_vars[_curMove[0]].solverId()) ==
-           assignment.committedValue(_vars[_curMove[1]].solverId()));
-    assert(assignment.currentValue(_vars[_curMove[1]].solverId()) ==
-           assignment.committedValue(_vars[_curMove[0]].solverId()));
+  assert(_moveValueIndex[0] < _valueIndexToVarIndex.size());
+  assert(_moveValueIndex[1] < _valueIndexToVarIndex.size());
 
-    const size_t value1Index =
-        toValueIndex(assignment.committedValue(_vars[_curMove[0]].solverId()));
-    const size_t value2Index =
-        toValueIndex(assignment.committedValue(_vars[_curMove[1]].solverId()));
+  assert(_valueIndexToVarIndex.at(_moveValueIndex[0]) < _vars.size());
+  const size_t var1Index = _valueIndexToVarIndex[_moveValueIndex[0]];
+  const auto var1 = _vars.at(var1Index).solverId();
 
-    assert(_curMove[0] == _valueIndexToVarIndex.at(value1Index));
-    assert(_curMove[1] == _valueIndexToVarIndex.at(value2Index));
+  if (_valueIndexToVarIndex[_moveValueIndex[1]] < _vars.size()) {
+    const size_t var2Index = _valueIndexToVarIndex[_moveValueIndex[1]];
+    const auto var2 = _vars.at(var2Index).solverId();
 
-    _valueIndexToVarIndex[value1Index] = _curMove[1];
-    _valueIndexToVarIndex[value2Index] = _curMove[0];
-
-    assert(_curMove[0] == _valueIndexToVarIndex.at(value2Index));
-    assert(_curMove[1] == _valueIndexToVarIndex.at(value1Index));
+    assert(assignment.currentValue(var1) == assignment.committedValue(var2));
+    assert(assignment.committedValue(var1) == assignment.currentValue(var2));
   } else {
-    assert(_curMove[1] < _valueIndexToVarIndex.size());
+    assert(_valueIndexToVarIndex.at(_moveValueIndex[1]) == _vars.size());
 
-    assert(_vars.size() == _valueIndexToVarIndex.at(_curMove[1]));
-    assert(_curMove[1] == toValueIndex(assignment.currentValue(
-                              _vars[_curMove[0]].solverId())));
-
-    const size_t oldValueIndex =
-        toValueIndex(assignment.committedValue(_vars[_curMove[0]].solverId()));
-
-    assert(oldValueIndex != _curMove[1]);
-
-    _valueIndexToVarIndex[_curMove[1]] = _curMove[0];
-    _valueIndexToVarIndex[oldValueIndex] = _vars.size();
+    assert(assignment.committedValue(var1) == toValue(_moveValueIndex[0]));
+    assert(assignment.currentValue(var1) == toValue(_moveValueIndex[1]));
   }
+
+#endif
+
+  std::swap(_valueIndexToVarIndex[_moveValueIndex[0]],
+            _valueIndexToVarIndex[_moveValueIndex[1]]);
+
   _curTimestamp = NULL_TIMESTAMP;
 }
 

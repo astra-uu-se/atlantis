@@ -21,7 +21,7 @@ class NeighbourhoodCombinator : public Neighbourhood {
   explicit NeighbourhoodCombinator(
       std::vector<std::shared_ptr<Neighbourhood>>&& neighbourhoods);
 
-  void initialise(RandomProvider&, IAssignment&) override;
+  void initialize(RandomProvider&, IAssignment&) override;
   size_t randomMove(RandomProvider&, IAssignment&) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
