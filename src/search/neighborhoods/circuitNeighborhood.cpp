@@ -1,15 +1,15 @@
-#include "atlantis/search/neighbourhoods/circuitNeighbourhood.hpp"
-
 #include <algorithm>
 
-namespace atlantis::search::neighbourhoods {
+#include "atlantis/search/neighborhoods/circuitNeighborhood.hpp"
 
-CircuitNeighbourhood::CircuitNeighbourhood(std::vector<SearchVar>&& vars,
-                                           Int offset)
+namespace atlantis::search::neighborhoods {
+
+CircuitNeighborhood::CircuitNeighborhood(std::vector<SearchVar>&& vars,
+                                         Int offset)
     : _vars(std::move(vars)), _offset(offset) {}
 
-void CircuitNeighbourhood::initialise(RandomProvider& random,
-                                      AssignmentModifier& modifications) {
+void CircuitNeighborhood::initialize(RandomProvider& random,
+                                     IAssignment& assignment) {
   Int numAvailable = _vars.size();
   std::vector<bool> idxIsAvailable(_vars.size(), true);
 
@@ -20,7 +20,7 @@ void CircuitNeighbourhood::initialise(RandomProvider& random,
 
       assert(idxIsAvailable.at(nextNodeIdx));
 
-      modifications.set(var.solverId(), nextNode);
+      assignment.set(var.solverId(), nextNode);
       idxIsAvailable[nextNodeIdx] = false;
       --numAvailable;
     }
@@ -60,13 +60,12 @@ void CircuitNeighbourhood::initialise(RandomProvider& random,
 
     assert(nextNodeIdx < _vars.size());
 
-    modifications.set(_vars[curNodeIdx].solverId(), idx2Node(nextNodeIdx));
+    assignment.set(_vars[curNodeIdx].solverId(), idx2Node(nextNodeIdx));
 
     curNodeIdx = nextNodeIdx;
   }
 
-  modifications.set(_vars[curNodeIdx].solverId(),
-                    idx2Node(availableIndices[0]));
+  assignment.set(_vars[curNodeIdx].solverId(), idx2Node(availableIndices[0]));
 }
 
 static size_t determineNewNext(RandomProvider& random, size_t node,
@@ -91,39 +90,39 @@ static size_t determineNewNext(RandomProvider& random, size_t node,
   return newNext;
 }
 
-bool CircuitNeighbourhood::randomMove(RandomProvider& random,
-                                      Assignment& assignment,
-                                      Annealer& annealer) {
+size_t CircuitNeighborhood::randomMove(RandomProvider& random,
+                                       IAssignment& assignment) {
   auto nodeIdx = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(_vars.size() - 1)));
-  auto oldNextIdx = node2Idx(assignment.value(_vars[nodeIdx].solverId()));
+  auto oldNextIdx =
+      node2Idx(assignment.committedValue(_vars[nodeIdx].solverId()));
 
   auto newNextIdx = determineNewNext(random, nodeIdx, oldNextIdx, _vars.size());
   assert(newNextIdx < _vars.size());
-  auto kIdx = node2Idx(assignment.value(_vars[oldNextIdx].solverId()));
-  auto lastIdx = node2Idx(assignment.value(_vars[newNextIdx].solverId()));
+  auto kIdx = node2Idx(assignment.committedValue(_vars[oldNextIdx].solverId()));
+  auto lastIdx =
+      node2Idx(assignment.committedValue(_vars[newNextIdx].solverId()));
 
   for (auto varIdx : {nodeIdx, oldNextIdx, newNextIdx}) {
     if (_vars[varIdx].isFixed()) {
-      return false;
+      return 0;
     }
   }
-
-  Move<3> move({_vars[nodeIdx].solverId(), _vars[oldNextIdx].solverId(),
-                _vars[newNextIdx].solverId()},
-               {idx2Node(kIdx), idx2Node(lastIdx), idx2Node(oldNextIdx)});
-  return annealer.acceptMove(move);
+  assignment.set(_vars[nodeIdx].solverId(), idx2Node(kIdx));
+  assignment.set(_vars[oldNextIdx].solverId(), idx2Node(lastIdx));
+  assignment.set(_vars[newNextIdx].solverId(), idx2Node(oldNextIdx));
+  return 3;
 }
 
-Int CircuitNeighbourhood::idx2Node(size_t nodeIdx) noexcept {
+Int CircuitNeighborhood::idx2Node(size_t nodeIdx) noexcept {
   // Account for index sets starting at _offset instead of 0.
   return static_cast<Int>(nodeIdx) + _offset;
 }
 
-size_t CircuitNeighbourhood::node2Idx(Int node) noexcept {
+size_t CircuitNeighborhood::node2Idx(Int node) noexcept {
   // Account for index sets starting at _offset instead of 0.
   assert(node >= _offset);
   return static_cast<size_t>(node - _offset);
 }
 
-}  // namespace atlantis::search::neighbourhoods
+}  // namespace atlantis::search::neighborhoods

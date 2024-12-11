@@ -32,12 +32,8 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
   do {
     initialisations->increment();
 
-    logger.timedProcedure(logging::Level::LVL_TRACE, "initialise assignment",
-                          [&] {
-                            _assignment.assign([&](auto& modifications) {
-                              _neighbourhood.initialise(_random, modifications);
-                            });
-                          });
+    logger.timedProcedure(logging::Level::LVL_TRACE, "initialize assignment",
+                          [&] { _assignment.initialize(_random); });
 
     if (_assignment.satisfiesConstraints()) {
       controller.onSolution(_assignment);
@@ -50,16 +46,15 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
       logger.timedProcedure(logging::Level::LVL_TRACE, "round", [&] {
         while (controller.shouldRun(_assignment) &&
                annealer.runMonteCarloSimulation()) {
-          bool madeMove =
-              _neighbourhood.randomMove(_random, _assignment, annealer);
+          const auto cost = _assignment.performProbe(_random);
 
-          if (madeMove) {
+          if (annealer.acceptMove(cost)) {
+            _assignment.commitLastProbe();
             moves->increment();
-          }
-
-          if (madeMove && _assignment.satisfiesConstraints()) {
-            controller.onSolution(_assignment);
-            _objective.tighten();
+            if (_assignment.satisfiesConstraints()) {
+              controller.onSolution(_assignment);
+              _objective.tighten();
+            }
           }
         }
 

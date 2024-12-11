@@ -4,7 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
-#include "atlantis/search/neighbourhoods/intLinEqNeighbourhood.hpp"
+#include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -25,8 +25,8 @@ void IntLinEqImplicitNode::init(InvariantNodeId id) {
                   }));
 }
 
-std::shared_ptr<search::neighbourhoods::Neighbourhood>
-IntLinEqImplicitNode::createNeighbourhood() {
+std::shared_ptr<search::neighborhoods::Neighborhood>
+IntLinEqImplicitNode::createNeighborhood() {
   if (outputVarNodeIds().size() <= 1) {
     return nullptr;
   }
@@ -43,7 +43,7 @@ IntLinEqImplicitNode::createNeighbourhood() {
     varNode.setDomainType(VarNode::DomainType::DOMAIN);
   }
 
-  return std::make_shared<search::neighbourhoods::IntLinEqNeighbourhood>(
+  return std::make_shared<search::neighborhoods::IntLinEqNeighborhood>(
       std::vector<Int>{_coeffs}, std::move(searchVars), _offset);
 }
 

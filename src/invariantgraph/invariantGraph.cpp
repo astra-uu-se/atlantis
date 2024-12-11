@@ -440,22 +440,22 @@ InvariantNodeId InvariantGraph::addImplicitConstraintNode(
   return implNode->id();
 }
 
-search::neighbourhoods::NeighbourhoodCombinator InvariantGraph::neighbourhood()
+search::neighborhoods::NeighborhoodCombinator InvariantGraph::neighborhood()
     const {
-  std::vector<std::shared_ptr<search::neighbourhoods::Neighbourhood>>
-      neighbourhoods;
-  neighbourhoods.reserve(_implicitConstraintNodes.size());
+  std::vector<std::shared_ptr<search::neighborhoods::Neighborhood>>
+      neighborhoods;
+  neighborhoods.reserve(_implicitConstraintNodes.size());
 
   for (auto const& implicitContraint : _implicitConstraintNodes) {
-    std::shared_ptr<search::neighbourhoods::Neighbourhood> neighbourhood =
-        implicitContraint->neighbourhood();
-    if (neighbourhood != nullptr) {
-      neighbourhoods.push_back(std::move(neighbourhood));
+    std::shared_ptr<search::neighborhoods::Neighborhood> neighborhood =
+        implicitContraint->neighborhood();
+    if (neighborhood != nullptr) {
+      neighborhoods.push_back(std::move(neighborhood));
     }
   }
 
-  return search::neighbourhoods::NeighbourhoodCombinator(
-      std::move(neighbourhoods));
+  return search::neighborhoods::NeighborhoodCombinator(
+      std::move(neighborhoods));
 }
 
 propagation::VarViewId InvariantGraph::totalViolationVarId() const {
@@ -685,7 +685,7 @@ std::unordered_set<VarNodeId> InvariantGraph::dynamicVarNodeFrontier(
   while (!q.empty()) {
     const auto cur = q.front();
     q.pop();
-    // Add unvisited dynamic neighbours to set of visited dynamic variable
+    // Add unvisited dynamic neighbors to set of visited dynamic variable
     // nodes:
     for (const auto& dynamicInvNodeId : varNode(cur).dynamicInputTo()) {
       for (const auto& outputVarId :
@@ -696,7 +696,7 @@ std::unordered_set<VarNodeId> InvariantGraph::dynamicVarNodeFrontier(
         }
       }
     }
-    // add unvisited static neighbours to queue:
+    // add unvisited static neighbors to queue:
     for (const auto& staticInvNodeId : varNode(cur).staticInputTo()) {
       for (const auto& outputVarId :
            invariantNode(staticInvNodeId).outputVarNodeIds()) {
@@ -734,7 +734,7 @@ VarNodeId InvariantGraph::findCycleUtil(
   visitedLocal.emplace(varNodeId);
   // iterate over all invariants that the variable is a static input to:
   // TODO: we now also break dynamic cycles. this should be fixed by having a
-  // better implicit constraint/neighbourhood initialisation process when
+  // better implicit constraint/neighborhood initialisation process when
   // closing the propagation _solver.
   for (size_t i = 0; i < (_breakDynamicCycles ? 2 : 1); ++i) {
     for (const InvariantNodeId& listeningInvNodeId :

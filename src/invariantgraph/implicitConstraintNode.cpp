@@ -3,7 +3,7 @@
 #include <cassert>
 
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
-#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/search/neighborhoods/neighborhood.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -25,17 +25,17 @@ void ImplicitConstraintNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
 }
 
-std::shared_ptr<search::neighbourhoods::Neighbourhood>
-ImplicitConstraintNode::neighbourhood() {
-  return _neighbourhood;
+std::shared_ptr<search::neighborhoods::Neighborhood>
+ImplicitConstraintNode::neighborhood() {
+  return _neighborhood;
 }
 
 void ImplicitConstraintNode::registerNode() {
-  if (_neighbourhood != nullptr) {
+  if (_neighborhood != nullptr) {
     return;
   }
-  _neighbourhood = createNeighbourhood();
-  assert(_neighbourhood);
+  _neighborhood = createNeighborhood();
+  assert(_neighborhood);
 }
 
 }  // namespace atlantis::invariantgraph

@@ -11,30 +11,31 @@
 
 namespace atlantis {
 
-std::string toIntString(const search::Assignment& assignment,
+std::string toIntString(const search::IAssignment& assignment,
                         const std::variant<propagation::VarViewId, Int>& var) {
   return std::to_string(
       std::holds_alternative<Int>(var)
           ? std::get<Int>(var)
-          : assignment.value(std::get<propagation::VarViewId>(var)));
+          : assignment.committedValue(std::get<propagation::VarViewId>(var)));
 }
 
-std::string toBoolString(const search::Assignment& assignment,
+std::string toBoolString(const search::IAssignment& assignment,
                          const std::variant<propagation::VarViewId, Int>& var) {
   return ((std::holds_alternative<Int>(var)
                ? std::get<Int>(var)
-               : assignment.value(std::get<propagation::VarViewId>(var))) == 0)
+               : assignment.committedValue(
+                     std::get<propagation::VarViewId>(var))) == 0)
              ? "true"
              : "false";
 }
 
-void printBoolVar(const search::Assignment& assignment,
+void printBoolVar(const search::IAssignment& assignment,
                   const FznOutputVar& outputVar) {
   std::cout << outputVar.identifier << " = "
             << toBoolString(assignment, outputVar.var) << ";\n";
 }
 
-void printIntVar(const search::Assignment& assignment,
+void printIntVar(const search::IAssignment& assignment,
                  const FznOutputVar& outputVar) {
   std::cout << outputVar.identifier << " = "
             << toIntString(assignment, outputVar.var) << ";\n";
@@ -43,14 +44,14 @@ void printIntVar(const search::Assignment& assignment,
 std::string arrayVarPrefix(const std::vector<Int>& indexSetSizes) {
   std::string s = " = array" + std::to_string(indexSetSizes.size()) + "d(";
 
-  for (Int size : indexSetSizes) {
+  for (const Int size : indexSetSizes) {
     s += "1.." + std::to_string(size) + ", ";
   }
 
   return s;
 }
 
-void printBoolVarArray(const search::Assignment& assignment,
+void printBoolVarArray(const search::IAssignment& assignment,
                        const FznOutputVarArray& varArray) {
   std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
             << '[';
@@ -65,7 +66,7 @@ void printBoolVarArray(const search::Assignment& assignment,
   std::cout << "]);\n";
 }
 
-void printIntVarArray(const search::Assignment& assignment,
+void printIntVarArray(const search::IAssignment& assignment,
                       const FznOutputVarArray& varArray) {
   std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
             << '[';
@@ -82,7 +83,7 @@ void printIntVarArray(const search::Assignment& assignment,
 
 void FznBackend::onSolutionDefault(
     const invariantgraph::FznInvariantGraph& invariantGraph,
-    const search::Assignment& assignment) {
+    const search::IAssignment& assignment) {
   for (const auto& outputVar : invariantGraph.outputBoolVars()) {
     printBoolVar(assignment, outputVar);
   }
@@ -115,16 +116,16 @@ FznBackend::FznBackend(logging::Logger& logger,
             return m;
           })) {}
 
-static propagation::ObjectiveDirection getObjectiveDirection(
+static ObjectiveDirection getObjectiveDirection(
     fznparser::ProblemType problemType) {
   switch (problemType) {
     case fznparser::ProblemType::MINIMIZE:
-      return propagation::ObjectiveDirection::MINIMIZE;
+      return ObjectiveDirection::MINIMIZE;
     case fznparser::ProblemType::MAXIMIZE:
-      return propagation::ObjectiveDirection::MAXIMIZE;
+      return ObjectiveDirection::MAXIMIZE;
     case fznparser::ProblemType::SATISFY:
     default:
-      return propagation::ObjectiveDirection::NONE;
+      return ObjectiveDirection::NONE;
   }
 }
 
@@ -148,9 +149,9 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
     }
     dotFile.close();
   }
-  auto neighbourhood = invariantGraph.neighbourhood();
+  auto neighborhood = invariantGraph.neighborhood();
 
-  neighbourhood.printNeighbourhood(logger);
+  neighborhood.printNeighborhood(logger);
 
   search::Objective searchObjective(solver, problemType);
 
@@ -166,11 +167,13 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
                  ? invariantGraph.objectiveVarNode().lowerBound()
                  : invariantGraph.objectiveVarNode().upperBound());
 
-  search::Assignment assignment(
-      solver, violation, invariantGraph.objectiveVarId(),
-      getObjectiveDirection(problemType), objectiveOptimalValue);
+  const auto objectiveDirection = getObjectiveDirection(problemType);
 
-  if (neighbourhood.coveredVars().empty()) {
+  search::Assignment assignment(solver, neighborhood, violation,
+                                invariantGraph.objectiveVarId(),
+                                objectiveDirection, objectiveOptimalValue);
+
+  if (neighborhood.coveredVars().empty()) {
     _onSolution(invariantGraph, assignment);
     _onFinish(true);
     return search::SearchStatistics{};
@@ -179,21 +182,20 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   logger.debug("Using seed {}.", _seed);
   search::RandomProvider random(_seed);
 
-  search::SearchProcedure search(random, assignment, neighbourhood,
+  search::SearchProcedure search(random, assignment, neighborhood,
                                  searchObjective);
 
-  std::function<void(const search::Assignment&)> onSolution =
-      [&](const search::Assignment& assignment) {
-        _onSolution(invariantGraph, assignment);
-      };
-  std::function<void(bool)> onFinish = [&](bool hadSol) { _onFinish(hadSol); };
+  auto onSolution = [&](const search::IAssignment& a) {
+    _onSolution(invariantGraph, a);
+  };
+  auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
 
   search::SearchController searchController(_model.isSatisfactionProblem(),
                                             std::move(onSolution),
                                             std::move(onFinish), _timelimit);
 
   auto schedule = _annealingScheduleFactory.create();
-  search::Annealer annealer(assignment, random, *schedule);
+  search::Annealer annealer(random, *schedule, assignment);
 
   return logger.timedFunction<search::SearchStatistics>(
       "search", [&] { return search.run(searchController, annealer, logger); });

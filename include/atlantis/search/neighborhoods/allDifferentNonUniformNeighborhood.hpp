@@ -1,14 +1,15 @@
 #pragma once
 
+#include <array>
 #include <cassert>
 
-#include "atlantis/search/neighbourhoods/neighbourhood.hpp"
+#include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
 
-namespace atlantis::search::neighbourhoods {
+namespace atlantis::search::neighborhoods {
 
-class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
+class AllDifferentNonUniformNeighborhood : public Neighborhood {
  private:
   std::vector<search::SearchVar> _vars;
   std::vector<size_t> _varIndices;
@@ -24,27 +25,26 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
   std::vector<std::vector<Int>> _domains;
   // inDomain[i][j] = the domain of _vars[i] contains value j + _offset
   std::vector<std::vector<bool>> _inDomain;
-  const propagation::SolverBase& _solver;
+  Timestamp _curTimestamp;
+  std::array<size_t, 2> _moveValueIndex;
 
  public:
-  AllDifferentNonUniformNeighbourhood(std::vector<search::SearchVar>&& vars,
-                                      Int domainLb, Int domainUb,
-                                      const propagation::SolverBase& solver);
+  AllDifferentNonUniformNeighborhood(std::vector<search::SearchVar>&& vars,
+                                     Int domainLb, Int domainUb);
 
-  void initialise(RandomProvider& random,
-                  AssignmentModifier& modifications) override;
-  bool randomMove(RandomProvider& random, Assignment& assignment,
-                  Annealer& annealer) override;
+  void initialize(RandomProvider&, IAssignment&) override;
+
+  size_t randomMove(RandomProvider&, IAssignment&) override;
+
+  void commitIf(const IAssignment&) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;
   }
-  [[nodiscard]] bool canSwap(const Assignment& assignment, size_t var1Index,
+  [[nodiscard]] bool canSwap(IAssignment& assignment, size_t var1Index,
                              size_t val2Index) const noexcept;
-  bool swapValues(Assignment& assignment, Annealer& annealer, size_t var1Index,
-                  size_t val2Index);
-  bool assignValue(Assignment& assignment, Annealer& annealer, size_t varIndex,
-                   size_t newValIndex);
+  size_t swapValues(IAssignment&, size_t var1Index, size_t val2Index);
+  size_t assignValue(IAssignment&, size_t varIndex, size_t newValIndex);
 
  private:
   [[nodiscard]] inline Int toValue(size_t valueIndex) const noexcept {
@@ -74,9 +74,12 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
   }
 
 #ifndef NDEBUG
-  bool sanity(Assignment& assignment) {
+  bool sanity(IAssignment& assignment, bool committedValue) {
     for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
-      const Int value = assignment.value(_vars.at(varIndex).solverId());
+      const Int value =
+          committedValue
+              ? assignment.committedValue(_vars.at(varIndex).solverId())
+              : assignment.currentValue(_vars.at(varIndex).solverId());
       const size_t valueIndex = toValueIndex(value);
       assert(valueIndex < _valueIndexToVarIndex.size());
       assert(_valueIndexToVarIndex.at(valueIndex) == varIndex);
@@ -86,4 +89,4 @@ class AllDifferentNonUniformNeighbourhood : public Neighbourhood {
 #endif
 };
 
-}  // namespace atlantis::search::neighbourhoods
+}  // namespace atlantis::search::neighborhoods

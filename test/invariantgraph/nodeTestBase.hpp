@@ -9,6 +9,7 @@
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
+#include "atlantis/propagation/solver.hpp"
 #include "atlantis/utils/variant.hpp"
 
 namespace atlantis::testing {
