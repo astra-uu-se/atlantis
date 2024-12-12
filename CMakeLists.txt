@@ -109,7 +109,7 @@ include(FetchContent)
 FetchContent_Declare(
   fznparser
   GIT_REPOSITORY https://github.com/astra-uu-se/fznparser
-  GIT_TAG v1.0.3
+  GIT_TAG v1.1.0
 )
 FetchContent_Declare(
   cxxopts
