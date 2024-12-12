@@ -55,10 +55,9 @@ TEST_F(RandomNeighborhoodTest, initialize) {
 }
 
 TEST_F(RandomNeighborhoodTest, randomMove) {
-  initialize(*_neighborhood);
-  expectHolds();
-
   for (auto i = 0; i < 1000; i++) {
+    initialize(*_neighborhood);
+    expectHolds();
     const size_t actual = _neighborhood->randomMove(_random, *_assignment);
     const size_t expected = expectHolds();
     EXPECT_EQ(actual, expected);

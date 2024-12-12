@@ -15,8 +15,11 @@ void RandomNeighborhood::initialize(RandomProvider& random,
 size_t RandomNeighborhood::randomMove(RandomProvider& random,
                                       IAssignment& assignment) {
   auto var = random.element(_vars);
-  assignment.set(var.solverId(), random.inDomain(var.domain()));
-  return 1;
+  const Int val = random.inDomain(var.domain());
+  const size_t modified =
+      val == assignment.committedValue(var.solverId()) ? 0 : 1;
+  assignment.set(var.solverId(), val);
+  return modified;
 }
 
 }  // namespace atlantis::search::neighborhoods
