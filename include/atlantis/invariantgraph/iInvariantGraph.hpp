@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <memory>
 #include <stack>
 #include <string>
 #include <unordered_map>
@@ -47,10 +48,11 @@ class IInvariantGraph {
   [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(bool,
                                                       const std::string&) = 0;
 
-  [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(SearchDomain&&) = 0;
+  [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(
+      std::shared_ptr<SearchDomain>) = 0;
 
-  [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(SearchDomain&&,
-                                                      VarNode::DomainType) = 0;
+  [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(
+      std::shared_ptr<SearchDomain>, VarNode::DomainType) = 0;
 
   [[nodiscard]] virtual VarNodeId retrieveIntVarNode(const std::string&) = 0;
 
@@ -59,17 +61,18 @@ class IInvariantGraph {
   [[nodiscard]] virtual VarNodeId retrieveIntVarNode(Int,
                                                      const std::string&) = 0;
 
-  [[nodiscard]] virtual VarNodeId retrieveIntVarNode(SearchDomain&&) = 0;
+  [[nodiscard]] virtual VarNodeId retrieveIntVarNode(
+      std::shared_ptr<SearchDomain>) = 0;
 
-  [[nodiscard]] virtual VarNodeId retrieveIntVarNode(SearchDomain&&,
-                                                     VarNode::DomainType) = 0;
+  [[nodiscard]] virtual VarNodeId retrieveIntVarNode(
+      std::shared_ptr<SearchDomain>, VarNode::DomainType) = 0;
 
-  [[nodiscard]] virtual VarNodeId retrieveIntVarNode(SearchDomain&&,
-                                                     const std::string&) = 0;
+  [[nodiscard]] virtual VarNodeId retrieveIntVarNode(
+      std::shared_ptr<SearchDomain>, const std::string&) = 0;
 
-  [[nodiscard]] virtual VarNodeId retrieveIntVarNode(SearchDomain&&,
-                                                     const std::string&,
-                                                     VarNode::DomainType) = 0;
+  [[nodiscard]] virtual VarNodeId retrieveIntVarNode(
+      std::shared_ptr<SearchDomain>, const std::string&,
+      VarNode::DomainType) = 0;
 
   [[nodiscard]] virtual VarNode& varNode(const std::string&) = 0;
 

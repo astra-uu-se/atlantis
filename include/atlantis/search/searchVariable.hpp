@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/types.hpp"
@@ -9,25 +11,26 @@ namespace atlantis::search {
 
 class SearchVar {
  private:
-  SearchDomain _domain;
+  std::shared_ptr<const SearchDomain> _domain;
   propagation::VarId _varId{propagation::NULL_ID};
 
  public:
-  explicit SearchVar(propagation::VarViewId varId, SearchDomain&& domain)
-      : _domain(std::move(domain)), _varId(propagation::VarId{varId}) {
+  explicit SearchVar(propagation::VarViewId varId,
+                     std::shared_ptr<const SearchDomain> domain)
+      : _domain(domain), _varId(propagation::VarId{varId}) {
     assert(varId.isVar());
   }
 
-  explicit SearchVar(propagation::VarId varId, SearchDomain&& domain)
-      : _domain(std::move(domain)), _varId(varId) {}
+  explicit SearchVar(propagation::VarId varId,
+                     std::shared_ptr<const SearchDomain> domain)
+      : _domain(domain), _varId(varId) {}
 
   [[nodiscard]] propagation::VarId solverId() const noexcept { return _varId; }
 
-  [[nodiscard]] SearchDomain& domain() noexcept { return _domain; }
-  [[nodiscard]] const SearchDomain& constDomain() const noexcept {
+  [[nodiscard]] std::shared_ptr<const SearchDomain> domain() const noexcept {
     return _domain;
   }
-  [[nodiscard]] bool isFixed() const noexcept { return _domain.isFixed(); }
+  [[nodiscard]] bool isFixed() const noexcept { return _domain->isFixed(); }
 };
 
 }  // namespace atlantis::search

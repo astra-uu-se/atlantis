@@ -92,7 +92,7 @@ TEST_F(AssignmentTest, satisfies_constraints) {
 
 TEST_F(AssignmentTest, initialize) {
   std::vector<SearchVar> vars{
-      SearchVar(propagation::NULL_ID, SearchDomain(0, 10))};
+      SearchVar(propagation::NULL_ID, std::make_shared<SearchDomain>(0, 10))};
 
   RandomProvider random{123456};
 

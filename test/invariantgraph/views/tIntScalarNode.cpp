@@ -20,7 +20,7 @@ class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
     if (isRegistered) {
       return _solver->currentValue(varId(inputVarNodeId)) * factor + offset;
     }
-    return varNode(inputVarNodeId).domain().lowerBound() * factor + offset;
+    return varNode(inputVarNodeId).domain()->lowerBound() * factor + offset;
   }
 
   void SetUp() override {
@@ -74,7 +74,7 @@ TEST_P(IntScalarNodeTestFixture, updateState) {
     EXPECT_TRUE(varNode(inputVarNodeId).isFixed());
     EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).domain().lowerBound();
+    const Int actual = varNode(outputVarNodeId).domain()->lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);

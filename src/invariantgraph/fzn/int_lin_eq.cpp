@@ -126,8 +126,8 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   auto [lb, ub] = linBounds(coeffs, inputs);
   lb += lhsOffset;
   ub += lhsOffset;
-  const VarNodeId outputVarNodeId =
-      graph.retrieveIntVarNode(SearchDomain(lb, ub), VarNode::DomainType::NONE);
+  const VarNodeId outputVarNodeId = graph.retrieveIntVarNode(
+      std::make_shared<SearchDomain>(lb, ub), VarNode::DomainType::NONE);
 
   graph.addInvariantNode(std::make_shared<IntLinearNode>(
       graph, std::move(coeffs), std::move(inputVarNodes), outputVarNodeId,

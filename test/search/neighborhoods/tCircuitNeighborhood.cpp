@@ -20,7 +20,7 @@ class CircuitNeighborhoodTest : public NeighborhoodTestBase {
     _solver->open();
     for (auto i = 0u; i < 4; ++i) {
       propagation::VarViewId var = _solver->makeIntVar(1, 1, 4);
-      next.emplace_back(var, SearchDomain(1, 4));
+      next.emplace_back(var, std::make_shared<SearchDomain>(1, 4));
     }
 
     _solver->close();

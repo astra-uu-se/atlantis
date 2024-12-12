@@ -1,7 +1,7 @@
+#include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
+
 #include <algorithm>
 #include <cassert>
-
-#include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
 
 namespace atlantis::search::neighborhoods {
 
@@ -31,9 +31,9 @@ void IntLinEqNeighborhood::initialize(RandomProvider& random,
   remainingBounds.back()[1] = 0;
   for (Int i = static_cast<Int>(_indices.size()) - 2; i >= 0; --i) {
     const Int val1 =
-        _coeffs[_indices[i]] * _vars[_indices[i]].domain().lowerBound();
+        _coeffs[_indices[i]] * _vars[_indices[i]].domain()->lowerBound();
     const Int val2 =
-        _coeffs[_indices[i]] * _vars[_indices[i]].domain().upperBound();
+        _coeffs[_indices[i]] * _vars[_indices[i]].domain()->upperBound();
 
     remainingBounds[_indices[i]][0] =
         remainingBounds[_indices[i + 1]][0] + std::min(val1, val2);
@@ -46,8 +46,8 @@ void IntLinEqNeighborhood::initialize(RandomProvider& random,
     const size_t index = _indices[i];
     if (i == _indices.size() - 1) {
       curSum = -curSum / _coeffs[_indices[i]];
-      assert(_vars[index].domain().lowerBound() <= curSum);
-      assert(_vars[index].domain().upperBound() >= curSum);
+      assert(_vars[index].domain()->lowerBound() <= curSum);
+      assert(_vars[index].domain()->upperBound() >= curSum);
       assignment.set(_vars[index].solverId(), curSum);
       curSum = 0;
       break;
@@ -55,9 +55,9 @@ void IntLinEqNeighborhood::initialize(RandomProvider& random,
     const Int val1 = (-remainingBounds[index][0] - curSum) / _coeffs[index];
     const Int val2 = (-remainingBounds[index][1] - curSum) / _coeffs[index];
     const Int lb =
-        std::max(_vars[index].domain().lowerBound(), std::min(val1, val2));
+        std::max(_vars[index].domain()->lowerBound(), std::min(val1, val2));
     const Int ub =
-        std::min(_vars[index].domain().upperBound(), std::max(val1, val2));
+        std::min(_vars[index].domain()->upperBound(), std::max(val1, val2));
     assert(lb <= ub);
     const Int val = random.intInRange(lb, ub);
     assignment.set(_vars[index].solverId(), val);
@@ -75,16 +75,16 @@ size_t IntLinEqNeighborhood::randomMove(RandomProvider& random,
                       _indices[random.intInRange(i, _indices.size() - 1)]);
     const size_t index1 = _indices[i];
     const Int cur1 = assignment.committedValue(_vars[index1].solverId());
-    const Int lb1 = _vars[index1].domain().lowerBound();
-    const Int ub1 = _vars[index1].domain().upperBound();
+    const Int lb1 = _vars[index1].domain()->lowerBound();
+    const Int ub1 = _vars[index1].domain()->upperBound();
 
     for (Int j = i + 1; j < static_cast<Int>(_indices.size()); ++j) {
       std::swap<size_t>(_indices[j],
                         _indices[random.intInRange(j, _indices.size() - 1)]);
       const size_t index2 = _indices[j];
       const Int cur2 = assignment.committedValue(_vars[index2].solverId());
-      const Int lb2 = _vars[index2].domain().lowerBound();
-      const Int ub2 = _vars[index2].domain().upperBound();
+      const Int lb2 = _vars[index2].domain()->lowerBound();
+      const Int ub2 = _vars[index2].domain()->upperBound();
 
       if (_coeffs[index1] == _coeffs[index2]) {
         const Int v1 = std::max(lb1 - cur1, -(ub2 - cur2));

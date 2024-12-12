@@ -150,8 +150,9 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntVar& var) {
   } else if (!var.identifier().empty()) {
     nId = retrieveIntVarNode(
         var.domain().isInterval()
-            ? SearchDomain(var.domain().lowerBound(), var.domain().upperBound())
-            : SearchDomain(var.domain().elements()),
+            ? std::make_shared<SearchDomain>(var.domain().lowerBound(),
+                                             var.domain().upperBound())
+            : std::make_shared<SearchDomain>(var.domain().elements()),
         var.identifier(), domainType(var));
   } else {
     throw FznException(

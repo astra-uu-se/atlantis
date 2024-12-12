@@ -1,6 +1,6 @@
-#include <algorithm>
-
 #include "atlantis/search/neighborhoods/allDifferentNonUniformNeighborhood.hpp"
+
+#include <algorithm>
 
 namespace atlantis::search::neighborhoods {
 
@@ -8,14 +8,25 @@ AllDifferentNonUniformNeighborhood::AllDifferentNonUniformNeighborhood(
     std::vector<SearchVar>&& vars, Int domainLb, Int domainUb)
     : _vars(std::move(vars)),
       _varIndices(_vars.size()),
+      _domIndices(),
       _domainOffset(domainLb),
       _valueIndexToVarIndex(domainUb - domainLb + 1, _vars.size()),
-      _domains(_vars.size()),
       _inDomain(_vars.size()),
       _curTimestamp(NULL_TIMESTAMP) {
   assert(_vars.size() > 1);
   std::iota(_varIndices.begin(), _varIndices.end(), 0u);
   assert(_valueIndexToVarIndex.size() >= _vars.size());
+  size_t maxDomSize =
+      std::max_element(_vars.begin(), _vars.end(),
+                       [&](const auto& a, const auto& b) {
+                         return a.domain()->size() < b.domain()->size();
+                       })
+          ->domain()
+          ->size();
+  _domIndices.reserve(maxDomSize);
+  for (size_t i = 0; i < maxDomSize; ++i) {
+    _domIndices.emplace_back(NULL_TIMESTAMP, i);
+  }
 }
 
 static bool bipartiteMatching(
@@ -49,20 +60,20 @@ void AllDifferentNonUniformNeighborhood::initialize(RandomProvider& random,
   std::vector<std::vector<size_t>> forwardArcs(_vars.size());
   std::fill(_valueIndexToVarIndex.begin(), _valueIndexToVarIndex.end(),
             _vars.size());
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    _domains[i] = _vars[i].domain().values();
-    _inDomain[i] = std::vector<bool>(_valueIndexToVarIndex.size(), false);
-    for (const Int val : _domains[i]) {
-      _inDomain[i][toValueIndex(val)] = true;
+  for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
+    _inDomain[varIndex] =
+        std::vector<bool>(_valueIndexToVarIndex.size(), false);
+    for (const Int val : *_vars[varIndex].domain()) {
+      _inDomain[varIndex][toValueIndex(val)] = true;
     }
   }
 
   for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
-    forwardArcs[varIndex].reserve(_domains[varIndex].size());
-    for (const Int val : _domains[varIndex]) {
+    forwardArcs[varIndex].reserve(_vars[varIndex].domain()->size());
+    for (const Int val : *_vars[varIndex].domain()) {
       const size_t valueIndex = toValueIndex(val);
       assert(valueIndex < _valueIndexToVarIndex.size());
-      forwardArcs[varIndex].push_back(valueIndex);
+      forwardArcs[varIndex].emplace_back(valueIndex);
     }
     random.shuffle<size_t>(forwardArcs[varIndex]);
   }
@@ -108,6 +119,7 @@ size_t AllDifferentNonUniformNeighborhood::randomMove(RandomProvider& random,
               _varIndices[random.intInRange(
                   i, static_cast<Int>(_varIndices.size()) - 1)]);
     const size_t var1Index = _varIndices[i];
+    const Timestamp ts = _domIndices.front().tmpTimestamp() + 1;
 #ifndef NDEBUG
     {
       const size_t value1Index = toValueIndex(
@@ -116,11 +128,19 @@ size_t AllDifferentNonUniformNeighborhood::randomMove(RandomProvider& random,
       assert(var1Index == _valueIndexToVarIndex.at(value1Index));
     }
 #endif
-    for (Int j = 0; j < static_cast<Int>(_domains[var1Index].size()); ++j) {
-      std::swap(_domains[var1Index][j],
-                _domains[var1Index][random.intInRange(
-                    j, static_cast<Int>(_domains[var1Index].size()) - 1)]);
-      const size_t value2Index = toValueIndex(_domains[var1Index][j]);
+    for (Int j = 0; j < static_cast<Int>(_vars[var1Index].domain()->size());
+         ++j) {
+      // perform swap:
+      const Int k = random.intInRange(
+          j, static_cast<Int>(_vars[var1Index].domain()->size()) - 1);
+      const Int domIndex = _domIndices[k].value(ts);
+      _domIndices[k].setValue(ts, _domIndices[j].value(ts));
+      _domIndices[j].setValue(ts, domIndex);
+
+      const Int value2 = (*_vars[var1Index].domain())[domIndex];
+
+      const size_t value2Index = toValueIndex(value2);
+
       assert(inDomain(var1Index, value2Index));
 
       if (_valueIndexToVarIndex[value2Index] == var1Index) {

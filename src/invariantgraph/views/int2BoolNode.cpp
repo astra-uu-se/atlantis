@@ -22,17 +22,17 @@ void Int2BoolNode::init(InvariantNodeId id) {
 }
 
 void Int2BoolNode::updateState() {
-  invariantGraph().varNode(input()).domain().removeBelow(Int{0});
-  invariantGraph().varNode(input()).domain().removeAbove(Int{1});
+  invariantGraph().varNode(input()).domain()->removeBelow(Int{0});
+  invariantGraph().varNode(input()).domain()->removeAbove(Int{1});
 
   invariantGraph()
       .varNode(outputVarNodeIds().front())
       .domain()
-      .removeBelow(Int{0});
+      ->removeBelow(Int{0});
   invariantGraph()
       .varNode(outputVarNodeIds().front())
       .domain()
-      .removeAbove(Int{1});
+      ->removeAbove(Int{1});
 
   if (invariantGraphConst().varNodeConst(input()).isFixed()) {
     invariantGraph()

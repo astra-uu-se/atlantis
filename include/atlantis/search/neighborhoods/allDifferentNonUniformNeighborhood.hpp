@@ -3,6 +3,7 @@
 #include <array>
 #include <cassert>
 
+#include "atlantis/propagation/variables/committableInt.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
@@ -13,6 +14,7 @@ class AllDifferentNonUniformNeighborhood : public Neighborhood {
  private:
   std::vector<search::SearchVar> _vars;
   std::vector<size_t> _varIndices;
+  std::vector<propagation::CommittableInt> _domIndices;
   const Int _domainOffset;
   // _valueIndexToVarIndex[i]:
   //  if _valueIndexToVarIndex[i] < _vars.size(), then

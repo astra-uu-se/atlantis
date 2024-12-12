@@ -37,9 +37,7 @@ IntLinEqImplicitNode::createNeighborhood() {
   for (const auto& nId : outputVarNodeIds()) {
     auto& varNode = invariantGraph().varNode(nId);
     assert(varNode.varId() != propagation::NULL_ID);
-    searchVars.emplace_back(varNode.varId(),
-                            SearchDomain{varNode.constDomain().lowerBound(),
-                                         varNode.constDomain().upperBound()});
+    searchVars.emplace_back(varNode.varId(), varNode.domain());
     varNode.setDomainType(VarNode::DomainType::DOMAIN);
   }
 

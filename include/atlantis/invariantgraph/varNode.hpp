@@ -28,7 +28,7 @@ class VarNode {
   VarNodeId _varNodeId;
   bool _isIntVar;
   DomainType _domainType{DomainType::DOMAIN};
-  SearchDomain _domain;
+  std::shared_ptr<SearchDomain> _domain;
   propagation::VarViewId _varId{propagation::NULL_ID};
   propagation::VarViewId _domainViolationId{propagation::NULL_ID};
 
@@ -50,7 +50,8 @@ class VarNode {
    *
    * @param domain The domain of this variable.
    */
-  explicit VarNode(VarNodeId, bool isIntVar, SearchDomain&& domain,
+  explicit VarNode(VarNodeId, bool isIntVar,
+                   std::shared_ptr<SearchDomain> domain,
                    VarNode::DomainType = DomainType::DOMAIN);
 
   VarNodeId varNodeId() const noexcept;
@@ -69,10 +70,10 @@ class VarNode {
    */
   void setVarId(propagation::VarViewId varId);
 
-  [[nodiscard]] const SearchDomain& constDomain() const noexcept;
+  [[nodiscard]] std::shared_ptr<const SearchDomain> constDomain()
+      const noexcept;
 
-  [[nodiscard]] SearchDomain& domain() noexcept;
-  [[nodiscard]] const SearchDomain& domainConst() const noexcept;
+  [[nodiscard]] std::shared_ptr<SearchDomain> domain() noexcept;
 
   [[nodiscard]] bool isFixed() const noexcept;
 

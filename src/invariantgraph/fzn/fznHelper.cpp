@@ -264,7 +264,7 @@ VarNodeId createCountNode(FznInvariantGraph& graph,
                           const std::shared_ptr<fznparser::IntVarArray>& inputs,
                           const fznparser::IntArg& needle) {
   VarNodeId countVarNodeId = graph.retrieveIntVarNode(
-      SearchDomain(0, static_cast<Int>(inputs->size())));
+      std::make_shared<SearchDomain>(0, static_cast<Int>(inputs->size())));
 
   if (needle.isFixed()) {
     graph.addInvariantNode(

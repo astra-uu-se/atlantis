@@ -14,6 +14,86 @@ static bool sortedVectorIsInterval(const std::vector<Int>& sortedVals) {
              sortedVals.back();
 }
 
+Domain::Iterator::Iterator(Int lb, Int ub, Int pos)
+    : _data(std::pair<Int, Int>(lb, ub + 1)), _pos{pos} {}
+
+Domain::Iterator::Iterator(const std::vector<Int>& vals, size_t pos)
+    : _data(&vals), _pos{static_cast<Int>(pos)} {}
+
+const Int& Domain::Iterator::operator*() const {
+  return std::holds_alternative<std::pair<Int, Int>>(_data)
+             ? _pos
+             : (std::get<std::vector<Int> const*>(_data)->operator[](_pos));
+}
+
+Int const* Domain::Iterator::operator->() const {
+  return std::holds_alternative<std::pair<Int, Int>>(_data)
+             ? &_pos
+             : &(std::get<std::vector<Int> const*>(_data)->operator[](_pos));
+}
+
+Domain::Iterator& Domain::Iterator::operator++() {
+  ++_pos;
+  return *this;
+}
+
+Domain::Iterator Domain::Iterator::operator++(int) {
+  Domain::Iterator tmp = *this;
+  ++_pos;
+  return tmp;
+}
+
+Domain::Iterator& Domain::Iterator::operator--() {
+  --_pos;
+  return *this;
+}
+
+Domain::Iterator Domain::Iterator::operator--(int) {
+  Domain::Iterator tmp = *this;
+  --_pos;
+  return tmp;
+}
+
+Domain::Iterator& Domain::Iterator::operator+=(size_t offset) {
+  _pos += static_cast<Int>(offset);
+  return *this;
+}
+
+Domain::Iterator& Domain::Iterator::operator-=(size_t offset) {
+  _pos -= static_cast<Int>(offset);
+  return *this;
+}
+
+Domain::Iterator Domain::Iterator::operator+(size_t offset) {
+  Domain::Iterator tmp = *this;
+  tmp._pos += static_cast<Int>(offset);
+  return tmp;
+}
+
+Domain::Iterator Domain::Iterator::operator-(size_t offset) {
+  Domain::Iterator tmp = *this;
+  tmp._pos -= static_cast<Int>(offset);
+  return tmp;
+}
+
+bool Domain::Iterator::operator==(const Domain::Iterator& other) {
+  if (std::holds_alternative<std::pair<Int, Int>>(_data) !=
+          std::holds_alternative<std::pair<Int, Int>>(other._data) ||
+      _pos != other._pos) {
+    return false;
+  }
+  if (std::holds_alternative<std::pair<Int, Int>>(_data)) {
+    return std::get<std::pair<Int, Int>>(_data) ==
+           std::get<std::pair<Int, Int>>(other._data);
+  }
+  return std::get<std::vector<Int> const*>(_data) ==
+         std::get<std::vector<Int> const*>(other._data);
+}
+
+bool Domain::Iterator::operator!=(const Domain::Iterator& other) {
+  return !operator==(other);
+}
+
 IntervalDomain::IntervalDomain(Int lb, Int ub) : _lb(lb), _ub(ub) {
   if (lb > ub) {
     throw DomainException("InterValDomain::InterValDomain: " +
@@ -46,6 +126,21 @@ std::vector<DomainEntry> IntervalDomain::relativeComplementIfIntersects(
   }
   return std::vector<DomainEntry>{{std::max(_lb, lb), std::min(_ub, ub)}};
 }
+
+Domain::Iterator IntervalDomain::begin() const {
+  return Domain::Iterator(_lb, _ub, _lb);
+}
+
+Domain::Iterator IntervalDomain::end() const {
+  return Domain::Iterator(_lb, _ub, _ub + 1);
+}
+
+Int IntervalDomain::at(size_t offset) const {
+  assert(_lb + static_cast<Int>(offset) <= _ub);
+  return _lb + static_cast<Int>(offset);
+}
+
+Int IntervalDomain::operator[](size_t offset) const { return at(offset); }
 
 void IntervalDomain::setLowerBound(Int lb) {
   if (lb > _ub) {
@@ -126,6 +221,18 @@ bool SetDomain::contains(Int value) const noexcept {
 bool SetDomain::isInterval() const noexcept {
   return sortedVectorIsInterval(_values);
 }
+
+Domain::Iterator SetDomain::begin() const {
+  return Domain::Iterator(_values, 0);
+}
+
+Domain::Iterator SetDomain::end() const {
+  return Domain::Iterator(_values, _values.size());
+}
+
+Int SetDomain::at(size_t offset) const { return _values.at(offset); }
+
+Int SetDomain::operator[](size_t offset) const { return _values[offset]; }
 
 std::vector<DomainEntry> SetDomain::relativeComplementIfIntersects(
     const Int lb, const Int ub) const {
@@ -345,6 +452,25 @@ bool SearchDomain::contains(Int value) const noexcept {
 bool SearchDomain::isInterval() const noexcept {
   return std::visit<bool>([&](const auto& dom) { return dom.isInterval(); },
                           _domain);
+}
+
+Domain::Iterator SearchDomain::begin() const {
+  return std::visit<Domain::Iterator>(
+      [&](const auto& dom) { return dom.begin(); }, _domain);
+}
+
+Domain::Iterator SearchDomain::end() const {
+  return std::visit<Domain::Iterator>(
+      [&](const auto& dom) { return dom.end(); }, _domain);
+}
+
+Int SearchDomain::at(size_t offset) const {
+  return std::visit<Int>([&](const auto& dom) { return dom.at(offset); },
+                         _domain);
+}
+
+Int SearchDomain::operator[](size_t offset) const {
+  return std::visit<Int>([&](const auto& dom) { return dom[offset]; }, _domain);
 }
 
 std::vector<DomainEntry> SearchDomain::relativeComplementIfIntersects(

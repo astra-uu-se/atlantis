@@ -133,15 +133,15 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   VarNodeId retrieveIntVarNode(Int lb, Int ub, const std::string& identifier) {
-    return _invariantGraph->retrieveIntVarNode(SearchDomain(lb, ub),
-                                               identifier);
+    return _invariantGraph->retrieveIntVarNode(
+        std::make_shared<SearchDomain>(lb, ub), identifier);
   }
 
   VarNodeId retrieveIntVarNode(std::vector<Int>&& vals,
                                const std::string& identifier) {
     assert(!vals.empty());
-    return _invariantGraph->retrieveIntVarNode(SearchDomain(std::move(vals)),
-                                               identifier);
+    return _invariantGraph->retrieveIntVarNode(
+        std::make_shared<SearchDomain>(std::move(vals)), identifier);
   }
 
   VarNodeId retrieveIntVarNode(Int val) {

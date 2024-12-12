@@ -20,7 +20,7 @@ class RandomNeighborhoodTest : public NeighborhoodTestBase {
     _solver->open();
     for (auto i = 0u; i < 4; ++i) {
       propagation::VarViewId var = _solver->makeIntVar(1, 1, 4);
-      _vars.emplace_back(var, SearchDomain(1, 4));
+      _vars.emplace_back(var, std::make_shared<SearchDomain>(1, 4));
     }
 
     _solver->close();
@@ -34,8 +34,8 @@ class RandomNeighborhoodTest : public NeighborhoodTestBase {
     for (const auto& var : _vars) {
       const Int curVal = _solver->currentValue(var.solverId());
       const Int comVal = _solver->committedValue(var.solverId());
-      EXPECT_TRUE(var.constDomain().contains(curVal));
-      EXPECT_TRUE(var.constDomain().contains(comVal));
+      EXPECT_TRUE(var.domain()->contains(curVal));
+      EXPECT_TRUE(var.domain()->contains(comVal));
       if (curVal != comVal) {
         ++numModified;
       }

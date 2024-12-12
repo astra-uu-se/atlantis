@@ -23,8 +23,10 @@ InvariantGraphRoot& InvariantGraph::root() {
 InvariantGraph::InvariantGraph(propagation::SolverBase& solver,
                                bool breakDynamicCycles)
     : _solver(solver),
-      _varNodes{VarNode{VarNodeId{0}, false, SearchDomain({1})},
-                VarNode{VarNodeId{1}, false, SearchDomain({0})}},
+      _varNodes{VarNode{VarNodeId{0}, false,
+                        std::make_shared<SearchDomain>(std::vector<Int>{1})},
+                VarNode{VarNodeId{1}, false,
+                        std::make_shared<SearchDomain>(std::vector<Int>{0})}},
       _namedVarNodeIndices(),
       _intVarNodeIndices(),
       _boolVarNodeIndices{VarNodeId{0}, VarNodeId{1}},
@@ -97,13 +99,12 @@ VarNodeId InvariantGraph::retrieveBoolVarNode(bool b,
   return nId;
 }
 
-VarNodeId InvariantGraph::retrieveBoolVarNode(SearchDomain&& domain,
-                                              VarNode::DomainType domainType) {
-  if (domain.isFixed()) {
-    return retrieveBoolVarNode(domain.lowerBound() == 0);
+VarNodeId InvariantGraph::retrieveBoolVarNode(
+    std::shared_ptr<SearchDomain> domain, VarNode::DomainType domainType) {
+  if (domain->isFixed()) {
+    return retrieveBoolVarNode(domain->lowerBound() == 0);
   }
-  return _varNodes
-      .emplace_back(nextVarNodeId(), false, std::move(domain), domainType)
+  return _varNodes.emplace_back(nextVarNodeId(), false, domain, domainType)
       .varNodeId();
 }
 
@@ -111,8 +112,10 @@ VarNodeId InvariantGraph::retrieveIntVarNode(Int value) {
   if (!containsVarNode((Int)value)) {
     const VarNodeId nodeId =
         _varNodes
-            .emplace_back(nextVarNodeId(), true, SearchDomain({value}),
-                          VarNode::DomainType::FIXED)
+            .emplace_back(
+                nextVarNodeId(), true,
+                std::make_shared<SearchDomain>(std::vector<Int>{value}),
+                VarNode::DomainType::FIXED)
             .varNodeId();
     _intVarNodeIndices.emplace(value, nodeId);
     return nodeId;
@@ -150,19 +153,18 @@ VarNodeId InvariantGraph::retrieveIntVarNode(Int i,
   return _namedVarNodeIndices.at(identifier);
 }
 
-VarNodeId InvariantGraph::retrieveIntVarNode(SearchDomain&& domain,
-                                             VarNode::DomainType domainType) {
-  if (domain.isFixed()) {
-    return retrieveIntVarNode(domain.lowerBound());
+VarNodeId InvariantGraph::retrieveIntVarNode(
+    std::shared_ptr<SearchDomain> domain, VarNode::DomainType domainType) {
+  if (domain->isFixed()) {
+    return retrieveIntVarNode(domain->lowerBound());
   }
-  return _varNodes
-      .emplace_back(nextVarNodeId(), true, std::move(domain), domainType)
+  return _varNodes.emplace_back(nextVarNodeId(), true, domain, domainType)
       .varNodeId();
 }
 
-VarNodeId InvariantGraph::retrieveIntVarNode(SearchDomain&& domain,
-                                             const std::string& identifier,
-                                             VarNode::DomainType domainType) {
+VarNodeId InvariantGraph::retrieveIntVarNode(
+    std::shared_ptr<SearchDomain> domain, const std::string& identifier,
+    VarNode::DomainType domainType) {
   if (containsVarNode(identifier)) {
     const auto& node = varNode(identifier);
     if (!node.isIntVar()) {
@@ -171,7 +173,7 @@ VarNodeId InvariantGraph::retrieveIntVarNode(SearchDomain&& domain,
     }
     return node.varNodeId();
   }
-  const VarNodeId nId = retrieveIntVarNode(std::move(domain), domainType);
+  const VarNodeId nId = retrieveIntVarNode(domain, domainType);
 
   assert(!containsVarNode(identifier));
   _namedVarNodeIndices.emplace(identifier, nId);
@@ -349,7 +351,7 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
   }
   VarNode& oldNode = varNode(oldNodeId);
   VarNode& newNode = varNode(newNodeId);
-  newNode.domain().intersect(oldNode.constDomain());
+  newNode.domain()->intersect(*oldNode.constDomain());
   while (!oldNode.definingNodes().empty()) {
     const InvariantNodeId invNodeId = *(oldNode.definingNodes().begin());
     invariantNode(invNodeId).replaceDefinedVar(oldNode.varNodeId(),
@@ -525,7 +527,7 @@ void InvariantGraph::splitMultiDefinedVars() {
     for (const auto& invNodeId : replacedDefiningNodes) {
       VarNode& splitVarNode = _varNodes.emplace_back(
           nextVarNodeId(), _varNodes[i].isIntVar(),
-          SearchDomain{_varNodes[i].constDomain()},
+          std::make_shared<SearchDomain>(*(_varNodes[i].constDomain())),
           isFixed ? VarNode::DomainType::FIXED : VarNode::DomainType::NONE);
 
       invariantNode(invNodeId).replaceDefinedVar(_varNodes[i].varNodeId(),
@@ -615,13 +617,13 @@ InvariantGraphEdge InvariantGraph::findPivotInCycle(
              [&](InvariantNodeId inv) { return inv == listeningInvNodeId; }));
 
   size_t minDomainSize = varNodeConst(pivot).isIntVar()
-                             ? varNodeConst(pivot).constDomain().size()
+                             ? varNodeConst(pivot).constDomain()->size()
                              : 2;
 
   for (size_t i = 1; i < cycle.size() && minDomainSize > 2; ++i) {
     const VarNode& vNode = varNodeConst(cycle[i].varNodeId);
-    if (!vNode.isIntVar() || vNode.constDomain().size() < minDomainSize) {
-      minDomainSize = !vNode.isIntVar() ? 2 : vNode.constDomain().size();
+    if (!vNode.isIntVar() || vNode.constDomain()->size() < minDomainSize) {
+      minDomainSize = !vNode.isIntVar() ? 2 : vNode.constDomain()->size();
       pivot = vNode.varNodeId();
       const size_t listeningInvIndex = i + 1 % cycle.size();
       listeningInvNodeId = cycle[listeningInvIndex].invariantNodeId;
@@ -656,11 +658,11 @@ VarNodeId InvariantGraph::breakCycle(
   // modified, this reference could be invalidated!
   assert(!varNodeConst(pivot).isFixed());
 
-  VarNode& newInputNode =
-      _varNodes.emplace_back(nextVarNodeId(), varNodeConst(pivot).isIntVar(),
-                             SearchDomain(varNodeConst(pivot).lowerBound(),
-                                          varNodeConst(pivot).upperBound()),
-                             VarNode::DomainType::NONE);
+  VarNode& newInputNode = _varNodes.emplace_back(
+      nextVarNodeId(), varNodeConst(pivot).isIntVar(),
+      std::make_shared<SearchDomain>(varNodeConst(pivot).lowerBound(),
+                                     varNodeConst(pivot).upperBound()),
+      VarNode::DomainType::NONE);
 
   invariantNode(listeningInvariant)
       .replaceStaticInputVarNode(pivot, newInputNode.varNodeId());
@@ -813,11 +815,12 @@ void InvariantGraph::breakSelfCycles() {
       if (hasSelfCycle) {
         const VarNodeId newDefinedVar =
             _varNodes
-                .emplace_back(
-                    nextVarNodeId(), varNodeConst(outputVarId).isIntVar(),
-                    SearchDomain(varNodeConst(outputVarId).lowerBound(),
-                                 varNodeConst(outputVarId).upperBound()),
-                    VarNode::DomainType::NONE)
+                .emplace_back(nextVarNodeId(),
+                              varNodeConst(outputVarId).isIntVar(),
+                              std::make_shared<SearchDomain>(
+                                  varNodeConst(outputVarId).lowerBound(),
+                                  varNodeConst(outputVarId).upperBound()),
+                              VarNode::DomainType::NONE)
                 .varNodeId();
         _invariantNodes.at(i)->replaceDefinedVar(outputVarId, newDefinedVar);
         if (varNodeConst(outputVarId).isIntVar()) {

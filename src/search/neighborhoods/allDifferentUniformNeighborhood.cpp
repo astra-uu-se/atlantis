@@ -1,59 +1,69 @@
+#include "atlantis/search/neighborhoods/allDifferentUniformNeighborhood.hpp"
+
 #include <algorithm>
 #include <cassert>
-
-#include "atlantis/search/neighborhoods/allDifferentUniformNeighborhood.hpp"
 
 namespace atlantis::search::neighborhoods {
 
 AllDifferentUniformNeighborhood::AllDifferentUniformNeighborhood(
-    std::vector<SearchVar>&& vars, std::vector<Int>&& domain)
+    std::vector<SearchVar>&& vars)
     : _vars(std::move(vars)),
-      _domain(std::move(domain)),
+      _freeVals(),
       _moveVarIdx(_vars.size()),
-      _moveValIdx(_domain.size()),
-      _curTimestamp(NULL_TIMESTAMP),
-      _hasFreeValues(_domain.size() > _vars.size()) {
+      _moveValIdx(_vars.front().domain()->size() - _vars.size()),
+      _curTimestamp(NULL_TIMESTAMP) {
   assert(_vars.size() > 1);
-  assert(_domain.size() >= _vars.size());
-
-  std::sort(_domain.begin(), _domain.end());
-  _domain.erase(std::unique(_domain.begin(), _domain.end()), _domain.end());
+  assert(_vars.front().domain()->size() >= _vars.size());
 }
 
 void AllDifferentUniformNeighborhood::initialize(RandomProvider& random,
                                                  IAssignment& assignment) {
   /*
-  For each index in 0.._vars.size() - 1: _domain[i] is the value assigned to
+  For each index in 0.._vars.size() - 1: (*_domain)[i] is the value assigned to
   _vars[i].
 
-  For each index in _vars.size().._domain.size() - 1: _domain[i] is
+  For each index in _vars.size().._domain->size() - 1: (*_domain)[i] is
   a value no variable currently takes
   */
   // Each value in 0..i-1 is assigned to a variable.
-  // Each value in i.._domain.size() - 1 is a free value.
-  for (size_t i = 0; i < _vars.size(); ++i) {
+  // Each value in i.._domain->size() - 1 is a free value.
+
+  _freeVals.resize(_vars.front().domain()->size());
+  for (size_t i = 0; i < _vars.front().domain()->size(); ++i) {
+    _freeVals[i] = (*_vars.front().domain())[i];
+  }
+
+  for (Int i = 0; i < static_cast<Int>(_vars.size()); ++i) {
     // Retrieve a free variable at index valIndex:
-    const size_t valIndex =
-        static_cast<size_t>(random.intInRange(i, _domain.size() - 1));
+    const size_t valIndex = static_cast<size_t>(
+        random.intInRange(0, static_cast<Int>(_freeVals.size()) - 1 - i));
 
     // Assign variable _vars[i] the retrieved value:
-    assignment.set(_vars[i].solverId(), _domain[valIndex]);
+    assignment.set(_vars[i].solverId(), _freeVals[valIndex]);
 
     // the value assigned to _vars[i] is no longer free:
-    std::swap(_domain[i], _domain[valIndex]);
+    std::swap(_freeVals[static_cast<Int>(_freeVals.size()) - 1 - i],
+              _freeVals[valIndex]);
   }
+
+  _freeVals.resize(_vars.front().domain()->size() - _vars.size());
+
+  assert(std::all_of(_freeVals.begin(), _freeVals.end(), [&](const Int val) {
+    return std::any_of(_vars.begin(), _vars.end(), [&](const auto& var) {
+      return var.domain()->contains(val);
+    });
+  }));
 }
 
 size_t AllDifferentUniformNeighborhood::randomMove(RandomProvider& random,
                                                    IAssignment& assignment) {
-  if (_hasFreeValues) {
-    // A move is replacing the value of a variable with a free value:
-    return assignValue(random, assignment);
+  if (_freeVals.empty()) {
+    // There are no free variables, a move consists of swapping the values of
+    // two variables:
+    return swapValues(random, assignment);
   }
-
-  // There are no free variables, a move consists of swapping the values of
-  // two variables:
-  return swapValues(random, assignment);
+  // A move is replacing the value of a variable with a free value:
+  return assignValue(random, assignment);
 }
 
 size_t AllDifferentUniformNeighborhood::swapValues(RandomProvider& random,
@@ -74,15 +84,15 @@ size_t AllDifferentUniformNeighborhood::swapValues(RandomProvider& random,
 
 size_t AllDifferentUniformNeighborhood::assignValue(RandomProvider& random,
                                                     IAssignment& assignment) {
-  assert(_vars.size() < _domain.size());
+  assert(_vars.size() < _vars.front().domain()->size());
 
   _moveVarIdx = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(_vars.size()) - 1));
 
-  _moveValIdx = static_cast<size_t>(random.intInRange(
-      static_cast<Int>(_vars.size()), static_cast<Int>(_domain.size()) - 1));
+  _moveValIdx = static_cast<size_t>(
+      random.intInRange(0, static_cast<Int>(_freeVals.size()) - 1));
 
-  assignment.set(_vars[_moveVarIdx].solverId(), _domain[_moveValIdx]);
+  assignment.set(_vars[_moveVarIdx].solverId(), _freeVals[_moveValIdx]);
   _curTimestamp = assignment.currentTimestamp();
 
   return 1;
@@ -91,30 +101,27 @@ size_t AllDifferentUniformNeighborhood::assignValue(RandomProvider& random,
 void AllDifferentUniformNeighborhood::commitIf(const IAssignment& assignment) {
   if (_curTimestamp == assignment.currentTimestamp()) {
     assert(_moveVarIdx < _vars.size());
-    assert(_vars.size() <= _moveValIdx);
-    assert(_moveValIdx < _domain.size());
+    assert(_moveValIdx < _freeVals.size());
 
-    assert(assignment.committedValue(_vars[_moveVarIdx].solverId()) ==
-           _domain[_moveVarIdx]);
     assert(assignment.currentValue(_vars[_moveVarIdx].solverId()) ==
-           _domain[_moveValIdx]);
+           _freeVals[_moveValIdx]);
 
-    std::swap(_domain[_moveVarIdx], _domain[_moveValIdx]);
+    _freeVals[_moveValIdx] =
+        assignment.committedValue(_vars[_moveVarIdx].solverId());
+
     _curTimestamp = NULL_TIMESTAMP;
 #ifndef NDEBUG
     for (size_t i = 0; i < _vars.size(); ++i) {
-      assert(assignment.currentValue(_vars[i].solverId()) == _domain[i]);
       for (size_t j = i + 1; j < _vars.size(); ++j) {
         assert(assignment.currentValue(_vars[i].solverId()) !=
                assignment.currentValue(_vars[j].solverId()));
-      }
-      for (size_t j = _vars.size(); j < _domain.size(); ++j) {
-        assert(_domain[i] != _domain[j]);
+        assert(assignment.committedValue(_vars[i].solverId()) !=
+               assignment.committedValue(_vars[j].solverId()));
       }
     }
-    for (size_t i = _vars.size(); i < _domain.size(); ++i) {
-      for (size_t j = 0; j < _vars.size(); ++j) {
-        assert(_domain[i] != _domain[j]);
+    for (const Int fVal : _freeVals) {
+      for (const auto& var : _vars) {
+        assert(assignment.currentValue(var.solverId()) != fVal);
       }
     }
 #endif
