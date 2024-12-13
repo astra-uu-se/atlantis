@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -67,9 +68,10 @@ class InvariantGraph : public virtual IInvariantGraph {
 
   VarNodeId retrieveBoolVarNode(bool, const std::string&) override;
 
-  VarNodeId retrieveBoolVarNode(SearchDomain&&, VarNode::DomainType) override;
+  VarNodeId retrieveBoolVarNode(std::shared_ptr<SearchDomain>,
+                                VarNode::DomainType) override;
 
-  VarNodeId retrieveBoolVarNode(SearchDomain&& dom) override {
+  VarNodeId retrieveBoolVarNode(std::shared_ptr<SearchDomain> dom) override {
     return retrieveBoolVarNode(std::move(dom), VarNode::DomainType::RANGE);
   }
 
@@ -79,16 +81,18 @@ class InvariantGraph : public virtual IInvariantGraph {
 
   VarNodeId retrieveIntVarNode(Int, const std::string&) override;
 
-  VarNodeId retrieveIntVarNode(SearchDomain&&, VarNode::DomainType) override;
+  VarNodeId retrieveIntVarNode(std::shared_ptr<SearchDomain>,
+                               VarNode::DomainType) override;
 
-  VarNodeId retrieveIntVarNode(SearchDomain&& dom) override {
+  VarNodeId retrieveIntVarNode(std::shared_ptr<SearchDomain> dom) override {
     return retrieveIntVarNode(std::move(dom), VarNode::DomainType::DOMAIN);
   }
 
-  VarNodeId retrieveIntVarNode(SearchDomain&& dom, const std::string& str,
+  VarNodeId retrieveIntVarNode(std::shared_ptr<SearchDomain> dom,
+                               const std::string& str,
                                VarNode::DomainType) override;
 
-  VarNodeId retrieveIntVarNode(SearchDomain&& dom,
+  VarNodeId retrieveIntVarNode(std::shared_ptr<SearchDomain> dom,
                                const std::string& identifier) override {
     return retrieveIntVarNode(std::move(dom), identifier,
                               VarNode::DomainType::DOMAIN);

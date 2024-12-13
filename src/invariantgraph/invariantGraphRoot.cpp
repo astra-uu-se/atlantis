@@ -17,12 +17,12 @@ InvariantGraphRoot::createNeighborhood() {
   searchVars.reserve(outputVarNodeIds().size());
 
   for (const auto& nId : outputVarNodeIds()) {
-    SearchDomain dom = invariantGraphConst()
-                           .varNodeConst(outputVarNodeIds().front())
-                           .constDomain();
+    auto dom = invariantGraphConst()
+                   .varNodeConst(outputVarNodeIds().front())
+                   .constDomain();
     auto& node = invariantGraph().varNode(nId);
     assert(node.varId() != propagation::NULL_ID);
-    searchVars.emplace_back(node.varId(), std::move(dom));
+    searchVars.emplace_back(node.varId(), dom);
     node.setDomainType(VarNode::DomainType::NONE);
   }
 

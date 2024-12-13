@@ -1,6 +1,6 @@
 #pragma once
 
-#include <optional>
+#include <algorithm>
 #include <random>
 #include <vector>
 
@@ -15,55 +15,34 @@ class RandomProvider {
   std::default_random_engine _randomEngine;
 
  public:
-  explicit RandomProvider(std::uint_fast32_t seed) : _gen(std::mt19937(seed)) {}
+  explicit RandomProvider(std::uint_fast32_t seed);
 
-  template <typename T>
-  T& element(std::vector<T>& collection) {
-    assert(!collection.empty());
-    std::uniform_int_distribution<size_t> distribution(0,
-                                                       collection.size() - 1);
-    return collection[distribution(_gen)];
-  }
+  Int element(const std::vector<Int>& collection);
 
-  template <typename T>
-  const T& element(const std::vector<T>& collection) {
-    assert(!collection.empty());
-    std::uniform_int_distribution<size_t> distribution(0,
-                                                       collection.size() - 1);
-    return collection[distribution(_gen)];
-  }
+  Int intInRange(Int lowerBound, Int upperBound);
 
-  template <typename Iter>
-  Iter iterator(Iter begin, Iter end) {
-    auto offset = intInRange(0, std::distance(begin, end) - 1);
-    return std::next(begin, offset);
-  }
+  Int intInRange(Int lowerBound, Int upperBound, Int ignoredValue);
 
-  Int intInRange(Int lowerBound, Int upperBound) {
-    return std::uniform_int_distribution<Int>(lowerBound, upperBound)(_gen);
-  }
+  float floatInRange(float lowerBound, float upperBound);
 
-  float floatInRange(float lowerBound, float upperBound) {
-    return std::uniform_real_distribution<float>(lowerBound, upperBound)(_gen);
-  }
+  Int inDomain(const SetDomain& domain);
 
-  Int inDomain(const SetDomain& domain) { return element(domain.values()); }
+  Int inDomain(const SetDomain& domain, Int ignoredValue);
 
-  Int inDomain(const IntervalDomain& domain) {
-    return intInRange(domain.lowerBound(), domain.upperBound());
-  }
+  Int inDomain(const IntervalDomain& domain);
 
-  Int inDomain(SearchDomain& domain) {
-    return std::visit<Int>([&](const auto& dom) { return inDomain(dom); },
-                           domain.innerDomain());
-  }
+  Int inDomain(const IntervalDomain& domain, Int ignoredValue);
+
+  Int inDomain(const SearchDomain& domain);
+
+  Int inDomain(const SearchDomain& domain, Int ignoredValue);
+
+  void seed(std::int_fast32_t seed);
 
   template <typename T>
   void shuffle(std::vector<T>& v) {
     std::shuffle(v.begin(), v.end(), _randomEngine);
   }
-
-  void seed(std::int_fast32_t seed) { _gen.seed(seed); }
 
   template <typename Value, typename Distribution>
   Value fromDistribution(Distribution d) {

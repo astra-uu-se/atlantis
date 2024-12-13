@@ -120,13 +120,16 @@ bool CircuitNode::replace() {
 
   for (size_t i = 1; i < staticInputVarNodeIds().size(); ++i) {
     orderVars.emplace_back(invariantGraph().retrieveIntVarNode(
-        SearchDomain{1, static_cast<Int>(staticInputVarNodeIds().size())},
+        std::make_shared<SearchDomain>(
+            1, static_cast<Int>(staticInputVarNodeIds().size())),
         VarNode::DomainType::NONE));
     offsetVars.emplace_back(invariantGraph().retrieveIntVarNode(
-        SearchDomain{1, static_cast<Int>(staticInputVarNodeIds().size()) + 1},
+        std::make_shared<SearchDomain>(
+            1, static_cast<Int>(staticInputVarNodeIds().size()) + 1),
         VarNode::DomainType::NONE));
     modoluVars.emplace_back(invariantGraph().retrieveIntVarNode(
-        SearchDomain{0, static_cast<Int>(staticInputVarNodeIds().size()) - 1},
+        std::make_shared<SearchDomain>(
+            0, static_cast<Int>(staticInputVarNodeIds().size()) - 1),
         VarNode::DomainType::NONE));
     // offset[i] = order[i] + 1
     invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(

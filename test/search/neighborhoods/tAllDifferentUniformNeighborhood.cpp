@@ -20,23 +20,15 @@ class AllDifferentUniformNeighborhoodTest : public NeighborhoodTestBase {
     if (_vars.empty()) {
       return;
     }
-    if (_vars.front().constDomain().isInterval()) {
-      for (Int val = _vars.front().constDomain().lowerBound();
-           val <= _vars.front().constDomain().upperBound(); ++val) {
-        holdsCurVal.emplace(val, false);
-        holdsComVal.emplace(val, false);
-      }
-    } else {
-      for (const Int val : _vars.front().domain().values()) {
-        holdsCurVal.emplace(val, false);
-        holdsComVal.emplace(val, false);
-      }
+    for (const Int val : *_vars.front().domain()) {
+      holdsCurVal.emplace(val, false);
+      holdsComVal.emplace(val, false);
     }
     for (const auto& var : _vars) {
       const Int curVal = _solver->currentValue(var.solverId());
       const Int comVal = _solver->committedValue(var.solverId());
-      EXPECT_TRUE(var.constDomain().contains(curVal));
-      EXPECT_TRUE(var.constDomain().contains(comVal));
+      EXPECT_TRUE(var.domain()->contains(curVal));
+      EXPECT_TRUE(var.domain()->contains(comVal));
 
       EXPECT_TRUE(holdsCurVal.contains(curVal));
       EXPECT_TRUE(holdsComVal.contains(comVal));
@@ -55,13 +47,13 @@ class AllDifferentUniformNeighborhoodTest : public NeighborhoodTestBase {
 
     for (size_t i = 0; i < 4; ++i) {
       propagation::VarViewId var = _solver->makeIntVar(1, 1, 5);
-      _vars.emplace_back(var, SearchDomain(1, 5));
+      _vars.emplace_back(var, std::make_shared<SearchDomain>(1, 5));
     }
     _solver->close();
 
     _neighborhood =
         std::make_shared<neighborhoods::AllDifferentUniformNeighborhood>(
-            std::vector<SearchVar>(_vars), std::vector<Int>{1, 2, 3, 4, 5});
+            std::vector<SearchVar>(_vars));
   }
 };
 

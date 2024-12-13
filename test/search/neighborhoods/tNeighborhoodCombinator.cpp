@@ -27,7 +27,7 @@ class NeighborhoodCombinatorTest : public NeighborhoodTestBase {
     NeighborhoodTestBase::SetUp();
 
     vars = std::vector<SearchVar>{
-        SearchVar(propagation::NULL_ID, SearchDomain(0, 10))};
+        SearchVar(propagation::NULL_ID, std::make_shared<SearchDomain>(0, 10))};
 
     n1 = std::make_shared<MockNeighborhood>();
     EXPECT_CALL(*n1, coveredVars()).WillRepeatedly(ReturnRef(vars));

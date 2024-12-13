@@ -33,23 +33,19 @@ CircuitImplicitNode::createNeighborhood() {
   for (const auto& nId : outputVarNodeIds()) {
     const auto& varNode = invariantGraphConst().varNodeConst(nId);
     if (varNode.isFixed()) {
-      freeIndices.emplace_back(varNode.constDomain().lowerBound());
+      freeIndices.emplace_back(varNode.constDomain()->lowerBound());
     }
   }
 
   for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
     auto& varNode = invariantGraph().varNode(outputVarNodeIds().at(i));
     assert(varNode.varId() != propagation::NULL_ID);
-    if (varNode.constDomain().isFixed()) {
-      const Int val = varNode.constDomain().lowerBound();
-      searchVars.emplace_back(varNode.varId(), SearchDomain{val, val});
+    searchVars.emplace_back(varNode.varId(), varNode.domain());
+
+    if (varNode.constDomain()->isFixed()) {
       varNode.setDomainType(VarNode::DomainType::NONE);
       continue;
     }
-
-    searchVars.emplace_back(
-        varNode.varId(),
-        SearchDomain{1, static_cast<Int>(outputVarNodeIds().size())});
 
     bool enforceDomain = false;
     for (Int val = 0; val <= static_cast<Int>(outputVarNodeIds().size());
@@ -59,7 +55,7 @@ CircuitImplicitNode::createNeighborhood() {
                       [&](const Int& i) { return i == val; })) {
         continue;
       }
-      if (!varNode.constDomain().contains(val)) {
+      if (!varNode.constDomain()->contains(val)) {
         enforceDomain = true;
         break;
       }

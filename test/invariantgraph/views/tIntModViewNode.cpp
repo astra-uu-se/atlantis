@@ -20,7 +20,7 @@ class IntModViewNodeTestFixture : public NodeTestBase<IntModViewNode> {
       return _solver->currentValue(varId(inputVarNodeId)) %
              std::abs(denominator);
     }
-    return varNode(inputVarNodeId).domain().lowerBound() %
+    return varNode(inputVarNodeId).domain()->lowerBound() %
            std::abs(denominator);
   }
 
@@ -74,7 +74,7 @@ TEST_P(IntModViewNodeTestFixture, updateState) {
     EXPECT_TRUE(varNode(inputVarNodeId).isFixed());
     EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).domain().lowerBound();
+    const Int actual = varNode(outputVarNodeId).domain()->lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);

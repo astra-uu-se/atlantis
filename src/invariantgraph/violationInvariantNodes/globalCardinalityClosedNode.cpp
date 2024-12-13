@@ -66,7 +66,8 @@ bool GlobalCardinalityClosedNode::replace() {
 
   for (VarNodeId countId : outputVarNodeIds()) {
     intermediateOutputNodeIds.emplace_back(invariantGraph().retrieveIntVarNode(
-        SearchDomain(0, static_cast<Int>(staticInputVarNodeIds().size())),
+        std::make_shared<SearchDomain>(
+            0, static_cast<Int>(staticInputVarNodeIds().size())),
         VarNode::DomainType::NONE));
 
     violationVarNodeIds.emplace_back(invariantGraph().retrieveBoolVarNode());

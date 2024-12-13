@@ -1,6 +1,6 @@
-#include <algorithm>
-
 #include "atlantis/search/neighborhoods/circuitNeighborhood.hpp"
+
+#include <algorithm>
 
 namespace atlantis::search::neighborhoods {
 
@@ -15,7 +15,7 @@ void CircuitNeighborhood::initialize(RandomProvider& random,
 
   for (auto& var : _vars) {
     if (var.isFixed()) {
-      auto nextNode = var.constDomain().lowerBound();
+      auto nextNode = var.domain()->lowerBound();
       auto nextNodeIdx = node2Idx(nextNode);
 
       assert(idxIsAvailable.at(nextNodeIdx));
@@ -47,7 +47,7 @@ void CircuitNeighborhood::initialize(RandomProvider& random,
   for (size_t i = 1; i < availableIndices.size(); ++i) {
     assert(curNodeIdx < _vars.size());
     while (_vars[curNodeIdx].isFixed()) {
-      curNodeIdx = node2Idx(_vars[curNodeIdx].constDomain().lowerBound());
+      curNodeIdx = node2Idx(_vars[curNodeIdx].domain()->lowerBound());
       assert(std::none_of(availableIndices.begin(), availableIndices.end(),
                           [&](const size_t idx) { return idx == curNodeIdx; }));
     }

@@ -23,7 +23,7 @@ class IntLinEqNeighborhoodTest : public NeighborhoodTestBase {
     _solver->open();
     for (Int i = 0; i < numVars; ++i) {
       _vars.emplace_back(_solver->makeIntVar(0, -10, 10),
-                         SearchDomain(-10, 10));
+                         std::make_shared<SearchDomain>(-10, 10));
       _coeffs.emplace_back(i % 2 == 0 ? 1 : -1);
     }
 
@@ -38,13 +38,13 @@ class IntLinEqNeighborhoodTest : public NeighborhoodTestBase {
     Int comSum = 0;
     for (size_t i = 0; i < _vars.size(); ++i) {
       const Int curVal = _solver->committedValue(_vars.at(i).solverId());
-      EXPECT_GE(curVal, _vars.at(i).constDomain().lowerBound());
-      EXPECT_LE(curVal, _vars.at(i).constDomain().upperBound());
+      EXPECT_GE(curVal, _vars.at(i).domain()->lowerBound());
+      EXPECT_LE(curVal, _vars.at(i).domain()->upperBound());
       curSum += _coeffs.at(i) * curVal;
 
       const Int comVal = _solver->committedValue(_vars.at(i).solverId());
-      EXPECT_GE(comVal, _vars.at(i).constDomain().lowerBound());
-      EXPECT_LE(comVal, _vars.at(i).constDomain().upperBound());
+      EXPECT_GE(comVal, _vars.at(i).domain()->lowerBound());
+      EXPECT_LE(comVal, _vars.at(i).domain()->upperBound());
       comSum += _coeffs.at(i) * comVal;
     }
 

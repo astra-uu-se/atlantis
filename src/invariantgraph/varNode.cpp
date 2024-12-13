@@ -21,16 +21,17 @@ VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
     : _varNodeId(varNodeId),
       _isIntVar(isIntVar),
       _domainType(domainType),
-      _domain(0, 1) {
+      _domain(std::make_shared<SearchDomain>(0, 1)) {
   assert(!isIntVar);
 }
 
-VarNode::VarNode(VarNodeId varNodeId, bool isIntVar, SearchDomain&& domain,
+VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
+                 std::shared_ptr<SearchDomain> domain,
                  VarNode::DomainType domainType)
     : _varNodeId(varNodeId),
       _isIntVar(isIntVar),
       _domainType(domainType),
-      _domain(std::move(domain)) {}
+      _domain(domain) {}
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
@@ -41,16 +42,17 @@ void VarNode::setVarId(propagation::VarViewId varId) {
   _varId = varId;
 }
 
-const SearchDomain& VarNode::constDomain() const noexcept { return _domain; }
+std::shared_ptr<const SearchDomain> VarNode::constDomain() const noexcept {
+  return _domain;
+}
 
-SearchDomain& VarNode::domain() noexcept { return _domain; }
-const SearchDomain& VarNode::domainConst() const noexcept { return _domain; }
+std::shared_ptr<SearchDomain> VarNode::domain() noexcept { return _domain; }
 
 bool VarNode::isFixed() const noexcept {
   if (isIntVar()) {
-    return _domain.isFixed();
+    return _domain->isFixed();
   }
-  return (_domain.lowerBound() == 0) == (_domain.upperBound() == 0);
+  return (_domain->lowerBound() == 0) == (_domain->upperBound() == 0);
 }
 
 bool VarNode::isIntVar() const noexcept { return _isIntVar; }
@@ -85,7 +87,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
   const Int solverLb = solver.lowerBound(varId());
   const Int solverUb = solver.upperBound(varId());
 
-  if (_domainType == DomainType::FIXED || _domain.isFixed()) {
+  if (_domainType == DomainType::FIXED || _domain->isFixed()) {
     if (lowerBound() < solverLb || solverUb < lowerBound()) {
       throw std::runtime_error("Solver var domain range is " +
                                std::to_string(solverLb) + ".." +
@@ -145,7 +147,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
   assert(_domainType == DomainType::DOMAIN);
 
   std::vector<DomainEntry> domain =
-      _domain.relativeComplementIfIntersects(solverLb, solverUb);
+      _domain->relativeComplementIfIntersects(solverLb, solverUb);
 
   if (domain.empty()) {
     // The node domain contains the solver domain:
@@ -167,12 +169,12 @@ propagation::VarViewId VarNode::postDomainConstraint(
   return _domainViolationId;
 }
 
-Int VarNode::lowerBound() const { return _domain.lowerBound(); }
-Int VarNode::upperBound() const { return _domain.upperBound(); }
+Int VarNode::lowerBound() const { return _domain->lowerBound(); }
+Int VarNode::upperBound() const { return _domain->upperBound(); }
 
 Int VarNode::val() const {
-  if (_domain.isFixed()) {
-    return _domain.lowerBound();
+  if (_domain->isFixed()) {
+    return _domain->lowerBound();
   } else {
     throw std::runtime_error("val() called on non-fixed var");
   }
@@ -198,7 +200,7 @@ bool VarNode::inDomain(Int val) const {
   if (!isIntVar()) {
     throw std::runtime_error("inDomain(Int) called on BoolVar");
   }
-  return _domain.contains(val);
+  return _domain->contains(val);
 }
 
 bool VarNode::inDomain(bool val) const {
@@ -212,21 +214,21 @@ void VarNode::removeValue(Int val) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValue(Int) called on BoolVar");
   }
-  _domain.remove(val);
+  _domain->remove(val);
 }
 
 void VarNode::removeValuesBelow(Int newLowerBound) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesBelow(Int) called on BoolVar");
   }
-  return _domain.removeBelow(newLowerBound);
+  return _domain->removeBelow(newLowerBound);
 }
 
 void VarNode::removeValuesAbove(Int newUpperBound) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesAbove(Int) called on BoolVar");
   }
-  return _domain.removeAbove(newUpperBound);
+  return _domain->removeAbove(newUpperBound);
 }
 
 void VarNode::removeValues(const std::vector<Int>& values) {
@@ -235,7 +237,7 @@ void VarNode::removeValues(const std::vector<Int>& values) {
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
   if (!values.empty()) {
-    return _domain.remove(values);
+    return _domain->remove(values);
   }
 }
 
@@ -244,35 +246,35 @@ void VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  _domain.intersect(values);
+  _domain->intersect(values);
 }
 
 void VarNode::fixToValue(Int val) {
   if (!isIntVar()) {
     throw std::runtime_error("fixToValue(Int) called on BoolVar");
   }
-  _domain.fix(val);
+  _domain->fix(val);
 }
 
 void VarNode::removeValue(bool val) {
   if (isIntVar()) {
     throw std::runtime_error("removeValue(bool) called on IntVar");
   }
-  _domain.fix(val ? 0 : 1);
+  _domain->fix(val ? 0 : 1);
 }
 
 void VarNode::fixToValue(bool val) {
   if (isIntVar()) {
     throw std::runtime_error("fixToValue(bool) called on IntVar");
   }
-  _domain.fix(val ? 0 : 1);
+  _domain->fix(val ? 0 : 1);
 }
 
 std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) {
-  return _domain.relativeComplementIfIntersects(lb, ub);
+  return _domain->relativeComplementIfIntersects(lb, ub);
 }
 
-std::pair<Int, Int> VarNode::bounds() const { return _domain.bounds(); }
+std::pair<Int, Int> VarNode::bounds() const { return _domain->bounds(); }
 
 const std::vector<InvariantNodeId>& VarNode::staticInputTo() const noexcept {
   return _staticInputTo;
@@ -332,7 +334,7 @@ void VarNode::markOutputTo(InvariantNodeId definingInvNodeId) {
 }
 
 std::optional<Int> VarNode::constantValue() const noexcept {
-  auto [lb, ub] = _domain.bounds();
+  auto [lb, ub] = _domain->bounds();
   return lb == ub ? std::optional<Int>{lb} : std::optional<Int>{};
 }
 

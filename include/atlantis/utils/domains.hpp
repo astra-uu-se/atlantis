@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <iterator>
 #include <variant>
 #include <vector>
 
@@ -16,6 +18,42 @@ class IntervalDomain;
  */
 class Domain {
  public:
+  struct Iterator {
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = Int;
+    using pointer = Int const*;
+    using reference = const Int&;
+    using range = std::pair<Int, Int>;
+    using set = std::vector<Int> const*;
+
+   private:
+    std::variant<range, set> _data;
+    Int _pos;
+
+   public:
+    explicit Iterator(Int lb, Int ub, Int pos);
+    explicit Iterator(const std::vector<Int>&, size_t pos);
+
+    const reference operator*() const;
+    pointer operator->() const;
+
+    Iterator& operator++();
+    Iterator operator++(int);
+
+    Iterator& operator--();
+    Iterator operator--(int);
+
+    Iterator& operator+=(size_t);
+    Iterator& operator-=(size_t);
+
+    Iterator operator+(size_t);
+    Iterator operator-(size_t);
+
+    bool operator==(const Iterator&);
+    bool operator!=(const Iterator&);
+  };
+
   virtual ~Domain() = default;
 
   /**
@@ -55,6 +93,14 @@ class Domain {
 
   virtual void fix(Int) = 0;
 
+  [[nodiscard]] virtual Int at(size_t) const = 0;
+
+  [[nodiscard]] virtual Int operator[](size_t) const = 0;
+
+  [[nodiscard]] virtual Domain::Iterator begin() const = 0;
+
+  [[nodiscard]] virtual Domain::Iterator end() const = 0;
+
   /**
    * @return if the domain is not a superset of lb..ub,
    * then returns the relative complement of lb..ub in domain,
@@ -79,6 +125,10 @@ class IntervalDomain : public Domain {
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
   [[nodiscard]] bool isInterval() const noexcept override;
+  [[nodiscard]] Domain::Iterator begin() const override;
+  [[nodiscard]] Domain::Iterator end() const override;
+  [[nodiscard]] Int at(size_t) const override;
+  [[nodiscard]] Int operator[](size_t) const override;
 
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
       Int lb, Int ub) const override;
@@ -116,6 +166,10 @@ class SetDomain : public Domain {
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
   [[nodiscard]] bool isInterval() const noexcept override;
+  [[nodiscard]] Domain::Iterator begin() const override;
+  [[nodiscard]] Domain::Iterator end() const override;
+  [[nodiscard]] Int at(size_t) const override;
+  [[nodiscard]] Int operator[](size_t) const override;
 
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
       Int lb, Int ub) const override;
@@ -176,6 +230,10 @@ class SearchDomain : public Domain {
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
   [[nodiscard]] bool isInterval() const noexcept override;
+  [[nodiscard]] Domain::Iterator begin() const override;
+  [[nodiscard]] Domain::Iterator end() const override;
+  [[nodiscard]] Int at(size_t) const override;
+  [[nodiscard]] Int operator[](size_t) const override;
 
   [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
       Int lb, Int ub) const override;

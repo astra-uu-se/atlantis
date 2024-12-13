@@ -37,8 +37,8 @@ class AllDifferentNonUniformNeighborhoodTest : public NeighborhoodTestBase {
     for (const auto& var : _vars) {
       const Int curVal = _solver->currentValue(var.solverId());
       const Int comVal = _solver->committedValue(var.solverId());
-      EXPECT_TRUE(var.constDomain().contains(curVal));
-      EXPECT_TRUE(var.constDomain().contains(comVal));
+      EXPECT_TRUE(var.domain()->contains(curVal));
+      EXPECT_TRUE(var.domain()->contains(comVal));
 
       EXPECT_FALSE(curVals.contains(curVal));
       EXPECT_FALSE(comVals.contains(comVal));
@@ -57,7 +57,7 @@ class AllDifferentNonUniformNeighborhoodTest : public NeighborhoodTestBase {
       propagation::VarViewId var = _solver->makeIntVar(*lb, *lb, *ub);
       domainLb = std::min(domainLb, *lb);
       domainUb = std::max(domainUb, *ub);
-      _vars.emplace_back(var, SearchDomain(domain));
+      _vars.emplace_back(var, std::make_shared<SearchDomain>(domain));
     }
     _solver->close();
 
