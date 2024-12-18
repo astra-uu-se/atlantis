@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "../nodeTestBase.hpp"
+#include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/circuitNode.hpp"
 
 namespace atlantis::testing {
@@ -30,8 +31,8 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
       visited.at(curNode - 1) = true;
       curNode = values.at(curNode - 1);
     }
-    return std::any_of(visited.begin(), visited.end(),
-                       [](bool v) { return !v; });
+    return std::ranges::any_of(visited.begin(), visited.end(),
+                               [](bool v) { return !v; });
   }
 
   void SetUp() override {

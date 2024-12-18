@@ -93,8 +93,9 @@ static std::unique_ptr<AnnealingSchedule> parseScheduleLoop(const json& value) {
         "'maximumConsecutiveFutileRounds' (uint) and 'inner' (schedule).");
   }
 
-  auto iterationCount = value["maximumConsecutiveFutileRounds"].get<UInt>();
-  auto it = value["inner"].begin();
+  const auto iterationCount =
+      value["maximumConsecutiveFutileRounds"].get<UInt>();
+  const auto it = value["inner"].begin();
   auto schedule = parseSchedule(it.key(), it.value());
   return AnnealerContainer::loop(std::move(schedule), iterationCount);
 }
@@ -103,16 +104,18 @@ static std::unique_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
                                                         const json& value) {
   if (name == "heating") {
     return parseHeatingSchedule(value);
-  } else if (name == "cooling") {
-    return parseCoolingSchedule(value);
-  } else if (name == "sequence") {
-    return parseScheduleSequence(value);
-  } else if (name == "loop") {
-    return parseScheduleLoop(value);
-  } else {
-    throw AnnealingScheduleCreationError(
-        std::string("Unknown schedule key: ").append(name));
   }
+  if (name == "cooling") {
+    return parseCoolingSchedule(value);
+  }
+  if (name == "sequence") {
+    return parseScheduleSequence(value);
+  }
+  if (name == "loop") {
+    return parseScheduleLoop(value);
+  }
+  throw AnnealingScheduleCreationError(
+      std::string("Unknown schedule key: ").append(name));
 }
 
 std::unique_ptr<AnnealingSchedule>
@@ -138,7 +141,7 @@ std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {
         "schedule.");
   }
 
-  auto it = parsedJson.begin();
+  const auto it = parsedJson.begin();
   return parseSchedule(it.key(), it.value());
 }
 

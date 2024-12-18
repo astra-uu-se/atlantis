@@ -58,7 +58,7 @@ TEST_F(PriorityListTest, Constructor) {
 }
 
 TEST_F(PriorityListTest, SimpleUpdatePriority) {
-  size_t size = 100;
+  const size_t size = 100;
   Timestamp ts;
   PriorityList priorityList(size);
 
@@ -95,8 +95,8 @@ TEST_F(PriorityListTest, SimpleUpdatePriority) {
 
 TEST_F(PriorityListTest, RandomUpdatePriority) {
   for (size_t n = 0; n < 1000; ++n) {
-    size_t size = 100;
-    Timestamp ts = 1;
+    const size_t size = 100;
+    const Timestamp ts = 1;
     std::uniform_int_distribution<> distribution(
         std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
 
@@ -116,7 +116,7 @@ TEST_F(PriorityListTest, RandomUpdatePriority) {
 }
 
 TEST_F(PriorityListTest, CommitIf) {
-  size_t size = 100;
+  const size_t size = 100;
   PriorityList priorityList(size);
   Timestamp ts = 1;
 

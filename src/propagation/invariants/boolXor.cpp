@@ -1,8 +1,6 @@
 #include "atlantis/propagation/invariants/boolXor.hpp"
 
-#include <algorithm>
-#include <functional>
-
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/variables/intVar.hpp"
 
 namespace atlantis::propagation {
@@ -10,7 +8,8 @@ namespace atlantis::propagation {
 /**
  * invariant output = ((x == 0) != (y == 0))
  * output does not violate if exactly one of x or y violates.
- * @param violationId id for the violationCount
+ * @param solver the solver that the invariant is added to
+ * @param output id for the output
  * @param x first violation variable
  * @param y second violation variable
  * @param output result
@@ -48,9 +47,9 @@ void BoolXor::updateBounds(bool widenOnly) {
 }
 
 void BoolXor::recompute(Timestamp ts) {
-  updateValue(ts, _output,
-              static_cast<Int>((_solver.value(ts, _x) != 0) ==
-                               (_solver.value(ts, _y) != 0)));
+  updateValue(
+      ts, _output,
+      (_solver.value(ts, _x) == 0) == (_solver.value(ts, _y) == 0) ? 1 : 0);
 }
 
 void BoolXor::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }

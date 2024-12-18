@@ -7,12 +7,10 @@
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/types.hpp"
-#include "atlantis/utils/variant.hpp"
 
 namespace atlantis::search {
 
 class Objective {
- private:
   propagation::Solver& _solver;
   fznparser::ProblemType _problemType;
 

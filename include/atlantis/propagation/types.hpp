@@ -1,10 +1,7 @@
 #pragma once
 
-#include <limits.h>
-
+#include <climits>
 #include <cstddef>
-#include <cstdint>
-#include <functional>
 
 #include "atlantis/types.hpp"
 
@@ -21,7 +18,7 @@ struct VarViewId {
   size_t id;
 
  public:
-  static const size_t VIEW_MASK =
+  static constexpr size_t VIEW_MASK =
       (size_t{1} << (sizeof(size_t) * CHAR_BIT - 1));
 
   VarViewId(size_t i) : id(i == NULL_ID ? i : (i & ~VIEW_MASK)) {}
@@ -29,27 +26,27 @@ struct VarViewId {
   VarViewId(size_t i, bool isView)
       : id(i == NULL_ID ? i : (isView ? (i | VIEW_MASK) : (i & ~VIEW_MASK))) {}
 
-  inline bool isView() const {
+  [[nodiscard]] bool isView() const {
     return id != NULL_ID && (id & VIEW_MASK) != size_t{0};
   }
 
-  inline bool isVar() const {
+  [[nodiscard]] bool isVar() const {
     return id != NULL_ID && (id & VIEW_MASK) == size_t{0};
   }
 
-  [[nodiscard]] inline bool operator==(size_t other) const {
+  [[nodiscard]] bool operator==(size_t other) const {
     return size_t(id) == other;
   }
 
-  [[nodiscard]] inline bool operator==(const VarViewId& other) const {
+  [[nodiscard]] bool operator==(const VarViewId& other) const {
     return id == other.id;
   }
 
-  [[nodiscard]] inline bool operator!=(size_t other) const {
+  [[nodiscard]] bool operator!=(size_t other) const {
     return !operator==(other);
   }
 
-  [[nodiscard]] inline bool operator!=(const VarViewId& other) const {
+  [[nodiscard]] bool operator!=(const VarViewId& other) const {
     return !operator==(other);
   }
 

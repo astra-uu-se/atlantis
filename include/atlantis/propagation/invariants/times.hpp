@@ -1,7 +1,6 @@
 #pragma once
 
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
 
 namespace atlantis::propagation {
@@ -12,7 +11,6 @@ namespace atlantis::propagation {
  */
 
 class Times : public Invariant {
- private:
   VarId _output;
   VarViewId _x, _y;
 

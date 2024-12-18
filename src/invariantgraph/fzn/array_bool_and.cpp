@@ -2,7 +2,8 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {

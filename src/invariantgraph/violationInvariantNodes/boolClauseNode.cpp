@@ -1,14 +1,16 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/boolClauseNode.hpp"
 
+#include <algorithm>
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolOrNode.hpp"
 #include "atlantis/propagation/invariants/boolLinear.hpp"
-#include "atlantis/propagation/views/equalConst.hpp"
-#include "atlantis/propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -27,11 +29,11 @@ void BoolClauseNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::none_of(staticInputVarNodeIds().begin(),
-                   staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                     return invariantGraphConst().varNodeConst(vId).isIntVar();
-                   }));
+  assert(std::ranges::none_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void BoolClauseNode::updateState() {
@@ -107,8 +109,8 @@ void BoolClauseNode::updateState() {
           "BoolClauseNode::updateState constraint is violated");
     }
     setState(InvariantNodeState::SUBSUMED);
-    return;
-  } else if (staticInputVarNodeIds().size() == 1 && !isReified()) {
+  }
+  if (staticInputVarNodeIds().size() == 1 && !isReified()) {
     auto& inputNode = invariantGraph().varNode(staticInputVarNodeIds().front());
     inputNode.fixToValue(_numAs > 0 ? shouldHold() : !shouldHold());
     removeStaticInputVarNode(inputNode.varNodeId());

@@ -3,7 +3,9 @@
 #include <utility>
 
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/search/neighborhoods/randomNeighborhood.hpp"
+#include "atlantis/search/searchVariable.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -23,7 +25,7 @@ InvariantGraphRoot::createNeighborhood() {
     auto& node = invariantGraph().varNode(nId);
     assert(node.varId() != propagation::NULL_ID);
     searchVars.emplace_back(node.varId(), dom);
-    node.setDomainType(VarNode::DomainType::NONE);
+    node.setDomainType(DomainType::DOM_NONE);
   }
 
   return std::make_shared<search::neighborhoods::RandomNeighborhood>(

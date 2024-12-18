@@ -1,9 +1,12 @@
 #include "atlantis/invariantgraph/invariantNodes/intPlusNode.hpp"
 
-#include <cmath>
+#include <algorithm>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/plus.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 
 namespace atlantis::invariantgraph {
@@ -17,11 +20,11 @@ void IntPlusNode::init(InvariantNodeId id) {
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
              .isIntVar());
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void IntPlusNode::updateState() {
@@ -82,11 +85,12 @@ void IntPlusNode::registerOutputVars() {
       makeSolverVar(outputVarNodeIds().front());
     }
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void IntPlusNode::registerNode() {

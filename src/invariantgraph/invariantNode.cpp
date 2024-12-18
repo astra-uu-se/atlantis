@@ -2,10 +2,11 @@
 
 #include <cassert>
 #include <fznparser/model.hpp>
-#include <unordered_map>
 
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 /**
@@ -23,7 +24,7 @@ InvariantNode::InvariantNode(IInvariantGraph& invariantGraph,
 
 IInvariantGraph& InvariantNode::invariantGraph() { return _invariantGraph; }
 
-void InvariantNode::setState(InvariantNodeState state) { _state = state; }
+void InvariantNode::setState(const InvariantNodeState state) { _state = state; }
 
 const IInvariantGraph& InvariantNode::invariantGraphConst() const {
   return _invariantGraph;
@@ -69,13 +70,13 @@ void InvariantNode::init(InvariantNodeId id) {
   }
   assert(_id == NULL_NODE_ID);
   _id = id;
-  for (VarNodeId varNodeId : _outputVarNodeIds) {
+  for (const VarNodeId varNodeId : _outputVarNodeIds) {
     markOutputTo(varNodeId, false);
   }
-  for (VarNodeId varNodeId : _staticInputVarNodeIds) {
+  for (const VarNodeId varNodeId : _staticInputVarNodeIds) {
     markStaticInputTo(varNodeId, false);
   }
-  for (VarNodeId varNodeId : _dynamicInputVarNodeIds) {
+  for (const VarNodeId varNodeId : _dynamicInputVarNodeIds) {
     markDynamicInputTo(varNodeId, false);
   }
   _state = InvariantNodeState::ACTIVE;
@@ -90,7 +91,8 @@ void InvariantNode::eraseStaticInputVarNode(size_t index) {
     throw InvariantGraphException(
         "InvariantNode::eraseStaticInputVarNode: index out of bounds");
   }
-  _staticInputVarNodeIds.erase(_staticInputVarNodeIds.begin() + index);
+  _staticInputVarNodeIds.erase(_staticInputVarNodeIds.begin() +
+                               static_cast<Int>(index));
 }
 
 void InvariantNode::eraseDynamicInputVarNode(size_t index) {
@@ -98,7 +100,8 @@ void InvariantNode::eraseDynamicInputVarNode(size_t index) {
     throw InvariantGraphException(
         "InvariantNode::eraseDynamicInputVarNode: index out of bounds");
   }
-  _dynamicInputVarNodeIds.erase(_dynamicInputVarNodeIds.begin() + index);
+  _dynamicInputVarNodeIds.erase(_dynamicInputVarNodeIds.begin() +
+                                static_cast<Int>(index));
 }
 
 void InvariantNode::deactivate() {
@@ -161,9 +164,9 @@ void InvariantNode::removeOutputVarNode(VarNodeId outputVarNodeId) {
 void InvariantNode::replaceStaticInputVarNode(VarNodeId oldInputVarNodeId,
                                               VarNodeId newInputVarNodeId) {
   // Replace all occurrences:
-  for (size_t i = 0; i < _staticInputVarNodeIds.size(); ++i) {
-    if (_staticInputVarNodeIds[i] == oldInputVarNodeId) {
-      _staticInputVarNodeIds[i] = newInputVarNodeId;
+  for (auto& sVarId : _staticInputVarNodeIds) {
+    if (sVarId == oldInputVarNodeId) {
+      sVarId = newInputVarNodeId;
     }
   }
   _invariantGraph.varNode(oldInputVarNodeId).unmarkAsInputFor(_id, true);
@@ -173,9 +176,9 @@ void InvariantNode::replaceStaticInputVarNode(VarNodeId oldInputVarNodeId,
 void InvariantNode::replaceDynamicInputVarNode(VarNodeId oldInputVarNodeId,
                                                VarNodeId newInputVarNodeId) {
   // Replace all occurrences:
-  for (size_t i = 0; i < _dynamicInputVarNodeIds.size(); ++i) {
-    if (_dynamicInputVarNodeIds[i] == oldInputVarNodeId) {
-      _dynamicInputVarNodeIds[i] = newInputVarNodeId;
+  for (auto& dVarId : _dynamicInputVarNodeIds) {
+    if (dVarId == oldInputVarNodeId) {
+      dVarId = newInputVarNodeId;
     }
   }
   _invariantGraph.varNode(oldInputVarNodeId).unmarkAsInputFor(_id, false);

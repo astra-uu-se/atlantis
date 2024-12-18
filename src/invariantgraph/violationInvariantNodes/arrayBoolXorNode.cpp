@@ -1,11 +1,16 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
 
+#include <algorithm>
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
 #include "atlantis/propagation/invariants/boolLinear.hpp"
 #include "atlantis/propagation/invariants/boolXor.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 
@@ -34,11 +39,11 @@ void ArrayBoolXorNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::none_of(staticInputVarNodeIds().begin(),
-                   staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                     return invariantGraphConst().varNodeConst(vId).isIntVar();
-                   }));
+  assert(std::ranges::none_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void ArrayBoolXorNode::updateState() {
@@ -99,8 +104,8 @@ void ArrayBoolXorNode::updateState() {
           "ArrayBoolOrNode::updateState constraint is violated");
     }
     setState(InvariantNodeState::SUBSUMED);
-    return;
-  } else if (staticInputVarNodeIds().size() == 1 && !isReified()) {
+  }
+  if (staticInputVarNodeIds().size() == 1 && !isReified()) {
     invariantGraph()
         .varNode(staticInputVarNodeIds().front())
         .fixToValue(shouldHold());
@@ -151,11 +156,12 @@ void ArrayBoolXorNode::registerOutputVars() {
           solver(), _intermediate, 1));
     }
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void ArrayBoolXorNode::registerNode() {
@@ -169,10 +175,10 @@ void ArrayBoolXorNode::registerNode() {
                                              : _intermediate.isVar());
 
   std::vector<propagation::VarViewId> inputNodeIds;
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(inputNodeIds), [&](const auto& node) {
-                   return invariantGraph().varId(node);
-                 });
+  std::ranges::transform(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      std::back_inserter(inputNodeIds),
+      [&](const auto& node) { return invariantGraph().varId(node); });
   if (staticInputVarNodeIds().size() == 2) {
     assert(isReified() || shouldHold());
     assert(_intermediate == propagation::NULL_ID);

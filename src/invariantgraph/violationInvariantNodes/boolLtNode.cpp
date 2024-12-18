@@ -1,13 +1,18 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/boolLtNode.hpp"
 
-#include <utility>
+#include <algorithm>
 
 #include "../parseHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/violationInvariants/boolLessEqual.hpp"
 #include "atlantis/propagation/violationInvariants/boolLessThan.hpp"
 
 namespace atlantis::invariantgraph {
+class VarNode;
 
 BoolLtNode::BoolLtNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
                        VarNodeId r)
@@ -22,11 +27,11 @@ void BoolLtNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::none_of(staticInputVarNodeIds().begin(),
-                   staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                     return invariantGraphConst().varNodeConst(vId).isIntVar();
-                   }));
+  assert(std::ranges::none_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void BoolLtNode::updateState() {
@@ -63,13 +68,14 @@ void BoolLtNode::updateState() {
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
-  } else if (aNode.isFixed() || bNode.isFixed()) {
+  }
+  if (aNode.isFixed() || bNode.isFixed()) {
     assert(aNode.isFixed() != bNode.isFixed());
     const bool isViolated = (aNode.isFixed() && aNode.inDomain(bool{true})) ||
                             (bNode.isFixed() && bNode.inDomain(bool{false}));
     if (isViolated) {
       if (isReified()) {
-        fixReified(!isViolated);
+        fixReified(false);
       } else if (shouldHold()) {
         throw InconsistencyException("BoolLtNode: a >= b");
       }
@@ -104,11 +110,12 @@ bool BoolLtNode::replace() {
 
 void BoolLtNode::registerOutputVars() {
   registerViolation();
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void BoolLtNode::registerNode() {

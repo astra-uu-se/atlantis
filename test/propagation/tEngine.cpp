@@ -212,15 +212,15 @@ class SolverTest : public ::testing::Test {
     solver->close();
 
     solver->beginProbe();
-    Timestamp timestamp = solver->currentTimestamp();
-    VarViewId modifiedDecisionVar = inputs[2][1];
+    const Timestamp timestamp = solver->currentTimestamp();
+    const VarViewId modifiedDecisionVar = inputs[2][1];
     solver->setValue(modifiedDecisionVar, 1);
     std::vector<size_t> markedInvariants = {2, 5, 6};
     std::vector<size_t> unmarkedInvariants = {0, 1, 3, 4};
     solver->query(outputs.back());
 
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      for (size_t i : markedInvariants) {
+      for (const size_t i : markedInvariants) {
         EXPECT_CALL(*invariants[i], notifyInputChanged(timestamp, LocalId(0)))
             .Times(i == 5 ? 1 : 0);
         EXPECT_CALL(*invariants[i], notifyInputChanged(timestamp, LocalId(1)))
@@ -230,8 +230,8 @@ class SolverTest : public ::testing::Test {
       if (solver->outputToInputMarkingMode() ==
           OutputToInputMarkingMode::NONE) {
         for (size_t i = 0; i < invariants.size(); ++i) {
-          VarViewId a = inputs[i][0];
-          VarViewId b = inputs[i][1];
+          const VarViewId a = inputs[i][0];
+          const VarViewId b = inputs[i][1];
           EXPECT_CALL(*invariants[i], nextInput(timestamp))
               .WillOnce(Return(a))
               .WillOnce(Return(b))
@@ -241,21 +241,21 @@ class SolverTest : public ::testing::Test {
         EXPECT_EQ(solver->modifiedSearchVar().size(), 1);
         EXPECT_TRUE(
             solver->modifiedSearchVar().contains(VarId(modifiedDecisionVar)));
-        for (size_t i : markedInvariants) {
+        for (const size_t i : markedInvariants) {
           EXPECT_CALL(*invariants[i], nextInput(timestamp))
               .WillOnce(Return(inputs[i][0]))
               .WillOnce(Return(inputs[i][1]))
               .WillRepeatedly(Return(NULL_ID));
         }
-        for (size_t i : unmarkedInvariants) {
+        for (const size_t i : unmarkedInvariants) {
           EXPECT_CALL(*invariants[i], nextInput(timestamp)).Times(0);
         }
       }
-      for (size_t i : markedInvariants) {
+      for (const size_t i : markedInvariants) {
         EXPECT_CALL(*invariants[i], notifyCurrentInputChanged(timestamp))
             .Times(1);
       }
-      for (size_t i : unmarkedInvariants) {
+      for (const size_t i : unmarkedInvariants) {
         EXPECT_CALL(*invariants[i], notifyCurrentInputChanged(timestamp))
             .Times(0);
       }
@@ -271,7 +271,7 @@ TEST_F(SolverTest, CreateVarsAndInvariant) {
   const VarViewId outputVar = solver->makeIntVar(0, Int(-100), Int(100));
 
   // TODO: use some other invariants...
-  auto invariant =
+  const auto invariant =
       &solver->makeInvariant<MockInvariantSimple>(*solver, outputVar, inputVar);
 
   EXPECT_CALL(*invariant, recompute(::testing::_)).Times(AtLeast(1));
@@ -290,7 +290,7 @@ TEST_F(SolverTest, ThisTestShouldNotBeHere) {
   // I just had to do some quick test and was too lazy to do this propperly.
   solver->open();
 
-  Int intVarCount = 10;
+  const Int intVarCount = 10;
   std::vector<VarViewId> X;
   for (Int value = 0; value < intVarCount; ++value) {
     X.push_back(solver->makeIntVar(value, Int(-100), Int(100)));
@@ -361,7 +361,7 @@ TEST_F(SolverTest, RecomputeAndCommit) {
   const VarViewId outputVar = solver->makeIntVar(0, -100, 100);
 
   // TODO: use some other invariants...
-  auto invariant =
+  const auto invariant =
       &solver->makeInvariant<MockInvariantSimple>(*solver, outputVar, inputVar);
 
   EXPECT_CALL(*invariant, recompute(::testing::_)).Times(1);
@@ -384,7 +384,7 @@ TEST_F(SolverTest, SimplePropagation) {
   VarViewId b = solver->makeIntVar(2, -10, 10);
   VarViewId c = solver->makeIntVar(3, -10, 10);
 
-  auto invariant = &solver->makeInvariant<MockInvariantAdvanced>(
+  const auto invariant = &solver->makeInvariant<MockInvariantAdvanced>(
       *solver, output, std::vector<VarViewId>({a, b, c}));
 
   EXPECT_CALL(*invariant, recompute(::testing::_)).Times(1);
@@ -394,7 +394,7 @@ TEST_F(SolverTest, SimplePropagation) {
   solver->close();
 
   solver->beginMove();
-  Timestamp moveTimestamp = solver->currentTimestamp();
+  const Timestamp moveTimestamp = solver->currentTimestamp();
 
   solver->setValue(a, -1);
   solver->setValue(b, -2);
@@ -434,7 +434,7 @@ TEST_F(SolverTest, SimpleCommit) {
   VarViewId b = solver->makeIntVar(2, -10, 10);
   VarViewId c = solver->makeIntVar(3, -10, 10);
 
-  auto invariant = &solver->makeInvariant<MockInvariantAdvanced>(
+  const auto invariant = &solver->makeInvariant<MockInvariantAdvanced>(
       *solver, output, std::vector<VarViewId>({a, b, c}));
 
   EXPECT_CALL(*invariant, recompute(::testing::_)).Times(AtLeast(1));
@@ -795,7 +795,7 @@ TEST_F(SolverTest, ComputeBounds) {
         &position));
   }
 
-  std::vector<std::pair<Int, Int>> expectedBounds = {
+  const std::vector<std::pair<Int, Int>> expectedBounds = {
       std::pair<Int, Int>{10, 20}, std::pair<Int, Int>{10, 20},
       std::pair<Int, Int>{10, 20}, std::pair<Int, Int>{10, 20},
       std::pair<Int, Int>{20, 40}, std::pair<Int, Int>{20, 40},

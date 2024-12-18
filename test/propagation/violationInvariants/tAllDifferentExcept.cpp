@@ -15,7 +15,7 @@ class AllDifferentExceptTest : public InvariantTest {
   std::uniform_int_distribution<Int> inputVarDist;
   std::unordered_set<Int> ignoredSet;
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = committedValue ? _solver->committedValue(inputVars.at(i))
@@ -24,7 +24,7 @@ class AllDifferentExceptTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(Timestamp ts) {
+  Int computeOutput(Timestamp ts) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = _solver->value(ts, inputVars.at(i));
@@ -32,7 +32,7 @@ class AllDifferentExceptTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(const std::vector<Int>& values) {
+  Int computeOutput(const std::vector<Int>& values) const {
     std::unordered_map<Int, Int> valueCounts;
     valueCounts.reserve(values.size());
     for (const Int value : values) {
@@ -124,7 +124,7 @@ TEST_F(AllDifferentExceptTest, Recompute) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-10004, -10000}, {-1, 1}, {10000, 10002}};
 
-  std::vector<std::unordered_set<Int>> ignored{
+  const std::vector<std::unordered_set<Int>> ignored{
       {-10003, -10000}, {-2, -1, 2}, {10000}};
 
   for (size_t i = 0; i < boundVec.size(); ++i) {
@@ -157,7 +157,7 @@ TEST_F(AllDifferentExceptTest, NotifyInputChanged) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-10002, -10000}, {-1, 1}, {10000, 10002}};
 
-  std::vector<std::unordered_set<Int>> ignoredVec{
+  const std::vector<std::unordered_set<Int>> ignoredVec{
       {-10003, -10000}, {-2, -1, 2}, {10000}};
 
   for (size_t b = 0; b < boundVec.size(); ++b) {
@@ -225,12 +225,12 @@ TEST_F(AllDifferentExceptTest, Commit) {
     committedValues.at(i) = _solver->committedValue(inputVars.at(i));
   }
 
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -272,8 +272,8 @@ RC_GTEST_FIXTURE_PROP(AllDifferentExceptTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -349,18 +349,18 @@ TEST_F(AllDifferentExceptTest, SolverIntegration) {
       _solver->open();
     }
     std::vector<VarViewId> args;
-    const size_t numArgs = 10;
-    const Int lb = -100;
-    const Int ub = 100;
-    for (size_t value = 0; value < numArgs; ++value) {
+    constexpr Int numArgs = 10;
+    constexpr Int lb = -100;
+    constexpr Int ub = 100;
+    for (Int value = 0; value < numArgs; ++value) {
       args.emplace_back(_solver->makeIntVar(0, lb, ub));
     }
     std::vector<Int> ignored(ub - lb, 0);
     for (size_t i = 0; i < ignored.size(); ++i) {
       ignored[i] = static_cast<Int>(i) - lb;
     }
-    std::shuffle(ignored.begin(), ignored.end(), rng);
-    const VarViewId viol = _solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
+    std::ranges::shuffle(ignored.begin(), ignored.end(), rng);
+    const VarViewId viol = _solver->makeIntVar(0, 0, numArgs);
     const VarViewId modifiedVarId = args.front();
     testNotifications<MockAllDifferentExcept>(
         &_solver->makeViolationInvariant<MockAllDifferentExcept>(

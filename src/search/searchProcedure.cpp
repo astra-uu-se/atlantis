@@ -1,11 +1,14 @@
 #include "atlantis/search/searchProcedure.hpp"
 
 #include <chrono>
-#include <string>
 
 #include "atlantis/logging/logger.hpp"
+#include "atlantis/search/annealer.hpp"
+#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/searchController.hpp"
 
 namespace atlantis::search {
+struct RoundStatistics;
 
 static void logRoundStatistics(logging::Logger& logger,
                                const RoundStatistics& statistics) {

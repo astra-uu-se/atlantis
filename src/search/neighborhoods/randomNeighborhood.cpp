@@ -1,5 +1,9 @@
 #include "atlantis/search/neighborhoods/randomNeighborhood.hpp"
 
+#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/randomProvider.hpp"
+#include "atlantis/search/searchVariable.hpp"
+
 namespace atlantis::search::neighborhoods {
 
 RandomNeighborhood::RandomNeighborhood(std::vector<SearchVar>&& vars)

@@ -36,12 +36,12 @@ class OutputToInputExplorer {
 
   void pushVarStack(VarId);
   void popVarStack();
-  VarId peekVarStack();
+  [[nodiscard]] VarId peekVarStack() const;
   void pushInvariantStack(InvariantId);
   void popInvariantStack();
-  InvariantId peekInvariantStack();
+  [[nodiscard]] InvariantId peekInvariantStack() const;
   void setComputed(Timestamp, VarId);
-  bool isComputed(Timestamp, VarId);
+  [[nodiscard]] bool isComputed(Timestamp, VarId) const;
 
   // We expand an invariant by pushing it and its first input variable onto
   // the stack.
@@ -60,7 +60,7 @@ class OutputToInputExplorer {
 
  public:
   OutputToInputExplorer() = delete;
-  OutputToInputExplorer(Solver& solver);
+  explicit OutputToInputExplorer(Solver& solver);
 
   void registerVar(VarId);
   void registerInvariant(InvariantId);
@@ -90,7 +90,7 @@ inline void OutputToInputExplorer::pushVarStack(VarId id) {
   _varStack[_varStackIdx++] = id;
 }
 inline void OutputToInputExplorer::popVarStack() { --_varStackIdx; }
-inline VarId OutputToInputExplorer::peekVarStack() {
+inline VarId OutputToInputExplorer::peekVarStack() const {
   return _varStack[_varStackIdx - 1];
 }
 
@@ -107,15 +107,15 @@ inline void OutputToInputExplorer::popInvariantStack() {
   _invariantIsOnStack[_invariantStack[--_invariantStackIdx]] = false;
 }
 
-inline InvariantId OutputToInputExplorer::peekInvariantStack() {
+inline InvariantId OutputToInputExplorer::peekInvariantStack() const {
   return _invariantStack[_invariantStackIdx - 1];
 }
 
 inline void OutputToInputExplorer::setComputed(Timestamp ts, VarId id) {
-  _varComputedAt[size_t(id)] = ts;
+  _varComputedAt[size_t{id}] = ts;
 }
-inline bool OutputToInputExplorer::isComputed(Timestamp ts, VarId id) {
-  return _varComputedAt.at(size_t(id)) == ts;
+inline bool OutputToInputExplorer::isComputed(Timestamp ts, VarId id) const {
+  return _varComputedAt.at(size_t{id}) == ts;
 }
 
 inline OutputToInputMarkingMode

@@ -1,9 +1,12 @@
 #include "atlantis/invariantgraph/views/bool2IntNode.hpp"
 
-#include <map>
-#include <utility>
+#include <algorithm>
 
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/bool2IntView.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -61,11 +64,12 @@ void Bool2IntNode::registerOutputVars() {
         .setVarId(solver().makeIntView<propagation::Bool2IntView>(
             solver(), invariantGraph().varId(input())));
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void Bool2IntNode::registerNode() {}

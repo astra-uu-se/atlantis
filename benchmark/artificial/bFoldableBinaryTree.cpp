@@ -94,7 +94,7 @@ void FoldableBinaryTree::probe(::benchmark::State& st, size_t moveCount) {
   moveCount = std::min(moveCount, decisionVars.size());
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
-    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
+    std::ranges::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
     st.ResumeTiming();
 
     solver->beginMove();
@@ -119,7 +119,7 @@ void FoldableBinaryTree::probeRnd(::benchmark::State& st, size_t moveCount) {
   moveCount = std::min(moveCount, decisionVars.size());
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
-    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
+    std::ranges::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
     st.ResumeTiming();
 
     solver->beginMove();
@@ -144,7 +144,7 @@ void FoldableBinaryTree::commit(::benchmark::State& st, size_t moveCount) {
   moveCount = std::min(moveCount, decisionVars.size());
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
-    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
+    std::ranges::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
 
     solver->beginMove();
     for (size_t i = 0; i < moveCount; ++i) {
@@ -171,7 +171,7 @@ void FoldableBinaryTree::commitRnd(::benchmark::State& st, size_t moveCount) {
   moveCount = std::min(moveCount, decisionVars.size());
   for ([[maybe_unused]] const auto& _ : st) {
     st.PauseTiming();
-    std::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
+    std::ranges::shuffle(decisionVars.begin(), decisionVars.end(), genValue);
 
     solver->beginMove();
     for (size_t i = 0; i < moveCount; ++i) {

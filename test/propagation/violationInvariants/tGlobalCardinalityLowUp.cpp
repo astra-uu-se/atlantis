@@ -25,7 +25,7 @@ class GlobalCardinalityLowUpTest : public InvariantTest {
 
   VarViewId outputVar{NULL_ID};
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = committedValue ? _solver->committedValue(inputVars.at(i))
@@ -34,7 +34,7 @@ class GlobalCardinalityLowUpTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = _solver->value(ts, inputVars.at(i));
@@ -42,11 +42,11 @@ class GlobalCardinalityLowUpTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(const std::vector<Int>& values) {
+  [[nodiscard]] Int computeOutput(const std::vector<Int>& values) const {
     std::vector<bool> checked(values.size(), false);
     std::unordered_map<Int, Int> actual;
     for (const Int val : values) {
-      if (actual.count(val) > 0) {
+      if (actual.contains(val)) {
         ++actual[val];
       } else {
         actual.emplace(val, 1);
@@ -57,8 +57,8 @@ class GlobalCardinalityLowUpTest : public InvariantTest {
     for (const auto& [val, lu] : coverSet) {
       const auto [l, u] = lu;
       shortage +=
-          std::max(Int(0), l - (actual.count(val) > 0 ? actual[val] : 0));
-      excess += std::max(Int(0), (actual.count(val) > 0 ? actual[val] : 0) - u);
+          std::max(Int{0}, l - (actual.contains(val) ? actual[val] : 0));
+      excess += std::max(Int{0}, (actual.contains(val) ? actual[val] : 0) - u);
     }
     return std::max(shortage, excess);
   }
@@ -295,12 +295,12 @@ TEST_F(GlobalCardinalityLowUpTest, Commit) {
     committedValues.at(i) = _solver->committedValue(inputVars.at(i));
   }
 
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -361,7 +361,7 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityLowUpTest, RapidCheck, ()) {
   std::iota(cover.begin(), cover.end(), coverLb);
   RC_ASSERT(cover.front() == coverLb);
   RC_ASSERT(cover.back() == coverUb);
-  std::shuffle(cover.begin(), cover.end(), rng);
+  std::ranges::shuffle(cover.begin(), cover.end(), rng);
   cover.resize(*rc::gen::inRange<size_t>(size_t{1}, cover.size() + 1));
 
   std::cerr << "\ncover: {";
@@ -374,8 +374,8 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityLowUpTest, RapidCheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -453,12 +453,12 @@ TEST_F(GlobalCardinalityLowUpTest, SolverIntegration) {
       _solver->open();
     }
     std::vector<VarViewId> args;
-    size_t numArgs = 10;
-    for (size_t value = 0; value < numArgs; ++value) {
+    constexpr Int numArgs = 10;
+    for (Int value = 0; value < numArgs; ++value) {
       args.push_back(_solver->makeIntVar(0, -100, 100));
     }
 
-    VarViewId viol = _solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
+    VarViewId viol = _solver->makeIntVar(0, 0, numArgs);
     const VarViewId modifiedVarId = args.front();
 
     testNotifications<MockGlobalCardinalityConst>(

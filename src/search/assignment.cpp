@@ -1,7 +1,7 @@
 #include "atlantis/search/assignment.hpp"
 
-#include <functional>
-#include <limits>
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/search/neighborhoods/neighborhood.hpp"
 
 namespace atlantis::search {
 

@@ -81,19 +81,19 @@ class TSP : public ::benchmark::Fixture {
         *solver, totalDist, std::vector<propagation::VarViewId>(timeToPred));
 
     solver->close();
-    assert(std::all_of(pred.begin() + 1, pred.end(),
-                       [&](const propagation::VarViewId p) {
-                         return solver->lowerBound(p) == 0;
-                       }));
-    assert(std::all_of(pred.begin(), pred.end() - 1,
-                       [&](const propagation::VarViewId p) {
-                         return solver->upperBound(p) == n - 1;
-                       }));
-    assert(std::all_of(pred.begin(), pred.end(),
-                       [&](const propagation::VarViewId p) {
-                         return 0 <= solver->committedValue(p) &&
-                                solver->committedValue(p) < n;
-                       }));
+    assert(std::ranges::all_of(pred.begin() + 1, pred.end(),
+                               [&](const propagation::VarViewId p) {
+                                 return solver->lowerBound(p) == 0;
+                               }));
+    assert(std::ranges::all_of(pred.begin(), pred.end() - 1,
+                               [&](const propagation::VarViewId p) {
+                                 return solver->upperBound(p) == n - 1;
+                               }));
+    assert(std::ranges::all_of(pred.begin(), pred.end(),
+                               [&](const propagation::VarViewId p) {
+                                 return 0 <= solver->committedValue(p) &&
+                                        solver->committedValue(p) < n;
+                               }));
 
     gen = std::mt19937(rd());
 

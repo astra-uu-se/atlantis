@@ -5,7 +5,6 @@
 namespace atlantis::invariantgraph {
 
 class IntScalarNode : public InvariantNode {
- private:
   Int _factor;
   Int _offset;
 
@@ -29,7 +28,7 @@ class IntScalarNode : public InvariantNode {
 
   std::ostream& dotLangEdges(std::ostream&) const override;
 
-  std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

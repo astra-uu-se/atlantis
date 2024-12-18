@@ -2,10 +2,13 @@
 
 #include <array>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 /**
  * Constraint x != y
+ * @param solver the solver that the invariant is added to
  * @param violationId id for the violationCount
  * @param x variable of lhs
  * @param y variable of rhs

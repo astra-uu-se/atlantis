@@ -8,6 +8,8 @@
 #include <string>
 
 #include "atlantis/fznBackend.hpp"
+#include "atlantis/logging/logger.hpp"
+#include "atlantis/search/searchStatistics.hpp"
 
 namespace atlantis::testing {
 
@@ -22,7 +24,7 @@ static void testModelFile(const char* modelFile,
     backend.setRandomSeed(seed.value());
   }
   backend.setTimelimit(std::chrono::seconds(2));
-  auto statistics = backend.solve(logger);
+  const auto statistics = backend.solve(logger);
   // Don't log to std::cout, since that would interfere with MiniZinc.
   statistics.display(std::cerr);
 }

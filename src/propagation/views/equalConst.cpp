@@ -1,10 +1,10 @@
 #include "atlantis/propagation/views/equalConst.hpp"
 
-#include <vector>
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::propagation {
 
-inline static Int compute(Int var, Int val) { return std::abs(var - val); }
+static Int compute(Int var, Int val) { return std::abs(var - val); }
 
 EqualConst::EqualConst(SolverBase& solver, VarViewId parentId, Int val)
     : IntView(solver, parentId), _val(val) {}

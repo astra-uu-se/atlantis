@@ -5,12 +5,15 @@
 #include <fznparser/variables.hpp>
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/utils/fznOutput.hpp"
+
+namespace atlantis {
+struct FznOutputVar;
+struct FznOutputVarArray;
+}  // namespace atlantis
 
 namespace atlantis::invariantgraph {
 
 class FznInvariantGraph : public InvariantGraph {
- private:
   std::unordered_set<std::string> _outputIdentifiers;
   std::vector<std::pair<std::string, VarNodeId>> _outputBoolVars;
   std::vector<std::pair<std::string, VarNodeId>> _outputIntVars;
@@ -18,8 +21,8 @@ class FznInvariantGraph : public InvariantGraph {
   std::vector<InvariantGraphOutputVarArray> _outputIntVarArrays;
 
  public:
-  FznInvariantGraph(propagation::SolverBase& solver,
-                    bool breakDynamicCycles = false);
+  explicit FznInvariantGraph(propagation::SolverBase& solver,
+                             bool breakDynamicCycles = false);
 
   VarNodeId retrieveVarNode(const fznparser::BoolVar&);
   VarNodeId retrieveVarNode(const std::shared_ptr<const fznparser::BoolVar>&);
@@ -48,7 +51,6 @@ class FznInvariantGraph : public InvariantGraph {
   void createNodes(const fznparser::Model&);
 
   bool makeInvariantNode(const fznparser::Constraint& constraint);
-  bool makeImplicitConstraintNode(const fznparser::Constraint& constraint);
   bool makeViolationInvariantNode(const fznparser::Constraint& constraint);
 };
 

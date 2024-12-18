@@ -2,6 +2,7 @@
 
 #include "./testHelper.hpp"
 #include "atlantis/search/neighborhoods/randomNeighborhood.hpp"
+#include "atlantis/search/searchVariable.hpp"
 
 namespace atlantis::testing {
 
@@ -29,7 +30,7 @@ class RandomNeighborhoodTest : public NeighborhoodTestBase {
         std::make_shared<RandomNeighborhood>(std::vector<SearchVar>(_vars));
   }
 
-  size_t expectHolds() {
+  size_t expectHolds() const {
     size_t numModified{0};
     for (const auto& var : _vars) {
       const Int curVal = _solver->currentValue(var.solverId());

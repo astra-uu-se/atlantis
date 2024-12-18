@@ -7,10 +7,13 @@
 #include <utility>
 #include <vector>
 
+#include "atlantis/invariantgraph/iImplicitConstraintNode.hpp"
+#include "atlantis/invariantgraph/iInvariantNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
 #include "atlantis/propagation/solver.hpp"
-#include "atlantis/utils/variant.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
 
@@ -60,7 +63,7 @@ struct ParamData {
   explicit ParamData(ViolationInvariantType vt, int d)
       : action(InvariantNodeAction::NONE), violType(vt), data(d) {}
   explicit ParamData(ViolationInvariantType vt)
-      : action(InvariantNodeAction::NONE), violType(vt) {}
+      : action(InvariantNodeAction::NONE), violType(vt), data(0) {}
 
   explicit ParamData(int d)
       : action(InvariantNodeAction::NONE),
@@ -77,30 +80,28 @@ template <class InvNode>
 class NodeTestBase : public ::testing::TestWithParam<ParamData> {
  protected:
   ParamData _paramData{0};
-
-  bool shouldBeSubsumed() const {
-    return _paramData.action == InvariantNodeAction::SUBSUME;
-  }
-  bool shouldBeReplaced() const {
-    return _paramData.action == InvariantNodeAction::REPLACE;
-  }
-  bool shouldBeMadeImplicit() const {
-    return _paramData.action == InvariantNodeAction::MAKE_IMPLICIT;
-  }
-  bool shouldHold() const {
-    return _paramData.violType == ViolationInvariantType::CONSTANT_TRUE;
-  }
-  bool shouldFail() const {
-    return _paramData.violType == ViolationInvariantType::CONSTANT_FALSE;
-  }
-  bool isReified() const {
-    return _paramData.violType == ViolationInvariantType::REIFIED;
-  }
-
   std::shared_ptr<propagation::Solver> _solver{nullptr};
   std::shared_ptr<InvariantGraph> _invariantGraph{nullptr};
-
   InvariantNodeId _invNodeId = InvariantNodeId{NULL_NODE_ID};
+
+  [[nodiscard]] bool shouldBeSubsumed() const {
+    return _paramData.action == InvariantNodeAction::SUBSUME;
+  }
+  [[nodiscard]] bool shouldBeReplaced() const {
+    return _paramData.action == InvariantNodeAction::REPLACE;
+  }
+  [[nodiscard]] bool shouldBeMadeImplicit() const {
+    return _paramData.action == InvariantNodeAction::MAKE_IMPLICIT;
+  }
+  [[nodiscard]] bool shouldHold() const {
+    return _paramData.violType == ViolationInvariantType::CONSTANT_TRUE;
+  }
+  [[nodiscard]] bool shouldFail() const {
+    return _paramData.violType == ViolationInvariantType::CONSTANT_FALSE;
+  }
+  [[nodiscard]] bool isReified() const {
+    return _paramData.violType == ViolationInvariantType::REIFIED;
+  }
 
   void SetUp() override {
     _solver = std::make_unique<propagation::Solver>();
@@ -126,54 +127,51 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     EXPECT_NE(_invNodeId, NULL_NODE_ID);
     if (_invNodeId.isInvariant()) {
       return dynamic_cast<InvNode&>(_invariantGraph->invariantNode(_invNodeId));
-    } else {
-      return dynamic_cast<InvNode&>(
-          _invariantGraph->implicitConstraintNode(_invNodeId));
     }
+    return dynamic_cast<InvNode&>(
+        _invariantGraph->implicitConstraintNode(_invNodeId));
   }
 
-  VarNodeId retrieveIntVarNode(Int lb, Int ub, const std::string& identifier) {
+  [[nodiscard]] VarNodeId retrieveIntVarNode(
+      Int lb, Int ub, const std::string& identifier) const {
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(lb, ub), identifier);
   }
 
-  VarNodeId retrieveIntVarNode(std::vector<Int>&& vals,
-                               const std::string& identifier) {
+  [[nodiscard]] VarNodeId retrieveIntVarNode(
+      std::vector<Int>&& vals, const std::string& identifier) const {
     assert(!vals.empty());
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(std::move(vals)), identifier);
   }
 
-  VarNodeId retrieveIntVarNode(Int val) {
+  [[nodiscard]] VarNodeId retrieveIntVarNode(Int val) const {
     return _invariantGraph->retrieveIntVarNode(val);
   }
 
-  VarNodeId retrieveBoolVarNode(const std::string& identifier) {
+  [[nodiscard]] VarNodeId retrieveBoolVarNode(
+      const std::string& identifier) const {
     return _invariantGraph->retrieveBoolVarNode(identifier);
   }
 
-  VarNodeId varNodeId(const std::string& identifier) {
+  [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const {
     return _invariantGraph->varNodeId(identifier);
   }
 
-  VarNode& varNode(const std::string& identifier) {
+  [[nodiscard]] VarNode& varNode(const std::string& identifier) {
     return _invariantGraph->varNode(identifier);
   }
 
-  VarNode& varNode(VarNodeId varNodeId) {
+  [[nodiscard]] VarNode& varNode(VarNodeId varNodeId) {
     return _invariantGraph->varNode(varNodeId);
   }
 
-  propagation::VarViewId varId(const std::string& identifier) {
+  [[nodiscard]] propagation::VarViewId varId(const std::string& identifier) {
     return varNode(identifier).varId();
   }
 
-  propagation::VarViewId varId(VarNodeId varNodeId) {
+  [[nodiscard]] propagation::VarViewId varId(VarNodeId varNodeId) {
     return varNode(varNodeId).varId();
-  }
-
-  std::string identifier(VarNodeId varNodeId) {
-    return varNode(varNodeId).identifier();
   }
 
   void addInputVarsToSolver() {
@@ -214,7 +212,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     expectInputsRegistered(invNode());
   }
 
-  [[nodiscard]] inline propagation::VarViewId solverVarId(
+  [[nodiscard]] propagation::VarViewId solverVarId(
       const VarNodeId varNodeId) const {
     return _invariantGraph->varNode(varNodeId).varId();
   }
@@ -242,7 +240,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     }
   }
 
-  void expectInputTo(const InvariantNode& invNode) {
+  void expectInputTo(const InvariantNode& invNode) const {
     for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
       bool found = false;
       for (const auto& invNodeId :
@@ -267,14 +265,14 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     }
   }
 
-  void expectOutputOf(const InvariantNode& invNode) {
+  void expectOutputOf(const InvariantNode& invNode) const {
     for (const auto& varNodeId : invNode.outputVarNodeIds()) {
       EXPECT_EQ(_invariantGraph->varNode(varNodeId).outputOf(), invNode.id());
     }
   }
 
-  std::vector<Int> makeInputVals(
-      const std::vector<propagation::VarViewId>& inputVars) {
+  [[nodiscard]] std::vector<Int> makeInputVals(
+      const std::vector<propagation::VarViewId>& inputVars) const {
     std::vector<Int> inputVals;
     inputVals.reserve(inputVars.size());
     for (const propagation::VarViewId& varId : inputVars) {
@@ -284,7 +282,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   Int increaseNextVal(const std::vector<propagation::VarViewId>& inputVars,
-                      std::vector<Int>& inputVals) {
+                      std::vector<Int>& inputVals) const {
     EXPECT_EQ(inputVars.size(), inputVals.size());
     for (Int i = static_cast<Int>(inputVals.size()) - 1; i >= 0; --i) {
       if (inputVars.at(i) == propagation::NULL_ID) {
@@ -300,7 +298,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   void setVarVals(const std::vector<propagation::VarViewId>& inputVars,
-                  const std::vector<Int>& vals) {
+                  const std::vector<Int>& vals) const {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVars.at(i) != propagation::NULL_ID) {
@@ -310,7 +308,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   void expectVarVals(const std::vector<propagation::VarViewId>& inputVars,
-                     const std::vector<Int>& vals) {
+                     const std::vector<Int>& vals) const {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVars.at(i) != propagation::NULL_ID) {
@@ -320,7 +318,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   void updateOutputVals(const std::vector<propagation::VarViewId>& outputVars,
-                        std::vector<Int>& outputVals) {
+                        std::vector<Int>& outputVals) const {
     EXPECT_EQ(outputVars.size(), outputVals.size());
     for (size_t i = 0; i < outputVars.size(); ++i) {
       outputVals.at(i) = _solver->currentValue(outputVars.at(i));

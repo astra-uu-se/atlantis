@@ -1,36 +1,16 @@
 #pragma once
 
 #include <fznparser/constraint.hpp>
-#include <fznparser/variables.hpp>
 
-#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/types.hpp"
+
+namespace atlantis::invariantgraph {
+class FznInvariantGraph;
+}
 
 namespace atlantis::invariantgraph::fzn {
 
-/*
-
-
-bool int_lt(FznInvariantGraph&, VarNodeId, const fznparser::IntArg&);
-
-bool int_lt(FznInvariantGraph&, VarNodeId, const fznparser::IntArg&,
-            const fznparser::BoolArg& reified);
-
-bool int_lt(FznInvariantGraph&, VarNodeId, VarNodeId,
-            const fznparser::IntArg& reified);
-
-bool int_lt(FznInvariantGraph&, VarNodeId, const fznparser::IntArg&);
-
-bool int_lt(FznInvariantGraph&, VarNodeId, const fznparser::IntArg&,
-            const fznparser::IntArg& reified);
-
-bool int_lt(FznInvariantGraph&, VarNodeId, fznparser::IntVar);
-
-bool int_lt(FznInvariantGraph&, const fznparser::IntArg&,
-            const fznparser::IntArg&);
-
-bool int_lt(FznInvariantGraph&, const fznparser::IntArg&,
-            const fznparser::IntArg&, const fznparser::IntArg& reified);
-*/
 bool int_lt(FznInvariantGraph&, Int, VarNodeId);
 bool int_lt(FznInvariantGraph&, VarNodeId, Int);
 bool int_lt(FznInvariantGraph&, VarNodeId, VarNodeId);

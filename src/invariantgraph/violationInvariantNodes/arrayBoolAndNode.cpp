@@ -1,10 +1,15 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 
+#include <algorithm>
+
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/propagation/invariants/boolAnd.hpp"
 #include "atlantis/propagation/invariants/max.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {
@@ -31,11 +36,11 @@ void ArrayBoolAndNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::none_of(staticInputVarNodeIds().begin(),
-                   staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                     return invariantGraphConst().varNodeConst(vId).isIntVar();
-                   }));
+  assert(std::ranges::none_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void ArrayBoolAndNode::updateState() {
@@ -109,11 +114,12 @@ void ArrayBoolAndNode::registerOutputVars() {
           solver(), _intermediate, 0));
     }
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void ArrayBoolAndNode::registerNode() {
@@ -126,10 +132,10 @@ void ArrayBoolAndNode::registerNode() {
 
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars), [&](const auto& node) {
-                   return invariantGraphConst().varId(node);
-                 });
+  std::ranges::transform(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      std::back_inserter(solverVars),
+      [&](const auto& node) { return invariantGraphConst().varId(node); });
   if (solverVars.size() == 2) {
     solver().makeInvariant<propagation::BoolAnd>(
         solver(), !shouldHold() ? _intermediate : violationVarId(),

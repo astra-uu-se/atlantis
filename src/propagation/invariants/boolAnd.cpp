@@ -1,5 +1,6 @@
 #include "atlantis/propagation/invariants/boolAnd.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/variables/intVar.hpp"
 
 namespace atlantis::propagation {
@@ -7,7 +8,8 @@ namespace atlantis::propagation {
 /**
  * Invariant output = x /\ y
  * output does not violate if x and y does not violate
- * @param violationId id for the violationCount
+ * @param solver the solver that the invariant is added to
+ * @param output id for the output
  * @param x first violation variable
  * @param y second violation variable
  * @param output the result
@@ -47,7 +49,7 @@ VarViewId BoolAnd::nextInput(Timestamp ts) {
     case 1:
       return _y;
     default:
-      return NULL_ID;
+      return VarViewId{NULL_ID};
   }
 }
 

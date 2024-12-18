@@ -1,10 +1,8 @@
 #include "atlantis/search/randomProvider.hpp"
 
 #include <fznparser/model.hpp>
-#include <limits>
-#include <utility>
 
-#include "atlantis/propagation/violationInvariants/lessEqual.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::search {
 
@@ -56,7 +54,7 @@ Int RandomProvider::inDomain(const IntervalDomain& domain, Int ignoredValue) {
 }
 
 Int RandomProvider::inDomain(const SearchDomain& domain) {
-  return domain[intInRange(0, domain.size() - 1)];
+  return domain[intInRange(0, static_cast<Int>(domain.size()) - 1)];
 }
 
 Int RandomProvider::inDomain(const SearchDomain& domain, Int ignoredValue) {

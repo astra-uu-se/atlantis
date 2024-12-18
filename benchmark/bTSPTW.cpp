@@ -137,19 +137,19 @@ class TSPTW : public ::benchmark::Fixture {
     solver->close();
     assert(solver->lowerBound(pred.front()) == 1);
     assert(solver->upperBound(pred.back()) == n - 1);
-    assert(std::all_of(pred.begin() + 1, pred.end(),
-                       [&](const propagation::VarViewId p) {
-                         return solver->lowerBound(p) == 0;
-                       }));
-    assert(std::all_of(pred.begin(), pred.end() - 1,
-                       [&](const propagation::VarViewId p) {
-                         return solver->upperBound(p) == n;
-                       }));
-    assert(std::all_of(pred.begin(), pred.end(),
-                       [&](const propagation::VarViewId p) {
-                         return 0 <= solver->committedValue(p) &&
-                                solver->committedValue(p) <= n;
-                       }));
+    assert(std::ranges::all_of(pred.begin() + 1, pred.end(),
+                               [&](const propagation::VarViewId p) {
+                                 return solver->lowerBound(p) == 0;
+                               }));
+    assert(std::ranges::all_of(pred.begin(), pred.end() - 1,
+                               [&](const propagation::VarViewId p) {
+                                 return solver->upperBound(p) == n;
+                               }));
+    assert(std::ranges::all_of(pred.begin(), pred.end(),
+                               [&](const propagation::VarViewId p) {
+                                 return 0 <= solver->committedValue(p) &&
+                                        solver->committedValue(p) <= n;
+                               }));
 
     gen = std::mt19937(rd());
 

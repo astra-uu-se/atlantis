@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class BoolAllEqualNode : public ViolationInvariantNode {
- private:
   bool _breaksCycle{false};
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
@@ -27,13 +26,13 @@ class BoolAllEqualNode : public ViolationInvariantNode {
 
   void updateState() override;
 
-  bool canBeReplaced() const override;
+  [[nodiscard]] bool canBeReplaced() const override;
 
   bool replace() override;
 
   void registerOutputVars() override;
 
   void registerNode() override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

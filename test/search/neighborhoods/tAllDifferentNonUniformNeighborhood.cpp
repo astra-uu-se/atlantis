@@ -20,10 +20,10 @@ class AllDifferentNonUniformNeighborhoodTest : public NeighborhoodTestBase {
       std::vector<Int>{2, 4, 5},
   };
 
-  Int domainLb{
-      *std::min_element(_domains.front().begin(), _domains.front().end())};
-  Int domainUb{
-      *std::max_element(_domains.front().begin(), _domains.front().end())};
+  Int domainLb{*std::ranges::min_element(_domains.front().begin(),
+                                         _domains.front().end())};
+  Int domainUb{*std::ranges::max_element(_domains.front().begin(),
+                                         _domains.front().end())};
 
   void expectHolds() {
     if (_vars.empty()) {

@@ -2,9 +2,12 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intLinEqNode.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -81,7 +84,7 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
                 Int bound,
                 const std::shared_ptr<const fznparser::IntVar>& definedVar,
-                fznparser::BoolArg reified) {
+                const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
   Int definedVarCoeff = 0;
   std::vector<Int> definedVarIndices;
@@ -127,7 +130,7 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   lb += lhsOffset;
   ub += lhsOffset;
   const VarNodeId outputVarNodeId = graph.retrieveIntVarNode(
-      std::make_shared<SearchDomain>(lb, ub), VarNode::DomainType::NONE);
+      std::make_shared<SearchDomain>(lb, ub), DomainType::DOM_NONE);
 
   graph.addInvariantNode(std::make_shared<IntLinearNode>(
       graph, std::move(coeffs), std::move(inputVarNodes), outputVarNodeId,
@@ -158,7 +161,7 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
 
 bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                Int bound, fznparser::BoolArg reified) {
+                Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
 
   graph.addInvariantNode(std::make_shared<IntLinEqNode>(
@@ -200,28 +203,25 @@ bool int_lin_eq(FznInvariantGraph& graph,
           std::get<fznparser::IntArg>(constraint.arguments().at(2))
               .toParameter(),
           definedVar);
-    } else {
-      return int_lin_eq(
-          graph, std::move(coeffs),
-          getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
-          std::get<fznparser::IntArg>(constraint.arguments().at(2))
-              .toParameter(),
-          definedVar,
-          std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
     }
-  } else if (!isReified) {
+    return int_lin_eq(
+        graph, std::move(coeffs),
+        getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
+        std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter(),
+        definedVar, std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
+  }
+  if (!isReified) {
     return int_lin_eq(
         graph, std::move(coeffs),
         getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
         std::get<fznparser::IntArg>(constraint.arguments().at(2))
             .toParameter());
-  } else {
-    return int_lin_eq(
-        graph, std::move(coeffs),
-        getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
-        std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter(),
-        std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
   }
+  return int_lin_eq(
+      graph, std::move(coeffs),
+      getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
+      std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter(),
+      std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

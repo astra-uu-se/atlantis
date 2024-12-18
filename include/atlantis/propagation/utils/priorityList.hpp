@@ -8,7 +8,6 @@
 namespace atlantis::propagation {
 
 class PriorityList {
- private:
   std::vector<Committable<Int>> _list;
   Committable<size_t> _minimum;
   Committable<size_t> _maximum;

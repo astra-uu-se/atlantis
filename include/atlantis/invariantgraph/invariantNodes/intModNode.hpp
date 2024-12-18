@@ -20,7 +20,7 @@ class IntModNode : public InvariantNode {
   [[nodiscard]] VarNodeId denominator() const;
   [[nodiscard]] VarNodeId remainder() const;
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

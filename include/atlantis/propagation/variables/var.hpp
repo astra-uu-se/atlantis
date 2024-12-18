@@ -9,7 +9,7 @@ class Var {
 
  public:
   explicit Var(VarId);
-  ~Var() = default;
+  virtual ~Var() = default;
 };
 
 }  // namespace atlantis::propagation

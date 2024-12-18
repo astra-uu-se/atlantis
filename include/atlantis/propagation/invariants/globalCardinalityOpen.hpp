@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/variables/committableInt.hpp"
 #include "atlantis/types.hpp"
@@ -11,7 +10,6 @@
 namespace atlantis::propagation {
 
 class GlobalCardinalityOpen : public Invariant {
- private:
   std::vector<VarId> _outputs;
   std::vector<VarViewId> _inputs;
   std::vector<Int> _cover;

@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 Mod::Mod(SolverBase& solver, VarId output, VarViewId numerator,

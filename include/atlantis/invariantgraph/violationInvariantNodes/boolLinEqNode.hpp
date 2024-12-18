@@ -5,7 +5,6 @@
 namespace atlantis::invariantgraph {
 
 class BoolLinEqNode : public ViolationInvariantNode {
- private:
   std::vector<Int> _coeffs;
   Int _bound;
   propagation::VarViewId _intermediate{propagation::NULL_ID};
@@ -28,7 +27,7 @@ class BoolLinEqNode : public ViolationInvariantNode {
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

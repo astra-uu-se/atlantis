@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class ArrayIntMaximumNode : public InvariantNode {
- private:
   Int _lb;
 
  public:
@@ -26,6 +25,6 @@ class ArrayIntMaximumNode : public InvariantNode {
   [[nodiscard]] bool replace() override;
 
   void registerNode() override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

@@ -1,8 +1,11 @@
 #include "atlantis/invariantgraph/views/intAbsNode.hpp"
 
-#include <map>
+#include <algorithm>
 #include <utility>
 
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intAbsView.hpp"
 
 namespace atlantis::invariantgraph {
@@ -58,11 +61,12 @@ void IntAbsNode::registerOutputVars() {
         .setVarId(solver().makeIntView<propagation::IntAbsView>(
             solver(), invariantGraph().varId(input())));
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void IntAbsNode::registerNode() {}

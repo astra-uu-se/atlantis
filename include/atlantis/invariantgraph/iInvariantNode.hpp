@@ -36,10 +36,7 @@ class IInvariantNode {
   virtual void deactivate() = 0;
 
   /**
-   * Creates as all the variables the node defines in @p solver.
-   *
-   * @param solver The solver with which to register the variables, constraints
-   * and views.
+   * Creates as all the variables the node defines in the solver.
    */
   virtual void registerOutputVars() = 0;
 
@@ -50,8 +47,6 @@ class IInvariantNode {
    * Note: This method assumes it is called after all the inputs to this node
    * are already registered with the solver.
    *
-   * @param solver The solver with which to register the variables, constraints
-   * and views.
    */
   virtual void registerNode() = 0;
 
@@ -112,7 +107,7 @@ class IInvariantNode {
 
   virtual void setState(InvariantNodeState) = 0;
 
-  virtual std::string dotLangIdentifier() const = 0;
+  [[nodiscard]] virtual std::string dotLangIdentifier() const = 0;
 
   virtual std::ostream& dotLangEdges(std::ostream&) const = 0;
 

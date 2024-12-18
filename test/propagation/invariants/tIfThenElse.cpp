@@ -22,13 +22,13 @@ class IfThenElseTest : public InvariantTest {
   std::uniform_int_distribution<Int> thenDist;
   std::uniform_int_distribution<Int> elseDist;
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     return computeOutput(_solver->value(ts, conditionVar),
                          _solver->value(ts, thenVar),
                          _solver->value(ts, elseVar));
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return computeOutput(committedValue ? _solver->committedValue(conditionVar)
                                         : _solver->currentValue(conditionVar),
                          committedValue ? _solver->committedValue(thenVar)
@@ -92,7 +92,7 @@ TEST_F(IfThenElseTest, Recompute) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
+  const std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -113,7 +113,7 @@ TEST_F(IfThenElseTest, NotifyInputChanged) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
+  const std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -132,7 +132,7 @@ TEST_F(IfThenElseTest, NotifyInputChanged) {
 TEST_F(IfThenElseTest, NextInput) {
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
+  const std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
 
   const size_t minVarId = size_t(getMinVarViewId(inputVars));
   const size_t maxVarId = size_t(getMaxVarViewId(inputVars));
@@ -186,11 +186,11 @@ TEST_F(IfThenElseTest, NotifyCurrentInputChanged) {
 
 TEST_F(IfThenElseTest, Commit) {
   auto& invariant = generate();
-  std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
+  const std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
 
   std::vector<size_t> indices(inputVars.size());
   std::iota(indices.begin(), indices.end(), 0);
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   std::vector<Int> committedValues(inputVars.size());
   for (size_t i = 0; i < inputVars.size(); ++i) {
@@ -200,7 +200,7 @@ TEST_F(IfThenElseTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -251,8 +251,8 @@ RC_GTEST_FIXTURE_PROP(IfThenElseTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));

@@ -12,18 +12,21 @@
 #include <vector>
 
 #include "atlantis/fznBackend.hpp"
+#include "atlantis/logging/logger.hpp"
+#include "atlantis/search/searchStatistics.hpp"
 
 namespace atlantis::testing {
 
 std::string ltrim(std::string s) {
-  s.erase(s.begin(), std::find_if(s.begin(), s.end(),
-                                  [](unsigned char ch) { return ch != '/'; }));
+  s.erase(s.begin(),
+          std::ranges::find_if(s.begin(), s.end(),
+                               [](unsigned char ch) { return ch != '/'; }));
   return s;
 }
 
 void logModelName(const std::string& modelPath, bool skipping, size_t index,
                   size_t total) {
-  size_t padding = std::to_string(total).size();
+  const auto padding = static_cast<int>(std::to_string(total).size());
   std::cout << (skipping ? "\033[0;33m[ SKIPPING" : "\033[0;32m[  PARSING")
             << " ] (" << std::setw(padding) << std::to_string(index + 1) << '/'
             << std::to_string(total) << ")\033[0;0m "
@@ -39,7 +42,7 @@ static void testChallange(const std::string& fznFilePath) {
   logging::Logger logger(stdout, logging::Level::LVL_DEBUG);
   FznBackend backend(logger, std::move(modelFilePath));
   backend.setTimelimit(std::chrono::milliseconds(1000));
-  auto statistics = backend.solve(logger);
+  const auto statistics = backend.solve(logger);
   // Don't log to std::cout, since that would interfere with MiniZinc.
   statistics.display(std::cerr);
 }
@@ -101,9 +104,8 @@ class MznChallange : public ::testing::Test {
                 dirPath, std::vector<std::pair<size_t, std::string>>{
                              {entry.file_size(), entry.path().string()}});
           } else {
-            fznModelsByDir.at(dirPath).emplace_back(
-                std::pair<size_t, std::string>{entry.file_size(),
-                                               entry.path().string()});
+            fznModelsByDir.at(dirPath).emplace_back(entry.file_size(),
+                                                    entry.path().string());
           }
         }
       }
@@ -113,13 +115,13 @@ class MznChallange : public ::testing::Test {
     dirs.reserve(fznModelsByDir.size());
 
     for (auto& [dir, fznModels] : fznModelsByDir) {
-      std::sort(fznModels.begin(), fznModels.end());
+      std::ranges::sort(fznModels.begin(), fznModels.end());
       dirs.emplace_back(dir);
     }
 
     EXPECT_EQ(dirs.size(), fznModelsByDir.size());
 
-    std::sort(dirs.begin(), dirs.end());
+    std::ranges::sort(dirs.begin(), dirs.end());
 
     passingFznModels.clear();
     failingFznModels.clear();
@@ -133,8 +135,7 @@ class MznChallange : public ::testing::Test {
                              timeout.size() - unbrokenCycles.size() -
                              unsatAllEqual.size() - failing.size());
 
-    for (size_t i = 0; i < dirs.size(); ++i) {
-      const auto& dirPath = dirs.at(i);
+    for (const auto& dirPath : dirs) {
       EXPECT_TRUE(fznModelsByDir.contains(dirPath));
       EXPECT_GT(fznModelsByDir.at(dirPath).size(), 0);
       for (const auto& [_, fznModel] : fznModelsByDir.at(dirPath)) {

@@ -1,7 +1,11 @@
 #include "atlantis/invariantgraph/invariantNodes/intModNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/mod.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -18,11 +22,12 @@ void IntModNode::init(InvariantNodeId id) {
 
 void IntModNode::registerOutputVars() {
   makeSolverVar(outputVarNodeIds().front());
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void IntModNode::registerNode() {

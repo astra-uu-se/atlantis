@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <random>
 #include <vector>
 
@@ -10,7 +11,7 @@ namespace atlantis::testing {
 
 static bool domainCoversInterval(const std::vector<DomainEntry>& domain,
                                  Int intervalLb, Int intervalUb) {
-  return std::any_of(
+  return std::ranges::any_of(
       domain.begin(), domain.end(), [&](const DomainEntry& entry) {
         return entry.lowerBound <= intervalLb && intervalUb <= entry.upperBound;
       });
@@ -18,7 +19,7 @@ static bool domainCoversInterval(const std::vector<DomainEntry>& domain,
 
 static bool isDisjoint(const std::vector<DomainEntry>& domain, Int intervalLb,
                        Int intervalUb) {
-  return std::all_of(
+  return std::ranges::all_of(
       domain.begin(), domain.end(), [&](const DomainEntry& entry) {
         return intervalUb < entry.lowerBound || entry.upperBound < intervalLb;
       });
@@ -69,8 +70,8 @@ TEST_F(DomainTest, relativeComplementIfIntersects) {
         values.push_back(val);
       }
     }
-    const Int domLb = *std::min_element(values.begin(), values.end());
-    const Int domUb = *std::max_element(values.begin(), values.end());
+    const Int domLb = *std::ranges::min_element(values.begin(), values.end());
+    const Int domUb = *std::ranges::max_element(values.begin(), values.end());
 
     for (Int intervalLb = lb; intervalLb <= domUb; intervalLb += inc) {
       for (Int intervalUb = std::max(lb, domLb); intervalUb <= ub;

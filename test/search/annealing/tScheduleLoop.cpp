@@ -25,13 +25,13 @@ class ScheduleLoopTest : public ::testing::Test {
 };
 
 TEST_F(ScheduleLoopTest, nested_schedule_is_active) {
-  auto temperature = 1.0;
+  const auto temperature = 1.0;
 
   auto dummySchedule = std::make_unique<DummyAnnealingSchedule>();
 
   EXPECT_CALL(*dummySchedule, temperature()).WillOnce(Return(temperature));
 
-  auto loopSchedule = AnnealerContainer::loop(
+  const auto loopSchedule = AnnealerContainer::loop(
       std::move(dummySchedule), maximumConsecutiveFutileIterations);
   loopSchedule->start(initialTemperature);
 
@@ -41,7 +41,7 @@ TEST_F(ScheduleLoopTest, nested_schedule_is_active) {
 
 TEST_F(ScheduleLoopTest,
        first_freeze_restarts_the_schedule_with_the_old_temperature) {
-  auto restartTemp = 10.0;
+  const auto restartTemp = 10.0;
 
   auto dummySchedule = std::make_unique<DummyAnnealingSchedule>();
 
@@ -49,7 +49,7 @@ TEST_F(ScheduleLoopTest,
   EXPECT_CALL(*dummySchedule, temperature())
       .WillRepeatedly(Return(restartTemp));
 
-  auto loopSchedule = AnnealerContainer::loop(
+  const auto loopSchedule = AnnealerContainer::loop(
       std::move(dummySchedule), maximumConsecutiveFutileIterations);
   loopSchedule->start(initialTemperature);
 
@@ -65,7 +65,7 @@ TEST_F(ScheduleLoopTest, frozen_if_consecutive_rounds_do_not_improve) {
       .WillOnce(Return(true))
       .WillOnce(Return(true));
 
-  auto loopSchedule = AnnealerContainer::loop(
+  const auto loopSchedule = AnnealerContainer::loop(
       std::move(dummySchedule), maximumConsecutiveFutileIterations);
   loopSchedule->start(initialTemperature);
 
@@ -83,7 +83,7 @@ TEST_F(ScheduleLoopTest,
       .WillOnce(Return(false))
       .WillRepeatedly(Return(true));
 
-  auto loopSchedule = AnnealerContainer::loop(
+  const auto loopSchedule = AnnealerContainer::loop(
       std::move(dummySchedule), maximumConsecutiveFutileIterations);
   loopSchedule->start(initialTemperature);
 

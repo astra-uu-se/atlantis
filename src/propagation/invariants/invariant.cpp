@@ -13,11 +13,11 @@ void Invariant::registerDefinedVar(VarId id) {
   _solver.registerDefinedVar(id, _id);
 }
 
-void Invariant::updateValue(Timestamp ts, VarId id, Int val) {
+void Invariant::updateValue(Timestamp ts, VarId id, Int val) const {
   _solver.updateValue(ts, id, val);
 }
 
-void Invariant::incValue(Timestamp ts, VarId id, Int val) {
+void Invariant::incValue(Timestamp ts, VarId id, Int val) const {
   _solver.incValue(ts, id, val);
 }
 }  // namespace atlantis::propagation

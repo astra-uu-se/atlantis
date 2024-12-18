@@ -1,5 +1,7 @@
 #include "atlantis/propagation/views/modView.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 ModView::ModView(SolverBase& solver, VarViewId parentId, Int denominator)

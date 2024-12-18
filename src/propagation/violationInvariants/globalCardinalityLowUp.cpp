@@ -1,43 +1,44 @@
 #include "atlantis/propagation/violationInvariants/globalCardinalityLowUp.hpp"
 
+#include <algorithm>
+
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 GlobalCardinalityLowUp::GlobalCardinalityLowUp(
-    SolverBase& solver, VarId violationId, std::vector<VarViewId>&& t_vars,
-    const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
-    const std::vector<Int>& upperBound)
+    SolverBase& solver, VarId violationId, std::vector<VarViewId>&& vars,
+    const std::vector<Int>& cover, const std::vector<Int>& lowerBounds,
+    const std::vector<Int>& upperBounds)
     : ViolationInvariant(solver, violationId),
-      _vars(std::move(t_vars)),
-      _lowerBounds(),
-      _upperBounds(),
+      _vars(std::move(vars)),
       _shortage(NULL_TIMESTAMP, 0),
       _excess(NULL_TIMESTAMP, 0),
-      _counts(),
       _offset(0) {
-  assert(lowerBound.size() == upperBound.size() &&
-         lowerBound.size() == cover.size());
+  assert(lowerBounds.size() == upperBounds.size() &&
+         lowerBounds.size() == cover.size());
 
   const auto [lb, ub] = std::minmax_element(cover.begin(), cover.end());
 
   // a bound of -1 means that the count of a value is not restricted:
-  _lowerBounds.assign(static_cast<Int>(*ub - *lb + 3), -1);
-  _upperBounds.assign(static_cast<Int>(*ub - *lb + 3), -1);
+  _lowerBounds.assign(*ub - *lb + 3, -1);
+  _upperBounds.assign(*ub - *lb + 3, -1);
   _offset = *lb - 1;
 
   for (size_t i = 0; i < cover.size(); ++i) {
-    assert(lowerBound[i] >= 0);
-    assert(lowerBound[i] <= upperBound[i]);
-    _lowerBounds[cover[i] - _offset] = lowerBound[i];
-    _upperBounds[cover[i] - _offset] = upperBound[i];
+    assert(lowerBounds[i] >= 0);
+    assert(lowerBounds[i] <= upperBounds[i]);
+    _lowerBounds[cover[i] - _offset] = lowerBounds[i];
+    _upperBounds[cover[i] - _offset] = upperBounds[i];
   }
 }
 
 GlobalCardinalityLowUp::GlobalCardinalityLowUp(
-    SolverBase& solver, VarViewId violationId, std::vector<VarViewId>&& t_vars,
-    const std::vector<Int>& cover, const std::vector<Int>& lowerBound,
-    const std::vector<Int>& upperBound)
-    : GlobalCardinalityLowUp(solver, VarId(violationId), std::move(t_vars),
-                             cover, lowerBound, upperBound) {
+    SolverBase& solver, VarViewId violationId, std::vector<VarViewId>&& vars,
+    const std::vector<Int>& cover, const std::vector<Int>& lowerBounds,
+    const std::vector<Int>& upperBounds)
+    : GlobalCardinalityLowUp(solver, VarId(violationId), std::move(vars), cover,
+                             lowerBounds, upperBounds) {
   assert(violationId.isVar());
 }
 
@@ -57,6 +58,35 @@ GlobalCardinalityLowUp::GlobalCardinalityLowUp(SolverBase& solver,
     : GlobalCardinalityLowUp(solver, VarId(violationId), std::move(t_vars),
                              cover, bounds) {
   assert(violationId.isVar());
+}
+
+signed char GlobalCardinalityLowUp::increaseCount(Timestamp ts, Int value) {
+  const size_t pos = static_cast<size_t>(std::max<Int>(
+      0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));
+  if (_lowerBounds.at(pos) < 0) {
+    return 0;
+  }
+  const Int newCount = _counts.at(pos).incValue(ts, 1);
+  assert(newCount >= 0);
+  assert(newCount <= static_cast<Int>(_vars.size()));
+  return newCount > _upperBounds.at(pos)
+             ? 1
+             : (newCount > _lowerBounds.at(pos) ? 0 : -1);
+}
+
+signed char GlobalCardinalityLowUp::decreaseCount(Timestamp ts, Int value) {
+  const size_t pos = static_cast<size_t>(std::max<Int>(
+      0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));
+  if (_lowerBounds.at(pos) < 0) {
+    return 0;
+  }
+
+  const Int newCount = _counts.at(pos).incValue(ts, -1);
+  assert(newCount >= 0);
+  assert(newCount <= static_cast<Int>(_vars.size()));
+  return newCount < _lowerBounds.at(pos)
+             ? 1
+             : (newCount < _upperBounds.at(pos) ? 0 : -1);
 }
 
 void GlobalCardinalityLowUp::registerVars() {

@@ -1,7 +1,8 @@
 #include "atlantis/propagation/violationInvariants/boolAllEqual.hpp"
 
 #include <cassert>
-#include <limits>
+
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::propagation {
 

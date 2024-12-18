@@ -3,11 +3,10 @@
 #include <algorithm>
 #include <cassert>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
-/**
- * @param violationId id for the violationCount
- */
 AllDifferentExcept::AllDifferentExcept(SolverBase& solver, VarId violationId,
                                        std::vector<VarViewId>&& vars,
                                        const std::vector<Int>& ignored)
@@ -28,6 +27,12 @@ AllDifferentExcept::AllDifferentExcept(SolverBase& solver,
                                        const std::vector<Int>& ignored)
     : AllDifferentExcept(solver, VarId(violationId), std::move(vars), ignored) {
   assert(violationId.isVar());
+}
+
+bool AllDifferentExcept::isIgnored(const Int val) const {
+  return _ignoredOffset <= val &&
+         static_cast<size_t>(val - _ignoredOffset) < _ignored.size() &&
+         _ignored[val - _ignoredOffset];
 }
 
 void AllDifferentExcept::recompute(Timestamp ts) {

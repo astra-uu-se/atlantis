@@ -1,5 +1,9 @@
 #include "atlantis/propagation/views/intMaxView.hpp"
 
+#include <algorithm>
+
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 IntMaxView::IntMaxView(SolverBase& solver, VarViewId parentId, Int max)

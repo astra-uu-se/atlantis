@@ -1,5 +1,10 @@
 #include "atlantis/invariantgraph/views/intModViewNode.hpp"
 
+#include <algorithm>
+
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/modView.hpp"
 
 namespace atlantis::invariantgraph {
@@ -41,11 +46,12 @@ void IntModViewNode::registerOutputVars() {
         .setVarId(solver().makeIntView<propagation::ModView>(
             solver(), invariantGraph().varId(input()), _denominator));
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void IntModViewNode::registerNode() {}

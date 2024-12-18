@@ -46,7 +46,7 @@ inline bool all_in_range(size_t minInclusive, size_t maxExclusive,
                          std::function<bool(size_t)>&& predicate) {
   std::vector<size_t> vec(maxExclusive - minInclusive);
   std::iota(vec.begin(), vec.end(), minInclusive);
-  return std::all_of(vec.begin(), vec.end(), std::move(predicate));
+  return std::ranges::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
 inline void defaultArguments(::benchmark::internal::Benchmark* benchmark) {

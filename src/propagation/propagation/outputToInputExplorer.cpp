@@ -1,21 +1,16 @@
 #include "atlantis/propagation/propagation/outputToInputExplorer.hpp"
 
+#include <algorithm>
+
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::propagation {
 
-OutputToInputExplorer::OutputToInputExplorer(Solver& e)
-    : _solver(e),
-      _varStack(),
+OutputToInputExplorer::OutputToInputExplorer(Solver& solver)
+    : _solver(solver),
       _varStackIdx(0),
-      _invariantStack(),
       _invariantStackIdx(0),
-      _varComputedAt(),
-      _invariantComputedAt(),
-      _invariantIsOnStack(),
-      _searchVarAncestors(),
-      _onPropagationPath(),
       _outputToInputMarkingMode(OutputToInputMarkingMode::NONE) {}
 
 void OutputToInputExplorer::outputToInputStaticMarking() {
@@ -27,9 +22,9 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
   }
 
   _searchVarAncestors.resize(_solver.numVars());
-  assert(std::all_of(
+  assert(std::ranges::all_of(
       _searchVarAncestors.begin(), _searchVarAncestors.end(),
-      [&](const std::unordered_set<VarId> anc) { return anc.empty(); }));
+      [&](const std::unordered_set<VarId>& anc) { return anc.empty(); }));
 
   for (const VarId searchVar : _solver.searchVars()) {
     std::fill(varVisited.begin(), varVisited.end(), false);
@@ -134,10 +129,11 @@ bool OutputToInputExplorer::isMarked(VarId id) {
   if constexpr (MarkingMode ==
                 OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC) {
     assert(id < _searchVarAncestors.size());
-    return std::any_of(_solver.modifiedSearchVar().begin(),
-                       _solver.modifiedSearchVar().end(), [&](size_t ancestor) {
-                         return _searchVarAncestors[id].contains(ancestor);
-                       });
+    return std::ranges::any_of(
+        _solver.modifiedSearchVar().begin(), _solver.modifiedSearchVar().end(),
+        [&](size_t ancestor) {
+          return _searchVarAncestors[id].contains(ancestor);
+        });
   } else if constexpr (MarkingMode ==
                        OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION) {
     assert(id < _onPropagationPath.size());

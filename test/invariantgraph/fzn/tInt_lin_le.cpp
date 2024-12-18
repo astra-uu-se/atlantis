@@ -3,9 +3,7 @@
 #include <rapidcheck/gen/Numeric.h>
 #include <rapidcheck/gtest.h>
 
-#include <deque>
 #include <iostream>
-#include <random>
 #include <string>
 #include <vector>
 
@@ -16,7 +14,7 @@
 
 namespace atlantis::testing {
 
-using ::rc::gen::inRange;
+using rc::gen::inRange;
 using ::testing::AtLeast;
 using ::testing::AtMost;
 
@@ -30,7 +28,7 @@ class int_lin_leTest : public FznTestBase {
   std::vector<std::pair<Int, Int>> varBounds{};
   Int bound = 10;
 
-  Int isViolated() {
+  [[nodiscard]] Int isViolated() const {
     Int sum = 0;
     for (size_t i = 0; i < coeffs.size(); ++i) {
       EXPECT_TRUE(_invariantGraph->containsVarNode(inputIdentifiers.at(i)));
@@ -39,7 +37,7 @@ class int_lin_leTest : public FznTestBase {
         sum += coeffs.at(i) * vNode.lowerBound();
       } else {
         EXPECT_NE(vNode.varId(), propagation::NULL_ID);
-        Int curValue = _solver->currentValue(vNode.varId());
+        const Int curValue = _solver->currentValue(vNode.varId());
         if (!vNode.inDomain(curValue)) {
           return true;
         }
@@ -107,7 +105,7 @@ TEST_F(int_lin_leTest, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  std::vector<propagation::VarViewId> inputVarIds = getVarIds(inputIdentifiers);
+  const auto inputVarIds = getVarIds(inputIdentifiers);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
 

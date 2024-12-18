@@ -4,16 +4,25 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
-#include "atlantis/invariantgraph/invariantGraphRoot.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
-#include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
+#include "varNode.hpp"
+
+namespace atlantis {
+class SearchDomain;
+}
+
+namespace atlantis::search::neighborhoods {
+class NeighborhoodCombinator;
+}
 
 namespace atlantis::invariantgraph {
+class InvariantGraphRoot;
 
 class InvariantGraph : public virtual IInvariantGraph {
- private:
   propagation::SolverBase& _solver;
   std::vector<VarNode> _varNodes;
   std::unordered_map<std::string, VarNodeId> _namedVarNodeIndices;
@@ -32,9 +41,9 @@ class InvariantGraph : public virtual IInvariantGraph {
   VarNodeId _objectiveVarNodeId;
 
  public:
-  InvariantGraph(propagation::SolverBase& solver,
-                 bool breakDynamicCycles = false);
-  virtual ~InvariantGraph() = default;
+  explicit InvariantGraph(propagation::SolverBase& solver,
+                          bool breakDynamicCycles = false);
+  ~InvariantGraph() override = default;
 
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
@@ -51,28 +60,28 @@ class InvariantGraph : public virtual IInvariantGraph {
 
   [[nodiscard]] bool containsVarNode(bool) const override;
 
-  VarNodeId retrieveBoolVarNode(VarNode::DomainType) override;
+  VarNodeId retrieveBoolVarNode(DomainType) override;
 
   VarNodeId retrieveBoolVarNode() override {
-    return retrieveBoolVarNode(VarNode::DomainType::RANGE);
+    return retrieveBoolVarNode(DomainType::DOM_RANGE);
   }
 
-  VarNodeId retrieveBoolVarNode(const std::string&,
-                                VarNode::DomainType) override;
+  VarNodeId retrieveBoolVarNode(const std::string&, DomainType) override;
 
   VarNodeId retrieveBoolVarNode(const std::string& identifier) override {
-    return retrieveBoolVarNode(identifier, VarNode::DomainType::RANGE);
+    return retrieveBoolVarNode(identifier, DomainType::DOM_RANGE);
   }
 
   VarNodeId retrieveBoolVarNode(bool) override;
 
   VarNodeId retrieveBoolVarNode(bool, const std::string&) override;
 
-  VarNodeId retrieveBoolVarNode(std::shared_ptr<SearchDomain>,
-                                VarNode::DomainType) override;
+  VarNodeId retrieveBoolVarNode(const std::shared_ptr<SearchDomain>&,
+                                DomainType) override;
 
-  VarNodeId retrieveBoolVarNode(std::shared_ptr<SearchDomain> dom) override {
-    return retrieveBoolVarNode(std::move(dom), VarNode::DomainType::RANGE);
+  VarNodeId retrieveBoolVarNode(
+      const std::shared_ptr<SearchDomain>& dom) override {
+    return retrieveBoolVarNode(dom, DomainType::DOM_RANGE);
   }
 
   VarNodeId retrieveIntVarNode(const std::string&) override;
@@ -81,22 +90,17 @@ class InvariantGraph : public virtual IInvariantGraph {
 
   VarNodeId retrieveIntVarNode(Int, const std::string&) override;
 
-  VarNodeId retrieveIntVarNode(std::shared_ptr<SearchDomain>,
-                               VarNode::DomainType) override;
+  VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>&,
+                               DomainType) override;
 
-  VarNodeId retrieveIntVarNode(std::shared_ptr<SearchDomain> dom) override {
-    return retrieveIntVarNode(std::move(dom), VarNode::DomainType::DOMAIN);
-  }
+  VarNodeId retrieveIntVarNode(
+      const std::shared_ptr<SearchDomain>& domain) override;
 
-  VarNodeId retrieveIntVarNode(std::shared_ptr<SearchDomain> dom,
-                               const std::string& str,
-                               VarNode::DomainType) override;
+  VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>&,
+                               const std::string&, DomainType) override;
 
-  VarNodeId retrieveIntVarNode(std::shared_ptr<SearchDomain> dom,
-                               const std::string& identifier) override {
-    return retrieveIntVarNode(std::move(dom), identifier,
-                              VarNode::DomainType::DOMAIN);
-  }
+  VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>& dom,
+                               const std::string& identifier) override;
 
   [[nodiscard]] VarNode& varNode(const std::string& identifier) override;
 
@@ -163,7 +167,7 @@ class InvariantGraph : public virtual IInvariantGraph {
 
   void replaceInvariantNodes();
 
-  [[nodiscard]] InvariantGraphRoot& root();
+  [[nodiscard]] InvariantGraphRoot& root() const;
 
   [[nodiscard]] search::neighborhoods::NeighborhoodCombinator neighborhood()
       const;

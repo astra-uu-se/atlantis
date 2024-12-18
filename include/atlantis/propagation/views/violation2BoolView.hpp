@@ -1,12 +1,9 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/intView.hpp"
 
 namespace atlantis::propagation {
+class SolverBase;
 
 class Violation2BoolView : public IntView {
  public:

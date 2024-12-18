@@ -1,5 +1,6 @@
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 
+#include <functional>
 #include <unordered_set>
 #include <vector>
 
@@ -56,36 +57,32 @@
 #include "atlantis/invariantgraph/fzn/int_pow.hpp"
 #include "atlantis/invariantgraph/fzn/int_times.hpp"
 #include "atlantis/invariantgraph/fzn/set_in.hpp"
+#include "atlantis/utils/domains.hpp"
 #include "atlantis/utils/fznAst.hpp"
+#include "atlantis/utils/fznOutput.hpp"
 
 namespace atlantis::invariantgraph {
 
-VarNode::DomainType domainType(
-    const std::vector<fznparser::Annotation>& annotations) {
+DomainType domainType(const std::vector<fznparser::Annotation>& annotations) {
   for (const auto& annotation : annotations) {
     if (annotation.identifier() == "computed_domain") {
-      return VarNode::DomainType::NONE;
+      return DomainType::DOM_NONE;
     }
   }
-  return VarNode::DomainType::DOMAIN;
+  return DomainType::DOM_DOMAIN;
 }
 
-VarNode::DomainType domainType(const fznparser::BoolVar& var) {
+DomainType domainType(const fznparser::BoolVar& var) {
   return domainType(var.annotations());
 }
 
-VarNode::DomainType domainType(const fznparser::IntVar& var) {
+DomainType domainType(const fznparser::IntVar& var) {
   return domainType(var.annotations());
 }
 
 FznInvariantGraph::FznInvariantGraph(propagation::SolverBase& solver,
                                      bool breakDynamicCycles)
-    : InvariantGraph(solver, breakDynamicCycles),
-      _outputIdentifiers(),
-      _outputBoolVars(),
-      _outputIntVars(),
-      _outputBoolVarArrays(),
-      _outputIntVarArrays() {}
+    : InvariantGraph(solver, breakDynamicCycles) {}
 
 void FznInvariantGraph::build(const fznparser::Model& model) {
   createNodes(model);
@@ -110,7 +107,7 @@ void FznInvariantGraph::build(const fznparser::Model& model) {
 }
 
 VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::BoolVar& var) {
-  VarNodeId nId{NULL_NODE_ID};
+  VarNodeId nId;
   if (var.isFixed()) {
     nId = var.identifier().empty()
               ? retrieveBoolVarNode(var.lowerBound())
@@ -142,7 +139,7 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::BoolArg& arg) {
 }
 
 VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntVar& var) {
-  VarNodeId nId{NULL_NODE_ID};
+  VarNodeId nId;
   if (var.isFixed()) {
     nId = var.identifier().empty()
               ? retrieveIntVarNode(var.lowerBound())
@@ -174,9 +171,8 @@ VarNodeId FznInvariantGraph::retrieveVarNode(
 }
 
 VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntArg& arg) {
-  return arg.isParameter()
-             ? retrieveIntVarNode(static_cast<Int>(arg.parameter()))
-             : retrieveVarNode(arg.var());
+  return arg.isParameter() ? retrieveIntVarNode(arg.parameter())
+                           : retrieveVarNode(arg.var());
 }
 
 std::vector<VarNodeId> FznInvariantGraph::retrieveVarNodes(
@@ -327,8 +323,9 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
     }
   }
 
-  assert(std::all_of(constraintIsProcessed.begin(), constraintIsProcessed.end(),
-                     [](bool b) { return b; }));
+  assert(std::ranges::all_of(constraintIsProcessed.begin(),
+                             constraintIsProcessed.end(),
+                             [](bool b) { return b; }));
 
   if (model.hasObjective()) {
     if (std::holds_alternative<std::shared_ptr<fznparser::BoolVar>>(

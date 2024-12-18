@@ -27,7 +27,7 @@ class MagicSquareTest : public ::testing::Test {
   void SetUp() override {
     _solver = std::make_unique<propagation::Solver>();
     n = 3;
-    Int n2 = n * n;
+    const Int n2 = n * n;
     gen = std::mt19937(rd());
 
     magicSum = (n * n * (n * n + 1) / 2) / n;
@@ -140,7 +140,7 @@ class MagicSquareTest : public ::testing::Test {
  *  Testing constructor
  */
 
-[[maybe_unused]] std::string squareToString(MagicSquareTest& test) {
+[[maybe_unused]] std::string squareToString(const MagicSquareTest& test) {
   std::string str = "\n";
   for (size_t i = 0; i < static_cast<size_t>(test.n); ++i) {
     for (size_t j = 0; j < static_cast<size_t>(test.n); ++j) {
@@ -153,7 +153,7 @@ class MagicSquareTest : public ::testing::Test {
   return str;
 }
 
-Int computeTotalViolaton(MagicSquareTest& test) {
+Int computeTotalViolaton(const MagicSquareTest& test) {
   Int totalViol = 0;
   for (size_t i = 0; i < static_cast<size_t>(test.n); ++i) {
     Int rowSum = 0;

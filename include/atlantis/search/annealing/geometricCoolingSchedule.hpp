@@ -5,7 +5,6 @@
 namespace atlantis::search {
 
 class GeometricCoolingSchedule : public AnnealingSchedule {
- private:
   double _coolingRate;
   UInt _successiveFutileRoundsThreshold;
 

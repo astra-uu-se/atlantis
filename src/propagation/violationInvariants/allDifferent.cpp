@@ -3,7 +3,7 @@
 #include <cassert>
 #include <limits>
 
-#include "atlantis/propagation/variables/intVar.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::propagation {
 
@@ -14,13 +14,32 @@ AllDifferent::AllDifferent(SolverBase& solver, VarId violationId,
                            std::vector<VarViewId>&& vars)
     : ViolationInvariant(solver, violationId),
       _vars(std::move(vars)),
-      _counts(),
       _offset(0) {}
 
 AllDifferent::AllDifferent(SolverBase& solver, VarViewId violationId,
                            std::vector<VarViewId>&& vars)
     : AllDifferent(solver, VarId(violationId), std::move(vars)) {
   assert(violationId.isVar());
+}
+
+signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
+  if (value < _offset || static_cast<Int>(_counts.size()) <= value - _offset) {
+    return 0;
+  }
+  assert(_counts[value - _offset].value(ts) + 1 >= 0);
+  assert(_counts[value - _offset].value(ts) + 1 <=
+         static_cast<Int>(_vars.size()));
+  return _counts[value - _offset].incValue(ts, 1) >= 2 ? 1 : 0;
+}
+
+signed char AllDifferent::decreaseCount(Timestamp ts, Int value) {
+  if (value < _offset || static_cast<Int>(_counts.size()) <= value - _offset) {
+    return 0;
+  }
+  assert(_counts[value - _offset].value(ts) - 1 >= 0);
+  assert(_counts[value - _offset].value(ts) - 1 <=
+         static_cast<Int>(_vars.size()));
+  return _counts[value - _offset].incValue(ts, -1) >= 1 ? -1 : 0;
 }
 
 void AllDifferent::registerVars() {
@@ -88,8 +107,7 @@ void AllDifferent::notifyInputChanged(Timestamp ts, LocalId id) {
     return;
   }
   incValue(ts, _violationId,
-           static_cast<Int>(decreaseCount(ts, committedValue) +
-                            increaseCount(ts, newValue)));
+           decreaseCount(ts, committedValue) + increaseCount(ts, newValue));
 }
 
 VarViewId AllDifferent::nextInput(Timestamp ts) {

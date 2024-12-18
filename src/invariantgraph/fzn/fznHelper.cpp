@@ -1,7 +1,12 @@
 #include "./fznHelper.hpp"
 
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/varIntCountNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -10,106 +15,93 @@ std::string to_string(const std::type_info& t, bool isVar) {
   if (t == typeid(fznparser::BoolArg) ||
       t == typeid(std::shared_ptr<fznparser::BoolArg>) ||
       t == typeid(std::shared_ptr<const fznparser::BoolArg>)) {
-    if (isVar) {
-      return "{var bool, bool}";
-    } else {
-      return "bool";
-    }
-  } else if (t == typeid(fznparser::IntArg) ||
-             t == typeid(std::shared_ptr<fznparser::IntArg>) ||
-             t == typeid(std::shared_ptr<const fznparser::IntArg>)) {
-    if (isVar) {
-      return "{var int, int}";
-    } else {
-      return "int";
-    }
-  } else if (t == typeid(fznparser::FloatArg) ||
-             t == typeid(std::shared_ptr<fznparser::FloatArg>) ||
-             t == typeid(std::shared_ptr<const fznparser::FloatArg>)) {
-    if (isVar) {
-      return "{var float, float}";
-    } else {
-      return "float";
-    }
-  } else if (t == typeid(fznparser::IntSetArg) ||
-             t == typeid(std::shared_ptr<fznparser::IntSetArg>) ||
-             t == typeid(std::shared_ptr<const fznparser::IntSetArg>)) {
-    if (isVar) {
-      return "{var set of int, set of int}";
-    } else {
-      return "set of int";
-    }
-  } else if (t == typeid(fznparser::FloatSet) ||
-             t == typeid(std::shared_ptr<fznparser::FloatSet>) ||
-             t == typeid(std::shared_ptr<const fznparser::FloatSet>)) {
+    return isVar ? "{var bool, bool}" : "bool";
+  }
+  if (t == typeid(fznparser::IntArg) ||
+      t == typeid(std::shared_ptr<fznparser::IntArg>) ||
+      t == typeid(std::shared_ptr<const fznparser::IntArg>)) {
+    return isVar ? "{var int, int}" : "int";
+  }
+  if (t == typeid(fznparser::FloatArg) ||
+      t == typeid(std::shared_ptr<fznparser::FloatArg>) ||
+      t == typeid(std::shared_ptr<const fznparser::FloatArg>)) {
+    return isVar ? "{var float, float}" : "float";
+  }
+  if (t == typeid(fznparser::IntSetArg) ||
+      t == typeid(std::shared_ptr<fznparser::IntSetArg>) ||
+      t == typeid(std::shared_ptr<const fznparser::IntSetArg>)) {
+    return isVar ? "{var set of int, set of int}" : "set of int";
+  }
+  if (t == typeid(fznparser::FloatSet) ||
+      t == typeid(std::shared_ptr<fznparser::FloatSet>) ||
+      t == typeid(std::shared_ptr<const fznparser::FloatSet>)) {
     return "set of float";
-  } else if (t == typeid(fznparser::BoolVarArray) ||
-             t == typeid(std::shared_ptr<fznparser::BoolVarArray>) ||
-             t == typeid(std::shared_ptr<const fznparser::BoolVarArray>)) {
-    if (isVar) {
-      return "array[int] of var bool";
-    } else {
-      return "array[int] of bool";
-    }
-  } else if (t == typeid(fznparser::IntVarArray) ||
-             t == typeid(std::shared_ptr<fznparser::IntVarArray>) ||
-             t == typeid(std::shared_ptr<const fznparser::IntVarArray>)) {
-    if (isVar) {
-      return "array[int] of var int";
-    } else {
-      return "array[int] of int";
-    }
-  } else if (t == typeid(fznparser::FloatVarArray) ||
-             t == typeid(std::shared_ptr<fznparser::FloatVarArray>) ||
-             t == typeid(std::shared_ptr<const fznparser::FloatVarArray>)) {
-    if (isVar) {
-      return "array[int] of var float";
-    } else {
-      return "array[int] of float";
-    }
-  } else if (t == typeid(fznparser::SetVarArray) ||
-             t == typeid(std::shared_ptr<fznparser::SetVarArray>) ||
-             t == typeid(std::shared_ptr<const fznparser::SetVarArray>)) {
-    if (isVar) {
-      return "array[int] of set of var int";
-    } else {
-      return "array[int] of set of int";
-    }
-  } else if (t == typeid(fznparser::FloatSetArray) ||
-             t == typeid(std::shared_ptr<fznparser::FloatSetArray>) ||
-             t == typeid(std::shared_ptr<const fznparser::FloatSetArray>)) {
+  }
+  if (t == typeid(fznparser::BoolVarArray) ||
+      t == typeid(std::shared_ptr<fznparser::BoolVarArray>) ||
+      t == typeid(std::shared_ptr<const fznparser::BoolVarArray>)) {
+    return isVar ? "array[int] of var bool" : "array[int] of bool";
+  }
+  if (t == typeid(fznparser::IntVarArray) ||
+      t == typeid(std::shared_ptr<fznparser::IntVarArray>) ||
+      t == typeid(std::shared_ptr<const fznparser::IntVarArray>)) {
+    return isVar ? "array[int] of var int" : "array[int] of int";
+  }
+  if (t == typeid(fznparser::FloatVarArray) ||
+      t == typeid(std::shared_ptr<fznparser::FloatVarArray>) ||
+      t == typeid(std::shared_ptr<const fznparser::FloatVarArray>)) {
+    return isVar ? "array[int] of var float" : "array[int] of float";
+  }
+  if (t == typeid(fznparser::SetVarArray) ||
+      t == typeid(std::shared_ptr<fznparser::SetVarArray>) ||
+      t == typeid(std::shared_ptr<const fznparser::SetVarArray>)) {
+    return isVar ? "array[int] of set of var int" : "array[int] of set of int";
+  }
+  if (t == typeid(fznparser::FloatSetArray) ||
+      t == typeid(std::shared_ptr<fznparser::FloatSetArray>) ||
+      t == typeid(std::shared_ptr<const fznparser::FloatSetArray>)) {
     return "array[int] of set of float";
-  } else if (t == typeid(fznparser::IntSet) ||
-             t == typeid(std::shared_ptr<fznparser::IntSet>) ||
-             t == typeid(std::shared_ptr<const fznparser::IntSet>)) {
+  }
+  if (t == typeid(fznparser::IntSet) ||
+      t == typeid(std::shared_ptr<fznparser::IntSet>) ||
+      t == typeid(std::shared_ptr<const fznparser::IntSet>)) {
     return "set of int";
-  } else if (t == typeid(fznparser::BoolVar) ||
-             t == typeid(std::shared_ptr<fznparser::BoolVar>) ||
-             t == typeid(std::shared_ptr<const fznparser::BoolVar>)) {  // Vars:
+  }
+  if (t == typeid(fznparser::BoolVar) ||
+      t == typeid(std::shared_ptr<fznparser::BoolVar>) ||
+      t == typeid(std::shared_ptr<const fznparser::BoolVar>)) {  // Vars:
     return "var bool";
-  } else if (t == typeid(fznparser::IntVar) ||
-             t == typeid(std::shared_ptr<fznparser::IntVar>) ||
-             t == typeid(std::shared_ptr<const fznparser::IntVar>)) {
+  }
+  if (t == typeid(fznparser::IntVar) ||
+      t == typeid(std::shared_ptr<fznparser::IntVar>) ||
+      t == typeid(std::shared_ptr<const fznparser::IntVar>)) {
     return "var int";
-  } else if (t == typeid(fznparser::FloatVar) ||
-             t == typeid(std::shared_ptr<fznparser::FloatVar>) ||
-             t == typeid(std::shared_ptr<const fznparser::FloatVar>)) {
+  }
+  if (t == typeid(fznparser::FloatVar) ||
+      t == typeid(std::shared_ptr<fznparser::FloatVar>) ||
+      t == typeid(std::shared_ptr<const fznparser::FloatVar>)) {
     return "var float";
-  } else if (t == typeid(fznparser::SetVar) ||
-             t == typeid(std::shared_ptr<fznparser::SetVar>) ||
-             t == typeid(std::shared_ptr<const fznparser::SetVar>)) {
+  }
+  if (t == typeid(fznparser::SetVar) ||
+      t == typeid(std::shared_ptr<fznparser::SetVar>) ||
+      t == typeid(std::shared_ptr<const fznparser::SetVar>)) {
     return "set of var int";
-  } else if (t == typeid(bool)) {
+  }
+  if (t == typeid(bool)) {
     return "bool";
-  } else if (t == typeid(Int)) {
+  }
+  if (t == typeid(Int)) {
     return "int";
-  } else if (t == typeid(double)) {
+  }
+  if (t == typeid(double)) {
     return "float";
-  } else if (t == typeid(fznparser::IntSet) ||
-             t == typeid(std::shared_ptr<fznparser::IntSet>)) {
+  }
+  if (t == typeid(fznparser::IntSet) ||
+      t == typeid(std::shared_ptr<fznparser::IntSet>)) {
     return "set of int";
-  } else if (t == typeid(fznparser::FloatSet) ||
-             t == typeid(std::shared_ptr<fznparser::FloatSet>)) {
+  }
+  if (t == typeid(fznparser::FloatSet) ||
+      t == typeid(std::shared_ptr<fznparser::FloatSet>)) {
     return "set of float";
   }
   return "[unknown type]";
@@ -156,7 +148,7 @@ std::vector<bool> getFixedBoolValues(const IInvariantGraph& graph,
                                      const std::vector<VarNodeId>& varNodeIds) {
   std::vector<bool> values;
   values.reserve(varNodeIds.size());
-  for (VarNodeId varNodeId : varNodeIds) {
+  for (const VarNodeId varNodeId : varNodeIds) {
     const VarNode& varNode = graph.varNodeConst(varNodeId);
     if (varNode.isFixed()) {
       values.emplace_back(varNode.lowerBound() == 0);
@@ -251,7 +243,7 @@ void verifyAllDifferent(
 
 [[nodiscard]] bool violatesAllEqual(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
-  std::vector<Int> values = getFixedValues(intVarArray);
+  const std::vector<Int> values = getFixedValues(intVarArray);
   for (size_t i = 1; i < values.size(); ++i) {
     if (values[i] != values[0]) {
       return true;
@@ -297,8 +289,8 @@ VarNodeId createCountNode(FznInvariantGraph& graph,
 }
 
 void invertCoeffs(std::vector<Int>& coeffs) {
-  for (size_t i = 0; i < coeffs.size(); ++i) {
-    coeffs[i] = -coeffs[i];
+  for (auto& c : coeffs) {
+    c = -c;
   }
 }
 
@@ -357,12 +349,14 @@ std::pair<Int, Int> linBounds(FznInvariantGraph& invariantgraph,
   Int ub = 0;
   for (size_t i = 0; i < coeffs.size(); ++i) {
     const auto& varNode = invariantgraph.varNode(varNodeIds.at(i));
-    int v1 = coeffs.at(i) * (varNode.isIntVar()
-                                 ? varNode.lowerBound()
-                                 : static_cast<Int>(!varNode.inDomain(false)));
-    int v2 = coeffs.at(i) * (varNode.isIntVar()
-                                 ? varNode.upperBound()
-                                 : static_cast<Int>(varNode.inDomain(true)));
+    const Int v1 =
+        coeffs.at(i) * (varNode.isIntVar()
+                            ? varNode.lowerBound()
+                            : static_cast<Int>(!varNode.inDomain(false)));
+    const Int v2 =
+        coeffs.at(i) * (varNode.isIntVar()
+                            ? varNode.upperBound()
+                            : static_cast<Int>(varNode.inDomain(true)));
     lb += std::min(v1, v2);
     ub += std::max(v1, v2);
   }

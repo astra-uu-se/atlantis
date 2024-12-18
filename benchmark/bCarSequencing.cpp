@@ -63,7 +63,7 @@ class CarSequencing : public ::benchmark::Fixture {
       for (size_t o = 0; o < classFeatureCount; ++o) {
         carData.at(c).at(o) = true;
       }
-      std::shuffle(carData.at(c).begin(), carData.at(c).end(), rng);
+      std::ranges::shuffle(carData.at(c).begin(), carData.at(c).end(), rng);
     }
 
     for (size_t o = 0; o < numFeatures; ++o) {
@@ -116,10 +116,11 @@ class CarSequencing : public ::benchmark::Fixture {
     initCarBlocks();
     initCarFeatures();
 
-    assert(std::all_of(
+    assert(std::ranges::all_of(
         carFeature.begin(), carFeature.end(), [&](const std::vector<Int>& v) {
-          return std::all_of(v.begin(), v.end(),
-                             [&](const Int o) { return 0 <= o && o <= 1; });
+          return std::ranges::all_of(v.begin(), v.end(), [&](const Int o) {
+            return 0 <= o && o <= 1;
+          });
         }));
 
     // introducing variables linear in numCars

@@ -1,9 +1,10 @@
 #include "atlantis/propagation/invariants/pow.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
-#include <vector>
 
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/utils/pow.hpp"
 
 namespace atlantis::propagation {
@@ -35,8 +36,8 @@ void Pow::updateBounds(bool widenOnly) {
   Int outLb = std::numeric_limits<Int>::max();
   Int outUb = std::numeric_limits<Int>::min();
 
-  for (const Int baseBound : std::array<Int, 2>{baseLb, baseUb}) {
-    for (const Int expBound : std::array<Int, 2>{expLb, expUb}) {
+  for (const Int baseBound : std::array<Int, 2>{{baseLb, baseUb}}) {
+    for (const Int expBound : std::array<Int, 2>{{expLb, expUb}}) {
       if (baseBound != 0 || expBound >= 0) {
         outLb = std::min(outLb, pow(baseBound, expBound));
         outUb = std::max(outUb, pow(baseBound, expBound));

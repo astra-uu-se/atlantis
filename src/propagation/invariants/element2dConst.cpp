@@ -4,12 +4,14 @@
 #include <limits>
 #include <vector>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
-static inline Int numCols(const std::vector<std::vector<Int>>& matrix) {
-  assert(std::all_of(matrix.begin(), matrix.end(), [&](const auto& col) {
-    return col.size() == matrix.front().size();
-  }));
+static Int numCols(const std::vector<std::vector<Int>>& matrix) {
+  assert(std::ranges::all_of(
+      matrix.begin(), matrix.end(),
+      [&](const auto& col) { return col.size() == matrix.front().size(); }));
   return matrix.empty() ? 0 : static_cast<Int>(matrix.front().size());
 }
 

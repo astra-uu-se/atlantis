@@ -19,25 +19,20 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
 
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
-      for (const auto& identifier : inputIdentifiers) {
-        if (varNode(identifier).isFixed()) {
-          if (varNode(identifier).inDomain(bool{true})) {
-            return false;
-          }
-        } else {
-          if (_solver->currentValue(varId(identifier)) == 0) {
-            return false;
-          }
-        }
-      }
-      return true;
+      return std::ranges::all_of(
+          inputIdentifiers.begin(), inputIdentifiers.end(),
+          [&](const auto& identifier) {
+            if (varNode(identifier).isFixed()) {
+              return !varNode(identifier).inDomain(bool{true});
+            }
+            return _solver->currentValue(varId(identifier)) != 0;
+          });
     }
-    for (const auto& identifier : inputIdentifiers) {
-      if (varNode(identifier).inDomain(bool{true})) {
-        return false;
-      }
-    }
-    return true;
+    return std::ranges::all_of(
+        inputIdentifiers.begin(), inputIdentifiers.end(),
+        [&](const auto& identifier) {
+          return !varNode(identifier).inDomain(bool{true});
+        });
   }
 
   void SetUp() override {

@@ -1,8 +1,6 @@
 #include "atlantis/search/objective.hpp"
 
 #include <fznparser/model.hpp>
-#include <limits>
-#include <utility>
 
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 
@@ -27,7 +25,8 @@ propagation::VarViewId Objective::registerNode(
           _solver.makeViolationInvariant<propagation::LessEqual>(
               _solver, boundViolation, objectiveVarId, boundVar);
         });
-  } else if (_problemType == fznparser::ProblemType::MAXIMIZE) {
+  }
+  if (_problemType == fznparser::ProblemType::MAXIMIZE) {
     return registerOptimisation(
         totalViolationVarId, objectiveVarId, _solver.lowerBound(objectiveVarId),
         [&](propagation::VarId boundViolation,

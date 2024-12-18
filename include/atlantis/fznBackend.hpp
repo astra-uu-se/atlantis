@@ -1,18 +1,25 @@
 #pragma once
 
-#include <cstdint>
-#include <filesystem>
+#include <functional>
 #include <fznparser/model.hpp>
-#include <iostream>
 #include <optional>
 
-#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
-#include "atlantis/search/iAssignment.hpp"
-#include "atlantis/search/searchStatistics.hpp"
 
 namespace atlantis {
+
+namespace invariantgraph {
+class FznInvariantGraph;
+}
+
+namespace logging {
+class Logger;
+}
+
+namespace search {
+class IAssignment;
+class SearchStatistics;
+}  // namespace search
 
 class FznBackend {
  public:
@@ -33,7 +40,7 @@ class FznBackend {
   std::function<void(bool)> _onFinish = onFinishDefault;
 
  public:
-  FznBackend(fznparser::Model&& model)
+  explicit FznBackend(fznparser::Model&& model)
       : _model(std::move(model)), _seed(std::time(nullptr)) {}
 
   FznBackend(logging::Logger& logger, std::filesystem::path&& modelFile);
@@ -51,9 +58,8 @@ class FznBackend {
   void setRandomSeed(std::uint_fast32_t seed) { _seed = seed; }
 
   void setOnSolution(
-      std::function<void(const invariantgraph::FznInvariantGraph&,
-                         const search::IAssignment&)>
-          onSolution) {
+      const std::function<void(const invariantgraph::FznInvariantGraph&,
+                               const search::IAssignment&)>& onSolution) {
     _onSolution = onSolution;
   }
 
@@ -61,7 +67,9 @@ class FznBackend {
     _dotFilePath = std::optional<std::filesystem::path>(std::move(path));
   }
 
-  void setOnFinish(std::function<void(bool)> onFinish) { _onFinish = onFinish; }
+  void setOnFinish(const std::function<void(bool)>& onFinish) {
+    _onFinish = onFinish;
+  }
 };
 
 }  // namespace atlantis

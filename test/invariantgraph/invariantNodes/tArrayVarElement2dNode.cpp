@@ -18,11 +18,13 @@ class ArrayVarElement2dNodeTestFixture
   Int offsetIdx1 = 1;
   Int offsetIdx2 = 1;
 
-  bool isIntElement() const { return _paramData.data <= 2; }
-  bool idx1ShouldBeReplaced() const {
+  [[nodiscard]] bool isIntElement() const { return _paramData.data <= 2; }
+
+  [[nodiscard]] bool idx1ShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 0 || _paramData.data == 2);
   }
-  bool idx2ShouldBeReplaced() const {
+
+  [[nodiscard]] bool idx2ShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 1 || _paramData.data == 3);
   }
 

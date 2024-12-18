@@ -1,19 +1,20 @@
 #pragma once
 
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
-#include "atlantis/search/randomProvider.hpp"
-#include "atlantis/search/searchVariable.hpp"
 #include "atlantis/types.hpp"
+
+namespace atlantis::search {
+class SearchVar;
+}
 
 namespace atlantis::search::neighborhoods {
 
 class CircuitNeighborhood : public Neighborhood {
- private:
-  std::vector<search::SearchVar> _vars;
+  std::vector<SearchVar> _vars;
   Int _offset;
 
  public:
-  explicit CircuitNeighborhood(std::vector<search::SearchVar>&&, Int offset);
+  explicit CircuitNeighborhood(std::vector<SearchVar>&&, Int offset);
 
   void initialize(RandomProvider&, IAssignment&) override;
 
@@ -24,8 +25,8 @@ class CircuitNeighborhood : public Neighborhood {
   }
 
  private:
-  [[nodiscard]] Int idx2Node(size_t nodeIdx) noexcept;
-  [[nodiscard]] size_t node2Idx(Int node) noexcept;
+  [[nodiscard]] Int idx2Node(size_t nodeIdx) const noexcept;
+  [[nodiscard]] size_t node2Idx(Int node) const noexcept;
 };
 
 }  // namespace atlantis::search::neighborhoods

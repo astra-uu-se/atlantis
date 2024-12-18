@@ -1,7 +1,6 @@
 #include "atlantis/propagation/views/expView.hpp"
 
-#include <initializer_list>
-
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/utils/pow.hpp"
 
 namespace atlantis::propagation {

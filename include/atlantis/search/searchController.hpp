@@ -3,14 +3,14 @@
 #include <chrono>
 #include <functional>
 #include <optional>
-#include <vector>
 
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::search {
 
+class IAssignment;
+
 class SearchController {
- private:
   std::function<void(const IAssignment&)> _onSolution;
   std::function<void(bool)> _onFinish;
   std::optional<std::chrono::milliseconds> _timeout;

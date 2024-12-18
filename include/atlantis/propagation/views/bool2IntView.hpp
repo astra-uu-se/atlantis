@@ -1,10 +1,9 @@
 #pragma once
 
-#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intView.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
+class SolverBase;
 
 /**
  * In MiniZinc, the bool2int constraint enforces the following mapping:
@@ -22,7 +21,7 @@ namespace atlantis::propagation {
  */
 class Bool2IntView : public IntView {
  public:
-  explicit Bool2IntView(SolverBase& solver, const VarViewId parentId);
+  explicit Bool2IntView(SolverBase& solver, VarViewId parentId);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

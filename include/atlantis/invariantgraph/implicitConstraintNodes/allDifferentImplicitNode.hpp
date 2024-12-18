@@ -2,9 +2,10 @@
 
 #include "atlantis/invariantgraph/implicitConstraintNode.hpp"
 #include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/search/neighborhoods/neighborhood.hpp"
-#include "atlantis/search/searchVariable.hpp"
+
+namespace atlantis::search::neighborhoods {
+class Neighborhood;
+}
 
 namespace atlantis::invariantgraph {
 
@@ -17,7 +18,7 @@ class AllDifferentImplicitNode : public ImplicitConstraintNode {
  protected:
   std::shared_ptr<search::neighborhoods::Neighborhood> createNeighborhood()
       override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

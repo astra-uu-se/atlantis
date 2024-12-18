@@ -1,17 +1,16 @@
 #pragma once
 
-#include <memory>
-
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
-#include "atlantis/search/randomProvider.hpp"
-#include "atlantis/search/searchVariable.hpp"
 #include "atlantis/types.hpp"
+
+namespace atlantis::search {
+class SearchVar;
+}
 
 namespace atlantis::search::neighborhoods {
 
 class AllDifferentUniformNeighborhood : public Neighborhood {
- private:
-  std::vector<search::SearchVar> _vars;
+  std::vector<SearchVar> _vars;
   std::vector<Int> _freeVals;
   size_t _moveVarIdx;
   size_t _moveValIdx;
@@ -22,7 +21,7 @@ class AllDifferentUniformNeighborhood : public Neighborhood {
 
   size_t assignValue(RandomProvider&, IAssignment& assignment);
 
-  AllDifferentUniformNeighborhood(std::vector<search::SearchVar>&& vars);
+  explicit AllDifferentUniformNeighborhood(std::vector<SearchVar>&& vars);
 
   void initialize(RandomProvider&, IAssignment&) override;
 

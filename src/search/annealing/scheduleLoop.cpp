@@ -10,7 +10,7 @@ void ScheduleLoop::start(double initialTemperature) {
 void ScheduleLoop::nextRound(const RoundStatistics& statistics) {
   assert(!frozen());
 
-  auto temp = temperature();
+  const auto temp = temperature();
   _schedule->nextRound(statistics);
 
   if (_schedule->frozen()) {

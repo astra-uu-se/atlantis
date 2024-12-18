@@ -15,13 +15,15 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
 
   std::vector<Int> parArray{-2, -1, 0, 1};
 
-  bool intParToBool(const Int val) { return std::abs(val) % 2 == 0; }
+  [[nodiscard]] static bool intParToBool(const Int val) {
+    return std::abs(val) % 2 == 0;
+  }
 
-  Int parVal(const Int val) {
+  [[nodiscard]] Int parVal(const Int val) const {
     return isIntElement() ? val : intParToBool(val) ? 0 : 1;
   }
 
-  bool isIntElement() const { return _paramData.data == 0; }
+  [[nodiscard]] bool isIntElement() const { return _paramData.data == 0; }
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
@@ -102,9 +104,9 @@ TEST_P(ArrayElementNodeTestFixture, application) {
   // The outputVarNodeId domain should contain all elements in as.
   if (isIntElement()) {
     EXPECT_GE(_solver->lowerBound(varId(outputVarNodeId)),
-              *std::min_element(parArray.begin(), parArray.end()));
+              *std::ranges::min_element(parArray.begin(), parArray.end()));
     EXPECT_LE(_solver->upperBound(varId(outputVarNodeId)),
-              *std::max_element(parArray.begin(), parArray.end()));
+              *std::ranges::max_element(parArray.begin(), parArray.end()));
   } else {
     EXPECT_GE(_solver->lowerBound(varId(outputVarNodeId)), 0);
     EXPECT_LE(_solver->upperBound(varId(outputVarNodeId)), 1);

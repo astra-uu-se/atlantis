@@ -2,8 +2,9 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -23,7 +24,7 @@ bool array_int_element(FznInvariantGraph& graph,
     return false;
   }
 
-  bool hasOffsetSuffix = hasSuffix(constraint.identifier(), "_offset");
+  const bool hasOffsetSuffix = hasSuffix(constraint.identifier(), "_offset");
   verifyNumArguments(constraint, hasOffsetSuffix ? 4 : 3);
 
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)

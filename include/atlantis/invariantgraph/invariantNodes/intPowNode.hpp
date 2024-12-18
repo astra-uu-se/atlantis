@@ -19,7 +19,7 @@ class IntPowNode : public InvariantNode {
   [[nodiscard]] VarNodeId exponent() const;
   [[nodiscard]] VarNodeId power() const;
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

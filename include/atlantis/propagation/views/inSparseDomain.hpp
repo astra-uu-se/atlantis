@@ -2,15 +2,12 @@
 
 #include <vector>
 
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/views/intView.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
+class SolverBase;
 
 class InSparseDomain : public IntView {
- private:
   Int _offset;
   std::vector<Int> _valueViolation;
 

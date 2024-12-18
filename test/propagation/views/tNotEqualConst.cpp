@@ -22,7 +22,7 @@ class NotEqualConstTest : public ViewTest {
     _solver->close();
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return value == (committedValue ? _solver->committedValue(inputVar)
                                     : _solver->currentValue(inputVar))
                ? 1
@@ -39,14 +39,13 @@ TEST_F(NotEqualConstTest, bounds) {
     value = v;
     generate();
 
-    for (size_t i = 0; i < bounds.size(); ++i) {
-      const auto& [inputLb, inputUb] = bounds.at(i);
+    for (const auto& [inputLb, inputUb] : bounds) {
       EXPECT_LE(inputLb, inputUb);
 
       _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
 
-      Int expectedLb = -1;
-      Int expectedUb = -1;
+      Int expectedLb;
+      Int expectedUb;
 
       if (inputLb == value && value == inputUb) {
         expectedLb = 1;
@@ -74,8 +73,8 @@ RC_GTEST_FIXTURE_PROP(NotEqualConstTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     for (size_t p = 0; p <= numProbes; ++p) {

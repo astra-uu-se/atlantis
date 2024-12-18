@@ -3,9 +3,6 @@
 #include <vector>
 
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
-#include "atlantis/propagation/utils/priorityList.hpp"
 
 namespace atlantis::propagation {
 
@@ -15,7 +12,6 @@ namespace atlantis::propagation {
  */
 
 class Min : public Invariant {
- private:
   VarId _output;
   std::vector<VarViewId> _varArray;
   std::vector<std::pair<CommittableInt, CommittableInt>> _linkedList;

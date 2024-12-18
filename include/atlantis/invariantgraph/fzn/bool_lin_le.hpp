@@ -3,7 +3,11 @@
 #include <fznparser/constraint.hpp>
 #include <fznparser/variables.hpp>
 
-#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/types.hpp"
+
+namespace atlantis::invariantgraph {
+class FznInvariantGraph;
+}
 
 namespace atlantis::invariantgraph::fzn {
 

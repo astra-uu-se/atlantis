@@ -1,8 +1,6 @@
 #pragma once
 
-#include <limits.h>
-
-#include <cstdint>
+#include <climits>
 #include <ostream>
 #include <string>
 
@@ -31,15 +29,15 @@ struct InvariantNodeId {
 
   explicit InvariantNodeId(size_t id) : InvariantNodeId(id, false) {}
 
-  inline bool isImplicitConstraint() const {
+  [[nodiscard]] bool isImplicitConstraint() const {
     return _id != NULL_NODE_ID && (_id & IMPLICIT_CONSTRAINT_MASK) != size_t{0};
   }
 
-  inline bool isInvariant() const {
+  [[nodiscard]] bool isInvariant() const {
     return _id != NULL_NODE_ID && (_id & IMPLICIT_CONSTRAINT_MASK) == size_t{0};
   }
 
-  inline InvariantNodeId& operator=(const InvariantNodeId& other) {
+  InvariantNodeId& operator=(const InvariantNodeId& other) {
     _id = other._id;
     return *this;
   }
@@ -76,11 +74,11 @@ struct InvariantNodeIdHash {
 struct InvariantGraphOutputVarArray {
   std::string identifier;
   std::vector<Int> indexSetSizes;
-  std::vector<invariantgraph::VarNodeId> varNodeIds;
+  std::vector<VarNodeId> varNodeIds;
 
-  InvariantGraphOutputVarArray(
-      std::string identifier, std::vector<Int> indexSetSizes,
-      std::vector<invariantgraph::VarNodeId> varNodeIds)
+  InvariantGraphOutputVarArray(const std::string& identifier,
+                               const std::vector<Int>& indexSetSizes,
+                               const std::vector<VarNodeId>& varNodeIds)
       : identifier(identifier),
         indexSetSizes(indexSetSizes),
         varNodeIds(varNodeIds) {}
@@ -95,6 +93,15 @@ enum struct InvariantNodeState : unsigned char {
 struct InvariantGraphEdge {
   InvariantNodeId invariantNodeId;
   VarNodeId varNodeId;
+};
+
+enum struct DomainType : unsigned char {
+  DOM_NONE = 0,
+  DOM_FIXED = 1,
+  DOM_LOWER_BOUND = 2,
+  DOM_UPPER_BOUND = 3,
+  DOM_RANGE = 4,
+  DOM_DOMAIN = 5
 };
 
 }  // namespace atlantis::invariantgraph

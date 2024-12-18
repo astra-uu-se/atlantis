@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class IntCountNode : public InvariantNode {
- private:
   propagation::VarViewId _intermediate{propagation::NULL_ID};
   Int _offset{0};
   Int _needle;
@@ -26,6 +25,6 @@ class IntCountNode : public InvariantNode {
 
   [[nodiscard]] Int needle() const;
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

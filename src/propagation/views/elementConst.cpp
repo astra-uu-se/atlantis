@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <limits>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 ElementConst::ElementConst(SolverBase& solver, VarViewId parentId,
@@ -27,11 +29,12 @@ Int ElementConst::lowerBound() const {
                     _solver.upperBound(_parentId) - _offset + 1);
   if (indexBegin >= static_cast<Int>(_array.size())) {
     return _array.back();
-  } else if (indexEnd < 0) {
+  }
+  if (indexEnd < 0) {
     return _array.front();
   }
-  return *std::min_element(_array.begin() + indexBegin,
-                           _array.begin() + indexEnd);
+  return *std::ranges::min_element(_array.begin() + indexBegin,
+                                   _array.begin() + indexEnd);
 }
 
 Int ElementConst::upperBound() const {
@@ -43,10 +46,11 @@ Int ElementConst::upperBound() const {
 
   if (indexBegin >= static_cast<Int>(_array.size())) {
     return _array.back();
-  } else if (indexEnd < 0) {
+  }
+  if (indexEnd < 0) {
     return _array.front();
   }
-  return *std::max_element(_array.begin() + indexBegin,
-                           _array.begin() + indexEnd);
+  return *std::ranges::max_element(_array.begin() + indexBegin,
+                                   _array.begin() + indexEnd);
 }
 }  // namespace atlantis::propagation

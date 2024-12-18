@@ -5,7 +5,6 @@
 namespace atlantis::invariantgraph {
 
 class ArrayVarElement2dNode : public InvariantNode {
- private:
   size_t _numRows;
   Int _offset1;
   Int _offset2;
@@ -36,7 +35,7 @@ class ArrayVarElement2dNode : public InvariantNode {
 
   void registerNode() override;
 
-  [[nodiscard]] VarNodeId at(Int row, Int col);
+  [[nodiscard]] VarNodeId at(Int row, Int col) const;
 
   [[nodiscard]] VarNodeId idx1() const noexcept {
     return staticInputVarNodeIds().front();
@@ -46,11 +45,11 @@ class ArrayVarElement2dNode : public InvariantNode {
     return staticInputVarNodeIds().back();
   }
 
-  size_t numCols() const noexcept {
+  [[nodiscard]] size_t numCols() const noexcept {
     return dynamicInputVarNodeIds().size() / _numRows;
   }
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

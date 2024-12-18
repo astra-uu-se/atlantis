@@ -1,11 +1,15 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolOrNode.hpp"
 
+#include <algorithm>
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/propagation/invariants/boolOr.hpp"
 #include "atlantis/propagation/invariants/min.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {
@@ -33,11 +37,11 @@ void ArrayBoolOrNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::none_of(staticInputVarNodeIds().begin(),
-                   staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                     return invariantGraphConst().varNodeConst(vId).isIntVar();
-                   }));
+  assert(std::ranges::none_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void ArrayBoolOrNode::updateState() {
@@ -65,7 +69,7 @@ void ArrayBoolOrNode::updateState() {
     removeStaticInputVarNode(id);
   }
 
-  if (staticInputVarNodeIds().size() == 0) {
+  if (staticInputVarNodeIds().empty()) {
     if (isReified()) {
       fixReified(true);
     } else if (shouldHold()) {
@@ -111,11 +115,12 @@ void ArrayBoolOrNode::registerOutputVars() {
           solver(), _intermediate, 0));
     }
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void ArrayBoolOrNode::registerNode() {
@@ -127,10 +132,10 @@ void ArrayBoolOrNode::registerNode() {
   assert(shouldHold() ? violationVarId().isVar() : _intermediate.isVar());
 
   std::vector<propagation::VarViewId> solverVars;
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars), [&](const auto& node) {
-                   return invariantGraph().varId(node);
-                 });
+  std::ranges::transform(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      std::back_inserter(solverVars),
+      [&](const auto& node) { return invariantGraph().varId(node); });
 
   if (solverVars.size() == 2) {
     solver().makeInvariant<propagation::BoolOr>(

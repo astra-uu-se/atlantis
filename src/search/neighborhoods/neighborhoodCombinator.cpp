@@ -1,8 +1,12 @@
-#include <ostream>
+#include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
+
 #include <random>
 #include <typeinfo>
 
-#include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
+#include "atlantis/logging/logger.hpp"
+#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/randomProvider.hpp"
+#include "atlantis/search/searchVariable.hpp"
 #include "atlantis/utils/type.hpp"
 
 namespace atlantis::search::neighborhoods {
@@ -47,7 +51,7 @@ size_t NeighborhoodCombinator::randomMove(RandomProvider& random,
   return _neighborhoods[_curNeighborhood]->randomMove(random, assignment);
 }
 
-void NeighborhoodCombinator::printNeighborhood(logging::Logger& logger) {
+void NeighborhoodCombinator::printNeighborhood(logging::Logger& logger) const {
   for (const auto& neighborhood : _neighborhoods) {
     logger.debug("Neighborhood {} covers {} variables.",
                  demangle(typeid(neighborhood.get()).name()),

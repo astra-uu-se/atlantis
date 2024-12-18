@@ -18,8 +18,8 @@ class ScalarViewTest : public ::testing::Test {
 RC_GTEST_FIXTURE_PROP(ScalarViewTest, simple,
                       (Int val, Int scalar, Int offset)) {
   _solver->open();
-  auto varId = _solver->makeIntVar(val, val, val);
-  auto viewId =
+  const auto varId = _solver->makeIntVar(val, val, val);
+  const auto viewId =
       _solver->makeIntView<ScalarView>(*_solver, varId, scalar, offset);
   _solver->close();
 

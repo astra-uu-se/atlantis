@@ -1,8 +1,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <deque>
-#include <random>
 #include <vector>
 
 #include "atlantis/invariantgraph/fzn/int_lt.hpp"

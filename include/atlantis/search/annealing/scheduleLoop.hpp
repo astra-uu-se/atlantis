@@ -12,7 +12,6 @@ namespace atlantis::search {
  * don't improve the assignment compared to the previous round.
  */
 class ScheduleLoop : public AnnealingSchedule {
- private:
   std::unique_ptr<AnnealingSchedule> _schedule;
   UInt _maximumConsecutiveFutileRounds;
 

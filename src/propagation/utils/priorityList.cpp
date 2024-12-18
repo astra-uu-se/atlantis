@@ -30,13 +30,13 @@ void PriorityList::commitIf(Timestamp ts) {
 }
 
 void PriorityList::updatePriority(Timestamp ts, size_t idx, Int newValue) {
-  auto oldValue = _list[idx].get(ts);
+  const auto oldValue = _list[idx].get(ts);
   if (oldValue == newValue) {
     return;
   }
 
-  auto min = minPriority(ts);
-  auto max = maxPriority(ts);
+  const auto min = minPriority(ts);
+  const auto max = maxPriority(ts);
   _list[idx].set(ts, newValue);
 
   if (newValue > max) {

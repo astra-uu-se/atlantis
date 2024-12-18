@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/fzn/array_bool_element.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::testing {
 

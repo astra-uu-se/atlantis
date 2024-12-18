@@ -3,6 +3,8 @@
 #include <utility>
 #include <vector>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 CountConst::CountConst(SolverBase& solver, VarId output, Int needle,
@@ -43,10 +45,9 @@ void CountConst::recompute(Timestamp ts) {
 
 void CountConst::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _vars.size());
-  const Int newValue =
-      static_cast<Int>(_solver.value(ts, _vars[id]) == _needle);
+  const Int newValue = _solver.value(ts, _vars[id]) == _needle ? 1 : 0;
   const Int committedValue =
-      static_cast<Int>(_solver.committedValue(_vars[id]) == _needle);
+      _solver.committedValue(_vars[id]) == _needle ? 1 : 0;
   if (newValue == committedValue) {
     return;
   }

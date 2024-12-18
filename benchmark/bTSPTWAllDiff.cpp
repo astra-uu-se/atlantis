@@ -147,19 +147,19 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
 
     solver->close();
     assert(computeDistance() > 0);
-    assert(std::all_of(sequence.begin(), sequence.end(),
-                       [&](const propagation::VarViewId p) {
-                         return solver->lowerBound(p) == 0;
-                       }));
-    assert(std::all_of(sequence.begin(), sequence.end(),
-                       [&](const propagation::VarViewId p) {
-                         return solver->upperBound(p) == n - 1;
-                       }));
-    assert(std::all_of(sequence.begin(), sequence.end(),
-                       [&](const propagation::VarViewId p) {
-                         return 0 <= solver->committedValue(p) &&
-                                solver->committedValue(p) <= n - 1;
-                       }));
+    assert(std::ranges::all_of(sequence.begin(), sequence.end(),
+                               [&](const propagation::VarViewId p) {
+                                 return solver->lowerBound(p) == 0;
+                               }));
+    assert(std::ranges::all_of(sequence.begin(), sequence.end(),
+                               [&](const propagation::VarViewId p) {
+                                 return solver->upperBound(p) == n - 1;
+                               }));
+    assert(std::ranges::all_of(sequence.begin(), sequence.end(),
+                               [&](const propagation::VarViewId p) {
+                                 return 0 <= solver->committedValue(p) &&
+                                        solver->committedValue(p) <= n - 1;
+                               }));
 
     gen = std::mt19937(rd());
 

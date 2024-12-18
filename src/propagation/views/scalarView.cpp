@@ -1,5 +1,9 @@
 #include "atlantis/propagation/views/scalarView.hpp"
 
+#include <algorithm>
+
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 ScalarView::ScalarView(SolverBase& solver, VarViewId parentId, Int factor,

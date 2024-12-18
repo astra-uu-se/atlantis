@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/types.hpp"
 
@@ -15,7 +14,6 @@ namespace atlantis::propagation {
  */
 
 class Linear : public Invariant {
- private:
   VarId _output;
   std::vector<Int> _coeffs;
   std::vector<VarViewId> _varArray;

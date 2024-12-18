@@ -2,12 +2,10 @@
 
 #include <vector>
 
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/views/intView.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
+class SolverBase;
 
 /**
  * Invariant for y <- array[index] where array is a vector of constants.
@@ -16,11 +14,10 @@ namespace atlantis::propagation {
  */
 
 class ElementConst : public IntView {
- private:
   std::vector<Int> _array;
   Int _offset;
 
-  [[nodiscard]] inline size_t safeIndex(Int index) noexcept {
+  [[nodiscard]] size_t safeIndex(Int index) const noexcept {
     return std::max<Int>(Int(0),
                          std::min<Int>(static_cast<Int>(_array.size()) - Int(1),
                                        index - _offset));

@@ -1,14 +1,10 @@
 #pragma once
 
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/violationInvariants/violationInvariant.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
 class NotEqual : public ViolationInvariant {
- private:
   VarViewId _x, _y;
 
  public:

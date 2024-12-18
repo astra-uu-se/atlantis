@@ -30,7 +30,7 @@ class BoolLtNode : public ViolationInvariantNode {
     return staticInputVarNodeIds().back();
   }
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

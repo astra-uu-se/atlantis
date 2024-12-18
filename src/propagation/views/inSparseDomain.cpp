@@ -1,7 +1,10 @@
 #include "atlantis/propagation/views/inSparseDomain.hpp"
 
+#include <algorithm>
 #include <cassert>
-#include <limits>
+#include <functional>
+
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::propagation {
 
@@ -11,16 +14,17 @@ inline bool all_in_range(size_t start, size_t stop,
   for (size_t i = 0; i < stop - start; ++i) {
     vec.at(i) = start + i;
   }
-  return std::all_of(vec.begin(), vec.end(), std::move(predicate));
+  return std::ranges::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
 InSparseDomain::InSparseDomain(SolverBase& solver, VarViewId parentId,
                                const std::vector<DomainEntry>& domain)
     : IntView(solver, parentId), _offset(domain.front().lowerBound) {
   assert(!domain.empty());
-  assert(std::all_of(domain.begin(), domain.end(), [&](const auto& domEntry) {
-    return domEntry.lowerBound <= domEntry.upperBound;
-  }));
+  assert(std::ranges::all_of(
+      domain.begin(), domain.end(), [&](const auto& domEntry) {
+        return domEntry.lowerBound <= domEntry.upperBound;
+      }));
   assert(all_in_range(1u, domain.size(), [&](const size_t i) {
     return domain.at(i - 1).upperBound < domain.at(i).lowerBound;
   }));
@@ -64,15 +68,16 @@ Int InSparseDomain::lowerBound() const {
 
   if (parentUb < _offset) {
     return dLb - parentUb;
-  } else if (dUb < parentLb) {
+  }
+  if (dUb < parentLb) {
     return parentLb - dUb;
   }
   const Int begin = std::max<Int>(0, parentLb - _offset);
   const Int end = std::min<Int>(static_cast<Int>(_valueViolation.size()),
                                 parentUb - _offset + 1);
 
-  return *std::min_element(_valueViolation.begin() + begin,
-                           _valueViolation.begin() + end);
+  return *std::ranges::min_element(_valueViolation.begin() + begin,
+                                   _valueViolation.begin() + end);
 }
 
 Int InSparseDomain::upperBound() const {
@@ -83,15 +88,16 @@ Int InSparseDomain::upperBound() const {
 
   if (parentUb < dLb) {
     return dLb - parentLb;
-  } else if (dUb < parentLb) {
+  }
+  if (dUb < parentLb) {
     return parentUb - dUb;
   }
   const Int begin = std::max<Int>(0, parentLb - _offset);
   const Int end = std::min<Int>(static_cast<Int>(_valueViolation.size()),
                                 parentUb - _offset + 1);
 
-  return *std::max_element(_valueViolation.begin() + begin,
-                           _valueViolation.begin() + end);
+  return *std::ranges::max_element(_valueViolation.begin() + begin,
+                                   _valueViolation.begin() + end);
 }
 
 }  // namespace atlantis::propagation

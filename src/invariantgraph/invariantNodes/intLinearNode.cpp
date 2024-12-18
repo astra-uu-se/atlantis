@@ -4,9 +4,12 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/views/scalarView.hpp"
 
@@ -24,11 +27,11 @@ void IntLinearNode::init(InvariantNodeId id) {
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
              .isIntVar());
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void IntLinearNode::updateState() {
@@ -56,7 +59,7 @@ void IntLinearNode::updateState() {
     }
   }
 
-  for (Int i = indicesToRemove.size() - 1; i >= 0; --i) {
+  for (Int i = static_cast<Int>(indicesToRemove.size()) - 1; i >= 0; --i) {
     removeStaticInputVarNode(staticInputVarNodeIds().at(indicesToRemove.at(i)));
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
@@ -88,16 +91,17 @@ void IntLinearNode::updateState() {
 }
 
 bool IntLinearNode::canBeMadeImplicit() const {
-  return std::all_of(_coeffs.begin(), _coeffs.end(),
-                     [](const Int& coeff) { return std::abs(coeff) == 1; }) &&
-         std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst()
-                           .varNodeConst(vId)
-                           .definingNodes()
-                           .empty();
-                     }) &&
+  return std::ranges::all_of(
+             _coeffs.begin(), _coeffs.end(),
+             [](const Int& coeff) { return std::abs(coeff) == 1; }) &&
+         std::ranges::all_of(staticInputVarNodeIds().begin(),
+                             staticInputVarNodeIds().end(),
+                             [&](const VarNodeId vId) {
+                               return invariantGraphConst()
+                                   .varNodeConst(vId)
+                                   .definingNodes()
+                                   .empty();
+                             }) &&
          invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
              .definingNodes()
@@ -130,7 +134,8 @@ void IntLinearNode::registerOutputVars() {
             solver(), invariantGraph().varId(staticInputVarNodeIds().front()),
             _coeffs.front(), _offset));
     return;
-  } else if (!staticInputVarNodeIds().empty()) {
+  }
+  if (!staticInputVarNodeIds().empty()) {
     if (_offset == 0) {
       makeSolverVar(outputVarNodeIds().front());
       assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
@@ -142,11 +147,12 @@ void IntLinearNode::registerOutputVars() {
               solver(), _intermediate, _offset));
     }
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void IntLinearNode::registerNode() {
@@ -161,9 +167,9 @@ void IntLinearNode::registerNode() {
   assert(_intermediate == propagation::NULL_ID || _intermediate.isVar());
 
   std::vector<propagation::VarViewId> solverVars;
-  std::transform(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      std::back_inserter(solverVars), [&](const VarNodeId varNodeId) {
+  std::ranges::transform(
+      staticInputVarNodeIds(), std::back_inserter(solverVars),
+      [&](const VarNodeId varNodeId) {
         assert(invariantGraph().varId(varNodeId) != propagation::NULL_ID);
         return invariantGraph().varId(varNodeId);
       });

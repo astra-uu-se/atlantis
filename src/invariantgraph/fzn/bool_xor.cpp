@@ -2,7 +2,8 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
-#include "atlantis/invariantgraph/fzn/bool_eq.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
@@ -29,7 +30,7 @@ bool bool_xor(FznInvariantGraph& graph,
     return false;
   }
 
-  bool isReified = constraint.arguments().size() >= 3;
+  const bool isReified = constraint.arguments().size() >= 3;
   verifyNumArguments(constraint, isReified ? 3 : 2);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::BoolArg, true)
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)

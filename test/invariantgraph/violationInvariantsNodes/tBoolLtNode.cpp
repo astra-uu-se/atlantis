@@ -12,7 +12,7 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolLtNode> {
   VarNodeId reifiedVarNodeId{NULL_NODE_ID};
   std::string reifiedIdentifier{"reified"};
 
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
       const bool aVal = varNode(aVarNodeId).isFixed()
                             ? varNode(aVarNodeId).inDomain(bool{true})

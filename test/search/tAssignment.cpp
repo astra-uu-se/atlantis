@@ -5,6 +5,7 @@
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/violationInvariants/equal.hpp"
 #include "atlantis/search/assignment.hpp"
+#include "atlantis/search/searchVariable.hpp"
 
 namespace atlantis::testing {
 
@@ -53,18 +54,17 @@ class AssignmentTest : public ::testing::Test {
 };
 
 TEST_F(AssignmentTest, search_vars_are_identified) {
-  search::Assignment assignment(*_solver, *_neighborhood, violation, a,
-                                ObjectiveDirection::MINIMIZE,
-                                _solver->lowerBound(a));
+  const Assignment assignment(*_solver, *_neighborhood, violation, a,
+                              ObjectiveDirection::MINIMIZE,
+                              _solver->lowerBound(a));
 
-  std::vector<propagation::VarId> expectedSearchVars{a, b, d};
+  const std::vector<propagation::VarId> expectedSearchVars{a, b, d};
   EXPECT_EQ(assignment.searchVars(), expectedSearchVars);
 }
 
 TEST_F(AssignmentTest, assign_sets_values) {
-  search::Assignment assignment(*_solver, *_neighborhood, violation, a,
-                                ObjectiveDirection::MINIMIZE,
-                                _solver->lowerBound(a));
+  Assignment assignment(*_solver, *_neighborhood, violation, a,
+                        ObjectiveDirection::MINIMIZE, _solver->lowerBound(a));
 
   assignment.set(a, 1);
   assignment.set(b, 2);
@@ -74,9 +74,8 @@ TEST_F(AssignmentTest, assign_sets_values) {
 }
 
 TEST_F(AssignmentTest, satisfies_constraints) {
-  search::Assignment assignment(*_solver, *_neighborhood, violation, a,
-                                ObjectiveDirection::MINIMIZE,
-                                _solver->lowerBound(a));
+  Assignment assignment(*_solver, *_neighborhood, violation, a,
+                        ObjectiveDirection::MINIMIZE, _solver->lowerBound(a));
 
   EXPECT_FALSE(assignment.satisfiesConstraints());
 
@@ -96,9 +95,8 @@ TEST_F(AssignmentTest, initialize) {
 
   RandomProvider random{123456};
 
-  search::Assignment assignment(*_solver, *_neighborhood, violation, a,
-                                ObjectiveDirection::MINIMIZE,
-                                _solver->lowerBound(a));
+  Assignment assignment(*_solver, *_neighborhood, violation, a,
+                        ObjectiveDirection::MINIMIZE, _solver->lowerBound(a));
 
   EXPECT_CALL(*_neighborhood, coveredVars()).WillRepeatedly(ReturnRef(vars));
   EXPECT_CALL(*_neighborhood, initialize(Ref(random), Ref(assignment)))

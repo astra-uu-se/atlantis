@@ -3,14 +3,15 @@
 #include <memory>
 #include <vector>
 
-#include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/variables/intVar.hpp"
-#include "atlantis/propagation/views/intView.hpp"
+#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::propagation {
 
+class Invariant;
+class IntVar;
+class IntView;
+
 class Store {
- private:
   std::vector<IntVar> _intVars;
   std::vector<std::unique_ptr<Invariant>> _invariants;
   std::vector<std::unique_ptr<IntView>> _intViews;

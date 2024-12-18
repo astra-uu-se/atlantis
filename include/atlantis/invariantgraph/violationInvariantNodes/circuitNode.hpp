@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class CircuitNode : public ViolationInvariantNode {
- private:
   Int _offset;
 
  public:
@@ -26,6 +25,6 @@ class CircuitNode : public ViolationInvariantNode {
   void registerOutputVars() override;
 
   void registerNode() override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

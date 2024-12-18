@@ -1,14 +1,11 @@
 #pragma once
 
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/views/intView.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
+class SolverBase;
 
 class InIntervalConst : public IntView {
- private:
   Int _lb;
   Int _ub;
 

@@ -36,11 +36,11 @@ TEST_P(IntLinEqImplicitNodeTestFixture, construction) {
 
 TEST_P(IntLinEqImplicitNodeTestFixture, application) {
   _solver->open();
-  for (VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
+  for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerOutputVars();
-  for (VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
+  for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerNode();
@@ -54,7 +54,7 @@ TEST_P(IntLinEqImplicitNodeTestFixture, application) {
 
   EXPECT_EQ(_solver->numInvariants(), 0);
 
-  auto neighborhood = invNode().neighborhood();
+  const auto neighborhood = invNode().neighborhood();
 
   EXPECT_TRUE(dynamic_cast<search::neighborhoods::IntLinEqNeighborhood*>(
       neighborhood.get()));

@@ -1,7 +1,11 @@
 #include "atlantis/invariantgraph/invariantNodes/intDivNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/intDiv.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -32,16 +36,17 @@ bool IntDivNode::replace() {
   return true;
 }
 
-void invariantgraph::IntDivNode::registerOutputVars() {
+void IntDivNode::registerOutputVars() {
   makeSolverVar(quotient());
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
-void invariantgraph::IntDivNode::registerNode() {
+void IntDivNode::registerNode() {
   assert(invariantGraph().varId(quotient()) != propagation::NULL_ID);
   assert(invariantGraph().varId(quotient()).isVar());
 

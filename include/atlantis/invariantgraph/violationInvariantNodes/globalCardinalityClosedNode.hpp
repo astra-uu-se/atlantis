@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class GlobalCardinalityClosedNode : public ViolationInvariantNode {
- private:
   std::vector<Int> _cover;
 
  public:
@@ -29,7 +28,7 @@ class GlobalCardinalityClosedNode : public ViolationInvariantNode {
   [[nodiscard]] bool canBeReplaced() const override;
 
   bool replace() override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

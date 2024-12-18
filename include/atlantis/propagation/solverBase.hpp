@@ -1,11 +1,11 @@
 #pragma once
 
-#include <cassert>
-#include <vector>
-
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/store/store.hpp"
 #include "atlantis/types.hpp"
+#include "invariants/invariant.hpp"
+#include "variables/intVar.hpp"
+#include "views/intView.hpp"
 
 namespace atlantis::propagation {
 
@@ -27,25 +27,16 @@ class SolverBase {
   Store _store;
 
   void incValue(Timestamp, VarId, Int inc);
-  inline void incValue(VarId id, Int val) {
-    incValue(_currentTimestamp, id, val);
-  }
+  void incValue(VarId id, Int val) { incValue(_currentTimestamp, id, val); }
 
   void updateValue(Timestamp, VarId, Int val);
 
-  inline void updateValue(VarId id, Int val) {
+  void updateValue(VarId id, Int val) {
     updateValue(_currentTimestamp, id, val);
   }
 
-  inline bool hasChanged(Timestamp, VarId);
+  inline bool hasChanged(Timestamp, VarId) const;
 
-  /**
-   * Register that 'from' defines variable 'to'. Throws exception if
-   * already defined.
-   * @param definedVarId the variable that is defined by the invariant
-   * @param invariantId the invariant defining the variable
-   * @throw if the variable is already defined by an invariant.
-   */
   virtual void registerDefinedVar(VarId definedVarId,
                                   InvariantId invariantId) = 0;
 
@@ -60,21 +51,21 @@ class SolverBase {
   virtual void close() = 0;
   virtual void computeBounds() = 0;
 
-  [[nodiscard]] inline bool isOpen() const noexcept { return _isOpen; }
-  [[nodiscard]] inline bool isMoving() const noexcept {
+  [[nodiscard]] bool isOpen() const noexcept { return _isOpen; }
+  [[nodiscard]] bool isMoving() const noexcept {
     return _solverState == SolverState::MOVE;
   }
 
   //--------------------- Variable ---------------------
 
-  [[nodiscard]] inline VarId sourceId(VarViewId id) const {
+  [[nodiscard]] VarId sourceId(VarViewId id) const {
     return _store.sourceId(id);
   }
 
   virtual void enqueueDefinedVar(VarId) = 0;
 
   [[nodiscard]] Int value(Timestamp, VarViewId);
-  [[nodiscard]] inline Int currentValue(VarViewId id) {
+  [[nodiscard]] Int currentValue(VarViewId id) {
     return value(_currentTimestamp, id);
   }
 
@@ -91,17 +82,17 @@ class SolverBase {
   void commitIf(Timestamp, VarId);
   void commitValue(VarId, Int val);
 
-  [[nodiscard]] inline Int lowerBound(VarViewId id) const {
+  [[nodiscard]] Int lowerBound(VarViewId id) const {
     return id.isView() ? _store.constIntView(ViewId(id)).lowerBound()
                        : _store.constIntVar(VarId(id)).lowerBound();
   }
 
-  [[nodiscard]] inline Int upperBound(VarViewId id) const {
+  [[nodiscard]] Int upperBound(VarViewId id) const {
     return id.isView() ? _store.constIntView(ViewId(id)).upperBound()
                        : _store.constIntVar(VarId(id)).upperBound();
   }
 
-  inline void updateBounds(VarId id, Int lb, Int ub, bool widenOnly) {
+  void updateBounds(VarId id, Int lb, Int ub, bool widenOnly) {
     _store.intVar(id).updateBounds(lb, ub, widenOnly);
   }
 
@@ -117,7 +108,7 @@ class SolverBase {
    * @return the created invariant.
    */
   template <class T, typename... Args>
-  std::enable_if_t<std::is_base_of<Invariant, T>::value, T&> makeInvariant(
+  std::enable_if_t<std::is_base_of_v<Invariant, T>, T&> makeInvariant(
       Args&&... args);
 
   /**
@@ -127,7 +118,7 @@ class SolverBase {
    * @return the created IntView.
    */
   template <class T, typename... Args>
-  std::enable_if_t<std::is_base_of<IntView, T>::value, VarViewId> makeIntView(
+  std::enable_if_t<std::is_base_of_v<IntView, T>, VarViewId> makeIntView(
       Args&&... args);
 
   /**
@@ -137,7 +128,7 @@ class SolverBase {
    * @return the created violation invariant.
    */
   template <class T, typename... Args>
-  std::enable_if_t<std::is_base_of<ViolationInvariant, T>::value, T&>
+  std::enable_if_t<std::is_base_of_v<ViolationInvariant, T>, T&>
   makeViolationInvariant(Args&&... args);
 
   /**
@@ -151,6 +142,7 @@ class SolverBase {
    * @param invariantId the invariant
    * @param varId the input
    * @param localId the id of the input in the invariant
+   * @param isDynamic true if the input is a dynamic input to the invariant
    */
   virtual void registerInvariantInput(InvariantId invariantId, VarViewId varId,
                                       LocalId localId, bool isDynamic) = 0;
@@ -163,8 +155,8 @@ class SolverBase {
 };
 
 template <class T, typename... Args>
-std::enable_if_t<std::is_base_of<Invariant, T>::value, T&>
-SolverBase::makeInvariant(Args&&... args) {
+std::enable_if_t<std::is_base_of_v<Invariant, T>, T&> SolverBase::makeInvariant(
+    Args&&... args) {
   if (!_isOpen) {
     throw SolverClosedException("Cannot make invariant when store is closed.");
   }
@@ -179,7 +171,7 @@ SolverBase::makeInvariant(Args&&... args) {
 }
 
 template <class T, typename... Args>
-std::enable_if_t<std::is_base_of<IntView, T>::value, VarViewId>
+std::enable_if_t<std::is_base_of_v<IntView, T>, VarViewId>
 SolverBase::makeIntView(Args&&... args) {
   if (!_isOpen) {
     throw SolverClosedException("Cannot make intView when store is closed.");
@@ -193,7 +185,7 @@ SolverBase::makeIntView(Args&&... args) {
 }
 
 template <class T, typename... Args>
-std::enable_if_t<std::is_base_of<ViolationInvariant, T>::value, T&>
+std::enable_if_t<std::is_base_of_v<ViolationInvariant, T>, T&>
 SolverBase::makeViolationInvariant(Args&&... args) {
   if (!_isOpen) {
     throw SolverClosedException("Cannot make invariant when store is closed.");
@@ -215,8 +207,8 @@ inline Timestamp SolverBase::currentTimestamp() const {
   return _currentTimestamp;
 }
 
-inline bool SolverBase::hasChanged(Timestamp ts, VarId id) {
-  return _store.intVar(id).hasChanged(ts);
+inline bool SolverBase::hasChanged(Timestamp ts, VarId id) const {
+  return _store.constIntVar(id).hasChanged(ts);
 }
 
 inline Int SolverBase::value(Timestamp ts, VarViewId id) {

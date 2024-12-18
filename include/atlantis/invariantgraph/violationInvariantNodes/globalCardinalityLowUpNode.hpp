@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
- private:
   std::vector<VarNodeId> _inputs;
   std::vector<Int> _cover;
   std::vector<Int> _low;
@@ -30,6 +29,6 @@ class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
   void registerOutputVars() override;
 
   void registerNode() override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

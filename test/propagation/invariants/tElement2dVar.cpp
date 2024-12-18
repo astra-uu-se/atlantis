@@ -24,10 +24,10 @@ class Element2dVarTest : public InvariantTest {
   VarViewId colIndexVar{NULL_ID};
   VarViewId outputVar{NULL_ID};
 
-  Int rowIndexLb() const { return rowOffset; }
-  Int rowIndexUb() const { return rowOffset + numRows - 1; }
-  Int colIndexLb() const { return colOffset; }
-  Int colIndexUb() const { return colOffset + numCols - 1; }
+  [[nodiscard]] Int rowIndexLb() const { return rowOffset; }
+  [[nodiscard]] Int rowIndexUb() const { return rowOffset + numRows - 1; }
+  [[nodiscard]] Int colIndexLb() const { return colOffset; }
+  [[nodiscard]] Int colIndexUb() const { return colOffset + numCols - 1; }
 
  public:
   void SetUp() override {
@@ -66,27 +66,27 @@ class Element2dVarTest : public InvariantTest {
 
   [[nodiscard]] size_t zeroBasedRowIndex(Int rowIndexVal) const {
     EXPECT_LE(rowOffset, rowIndexVal);
-    EXPECT_LT(rowIndexVal - rowOffset, static_cast<Int>(numRows));
+    EXPECT_LT(rowIndexVal - rowOffset, numRows);
     return rowIndexVal - rowOffset;
   }
 
   [[nodiscard]] size_t zeroBasedColIndex(Int colIndexVal) const {
     EXPECT_LE(colOffset, colIndexVal);
-    EXPECT_LT(colIndexVal - colOffset, static_cast<Int>(numCols));
+    EXPECT_LT(colIndexVal - colOffset, numCols);
     return colIndexVal - colOffset;
   }
 
-  VarViewId getInput(Int rowIndexVal, Int colIndexVal) {
+  [[nodiscard]] VarViewId getInput(Int rowIndexVal, Int colIndexVal) const {
     return varMatrix.at(zeroBasedRowIndex(rowIndexVal))
         .at(zeroBasedColIndex(colIndexVal));
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     return computeOutput(ts, _solver->value(ts, rowIndexVar),
                          _solver->value(ts, colIndexVar));
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return computeOutput(committedValue ? _solver->committedValue(rowIndexVar)
                                         : _solver->currentValue(rowIndexVar),
                          committedValue ? _solver->committedValue(colIndexVar)
@@ -94,12 +94,13 @@ class Element2dVarTest : public InvariantTest {
                          committedValue);
   }
 
-  Int computeOutput(Timestamp ts, Int rowIndexVal, Int colIndexVal) {
+  [[nodiscard]] Int computeOutput(Timestamp ts, Int rowIndexVal,
+                                  Int colIndexVal) const {
     return _solver->value(ts, getInput(rowIndexVal, colIndexVal));
   }
 
-  Int computeOutput(Int rowIndexVal, Int colIndexVal,
-                    bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(Int rowIndexVal, Int colIndexVal,
+                                  bool committedValue = false) const {
     return committedValue
                ? _solver->committedValue(getInput(rowIndexVal, colIndexVal))
                : _solver->currentValue(getInput(rowIndexVal, colIndexVal));
@@ -196,7 +197,7 @@ TEST_F(Element2dVarTest, NotifyInputChanged) {
 
     Timestamp ts = _solver->currentTimestamp();
 
-    Int i{-1};
+    const Int i{-1};
 
     for (Int rowIndexVal = rowIndexLb(); rowIndexVal <= rowIndexUb();
          ++rowIndexVal) {
@@ -238,19 +239,20 @@ TEST_F(Element2dVarTest, NextInput) {
 }
 
 TEST_F(Element2dVarTest, NotifyCurrentInputChanged) {
-  Timestamp t0 = _solver->currentTimestamp() +
-                 (numRows * numCols * static_cast<Int>(offsets.size())) + 1;
+  const Timestamp t0 = _solver->currentTimestamp() +
+                       (numRows * numCols * static_cast<Int>(offsets.size())) +
+                       1;
   for (const auto& [ro, co] : offsets) {
     rowOffset = ro;
     colOffset = co;
 
     std::vector<Int> rowIndexValues(numRows, 0);
     std::iota(rowIndexValues.begin(), rowIndexValues.end(), rowOffset);
-    std::shuffle(rowIndexValues.begin(), rowIndexValues.end(), rng);
+    std::ranges::shuffle(rowIndexValues.begin(), rowIndexValues.end(), rng);
 
     std::vector<Int> colIndexValues(numCols, 0);
     std::iota(colIndexValues.begin(), colIndexValues.end(), colOffset);
-    std::shuffle(colIndexValues.begin(), colIndexValues.end(), rng);
+    std::ranges::shuffle(colIndexValues.begin(), colIndexValues.end(), rng);
 
     _solver->open();
     auto& invariant = generate();
@@ -294,11 +296,11 @@ TEST_F(Element2dVarTest, Commit) {
 
     std::vector<Int> rowIndexValues(numRows);
     std::iota(rowIndexValues.begin(), rowIndexValues.end(), rowOffset);
-    std::shuffle(rowIndexValues.begin(), rowIndexValues.end(), rng);
+    std::ranges::shuffle(rowIndexValues.begin(), rowIndexValues.end(), rng);
 
     std::vector<Int> colIndexValues(numCols, 0);
     std::iota(colIndexValues.begin(), colIndexValues.end(), colOffset);
-    std::shuffle(colIndexValues.begin(), colIndexValues.end(), rng);
+    std::ranges::shuffle(colIndexValues.begin(), colIndexValues.end(), rng);
 
     _solver->open();
     auto& invariant = generate();
@@ -411,22 +413,22 @@ RC_GTEST_FIXTURE_PROP(Element2dVarTest, rapidcheck, ()) {
     }
   }
 
-  std::vector<VarViewId> staticInputVars{rowIndexVar, colIndexVar};
+  const std::vector<VarViewId> staticInputVars{rowIndexVar, colIndexVar};
 
   std::vector<std::uniform_int_distribution<Int>> indexDists{rowIndexDist,
                                                              colIndexDist};
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      for (size_t i = 0; i < dynamicInputVars.size(); ++i) {
+      for (const auto& dVar : dynamicInputVars) {
         if (randBool()) {
-          _solver->setValue(dynamicInputVars.at(i), dynamicVarDist(gen));
+          _solver->setValue(dVar, dynamicVarDist(gen));
         }
       }
       for (size_t i = 0; i < staticInputVars.size(); ++i) {
@@ -501,12 +503,11 @@ TEST_F(Element2dVarTest, SolverIntegration) {
         numRows, std::vector<VarViewId>(numCols, NULL_ID));
     for (Int i = 0; i < numRows; ++i) {
       for (Int j = 0; j < numCols; ++j) {
-        varMatrix.at(i).at(j) =
-            _solver->makeIntVar(static_cast<Int>(i * numCols + j), -100, 100);
+        varMatrix.at(i).at(j) = _solver->makeIntVar(i * numCols + j, -100, 100);
       }
     }
-    VarViewId index1 = _solver->makeIntVar(1, 1, static_cast<Int>(numRows));
-    VarViewId index2 = _solver->makeIntVar(1, 1, static_cast<Int>(numCols));
+    VarViewId index1 = _solver->makeIntVar(1, 1, numRows);
+    VarViewId index2 = _solver->makeIntVar(1, 1, numCols);
     VarViewId output = _solver->makeIntVar(-10, -100, 100);
     testNotifications<MockElement2dVar>(
         &_solver->makeInvariant<MockElement2dVar>(

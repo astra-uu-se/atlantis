@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 AbsDiff::AbsDiff(SolverBase& solver, VarId output, VarViewId x, VarViewId y)

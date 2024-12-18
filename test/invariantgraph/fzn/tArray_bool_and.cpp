@@ -1,6 +1,5 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <rapidcheck/gen/Numeric.h>
 #include <rapidcheck/gtest.h>
 
 #include <algorithm>
@@ -23,40 +22,38 @@ class array_bool_andTest : public FznTestBase {
   std::string outputIdentifier = "output";
 
   bool isSatisfied(const std::vector<Int>& inputVals) {
-    return std::all_of(inputVals.begin(), inputVals.end(),
-                       [](Int val) { return val == 0; });
+    return std::ranges::all_of(inputVals.begin(), inputVals.end(),
+                               [](Int val) { return val == 0; });
   }
 
   void generate(const std::vector<Int>& inputs, Int output) {
     inputIdentifiers.reserve(inputs.size());
-    std::vector<fznparser::Arg> args;
+    std::vector<Arg> args;
     args.reserve(2);
 
     for (size_t i = 0; i < inputs.size(); ++i) {
       inputIdentifiers.emplace_back("b_" + std::to_string(i));
       if (inputs[i] < 0) {
-        _model->addVar(
-            std::make_shared<fznparser::BoolVar>(inputIdentifiers.back()));
+        _model->addVar(std::make_shared<BoolVar>(inputIdentifiers.back()));
       } else {
-        _model->addVar(std::make_shared<fznparser::BoolVar>(
-            inputs[i] > 0, inputIdentifiers.back()));
+        _model->addVar(
+            std::make_shared<BoolVar>(inputs[i] > 0, inputIdentifiers.back()));
       }
     }
     if (output < 0) {
-      _model->addVar(std::make_shared<fznparser::BoolVar>(outputIdentifier));
+      _model->addVar(std::make_shared<BoolVar>(outputIdentifier));
     } else {
-      _model->addVar(
-          std::make_shared<fznparser::BoolVar>(output > 0, outputIdentifier));
+      _model->addVar(std::make_shared<BoolVar>(output > 0, outputIdentifier));
     }
 
-    auto inputsArg = std::make_shared<fznparser::BoolVarArray>("inputs");
+    auto inputsArg = std::make_shared<BoolVarArray>("inputs");
     for (size_t i = 0; i < inputs.size(); ++i) {
-      inputsArg->append(std::get<std::shared_ptr<fznparser::BoolVar>>(
+      inputsArg->append(std::get<std::shared_ptr<BoolVar>>(
           _model->var(inputIdentifiers.at(i))));
     }
     args.emplace_back(inputsArg);
-    args.emplace_back(std::get<std::shared_ptr<fznparser::BoolVar>>(
-        _model->var(outputIdentifier)));
+    args.emplace_back(
+        std::get<std::shared_ptr<BoolVar>>(_model->var(outputIdentifier)));
 
     _model->addConstraint(Constraint(constraintIdentifier, std::move(args)));
   }
@@ -67,7 +64,7 @@ class array_bool_andTest : public FznTestBase {
   }
 
   void generateSimple() {
-    std::vector<Int> inputs(4, -1);
+    const std::vector<Int> inputs(4, -1);
     generate(inputs, -1);
   }
 };
@@ -90,7 +87,8 @@ TEST_F(array_bool_andTest, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  std::vector<propagation::VarViewId> inputVarIds = getVarIds(inputIdentifiers);
+  const std::vector<propagation::VarViewId> inputVarIds =
+      getVarIds(inputIdentifiers);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
 

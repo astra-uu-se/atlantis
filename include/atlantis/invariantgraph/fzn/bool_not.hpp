@@ -1,14 +1,15 @@
 #pragma once
 
 #include <fznparser/constraint.hpp>
-#include <fznparser/variables.hpp>
 
-#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+namespace atlantis::invariantgraph {
+class FznInvariantGraph;
+}
 
 namespace atlantis::invariantgraph::fzn {
 
-bool bool_not(FznInvariantGraph&, const fznparser::BoolArg& a,
-              const fznparser::BoolArg& b);
+bool bool_not(FznInvariantGraph&, const fznparser::BoolArg& boolVar,
+              const fznparser::BoolArg& negatedBoolVar);
 
 bool bool_not(FznInvariantGraph&, const fznparser::Constraint&);
 

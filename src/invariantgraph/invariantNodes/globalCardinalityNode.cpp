@@ -1,11 +1,15 @@
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
 
+#include <algorithm>
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 
@@ -22,16 +26,16 @@ GlobalCardinalityNode::GlobalCardinalityNode(IInvariantGraph& graph,
 
 void GlobalCardinalityNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(
-      std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                  [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void GlobalCardinalityNode::updateState() {
@@ -111,8 +115,9 @@ bool GlobalCardinalityNode::replace() {
 
 void GlobalCardinalityNode::registerOutputVars() {
   for (size_t i = 0; i < _cover.size(); ++i) {
-    const bool isDuplicate = std::any_of(
-        outputVarNodeIds().begin(), outputVarNodeIds().begin() + i,
+    const bool isDuplicate = std::ranges::any_of(
+        outputVarNodeIds().begin(),
+        outputVarNodeIds().begin() + static_cast<Int>(i),
         [&](const VarNodeId vId) { return vId == outputVarNodeIds().at(i); });
 
     assert(
@@ -146,18 +151,19 @@ void GlobalCardinalityNode::registerOutputVars() {
               solver(), _intermediate.at(i), _countOffsets[i]));
     }
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void GlobalCardinalityNode::registerNode() {
   std::vector<propagation::VarViewId> inputVarIds;
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(inputVarIds),
-                 [&](const auto& id) { return invariantGraph().varId(id); });
+  std::ranges::transform(
+      staticInputVarNodeIds(), std::back_inserter(inputVarIds),
+      [&](const auto& id) { return invariantGraph().varId(id); });
 
   std::vector<propagation::VarViewId> outputVarIds;
   outputVarIds.reserve(outputVarNodeIds().size());
@@ -182,7 +188,7 @@ void GlobalCardinalityNode::registerNode() {
 std::string GlobalCardinalityNode::dotLangIdentifier() const {
   std::string s{"global_cardinality ["};
   for (size_t i = 0; i < _cover.size(); ++i) {
-    s += _cover.at(i);
+    s += std::to_string(_cover.at(i));
     if (i < _cover.size() - 1) {
       s += ", ";
     }

@@ -1,13 +1,16 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityClosedNode.hpp"
 
+#include <algorithm>
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
-#include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/setInNode.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -29,16 +32,16 @@ void GlobalCardinalityClosedNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-                  [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void GlobalCardinalityClosedNode::registerOutputVars() {
@@ -68,7 +71,7 @@ bool GlobalCardinalityClosedNode::replace() {
     intermediateOutputNodeIds.emplace_back(invariantGraph().retrieveIntVarNode(
         std::make_shared<SearchDomain>(
             0, static_cast<Int>(staticInputVarNodeIds().size())),
-        VarNode::DomainType::NONE));
+        DomainType::DOM_NONE));
 
     violationVarNodeIds.emplace_back(invariantGraph().retrieveBoolVarNode());
 
@@ -94,11 +97,9 @@ bool GlobalCardinalityClosedNode::replace() {
         invariantGraph(), std::move(violationVarNodeIds),
         reifiedViolationNodeId()));
     return true;
-  } else {
-    invariantGraph().addInvariantNode(std::make_shared<ArrayBoolAndNode>(
-        invariantGraph(), std::move(violationVarNodeIds), false));
-    return true;
   }
+  invariantGraph().addInvariantNode(std::make_shared<ArrayBoolAndNode>(
+      invariantGraph(), std::move(violationVarNodeIds), false));
   return true;
 }
 

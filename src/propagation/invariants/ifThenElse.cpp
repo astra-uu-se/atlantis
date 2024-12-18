@@ -1,13 +1,15 @@
 #include "atlantis/propagation/invariants/ifThenElse.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarViewId condition,
-                       VarViewId thenBranch, VarViewId elseBranch)
+                       VarViewId thenVar, VarViewId elseVar)
     : Invariant(solver),
       _output(output),
       _condition(condition),
-      _branches({thenBranch, elseBranch}) {}
+      _branches({thenVar, elseVar}) {}
 
 IfThenElse::IfThenElse(SolverBase& solver, VarViewId output,
                        VarViewId condition, VarViewId thenBranch,

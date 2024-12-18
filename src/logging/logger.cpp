@@ -3,10 +3,10 @@
 namespace atlantis::logging {
 
 static std::string formatDuration(std::chrono::nanoseconds duration) {
-  auto seconds = duration.count() / 1'000'000'000;
-  auto milliseconds = duration.count() / 1'000'000;
-  auto microseconds = duration.count() / 1'000;
-  auto nanoseconds = duration.count();
+  const auto seconds = duration.count() / 1'000'000'000;
+  const auto milliseconds = duration.count() / 1'000'000;
+  const auto microseconds = duration.count() / 1'000;
+  const auto nanoseconds = duration.count();
 
   std::stringstream output;
 
@@ -30,9 +30,9 @@ void TimedLogScopeWrapper::begin(Logger& logger, Level level) {
 }
 
 void TimedLogScopeWrapper::end(Logger& logger, Level level) {
-  auto endTime = Clock::now();
-  auto duration = endTime - _startTime;
-  auto formattedDuration = formatDuration(
+  const auto endTime = Clock::now();
+  const auto duration = endTime - _startTime;
+  const auto formattedDuration = formatDuration(
       std::chrono::duration_cast<std::chrono::nanoseconds>(duration));
 
   logger.decreaseIndentation();

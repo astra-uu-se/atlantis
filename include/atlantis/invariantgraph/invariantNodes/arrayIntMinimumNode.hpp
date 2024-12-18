@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class ArrayIntMinimumNode : public InvariantNode {
- private:
   Int _ub;
 
  public:
@@ -26,6 +25,6 @@ class ArrayIntMinimumNode : public InvariantNode {
   [[nodiscard]] bool replace() override;
 
   void registerNode() override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

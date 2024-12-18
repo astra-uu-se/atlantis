@@ -2,14 +2,14 @@
 
 #include <algorithm>
 #include <fznparser/model.hpp>
-#include <optional>
-#include <variant>
+
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 
 namespace atlantis::invariantgraph {
 
-std::vector<invariantgraph::VarNodeId> &&append(
-    std::vector<invariantgraph::VarNodeId> &&vars,
-    invariantgraph::VarNodeId fst, invariantgraph::VarNodeId snd) {
+std::vector<VarNodeId> &&append(std::vector<VarNodeId> &&vars, VarNodeId fst,
+                                VarNodeId snd) {
   if (fst != NULL_NODE_ID) {
     vars.emplace_back(fst);
   }
@@ -19,19 +19,16 @@ std::vector<invariantgraph::VarNodeId> &&append(
   return std::move(vars);
 }
 
-std::vector<invariantgraph::VarNodeId> &&append(
-    std::vector<invariantgraph::VarNodeId> &&vars,
-    invariantgraph::VarNodeId var) {
+std::vector<VarNodeId> &&append(std::vector<VarNodeId> &&vars, VarNodeId var) {
   if (var != NULL_NODE_ID) {
     vars.emplace_back(var);
   }
   return std::move(vars);
 }
 
-std::vector<invariantgraph::VarNodeId> concat(
-    const std::vector<invariantgraph::VarNodeId> &fst,
-    const std::vector<invariantgraph::VarNodeId> &snd) {
-  std::vector<invariantgraph::VarNodeId> res;
+std::vector<VarNodeId> concat(const std::vector<VarNodeId> &fst,
+                              const std::vector<VarNodeId> &snd) {
+  std::vector<VarNodeId> res;
   res.reserve(fst.size() + snd.size());
   res.insert(res.end(), fst.begin(), fst.end());
   res.insert(res.end(), snd.begin(), snd.end());
@@ -39,7 +36,8 @@ std::vector<invariantgraph::VarNodeId> concat(
 }
 
 static std::vector<std::pair<size_t, Int>> allDifferent(
-    IInvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
+    IInvariantGraph &invariantGraph,
+    const std::vector<VarNodeId> &inputVarNodeIds) {
   // pruned[i] = <index, value> where index is the index of the static
   // variable with singleton domain {value}.
   std::vector<std::pair<size_t, Int>> fixed;
@@ -76,7 +74,8 @@ static std::vector<std::pair<size_t, Int>> allDifferent(
 }
 
 std::vector<VarNodeId> pruneAllDifferentFree(
-    IInvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
+    IInvariantGraph &invariantGraph,
+    const std::vector<VarNodeId> &inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
   std::vector<bool> isFree(inputVarNodeIds.size(), true);
   for (const auto &[index, _] : fixed) {
@@ -93,7 +92,8 @@ std::vector<VarNodeId> pruneAllDifferentFree(
 }
 
 std::vector<VarNodeId> pruneAllDifferentFixed(
-    IInvariantGraph &invariantGraph, std::vector<VarNodeId> inputVarNodeIds) {
+    IInvariantGraph &invariantGraph,
+    const std::vector<VarNodeId> &inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
   std::vector<bool> isFree(inputVarNodeIds.size(), true);
   for (const auto &[index, _] : fixed) {
@@ -112,8 +112,8 @@ std::vector<VarNodeId> pruneAllDifferentFixed(
 std::vector<Int> toIntVector(const std::vector<bool> &argument) {
   std::vector<Int> ints;
   ints.reserve(argument.size());
-  std::transform(argument.begin(), argument.end(), std::back_inserter(ints),
-                 [](const bool b) { return 1 - static_cast<Int>(b); });
+  std::ranges::transform(argument, std::back_inserter(ints),
+                         [](const bool b) { return 1 - static_cast<Int>(b); });
 
   return ints;
 }

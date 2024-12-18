@@ -1,9 +1,10 @@
 #include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
 
-#include <numeric>
+#include <algorithm>
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
 
 namespace atlantis::invariantgraph {
@@ -18,11 +19,11 @@ IntLinEqImplicitNode::IntLinEqImplicitNode(IInvariantGraph& graph,
 
 void IntLinEqImplicitNode::init(InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
-  assert(
-      std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                  [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 std::shared_ptr<search::neighborhoods::Neighborhood>
@@ -38,7 +39,7 @@ IntLinEqImplicitNode::createNeighborhood() {
     auto& varNode = invariantGraph().varNode(nId);
     assert(varNode.varId() != propagation::NULL_ID);
     searchVars.emplace_back(varNode.varId(), varNode.domain());
-    varNode.setDomainType(VarNode::DomainType::DOMAIN);
+    varNode.setDomainType(DomainType::DOM_DOMAIN);
   }
 
   return std::make_shared<search::neighborhoods::IntLinEqNeighborhood>(

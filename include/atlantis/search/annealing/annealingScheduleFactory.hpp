@@ -4,12 +4,11 @@
 #include <optional>
 #include <string>
 
-#include "atlantis/search/annealing/annealingSchedule.hpp"
-
 namespace atlantis::search {
 
+class AnnealingSchedule;
+
 class AnnealingScheduleCreationError : public std::exception {
- private:
   const std::string _msg;
 
  public:
@@ -23,7 +22,6 @@ class AnnealingScheduleCreationError : public std::exception {
 };
 
 class AnnealingScheduleFactory {
- private:
   std::optional<std::filesystem::path> _scheduleDefinition;
 
   [[nodiscard]] static inline std::unique_ptr<AnnealingSchedule>

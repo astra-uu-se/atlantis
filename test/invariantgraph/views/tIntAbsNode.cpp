@@ -1,6 +1,7 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/views/intAbsNode.hpp"
 #include "atlantis/propagation/solver.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
 
