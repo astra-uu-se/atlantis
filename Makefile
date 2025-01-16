@@ -70,7 +70,7 @@ build:
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
 	                                           -DBUILD_TESTS:BOOL=OFF \
 	                                           -DBUILD_BENCHMARKS:BOOL=OFF ..
-	cd ${BUILD_DIR}; $(MAKE)
+	cd ${BUILD_DIR}; $(MAKE) -j 8
 
 .PHONY: build-tests
 build-tests:
@@ -78,7 +78,7 @@ build-tests:
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
 	                                           -DBUILD_TESTS:BOOL=ON \
 	                                           -DBUILD_BENCHMARKS:BOOL=OFF ..
-	cd ${BUILD_DIR}; $(MAKE)
+	cd ${BUILD_DIR}; $(MAKE) -j 8
 
 .PHONY: build-benchmarks
 build-benchmarks:
@@ -86,7 +86,7 @@ build-benchmarks:
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
 	                                           -DBUILD_TESTS:BOOL=OFF \
 	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
-	cd ${BUILD_DIR}; $(MAKE)
+	cd ${BUILD_DIR}; $(MAKE) -j 8
 
 .PHONY: build-benchmarks-debug
 build-benchmarks-debug:
@@ -94,7 +94,7 @@ build-benchmarks-debug:
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
 	                                           -DBUILD_TESTS:BOOL=OFF \
 	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
-	cd ${BUILD_DIR}; $(MAKE)
+	cd ${BUILD_DIR}; $(MAKE) -j 8
 
 .PHONY: run
 run: build
