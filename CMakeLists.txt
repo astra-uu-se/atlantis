@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.23 FATAL_ERROR)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PROJECT_NAME atlantis)
@@ -109,7 +109,7 @@ include(FetchContent)
 FetchContent_Declare(
   fznparser
   GIT_REPOSITORY https://github.com/astra-uu-se/fznparser
-  GIT_TAG v1.1.0
+  GIT_TAG v1.1.1
 )
 FetchContent_Declare(
   cxxopts
@@ -263,5 +263,5 @@ packageProject(
   INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include
   INCLUDE_DESTINATION include/
   VERSION_HEADER "${VERSION_HEADER_LOCATION}"
-  DEPENDENCIES "fmt 8.1.1;fznparser 0.2"
+  DEPENDENCIES "fmt 8.1.1;fznparser v1.1.1"
 )

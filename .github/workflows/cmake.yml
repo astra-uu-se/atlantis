@@ -19,7 +19,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.9
         with:
-          cmake-version: "3.21.*"
+          cmake-version: "3.28.*"
 
       - name: Install Dependencies
         shell: bash
@@ -49,7 +49,7 @@ jobs:
             -DBUILD_BENCHMARKS:BOOL=${{steps.buildBenchmarksFlag.outputs.value}}
             -DCMAKE_BUILD_TYPE=${{steps.buildBenchmarksFlag.outputs.value == 'ON' && 'Release' || 'Debug'}}
         shell: bash
-        run: cmake $CMAKE_FLAGS ..; make
+        run: cmake $CMAKE_FLAGS ..; make -j 8
 
       - name: Test
         working-directory: ${{github.workspace}}/build
