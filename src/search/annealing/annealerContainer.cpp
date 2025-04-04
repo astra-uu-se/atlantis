@@ -7,26 +7,26 @@
 
 namespace atlantis::search {
 
-std::unique_ptr<AnnealingSchedule> AnnealerContainer::sequence(
-    std::vector<std::unique_ptr<AnnealingSchedule>> schedules) {
-  return std::make_unique<ScheduleSequence>(std::move(schedules));
+std::shared_ptr<AnnealingSchedule> AnnealerContainer::sequence(
+    std::vector<std::shared_ptr<AnnealingSchedule>> schedules) {
+  return std::make_shared<ScheduleSequence>(std::move(schedules));
 }
 
-std::unique_ptr<AnnealingSchedule> AnnealerContainer::heating(
+std::shared_ptr<AnnealingSchedule> AnnealerContainer::heating(
     double heatingRate, double minimumUphillAcceptanceRatio) {
-  return std::make_unique<GeometricHeatingSchedule>(
+  return std::make_shared<GeometricHeatingSchedule>(
       heatingRate, minimumUphillAcceptanceRatio);
 }
 
-std::unique_ptr<AnnealingSchedule> AnnealerContainer::cooling(
+std::shared_ptr<AnnealingSchedule> AnnealerContainer::cooling(
     double coolingRate, UInt successiveFutileRoundsThreshold) {
-  return std::make_unique<GeometricCoolingSchedule>(
+  return std::make_shared<GeometricCoolingSchedule>(
       coolingRate, successiveFutileRoundsThreshold);
 }
 
-std::unique_ptr<AnnealingSchedule> AnnealerContainer::loop(
-    std::unique_ptr<AnnealingSchedule> schedule, UInt numberOfIterations) {
-  return std::make_unique<ScheduleLoop>(std::move(schedule),
+std::shared_ptr<AnnealingSchedule> AnnealerContainer::loop(
+    std::shared_ptr<AnnealingSchedule> schedule, UInt numberOfIterations) {
+  return std::make_shared<ScheduleLoop>(std::move(schedule),
                                         numberOfIterations);
 }
 

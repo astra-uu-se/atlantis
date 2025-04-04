@@ -44,18 +44,18 @@ GlobalCardinalityLowUp::GlobalCardinalityLowUp(
 
 GlobalCardinalityLowUp::GlobalCardinalityLowUp(SolverBase& solver,
                                                VarId violationId,
-                                               std::vector<VarViewId>&& t_vars,
+                                               std::vector<VarViewId>&& vars,
                                                const std::vector<Int>& cover,
                                                const std::vector<Int>& bounds)
-    : GlobalCardinalityLowUp(solver, violationId, std::move(t_vars), cover,
+    : GlobalCardinalityLowUp(solver, violationId, std::move(vars), cover,
                              bounds, bounds) {}
 
 GlobalCardinalityLowUp::GlobalCardinalityLowUp(SolverBase& solver,
                                                VarViewId violationId,
-                                               std::vector<VarViewId>&& t_vars,
+                                               std::vector<VarViewId>&& vars,
                                                const std::vector<Int>& cover,
                                                const std::vector<Int>& bounds)
-    : GlobalCardinalityLowUp(solver, VarId(violationId), std::move(t_vars),
+    : GlobalCardinalityLowUp(solver, VarId(violationId), std::move(vars),
                              cover, bounds) {
   assert(violationId.isVar());
 }

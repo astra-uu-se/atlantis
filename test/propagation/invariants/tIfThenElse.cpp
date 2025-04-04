@@ -174,7 +174,7 @@ TEST_F(IfThenElseTest, NotifyCurrentInputChanged) {
       do {
         _solver->setValue(ts, curInput,
                           i == 0 ? conditionDist(gen)
-                                 : (i == 1 ? thenDist(gen) : elseDist(gen)));
+                                 : (conditionVal == 0 ? thenDist(gen) : elseDist(gen)));
       } while (_solver->value(ts, curInput) == oldVal);
 
       invariant.notifyCurrentInputChanged(ts);

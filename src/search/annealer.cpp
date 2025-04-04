@@ -19,26 +19,16 @@ Annealer::Annealer(RandomProvider& random, AnnealingSchedule& schedule,
               : (assignment.objectiveDirection() == ObjectiveDirection::MAXIMIZE
                      ? std::numeric_limits<Int>::min()
                      : 0),
-          assignment.objectiveDirection()) {
-  _statistics.bestCostOfPreviousRound = std::numeric_limits<Int>::max();
-  _statistics.bestCostOfThisRound = std::numeric_limits<Int>::max();
-
-  const auto numSearchVars = assignment.searchVars().size();
-  _requiredMovesPerRound = static_cast<UInt>(
-      static_cast<double>(128 * numSearchVars) / std::log2(numSearchVars));
-}
+          assignment.objectiveDirection()),
+      _statistics(INITIAL_TEMPERATURE),
+      _requiredMovesPerRound{static_cast<UInt>(
+        static_cast<double>(128 * assignment.searchVars().size()) / std::log2(assignment.searchVars().size()))}{}
 
 bool Annealer::isFinished() const { return _schedule.frozen(); }
 
 void Annealer::nextRound() {
   _schedule.nextRound(_statistics);
-
-  const auto previousBest = _statistics.bestCostOfThisRound;
-  _statistics = {};
-  _statistics.bestCostOfPreviousRound = previousBest;
-  _statistics.bestCostOfThisRound = std::numeric_limits<Int>::max();
-  _statistics.temperature = _schedule.temperature();
-
+  _statistics.nextRound(_schedule.temperature());
   _attemptedMovesPerRound = 0;
 }
 

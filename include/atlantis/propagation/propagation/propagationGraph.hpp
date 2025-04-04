@@ -76,7 +76,7 @@ class PropagationGraph {
   bool containsStaticCycle();
   void partitionIntoLayers(std::vector<bool>& visited, VarId varId);
   void partitionIntoLayers();
-  bool containsDynamicCycle(std::vector<bool>& visited, VarId varId);
+  bool containsDynamicCycle(std::vector<bool>& visited, VarId originVarId);
   bool containsDynamicCycle(size_t layer);
   void mergeLayersWithoutDynamicCycles();
   void computeLayerOffsets();

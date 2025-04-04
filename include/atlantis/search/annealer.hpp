@@ -19,12 +19,12 @@ class Annealer {
   RandomProvider& _random;
   AnnealingSchedule& _schedule;
   Cost _cost;
-
-  UInt _requiredMovesPerRound{0};
-  UInt _attemptedMovesPerRound{0};
   RoundStatistics _statistics;
+  UInt _requiredMovesPerRound;
 
-  const double INITIAL_TEMPERATURE = 1.0;
+  UInt _attemptedMovesPerRound{0};
+
+  static constexpr double INITIAL_TEMPERATURE{1.0};
 
   UInt _violationWeight{1};
   UInt _objectiveWeight{1};

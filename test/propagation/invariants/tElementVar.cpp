@@ -373,8 +373,8 @@ TEST_F(ElementVarTest, SolverIntegration) {
     std::vector<VarViewId> args;
     constexpr size_t numArgs = 10;
     args.reserve(numArgs);
-    for (Int value = 0; value < numArgs; ++value) {
-      args.push_back(_solver->makeIntVar(value, -100, 100));
+    for (size_t value = 0; value < numArgs; ++value) {
+      args.push_back(_solver->makeIntVar(static_cast<Int>(value), -100, 100));
     }
     VarViewId idx = _solver->makeIntVar(0, 0, static_cast<Int>(numArgs) - 1);
     VarViewId output = _solver->makeIntVar(-10, -100, 100);

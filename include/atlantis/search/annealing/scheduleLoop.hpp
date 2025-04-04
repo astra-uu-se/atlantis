@@ -13,14 +13,14 @@ namespace atlantis::search {
  * don't improve the assignment compared to the previous round.
  */
 class ScheduleLoop : public AnnealingSchedule {
-  std::unique_ptr<AnnealingSchedule> _schedule;
+  std::shared_ptr<AnnealingSchedule> _schedule;
   UInt _maximumConsecutiveFutileRounds;
 
   UInt _consecutiveFutileIterations{0};
   std::optional<RoundStatistics> _lastRoundStatistics;
 
  public:
-  explicit ScheduleLoop(std::unique_ptr<AnnealingSchedule> schedule,
+  explicit ScheduleLoop(std::shared_ptr<AnnealingSchedule> schedule,
                         UInt maximumConsecutiveFutileRounds)
       : _schedule(std::move(schedule)),
         _maximumConsecutiveFutileRounds(maximumConsecutiveFutileRounds) {}

@@ -12,9 +12,9 @@ IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarViewId condition,
       _branches({thenVar, elseVar}) {}
 
 IfThenElse::IfThenElse(SolverBase& solver, VarViewId output,
-                       VarViewId condition, VarViewId thenBranch,
-                       VarViewId elseBranch)
-    : IfThenElse(solver, VarId(output), condition, thenBranch, elseBranch) {
+                       VarViewId condition, VarViewId thenVar,
+                       VarViewId elseVar)
+    : IfThenElse(solver, VarId(output), condition, thenVar, elseVar) {
   assert(output.isVar());
 }
 

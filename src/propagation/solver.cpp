@@ -515,10 +515,6 @@ void Solver::notifyCurrentInputChanged(InvariantId invariantId) {
   _store.invariant(invariantId).notifyCurrentInputChanged(_currentTimestamp);
 }
 
-bool Solver::hasChanged(Timestamp ts, VarId id) const {
-  return _store.constIntVar(id).hasChanged(ts);
-}
-
 void Solver::setValue(Timestamp ts, VarViewId id, Int val) {
   assert(id.isVar());
   setValue(ts, VarId(id), val);

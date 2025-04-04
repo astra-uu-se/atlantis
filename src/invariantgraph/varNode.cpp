@@ -324,9 +324,9 @@ void VarNode::unmarkAsInputFor(InvariantNodeId listeningInvNodeId,
   }
 }
 
-void VarNode::markOutputTo(InvariantNodeId definingInvNodeId) {
-  assert(definingInvNodeId != NULL_NODE_ID);
-  _outputOf.emplace(definingInvNodeId);
+void VarNode::markOutputTo(InvariantNodeId definingInvariant) {
+  assert(definingInvariant != NULL_NODE_ID);
+  _outputOf.emplace(definingInvariant);
 }
 
 std::optional<Int> VarNode::constantValue() const noexcept {

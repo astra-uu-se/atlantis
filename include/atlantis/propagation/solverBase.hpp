@@ -32,8 +32,6 @@ class SolverBase {
     updateValue(_currentTimestamp, id, val);
   }
 
-  inline bool hasChanged(Timestamp, VarId) const;
-
   virtual void registerDefinedVar(VarId definedVarId,
                                   InvariantId invariantId) = 0;
 
@@ -69,6 +67,8 @@ class SolverBase {
   [[nodiscard]] Int committedValue(VarViewId);
 
   [[nodiscard]] Timestamp tmpTimestamp(VarViewId) const;
+
+  [[nodiscard]] inline bool hasChanged(Timestamp, VarId) const;
 
   [[nodiscard]] bool isPostponed(InvariantId) const;
 

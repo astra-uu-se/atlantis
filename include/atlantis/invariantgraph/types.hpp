@@ -3,6 +3,7 @@
 #include <climits>
 #include <ostream>
 #include <string>
+#include <utility>
 
 #include "atlantis/types.hpp"
 
@@ -37,10 +38,7 @@ struct InvariantNodeId {
     return _id != NULL_NODE_ID && (_id & IMPLICIT_CONSTRAINT_MASK) == size_t{0};
   }
 
-  InvariantNodeId& operator=(const InvariantNodeId& other) {
-    _id = other._id;
-    return *this;
-  }
+  InvariantNodeId& operator=(const InvariantNodeId& other) = default;
 
   bool operator==(const InvariantNodeId& other) const {
     return _id == other._id;
@@ -76,12 +74,17 @@ struct InvariantGraphOutputVarArray {
   std::vector<Int> indexSetSizes;
   std::vector<VarNodeId> varNodeIds;
 
-  InvariantGraphOutputVarArray(const std::string& identifier,
+  explicit InvariantGraphOutputVarArray(std::string&&  identifier,
                                const std::vector<Int>& indexSetSizes,
                                const std::vector<VarNodeId>& varNodeIds)
-      : identifier(identifier),
+      : identifier(std::move(identifier)),
         indexSetSizes(indexSetSizes),
         varNodeIds(varNodeIds) {}
+
+  explicit InvariantGraphOutputVarArray(const std::string&  identifier,
+                               const std::vector<Int>& indexSetSizes,
+                               const std::vector<VarNodeId>& varNodeIds)
+      : InvariantGraphOutputVarArray(std::move(std::string(identifier)), indexSetSizes, varNodeIds) {}
 };
 
 enum struct InvariantNodeState : unsigned char {

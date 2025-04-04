@@ -100,9 +100,6 @@ class Solver : public SolverBase {
 
   InvariantId definingInvariant(VarViewId) const;
 
-  // This function is used by propagation, which is unaware of views.
-  [[nodiscard]] bool hasChanged(Timestamp, VarId) const;
-
   [[nodiscard]] const std::vector<VarId>& varsDefinedBy(InvariantId) const;
 
   [[nodiscard]] const std::vector<PropagationGraph::ListeningInvariantData>&
@@ -118,10 +115,10 @@ class Solver : public SolverBase {
    * @param invariantId the invariant
    * @param inputId the id of the variable
    * @param localId the id of the variable in the invariant
-   * @param isDynamic true if the input is a dynamic input to the invariant
+   * @param isDynamicInput true if the input is a dynamic input to the invariant
    */
   void registerInvariantInput(InvariantId invariantId, VarViewId inputId,
-                              LocalId localId, bool isDynamic) final;
+                              LocalId localId, bool isDynamicInput) final;
 
   void registerVar(VarId) final;
   void registerInvariant(InvariantId) final;

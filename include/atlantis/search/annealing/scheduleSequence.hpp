@@ -10,7 +10,7 @@ namespace atlantis::search {
 
 class ScheduleSequence : public AnnealingSchedule {
  public:
-  using ScheduleList = std::vector<std::unique_ptr<AnnealingSchedule>>;
+  using ScheduleList = std::vector<std::shared_ptr<AnnealingSchedule>>;
 
  private:
   ScheduleList _schedules;
