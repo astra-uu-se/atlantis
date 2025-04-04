@@ -4,6 +4,7 @@
 #include <chrono>
 #include <functional>
 #include <numeric>
+#include <ranges>
 
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/store/store.hpp"
@@ -281,7 +282,7 @@ bool PropagationGraph::containsDynamicCycle(std::vector<bool>& visited,
     // mark as in frontier:
     onStack[index] = true;
     // get the defining invariant:
-    for (const auto& [inputId, _] : inputVars(defInv)) {
+    for (const auto& inputId : std::views::keys(inputVars(defInv))) {
       assert(_varLayerIndex[inputId].layer <= layer);
       if (_varLayerIndex[inputId].layer == layer) {
         stack.emplace_back(inputId);

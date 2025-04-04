@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <ranges>
 
 #include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
@@ -1303,7 +1304,7 @@ void InvariantGraph::writeDotFile(std::ostream& o) const {
 
   std::vector<std::string> varIdentifiers;
   varIdentifiers.reserve(_namedVarNodeIndices.size());
-  for (const auto& [identifier, _] : _namedVarNodeIndices) {
+  for (const auto& identifier: std::views::keys(_namedVarNodeIndices)) {
     varIdentifiers.push_back(identifier);
   }
 

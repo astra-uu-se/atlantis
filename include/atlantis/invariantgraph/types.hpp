@@ -16,7 +16,7 @@ using VarNodeId = size_t;
 struct InvariantNodeId {
  private:
   size_t _id;
-  static const size_t IMPLICIT_CONSTRAINT_MASK =
+  static constexpr size_t IMPLICIT_CONSTRAINT_MASK =
       (size_t{1} << (sizeof(size_t) * CHAR_BIT - 1));
 
  public:

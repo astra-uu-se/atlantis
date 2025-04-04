@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <fznparser/model.hpp>
+#include <ranges>
 
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
@@ -78,7 +79,7 @@ std::vector<VarNodeId> pruneAllDifferentFree(
     const std::vector<VarNodeId> &inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
   std::vector<bool> isFree(inputVarNodeIds.size(), true);
-  for (const auto &[index, _] : fixed) {
+  for (const auto &index : std::views::keys(fixed)) {
     isFree[index] = false;
   }
   std::vector<VarNodeId> freeVars;
@@ -96,7 +97,7 @@ std::vector<VarNodeId> pruneAllDifferentFixed(
     const std::vector<VarNodeId> &inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
   std::vector<bool> isFree(inputVarNodeIds.size(), true);
-  for (const auto &[index, _] : fixed) {
+  for (const auto &index : std::views::keys(fixed)) {
     isFree[index] = false;
   }
   std::vector<VarNodeId> freeVars;

@@ -215,9 +215,9 @@ void Solver::endProbe() {
       outputToInputPropagate();
     }
     _solverState = SolverState::IDLE;
-  } catch (std::exception const& e) {
+  } catch (std::exception const&) {
     _solverState = SolverState::IDLE;
-    throw e;
+    throw;
   }
 }
 
@@ -261,9 +261,9 @@ void Solver::endCommit() {
                  return !_store.intVar(varId).hasChanged(_currentTimestamp);
                }));
     _solverState = SolverState::IDLE;
-  } catch (std::exception const& e) {
+  } catch (std::exception const&) {
     _solverState = SolverState::IDLE;
-    throw e;
+    throw;
   }
 }
 

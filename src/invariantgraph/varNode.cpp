@@ -307,17 +307,17 @@ void VarNode::unmarkOutputTo(InvariantNodeId definingInvNodeId) {
   _outputOf.erase(definingInvNodeId);
 }
 
-void VarNode::unmarkAsInputFor(InvariantNodeId listeningInvNodeId,
+void VarNode::unmarkAsInputFor(InvariantNodeId listeningInvariant,
                                bool isStaticInput) {
   if (isStaticInput) {
     for (Int i = static_cast<Int>(_staticInputTo.size()) - 1; i >= 0; --i) {
-      if (_staticInputTo[i] == listeningInvNodeId) {
+      if (_staticInputTo[i] == listeningInvariant) {
         _staticInputTo.erase(_staticInputTo.begin() + i);
       }
     }
   } else {
     for (Int i = static_cast<Int>(_dynamicInputTo.size()) - 1; i >= 0; --i) {
-      if (_dynamicInputTo[i] == listeningInvNodeId) {
+      if (_dynamicInputTo[i] == listeningInvariant) {
         _dynamicInputTo.erase(_dynamicInputTo.begin() + i);
       }
     }
