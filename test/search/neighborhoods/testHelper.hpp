@@ -3,7 +3,6 @@
 #include <gtest/gtest.h>
 
 #include "atlantis/propagation/solver.hpp"
-#include "atlantis/search/annealer.hpp"
 #include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "atlantis/search/cost.hpp"
 #include "atlantis/search/iAssignment.hpp"
@@ -19,11 +18,11 @@ class SimpleAssignment : public virtual IAssignment {
  public:
   std::shared_ptr<propagation::Solver> _solver;
 
-  SimpleAssignment(std::shared_ptr<propagation::Solver> solver)
+  explicit SimpleAssignment(const std::shared_ptr<propagation::Solver>& solver)
       : _solver(solver) {}
 
   Cost initialize(RandomProvider&) override {
-    return Cost(0, 0, ObjectiveDirection::NONE);
+    return Cost{0, 0, ObjectiveDirection::NONE};
   }
 
   void initialize(Neighborhood& neighborhood, RandomProvider& random) {
@@ -35,12 +34,12 @@ class SimpleAssignment : public virtual IAssignment {
   }
 
   Cost performProbe(RandomProvider&) override {
-    return Cost(0, 0, ObjectiveDirection::NONE);
+    return Cost{0, 0, ObjectiveDirection::NONE};
   }
 
   void commitLastProbe() override {}
 
-  Int currentValue(propagation::VarViewId var) const override {
+  [[nodiscard]] Int currentValue(propagation::VarViewId var) const override {
     return _solver->currentValue(var);
   }
 

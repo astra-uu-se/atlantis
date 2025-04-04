@@ -44,9 +44,9 @@ class LinearTest : public InvariantTest {
             ? coeffs.front()
             : coeffUb;
 
-    for (size_t i = 0; i < coeffs.size(); ++i) {
-      cLb = std::min(cLb, coeffs.at(i));
-      cUb = std::max(cUb, coeffs.at(i));
+    for (const Int c : coeffs) {
+      cLb = std::min(cLb, c);
+      cUb = std::max(cUb, c);
     }
 
     if (coeffs.size() < static_cast<size_t>(numInputVars)) {
@@ -58,14 +58,10 @@ class LinearTest : public InvariantTest {
     }
 
     std::vector<Int> bounds{
-        (std::numeric_limits<Int>::min() / static_cast<Int>(numInputVars)) /
-            coeffLb,
-        (std::numeric_limits<Int>::min() / static_cast<Int>(numInputVars)) /
-            coeffUb,
-        (std::numeric_limits<Int>::max() / static_cast<Int>(numInputVars)) /
-            coeffLb,
-        (std::numeric_limits<Int>::max() / static_cast<Int>(numInputVars)) /
-            coeffUb};
+        (std::numeric_limits<Int>::min() / numInputVars) / coeffLb,
+        (std::numeric_limits<Int>::min() / numInputVars) / coeffUb,
+        (std::numeric_limits<Int>::max() / numInputVars) / coeffLb,
+        (std::numeric_limits<Int>::max() / numInputVars) / coeffUb};
     const auto [lb, ub] = std::minmax_element(bounds.begin(), bounds.end());
     inputVarLb = std::max(inputVarLb, *lb);
     inputVarUb = std::min(inputVarUb, *ub);
@@ -91,7 +87,7 @@ class LinearTest : public InvariantTest {
     inputVars.clear();
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = _solver->value(ts, inputVars.at(i));
@@ -99,7 +95,7 @@ class LinearTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = committedValue ? _solver->committedValue(inputVars.at(i))
@@ -108,7 +104,7 @@ class LinearTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(const std::vector<Int>& values) {
+  [[nodiscard]] Int computeOutput(const std::vector<Int>& values) const {
     Int sum = 0;
     for (size_t i = 0; i < values.size(); ++i) {
       sum += values.at(i) * coeffs.at(i);
@@ -291,17 +287,17 @@ RC_GTEST_FIXTURE_PROP(LinearTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      for (size_t i = 0; i < inputVars.size(); ++i) {
+      for (const auto& var : inputVars) {
         if (randBool()) {
-          _solver->setValue(inputVars.at(i), inputVarDist(gen));
+          _solver->setValue(var, inputVarDist(gen));
         }
       }
       _solver->endMove();
@@ -365,14 +361,12 @@ TEST_F(LinearTest, SolverIntegration) {
       _solver->open();
     }
     std::vector<VarViewId> args;
-    const size_t numArgs = 10;
-    for (size_t value = 1; value <= numArgs; ++value) {
-      args.push_back(_solver->makeIntVar(static_cast<Int>(value), 1,
-                                         static_cast<Int>(numArgs)));
+    constexpr size_t numArgs = 10;
+    for (Int value = 1; value <= numArgs; ++value) {
+      args.push_back(_solver->makeIntVar(value, 1, numArgs));
     }
     const VarViewId modifiedVarId = args.front();
-    const VarViewId output =
-        _solver->makeIntVar(-10, -100, static_cast<Int>(numArgs * numArgs));
+    const VarViewId output = _solver->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockLinear>(
         &_solver->makeInvariant<MockLinear>(*_solver, output, std::move(args)),
         {propMode, markingMode, numArgs + 1, modifiedVarId, 5, output});

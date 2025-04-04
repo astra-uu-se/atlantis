@@ -5,16 +5,14 @@
 #include <rapidcheck/gen/Numeric.h>
 #include <rapidcheck/gtest.h>
 
-#include <deque>
 #include <fznparser/constraint.hpp>
 #include <fznparser/model.hpp>
-#include <fznparser/types.hpp>
 #include <fznparser/variables.hpp>
-#include <random>
 #include <string>
 #include <vector>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
@@ -122,41 +120,41 @@ class FznTestBase : public ::testing::Test {
     }
   }
 
-  IntArgState genIntArgState() {
+  static IntArgState genIntArgState() {
     return static_cast<IntArgState>(*rc::gen::inRange<unsigned char>(0, 2));
   }
 
-  std::shared_ptr<fznparser::IntVar> genIntVar(
-      Int lb, Int ub, const std::string& identifier = "i") {
-    return std::get<std::shared_ptr<fznparser::IntVar>>(
+  [[nodiscard]] std::shared_ptr<IntVar> genIntVar(
+      Int lb, Int ub, const std::string& identifier = "i") const {
+    return std::get<std::shared_ptr<IntVar>>(
         _model->addVar(std::make_shared<IntVar>(lb, ub, identifier)));
   }
 
-  fznparser::IntArg genIntArg(IntArgState state, Int lb, Int ub,
-                              const std::string& identifier = "i") {
+  [[nodiscard]] IntArg genIntArg(IntArgState state, Int lb, Int ub,
+                                 const std::string& identifier = "i") const {
     switch (state) {
       case IntArgState::PAR:
-        return fznparser::IntArg{*rc::gen::inRange<Int>(lb, ub + 1)};
+        return IntArg{*rc::gen::inRange<Int>(lb, ub + 1)};
       case IntArgState::FIXED: {
         const Int val = *rc::gen::inRange<Int>(lb, ub + 1);
-        return fznparser::IntArg{genIntVar(val, val, identifier)};
+        return IntArg{genIntVar(val, val, identifier)};
       }
       case IntArgState::VAR:
-        return fznparser::IntArg{genIntVar(lb, ub, identifier)};
+        return IntArg{genIntVar(lb, ub, identifier)};
       default:
         throw std::invalid_argument("Invalid IntArgState");
     }
   }
 
-  fznparser::IntArg genIntArg(Int lb, Int ub,
-                              const std::string& identifier = "b") {
+  [[nodiscard]] IntArg genIntArg(Int lb, Int ub,
+                                 const std::string& identifier = "b") const {
     return genIntArg(genIntArgState(), lb, ub, identifier);
   }
 
-  std::shared_ptr<fznparser::IntVarArray> genIntVarArray(
+  [[nodiscard]] std::shared_ptr<IntVarArray> genIntVarArray(
       size_t numVars, Int lb, Int ub, const std::string& identifier = "i_arr",
-      const std::string& varPrefix = "i_") {
-    auto vars = std::make_shared<fznparser::IntVarArray>(identifier);
+      const std::string& varPrefix = "i_") const {
+    auto vars = std::make_shared<IntVarArray>(identifier);
     std::vector<unsigned char> argStates =
         *rc::gen::container<std::vector<unsigned char>>(
             numVars, rc::gen::inRange<unsigned char>(0, 3));
@@ -181,50 +179,50 @@ class FznTestBase : public ::testing::Test {
     return vars;
   }
 
-  BoolArgState genBoolArgState() {
+  static BoolArgState genBoolArgState() {
     return static_cast<BoolArgState>(*rc::gen::inRange<unsigned char>(0, 5));
   }
 
-  std::shared_ptr<fznparser::BoolVar> genBoolVar(
-      BoolArgState state, const std::string& identifier = "b") {
+  [[nodiscard]] std::shared_ptr<BoolVar> genBoolVar(
+      BoolArgState state, const std::string& identifier = "b") const {
     switch (state) {
       case BoolArgState::FIXED_FALSE:
-        return std::get<std::shared_ptr<fznparser::BoolVar>>(
+        return std::get<std::shared_ptr<BoolVar>>(
             _model->addVar(std::make_shared<BoolVar>(false, identifier)));
       case BoolArgState::FIXED_TRUE:
-        return std::get<std::shared_ptr<fznparser::BoolVar>>(
+        return std::get<std::shared_ptr<BoolVar>>(
             _model->addVar(std::make_shared<BoolVar>(true, identifier)));
       case BoolArgState::VAR:
-        return std::get<std::shared_ptr<fznparser::BoolVar>>(
+        return std::get<std::shared_ptr<BoolVar>>(
             _model->addVar(std::make_shared<BoolVar>(identifier)));
       default:
         throw std::invalid_argument("Invalid BoolArgState");
     }
   }
 
-  fznparser::BoolArg genBoolArg(BoolArgState state,
-                                const std::string& identifier = "b") {
+  [[nodiscard]] BoolArg genBoolArg(BoolArgState state,
+                                   const std::string& identifier = "b") const {
     switch (state) {
       case BoolArgState::PAR_FALSE:
-        return fznparser::BoolArg{false};
+        return BoolArg{false};
       case BoolArgState::PAR_TRUE:
-        return fznparser::BoolArg{true};
+        return BoolArg{true};
       default:
         return genBoolVar(state, identifier);
     }
   }
 
-  fznparser::BoolArg genBoolArg(const std::string& identifier = "b") {
+  [[nodiscard]] BoolArg genBoolArg(const std::string& identifier = "b") const {
     return genBoolArg(genBoolArgState(), identifier);
   }
 
-  std::shared_ptr<fznparser::BoolVarArray> genBoolVarArray(
+  [[nodiscard]] std::shared_ptr<BoolVarArray> genBoolVarArray(
       size_t numVars, const std::string& identifier = "b_arr",
-      const std::string& varPrefix = "b_") {
+      const std::string& varPrefix = "b_") const {
     std::vector<unsigned char> argStates =
         *rc::gen::container<std::vector<unsigned char>>(
             numVars, rc::gen::inRange<unsigned char>(0, 5));
-    auto vars = std::make_shared<fznparser::BoolVarArray>(identifier);
+    auto vars = std::make_shared<BoolVarArray>(identifier);
     for (size_t i = 0; i < numVars; ++i) {
       const auto state = static_cast<BoolArgState>(argStates.at(i));
       switch (state) {

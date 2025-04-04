@@ -40,10 +40,8 @@ class BoolLinearTest : public InvariantTest {
     const Int cs = static_cast<Int>(coeffs.size());
 
     if (cs < numInputVars) {
-      Int coeffLb =
-          std::numeric_limits<Int>::min() / static_cast<Int>(numInputVars + 1);
-      Int coeffUb =
-          std::numeric_limits<Int>::max() / static_cast<Int>(numInputVars + 1);
+      const Int coeffLb = std::numeric_limits<Int>::min() / (numInputVars + 1);
+      const Int coeffUb = std::numeric_limits<Int>::max() / (numInputVars + 1);
       auto coeffDist = std::uniform_int_distribution<Int>(coeffLb, coeffUb);
       coeffs.reserve(numInputVars);
       for (Int i = 0; i < numInputVars; ++i) {
@@ -72,7 +70,7 @@ class BoolLinearTest : public InvariantTest {
     return invariant;
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     std::vector<Int> values(inputVars.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = _solver->value(ts, inputVars.at(i));
@@ -80,7 +78,7 @@ class BoolLinearTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     std::vector<Int> values(inputVars.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = committedValue ? _solver->committedValue(inputVars.at(i))
@@ -89,7 +87,7 @@ class BoolLinearTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(const std::vector<Int>& violations) {
+  [[nodiscard]] Int computeOutput(const std::vector<Int>& violations) const {
     Int sum = 0;
     for (size_t i = 0; i < violations.size(); ++i) {
       sum += static_cast<Int>(violations.at(i) == 0) * coeffs.at(i);
@@ -226,7 +224,7 @@ TEST_F(BoolLinearTest, Commit) {
 
   std::vector<size_t> indices(numInputVars);
   std::iota(indices.begin(), indices.end(), 0);
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   std::vector<Int> committedValues(inputVars.size());
   for (size_t i = 0; i < inputVars.size(); ++i) {
@@ -236,7 +234,7 @@ TEST_F(BoolLinearTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -333,8 +331,8 @@ RC_GTEST_FIXTURE_PROP(BoolLinearTest, rapidcheck, ()) {
     valDists.emplace_back(std::min(v1, v2), std::max(v1, v2));
   }
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -407,14 +405,12 @@ TEST_F(BoolLinearTest, SolverIntegration) {
       _solver->open();
     }
     std::vector<VarViewId> args;
-    const size_t numArgs = 10;
-    for (size_t value = 1; value <= numArgs; ++value) {
-      args.push_back(_solver->makeIntVar(static_cast<Int>(value), 1,
-                                         static_cast<Int>(numArgs)));
+    constexpr Int numArgs = 10;
+    for (Int value = 1; value <= numArgs; ++value) {
+      args.push_back(_solver->makeIntVar(value, 1, numArgs));
     }
     const VarViewId modifiedVarId = args.front();
-    const VarViewId output =
-        _solver->makeIntVar(-10, -100, static_cast<Int>(numArgs * numArgs));
+    const VarViewId output = _solver->makeIntVar(-10, -100, numArgs * numArgs);
     testNotifications<MockBoolLinear>(
         &_solver->makeInvariant<MockBoolLinear>(*_solver, output,
                                                 std::move(args)),

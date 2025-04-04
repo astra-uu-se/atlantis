@@ -47,7 +47,7 @@ class CountTest : public InvariantTest {
     return invariant;
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     std::vector<Int> values(haystackVars.size(), 0);
     for (size_t i = 0; i < haystackVars.size(); ++i) {
       values.at(i) = _solver->value(ts, haystackVars.at(i));
@@ -55,7 +55,7 @@ class CountTest : public InvariantTest {
     return computeOutput(_solver->value(ts, needleVar), values);
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     std::vector<Int> values(haystackVars.size(), 0);
     for (size_t i = 0; i < haystackVars.size(); ++i) {
       values.at(i) = committedValue
@@ -67,9 +67,9 @@ class CountTest : public InvariantTest {
                          values);
   }
 
-  Int computeOutput(Int needleVal, const std::vector<Int>& values) {
+  static Int computeOutput(Int needleVal, const std::vector<Int>& values) {
     Int count = 0;
-    for (Int value : values) {
+    for (const Int value : values) {
       if (value == needleVal) {
         ++count;
       }
@@ -117,8 +117,9 @@ TEST_F(CountTest, Recompute) {
 
   haystackSize = 3;
 
-  std::pair<Int, Int> inputBound{-1, 1};
-  std::vector<std::pair<Int, Int>> haystackBounds(haystackSize, inputBound);
+  const std::pair<Int, Int> inputBound{-1, 1};
+  const std::vector<std::pair<Int, Int>> haystackBounds(haystackSize,
+                                                        inputBound);
 
   _solver->open();
 
@@ -209,7 +210,7 @@ TEST_F(CountTest, Commit) {
 
   std::vector<size_t> indices(haystackSize + 1);
   std::iota(indices.begin(), indices.end(), 0);
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   std::vector<VarViewId> inputVars(haystackVars);
   inputVars.emplace_back(needleVar);
@@ -223,7 +224,7 @@ TEST_F(CountTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
     for (size_t j = 0; j < committedValues.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -271,17 +272,17 @@ RC_GTEST_FIXTURE_PROP(CountTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      for (size_t i = 0; i < haystackVars.size(); ++i) {
+      for (const auto& hVar : haystackVars) {
         if (randBool()) {
-          _solver->setValue(haystackVars.at(i), haystackVarDist(gen));
+          _solver->setValue(hVar, haystackVarDist(gen));
         }
       }
       if (randBool()) {
@@ -348,12 +349,11 @@ TEST_F(CountTest, SolverIntegration) {
     if (!_solver->isOpen()) {
       _solver->open();
     }
-    const size_t numArgs = 10;
+    constexpr Int numArgs = 10;
     const VarViewId needleVar = _solver->makeIntVar(0, 0, numArgs);
     std::vector<VarViewId> args;
-    for (size_t value = 1; value <= numArgs; ++value) {
-      args.push_back(_solver->makeIntVar(static_cast<Int>(value), 1,
-                                         static_cast<Int>(numArgs)));
+    for (Int value = 1; value <= numArgs; ++value) {
+      args.push_back(_solver->makeIntVar(value, 1, numArgs));
     }
     const VarViewId modifiedVarId = args.front();
     const VarViewId output = _solver->makeIntVar(-10, -100, numArgs * numArgs);

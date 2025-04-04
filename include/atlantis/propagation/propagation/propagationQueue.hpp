@@ -1,16 +1,15 @@
 #pragma once
 #include <cassert>
 #include <memory>
+#include <vector>
 
 #include "atlantis/propagation/propagation/propagationListNode.hpp"
-#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::propagation {
 
 class PropagationQueue {
   typedef PropagationListNode ListNode;
 
- private:
   std::vector<std::unique_ptr<ListNode>> _priorityNodes;
   ListNode* head;
   ListNode* tail;
@@ -85,7 +84,7 @@ class PropagationQueue {
     ret->next = nullptr;
     return ret->id;
   }
-  VarId top() {
+  [[nodiscard]] VarId top() const {
     if (head == nullptr) {
       return NULL_ID;
     }

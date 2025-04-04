@@ -11,7 +11,6 @@ namespace atlantis::invariantgraph {
  */
 class ImplicitConstraintNode : public virtual IImplicitConstraintNode,
                                public InvariantNode {
- private:
   std::shared_ptr<search::neighborhoods::Neighborhood> _neighborhood{nullptr};
 
  public:
@@ -43,7 +42,7 @@ class ImplicitConstraintNode : public virtual IImplicitConstraintNode,
   neighborhood() override;
 
  protected:
-  virtual std::shared_ptr<search::neighborhoods::Neighborhood>
+  [[nodiscard]] std::shared_ptr<search::neighborhoods::Neighborhood>
   createNeighborhood() override = 0;
 };
 }  // namespace atlantis::invariantgraph

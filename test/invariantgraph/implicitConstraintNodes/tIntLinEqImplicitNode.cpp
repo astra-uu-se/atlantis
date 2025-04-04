@@ -1,5 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
 
 namespace atlantis::testing {
@@ -36,11 +37,11 @@ TEST_P(IntLinEqImplicitNodeTestFixture, construction) {
 
 TEST_P(IntLinEqImplicitNodeTestFixture, application) {
   _solver->open();
-  for (VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
+  for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerOutputVars();
-  for (VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
+  for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   invNode().registerNode();
@@ -54,7 +55,7 @@ TEST_P(IntLinEqImplicitNodeTestFixture, application) {
 
   EXPECT_EQ(_solver->numInvariants(), 0);
 
-  auto neighborhood = invNode().neighborhood();
+  const auto neighborhood = invNode().neighborhood();
 
   EXPECT_TRUE(dynamic_cast<search::neighborhoods::IntLinEqNeighborhood*>(
       neighborhood.get()));

@@ -1,8 +1,6 @@
 #pragma once
 
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/types.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
@@ -19,7 +17,7 @@ class ViolationInvariant : public Invariant {
 
  public:
   [[nodiscard]] inline VarId violationId() const;
-  [[nodiscard]] inline Int violationCount(Timestamp&) const;
+  [[nodiscard]] inline Int violationCount(Timestamp) const;
 };
 
 }  // namespace atlantis::propagation

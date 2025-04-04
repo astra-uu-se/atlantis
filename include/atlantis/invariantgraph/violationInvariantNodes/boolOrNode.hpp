@@ -5,7 +5,6 @@
 namespace atlantis::invariantgraph {
 
 class BoolOrNode : public ViolationInvariantNode {
- private:
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
@@ -27,7 +26,7 @@ class BoolOrNode : public ViolationInvariantNode {
     return staticInputVarNodeIds().back();
   }
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

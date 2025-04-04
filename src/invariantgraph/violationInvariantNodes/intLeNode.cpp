@@ -1,8 +1,12 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/intLeNode.hpp"
 
-#include <utility>
+#include <algorithm>
 
 #include "../parseHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 #include "atlantis/propagation/violationInvariants/lessThan.hpp"
 
@@ -21,20 +25,21 @@ void IntLeNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void IntLeNode::registerOutputVars() {
   registerViolation();
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void IntLeNode::updateState() {
@@ -43,8 +48,8 @@ void IntLeNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  VarNode aNode = invariantGraph().varNode(a());
-  VarNode bNode = invariantGraph().varNode(b());
+  const VarNode& aNode = invariantGraph().varNode(a());
+  const VarNode& bNode = invariantGraph().varNode(b());
   if (a() == b()) {
     if (isReified()) {
       fixReified(true);
@@ -75,7 +80,6 @@ void IntLeNode::updateState() {
       throw InconsistencyException("IntLeNode neg: a <= b");
     }
     setState(InvariantNodeState::SUBSUMED);
-    return;
   } else if (aNode.lowerBound() > bNode.upperBound()) {
     // always false
     if (isReified()) {
@@ -84,7 +88,6 @@ void IntLeNode::updateState() {
       throw InconsistencyException("IntLeNode: a > b");
     }
     setState(InvariantNodeState::SUBSUMED);
-    return;
   }
 }
 

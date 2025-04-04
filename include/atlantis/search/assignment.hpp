@@ -2,16 +2,20 @@
 
 #include <vector>
 
-#include "atlantis/propagation/solver.hpp"
-#include "atlantis/propagation/types.hpp"
 #include "atlantis/search/cost.hpp"
 #include "atlantis/search/iAssignment.hpp"
-#include "atlantis/search/neighborhoods/neighborhood.hpp"
+
+namespace atlantis::propagation {
+class Solver;
+}
 
 namespace atlantis::search {
 
+namespace neighborhoods {
+class Neighborhood;
+}
+
 class Assignment : public virtual IAssignment {
- private:
   propagation::Solver& _solver;
   neighborhoods::Neighborhood& _neighborhood;
   propagation::VarViewId _violation{propagation::NULL_ID};
@@ -35,17 +39,11 @@ class Assignment : public virtual IAssignment {
 
   /**
    * Get the current value of a variable in the assignment.
-   *
-   * @param var The variable for which to query the value.
-   * @return The value of @p var.
    */
   [[nodiscard]] Int currentValue(propagation::VarViewId) const override;
 
   /**
    * Get the committed of a variable in the assignment.
-   *
-   * @param var The variable for which to query the value.
-   * @return The value of @p var.
    */
   [[nodiscard]] Int committedValue(propagation::VarViewId) const override;
 

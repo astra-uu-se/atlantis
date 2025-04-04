@@ -2,9 +2,11 @@
 
 #include <vector>
 
-#include "atlantis/search/iAssignment.hpp"
-#include "atlantis/search/randomProvider.hpp"
-#include "atlantis/search/searchVariable.hpp"
+namespace atlantis::search {
+class SearchVar;
+class IAssignment;
+class RandomProvider;
+}  // namespace atlantis::search
 
 namespace atlantis::search::neighborhoods {
 
@@ -16,6 +18,7 @@ class Neighborhood {
    * Initialize an assignment.
    *
    * @param random The source of randomness.
+   * @param assignment to modify and initialize
    */
   virtual void initialize(RandomProvider& random, IAssignment& assignment) = 0;
 
@@ -23,6 +26,7 @@ class Neighborhood {
    * Make a random move.
    *
    * @param random The source of randomness.
+   * @param assignment the assignment to modify
    * @return the number of variables that were modified
    */
   virtual size_t randomMove(RandomProvider& random,
@@ -33,7 +37,7 @@ class Neighborhood {
    */
   [[nodiscard]] virtual const std::vector<SearchVar>& coveredVars() const = 0;
 
-  virtual void commitIf(const IAssignment&) {};
+  virtual void commitIf(const IAssignment&) {}
 };
 
 }  // namespace atlantis::search::neighborhoods

@@ -1,10 +1,6 @@
 #pragma once
 
-#include <vector>
-
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::propagation {
 
@@ -15,7 +11,6 @@ namespace atlantis::propagation {
  */
 
 class CountConst : public Invariant {
- private:
   VarId _output;
   Int _needle;
   std::vector<VarViewId> _vars;

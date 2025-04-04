@@ -2,20 +2,17 @@
 
 #include <vector>
 
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph {
+class IInvariantGraph;
 
-std::vector<invariantgraph::VarNodeId>&& append(
-    std::vector<invariantgraph::VarNodeId>&&, invariantgraph::VarNodeId,
-    invariantgraph::VarNodeId);
+std::vector<VarNodeId>&& append(std::vector<VarNodeId>&&, VarNodeId, VarNodeId);
 
-std::vector<invariantgraph::VarNodeId>&& append(
-    std::vector<invariantgraph::VarNodeId>&&, invariantgraph::VarNodeId);
+std::vector<VarNodeId>&& append(std::vector<VarNodeId>&&, VarNodeId);
 
-std::vector<invariantgraph::VarNodeId> concat(
-    const std::vector<invariantgraph::VarNodeId>&,
-    const std::vector<invariantgraph::VarNodeId>&);
+std::vector<VarNodeId> concat(const std::vector<VarNodeId>&,
+                              const std::vector<VarNodeId>&);
 
 std::vector<VarNodeId> pruneAllDifferentFree(
     IInvariantGraph&, std::vector<VarNodeId> staticInputVarNodeIds);

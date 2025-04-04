@@ -26,10 +26,10 @@ class Element2dConstTest : public InvariantTest {
   std::uniform_int_distribution<Int> rowIndexVarDist;
   std::uniform_int_distribution<Int> colIndexVarDist;
 
-  Int rowIndexLb() const { return rowOffset; }
-  Int rowIndexUb() const { return rowOffset + numRows - 1; }
-  Int colIndexLb() const { return colOffset; }
-  Int colIndexUb() const { return colOffset + numCols - 1; }
+  [[nodiscard]] Int rowIndexLb() const { return rowOffset; }
+  [[nodiscard]] Int rowIndexUb() const { return rowOffset + numRows - 1; }
+  [[nodiscard]] Int colIndexLb() const { return colOffset; }
+  [[nodiscard]] Int colIndexUb() const { return colOffset + numCols - 1; }
 
  public:
   void SetUp() override {
@@ -83,17 +83,17 @@ class Element2dConstTest : public InvariantTest {
     return colIndexVal - colOffset;
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     return computeOutput(_solver->value(ts, rowIndexVar),
                          _solver->value(ts, colIndexVar));
   }
 
-  Int computeOutput(Int rowIndexVal, Int colIndexVal) {
+  [[nodiscard]] Int computeOutput(Int rowIndexVal, Int colIndexVal) const {
     return parMatrix.at(zeroBasedRowIndex(rowIndexVal))
         .at(zeroBasedColIndex(colIndexVal));
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return parMatrix
         .at(zeroBasedRowIndex(committedValue
                                   ? _solver->committedValue(rowIndexVar)
@@ -215,19 +215,20 @@ TEST_F(Element2dConstTest, NextInput) {
 }
 
 TEST_F(Element2dConstTest, NotifyCurrentInputChanged) {
-  Timestamp t0 = _solver->currentTimestamp() +
-                 (numRows * numCols * static_cast<Int>(offsets.size())) + 1;
+  const Timestamp t0 = _solver->currentTimestamp() +
+                       (numRows * numCols * static_cast<Int>(offsets.size())) +
+                       1;
   for (const auto& [ro, co] : offsets) {
     rowOffset = ro;
     colOffset = co;
 
     std::vector<Int> rowIndexValues(numRows, 0);
     std::iota(rowIndexValues.begin(), rowIndexValues.end(), rowOffset);
-    std::shuffle(rowIndexValues.begin(), rowIndexValues.end(), rng);
+    std::ranges::shuffle(rowIndexValues.begin(), rowIndexValues.end(), rng);
 
     std::vector<Int> colIndexValues(numCols, 0);
     std::iota(colIndexValues.begin(), colIndexValues.end(), colOffset);
-    std::shuffle(colIndexValues.begin(), colIndexValues.end(), rng);
+    std::ranges::shuffle(colIndexValues.begin(), colIndexValues.end(), rng);
 
     auto& invariant = generate();
 
@@ -258,17 +259,11 @@ TEST_F(Element2dConstTest, Commit) {
 
     std::vector<Int> rowIndexValues(numRows);
     std::iota(rowIndexValues.begin(), rowIndexValues.end(), rowOffset);
-    std::shuffle(rowIndexValues.begin(), rowIndexValues.end(), rng);
-
-    std::uniform_int_distribution<Int> rowIndexVarDist(rowIndexLb(),
-                                                       rowIndexUb());
+    std::ranges::shuffle(rowIndexValues.begin(), rowIndexValues.end(), rng);
 
     std::vector<Int> colIndexValues(numCols, 0);
     std::iota(colIndexValues.begin(), colIndexValues.end(), colOffset);
-    std::shuffle(colIndexValues.begin(), colIndexValues.end(), rng);
-
-    std::uniform_int_distribution<Int> colIndexVarDist(colIndexLb(),
-                                                       colIndexUb());
+    std::ranges::shuffle(colIndexValues.begin(), colIndexValues.end(), rng);
 
     auto& invariant = generate();
 
@@ -335,8 +330,8 @@ RC_GTEST_FIXTURE_PROP(Element2dConstTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));

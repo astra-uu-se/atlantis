@@ -4,6 +4,8 @@
 #include <limits>
 #include <vector>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 ElementVar::ElementVar(SolverBase& solver, VarId output, VarViewId index,

@@ -1,5 +1,6 @@
 #include <benchmark/benchmark.h>
 
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <random>
@@ -8,7 +9,6 @@
 
 #include "atlantis/propagation/invariants/countConst.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/lessEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 #include "atlantis/propagation/violationInvariants/equal.hpp"
@@ -116,10 +116,11 @@ class CarSequencing : public ::benchmark::Fixture {
     initCarBlocks();
     initCarFeatures();
 
-    assert(std::all_of(
+    assert(std::ranges::all_of(
         carFeature.begin(), carFeature.end(), [&](const std::vector<Int>& v) {
-          return std::all_of(v.begin(), v.end(),
-                             [&](const Int o) { return 0 <= o && o <= 1; });
+          return std::ranges::all_of(v.begin(), v.end(), [&](const Int o) {
+            return 0 <= o && o <= 1;
+          });
         }));
 
     // introducing variables linear in numCars

@@ -4,7 +4,9 @@
 #include <iostream>
 
 #include "atlantis/fznBackend.hpp"
+#include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
+#include "atlantis/search/searchStatistics.hpp"
 
 atlantis::logging::Level getLogLevel(const cxxopts::ParseResult&);
 
@@ -60,7 +62,7 @@ int main(int argc, char* argv[]) {
 
     options.parse_positional({"modelFile"});
 
-    auto result = options.parse(argc, argv);
+    const auto result = options.parse(argc, argv);
 
     if (result.count("help")) {
       std::cout << options.help({""}) << std::endl;

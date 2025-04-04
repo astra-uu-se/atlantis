@@ -9,7 +9,6 @@ namespace atlantis::invariantgraph {
  * propagation solver.
  */
 class ViolationInvariantNode : public InvariantNode {
- private:
   // Bounds will be recomputed by the solver.
   propagation::VarViewId _violationVarId{propagation::NULL_ID};
   bool _isReified;
@@ -60,9 +59,9 @@ class ViolationInvariantNode : public InvariantNode {
 
   [[nodiscard]] propagation::VarViewId violationVarId() const override;
 
-  VarNodeId reifiedViolationNodeId();
+  [[nodiscard]] VarNodeId reifiedViolationNodeId() const;
 
-  virtual void updateState() override;
+  void updateState() override;
 };
 
 }  // namespace atlantis::invariantgraph

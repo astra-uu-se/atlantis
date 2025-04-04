@@ -1,13 +1,15 @@
 #include "atlantis/propagation/views/notEqualConst.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 Int NotEqualConst::value(Timestamp ts) {
-  return static_cast<Int>(_solver.value(ts, _parentId) == _val);
+  return _solver.value(ts, _parentId) == _val ? 1 : 0;
 }
 
 Int NotEqualConst::committedValue() {
-  return static_cast<Int>(_solver.committedValue(_parentId) == _val);
+  return _solver.committedValue(_parentId) == _val ? 1 : 0;
 }
 
 Int NotEqualConst::lowerBound() const {

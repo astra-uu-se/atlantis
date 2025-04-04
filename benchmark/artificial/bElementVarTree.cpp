@@ -10,7 +10,6 @@
 #include "../benchmark.hpp"
 #include "atlantis/propagation/invariants/absDiff.hpp"
 #include "atlantis/propagation/invariants/elementVar.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 #include "atlantis/utils/pow.hpp"
 

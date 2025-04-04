@@ -3,8 +3,8 @@
 #include "atlantis/invariantgraph/invariantNode.hpp"
 
 namespace atlantis::invariantgraph {
+
 class IntLinearNode : public InvariantNode {
- private:
   std::vector<Int> _coeffs;
   Int _offset;
   propagation::VarViewId _intermediate{propagation::NULL_ID};
@@ -28,6 +28,6 @@ class IntLinearNode : public InvariantNode {
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

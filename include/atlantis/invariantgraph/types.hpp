@@ -1,10 +1,9 @@
 #pragma once
 
-#include <limits.h>
-
-#include <cstdint>
+#include <climits>
 #include <ostream>
 #include <string>
+#include <utility>
 
 #include "atlantis/types.hpp"
 
@@ -17,7 +16,7 @@ using VarNodeId = size_t;
 struct InvariantNodeId {
  private:
   size_t _id;
-  static const size_t IMPLICIT_CONSTRAINT_MASK =
+  static constexpr size_t IMPLICIT_CONSTRAINT_MASK =
       (size_t{1} << (sizeof(size_t) * CHAR_BIT - 1));
 
  public:
@@ -31,18 +30,15 @@ struct InvariantNodeId {
 
   explicit InvariantNodeId(size_t id) : InvariantNodeId(id, false) {}
 
-  inline bool isImplicitConstraint() const {
+  [[nodiscard]] bool isImplicitConstraint() const {
     return _id != NULL_NODE_ID && (_id & IMPLICIT_CONSTRAINT_MASK) != size_t{0};
   }
 
-  inline bool isInvariant() const {
+  [[nodiscard]] bool isInvariant() const {
     return _id != NULL_NODE_ID && (_id & IMPLICIT_CONSTRAINT_MASK) == size_t{0};
   }
 
-  inline InvariantNodeId& operator=(const InvariantNodeId& other) {
-    _id = other._id;
-    return *this;
-  }
+  InvariantNodeId& operator=(const InvariantNodeId& other) = default;
 
   bool operator==(const InvariantNodeId& other) const {
     return _id == other._id;
@@ -76,14 +72,20 @@ struct InvariantNodeIdHash {
 struct InvariantGraphOutputVarArray {
   std::string identifier;
   std::vector<Int> indexSetSizes;
-  std::vector<invariantgraph::VarNodeId> varNodeIds;
+  std::vector<VarNodeId> varNodeIds;
 
-  InvariantGraphOutputVarArray(
-      std::string identifier, std::vector<Int> indexSetSizes,
-      std::vector<invariantgraph::VarNodeId> varNodeIds)
-      : identifier(identifier),
+  explicit InvariantGraphOutputVarArray(
+      std::string&& identifier, const std::vector<Int>& indexSetSizes,
+      const std::vector<VarNodeId>& varNodeIds)
+      : identifier(std::move(identifier)),
         indexSetSizes(indexSetSizes),
         varNodeIds(varNodeIds) {}
+
+  explicit InvariantGraphOutputVarArray(
+      const std::string& identifier, const std::vector<Int>& indexSetSizes,
+      const std::vector<VarNodeId>& varNodeIds)
+      : InvariantGraphOutputVarArray(std::move(std::string(identifier)),
+                                     indexSetSizes, varNodeIds) {}
 };
 
 enum struct InvariantNodeState : unsigned char {
@@ -95,6 +97,15 @@ enum struct InvariantNodeState : unsigned char {
 struct InvariantGraphEdge {
   InvariantNodeId invariantNodeId;
   VarNodeId varNodeId;
+};
+
+enum struct DomainType : unsigned char {
+  DOM_NONE = 0,
+  DOM_FIXED = 1,
+  DOM_LOWER_BOUND = 2,
+  DOM_UPPER_BOUND = 3,
+  DOM_RANGE = 4,
+  DOM_DOMAIN = 5
 };
 
 }  // namespace atlantis::invariantgraph

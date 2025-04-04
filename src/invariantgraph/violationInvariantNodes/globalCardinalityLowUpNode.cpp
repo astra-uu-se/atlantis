@@ -1,8 +1,12 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityLowUpNode.hpp"
 
+#include <algorithm>
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/globalCardinalityLowUp.hpp"
 
@@ -31,16 +35,16 @@ void GlobalCardinalityLowUpNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-                  [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin() + (isReified() ? 1 : 0),
+      outputVarNodeIds().end(), [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void GlobalCardinalityLowUpNode::registerOutputVars() {
@@ -54,11 +58,12 @@ void GlobalCardinalityLowUpNode::registerOutputVars() {
       registerViolation();
     }
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void GlobalCardinalityLowUpNode::registerNode() {
@@ -67,9 +72,10 @@ void GlobalCardinalityLowUpNode::registerNode() {
   assert(shouldHold() || _intermediate != propagation::NULL_ID);
   assert(shouldHold() ? violationVarId().isVar() : _intermediate.isVar());
 
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(inputVarIds),
-                 [&](const auto& id) { return invariantGraph().varId(id); });
+  std::ranges::transform(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      std::back_inserter(inputVarIds),
+      [&](const auto& id) { return invariantGraph().varId(id); });
 
   if (shouldHold()) {
     solver().makeInvariant<propagation::GlobalCardinalityLowUp>(

@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "../nodeTestBase.hpp"
+#include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 #include "atlantis/propagation/solver.hpp"
 

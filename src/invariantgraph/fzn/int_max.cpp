@@ -2,7 +2,10 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 

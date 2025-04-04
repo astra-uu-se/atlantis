@@ -1,7 +1,6 @@
 #pragma once
 
 #include <fznparser/variables.hpp>
-#include <optional>
 #include <string>
 
 namespace atlantis {

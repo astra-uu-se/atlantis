@@ -4,9 +4,7 @@
 #include <gtest/gtest.h>
 #include <rapidcheck/gtest.h>
 
-#include <deque>
 #include <random>
-#include <vector>
 
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/types.hpp"
@@ -21,7 +19,7 @@ using namespace atlantis::propagation;
 
 class ViewTest : public ::testing::Test {
  protected:
-  std::shared_ptr<propagation::Solver> _solver;
+  std::shared_ptr<Solver> _solver;
   std::mt19937 gen;
 
   VarViewId inputVar{NULL_ID};
@@ -40,7 +38,7 @@ class ViewTest : public ::testing::Test {
   void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());
-    _solver = std::make_unique<propagation::Solver>();
+    _solver = std::make_unique<Solver>();
   }
 };
 

@@ -1,5 +1,9 @@
 #include "atlantis/propagation/views/violation2BoolView.hpp"
 
+#include <algorithm>
+
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 static Int convert(Int value) { return std::min<Int>(value, 1); }

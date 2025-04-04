@@ -1,8 +1,10 @@
 #include "atlantis/propagation/views/inIntervalConst.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
-static inline Int compute(Int val, Int lb, Int ub) {
+static Int compute(Int val, Int lb, Int ub) {
   return lb <= val && val <= ub ? 0 : 1;
 }
 

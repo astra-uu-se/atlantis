@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class BoolLinearNode : public InvariantNode {
- private:
   std::vector<Int> _coeffs;
   Int _offset{0};
   propagation::VarViewId _intermediate{propagation::NULL_ID};
@@ -25,6 +24,6 @@ class BoolLinearNode : public InvariantNode {
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

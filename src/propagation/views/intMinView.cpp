@@ -1,5 +1,9 @@
 #include "atlantis/propagation/views/intMinView.hpp"
 
+#include <algorithm>
+
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 IntMinView::IntMinView(SolverBase& solver, VarViewId parentId, Int min)

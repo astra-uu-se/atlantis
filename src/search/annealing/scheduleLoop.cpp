@@ -10,15 +10,20 @@ void ScheduleLoop::start(double initialTemperature) {
 void ScheduleLoop::nextRound(const RoundStatistics& statistics) {
   assert(!frozen());
 
-  auto temp = temperature();
+  const auto temp = temperature();
   _schedule->nextRound(statistics);
 
   if (_schedule->frozen()) {
-    if (_lastRoundStatistics && _lastRoundStatistics->bestCostOfThisRound <=
-                                    statistics.bestCostOfThisRound) {
-      _consecutiveFutileIterations++;
+    if (!_lastRoundStatistics) {
+      _consecutiveFutileIterations =
+          statistics.bestCostOfThisRound < statistics.bestCostOfPreviousRound
+              ? 0
+              : 1;
+    } else if (statistics.bestCostOfThisRound <
+               _lastRoundStatistics->bestCostOfThisRound) {
+      _consecutiveFutileIterations = 0;
     } else {
-      _consecutiveFutileIterations = 1;
+      ++_consecutiveFutileIterations;
     }
 
     _lastRoundStatistics.emplace(statistics);

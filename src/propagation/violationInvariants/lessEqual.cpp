@@ -1,5 +1,7 @@
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 /**

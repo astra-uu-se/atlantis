@@ -1,12 +1,8 @@
 #pragma once
 
 #include <array>
-#include <vector>
 
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
@@ -18,23 +14,22 @@ namespace atlantis::propagation {
  */
 
 class Element2dConst : public Invariant {
- private:
   std::vector<std::vector<Int>> _matrix;
   std::array<const VarViewId, 2> _indices;
   std::array<const Int, 2> _dimensions;
   std::array<const Int, 2> _offsets;
   VarId _output;
 
-  [[nodiscard]] inline size_t safeIndex(Int index, size_t pos) const noexcept {
+  [[nodiscard]] size_t safeIndex(Int index, size_t pos) const noexcept {
     return std::max<Int>(0,
                          std::min(_dimensions[pos] - 1, index - _offsets[pos]));
   }
 
-  [[nodiscard]] inline size_t safeIndex1(Int index) const noexcept {
+  [[nodiscard]] size_t safeIndex1(Int index) const noexcept {
     return safeIndex(index, 0);
   }
 
-  [[nodiscard]] inline size_t safeIndex2(Int index) const noexcept {
+  [[nodiscard]] size_t safeIndex2(Int index) const noexcept {
     return safeIndex(index, 1);
   }
 

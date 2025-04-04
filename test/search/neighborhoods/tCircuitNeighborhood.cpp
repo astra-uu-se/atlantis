@@ -2,6 +2,7 @@
 
 #include "./testHelper.hpp"
 #include "atlantis/search/neighborhoods/circuitNeighborhood.hpp"
+#include "atlantis/search/searchVariable.hpp"
 
 namespace atlantis::testing {
 
@@ -29,7 +30,7 @@ class CircuitNeighborhoodTest : public NeighborhoodTestBase {
         std::vector<SearchVar>(next), _offset);
   }
 
-  void expectHolds() {
+  void expectHolds() const {
     std::vector<bool> visited(next.size(), false);
     Int cur = 0;
     while (!visited.at(cur)) {

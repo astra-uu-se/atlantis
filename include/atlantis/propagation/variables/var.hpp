@@ -1,4 +1,5 @@
 #pragma once
+
 #include "atlantis/propagation/types.hpp"
 
 namespace atlantis::propagation {
@@ -9,7 +10,7 @@ class Var {
 
  public:
   explicit Var(VarId);
-  ~Var() = default;
+  virtual ~Var() = default;
 };
 
 }  // namespace atlantis::propagation

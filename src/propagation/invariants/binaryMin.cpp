@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 BinaryMin::BinaryMin(SolverBase& solver, VarId output, VarViewId x, VarViewId y)

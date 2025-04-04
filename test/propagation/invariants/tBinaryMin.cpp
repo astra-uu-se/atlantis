@@ -18,13 +18,13 @@ class BinaryMinTest : public InvariantTest {
   std::uniform_int_distribution<Int> xDist;
   std::uniform_int_distribution<Int> yDist;
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return computeOutput(
         committedValue ? _solver->committedValue(x) : _solver->currentValue(x),
         committedValue ? _solver->committedValue(y) : _solver->currentValue(y));
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     return computeOutput(_solver->value(ts, x), _solver->value(ts, y));
   }
 
@@ -82,7 +82,7 @@ TEST_F(BinaryMinTest, Recompute) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{x, y};
+  const std::vector<VarViewId> inputVars{x, y};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -107,7 +107,7 @@ TEST_F(BinaryMinTest, NotifyInputChanged) {
   yUb = xUb;
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{x, y};
+  const std::vector<VarViewId> inputVars{x, y};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -130,7 +130,7 @@ TEST_F(BinaryMinTest, NextInput) {
   yUb = xUb;
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{x, y};
+  const std::vector<VarViewId> inputVars{x, y};
 
   expectNextInput(inputVars, invariant);
 }
@@ -142,7 +142,7 @@ TEST_F(BinaryMinTest, NotifyCurrentInputChanged) {
   yUb = xUb;
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{x, y};
+  const std::vector<VarViewId> inputVars{x, y};
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
@@ -165,10 +165,10 @@ TEST_F(BinaryMinTest, Commit) {
   yUb = xUb;
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{x, y};
+  const std::vector<VarViewId> inputVars{x, y};
 
   std::vector<size_t> indices{0, 1};
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   std::vector<Int> committedValues{_solver->committedValue(x),
                                    _solver->committedValue(y)};
@@ -176,7 +176,7 @@ TEST_F(BinaryMinTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -222,8 +222,8 @@ RC_GTEST_FIXTURE_PROP(BinaryMinTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));

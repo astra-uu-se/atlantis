@@ -29,7 +29,8 @@ class InDomainTest : public ::testing::Test {
       if (lb <= val && val <= ub) {
         viol = 0;
         break;
-      } else if (val < lb) {
+      }
+      if (val < lb) {
         viol = std::min(viol, lb - val);
       } else if (ub < val) {
         viol = std::min(viol, val - ub);
@@ -122,7 +123,7 @@ TEST_F(InDomainTest, CommittedValue) {
     EXPECT_EQ(values.front(), lb);
     EXPECT_EQ(values.back(), ub);
 
-    std::shuffle(values.begin(), values.end(), rng);
+    std::ranges::shuffle(values.begin(), values.end(), rng);
 
     const VarViewId x = _solver->makeIntVar(lb, lb, ub);
     const VarViewId violationId = _solver->makeIntView<InDomain>(
@@ -132,7 +133,7 @@ TEST_F(InDomainTest, CommittedValue) {
     Int committedValue = _solver->committedValue(x);
 
     for (size_t i = 0; i < values.size(); ++i) {
-      Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+      const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
       ASSERT_EQ(_solver->committedValue(x), committedValue);
 
       _solver->setValue(ts, x, values[i]);

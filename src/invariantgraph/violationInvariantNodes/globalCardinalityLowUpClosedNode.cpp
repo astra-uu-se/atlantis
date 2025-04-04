@@ -1,12 +1,16 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityLowUpClosedNode.hpp"
 
+#include <algorithm>
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityLowUpNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/setInNode.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -33,16 +37,16 @@ void GlobalCardinalityLowUpClosedNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::all_of(outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-                  [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void GlobalCardinalityLowUpClosedNode::registerOutputVars() {
@@ -74,7 +78,7 @@ bool GlobalCardinalityLowUpClosedNode::replace() {
     intermediateOutputNodeIds.emplace_back(invariantGraph().retrieveIntVarNode(
         std::make_shared<SearchDomain>(
             0, static_cast<Int>(staticInputVarNodeIds().size())),
-        VarNode::DomainType::NONE));
+        DomainType::DOM_NONE));
 
     violationVarNodeIds.emplace_back(invariantGraph().retrieveBoolVarNode());
 

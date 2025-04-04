@@ -7,6 +7,7 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intPlusNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/utils/domains.hpp"
 
@@ -165,7 +166,7 @@ TEST(InvariantGraphTest, SplitGraph) {
     }
   }
 
-  std::vector<Int> coeffs(numInputs, 1);
+  const std::vector<Int> coeffs(numInputs, 1);
   for (const auto& identifierArray : varNodeIdMatrix) {
     std::vector<VarNodeId> inputVarNodeIds(identifierArray);
     invariantGraph.addInvariantNode(std::make_shared<IntLinearNode>(
@@ -208,9 +209,9 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
   const VarNodeId x2 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
   const VarNodeId output1 = invariantGraph.retrieveIntVarNode(
-      std::make_shared<SearchDomain>(0, 40), VarNode::DomainType::NONE);
+      std::make_shared<SearchDomain>(0, 40), DomainType::DOM_NONE);
   const VarNodeId output2 = invariantGraph.retrieveIntVarNode(
-      std::make_shared<SearchDomain>(0, 40), VarNode::DomainType::NONE);
+      std::make_shared<SearchDomain>(0, 40), DomainType::DOM_NONE);
 
   invariantGraph.addInvariantNode(
       std::make_shared<IntPlusNode>(invariantGraph, x1, output2, output1));

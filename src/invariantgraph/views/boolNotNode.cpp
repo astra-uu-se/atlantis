@@ -1,12 +1,17 @@
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 
+#include <algorithm>
+
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/bool2IntView.hpp"
 
 namespace atlantis::invariantgraph {
 
-BoolNotNode::BoolNotNode(IInvariantGraph& invariantGraph, VarNodeId staticInput,
+BoolNotNode::BoolNotNode(IInvariantGraph& graph, VarNodeId staticInput,
                          VarNodeId output)
-    : InvariantNode(invariantGraph, {output}, {staticInput}) {}
+    : InvariantNode(graph, {output}, {staticInput}) {}
 
 void BoolNotNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
@@ -44,11 +49,12 @@ void BoolNotNode::registerOutputVars() {
         .setVarId(solver().makeIntView<propagation::Bool2IntView>(
             solver(), invariantGraph().varId(input())));
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void BoolNotNode::registerNode() {}

@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class InIntervalNode : public ViolationInvariantNode {
- private:
   Int _lb, _ub;
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
@@ -20,6 +19,6 @@ class InIntervalNode : public ViolationInvariantNode {
   void registerOutputVars() override;
 
   void registerNode() override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

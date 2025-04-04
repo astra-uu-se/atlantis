@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "atlantis/propagation/invariants/absDiff.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 #include "benchmark.hpp"
 

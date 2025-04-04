@@ -21,8 +21,9 @@ TEST_F(BoolViewTest, CreateBoolView) {
   _solver->open();
 
   const VarViewId var = _solver->makeIntVar(10, 0, 10);
-  auto viewOfVar = _solver->makeIntView<Violation2BoolView>(*_solver, var);
-  auto viewOfView =
+  const auto viewOfVar =
+      _solver->makeIntView<Violation2BoolView>(*_solver, var);
+  const auto viewOfView =
       _solver->makeIntView<Violation2BoolView>(*_solver, viewOfVar);
 
   EXPECT_EQ(_solver->committedValue(viewOfVar), Int(1));
@@ -33,24 +34,25 @@ TEST_F(BoolViewTest, CreateBoolView) {
 
 TEST_F(BoolViewTest, ComputeBounds) {
   _solver->open();
-  auto a = _solver->makeIntVar(20, -100, 100);
+  const auto a = _solver->makeIntVar(20, -100, 100);
 
-  auto va = _solver->makeIntView<Violation2BoolView>(*_solver, a);
+  const auto va = _solver->makeIntView<Violation2BoolView>(*_solver, a);
 
-  EXPECT_EQ(_solver->lowerBound(va), Int(0));
-  EXPECT_EQ(_solver->upperBound(va), Int(1));
+  EXPECT_EQ(_solver->lowerBound(va), Int{0});
+  EXPECT_EQ(_solver->upperBound(va), Int{1});
 
   _solver->close();
 
-  EXPECT_EQ(_solver->lowerBound(va), Int(0));
-  EXPECT_EQ(_solver->upperBound(va), Int(1));
+  EXPECT_EQ(_solver->lowerBound(va), Int{0});
+  EXPECT_EQ(_solver->upperBound(va), Int{1});
 }
 
 TEST_F(BoolViewTest, RecomputeBoolView) {
   _solver->open();
   auto a = _solver->makeIntVar(20, -100, 100);
 
-  auto viewOfVarId = _solver->makeIntView<Violation2BoolView>(*_solver, a);
+  const auto viewOfVarId =
+      _solver->makeIntView<Violation2BoolView>(*_solver, a);
 
   EXPECT_EQ(_solver->currentValue(viewOfVarId), Int(1));
 

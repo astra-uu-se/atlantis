@@ -3,6 +3,8 @@
 #include <utility>
 #include <vector>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 BoolLinear::BoolLinear(SolverBase& solver, VarId output,
@@ -53,9 +55,9 @@ void BoolLinear::updateBounds(bool widenOnly) {
     const Int violLb = _solver.lowerBound(_violArray[i]);
     const Int violUb = _solver.upperBound(_violArray[i]);
     // violation != 0 <=> false
-    const Int boolLb = static_cast<Int>(violLb == 0 && violUb == 0);
     // violation == 0 <=> true
-    const Int boolUb = static_cast<Int>(violLb <= 0 && 0 <= violUb);
+    const Int boolLb = violUb == 0 ? 1 : 0;
+    const Int boolUb = violLb == 0 ? 1 : 0;
     assert(0 <= boolLb);
     assert(boolLb <= boolUb);
     assert(boolUb <= 1);
@@ -76,9 +78,9 @@ void BoolLinear::recompute(Timestamp ts) {
 
 void BoolLinear::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _violArray.size());
-  const Int newValue = static_cast<Int>(_solver.value(ts, _violArray[id]) == 0);
+  const Int newValue = _solver.value(ts, _violArray[id]) == 0 ? 1 : 0;
   const Int committedValue =
-      static_cast<Int>(_solver.committedValue(_violArray[id]) == 0);
+      _solver.committedValue(_violArray[id]) == 0 ? 1 : 0;
   if (newValue == committedValue) {
     return;
   }

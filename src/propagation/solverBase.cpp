@@ -3,7 +3,7 @@
 namespace atlantis::propagation {
 
 SolverBase::SolverBase()
-    : _currentTimestamp(NULL_TIMESTAMP + 1), _isOpen(false), _store() {}
+    : _currentTimestamp(NULL_TIMESTAMP + 1), _isOpen(false) {}
 
 //---------------------Registration---------------------
 
@@ -12,7 +12,7 @@ VarViewId SolverBase::makeIntVar(Int initValue, Int lowerBound,
   if (!_isOpen) {
     throw SolverClosedException("Cannot make IntVar when store is closed.");
   }
-  VarViewId newId =
+  const VarViewId newId =
       _store.createIntVar(_currentTimestamp, initValue, lowerBound, upperBound);
   registerVar(VarId(newId));
   return newId;

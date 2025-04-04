@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class SetInNode : public ViolationInvariantNode {
- private:
   std::vector<Int> _values;
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
@@ -23,6 +22,6 @@ class SetInNode : public ViolationInvariantNode {
 
   [[nodiscard]] const std::vector<Int>& values() { return _values; }
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

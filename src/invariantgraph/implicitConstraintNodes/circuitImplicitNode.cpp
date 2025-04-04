@@ -1,10 +1,13 @@
 #include "atlantis/invariantgraph/implicitConstraintNodes/circuitImplicitNode.hpp"
 
-#include <numeric>
+#include <algorithm>
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/search/neighborhoods/circuitNeighborhood.hpp"
+#include "atlantis/search/searchVariable.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -12,16 +15,16 @@ CircuitImplicitNode::CircuitImplicitNode(IInvariantGraph& graph,
                                          std::vector<VarNodeId>&& vars,
                                          Int offset)
     : ImplicitConstraintNode(graph, std::move(vars)), _offset(offset) {
-  assert(outputVarNodeIds().size() > 1);
+  assert(InvariantNode::outputVarNodeIds().size() > 1);
 }
 
 void CircuitImplicitNode::init(InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
-  assert(
-      std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                  [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 std::shared_ptr<search::neighborhoods::Neighborhood>
@@ -43,7 +46,7 @@ CircuitImplicitNode::createNeighborhood() {
     searchVars.emplace_back(varNode.varId(), varNode.domain());
 
     if (varNode.constDomain()->isFixed()) {
-      varNode.setDomainType(VarNode::DomainType::NONE);
+      varNode.setDomainType(DomainType::DOM_NONE);
       continue;
     }
 
@@ -51,8 +54,8 @@ CircuitImplicitNode::createNeighborhood() {
     for (Int val = 0; val <= static_cast<Int>(outputVarNodeIds().size());
          ++val) {
       if (val == (static_cast<Int>(i) - 1) ||
-          std::any_of(freeIndices.begin(), freeIndices.end(),
-                      [&](const Int& i) { return i == val; })) {
+          std::ranges::any_of(freeIndices.begin(), freeIndices.end(),
+                              [&](const Int& index) { return index == val; })) {
         continue;
       }
       if (!varNode.constDomain()->contains(val)) {
@@ -60,8 +63,8 @@ CircuitImplicitNode::createNeighborhood() {
         break;
       }
     }
-    varNode.setDomainType(enforceDomain ? VarNode::DomainType::DOMAIN
-                                        : VarNode::DomainType::NONE);
+    varNode.setDomainType(enforceDomain ? DomainType::DOM_DOMAIN
+                                        : DomainType::DOM_NONE);
   }
   return std::make_shared<search::neighborhoods::CircuitNeighborhood>(
       std::move(searchVars), _offset);

@@ -142,7 +142,7 @@ TEST_P(IntPlusNodeTestFixture, propagation) {
   _invariantGraph->close();
 
   if (shouldBeSubsumed()) {
-    VarNode& outputNode = varNode(outputIdentifier);
+    const VarNode& outputNode = varNode(outputIdentifier);
     EXPECT_TRUE(outputNode.isFixed());
     const Int actual = outputNode.lowerBound();
     const Int expected = computeOutput(true);

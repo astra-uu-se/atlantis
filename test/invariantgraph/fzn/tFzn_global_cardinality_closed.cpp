@@ -1,11 +1,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <deque>
-#include <random>
 #include <vector>
 
 #include "atlantis/invariantgraph/fzn/fzn_global_cardinality_closed.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::testing {
 

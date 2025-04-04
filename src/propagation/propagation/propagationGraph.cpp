@@ -3,9 +3,8 @@
 #include <algorithm>
 #include <chrono>
 #include <functional>
-#include <iostream>
 #include <numeric>
-#include <queue>
+#include <ranges>
 
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/store/store.hpp"
@@ -18,18 +17,11 @@ inline bool all_in_range(size_t start, size_t stop,
   for (size_t i = 0; i < stop - start; ++i) {
     vec.at(i) = start + i;
   }
-  return std::all_of(vec.begin(), vec.end(), std::move(predicate));
+  return std::ranges::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
 PropagationGraph::PropagationGraph(const Store& store, size_t expectedSize)
-    : _store(store),
-      _definingInvariant(),
-      _varsDefinedByInvariant(),
-      _inputVars(),
-      _isDynamicInvariant(),
-      _listeningInvariantData(),
-      _varLayerIndex(),
-      _varPosition() {
+    : _store(store) {
   _definingInvariant.reserve(expectedSize);
   _varsDefinedByInvariant.reserve(expectedSize);
   _inputVars.reserve(expectedSize);
@@ -66,22 +58,22 @@ void PropagationGraph::registerVar([[maybe_unused]] VarId id) {
 }
 
 void PropagationGraph::registerInvariantInput(InvariantId invariantId,
-                                              VarId varId, LocalId localId,
+                                              VarId inputVarId, LocalId localId,
                                               bool isDynamicInput) {
-  assert(invariantId != NULL_ID && varId != NULL_ID);
-  assert(varId < _definingInvariant.size());
-  if (_definingInvariant[varId] == invariantId) {
+  assert(invariantId != NULL_ID && inputVarId != NULL_ID);
+  assert(inputVarId < _definingInvariant.size());
+  if (_definingInvariant[inputVarId] == invariantId) {
     return;
   }
   assert(invariantId < _isDynamicInvariant.size());
   _isDynamicInvariant[invariantId] =
       _isDynamicInvariant[invariantId] || isDynamicInput;
 
-  assert(varId < _listeningInvariantData.size());
-  _listeningInvariantData[varId].emplace_back(invariantId, localId);
+  assert(inputVarId < _listeningInvariantData.size());
+  _listeningInvariantData[inputVarId].emplace_back(invariantId, localId);
 
   assert(invariantId < _inputVars.size());
-  _inputVars[invariantId].emplace_back(varId, isDynamicInput);
+  _inputVars[invariantId].emplace_back(inputVarId, isDynamicInput);
 }
 
 void PropagationGraph::registerDefinedVar(VarId varId,
@@ -102,11 +94,11 @@ void PropagationGraph::registerDefinedVar(VarId varId,
   if (index < _listeningInvariantData[varId].size()) {
     _listeningInvariantData[varId].erase(
         _listeningInvariantData[varId].begin() + static_cast<Int>(index));
-    assert(std::all_of(_listeningInvariantData[varId].begin(),
-                       _listeningInvariantData[varId].end(),
-                       [&](const ListeningInvariantData& data) {
-                         return data.invariantId != invariantId;
-                       }));
+    assert(std::ranges::all_of(_listeningInvariantData[varId].begin(),
+                               _listeningInvariantData[varId].end(),
+                               [&](const ListeningInvariantData& data) {
+                                 return data.invariantId != invariantId;
+                               }));
   }
   _definingInvariant[varId] = invariantId;
   _varsDefinedByInvariant[invariantId].push_back(varId);
@@ -290,7 +282,7 @@ bool PropagationGraph::containsDynamicCycle(std::vector<bool>& visited,
     // mark as in frontier:
     onStack[index] = true;
     // get the defining invariant:
-    for (const auto& [inputId, _] : inputVars(defInv)) {
+    for (const auto& inputId : std::views::keys(inputVars(defInv))) {
       assert(_varLayerIndex[inputId].layer <= layer);
       if (_varLayerIndex[inputId].layer == layer) {
         stack.emplace_back(inputId);
@@ -350,10 +342,11 @@ void PropagationGraph::mergeLayersWithoutDynamicCycles() {
       assert(varId == _varsInLayer[_varLayerIndex[varId].layer]
                                   [_varLayerIndex[varId].index]);
     }
-    assert(std::all_of(_varsInLayer[layer - 1].begin(),
-                       _varsInLayer[layer - 1].end(), [&](const VarId varId) {
-                         return _varLayerIndex[varId].layer == layer - 1;
-                       }));
+    assert(std::ranges::all_of(
+        _varsInLayer[layer - 1].begin(), _varsInLayer[layer - 1].end(),
+        [&](const VarId varId) {
+          return _varLayerIndex[varId].layer == layer - 1;
+        }));
 
     assert(!containsDynamicCycle(layer - 1));
     // shift the rest of the layers:
@@ -418,16 +411,16 @@ void PropagationGraph::topologicallyOrder(const Timestamp ts,
   const bool isDynInv =
       _layerHasDynamicCycle[layer] && isDynamicInvariant(defInv);
 
-  assert(std::all_of(inputVars(defInv).begin(), inputVars(defInv).end(),
-                     [&](const std::pair<VarId, bool>& p) {
-                       if (p.first == NULL_ID) {
-                         return false;
-                       }
-                       if (isDynInv && !p.second) {
-                         return _varLayerIndex[p.first].layer < layer;
-                       }
-                       return _varLayerIndex[p.first].layer <= layer;
-                     }));
+  assert(std::ranges::all_of(inputVars(defInv).begin(), inputVars(defInv).end(),
+                             [&](const std::pair<VarId, bool>& p) {
+                               if (p.first == NULL_ID) {
+                                 return false;
+                               }
+                               if (isDynInv && !p.second) {
+                                 return _varLayerIndex[p.first].layer < layer;
+                               }
+                               return _varLayerIndex[p.first].layer <= layer;
+                             }));
 
   for (const auto& [inputId, isDynamicInput] : _inputVars[defInv]) {
     if (!isDynInv || !isDynamicInput) {
@@ -452,17 +445,18 @@ void PropagationGraph::topologicallyOrder(const Timestamp ts,
     _varPosition[varId] =
         std::max(_varPosition[varId], _varPosition[dynamicInputId] + 1);
   }
-  assert(std::all_of(inputVars(defInv).begin(), inputVars(defInv).end(),
-                     [&](const std::pair<VarId, bool> p) {
-                       if (p.first == NULL_ID) {
-                         return false;
-                       }
-                       if (isDynInv && p.second) {
-                         return _store.dynamicInputVar(ts, defInv) != p.first ||
-                                _varPosition[p.first] < _varPosition[varId];
-                       }
-                       return _varPosition[p.first] < _varPosition[varId];
-                     }));
+  assert(std::ranges::all_of(
+      inputVars(defInv).begin(), inputVars(defInv).end(),
+      [&](const std::pair<VarId, bool>& p) {
+        if (p.first == NULL_ID) {
+          return false;
+        }
+        if (isDynInv && p.second) {
+          return _store.dynamicInputVar(ts, defInv) != p.first ||
+                 _varPosition[p.first] < _varPosition[varId];
+        }
+        return _varPosition[p.first] < _varPosition[varId];
+      }));
 
   inFrontier[index] = false;
 }

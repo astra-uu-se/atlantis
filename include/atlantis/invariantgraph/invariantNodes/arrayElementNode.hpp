@@ -5,7 +5,6 @@
 namespace atlantis::invariantgraph {
 
 class ArrayElementNode : public InvariantNode {
- private:
   std::vector<Int> _parVector;
   Int _offset;
   bool _isIntVector;
@@ -33,7 +32,7 @@ class ArrayElementNode : public InvariantNode {
     return staticInputVarNodeIds().back();
   }
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

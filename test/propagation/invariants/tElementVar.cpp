@@ -18,8 +18,8 @@ class ElementVarTest : public InvariantTest {
   VarViewId indexVar{NULL_ID};
   VarViewId outputVar{NULL_ID};
 
-  Int indexLb() const { return offset; }
-  Int indexUb() const { return offset + numDynamicVars - 1; }
+  [[nodiscard]] Int indexLb() const { return offset; }
+  [[nodiscard]] Int indexUb() const { return offset + numDynamicVars - 1; }
 
  public:
   void SetUp() override {
@@ -59,23 +59,23 @@ class ElementVarTest : public InvariantTest {
 
   [[nodiscard]] size_t zeroBasedIndex(Int indexVal) const {
     EXPECT_LE(offset, indexVal);
-    EXPECT_LT(indexVal - offset, static_cast<Int>(numDynamicVars));
+    EXPECT_LT(indexVal - offset, numDynamicVars);
     return indexVal - offset;
   }
 
-  VarViewId getInput(Int indexVal) {
+  [[nodiscard]] VarViewId getInput(Int indexVal) const {
     return dynamicInputs.at(zeroBasedIndex(indexVal));
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     return computeOutput(ts, _solver->value(ts, indexVar));
   }
 
-  Int computeOutput(Timestamp ts, Int indexVal) {
+  [[nodiscard]] Int computeOutput(Timestamp ts, Int indexVal) const {
     return _solver->value(ts, getInput(indexVal));
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return committedValue ? _solver->committedValue(
                                 getInput(_solver->committedValue(indexVar)))
                           : _solver->currentValue(
@@ -172,8 +172,8 @@ TEST_F(ElementVarTest, NextInput) {
 
 TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
   EXPECT_LE(std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max());
-  Timestamp t0 = _solver->currentTimestamp() +
-                 (numDynamicVars * static_cast<Int>(offsets.size())) + 1;
+  const Timestamp t0 = _solver->currentTimestamp() +
+                       (numDynamicVars * static_cast<Int>(offsets.size())) + 1;
   for (const Int o : offsets) {
     offset = o;
 
@@ -181,11 +181,11 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
 
     std::vector<Int> indexValues(numDynamicVars);
     std::iota(indexValues.begin(), indexValues.end(), indexLb());
-    std::shuffle(indexValues.begin(), indexValues.end(), rng);
+    std::ranges::shuffle(indexValues.begin(), indexValues.end(), rng);
 
     for (size_t i = 0; i < indexValues.size(); ++i) {
       const Int indexVal = indexValues.at(i);
-      Timestamp ts = t0 + Timestamp(i);
+      const Timestamp ts = t0 + Timestamp(i);
       EXPECT_EQ(invariant.nextInput(ts), indexVar);
       _solver->setValue(ts, indexVar, indexVal);
       invariant.notifyCurrentInputChanged(ts);
@@ -221,11 +221,11 @@ TEST_F(ElementVarTest, Commit) {
 
     std::vector<Int> indexValues(numDynamicVars);
     std::iota(indexValues.begin(), indexValues.end(), indexLb());
-    std::shuffle(indexValues.begin(), indexValues.end(), rng);
+    std::ranges::shuffle(indexValues.begin(), indexValues.end(), rng);
 
     for (size_t i = 0; i < indexValues.size(); ++i) {
       const Int indexVal = indexValues.at(i);
-      Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+      const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
       ASSERT_EQ(_solver->committedValue(indexVar), committedIndexValue);
       for (size_t j = 0; j < dynamicInputs.size(); ++j) {
         ASSERT_EQ(_solver->committedValue(dynamicInputs.at(j)),
@@ -296,8 +296,8 @@ RC_GTEST_FIXTURE_PROP(ElementVarTest, rapidcheck, ()) {
   inputVars.emplace_back(indexVar);
   dists.emplace_back(indexDist);
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -371,7 +371,7 @@ TEST_F(ElementVarTest, SolverIntegration) {
       _solver->open();
     }
     std::vector<VarViewId> args;
-    const size_t numArgs = 10;
+    constexpr size_t numArgs = 10;
     args.reserve(numArgs);
     for (size_t value = 0; value < numArgs; ++value) {
       args.push_back(_solver->makeIntVar(static_cast<Int>(value), -100, 100));

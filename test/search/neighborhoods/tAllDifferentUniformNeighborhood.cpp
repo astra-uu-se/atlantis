@@ -2,6 +2,7 @@
 
 #include "./testHelper.hpp"
 #include "atlantis/search/neighborhoods/allDifferentUniformNeighborhood.hpp"
+#include "atlantis/search/searchVariable.hpp"
 
 namespace atlantis::testing {
 
@@ -51,9 +52,8 @@ class AllDifferentUniformNeighborhoodTest : public NeighborhoodTestBase {
     }
     _solver->close();
 
-    _neighborhood =
-        std::make_shared<neighborhoods::AllDifferentUniformNeighborhood>(
-            std::vector<SearchVar>(_vars));
+    _neighborhood = std::make_shared<AllDifferentUniformNeighborhood>(
+        std::vector<SearchVar>(_vars));
   }
 };
 

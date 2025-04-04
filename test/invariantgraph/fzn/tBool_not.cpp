@@ -1,11 +1,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <deque>
-#include <random>
 #include <vector>
 
 #include "atlantis/invariantgraph/fzn/bool_not.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::testing {
 

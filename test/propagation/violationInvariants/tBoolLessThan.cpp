@@ -18,39 +18,28 @@ class BoolLessThanTest : public InvariantTest {
   std::uniform_int_distribution<Int> xDist;
   std::uniform_int_distribution<Int> yDist;
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     return computeOutput(_solver->value(ts, x), _solver->value(ts, y));
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return computeOutput(
         committedValue ? _solver->committedValue(x) : _solver->currentValue(x),
         committedValue ? _solver->committedValue(y) : _solver->currentValue(y));
   }
 
   static Int computeOutput(const Int xVal, const Int yVal) {
-    // both are violating:
-    if (xVal != 0 && yVal != 0) {
-      // y must be satisfied
-      return yVal;
-    }
-    // x is violating and y is satisfied:
+    // none is satisifed:
     if (xVal != 0 && yVal == 0) {
-      // satisfied
       return 0;
     }
-    // x is satisfied and y is violating:
-    if (xVal == 0 && yVal != 0) {
-      // x must violate and y must be satisfied
-      return 1 + yVal;
+    if (xVal != 0) {
+      return yVal;
     }
-    // both are satisfied
-    if (xVal == 0 && yVal == 0) {
-      // x must violate
+    if (yVal == 0) {
       return 1;
     }
-    EXPECT_FALSE(true);
-    return -1;
+    return 1 + yVal;
   }
 
   BoolLessThan& generate() {
@@ -102,7 +91,7 @@ TEST_F(BoolLessThanTest, Recompute) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{x, y};
+  const std::vector<VarViewId> inputVars{x, y};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -123,7 +112,7 @@ TEST_F(BoolLessThanTest, NotifyInputChanged) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{x, y};
+  const std::vector<VarViewId> inputVars{x, y};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -142,7 +131,7 @@ TEST_F(BoolLessThanTest, NotifyInputChanged) {
 TEST_F(BoolLessThanTest, NextInput) {
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{x, y};
+  const std::vector<VarViewId> inputVars{x, y};
 
   expectNextInput(inputVars, invariant);
 }
@@ -150,7 +139,7 @@ TEST_F(BoolLessThanTest, NextInput) {
 TEST_F(BoolLessThanTest, NotifyCurrentInputChanged) {
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{x, y};
+  const std::vector<VarViewId> inputVars{x, y};
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
@@ -175,10 +164,10 @@ TEST_F(BoolLessThanTest, Commit) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{x, y};
+  const std::vector<VarViewId> inputVars{x, y};
 
   std::vector<size_t> indices{0, 1};
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   std::vector<Int> committedValues{_solver->committedValue(x),
                                    _solver->committedValue(y)};
@@ -186,7 +175,7 @@ TEST_F(BoolLessThanTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -222,8 +211,8 @@ RC_GTEST_FIXTURE_PROP(BoolLessThanTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));

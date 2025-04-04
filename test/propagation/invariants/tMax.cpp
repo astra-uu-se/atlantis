@@ -2,7 +2,7 @@
 #include "atlantis/propagation/invariants/max.hpp"
 
 namespace atlantis::testing {
-using ::rc::gen::inRange;
+using rc::gen::inRange;
 
 using namespace atlantis::propagation;
 
@@ -20,18 +20,18 @@ class MaxTest : public InvariantTest {
     inputVars.clear();
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     Int maxVal = std::numeric_limits<Int>::min();
-    for (auto var : inputVars) {
+    for (const auto var : inputVars) {
       maxVal = std::max(maxVal, committedValue ? _solver->committedValue(var)
                                                : _solver->currentValue(var));
     }
     return maxVal;
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     Int maxVal = std::numeric_limits<Int>::min();
-    for (auto var : inputVars) {
+    for (const auto var : inputVars) {
       maxVal = std::max(maxVal, _solver->value(ts, var));
     }
     return maxVal;
@@ -188,7 +188,7 @@ TEST_F(MaxTest, Commit) {
 
   std::vector<size_t> indices(numInputVars);
   std::iota(indices.begin(), indices.end(), 0);
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   std::vector<Int> committedValues(inputVars.size());
   for (size_t i = 0; i < inputVars.size(); ++i) {
@@ -198,7 +198,7 @@ TEST_F(MaxTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -219,9 +219,9 @@ TEST_F(MaxTest, Commit) {
 
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -230,21 +230,21 @@ TEST_F(MaxTest, Commit) {
 }
 
 RC_GTEST_FIXTURE_PROP(MaxTest, rapidcheck, ()) {
-  numInputVars = *rc::gen::inRange(1, 100);
+  numInputVars = *inRange(1, 100);
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      for (size_t i = 0; i < inputVars.size(); ++i) {
+      for (const auto& var : inputVars) {
         if (randBool()) {
-          _solver->setValue(inputVars.at(i), inputVarDist(gen));
+          _solver->setValue(var, inputVarDist(gen));
         }
       }
       _solver->endMove();

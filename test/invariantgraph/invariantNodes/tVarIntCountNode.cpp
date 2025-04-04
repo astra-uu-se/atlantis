@@ -81,7 +81,7 @@ TEST_P(VarIntCountNodeTestFixture, construction) {
   expectedInputs.emplace_back(needleVarNodeId);
   EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
-  std::vector<VarNodeId> expectedOutputs{outputVarNodeId};
+  const std::vector<VarNodeId> expectedOutputs{outputVarNodeId};
 
   EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
   EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodeIds()));

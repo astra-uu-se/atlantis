@@ -1,12 +1,10 @@
 #include "atlantis/propagation/views/greaterEqualConst.hpp"
 
-#include <vector>
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::propagation {
 
-static inline Int compute(Int var, Int val) {
-  return std::max<Int>(0, val - var);
-}
+static Int compute(Int var, Int val) { return std::max<Int>(0, val - var); }
 
 GreaterEqualConst::GreaterEqualConst(SolverBase &solver, VarViewId parentId,
                                      Int val)

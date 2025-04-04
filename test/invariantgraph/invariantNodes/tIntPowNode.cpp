@@ -12,7 +12,7 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   std::string outputIdentifier{"output"};
 
-  Int int_exp(Int baseVal, Int exponentVal) {
+  [[nodiscard]] static Int int_exp(Int baseVal, Int exponentVal) {
     if (exponentVal == 0) {
       return 1;
     }

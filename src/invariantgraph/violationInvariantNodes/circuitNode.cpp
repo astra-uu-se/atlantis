@@ -3,11 +3,15 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/circuitImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/intModViewNode.hpp"
 #include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -20,11 +24,11 @@ void CircuitNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void CircuitNode::updateState() {
@@ -46,7 +50,7 @@ void CircuitNode::updateState() {
 bool CircuitNode::canBeMadeImplicit() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
          shouldHold() && staticInputVarNodeIds().size() > 2 &&
-         std::all_of(
+         std::ranges::all_of(
              staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
              [&](const VarNodeId nId) {
                return invariantGraphConst().varNodeConst(nId).isFixed() ||
@@ -122,15 +126,15 @@ bool CircuitNode::replace() {
     orderVars.emplace_back(invariantGraph().retrieveIntVarNode(
         std::make_shared<SearchDomain>(
             1, static_cast<Int>(staticInputVarNodeIds().size())),
-        VarNode::DomainType::NONE));
+        DomainType::DOM_NONE));
     offsetVars.emplace_back(invariantGraph().retrieveIntVarNode(
         std::make_shared<SearchDomain>(
             1, static_cast<Int>(staticInputVarNodeIds().size()) + 1),
-        VarNode::DomainType::NONE));
+        DomainType::DOM_NONE));
     modoluVars.emplace_back(invariantGraph().retrieveIntVarNode(
         std::make_shared<SearchDomain>(
             0, static_cast<Int>(staticInputVarNodeIds().size()) - 1),
-        VarNode::DomainType::NONE));
+        DomainType::DOM_NONE));
     // offset[i] = order[i] + 1
     invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(
         invariantGraph(), offsetVars.at(i), orderVars.at(i), 1, 1));

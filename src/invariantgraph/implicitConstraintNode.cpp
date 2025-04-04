@@ -3,6 +3,8 @@
 #include <cassert>
 
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
 
 namespace atlantis::invariantgraph {

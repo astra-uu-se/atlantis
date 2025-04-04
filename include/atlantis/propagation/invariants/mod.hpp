@@ -1,9 +1,6 @@
 #pragma once
 
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
@@ -12,7 +9,6 @@ namespace atlantis::propagation {
  *
  */
 class Mod : public Invariant {
- private:
   VarId _output;
   VarViewId _numerator, _denominator;
 

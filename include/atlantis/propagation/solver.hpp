@@ -3,20 +3,15 @@
 #include <unordered_set>
 #include <vector>
 
-#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/propagation/propagation/outputToInputExplorer.hpp"
 #include "atlantis/propagation/propagation/propagationGraph.hpp"
 #include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/utils/hashes.hpp"
-#include "atlantis/propagation/variables/intVar.hpp"
 
 namespace atlantis::propagation {
 
 class Solver : public SolverBase {
  protected:
   PropagationMode _propagationMode;
-
- protected:
   size_t _numVars{0};
 
   PropagationGraph _propGraph;
@@ -46,7 +41,8 @@ class Solver : public SolverBase {
    * already defined.
    * @param definedVarId the variable that is defined by the invariant
    * @param invariantId the invariant defining the variable
-   * @throw if the variable is already defined by an invariant.
+   * @throw VarAlreadyDefinedException if the variable is already defined by an
+   * invariant.
    */
   void registerDefinedVar(VarId definedVarId, InvariantId invariantId) final;
 
@@ -62,13 +58,10 @@ class Solver : public SolverBase {
   void setOutputToInputMarkingMode(OutputToInputMarkingMode);
 
   //--------------------- Notification ---------------------
-  /***
-   * @param id the id of the changed variable
-   */
   void enqueueDefinedVar(VarId) final;
   void enqueueDefinedVar(VarId, size_t layer);
 
-  [[nodiscard]] inline PropagationMode propagationMode() const {
+  [[nodiscard]] PropagationMode propagationMode() const {
     return _propagationMode;
   }
 
@@ -81,13 +74,9 @@ class Solver : public SolverBase {
   void setValue(Timestamp, VarId, Int val);
   void setValue(Timestamp, VarViewId, Int val);
 
-  inline void setValue(VarId id, Int val) {
-    setValue(_currentTimestamp, id, val);
-  }
+  void setValue(VarId id, Int val) { setValue(_currentTimestamp, id, val); }
 
-  inline void setValue(VarViewId id, Int val) {
-    setValue(_currentTimestamp, id, val);
-  }
+  void setValue(VarViewId id, Int val) { setValue(_currentTimestamp, id, val); }
 
   void beginProbe();
   void endProbe();
@@ -111,9 +100,6 @@ class Solver : public SolverBase {
 
   InvariantId definingInvariant(VarViewId) const;
 
-  // This function is used by propagation, which is unaware of views.
-  [[nodiscard]] inline bool hasChanged(Timestamp, VarId) const;
-
   [[nodiscard]] const std::vector<VarId>& varsDefinedBy(InvariantId) const;
 
   [[nodiscard]] const std::vector<PropagationGraph::ListeningInvariantData>&
@@ -129,120 +115,13 @@ class Solver : public SolverBase {
    * @param invariantId the invariant
    * @param inputId the id of the variable
    * @param localId the id of the variable in the invariant
+   * @param isDynamicInput true if the input is a dynamic input to the invariant
    */
   void registerInvariantInput(InvariantId invariantId, VarViewId inputId,
-                              LocalId localId, bool isDynamic) final;
+                              LocalId localId, bool isDynamicInput) final;
 
   void registerVar(VarId) final;
   void registerInvariant(InvariantId) final;
 };
-
-inline void Solver::incCurrentTimestamp() {
-  ++_currentTimestamp;
-  if (_propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
-    clearPropagationQueue();
-  } else {
-    _modifiedSearchVars.clear();
-  }
-  assert(std::all_of(
-      searchVars().begin(), searchVars().end(), [&](const VarId varId) {
-        return !_store.intVar(varId).hasChanged(_currentTimestamp);
-      }));
-}
-
-inline size_t Solver::numVars() const { return _propGraph.numVars(); }
-
-inline size_t Solver::numInvariants() const {
-  return _propGraph.numInvariants();
-}
-
-inline InvariantId Solver::definingInvariant(VarViewId id) const {
-  return _propGraph.definingInvariant(id.isView() ? sourceId(id) : VarId(id));
-}
-
-inline const std::vector<VarId>& Solver::varsDefinedBy(
-    InvariantId invariantId) const {
-  return _propGraph.varsDefinedBy(invariantId);
-}
-
-inline const std::vector<PropagationGraph::ListeningInvariantData>&
-Solver::listeningInvariantData(VarId id) const {
-  return _propGraph.listeningInvariantData(id);
-}
-
-inline VarId Solver::nextInput(InvariantId invariantId) {
-  return sourceId(_store.invariant(invariantId).nextInput(_currentTimestamp));
-}
-inline void Solver::notifyCurrentInputChanged(InvariantId invariantId) {
-  _store.invariant(invariantId).notifyCurrentInputChanged(_currentTimestamp);
-}
-
-inline bool Solver::hasChanged(Timestamp ts, VarId id) const {
-  return _store.constIntVar(id).hasChanged(ts);
-}
-
-inline void Solver::setValue(Timestamp ts, VarViewId id, Int val) {
-  assert(id.isVar());
-  setValue(ts, VarId(id), val);
-}
-
-inline void Solver::setValue(Timestamp ts, VarId id, Int val) {
-  assert(_propGraph.isSearchVar(id));
-
-  IntVar& var = _store.intVar(id);
-  var.setValue(ts, val);
-
-  if (_propagationMode == PropagationMode::OUTPUT_TO_INPUT) {
-    if (ts != _currentTimestamp) {
-      _modifiedSearchVars.clear();
-    }
-
-    if (var.hasChanged(ts)) {
-      _modifiedSearchVars.emplace(id);
-    } else {
-      _modifiedSearchVars.erase(id);
-    }
-  }
-  enqueueDefinedVar(id);
-}
-
-inline void Solver::setPropagationMode(PropagationMode propMode) {
-  if (!_isOpen) {
-    throw SolverClosedException(
-        "Cannot set propagation mode when model is closed");
-  }
-  _propagationMode = propMode;
-}
-
-inline OutputToInputMarkingMode Solver::outputToInputMarkingMode() const {
-  return _outputToInputExplorer.outputToInputMarkingMode();
-}
-
-inline void Solver::setOutputToInputMarkingMode(
-    OutputToInputMarkingMode markingMode) {
-  if (!_isOpen) {
-    throw SolverClosedException(
-        "Cannot set output-to-input marking mode when model is closed");
-  }
-  _outputToInputExplorer.setOutputToInputMarkingMode(markingMode);
-}
-
-inline const std::vector<VarId>& Solver::searchVars() const {
-  return _propGraph.searchVars();
-}
-
-inline const std::vector<std::pair<VarId, bool>>& Solver::inputVars(
-    InvariantId invariantId) const {
-  return _propGraph.inputVars(invariantId);
-}
-
-inline const std::unordered_set<VarId>& Solver::modifiedSearchVar() const {
-  return _modifiedSearchVars;
-}
-
-inline void Solver::outputToInputPropagate() {
-  assert(propagationMode() == PropagationMode::OUTPUT_TO_INPUT);
-  _outputToInputExplorer.propagate(_currentTimestamp);
-}
 
 }  // namespace atlantis::propagation

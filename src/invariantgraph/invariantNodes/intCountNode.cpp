@@ -4,10 +4,12 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/countConst.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/ifThenElseConst.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
-#include "atlantis/propagation/views/scalarView.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -26,11 +28,11 @@ void IntCountNode::init(InvariantNodeId id) {
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
              .isIntVar());
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void IntCountNode::updateState() {
@@ -81,11 +83,12 @@ void IntCountNode::registerOutputVars() {
               solver(), _intermediate, _offset));
     }
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void IntCountNode::registerNode() {
@@ -102,10 +105,9 @@ void IntCountNode::registerNode() {
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
 
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars), [&](const VarNodeId node) {
-                   return invariantGraph().varId(node);
-                 });
+  std::ranges::transform(
+      staticInputVarNodeIds(), std::back_inserter(solverVars),
+      [&](const VarNodeId node) { return invariantGraph().varId(node); });
 
   solver().makeInvariant<propagation::CountConst>(
       solver(),

@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 Linear::Linear(SolverBase& solver, VarId output, std::vector<Int>&& coeffs,

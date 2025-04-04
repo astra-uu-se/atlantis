@@ -3,12 +3,16 @@
 #include <algorithm>
 #include <cassert>
 
+#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/randomProvider.hpp"
+#include "atlantis/search/searchVariable.hpp"
+#include "atlantis/utils/domains.hpp"
+
 namespace atlantis::search::neighborhoods {
 
 AllDifferentUniformNeighborhood::AllDifferentUniformNeighborhood(
     std::vector<SearchVar>&& vars)
     : _vars(std::move(vars)),
-      _freeVals(),
       _moveVarIdx(_vars.size()),
       _moveValIdx(_vars.front().domain()->size() - _vars.size()),
       _curTimestamp(NULL_TIMESTAMP) {
@@ -35,7 +39,7 @@ void AllDifferentUniformNeighborhood::initialize(RandomProvider& random,
 
   for (Int i = 0; i < static_cast<Int>(_vars.size()); ++i) {
     // Retrieve a free variable at index valIndex:
-    const size_t valIndex = static_cast<size_t>(
+    const auto valIndex = static_cast<size_t>(
         random.intInRange(0, static_cast<Int>(_freeVals.size()) - 1 - i));
 
     // Assign variable _vars[i] the retrieved value:
@@ -48,11 +52,12 @@ void AllDifferentUniformNeighborhood::initialize(RandomProvider& random,
 
   _freeVals.resize(_vars.front().domain()->size() - _vars.size());
 
-  assert(std::all_of(_freeVals.begin(), _freeVals.end(), [&](const Int val) {
-    return std::any_of(_vars.begin(), _vars.end(), [&](const auto& var) {
-      return var.domain()->contains(val);
-    });
-  }));
+  assert(std::ranges::all_of(
+      _freeVals.begin(), _freeVals.end(), [&](const Int val) {
+        return std::ranges::any_of(
+            _vars.begin(), _vars.end(),
+            [&](const auto& var) { return var.domain()->contains(val); });
+      }));
 }
 
 size_t AllDifferentUniformNeighborhood::randomMove(RandomProvider& random,
@@ -68,9 +73,10 @@ size_t AllDifferentUniformNeighborhood::randomMove(RandomProvider& random,
 
 size_t AllDifferentUniformNeighborhood::swapValues(RandomProvider& random,
                                                    IAssignment& assignment) {
-  size_t i = random.intInRange(0, static_cast<Int>(_vars.size()) - 1);
-  size_t j = (i + random.intInRange(1, static_cast<Int>(_vars.size()) - 1)) %
-             _vars.size();
+  const size_t i = random.intInRange(0, static_cast<Int>(_vars.size()) - 1);
+  const size_t j =
+      (i + random.intInRange(1, static_cast<Int>(_vars.size()) - 1)) %
+      _vars.size();
 
   _curTimestamp = NULL_TIMESTAMP;
 

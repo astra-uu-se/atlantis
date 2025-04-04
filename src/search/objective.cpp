@@ -1,9 +1,10 @@
 #include "atlantis/search/objective.hpp"
 
+#include <functional>
 #include <fznparser/model.hpp>
 #include <limits>
-#include <utility>
 
+#include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 
 namespace atlantis::search {
@@ -27,7 +28,8 @@ propagation::VarViewId Objective::registerNode(
           _solver.makeViolationInvariant<propagation::LessEqual>(
               _solver, boundViolation, objectiveVarId, boundVar);
         });
-  } else if (_problemType == fznparser::ProblemType::MAXIMIZE) {
+  }
+  if (_problemType == fznparser::ProblemType::MAXIMIZE) {
     return registerOptimisation(
         totalViolationVarId, objectiveVarId, _solver.lowerBound(objectiveVarId),
         [&](propagation::VarId boundViolation,
@@ -58,6 +60,37 @@ void Objective::tighten() {
   _solver.beginCommit();
   _solver.query(*_violation);
   _solver.endCommit();
+}
+
+std::optional<propagation::VarViewId> Objective::bound() const noexcept {
+  return _bound;
+}
+
+propagation::VarViewId Objective::registerOptimisation(
+    propagation::VarViewId constraintViolation,
+    propagation::VarViewId objectiveVarId, Int initialBound,
+    std::function<void(propagation::VarId, propagation::VarViewId)>&&
+        constraintFactory) {
+  _bound = _solver.makeIntVar(initialBound, _solver.lowerBound(objectiveVarId),
+                              _solver.upperBound(objectiveVarId));
+
+  const auto boundViolation = static_cast<propagation::VarId>(
+      _solver.makeIntVar(0, 0, std::numeric_limits<Int>::max()));
+
+  constraintFactory(boundViolation, *_bound);
+
+  if (constraintViolation == propagation::NULL_ID) {
+    _violation = boundViolation;
+  } else {
+    _violation = static_cast<propagation::VarId>(
+        _solver.makeIntVar(0, 0, std::numeric_limits<Int>::max()));
+
+    _solver.makeInvariant<propagation::Linear>(
+        _solver, *_violation,
+        std::vector<propagation::VarViewId>{boundViolation,
+                                            constraintViolation});
+  }
+  return *_violation;
 }
 
 }  // namespace atlantis::search

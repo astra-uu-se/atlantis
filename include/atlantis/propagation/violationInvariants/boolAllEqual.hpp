@@ -2,11 +2,7 @@
 
 #include <vector>
 
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
-#include "atlantis/propagation/variables/committableInt.hpp"
 #include "atlantis/propagation/violationInvariants/violationInvariant.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

@@ -1,5 +1,7 @@
 #include "atlantis/propagation/views/ifThenElseConst.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 IfThenElseConst::IfThenElseConst(SolverBase& solver, VarViewId parentId,
@@ -19,8 +21,9 @@ Int IfThenElseConst::lowerBound() const {
       _condVal == _solver.upperBound(_parentId)) {
     // always true, take then case:
     return _values[0];
-  } else if (_condVal < _solver.lowerBound(_parentId) ||
-             _solver.upperBound(_parentId) < _condVal) {
+  }
+  if (_condVal < _solver.lowerBound(_parentId) ||
+      _solver.upperBound(_parentId) < _condVal) {
     // always false, take else case:
     return _values[1];
   }
@@ -32,8 +35,9 @@ Int IfThenElseConst::upperBound() const {
       _condVal == _solver.upperBound(_parentId)) {
     // always true, take then case:
     return _values[0];
-  } else if (_condVal < _solver.lowerBound(_parentId) ||
-             _solver.upperBound(_parentId) < _condVal) {
+  }
+  if (_condVal < _solver.lowerBound(_parentId) ||
+      _solver.upperBound(_parentId) < _condVal) {
     // always false, take else case:
     return _values[1];
   }

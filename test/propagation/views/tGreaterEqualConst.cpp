@@ -24,7 +24,7 @@ class GreaterEqualConstTest : public ViewTest {
     _solver->close();
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return std::max<Int>(
         0, value - (committedValue ? _solver->committedValue(inputVar)
                                    : _solver->currentValue(inputVar)));
@@ -40,8 +40,7 @@ TEST_F(GreaterEqualConstTest, bounds) {
     value = v;
     generate();
 
-    for (size_t i = 0; i < bounds.size(); ++i) {
-      const auto& [inputLb, inputUb] = bounds.at(i);
+    for (const auto& [inputLb, inputUb] : bounds) {
       EXPECT_LE(inputLb, inputUb);
 
       _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
@@ -64,8 +63,8 @@ RC_GTEST_FIXTURE_PROP(GreaterEqualConstTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     for (size_t p = 0; p <= numProbes; ++p) {

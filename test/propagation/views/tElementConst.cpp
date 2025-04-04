@@ -15,8 +15,8 @@ class ElementConstTest : public ViewTest {
   std::vector<Int> values;
   std::uniform_int_distribution<Int> valueDist;
 
-  Int indexLb() const { return offset; }
-  Int indexUb() const { return offset + numValues - 1; }
+  [[nodiscard]] Int indexLb() const { return offset; }
+  [[nodiscard]] Int indexUb() const { return offset + numValues - 1; }
 
   void SetUp() override {
     inputVarLb = indexLb();
@@ -29,14 +29,14 @@ class ElementConstTest : public ViewTest {
     values.clear();
   }
 
-  Int toZeroIndex(Int index) const {
+  [[nodiscard]] Int toZeroIndex(Int index) const {
     const Int zeroIndex = index - offset;
     assert(0 <= zeroIndex);
     assert(zeroIndex < static_cast<Int>(values.size()));
     return zeroIndex;
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return values.at(toZeroIndex(committedValue
                                      ? _solver->committedValue(inputVar)
                                      : _solver->currentValue(inputVar)));
@@ -92,8 +92,8 @@ RC_GTEST_FIXTURE_PROP(ElementConstTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     for (size_t p = 0; p <= numProbes; ++p) {

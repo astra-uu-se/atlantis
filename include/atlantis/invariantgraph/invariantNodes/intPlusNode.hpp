@@ -5,7 +5,6 @@
 namespace atlantis::invariantgraph {
 
 class IntPlusNode : public InvariantNode {
- private:
   Int _offset{0};
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
@@ -21,7 +20,7 @@ class IntPlusNode : public InvariantNode {
 
   void registerNode() override;
 
-  bool canBeReplaced() const override;
+  [[nodiscard]] bool canBeReplaced() const override;
 
   bool replace() override;
 
@@ -32,7 +31,7 @@ class IntPlusNode : public InvariantNode {
     return staticInputVarNodeIds().back();
   }
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

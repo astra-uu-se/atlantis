@@ -14,7 +14,7 @@ namespace atlantis::testing {
 using namespace atlantis::search;
 using namespace atlantis::search::neighborhoods;
 
-class AlwaysAcceptingAnnealer : public search::Annealer {
+class AlwaysAcceptingAnnealer : public Annealer {
  public:
   AlwaysAcceptingAnnealer(RandomProvider& random, AnnealingSchedule& schedule,
                           const IAssignment& assignment)

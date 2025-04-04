@@ -3,7 +3,11 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
@@ -32,11 +36,11 @@ void AllDifferentNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void AllDifferentNode::updateState() {
@@ -52,13 +56,14 @@ void AllDifferentNode::updateState() {
 bool AllDifferentNode::canBeMadeImplicit() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
          shouldHold() &&
-         std::all_of(staticInputVarNodeIds().begin(),
-                     staticInputVarNodeIds().end(), [&](const auto& id) {
-                       return invariantGraphConst()
-                           .varNodeConst(id)
-                           .definingNodes()
-                           .empty();
-                     });
+         std::ranges::all_of(staticInputVarNodeIds().begin(),
+                             staticInputVarNodeIds().end(),
+                             [&](const auto& id) {
+                               return invariantGraphConst()
+                                   .varNodeConst(id)
+                                   .definingNodes()
+                                   .empty();
+                             });
 }
 
 bool AllDifferentNode::makeImplicit() {
@@ -87,11 +92,12 @@ void AllDifferentNode::registerOutputVars() {
   }
   assert(outputVarNodeIds().size() <= 1);
   assert(outputVarNodeIds().empty() ||
-         std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+         std::ranges::all_of(
+             outputVarNodeIds().begin(), outputVarNodeIds().end(),
+             [&](const VarNodeId vId) {
+               return invariantGraphConst().varNodeConst(vId).varId() !=
+                      propagation::NULL_ID;
+             }));
 }
 
 void AllDifferentNode::registerNode() {
@@ -104,9 +110,10 @@ void AllDifferentNode::registerNode() {
 
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars),
-                 [&](const auto& id) { return invariantGraph().varId(id); });
+  std::ranges::transform(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      std::back_inserter(solverVars),
+      [&](const auto& id) { return invariantGraph().varId(id); });
 
   if (solverVars.size() == 2) {
     solver().makeViolationInvariant<propagation::NotEqual>(

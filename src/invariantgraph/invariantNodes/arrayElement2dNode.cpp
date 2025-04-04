@@ -1,8 +1,13 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayElement2dNode.hpp"
 
+#include <algorithm>
+
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/element2dConst.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -13,7 +18,7 @@ static std::vector<std::vector<Int>> toIntMatrix(
   for (auto& row : boolMatrix) {
     intMatrix.emplace_back();
     intMatrix.back().reserve(row.size());
-    for (bool par : row) {
+    for (const bool par : row) {
       intMatrix.back().emplace_back(par ? 0 : 1);
     }
   }
@@ -104,11 +109,12 @@ void ArrayElement2dNode::registerOutputVars() {
   if (!staticInputVarNodeIds().empty()) {
     makeSolverVar(outputVarNodeIds().front());
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void ArrayElement2dNode::registerNode() {

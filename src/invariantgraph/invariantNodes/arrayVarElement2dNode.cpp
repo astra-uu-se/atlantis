@@ -1,9 +1,13 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElement2dNode.hpp"
 
+#include <algorithm>
+
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/invariantNodes/arrayVarElement2dNode.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/element2dVar.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -36,37 +40,37 @@ ArrayVarElement2dNode::ArrayVarElement2dNode(
 
 void ArrayVarElement2dNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId node) {
-                    return invariantGraphConst().varNodeConst(node).isIntVar();
-                  }));
-  assert(
-      std::all_of(dynamicInputVarNodeIds().begin(),
-                  dynamicInputVarNodeIds().end(), [&](const VarNodeId node) {
-                    return invariantGraph()
-                               .varNodeConst(outputVarNodeIds().front())
-                               .isIntVar() ==
-                           invariantGraphConst().varNodeConst(node).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId node) {
+        return invariantGraphConst().varNodeConst(node).isIntVar();
+      }));
+  assert(std::ranges::all_of(
+      dynamicInputVarNodeIds().begin(), dynamicInputVarNodeIds().end(),
+      [&](const VarNodeId node) {
+        return invariantGraph()
+                   .varNodeConst(outputVarNodeIds().front())
+                   .isIntVar() ==
+               invariantGraphConst().varNodeConst(node).isIntVar();
+      }));
 }
 
-VarNodeId ArrayVarElement2dNode::at(Int row, Int col) {
+VarNodeId ArrayVarElement2dNode::at(Int row, Int col) const {
   assert(row >= _offset1 && col >= _offset2);
-  const size_t r = static_cast<size_t>(row - _offset1);
+  const auto r = static_cast<size_t>(row - _offset1);
   assert(r < _numRows);
-  const size_t c = static_cast<size_t>(col - _offset2);
+  const auto c = static_cast<size_t>(col - _offset2);
   assert(col >= 0);
   const size_t pos = r * _numRows + c;
   return dynamicInputVarNodeIds().at(pos);
 }
 
 void ArrayVarElement2dNode::updateState() {
-  VarNode& idx1Node = invariantGraph().varNode(idx1());
+  const VarNode& idx1Node = invariantGraph().varNode(idx1());
   // idx1Node.removeValuesBelow(_offset1);
   // idx1Node.removeValuesAbove(_offset1 + static_cast<Int>(_numRows) - 1);
 
-  VarNode& idx2Node = invariantGraph().varNode(idx2());
+  const VarNode& idx2Node = invariantGraph().varNode(idx2());
   // idx2Node.removeValuesBelow(_offset2);
   // idx2Node.removeValuesAbove(_offset2 + static_cast<Int>(numCols()) - 1);
 
@@ -83,9 +87,9 @@ void ArrayVarElement2dNode::updateState() {
         continue;
       }
       assert(row >= _offset1 && col >= _offset2);
-      const size_t r = static_cast<size_t>(row - _offset1);
+      const auto r = static_cast<size_t>(row - _offset1);
       assert(r < _numRows);
-      const size_t c = static_cast<size_t>(col - _offset2);
+      const auto c = static_cast<size_t>(col - _offset2);
       assert(col >= 0);
       const size_t pos = r * _numRows + c;
       if (invariantGraph()
@@ -108,7 +112,7 @@ void ArrayVarElement2dNode::updateState() {
   }
 
   if (placeholder != NULL_NODE_ID &&
-      std::none_of(
+      std::ranges::none_of(
           invariantGraphConst()
               .varNodeConst(placeholder)
               .dynamicInputTo()
@@ -122,9 +126,9 @@ void ArrayVarElement2dNode::updateState() {
   }
 
   for (const auto& vId : varNodeIdsToRemove) {
-    if (std::none_of(dynamicInputVarNodeIds().begin(),
-                     dynamicInputVarNodeIds().end(),
-                     [&](const VarNodeId dId) { return dId == vId; })) {
+    if (std::ranges::none_of(dynamicInputVarNodeIds().begin(),
+                             dynamicInputVarNodeIds().end(),
+                             [&](const VarNodeId dId) { return dId == vId; })) {
       removeDynamicInputVarNode(vId);
     }
   }
@@ -132,11 +136,12 @@ void ArrayVarElement2dNode::updateState() {
 
 void ArrayVarElement2dNode::registerOutputVars() {
   makeSolverVar(outputVarNodeIds().front());
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 bool ArrayVarElement2dNode::canBeReplaced() const {
@@ -149,8 +154,8 @@ bool ArrayVarElement2dNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  auto& idx1Node = invariantGraph().varNode(idx1());
-  auto& idx2Node = invariantGraph().varNode(idx2());
+  const auto& idx1Node = invariantGraph().varNode(idx1());
+  const auto& idx2Node = invariantGraph().varNode(idx2());
   assert(idx1Node.isFixed() || idx2Node.isFixed());
   if (idx1Node.isFixed() && idx2Node.isFixed()) {
     const VarNodeId input = at(idx1Node.lowerBound(), idx2Node.lowerBound());
@@ -166,7 +171,8 @@ bool ArrayVarElement2dNode::replace() {
         _offset2));
   } else {
     assert(idx2Node.isFixed());
-    const Int numCols = dynamicInputVarNodeIds().size() / _numRows;
+    const Int numCols =
+        static_cast<Int>(dynamicInputVarNodeIds().size() / _numRows);
     std::vector<VarNodeId> row;
     row.reserve(numCols);
     for (Int i = 0; i < numCols; ++i) {

@@ -27,13 +27,13 @@ class IntLinEqNeighborhoodTest : public NeighborhoodTestBase {
       _coeffs.emplace_back(i % 2 == 0 ? 1 : -1);
     }
 
-    _neighborhood = std::make_shared<neighborhoods::IntLinEqNeighborhood>(
+    _neighborhood = std::make_shared<IntLinEqNeighborhood>(
         std::vector<Int>{_coeffs}, std::vector<SearchVar>{_vars}, _offset);
 
     _solver->close();
   }
 
-  void expectHolds() {
+  void expectHolds() const {
     Int curSum = 0;
     Int comSum = 0;
     for (size_t i = 0; i < _vars.size(); ++i) {

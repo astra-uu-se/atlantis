@@ -1,7 +1,11 @@
 #include "atlantis/invariantgraph/fzn/fzn_circuit.hpp"
 
+#include <limits>
+
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/circuitNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
@@ -47,7 +51,7 @@ bool fzn_circuit(FznInvariantGraph& graph,
     return false;
   }
 
-  bool hasOffset = constraint.identifier() == "fzn_circuit_offset";
+  const bool hasOffset = constraint.identifier() == "fzn_circuit_offset";
 
   verifyNumArguments(constraint, hasOffset ? 2 : 1);
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)

@@ -1,26 +1,30 @@
 #include "atlantis/propagation/store/store.hpp"
 
+#include "atlantis/propagation/invariants/invariant.hpp"
+#include "atlantis/propagation/variables/intVar.hpp"
+#include "atlantis/propagation/views/intView.hpp"
+
 namespace atlantis::propagation {
 
-Store::Store() : _intVars(), _invariants(), _intViews(), _intViewSourceId() {}
+Store::Store() = default;
 
 VarViewId Store::createIntVar(Timestamp ts, Int initValue, Int lowerBound,
                               Int upperBound) {
   VarId vId(_intVars.size());
-  const VarViewId newId = VarViewId(vId, false);
+  const VarViewId newId(vId, false);
   _intVars.emplace_back(ts, vId, initValue, lowerBound, upperBound);
   return newId;
 }
 
 InvariantId Store::createInvariantFromPtr(std::unique_ptr<Invariant>&& ptr) {
-  auto newId = InvariantId(_invariants.size());
+  const auto newId = InvariantId{_invariants.size()};
   ptr->setId(newId);
   _invariants.emplace_back(std::move(ptr));
   return newId;
 }
 
 VarViewId Store::createIntViewFromPtr(std::unique_ptr<IntView>&& ptr) {
-  const VarViewId newId = VarViewId(_intViews.size(), true);
+  const VarViewId newId(_intViews.size(), true);
   ptr->setId(ViewId(newId));
   const VarViewId parentId = ptr->parentId();
   const VarViewId source =

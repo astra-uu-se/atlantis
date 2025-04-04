@@ -5,12 +5,16 @@
 #include <vector>
 
 #include "atlantis/types.hpp"
-#include "atlantis/utils/domains.hpp"
+
+namespace atlantis {
+class SetDomain;
+class IntervalDomain;
+class SearchDomain;
+}  // namespace atlantis
 
 namespace atlantis::search {
 
 class RandomProvider {
- private:
   std::mt19937 _gen;
   std::default_random_engine _randomEngine;
 
@@ -41,7 +45,7 @@ class RandomProvider {
 
   template <typename T>
   void shuffle(std::vector<T>& v) {
-    std::shuffle(v.begin(), v.end(), _randomEngine);
+    std::ranges::shuffle(v.begin(), v.end(), _randomEngine);
   }
 
   template <typename Value, typename Distribution>

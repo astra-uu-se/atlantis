@@ -1,5 +1,7 @@
 #include "atlantis/search/annealing/scheduleSequence.hpp"
 
+#include "atlantis/search/annealing/types.hpp"
+
 namespace atlantis::search {
 
 void ScheduleSequence::start(double initialTemperature) {
@@ -12,7 +14,7 @@ void ScheduleSequence::start(double initialTemperature) {
 void ScheduleSequence::nextRound(const RoundStatistics& statistics) {
   assert(!frozen());
 
-  auto temp = temperature();
+  const auto temp = temperature();
   currentSchedule().nextRound(statistics);
 
   if (currentSchedule().frozen()) {

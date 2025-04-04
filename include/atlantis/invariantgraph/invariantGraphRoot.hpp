@@ -4,7 +4,6 @@
 
 #include "atlantis/invariantgraph/implicitConstraintNode.hpp"
 #include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -20,14 +19,14 @@ class InvariantGraphRoot : public ImplicitConstraintNode {
 
   void addSearchVarNode(VarNodeId);
 
-  virtual std::ostream& dotLangEntry(std::ostream&) const override;
+  [[nodiscard]] std::ostream& dotLangEntry(std::ostream&) const override;
 
-  virtual std::ostream& dotLangEdges(std::ostream&) const override;
+  [[nodiscard]] std::ostream& dotLangEdges(std::ostream&) const override;
 
  protected:
   std::shared_ptr<search::neighborhoods::Neighborhood> createNeighborhood()
       override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

@@ -20,7 +20,7 @@ class Int2BoolViewTest : public ViewTest {
     _solver->close();
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return (committedValue ? _solver->committedValue(inputVar)
                            : _solver->currentValue(inputVar)) <= 0
                ? 1

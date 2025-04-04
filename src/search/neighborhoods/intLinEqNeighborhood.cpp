@@ -1,28 +1,35 @@
 #include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
+#include <numeric>
+
+#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/randomProvider.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::search::neighborhoods {
 
 IntLinEqNeighborhood::IntLinEqNeighborhood(std::vector<Int>&& coeffs,
                                            std::vector<SearchVar>&& vars,
-                                           Int bound)
+                                           Int offset)
     : _coeffs(coeffs),
       _vars(std::move(vars)),
-      _offset(bound),
+      _offset(offset),
       _indices(_vars.size()) {
   assert(_vars.size() > 1);
   std::iota(_indices.begin(), _indices.end(), 0);
-  assert(std::all_of(_coeffs.begin(), _coeffs.end(),
-                     [](Int coeff) { return std::abs(coeff) == 1; }));
+  assert(std::ranges::all_of(_coeffs.begin(), _coeffs.end(),
+                             [](Int coeff) { return std::abs(coeff) == 1; }));
 }
 
 void IntLinEqNeighborhood::initialize(RandomProvider& random,
                                       IAssignment& assignment) {
   for (Int i = 0; i < static_cast<Int>(_indices.size()) - 1; ++i) {
-    std::swap<size_t>(_indices[i],
-                      _indices[random.intInRange(i, _indices.size() - 1)]);
+    std::swap<size_t>(
+        _indices[i],
+        _indices[random.intInRange(i, static_cast<Int>(_indices.size()) - 1)]);
   }
 
   std::vector<std::array<Int, 2>> remainingBounds;
@@ -71,8 +78,9 @@ void IntLinEqNeighborhood::initialize(RandomProvider& random,
 size_t IntLinEqNeighborhood::randomMove(RandomProvider& random,
                                         IAssignment& assignment) {
   for (Int i = 0; i < static_cast<Int>(_indices.size()) - 1; ++i) {
-    std::swap<size_t>(_indices[i],
-                      _indices[random.intInRange(i, _indices.size() - 1)]);
+    std::swap<size_t>(
+        _indices[i],
+        _indices[random.intInRange(i, static_cast<Int>(_indices.size()) - 1)]);
     const size_t index1 = _indices[i];
     const Int cur1 = assignment.committedValue(_vars[index1].solverId());
     const Int lb1 = _vars[index1].domain()->lowerBound();
@@ -80,7 +88,8 @@ size_t IntLinEqNeighborhood::randomMove(RandomProvider& random,
 
     for (Int j = i + 1; j < static_cast<Int>(_indices.size()); ++j) {
       std::swap<size_t>(_indices[j],
-                        _indices[random.intInRange(j, _indices.size() - 1)]);
+                        _indices[random.intInRange(
+                            j, static_cast<Int>(_indices.size()) - 1)]);
       const size_t index2 = _indices[j];
       const Int cur2 = assignment.committedValue(_vars[index2].solverId());
       const Int lb2 = _vars[index2].domain()->lowerBound();
@@ -100,21 +109,20 @@ size_t IntLinEqNeighborhood::randomMove(RandomProvider& random,
         assignment.set(_vars[index1].solverId(), cur1 + diff);
         assignment.set(_vars[index2].solverId(), cur2 - diff);
         return 2;
-      } else {
-        const Int v1 = std::max(lb1 - cur1, lb2 - cur2);
-        const Int v2 = std::min(ub1 - cur1, ub2 - cur2);
-        if (v1 > v2) {
-          continue;
-        }
-        const Int diff = random.intInRange(v1, v2);
-        assert(lb1 <= cur1 + diff);
-        assert(ub1 >= cur1 + diff);
-        assert(lb2 <= cur2 + diff);
-        assert(ub2 >= cur2 + diff);
-        assignment.set(_vars[index1].solverId(), cur1 + diff);
-        assignment.set(_vars[index2].solverId(), cur2 + diff);
-        return 2;
       }
+      const Int v1 = std::max(lb1 - cur1, lb2 - cur2);
+      const Int v2 = std::min(ub1 - cur1, ub2 - cur2);
+      if (v1 > v2) {
+        continue;
+      }
+      const Int diff = random.intInRange(v1, v2);
+      assert(lb1 <= cur1 + diff);
+      assert(ub1 >= cur1 + diff);
+      assert(lb2 <= cur2 + diff);
+      assert(ub2 >= cur2 + diff);
+      assignment.set(_vars[index1].solverId(), cur1 + diff);
+      assignment.set(_vars[index2].solverId(), cur2 + diff);
+      return 2;
     }
   }
   return 0;

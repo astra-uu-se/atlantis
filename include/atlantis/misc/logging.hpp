@@ -55,13 +55,13 @@ void log(LogLevel logLevel, const char *file, int line,
   }
   const char *level;
   switch (logLevel) {
-    case LogLevel::error:
+    case error:
       level = "[error] ";
       break;
-    case LogLevel::warning:
+    case warning:
       level = "[warning] ";
       break;
-    case LogLevel::info:
+    case info:
       level = "[info] ";
       break;
     default:

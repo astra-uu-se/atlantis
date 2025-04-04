@@ -4,10 +4,12 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/boolLinear.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/ifThenElseConst.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
-#include "atlantis/propagation/views/scalarView.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -24,11 +26,11 @@ void BoolLinearNode::init(InvariantNodeId id) {
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
              .isIntVar());
-  assert(
-      std::none_of(staticInputVarNodeIds().begin(),
-                   staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                     return invariantGraphConst().varNodeConst(vId).isIntVar();
-                   }));
+  assert(std::ranges::none_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void BoolLinearNode::updateState() {
@@ -58,7 +60,7 @@ void BoolLinearNode::updateState() {
     }
   }
 
-  for (Int i = indicesToRemove.size() - 1; i >= 0; --i) {
+  for (Int i = static_cast<Int>(indicesToRemove.size()) - 1; i >= 0; --i) {
     removeStaticInputVarNode(staticInputVarNodeIds().at(indicesToRemove.at(i)));
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
@@ -74,7 +76,7 @@ void BoolLinearNode::updateState() {
   // invariantGraph().varNode(outputVarNodeIds().front()).removeValuesBelow(lb);
   // invariantGraph().varNode(outputVarNodeIds().front()).removeValuesAbove(ub);
 
-  if (staticInputVarNodeIds().size() == 0) {
+  if (staticInputVarNodeIds().empty()) {
     invariantGraph().varNode(outputVarNodeIds().front()).fixToValue(_offset);
     setState(InvariantNodeState::SUBSUMED);
   }
@@ -98,11 +100,12 @@ void BoolLinearNode::registerOutputVars() {
               solver(), _intermediate, _offset));
     }
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void BoolLinearNode::registerNode() {
@@ -117,11 +120,11 @@ void BoolLinearNode::registerNode() {
   assert(_intermediate == propagation::NULL_ID || _intermediate.isVar());
 
   std::vector<propagation::VarViewId> solverVars;
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars),
-                 [&](const VarNodeId varNodeId) {
-                   return invariantGraph().varId(varNodeId);
-                 });
+  std::ranges::transform(staticInputVarNodeIds(),
+                         std::back_inserter(solverVars),
+                         [&](const VarNodeId varNodeId) {
+                           return invariantGraph().varId(varNodeId);
+                         });
   solver().makeInvariant<propagation::BoolLinear>(
       solver(),
       _intermediate == propagation::NULL_ID

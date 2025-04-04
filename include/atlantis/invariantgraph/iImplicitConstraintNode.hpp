@@ -3,7 +3,10 @@
 #include <memory>
 
 #include "atlantis/invariantgraph/iInvariantNode.hpp"
-#include "atlantis/search/neighborhoods/neighborhood.hpp"
+
+namespace atlantis::search::neighborhoods {
+class Neighborhood;
+}
 
 namespace atlantis::invariantgraph {
 

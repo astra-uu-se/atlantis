@@ -2,9 +2,10 @@
 
 #include <algorithm>
 #include <cassert>
+#include <functional>
 #include <vector>
 
-#include "atlantis/propagation/variables/intVar.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::propagation {
 
@@ -14,7 +15,7 @@ inline bool all_in_range(Int start, Int stop,
   for (Int i = 0; i < stop - start; ++i) {
     vec.at(i) = start + i;
   }
-  return std::all_of(vec.begin(), vec.end(), std::move(predicate));
+  return std::ranges::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
 inline std::vector<VarId> toVarIds(std::vector<VarViewId>&& ids) {
@@ -27,9 +28,6 @@ inline std::vector<VarId> toVarIds(std::vector<VarViewId>&& ids) {
   return varIds;
 }
 
-/**
- * @param violationId id for the violationCount
- */
 GlobalCardinalityOpen::GlobalCardinalityOpen(SolverBase& solver,
                                              std::vector<VarId>&& outputs,
                                              std::vector<VarViewId>&& inputs,
@@ -38,8 +36,6 @@ GlobalCardinalityOpen::GlobalCardinalityOpen(SolverBase& solver,
       _outputs(std::move(outputs)),
       _inputs(std::move(inputs)),
       _cover(std::move(cover)),
-      _coverVarIndex(),
-      _counts(),
       _offset(0) {
   assert(_cover.size() == _outputs.size());
   assert(all_in_range(0, _cover.size(), [&](const Int i) {

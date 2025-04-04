@@ -2,6 +2,8 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
@@ -38,7 +40,7 @@ bool int_linear(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
     return false;
   }
 
-  Int outputCoeff = coeffs.at(definedVarIndex);
+  const Int outputCoeff = coeffs.at(definedVarIndex);
   // TODO: add a violation that is definedVar % coeffs[definedVarIndex]
   if (std::abs(outputCoeff) != 1) {
     return false;
@@ -46,8 +48,8 @@ bool int_linear(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
 
   coeffs.erase(coeffs.begin() + definedVarIndex);
   if (outputCoeff > 1) {
-    std::for_each(coeffs.begin(), coeffs.end(),
-                  [](Int& coeff) { coeff *= -1; });
+    std::ranges::for_each(coeffs.begin(), coeffs.end(),
+                          [](Int& coeff) { coeff *= -1; });
   }
 
   std::vector<VarNodeId> inputVarNodeIds;
@@ -55,18 +57,11 @@ bool int_linear(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   VarNodeId outputVarNodeId{NULL_NODE_ID};
   for (Int i = 0; i < static_cast<Int>(vars->size()); ++i) {
     const VarNodeId varNodeId =
-
         std::holds_alternative<Int>(vars->at(i))
-            ? (i == definedVarIndex
-                   ? graph.retrieveVarNode(std::get<Int>(vars->at(i)))
-                   : graph.retrieveVarNode(std::get<Int>(vars->at(i))))
-            : (i == definedVarIndex
-                   ? graph.retrieveVarNode(
-                         std::get<std::shared_ptr<const fznparser::IntVar>>(
-                             vars->at(i)))
-                   : graph.retrieveVarNode(
-                         std::get<std::shared_ptr<const fznparser::IntVar>>(
-                             vars->at(i))));
+            ? graph.retrieveVarNode(std::get<Int>(vars->at(i)))
+            : graph.retrieveVarNode(
+                  std::get<std::shared_ptr<const fznparser::IntVar>>(
+                      vars->at(i)));
 
     if (i == definedVarIndex) {
       outputVarNodeId = varNodeId;

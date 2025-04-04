@@ -1,11 +1,9 @@
 #pragma once
 
-#include <cassert>
 #include <vector>
 
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/variables/committableInt.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
@@ -35,11 +33,11 @@ class Invariant {
   /**
    * Updates the value of variable without queueing it for propagation
    */
-  void updateValue(Timestamp ts, VarId id, Int val);
+  void updateValue(Timestamp ts, VarId id, Int val) const;
   /**
    * Increases the value of variable without queueing it for propagation
    */
-  void incValue(Timestamp ts, VarId id, Int val);
+  void incValue(Timestamp ts, VarId id, Int val) const;
 
  public:
   virtual ~Invariant() = default;
@@ -54,7 +52,7 @@ class Invariant {
     return NULL_ID;
   }
 
-  [[nodiscard]] inline InvariantId id() const noexcept { return _id; }
+  [[nodiscard]] InvariantId id() const noexcept { return _id; }
 
   void setId(InvariantId id) { _id = id; }
 
@@ -80,7 +78,7 @@ class Invariant {
 
   virtual void updateBounds(bool widenOnly) = 0;
 
-  virtual void close(Timestamp){};
+  virtual void close(Timestamp) {}
 
   virtual void recompute(Timestamp) = 0;
 
@@ -107,15 +105,13 @@ class Invariant {
    */
   virtual void notifyInputChanged(Timestamp ts, LocalId localId) = 0;
 
-  virtual void commit(Timestamp) { _isPostponed = false; };
+  virtual void commit(Timestamp) { _isPostponed = false; }
 
-  inline void postpone() { _isPostponed = true; }
-  [[nodiscard]] inline bool isPostponed() const { return _isPostponed; }
+  void postpone() { _isPostponed = true; }
+  [[nodiscard]] bool isPostponed() const { return _isPostponed; }
 
-  [[nodiscard]] inline VarId primaryDefinedVar() const {
-    return _primaryDefinedVar;
-  }
-  [[nodiscard]] const inline std::vector<VarId>& nonPrimaryDefinedVars() const {
+  [[nodiscard]] VarId primaryDefinedVar() const { return _primaryDefinedVar; }
+  [[nodiscard]] const std::vector<VarId>& nonPrimaryDefinedVars() const {
     return _definedVars;
   }
 };

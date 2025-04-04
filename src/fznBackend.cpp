@@ -4,9 +4,16 @@
 #include <utility>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/logging/logger.hpp"
+#include "atlantis/search/annealer.hpp"
 #include "atlantis/search/assignment.hpp"
+#include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
 #include "atlantis/search/objective.hpp"
+#include "atlantis/search/randomProvider.hpp"
+#include "atlantis/search/searchController.hpp"
 #include "atlantis/search/searchProcedure.hpp"
+#include "atlantis/search/searchVariable.hpp"
 #include "atlantis/utils/fznOutput.hpp"
 
 namespace atlantis {

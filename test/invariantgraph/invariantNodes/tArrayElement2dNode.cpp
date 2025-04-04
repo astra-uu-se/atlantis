@@ -18,17 +18,19 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
   Int offsetIdx1 = 1;
   Int offsetIdx2 = 1;
 
-  bool intParToBool(const Int val) { return std::abs(val) % 2 == 0; }
+  [[nodiscard]] static bool intParToBool(const Int val) {
+    return std::abs(val) % 2 == 0;
+  }
 
-  Int parVal(const Int val) {
+  [[nodiscard]] Int parVal(const Int val) const {
     return isIntElement() ? val : intParToBool(val) ? 0 : 1;
   }
 
-  bool isIntElement() const { return _paramData.data <= 1; }
-  bool idx1ShouldBeReplaced() const {
+  [[nodiscard]] bool isIntElement() const { return _paramData.data <= 1; }
+  [[nodiscard]] bool idx1ShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 0 || _paramData.data == 2);
   }
-  bool idx2ShouldBeReplaced() const {
+  [[nodiscard]] bool idx2ShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 1 || _paramData.data == 3);
   }
 

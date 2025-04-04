@@ -1,5 +1,7 @@
 #include "atlantis/propagation/views/intAbsView.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 IntAbsView::IntAbsView(SolverBase& solver, VarViewId parentId)

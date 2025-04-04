@@ -18,16 +18,16 @@ class IntDivTest : public InvariantTest {
   std::uniform_int_distribution<Int> numeratorDist;
   std::uniform_int_distribution<Int> denominatorDist;
 
-  Int zeroReplacement() const {
+  [[nodiscard]] Int zeroReplacement() const {
     return denominatorLb < 0 && denominatorUb <= 0 ? -1 : 1;
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     return computeOutput(_solver->value(ts, numerator),
                          _solver->value(ts, denominator));
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     Int denVal = committedValue ? _solver->committedValue(denominator)
                                 : _solver->currentValue(denominator);
     if (denVal == 0) {
@@ -38,7 +38,7 @@ class IntDivTest : public InvariantTest {
            denVal;
   }
 
-  Int computeOutput(Int numerator, Int denominator) {
+  [[nodiscard]] Int computeOutput(Int numerator, Int denominator) const {
     return numerator / (denominator == 0 ? zeroReplacement() : denominator);
   }
 
@@ -110,7 +110,7 @@ TEST_F(IntDivTest, Recompute) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{numerator, denominator};
+  const std::vector<VarViewId> inputVars{numerator, denominator};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -131,7 +131,7 @@ TEST_F(IntDivTest, NotifyInputChanged) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{numerator, denominator};
+  const std::vector<VarViewId> inputVars{numerator, denominator};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -150,7 +150,7 @@ TEST_F(IntDivTest, NotifyInputChanged) {
 TEST_F(IntDivTest, NextInput) {
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{numerator, denominator};
+  const std::vector<VarViewId> inputVars{numerator, denominator};
 
   expectNextInput(inputVars, invariant);
 }
@@ -179,10 +179,10 @@ TEST_F(IntDivTest, NotifyCurrentInputChanged) {
 TEST_F(IntDivTest, Commit) {
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{numerator, denominator};
+  const std::vector<VarViewId> inputVars{numerator, denominator};
 
   std::vector<size_t> indices{0, 1};
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   std::vector<Int> committedValues{_solver->committedValue(numerator),
                                    _solver->committedValue(denominator)};
@@ -190,7 +190,7 @@ TEST_F(IntDivTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -264,8 +264,8 @@ RC_GTEST_FIXTURE_PROP(IntDivTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));

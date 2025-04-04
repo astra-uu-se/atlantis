@@ -48,7 +48,7 @@ TEST_F(IntVarTest, CommittableIntConstructor) {
   // Random inital value
   Int value = distribution(gen);
 
-  IntVar intVarWithValue = IntVar(varId, value, lowerBound, upperBound);
+  IntVar intVarWithValue(varId, value, lowerBound, upperBound);
 
   ASSERT_EQ(intVarWithValue.value(timestamp), value);
   ASSERT_EQ(intVarWithValue.committedValue(), value);
@@ -64,10 +64,10 @@ TEST_F(IntVarTest, CommittableIntConstructor) {
 }
 
 TEST_F(IntVarTest, InDomain) {
-  Int lowerBound = -10;
-  Int upperBound = 10;
-  Timestamp timestamp(1);
-  IntVar intVar = IntVar(timestamp, 0, lowerBound, upperBound);
+  const Int lowerBound = -10;
+  const Int upperBound = 10;
+  const Timestamp timestamp(1);
+  const IntVar intVar(timestamp, 0, lowerBound, upperBound);
 
   for (Int value = lowerBound; value <= upperBound; ++value) {
     EXPECT_TRUE(intVar.inDomain(value));
@@ -83,11 +83,11 @@ TEST_F(IntVarTest, InDomain) {
 }
 
 TEST_F(IntVarTest, UpdateBounds) {
-  Int initialLowerBound = 0;
-  Int initialUpperBound = 0;
+  const Int initialLowerBound = 0;
+  const Int initialUpperBound = 0;
 
-  Timestamp timestamp(1);
-  IntVar intVar = IntVar(timestamp, 0, initialLowerBound, initialUpperBound);
+  const Timestamp timestamp(1);
+  IntVar intVar(timestamp, 0, initialLowerBound, initialUpperBound);
 
   for (Int value = 1; value <= 1000; ++value) {
     EXPECT_FALSE(intVar.inDomain(-value));

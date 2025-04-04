@@ -1,5 +1,7 @@
 #include "atlantis/search/searchController.hpp"
 
+#include "atlantis/search/iAssignment.hpp"
+
 namespace atlantis::search {
 
 bool SearchController::shouldRun(const IAssignment& assignment) {

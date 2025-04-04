@@ -1,7 +1,9 @@
 #include "atlantis/propagation/invariants/times.hpp"
 
 #include <algorithm>
-#include <vector>
+#include <array>
+
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::propagation {
 

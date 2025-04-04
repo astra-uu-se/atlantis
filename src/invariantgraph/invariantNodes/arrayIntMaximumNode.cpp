@@ -1,10 +1,14 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/max.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intMaxView.hpp"
 
 namespace atlantis::invariantgraph {
@@ -24,11 +28,11 @@ void ArrayIntMaximumNode::init(InvariantNodeId id) {
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
              .isIntVar());
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void ArrayIntMaximumNode::updateState() {
@@ -51,7 +55,7 @@ void ArrayIntMaximumNode::updateState() {
   auto& outputVar = invariantGraph().varNode(outputVarNodeIds().front());
   // outputVar.removeValuesBelow(_lb);
   // outputVar.removeValuesAbove(ub);
-  if (staticInputVarNodeIds().size() == 0 || outputVar.isFixed()) {
+  if (staticInputVarNodeIds().empty() || outputVar.isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -90,11 +94,12 @@ void ArrayIntMaximumNode::registerOutputVars() {
   } else if (!staticInputVarNodeIds().empty()) {
     makeSolverVar(outputVarNodeIds().front());
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void ArrayIntMaximumNode::registerNode() {
@@ -102,10 +107,10 @@ void ArrayIntMaximumNode::registerNode() {
     return;
   }
   std::vector<propagation::VarViewId> solverVars;
-  std::transform(staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-                 std::back_inserter(solverVars), [&](const auto& node) {
-                   return invariantGraph().varId(node);
-                 });
+  std::ranges::transform(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      std::back_inserter(solverVars),
+      [&](const auto& node) { return invariantGraph().varId(node); });
 
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);

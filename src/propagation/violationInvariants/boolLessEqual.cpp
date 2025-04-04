@@ -1,9 +1,12 @@
 #include "atlantis/propagation/violationInvariants/boolLessEqual.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 /**
  * Constraint x = y
+ * @param solver the solver that the invariant is added to
  * @param violationId id for the violationCount
  * @param x variable of lhs
  * @param y variable of rhs
@@ -30,9 +33,9 @@ void BoolLessEqual::updateBounds(bool widenOnly) {
 }
 
 void BoolLessEqual::recompute(Timestamp ts) {
-  updateValue(ts, _violationId,
-              static_cast<Int>((_solver.value(ts, _x) == 0) &&
-                               (_solver.value(ts, _y) != 0)));
+  updateValue(
+      ts, _violationId,
+      (_solver.value(ts, _x) != 0) || (_solver.value(ts, _y) == 0) ? 0 : 1);
 }
 
 void BoolLessEqual::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }

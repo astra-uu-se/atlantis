@@ -1,14 +1,10 @@
 #pragma once
 
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/violationInvariants/violationInvariant.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
 class PowDomain : public ViolationInvariant {
- private:
   VarViewId _x, _y;
 
  public:
@@ -24,7 +20,7 @@ class PowDomain : public ViolationInvariant {
   VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
 
-  static bool shouldPost(SolverBase&, VarViewId x, VarViewId y);
+  static bool shouldPost(const SolverBase&, VarViewId x, VarViewId y);
 };
 
 }  // namespace atlantis::propagation

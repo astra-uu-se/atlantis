@@ -17,14 +17,14 @@ class ObjectiveTest : public ::testing::Test {
   void SetUp() override { _solver = std::make_shared<propagation::Solver>(); }
 
   propagation::VarViewId install(
-      search::Objective& objective,
+      Objective& objective,
       const fznparser::IntSet& objectiveRange = fznparser::IntSet(0, 0),
       Int initial = 0) {
     _solver->open();
     objectiveVarId = _solver->makeIntVar(initial, objectiveRange.lowerBound(),
                                          objectiveRange.upperBound());
     totalViolationVarId = _solver->makeIntVar(0, 0, 0);
-    auto violation =
+    const auto violation =
         objective.registerNode(totalViolationVarId, objectiveVarId);
     _solver->close();
     return violation;
@@ -32,9 +32,9 @@ class ObjectiveTest : public ::testing::Test {
 };
 
 TEST_F(ObjectiveTest, satisfaction_objective) {
-  search::Objective searchObjective(*_solver, fznparser::ProblemType::SATISFY);
+  Objective searchObjective(*_solver, fznparser::ProblemType::SATISFY);
 
-  auto violation = install(searchObjective);
+  const auto violation = install(searchObjective);
 
   EXPECT_EQ(violation, totalViolationVarId);
   EXPECT_EQ(_solver->numVars(), 2);
@@ -49,7 +49,7 @@ TEST_F(ObjectiveTest, minimisation_objective) {
   fznparser::Model model;
   fznparser::IntSet domain(1, 10);
   fznparser::IntVar a(domain.lowerBound(), domain.upperBound(), "a");
-  search::Objective searchObjective(*_solver, fznparser::ProblemType::MINIMIZE);
+  Objective searchObjective(*_solver, fznparser::ProblemType::MINIMIZE);
 
   auto violation = install(searchObjective, domain, 5);
 
@@ -83,7 +83,7 @@ TEST_F(ObjectiveTest, maximisation_objective) {
   fznparser::IntSet domain(1, 10);
   fznparser::IntVar a(domain.lowerBound(), domain.upperBound(), "a");
 
-  search::Objective searchObjective(*_solver, fznparser::ProblemType::MAXIMIZE);
+  Objective searchObjective(*_solver, fznparser::ProblemType::MAXIMIZE);
 
   auto violation = install(searchObjective, domain, 5);
 

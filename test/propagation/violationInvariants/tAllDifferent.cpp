@@ -14,7 +14,7 @@ class AllDifferentTest : public InvariantTest {
   Int inputVarUb{10};
   std::uniform_int_distribution<Int> inputVarDist;
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = committedValue ? _solver->committedValue(inputVars.at(i))
@@ -23,7 +23,7 @@ class AllDifferentTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = _solver->value(ts, inputVars.at(i));
@@ -194,12 +194,12 @@ TEST_F(AllDifferentTest, Commit) {
     committedValues.at(i) = _solver->committedValue(inputVars.at(i));
   }
 
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -241,8 +241,8 @@ RC_GTEST_FIXTURE_PROP(AllDifferentTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -317,11 +317,11 @@ TEST_F(AllDifferentTest, SolverIntegration) {
       _solver->open();
     }
     std::vector<VarViewId> args;
-    const size_t numArgs = 10;
-    for (size_t value = 0; value < numArgs; ++value) {
+    constexpr Int numArgs = 10;
+    for (Int value = 0; value < numArgs; ++value) {
       args.emplace_back(_solver->makeIntVar(0, -100, 100));
     }
-    const VarViewId viol = _solver->makeIntVar(0, 0, static_cast<Int>(numArgs));
+    const VarViewId viol = _solver->makeIntVar(0, 0, numArgs);
     const VarViewId modifiedVarId = args.front();
     testNotifications<MockAllDifferent>(
         &_solver->makeViolationInvariant<MockAllDifferent>(*_solver, viol,

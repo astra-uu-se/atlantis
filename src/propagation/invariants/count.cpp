@@ -3,6 +3,8 @@
 #include <limits>
 #include <utility>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 Count::Count(SolverBase& solver, VarId output, VarViewId needle,
@@ -11,13 +13,45 @@ Count::Count(SolverBase& solver, VarId output, VarViewId needle,
       _output(output),
       _needle(needle),
       _vars(std::move(varArray)),
-      _counts(),
       _offset(0) {}
 
 Count::Count(SolverBase& solver, VarViewId output, VarViewId needle,
              std::vector<VarViewId>&& varArray)
     : Count(solver, VarId(output), needle, std::move(varArray)) {
   assert(output.isVar());
+}
+
+inline void Count::increaseCount(Timestamp ts, Int value) {
+  if (value - _offset < 0 ||
+      static_cast<Int>(_counts.size()) <= value - _offset) {
+    return;
+  }
+  assert(_counts[value - _offset].value(ts) + 1 > 0);
+  assert(_counts[value - _offset].value(ts) + 1 <=
+         static_cast<Int>(_vars.size()));
+  _counts[value - _offset].incValue(ts, 1);
+}
+
+inline void Count::decreaseCount(Timestamp ts, Int value) {
+  if (value - _offset < 0 ||
+      static_cast<Int>(_counts.size()) <= value - _offset) {
+    return;
+  }
+  assert(_counts[value - _offset].value(ts) - 1 >= 0);
+  assert(_counts[value - _offset].value(ts) - 1 <
+         static_cast<Int>(_vars.size()));
+  _counts[value - _offset].incValue(ts, -1);
+}
+
+inline signed char Count::count(Timestamp ts, Int value) const {
+  if (value - _offset < 0 ||
+      static_cast<Int>(_counts.size()) <= value - _offset) {
+    return 0;
+  }
+  assert(0 <= value - _offset);
+  assert(static_cast<size_t>(value - _offset) <= _counts.size());
+  assert(_counts.at(value - _offset).value(ts) >= 0);
+  return static_cast<signed char>(_counts[value - _offset].value(ts));
 }
 
 void Count::registerVars() {
@@ -83,7 +117,8 @@ VarViewId Count::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _vars.size()) {
     return _vars[index];
-  } else if (index == _vars.size()) {
+  }
+  if (index == _vars.size()) {
     return _needle;
   }
   return NULL_ID;

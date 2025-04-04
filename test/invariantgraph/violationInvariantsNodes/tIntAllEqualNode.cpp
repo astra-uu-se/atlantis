@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
+#include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 
 namespace atlantis::testing {
@@ -204,10 +205,11 @@ TEST_P(IntAllEqualNodeTestFixture, propagation) {
     if (!varNode(inputIdentifier).isFixed()) {
       const propagation::VarViewId inputVarId = varId(inputIdentifier);
       EXPECT_NE(inputVarId, propagation::NULL_ID);
-      const bool inVec = std::any_of(inputVarIds.begin(), inputVarIds.end(),
-                                     [&](const propagation::VarViewId& varId) {
-                                       return varId == inputVarId;
-                                     });
+      const bool inVec =
+          std::ranges::any_of(inputVarIds.begin(), inputVarIds.end(),
+                              [&](const propagation::VarViewId& varId) {
+                                return varId == inputVarId;
+                              });
       if (!inVec) {
         inputVarIds.emplace_back(inputVarId);
       }

@@ -2,6 +2,7 @@
 
 #include "atlantis/search/annealing/annealerContainer.hpp"
 #include "atlantis/search/annealing/geometricCoolingSchedule.hpp"
+#include "atlantis/search/annealing/types.hpp"
 
 namespace atlantis::testing {
 
@@ -13,7 +14,7 @@ class GeometricCoolingScheduleTest : public ::testing::Test {
   double initialTemp = 5.0;
   UInt successiveFutileRoundsThreshold = 2;
 
-  std::unique_ptr<AnnealingSchedule> schedule;
+  std::shared_ptr<AnnealingSchedule> schedule;
 
   void SetUp() override {
     schedule =
@@ -35,7 +36,7 @@ TEST_F(GeometricCoolingScheduleTest, temperature_decreases_geometrically) {
   schedule->start(initialTemp);
   EXPECT_EQ(schedule->temperature(), initialTemp);
 
-  RoundStatistics stats{};
+  RoundStatistics stats;
   stats.attemptedMoves = 100;
   stats.acceptedMoves = 10;
   schedule->nextRound(stats);
@@ -48,7 +49,7 @@ TEST_F(GeometricCoolingScheduleTest, temperature_decreases_geometrically) {
 TEST_F(GeometricCoolingScheduleTest, frozen_if_rounds_no_longer_improve) {
   EXPECT_FALSE(schedule->frozen());
 
-  RoundStatistics stats{};
+  RoundStatistics stats;
   stats.bestCostOfThisRound = 5;
   stats.bestCostOfPreviousRound = 5;
   schedule->nextRound(stats);
@@ -61,7 +62,7 @@ TEST_F(GeometricCoolingScheduleTest, frozen_if_rounds_no_longer_improve) {
 TEST_F(GeometricCoolingScheduleTest, restarting_frozen_schedule_is_unfrozen) {
   EXPECT_FALSE(schedule->frozen());
 
-  RoundStatistics stats{};
+  RoundStatistics stats;
   stats.bestCostOfThisRound = 5;
   stats.bestCostOfPreviousRound = 5;
   schedule->nextRound(stats);

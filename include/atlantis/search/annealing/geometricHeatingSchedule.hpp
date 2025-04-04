@@ -5,7 +5,6 @@
 namespace atlantis::search {
 
 class GeometricHeatingSchedule : public AnnealingSchedule {
- private:
   double _heatingRate;
   double _minimumUphillAcceptanceRatio;
 

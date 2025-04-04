@@ -1,14 +1,14 @@
 #pragma once
 
-#include <functional>
 #include <fznparser/constraint.hpp>
-#include <fznparser/types.hpp>
-#include <fznparser/variables.hpp>
 #include <string>
-#include <typeinfo>
 
-#include "atlantis/exceptions/exceptions.hpp"
-#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+
+namespace atlantis::invariantgraph {
+class IInvariantGraph;
+class FznInvariantGraph;
+}  // namespace atlantis::invariantgraph
 
 namespace atlantis::invariantgraph::fzn {
 

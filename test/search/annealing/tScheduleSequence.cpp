@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "atlantis/search/annealing/annealerContainer.hpp"
+#include "atlantis/search/annealing/types.hpp"
 
 namespace atlantis::testing {
 
@@ -20,25 +21,16 @@ class DummyAnnealingSchedule : public AnnealingSchedule {
 
 class ScheduleSequenceTest : public ::testing::Test {
  protected:
-  DummyAnnealingSchedule* inner1{nullptr};
-  DummyAnnealingSchedule* inner2{nullptr};
-  std::unique_ptr<AnnealingSchedule> schedule;
+  std::shared_ptr<DummyAnnealingSchedule> inner1{nullptr};
+  std::shared_ptr<DummyAnnealingSchedule> inner2{nullptr};
+  std::shared_ptr<AnnealingSchedule> schedule;
 
   void SetUp() override {
-    auto innerSchedule1 = std::make_unique<DummyAnnealingSchedule>();
-    inner1 = innerSchedule1.get();
+    inner1 = std::make_shared<DummyAnnealingSchedule>();
+    inner2 = std::make_shared<DummyAnnealingSchedule>();
 
-    auto innerSchedule2 = std::make_unique<DummyAnnealingSchedule>();
-    inner2 = innerSchedule2.get();
-
-    // I don't know how to pass in innerSchedule1 directly, since then the
-    // sequence method doesn't compile. It expects
-    // std::unique_ptr<AnnealingSchedule> but is given
-    // std::unique_ptr<DummyAnnealingSchedule>.
-    std::unique_ptr<AnnealingSchedule> i1 = std::move(innerSchedule1);
-    std::unique_ptr<AnnealingSchedule> i2 = std::move(innerSchedule2);
-
-    schedule = AnnealerContainer::sequence(i1, i2);
+    schedule = AnnealerContainer::sequence(
+        std::vector<std::shared_ptr<AnnealingSchedule>>{inner1, inner2});
     schedule->start(1.0);
   }
 };
@@ -56,9 +48,9 @@ TEST_F(ScheduleSequenceTest, second_schedule_is_active_after_first_freezes) {
   EXPECT_CALL(*inner2, frozen()).WillRepeatedly(Return(false));
   EXPECT_CALL(*inner2, temperature()).WillRepeatedly(Return(2.0));
 
-  schedule->nextRound({});
+  schedule->nextRound(RoundStatistics(1.0));
   EXPECT_FALSE(schedule->frozen());
-  schedule->nextRound({});
+  schedule->nextRound(RoundStatistics(1.0));
   EXPECT_FALSE(schedule->frozen());
 
   EXPECT_EQ(schedule->temperature(), 2.0);
@@ -68,8 +60,8 @@ TEST_F(ScheduleSequenceTest, frozen_if_sequence_is_finished) {
   EXPECT_CALL(*inner1, frozen()).WillRepeatedly(Return(true));
   EXPECT_CALL(*inner2, frozen()).WillRepeatedly(Return(true));
 
-  schedule->nextRound({});
-  schedule->nextRound({});
+  schedule->nextRound(RoundStatistics(1.0));
+  schedule->nextRound(RoundStatistics(1.0));
   EXPECT_TRUE(schedule->frozen());
 }
 

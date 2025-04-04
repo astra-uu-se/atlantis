@@ -3,9 +3,6 @@
 #include <vector>
 
 #include "atlantis/propagation/invariants/invariant.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/types.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
@@ -17,12 +14,11 @@ namespace atlantis::propagation {
  */
 
 class ElementVar : public Invariant {
- private:
   VarId _output, _index;
   std::vector<VarViewId> _varArray;
   Int _offset;
 
-  [[nodiscard]] inline size_t safeIndex(Int index) const noexcept {
+  [[nodiscard]] size_t safeIndex(Int index) const noexcept {
     return std::max<Int>(
         0, std::min(static_cast<Int>(_varArray.size()) - 1, index - _offset));
   }

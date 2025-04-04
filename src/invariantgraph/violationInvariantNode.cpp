@@ -2,10 +2,15 @@
 
 #include <cassert>
 
+#include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::invariantgraph {
 
-static std::vector<invariantgraph::VarNodeId> combine(
-    VarNodeId reifiedId, std::vector<VarNodeId>&& outputIds) {
+static std::vector<VarNodeId> combine(VarNodeId reifiedId,
+                                      std::vector<VarNodeId>&& outputIds) {
   if (reifiedId == NULL_NODE_ID) {
     return std::move(outputIds);
   }
@@ -20,28 +25,30 @@ static std::vector<invariantgraph::VarNodeId> combine(
 
 ViolationInvariantNode::ViolationInvariantNode(
     IInvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
-    std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedId,
+    std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedViolationId,
     bool shouldHold)
-    : InvariantNode(graph, combine(reifiedId, std::move(outputIds)),
+    : InvariantNode(graph, combine(reifiedViolationId, std::move(outputIds)),
                     std::move(staticInputIds)),
-      _isReified(reifiedId != NULL_NODE_ID),
+      _isReified(reifiedViolationId != NULL_NODE_ID),
       _shouldHold(shouldHold) {
-  assert(
-      (!isReified() && reifiedId == NULL_NODE_ID) ||
-      (reifiedId != NULL_NODE_ID && outputVarNodeIds().front() == reifiedId));
+  assert((!ViolationInvariantNode::isReified() &&
+          reifiedViolationId == NULL_NODE_ID) ||
+         (reifiedViolationId != NULL_NODE_ID &&
+          InvariantNode::outputVarNodeIds().front() == reifiedViolationId));
 }
 
 ViolationInvariantNode::ViolationInvariantNode(
     IInvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
-    std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedId)
+    std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedViolationId)
     : ViolationInvariantNode(graph, std::move(outputIds),
-                             std::move(staticInputIds), reifiedId, true) {}
+                             std::move(staticInputIds), reifiedViolationId,
+                             true) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
     IInvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
-    VarNodeId reifiedId)
-    : ViolationInvariantNode(graph, {}, std::move(staticInputIds), reifiedId,
-                             true) {}
+    VarNodeId reifiedViolationId)
+    : ViolationInvariantNode(graph, {}, std::move(staticInputIds),
+                             reifiedViolationId, true) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
     IInvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
@@ -79,7 +86,7 @@ void ViolationInvariantNode::updateReified() {
                       .inDomain(bool{true});
     if (!outputVarNodeIds().empty()) {
       assert(outputVarNodeIds().front() == reifiedViolationNodeId());
-      const bool isAlsoOutput = std::any_of(
+      const bool isAlsoOutput = std::ranges::any_of(
           outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
           [this](VarNodeId oId) { return oId == reifiedViolationNodeId(); });
       if (!isAlsoOutput) {
@@ -98,7 +105,7 @@ propagation::VarViewId ViolationInvariantNode::violationVarId() const {
   return _violationVarId;
 }
 
-VarNodeId ViolationInvariantNode::reifiedViolationNodeId() {
+VarNodeId ViolationInvariantNode::reifiedViolationNodeId() const {
   return isReified() ? outputVarNodeIds().front() : VarNodeId{NULL_NODE_ID};
 }
 

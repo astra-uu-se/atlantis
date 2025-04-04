@@ -2,13 +2,11 @@
 
 #include <string>
 
-#include "atlantis/propagation/types.hpp"
 #include "atlantis/types.hpp"
 
 namespace atlantis::search {
 
 class Cost {
- private:
   Int _violationDegree;
   Int _objective;
   Int _objectiveWeightSign;
@@ -19,7 +17,7 @@ class Cost {
   /**
    * @return True if this cost has no violated constraints.
    */
-  [[nodiscard]] inline bool satisfiesConstraints() const noexcept {
+  [[nodiscard]] bool satisfiesConstraints() const noexcept {
     return _violationDegree == 0;
   }
 

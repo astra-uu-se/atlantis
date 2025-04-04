@@ -5,7 +5,6 @@
 namespace atlantis::invariantgraph {
 
 class IntModViewNode : public InvariantNode {
- private:
   Int _denominator;
 
  public:
@@ -24,7 +23,7 @@ class IntModViewNode : public InvariantNode {
     return staticInputVarNodeIds().front();
   }
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

@@ -20,7 +20,7 @@ class Bool2IntNode : public InvariantNode {
     return staticInputVarNodeIds().front();
   }
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

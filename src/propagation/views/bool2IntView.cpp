@@ -1,8 +1,10 @@
 #include "atlantis/propagation/views/bool2IntView.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
-static inline Int convert(Int value) { return static_cast<Int>(value == 0); }
+static Int convert(Int value) { return value == 0 ? 1 : 0; }
 
 Bool2IntView::Bool2IntView(SolverBase& solver, const VarViewId parentId)
     : IntView(solver, parentId) {}

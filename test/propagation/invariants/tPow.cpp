@@ -35,24 +35,24 @@ class PowTest : public InvariantTest {
     return invariant;
   }
 
-  Int zeroReplacement() const {
+  [[nodiscard]] Int zeroReplacement() const {
     // base is always negative
     return baseLb < 0 && baseUb <= 0 ? -1 : 1;
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return computeOutput(committedValue ? _solver->committedValue(base)
                                         : _solver->currentValue(base),
                          committedValue ? _solver->committedValue(exponent)
                                         : _solver->currentValue(exponent));
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     return computeOutput(_solver->value(ts, base),
                          _solver->value(ts, exponent));
   }
 
-  Int computeOutput(Int baseVal, Int expVal) {
+  [[nodiscard]] Int computeOutput(Int baseVal, Int expVal) const {
     return pow_zero_replacement(baseVal, expVal, zeroReplacement());
   }
 };
@@ -94,7 +94,7 @@ TEST_F(PowTest, Recompute) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{base, exponent};
+  const std::vector<VarViewId> inputVars{base, exponent};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -115,7 +115,7 @@ TEST_F(PowTest, NotifyInputChanged) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{base, exponent};
+  const std::vector<VarViewId> inputVars{base, exponent};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -134,7 +134,7 @@ TEST_F(PowTest, NotifyInputChanged) {
 TEST_F(PowTest, NextInput) {
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{base, exponent};
+  const std::vector<VarViewId> inputVars{base, exponent};
 
   expectNextInput(inputVars, invariant);
 }
@@ -162,10 +162,10 @@ TEST_F(PowTest, NotifyCurrentInputChanged) {
 TEST_F(PowTest, Commit) {
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{base, exponent};
+  const std::vector<VarViewId> inputVars{base, exponent};
 
   std::vector<size_t> indices{0, 1};
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   std::vector<Int> committedValues{_solver->committedValue(base),
                                    _solver->committedValue(exponent)};
@@ -173,7 +173,7 @@ TEST_F(PowTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -221,8 +221,8 @@ RC_GTEST_FIXTURE_PROP(PowTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));

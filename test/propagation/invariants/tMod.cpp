@@ -18,19 +18,19 @@ class ModTest : public InvariantTest {
   std::uniform_int_distribution<Int> numeratorDist;
   std::uniform_int_distribution<Int> denominatorDist;
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     return computeOutput(_solver->value(ts, numerator),
                          _solver->value(ts, denominator));
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return computeOutput(committedValue ? _solver->committedValue(numerator)
                                         : _solver->currentValue(numerator),
                          committedValue ? _solver->committedValue(denominator)
                                         : _solver->currentValue(denominator));
   }
 
-  Int computeOutput(Int numerator, Int denominator) {
+  static Int computeOutput(Int numerator, Int denominator) {
     return numerator % (denominator == 0 ? 1 : std::abs(denominator));
   }
 
@@ -91,7 +91,7 @@ TEST_F(ModTest, Recompute) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{numerator, denominator};
+  const std::vector<VarViewId> inputVars{numerator, denominator};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -112,7 +112,7 @@ TEST_F(ModTest, NotifyInputChanged) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{numerator, denominator};
+  const std::vector<VarViewId> inputVars{numerator, denominator};
 
   auto inputVals = makeValVector(inputVars);
 
@@ -131,7 +131,7 @@ TEST_F(ModTest, NotifyInputChanged) {
 TEST_F(ModTest, NextInput) {
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{numerator, denominator};
+  const std::vector<VarViewId> inputVars{numerator, denominator};
 
   expectNextInput(inputVars, invariant);
 }
@@ -160,10 +160,10 @@ TEST_F(ModTest, NotifyCurrentInputChanged) {
 TEST_F(ModTest, Commit) {
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{numerator, denominator};
+  const std::vector<VarViewId> inputVars{numerator, denominator};
 
   std::vector<size_t> indices{0, 1};
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   std::vector<Int> committedValues{_solver->committedValue(numerator),
                                    _solver->committedValue(denominator)};
@@ -171,7 +171,7 @@ TEST_F(ModTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -245,8 +245,8 @@ RC_GTEST_FIXTURE_PROP(ModTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));

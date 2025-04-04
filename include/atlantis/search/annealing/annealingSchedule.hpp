@@ -1,41 +1,8 @@
 #pragma once
 
-#include "atlantis/types.hpp"
-
 namespace atlantis::search {
 
-struct RoundStatistics {
-  UInt uphillAttemptedMoves;
-  UInt uphillAcceptedMoves;
-
-  UInt attemptedMoves;
-  UInt acceptedMoves;
-  UInt improvingMoves;
-
-  Int bestCostOfPreviousRound;
-  Int bestCostOfThisRound;
-
-  double temperature;
-
-  [[nodiscard]] inline double uphillAcceptanceRatio() const noexcept {
-    return static_cast<double>(uphillAcceptedMoves) /
-           static_cast<double>(uphillAttemptedMoves);
-  }
-
-  [[nodiscard]] inline double moveAcceptanceRatio() const noexcept {
-    return static_cast<double>(acceptedMoves) /
-           static_cast<double>(attemptedMoves);
-  }
-
-  [[nodiscard]] inline double improvingMoveRatio() const noexcept {
-    return static_cast<double>(improvingMoves) /
-           static_cast<double>(attemptedMoves);
-  }
-
-  [[nodiscard]] inline bool roundImprovedOnPrevious() const noexcept {
-    return bestCostOfThisRound < bestCostOfPreviousRound;
-  }
-};
+struct RoundStatistics;
 
 class AnnealingSchedule {
  public:

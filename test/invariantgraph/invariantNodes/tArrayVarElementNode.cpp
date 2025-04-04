@@ -17,7 +17,7 @@ class ArrayVarElementNodeTestFixture
 
   Int offsetIdx = 1;
 
-  bool isIntElement() const { return _paramData.data == 0; }
+  [[nodiscard]] bool isIntElement() const { return _paramData.data == 0; }
 
   void SetUp() override {
     NodeTestBase::SetUp();

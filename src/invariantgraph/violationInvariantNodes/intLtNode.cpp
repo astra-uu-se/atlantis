@@ -1,8 +1,12 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/intLtNode.hpp"
 
-#include <utility>
+#include <algorithm>
 
 #include "../parseHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 #include "atlantis/propagation/violationInvariants/lessThan.hpp"
 
@@ -21,11 +25,11 @@ void IntLtNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId vId) {
-                    return invariantGraphConst().varNodeConst(vId).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isIntVar();
+      }));
 }
 
 void IntLtNode::updateState() {
@@ -34,8 +38,8 @@ void IntLtNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  VarNode aNode = invariantGraph().varNode(a());
-  VarNode bNode = invariantGraph().varNode(b());
+  const VarNode& aNode = invariantGraph().varNode(a());
+  const VarNode& bNode = invariantGraph().varNode(b());
   if (a() == b()) {
     if (isReified()) {
       fixReified(false);
@@ -64,7 +68,6 @@ void IntLtNode::updateState() {
       throw InconsistencyException("IntLtNode neg: a < b");
     }
     setState(InvariantNodeState::SUBSUMED);
-    return;
   } else if (aNode.lowerBound() >= bNode.upperBound()) {
     // always false
     if (isReified()) {
@@ -73,17 +76,17 @@ void IntLtNode::updateState() {
       throw InconsistencyException("IntLtNode: a >= b");
     }
     setState(InvariantNodeState::SUBSUMED);
-    return;
   }
 }
 
 void IntLtNode::registerOutputVars() {
   registerViolation();
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void IntLtNode::registerNode() {

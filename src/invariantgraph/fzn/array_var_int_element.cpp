@@ -2,8 +2,9 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -29,7 +30,7 @@ bool array_var_int_element(FznInvariantGraph& graph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true)
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true)
   const auto& index = std::get<fznparser::IntArg>(constraint.arguments().at(0));
-  Int offset = 1;
+  Int offset;
   if (constraint.identifier() != "array_var_int_element_nonshifted") {
     FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, false)
     offset =

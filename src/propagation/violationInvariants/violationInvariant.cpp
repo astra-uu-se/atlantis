@@ -16,7 +16,7 @@ ViolationInvariant::ViolationInvariant(SolverBase& solver,
 
 inline VarId ViolationInvariant::violationId() const { return _violationId; }
 
-inline Int ViolationInvariant::violationCount(Timestamp& ts) const {
+inline Int ViolationInvariant::violationCount(Timestamp ts) const {
   return _solver.value(ts, _violationId);
 }
 }  // namespace atlantis::propagation

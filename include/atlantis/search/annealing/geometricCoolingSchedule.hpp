@@ -1,11 +1,11 @@
 #pragma once
 
 #include "atlantis/search/annealing/annealingSchedule.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis::search {
 
 class GeometricCoolingSchedule : public AnnealingSchedule {
- private:
   double _coolingRate;
   UInt _successiveFutileRoundsThreshold;
 

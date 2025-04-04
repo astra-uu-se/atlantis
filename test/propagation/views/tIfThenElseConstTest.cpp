@@ -32,7 +32,7 @@ class IfThenElseConstTest : public ViewTest {
     _solver->close();
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return (committedValue ? _solver->committedValue(inputVar)
                            : _solver->currentValue(inputVar)) == condVal
                ? thenVal

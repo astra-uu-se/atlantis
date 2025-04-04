@@ -1,7 +1,12 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
 
+#include <algorithm>
+
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/elementVar.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -13,33 +18,32 @@ ArrayVarElementNode::ArrayVarElementNode(IInvariantGraph& graph, VarNodeId idx,
 
 void ArrayVarElementNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(
-      std::all_of(staticInputVarNodeIds().begin(),
-                  staticInputVarNodeIds().end(), [&](const VarNodeId node) {
-                    return invariantGraphConst().varNodeConst(node).isIntVar();
-                  }));
-  assert(
-      std::all_of(dynamicInputVarNodeIds().begin(),
-                  dynamicInputVarNodeIds().end(), [&](const VarNodeId node) {
-                    return invariantGraph()
-                               .varNodeConst(outputVarNodeIds().front())
-                               .isIntVar() ==
-                           invariantGraphConst().varNodeConst(node).isIntVar();
-                  }));
+  assert(std::ranges::all_of(
+      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      [&](const VarNodeId node) {
+        return invariantGraphConst().varNodeConst(node).isIntVar();
+      }));
+  assert(std::ranges::all_of(
+      dynamicInputVarNodeIds().begin(), dynamicInputVarNodeIds().end(),
+      [&](const VarNodeId node) {
+        return invariantGraph()
+                   .varNodeConst(outputVarNodeIds().front())
+                   .isIntVar() ==
+               invariantGraphConst().varNodeConst(node).isIntVar();
+      }));
 }
 
 void ArrayVarElementNode::updateState() {
-  VarNode& idxNode = invariantGraph().varNode(idx());
+  const VarNode& idxNode = invariantGraph().varNode(idx());
   /*
   idxNode.removeValuesBelow(_offset);
   idxNode.removeValuesAbove(
       _offset + static_cast<Int>(dynamicInputVarNodeIds().size()) - 1);
   */
 
-  const Int overflow =
-      _offset +
-      static_cast<Int>(static_cast<Int>(dynamicInputVarNodeIds().size())) -
-      idxNode.upperBound() - 1;
+  const Int overflow = _offset +
+                       static_cast<Int>(dynamicInputVarNodeIds().size()) -
+                       idxNode.upperBound() - 1;
 
   const Int underflow = idxNode.lowerBound() - _offset;
 
@@ -67,9 +71,9 @@ void ArrayVarElementNode::updateState() {
                                 _dynamicInputVarNodeIds.begin() + underflow);
 
   for (const auto& vId : varNodeIdsToRemove) {
-    if (std::none_of(dynamicInputVarNodeIds().begin(),
-                     dynamicInputVarNodeIds().end(),
-                     [&](const VarNodeId dId) { return dId == vId; })) {
+    if (std::ranges::none_of(dynamicInputVarNodeIds().begin(),
+                             dynamicInputVarNodeIds().end(),
+                             [&](const VarNodeId dId) { return dId == vId; })) {
       removeDynamicInputVarNode(vId);
     }
   }
@@ -84,7 +88,7 @@ bool ArrayVarElementNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  auto& idxNode = invariantGraph().varNode(idx());
+  const auto& idxNode = invariantGraph().varNode(idx());
   const VarNodeId input =
       dynamicInputVarNodeIds().at(idxNode.lowerBound() - _offset);
 
@@ -94,18 +98,19 @@ bool ArrayVarElementNode::replace() {
 
 void ArrayVarElementNode::registerOutputVars() {
   makeSolverVar(outputVarNodeIds().front(), _offset);
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void ArrayVarElementNode::registerNode() {
   std::vector<propagation::VarViewId> varVector;
-  std::transform(dynamicInputVarNodeIds().begin(),
-                 dynamicInputVarNodeIds().end(), std::back_inserter(varVector),
-                 [&](auto node) { return invariantGraph().varId(node); });
+  std::ranges::transform(
+      dynamicInputVarNodeIds(), std::back_inserter(varVector),
+      [&](auto node) { return invariantGraph().varId(node); });
 
   assert(invariantGraph().varId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);

@@ -11,7 +11,6 @@
 #include "../benchmark.hpp"
 #include "atlantis/propagation/invariants/elementVar.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/utils/pow.hpp"
 
 namespace atlantis::benchmark {

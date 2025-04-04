@@ -1,6 +1,11 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
 
+#include <algorithm>
+
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/elementConst.hpp"
 
 namespace atlantis::invariantgraph {
@@ -14,7 +19,7 @@ static Int getVal(const std::vector<Int>& parVector, Int idx, Int offset) {
 static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
   std::vector<Int> intVec;
   intVec.reserve(boolVec.size());
-  for (bool par : boolVec) {
+  for (const bool par : boolVec) {
     intVec.emplace_back(par ? 0 : 1);
   }
   return intVec;
@@ -68,11 +73,12 @@ void ArrayElementNode::registerOutputVars() {
             solver(), invariantGraph().varId(idx()),
             std::vector<Int>(_parVector), _offset));
   }
-  assert(std::all_of(outputVarNodeIds().begin(), outputVarNodeIds().end(),
-                     [&](const VarNodeId vId) {
-                       return invariantGraphConst().varNodeConst(vId).varId() !=
-                              propagation::NULL_ID;
-                     }));
+  assert(std::ranges::all_of(
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).varId() !=
+               propagation::NULL_ID;
+      }));
 }
 
 void ArrayElementNode::registerNode() {}

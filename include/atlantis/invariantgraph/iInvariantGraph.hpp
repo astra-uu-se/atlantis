@@ -1,21 +1,24 @@
 #pragma once
 
-#include <array>
 #include <memory>
-#include <stack>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
-#include "atlantis/invariantgraph/iImplicitConstraintNode.hpp"
-#include "atlantis/invariantgraph/iInvariantNode.hpp"
 #include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
 
+namespace atlantis {
+class SearchDomain;
+}
+
+namespace atlantis::propagation {
+class SolverBase;
+}
+
 namespace atlantis::invariantgraph {
+
+class IImplicitConstraintNode;
+class IInvariantNode;
+class VarNode;
 
 class IInvariantGraph {
  public:
@@ -36,12 +39,12 @@ class IInvariantGraph {
 
   [[nodiscard]] virtual VarNodeId retrieveBoolVarNode() = 0;
 
-  [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(VarNode::DomainType) = 0;
+  [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(DomainType) = 0;
 
   [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(const std::string&) = 0;
 
   [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(const std::string&,
-                                                      VarNode::DomainType) = 0;
+                                                      DomainType) = 0;
 
   [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(bool) = 0;
 
@@ -49,10 +52,10 @@ class IInvariantGraph {
                                                       const std::string&) = 0;
 
   [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(
-      std::shared_ptr<SearchDomain>) = 0;
+      const std::shared_ptr<SearchDomain>&) = 0;
 
   [[nodiscard]] virtual VarNodeId retrieveBoolVarNode(
-      std::shared_ptr<SearchDomain>, VarNode::DomainType) = 0;
+      const std::shared_ptr<SearchDomain>&, DomainType) = 0;
 
   [[nodiscard]] virtual VarNodeId retrieveIntVarNode(const std::string&) = 0;
 
@@ -62,17 +65,16 @@ class IInvariantGraph {
                                                      const std::string&) = 0;
 
   [[nodiscard]] virtual VarNodeId retrieveIntVarNode(
-      std::shared_ptr<SearchDomain>) = 0;
+      const std::shared_ptr<SearchDomain>&) = 0;
 
   [[nodiscard]] virtual VarNodeId retrieveIntVarNode(
-      std::shared_ptr<SearchDomain>, VarNode::DomainType) = 0;
+      const std::shared_ptr<SearchDomain>&, DomainType) = 0;
 
   [[nodiscard]] virtual VarNodeId retrieveIntVarNode(
-      std::shared_ptr<SearchDomain>, const std::string&) = 0;
+      const std::shared_ptr<SearchDomain>&, const std::string&) = 0;
 
   [[nodiscard]] virtual VarNodeId retrieveIntVarNode(
-      std::shared_ptr<SearchDomain>, const std::string&,
-      VarNode::DomainType) = 0;
+      const std::shared_ptr<SearchDomain>&, const std::string&, DomainType) = 0;
 
   [[nodiscard]] virtual VarNode& varNode(const std::string&) = 0;
 

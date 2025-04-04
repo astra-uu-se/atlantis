@@ -1,5 +1,7 @@
 #include "atlantis/propagation/violationInvariants/boolLessThan.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 /**

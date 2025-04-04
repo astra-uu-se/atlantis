@@ -2,22 +2,20 @@
 
 #include <cassert>
 #include <fznparser/variables.hpp>
-#include <limits>
 
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/greaterEqualConst.hpp"
 #include "atlantis/propagation/views/inDomain.hpp"
 #include "atlantis/propagation/views/inIntervalConst.hpp"
 #include "atlantis/propagation/views/inSparseDomain.hpp"
 #include "atlantis/propagation/views/lessEqualConst.hpp"
-#include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/searchVariable.hpp"
-#include "atlantis/utils/variant.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
-VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
-                 VarNode::DomainType domainType)
+VarNode::VarNode(VarNodeId varNodeId, bool isIntVar, DomainType domainType)
     : _varNodeId(varNodeId),
       _isIntVar(isIntVar),
       _domainType(domainType),
@@ -26,8 +24,8 @@ VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
 }
 
 VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
-                 std::shared_ptr<SearchDomain> domain,
-                 VarNode::DomainType domainType)
+                 const std::shared_ptr<SearchDomain>& domain,
+                 DomainType domainType)
     : _varNodeId(varNodeId),
       _isIntVar(isIntVar),
       _domainType(domainType),
@@ -71,12 +69,12 @@ propagation::VarViewId VarNode::postDomainConstraint(
   if (_domainViolationId != propagation::NULL_ID) {
     return _domainViolationId;
   }
-  if (_domainType == DomainType::NONE ||
+  if (_domainType == DomainType::DOM_NONE ||
       ((staticInputTo().empty() || dynamicInputTo().empty()) &&
        definingNodes().empty())) {
     return propagation::VarViewId{propagation::NULL_ID};
   }
-  if (_domainType == DomainType::FIXED && !isFixed()) {
+  if (_domainType == DomainType::DOM_FIXED && !isFixed()) {
     throw std::runtime_error("Domain type is fixed but domain is not fixed");
   }
 
@@ -87,7 +85,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
   const Int solverLb = solver.lowerBound(varId());
   const Int solverUb = solver.upperBound(varId());
 
-  if (_domainType == DomainType::FIXED || _domain->isFixed()) {
+  if (_domainType == DomainType::DOM_FIXED || _domain->isFixed()) {
     if (lowerBound() < solverLb || solverUb < lowerBound()) {
       throw std::runtime_error("Solver var domain range is " +
                                std::to_string(solverLb) + ".." +
@@ -102,7 +100,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
     return _domainViolationId;
   }
 
-  if (_domainType == DomainType::LOWER_BOUND) {
+  if (_domainType == DomainType::DOM_LOWER_BOUND) {
     if (solverUb < lowerBound()) {
       throw std::runtime_error(
           "Solver var max value is " + std::to_string(solverUb) +
@@ -116,7 +114,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
     return _domainViolationId;
   }
 
-  if (_domainType == DomainType::UPPER_BOUND) {
+  if (_domainType == DomainType::DOM_UPPER_BOUND) {
     if (solverLb > upperBound()) {
       throw std::runtime_error(
           "Solver var min value is " + std::to_string(solverLb) +
@@ -130,7 +128,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
     return _domainViolationId;
   }
 
-  if (_domainType == DomainType::RANGE) {
+  if (_domainType == DomainType::DOM_RANGE) {
     if (solverUb < lowerBound() || solverLb > upperBound()) {
       throw std::runtime_error(
           "Solver var domain range is " + std::to_string(solverLb) + ".." +
@@ -144,7 +142,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
     }
     return _domainViolationId;
   }
-  assert(_domainType == DomainType::DOMAIN);
+  assert(_domainType == DomainType::DOM_DOMAIN);
 
   std::vector<DomainEntry> domain =
       _domain->relativeComplementIfIntersects(solverLb, solverUb);
@@ -175,26 +173,23 @@ Int VarNode::upperBound() const { return _domain->upperBound(); }
 Int VarNode::val() const {
   if (_domain->isFixed()) {
     return _domain->lowerBound();
-  } else {
-    throw std::runtime_error("val() called on non-fixed var");
   }
+  throw std::runtime_error("val() called on non-fixed var");
 }
 
-VarNode::DomainType VarNode::domainType() const noexcept { return _domainType; }
+DomainType VarNode::domainType() const noexcept { return _domainType; }
 
-void VarNode::tightenDomainType(VarNode::DomainType domainType) {
-  if ((domainType == DomainType::LOWER_BOUND &&
-       _domainType == DomainType::UPPER_BOUND) ||
-      (domainType == DomainType::UPPER_BOUND &&
-       _domainType == DomainType::LOWER_BOUND)) {
-    _domainType = DomainType::RANGE;
+void VarNode::tightenDomainType(DomainType domainType) {
+  if ((domainType == DomainType::DOM_LOWER_BOUND &&
+       _domainType == DomainType::DOM_UPPER_BOUND) ||
+      (domainType == DomainType::DOM_UPPER_BOUND &&
+       _domainType == DomainType::DOM_LOWER_BOUND)) {
+    _domainType = DomainType::DOM_RANGE;
   }
   _domainType = std::max(_domainType, domainType);
 }
 
-void VarNode::setDomainType(VarNode::DomainType domainType) {
-  _domainType = domainType;
-}
+void VarNode::setDomainType(DomainType domainType) { _domainType = domainType; }
 
 bool VarNode::inDomain(Int val) const {
   if (!isIntVar()) {
@@ -270,7 +265,7 @@ void VarNode::fixToValue(bool val) {
   _domain->fix(val ? 0 : 1);
 }
 
-std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) {
+std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) const {
   return _domain->relativeComplementIfIntersects(lb, ub);
 }
 
@@ -292,7 +287,8 @@ VarNode::definingNodes() const noexcept {
 InvariantNodeId VarNode::outputOf() const {
   if (_outputOf.empty()) {
     return InvariantNodeId{NULL_NODE_ID};
-  } else if (_outputOf.size() != 1) {
+  }
+  if (_outputOf.size() != 1) {
     throw std::runtime_error("VarNode is not an output var");
   }
   return *_outputOf.begin();
@@ -311,26 +307,26 @@ void VarNode::unmarkOutputTo(InvariantNodeId definingInvNodeId) {
   _outputOf.erase(definingInvNodeId);
 }
 
-void VarNode::unmarkAsInputFor(InvariantNodeId listeningInvNodeId,
+void VarNode::unmarkAsInputFor(InvariantNodeId listeningInvariant,
                                bool isStaticInput) {
   if (isStaticInput) {
     for (Int i = static_cast<Int>(_staticInputTo.size()) - 1; i >= 0; --i) {
-      if (_staticInputTo[i] == listeningInvNodeId) {
+      if (_staticInputTo[i] == listeningInvariant) {
         _staticInputTo.erase(_staticInputTo.begin() + i);
       }
     }
   } else {
     for (Int i = static_cast<Int>(_dynamicInputTo.size()) - 1; i >= 0; --i) {
-      if (_dynamicInputTo[i] == listeningInvNodeId) {
+      if (_dynamicInputTo[i] == listeningInvariant) {
         _dynamicInputTo.erase(_dynamicInputTo.begin() + i);
       }
     }
   }
 }
 
-void VarNode::markOutputTo(InvariantNodeId definingInvNodeId) {
-  assert(definingInvNodeId != NULL_NODE_ID);
-  _outputOf.emplace(definingInvNodeId);
+void VarNode::markOutputTo(InvariantNodeId definingInvariant) {
+  assert(definingInvariant != NULL_NODE_ID);
+  _outputOf.emplace(definingInvariant);
 }
 
 std::optional<Int> VarNode::constantValue() const noexcept {

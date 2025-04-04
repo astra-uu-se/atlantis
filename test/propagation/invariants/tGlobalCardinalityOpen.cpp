@@ -146,12 +146,13 @@ TEST_F(GlobalCardinalityOpenTest, UpdateBounds) {
 TEST_F(GlobalCardinalityOpenTest, Recompute) {
   generateState = GenerateState::LB;
 
-  std::vector<std::pair<Int, Int>> boundVec{
+  const std::vector<std::pair<Int, Int>> boundVec{
       {-10004, -10000}, {-2, 2}, {10000, 10002}};
 
-  std::vector<std::vector<Int>> coverVec{{std::vector<Int>{-10003, -10002}},
-                                         {std::vector<Int>{-2, 2}},
-                                         {std::vector<Int>{10000, 10002}}};
+  const std::vector<std::vector<Int>> coverVec{
+      {std::vector<Int>{-10003, -10002}},
+      {std::vector<Int>{-2, 2}},
+      {std::vector<Int>{10000, 10002}}};
 
   for (size_t i = 0; i < boundVec.size(); ++i) {
     inputVarLb = boundVec[i].first;
@@ -178,12 +179,13 @@ TEST_F(GlobalCardinalityOpenTest, Recompute) {
 TEST_F(GlobalCardinalityOpenTest, NotifyInputChanged) {
   generateState = GenerateState::LB;
 
-  std::vector<std::pair<Int, Int>> boundVec{
+  const std::vector<std::pair<Int, Int>> boundVec{
       {-10002, -10000}, {-1, 1}, {10000, 10002}};
 
-  std::vector<std::vector<Int>> coverVec{{std::vector<Int>{-10003, -10002}},
-                                         {std::vector<Int>{-2, 2}},
-                                         {std::vector<Int>{10000, 10002}}};
+  const std::vector<std::vector<Int>> coverVec{
+      {std::vector<Int>{-10003, -10002}},
+      {std::vector<Int>{-2, 2}},
+      {std::vector<Int>{10000, 10002}}};
 
   for (size_t b = 0; b < boundVec.size(); ++b) {
     inputVarLb = boundVec[b].first;
@@ -269,12 +271,12 @@ TEST_F(GlobalCardinalityOpenTest, Commit) {
     committedValues.emplace_back(_solver->committedValue(inputVars.at(i)));
   }
 
-  std::shuffle(indices.begin(), indices.end(), rng);
+  std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   std::vector<Int> notifiedOutputValues(coverSize, -1);
 
   for (const size_t i : indices) {
-    Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -329,8 +331,8 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityOpenTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     std::vector<Int> expected = computeOutputs(true);
@@ -341,9 +343,9 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityOpenTest, rapidcheck, ()) {
 
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
-      for (size_t i = 0; i < inputVars.size(); ++i) {
+      for (const auto& var : inputVars) {
         if (randBool()) {
-          _solver->setValue(inputVars.at(i), inputVarDist(gen));
+          _solver->setValue(var, inputVarDist(gen));
         }
       }
       _solver->endMove();

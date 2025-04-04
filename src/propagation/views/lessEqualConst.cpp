@@ -1,10 +1,10 @@
 #include "atlantis/propagation/views/lessEqualConst.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
-static inline Int compute(Int var, Int val) {
-  return std::max<Int>(0, var - val);
-}
+static Int compute(Int var, Int val) { return std::max<Int>(0, var - val); }
 LessEqualConst::LessEqualConst(SolverBase& solver, VarViewId parentId, Int val)
     : IntView(solver, parentId), _val(val) {}
 Int LessEqualConst::value(Timestamp ts) {

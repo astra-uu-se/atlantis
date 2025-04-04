@@ -1,6 +1,13 @@
 #include "atlantis/search/neighborhoods/allDifferentNonUniformNeighborhood.hpp"
 
 #include <algorithm>
+#include <numeric>
+
+#include "atlantis/propagation/variables/committableInt.hpp"
+#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/randomProvider.hpp"
+#include "atlantis/search/searchVariable.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::search::neighborhoods {
 
@@ -8,19 +15,19 @@ AllDifferentNonUniformNeighborhood::AllDifferentNonUniformNeighborhood(
     std::vector<SearchVar>&& vars, Int domainLb, Int domainUb)
     : _vars(std::move(vars)),
       _varIndices(_vars.size()),
-      _domIndices(),
       _domainOffset(domainLb),
       _valueIndexToVarIndex(domainUb - domainLb + 1, _vars.size()),
       _inDomain(_vars.size()),
-      _curTimestamp(NULL_TIMESTAMP) {
+      _curTimestamp(NULL_TIMESTAMP),
+      _moveValueIndex({0, 0}) {
   assert(_vars.size() > 1);
   std::iota(_varIndices.begin(), _varIndices.end(), 0u);
   assert(_valueIndexToVarIndex.size() >= _vars.size());
-  size_t maxDomSize =
-      std::max_element(_vars.begin(), _vars.end(),
-                       [&](const auto& a, const auto& b) {
-                         return a.domain()->size() < b.domain()->size();
-                       })
+  const size_t maxDomSize =
+      std::ranges::max_element(_vars.begin(), _vars.end(),
+                               [&](const auto& a, const auto& b) {
+                                 return a.domain()->size() < b.domain()->size();
+                               })
           ->domain()
           ->size();
   _domIndices.reserve(maxDomSize);
@@ -58,8 +65,8 @@ static bool bipartiteMatching(
 void AllDifferentNonUniformNeighborhood::initialize(RandomProvider& random,
                                                     IAssignment& assignment) {
   std::vector<std::vector<size_t>> forwardArcs(_vars.size());
-  std::fill(_valueIndexToVarIndex.begin(), _valueIndexToVarIndex.end(),
-            _vars.size());
+  std::ranges::fill(_valueIndexToVarIndex.begin(), _valueIndexToVarIndex.end(),
+                    _vars.size());
   for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
     _inDomain[varIndex] =
         std::vector<bool>(_valueIndexToVarIndex.size(), false);
@@ -95,9 +102,9 @@ void AllDifferentNonUniformNeighborhood::initialize(RandomProvider& random,
         assert(inDomain(varIndex, valueIndex));
       }
     }
-    assert(
-        std::all_of(varVisited.begin(), varVisited.end(),
-                    [&](size_t varIndex) { return varVisited.at(varIndex); }));
+    assert(std::ranges::all_of(
+        varVisited.begin(), varVisited.end(),
+        [&](size_t varIndex) { return varVisited.at(varIndex); }));
   }
 #endif
   for (size_t valueIndex = 0; valueIndex < _valueIndexToVarIndex.size();
@@ -160,7 +167,7 @@ size_t AllDifferentNonUniformNeighborhood::randomMove(RandomProvider& random,
 }
 
 bool AllDifferentNonUniformNeighborhood::canSwap(
-    IAssignment& assignment, size_t var1Index,
+    const IAssignment& assignment, size_t var1Index,
     size_t value2Index) const noexcept {
   // var 1:
   assert(var1Index < _vars.size());

@@ -29,11 +29,11 @@ TEST_F(CommittableIntTest, CommittableIntConstructor) {
       std::numeric_limits<int>::min(), std::numeric_limits<int>::max() - 1);
 
   // Random timestamp
-  Timestamp initTimestamp = std::max(0, distribution(gen));
+  const Timestamp initTimestamp = std::max(0, distribution(gen));
   // Random inital value
-  Int value = distribution(gen);
+  const Int value = distribution(gen);
 
-  CommittableInt committableInt = CommittableInt(initTimestamp, value);
+  const CommittableInt committableInt(initTimestamp, value);
 
   // Get the current value at the initial timestamp return the initial value
   EXPECT_EQ(committableInt.value(initTimestamp), value);
@@ -42,7 +42,7 @@ TEST_F(CommittableIntTest, CommittableIntConstructor) {
   // value
   EXPECT_EQ(committableInt.value(initTimestamp), value);
 
-  Timestamp otherTimestamp = std::max(0, distribution(gen));
+  const Timestamp otherTimestamp = std::max(0, distribution(gen));
   // Get the current value at another timestamp.
   // Should still return the initial value (as no other value has been
   // committed)
@@ -61,14 +61,14 @@ TEST_F(CommittableIntTest, CommittableIntSetGetValue) {
   std::uniform_int_distribution<> distribution2(
       10001, std::numeric_limits<int>::max());
 
-  Timestamp initTimestamp = std::max(0, distribution1(gen));
-  Int initValue = distribution1(gen);
+  const Timestamp initTimestamp = std::max(0, distribution1(gen));
+  const Int initValue = distribution1(gen);
 
-  Timestamp nextTimestamp = distribution2(gen);
-  Int nextValue = distribution2(gen);
+  const Timestamp nextTimestamp = distribution2(gen);
+  const Int nextValue = distribution2(gen);
 
   // Create a CommittableInt
-  CommittableInt committableInt = CommittableInt(initTimestamp, initValue);
+  CommittableInt committableInt(initTimestamp, initValue);
 
   // Update the value for the other (next) timestamp
   committableInt.setValue(nextTimestamp, nextValue);
@@ -91,20 +91,18 @@ TEST_F(CommittableIntTest, CommittableIntIncValue) {
       std::numeric_limits<int>::min() + 10,
       std::numeric_limits<int>::max() - 10);
 
-  Timestamp initTimestamp = std::max(0, distribution(gen));
-  Int committedValue = distribution(gen);
+  const Timestamp initTimestamp = std::max(0, distribution(gen));
+  const Int committedValue = distribution(gen);
 
-  CommittableInt committableInt = CommittableInt(initTimestamp, committedValue);
+  CommittableInt committableInt(initTimestamp, committedValue);
 
-  Timestamp nextTimestamp;
-  Int nextValue;
   // Increase -10, -9, ..., -1, 1, 2, ..., 10
   for (Int increment = -10; increment <= 10; ++increment) {
     if (increment == 0) {
       continue;
     }
-    nextTimestamp = initTimestamp + increment;
-    nextValue = committedValue + increment;
+    const Timestamp nextTimestamp = initTimestamp + increment;
+    Int nextValue = committedValue + increment;
 
     // Not the same timestamp as init timestamp, increment will be based on:
     //   saved
@@ -135,13 +133,13 @@ TEST_F(CommittableIntTest, CommittableIntCommitValue) {
   std::uniform_int_distribution<> distribution2(
       10001, std::numeric_limits<int>::max());
 
-  Timestamp initTimestamp = std::max(0, distribution1(gen));
-  Int initValue = distribution1(gen);
+  const Timestamp initTimestamp = std::max(0, distribution1(gen));
+  const Int initValue = distribution1(gen);
 
-  Timestamp nextTimestamp = distribution2(gen);
-  Int committedValue = distribution2(gen);
+  const Timestamp nextTimestamp = distribution2(gen);
+  const Int committedValue = distribution2(gen);
 
-  CommittableInt committableInt = CommittableInt(initTimestamp, initValue);
+  CommittableInt committableInt(initTimestamp, initValue);
 
   committableInt.commitValue(committedValue);
 
@@ -156,13 +154,13 @@ TEST_F(CommittableIntTest, CommittableIntCommit) {
   std::uniform_int_distribution<> distribution2(
       10001, std::numeric_limits<int>::max());
 
-  Timestamp initTimestamp = std::max(0, distribution1(gen));
-  Int initValue = distribution1(gen);
+  const Timestamp initTimestamp = std::max(0, distribution1(gen));
+  const Int initValue = distribution1(gen);
 
-  Timestamp nextTimestamp = distribution2(gen);
-  Int committedValue = distribution2(gen);
+  const Timestamp nextTimestamp = distribution2(gen);
+  const Int committedValue = distribution2(gen);
 
-  CommittableInt committableInt = CommittableInt(initTimestamp, initValue);
+  CommittableInt committableInt(initTimestamp, initValue);
 
   EXPECT_EQ(committableInt.value(initTimestamp), initValue);
   EXPECT_EQ(committableInt.value(nextTimestamp), initValue);
@@ -184,13 +182,13 @@ TEST_F(CommittableIntTest, CommittableIntCommitIf) {
   std::uniform_int_distribution<> distribution2(
       10001, std::numeric_limits<int>::max());
 
-  Timestamp initTimestamp = std::max(0, distribution1(gen));
-  Int initValue = distribution1(gen);
+  const Timestamp initTimestamp = std::max(0, distribution1(gen));
+  const Int initValue = distribution1(gen);
 
-  Timestamp nextTimestamp = distribution2(gen);
-  Int nextValue = distribution2(gen);
+  const Timestamp nextTimestamp = distribution2(gen);
+  const Int nextValue = distribution2(gen);
 
-  CommittableInt committableInt = CommittableInt(initTimestamp, initValue);
+  CommittableInt committableInt(initTimestamp, initValue);
 
   committableInt.commitIf(nextTimestamp);
 
@@ -217,7 +215,7 @@ TEST_F(CommittableIntTest, CommittableIntCommitIf) {
 
 RC_GTEST_FIXTURE_PROP(CommittableIntTest, checkConstructorValue,
                       (Timestamp initTime, Int initValue, Timestamp anyTime)) {
-  auto committableInt = CommittableInt(initTime, initValue);
+  const auto committableInt = CommittableInt(initTime, initValue);
   RC_ASSERT(committableInt.value(anyTime) == initValue);
 }
 

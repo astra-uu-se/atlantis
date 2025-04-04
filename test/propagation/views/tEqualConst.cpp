@@ -11,7 +11,7 @@ class EqualConstTest : public ViewTest {
  public:
   Int value{0};
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     return std::abs((committedValue ? _solver->committedValue(inputVar)
                                     : _solver->currentValue(inputVar)) -
                     value);
@@ -64,8 +64,8 @@ RC_GTEST_FIXTURE_PROP(EqualConstTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     for (size_t p = 0; p <= numProbes; ++p) {

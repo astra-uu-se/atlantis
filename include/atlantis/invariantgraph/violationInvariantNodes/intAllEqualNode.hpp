@@ -5,7 +5,6 @@
 namespace atlantis::invariantgraph {
 
 class IntAllEqualNode : public ViolationInvariantNode {
- private:
   bool _breaksCycle{false};
   propagation::VarViewId _allDifferentViolationVarId{propagation::NULL_ID};
 
@@ -31,6 +30,6 @@ class IntAllEqualNode : public ViolationInvariantNode {
   void registerOutputVars() override;
 
   void registerNode() override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

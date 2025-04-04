@@ -2,6 +2,7 @@
 
 #include "atlantis/search/annealing/annealerContainer.hpp"
 #include "atlantis/search/annealing/geometricHeatingSchedule.hpp"
+#include "atlantis/search/annealing/types.hpp"
 
 namespace atlantis::testing {
 
@@ -13,7 +14,7 @@ class GeometricHeatingScheduleTest : public ::testing::Test {
   double initialTemp = 0.1;
   double minimumUphillMoveAcceptanceRatio = 0.5;
 
-  std::unique_ptr<AnnealingSchedule> schedule;
+  std::shared_ptr<AnnealingSchedule> schedule;
 
   void SetUp() override {
     schedule = AnnealerContainer::heating(heatingRate,
@@ -35,10 +36,10 @@ TEST_F(GeometricHeatingScheduleTest, temperature_increases_geometrically) {
   schedule->start(initialTemp);
   EXPECT_EQ(schedule->temperature(), initialTemp);
 
-  schedule->nextRound({});
+  schedule->nextRound(RoundStatistics());
   EXPECT_EQ(schedule->temperature(), initialTemp * heatingRate);
 
-  schedule->nextRound({});
+  schedule->nextRound(RoundStatistics());
   EXPECT_EQ(schedule->temperature(), initialTemp * heatingRate * heatingRate);
 }
 
@@ -46,7 +47,7 @@ TEST_F(GeometricHeatingScheduleTest,
        frozen_when_accepted_uphill_moves_surpasses_threshold) {
   EXPECT_FALSE(schedule->frozen());
 
-  RoundStatistics stats{};
+  RoundStatistics stats;
   stats.uphillAcceptedMoves = 10;
   stats.uphillAttemptedMoves = 21;
   schedule->nextRound(stats);
@@ -60,7 +61,7 @@ TEST_F(GeometricHeatingScheduleTest,
 TEST_F(GeometricHeatingScheduleTest, restarting_frozen_schedule_is_unfrozen) {
   EXPECT_FALSE(schedule->frozen());
 
-  RoundStatistics stats{};
+  RoundStatistics stats;
   stats.uphillAcceptedMoves = 10;
   stats.uphillAttemptedMoves = 19;
   schedule->nextRound(stats);

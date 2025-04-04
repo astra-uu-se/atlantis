@@ -3,16 +3,22 @@
 #include <array>
 #include <cassert>
 
-#include "atlantis/propagation/variables/committableInt.hpp"
+#include "atlantis/search/iAssignment.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
-#include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
+
+namespace atlantis::propagation {
+class CommittableInt;
+}
+
+namespace atlantis::search {
+class SearchVar;
+}
 
 namespace atlantis::search::neighborhoods {
 
 class AllDifferentNonUniformNeighborhood : public Neighborhood {
- private:
-  std::vector<search::SearchVar> _vars;
+  std::vector<SearchVar> _vars;
   std::vector<size_t> _varIndices;
   std::vector<propagation::CommittableInt> _domIndices;
   const Int _domainOffset;
@@ -28,10 +34,10 @@ class AllDifferentNonUniformNeighborhood : public Neighborhood {
   // inDomain[i][j] = the domain of _vars[i] contains value j + _offset
   std::vector<std::vector<bool>> _inDomain;
   Timestamp _curTimestamp;
-  std::array<size_t, 2> _moveValueIndex;
+  std::array<size_t, 2> _moveValueIndex{};
 
  public:
-  AllDifferentNonUniformNeighborhood(std::vector<search::SearchVar>&& vars,
+  AllDifferentNonUniformNeighborhood(std::vector<SearchVar>&& vars,
                                      Int domainLb, Int domainUb);
 
   void initialize(RandomProvider&, IAssignment&) override;
@@ -43,18 +49,18 @@ class AllDifferentNonUniformNeighborhood : public Neighborhood {
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;
   }
-  [[nodiscard]] bool canSwap(IAssignment& assignment, size_t var1Index,
-                             size_t val2Index) const noexcept;
-  size_t swapValues(IAssignment&, size_t var1Index, size_t val2Index);
-  size_t assignValue(IAssignment&, size_t varIndex, size_t newValIndex);
+  [[nodiscard]] bool canSwap(const IAssignment& assignment, size_t var1Index,
+                             size_t value2Index) const noexcept;
+  size_t swapValues(IAssignment&, size_t var1Index, size_t value2Index);
+  size_t assignValue(IAssignment&, size_t varIndex, size_t newValueIndex);
 
  private:
-  [[nodiscard]] inline Int toValue(size_t valueIndex) const noexcept {
+  [[nodiscard]] Int toValue(size_t valueIndex) const noexcept {
     assert(valueIndex < _valueIndexToVarIndex.size());
     assert(_valueIndexToVarIndex.at(valueIndex) <= _vars.size());
     return static_cast<Int>(valueIndex) + _domainOffset;
   }
-  [[nodiscard]] inline size_t toValueIndex(Int value) const noexcept {
+  [[nodiscard]] size_t toValueIndex(Int value) const noexcept {
     assert(value >= _domainOffset);
     assert(static_cast<size_t>(value - _domainOffset) <
            _valueIndexToVarIndex.size());
@@ -62,21 +68,21 @@ class AllDifferentNonUniformNeighborhood : public Neighborhood {
                static_cast<size_t>(value - _domainOffset)) <= _vars.size());
     return static_cast<size_t>(value - _domainOffset);
   }
-  [[nodiscard]] inline bool isValueIndexOccupied(
-      size_t valueIndex) const noexcept {
+  [[nodiscard]] bool isValueIndexOccupied(size_t valueIndex) const noexcept {
     assert(valueIndex < _valueIndexToVarIndex.size());
     assert(_valueIndexToVarIndex.at(valueIndex) <= _vars.size());
     return _valueIndexToVarIndex[valueIndex] < _vars.size();
   }
-  [[nodiscard]] inline bool inDomain(size_t varIndex,
-                                     size_t valueIndex) const noexcept {
+  [[nodiscard]] bool inDomain(size_t varIndex,
+                              size_t valueIndex) const noexcept {
     assert(varIndex < _inDomain.size());
     assert(valueIndex < _inDomain.at(varIndex).size());
     return _inDomain[varIndex][valueIndex];
   }
 
 #ifndef NDEBUG
-  bool sanity(IAssignment& assignment, bool committedValue) {
+  [[nodiscard]] bool sanity(const IAssignment& assignment,
+                            bool committedValue) const {
     for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
       const Int value =
           committedValue

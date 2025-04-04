@@ -4,10 +4,10 @@
 
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/search/cost.hpp"
-#include "atlantis/search/randomProvider.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::search {
+
+class RandomProvider;
 
 class IAssignment {
  public:

@@ -4,6 +4,7 @@
 #include "../testHelper.hpp"
 #include "./testHelper.hpp"
 #include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
+#include "atlantis/search/searchVariable.hpp"
 
 namespace atlantis::testing {
 
@@ -68,7 +69,7 @@ TEST_F(NeighborhoodCombinatorTest, commitIf) {
       .Times(AtMost(1))
       .WillOnce(Return(size_t{1}));
 
-  size_t nIndex = _combinator->randomMove(_random, *_assignment);
+  const size_t nIndex = _combinator->randomMove(_random, *_assignment);
 
   EXPECT_CALL(*n2, commitIf(Ref(*_assignment)))
       .Times(Exactly(nIndex == 0 ? 1 : 0));

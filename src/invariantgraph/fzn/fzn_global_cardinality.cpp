@@ -2,9 +2,12 @@
 
 #include "../parseHelper.hpp"
 #include "./fznHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -49,7 +52,7 @@ bool fzn_global_cardinality(
   for (size_t i = 0; i < counts->size(); ++i) {
     outputVarNodeIds.emplace_back(graph.retrieveIntVarNode(
         std::make_shared<SearchDomain>(0, static_cast<Int>(inputs->size())),
-        VarNode::DomainType::NONE));
+        DomainType::DOM_NONE));
     binaryOutputVarNodeIds.emplace_back(graph.retrieveBoolVarNode());
     graph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
         graph, outputVarNodeIds.at(i), countVarNodeIds.at(i),

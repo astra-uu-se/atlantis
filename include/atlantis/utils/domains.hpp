@@ -47,11 +47,11 @@ class Domain {
     Iterator& operator+=(size_t);
     Iterator& operator-=(size_t);
 
-    Iterator operator+(size_t);
-    Iterator operator-(size_t);
+    Iterator operator+(size_t) const;
+    Iterator operator-(size_t) const;
 
-    bool operator==(const Iterator&);
-    bool operator!=(const Iterator&);
+    bool operator==(const Iterator&) const;
+    bool operator!=(const Iterator&) const;
   };
 
   virtual ~Domain() = default;
@@ -97,9 +97,9 @@ class Domain {
 
   [[nodiscard]] virtual Int operator[](size_t) const = 0;
 
-  [[nodiscard]] virtual Domain::Iterator begin() const = 0;
+  [[nodiscard]] virtual Iterator begin() const = 0;
 
-  [[nodiscard]] virtual Domain::Iterator end() const = 0;
+  [[nodiscard]] virtual Iterator end() const = 0;
 
   /**
    * @return if the domain is not a superset of lb..ub,
@@ -111,7 +111,6 @@ class Domain {
 };
 
 class IntervalDomain : public Domain {
- private:
   Int _lb;
   Int _ub;
 
@@ -125,8 +124,8 @@ class IntervalDomain : public Domain {
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
   [[nodiscard]] bool isInterval() const noexcept override;
-  [[nodiscard]] Domain::Iterator begin() const override;
-  [[nodiscard]] Domain::Iterator end() const override;
+  [[nodiscard]] Iterator begin() const override;
+  [[nodiscard]] Iterator end() const override;
   [[nodiscard]] Int at(size_t) const override;
   [[nodiscard]] Int operator[](size_t) const override;
 
@@ -150,7 +149,6 @@ class IntervalDomain : public Domain {
 };
 
 class SetDomain : public Domain {
- private:
   std::vector<Int> _values;
 
  public:
@@ -166,8 +164,8 @@ class SetDomain : public Domain {
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
   [[nodiscard]] bool isInterval() const noexcept override;
-  [[nodiscard]] Domain::Iterator begin() const override;
-  [[nodiscard]] Domain::Iterator end() const override;
+  [[nodiscard]] Iterator begin() const override;
+  [[nodiscard]] Iterator end() const override;
   [[nodiscard]] Int at(size_t) const override;
   [[nodiscard]] Int operator[](size_t) const override;
 
@@ -180,23 +178,21 @@ class SetDomain : public Domain {
   /**
    * @brief removes all values that are strictly less than the given value.
    *
-   * @param val the minimum value that is allowed in the domain.
+   * @param newLowerBound the minimum value that is allowed in the domain.
    */
 
-  void removeBelow(Int val);
+  void removeBelow(Int newLowerBound);
 
   /**
    * @brief removes all values that are strictly greater than the given value.
    *
-   * @param val the maximum value that is allowed in the domain.
+   * @param newUpperBound the maximum value that is allowed in the domain.
    */
-  void removeAbove(Int val);
+  void removeAbove(Int newUpperBound);
 
   /**
    * @brief removes all values in the domain, except the values in the given
    * vector.
-   *
-   * @param values the values that are to be kept in the domain.
    */
   void intersect(const std::vector<Int>&);
 
@@ -211,7 +207,6 @@ class SetDomain : public Domain {
 };
 
 class SearchDomain : public Domain {
- private:
   std::variant<IntervalDomain, SetDomain> _domain;
 
  public:
@@ -230,8 +225,8 @@ class SearchDomain : public Domain {
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
   [[nodiscard]] bool isInterval() const noexcept override;
-  [[nodiscard]] Domain::Iterator begin() const override;
-  [[nodiscard]] Domain::Iterator end() const override;
+  [[nodiscard]] Iterator begin() const override;
+  [[nodiscard]] Iterator end() const override;
   [[nodiscard]] Int at(size_t) const override;
   [[nodiscard]] Int operator[](size_t) const override;
 
@@ -243,14 +238,14 @@ class SearchDomain : public Domain {
   /**
    * @brief removes all values that are strictly less than the given value.
    *
-   * @param val the minimum value that is allowed in the domain.
+   * @param newLowerBound the minimum value that is allowed in the domain.
    */
-  void removeBelow(Int val);
+  void removeBelow(Int newLowerBound);
 
   /**
    * @brief removes all values that are strictly greater than the given value.
    *
-   * @param val the maximum value that is allowed in the domain.
+   * @param newUpperBound the maximum value that is allowed in the domain.
    */
   void removeAbove(Int newUpperBound);
 
@@ -264,8 +259,6 @@ class SearchDomain : public Domain {
   /**
    * @brief removes all values in the domain, except the values in the given
    * vector.
-   *
-   * @param values the values that are to be kept in the domain.
    */
   void intersect(const std::vector<Int>&);
 

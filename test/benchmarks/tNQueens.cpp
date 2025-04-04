@@ -46,7 +46,7 @@ TEST(NQueens, CommitsInvariant) {
   solver.close();
 
   solver.beginMove();
-  std::vector<Int> initial{1, 4, 3, 3};
+  const std::vector<Int> initial{1, 4, 3, 3};
   for (size_t i = 0; i < queens.size(); i++)
     solver.setValue(queens[i], initial[i]);
   solver.endMove();

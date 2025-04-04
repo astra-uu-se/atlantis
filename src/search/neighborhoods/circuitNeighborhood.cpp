@@ -1,6 +1,12 @@
 #include "atlantis/search/neighborhoods/circuitNeighborhood.hpp"
 
 #include <algorithm>
+#include <array>
+
+#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/randomProvider.hpp"
+#include "atlantis/search/searchVariable.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::search::neighborhoods {
 
@@ -10,13 +16,13 @@ CircuitNeighborhood::CircuitNeighborhood(std::vector<SearchVar>&& vars,
 
 void CircuitNeighborhood::initialize(RandomProvider& random,
                                      IAssignment& assignment) {
-  Int numAvailable = _vars.size();
+  Int numAvailable = static_cast<Int>(_vars.size());
   std::vector<bool> idxIsAvailable(_vars.size(), true);
 
   for (auto& var : _vars) {
     if (var.isFixed()) {
-      auto nextNode = var.domain()->lowerBound();
-      auto nextNodeIdx = node2Idx(nextNode);
+      const auto nextNode = var.domain()->lowerBound();
+      const auto nextNodeIdx = node2Idx(nextNode);
 
       assert(idxIsAvailable.at(nextNodeIdx));
 
@@ -38,24 +44,25 @@ void CircuitNeighborhood::initialize(RandomProvider& random,
     }
   }
 
-  const size_t j = static_cast<size_t>(
+  const auto j = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(availableIndices.size() - 1)));
   assert(j < availableIndices.size());
   std::swap(availableIndices[0], availableIndices[j]);
   size_t curNodeIdx = availableIndices[0];
 
-  for (size_t i = 1; i < availableIndices.size(); ++i) {
+  for (Int i = 1; i < static_cast<Int>(availableIndices.size()); ++i) {
     assert(curNodeIdx < _vars.size());
     while (_vars[curNodeIdx].isFixed()) {
       curNodeIdx = node2Idx(_vars[curNodeIdx].domain()->lowerBound());
-      assert(std::none_of(availableIndices.begin(), availableIndices.end(),
-                          [&](const size_t idx) { return idx == curNodeIdx; }));
+      assert(std::ranges::none_of(
+          availableIndices.begin(), availableIndices.end(),
+          [&](const size_t idx) { return idx == curNodeIdx; }));
     }
 
-    const size_t j = static_cast<size_t>(
+    const auto k = static_cast<size_t>(
         random.intInRange(i, static_cast<Int>(availableIndices.size() - 1)));
-    assert(j < availableIndices.size());
-    std::swap(availableIndices[i], availableIndices[j]);
+    assert(k < availableIndices.size());
+    std::swap(availableIndices[i], availableIndices[k]);
     const size_t nextNodeIdx = availableIndices[i];
 
     assert(nextNodeIdx < _vars.size());
@@ -73,11 +80,11 @@ static size_t determineNewNext(RandomProvider& random, size_t node,
   assert(numVars >= 3);
   // Based on https://stackoverflow.com/a/39631885.
   // Note: Random.next(n) returns an integer between 0..n-1
-  std::array<size_t, 2> excluded{std::min(node, oldNext),
-                                 std::max(node, oldNext)};
+  const std::array<size_t, 2> excluded{std::min(node, oldNext),
+                                       std::max(node, oldNext)};
   // the range is between 0..numVars-1
   // excluded.size() = 2
-  size_t newNext =
+  auto newNext =
       static_cast<size_t>(random.intInRange(0, static_cast<Int>(numVars - 3)));
   for (const auto num : excluded) {
     if (newNext < num) {
@@ -99,11 +106,12 @@ size_t CircuitNeighborhood::randomMove(RandomProvider& random,
 
   auto newNextIdx = determineNewNext(random, nodeIdx, oldNextIdx, _vars.size());
   assert(newNextIdx < _vars.size());
-  auto kIdx = node2Idx(assignment.committedValue(_vars[oldNextIdx].solverId()));
-  auto lastIdx =
+  const auto kIdx =
+      node2Idx(assignment.committedValue(_vars[oldNextIdx].solverId()));
+  const auto lastIdx =
       node2Idx(assignment.committedValue(_vars[newNextIdx].solverId()));
 
-  for (auto varIdx : {nodeIdx, oldNextIdx, newNextIdx}) {
+  for (const auto varIdx : {nodeIdx, oldNextIdx, newNextIdx}) {
     if (_vars[varIdx].isFixed()) {
       return 0;
     }
@@ -114,12 +122,12 @@ size_t CircuitNeighborhood::randomMove(RandomProvider& random,
   return 3;
 }
 
-Int CircuitNeighborhood::idx2Node(size_t nodeIdx) noexcept {
+Int CircuitNeighborhood::idx2Node(size_t nodeIdx) const noexcept {
   // Account for index sets starting at _offset instead of 0.
   return static_cast<Int>(nodeIdx) + _offset;
 }
 
-size_t CircuitNeighborhood::node2Idx(Int node) noexcept {
+size_t CircuitNeighborhood::node2Idx(Int node) const noexcept {
   // Account for index sets starting at _offset instead of 0.
   assert(node >= _offset);
   return static_cast<size_t>(node - _offset);

@@ -4,6 +4,8 @@
 #include <limits>
 #include <vector>
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 IntDiv::IntDiv(SolverBase& solver, VarId output, VarViewId numerator,

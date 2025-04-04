@@ -59,7 +59,7 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
         _invariantGraph->varNode(inputVarNodeIds.back())
             .fixToValue(bool{i % 2 == 0});
       }
-      coeffs.push_back((i + 1) * (i % 2 == 0 ? -1 : 1));
+      coeffs.push_back((static_cast<Int>(i) + 1) * (i % 2 == 0 ? -1 : 1));
       minSum += std::min<Int>(coeffs.back(), 0);
       maxSum += std::max<Int>(coeffs.back(), 0);
     }
@@ -111,7 +111,7 @@ TEST_P(BoolLinearNodeTestFixture, updateState) {
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
-    Int expected = computeOutput();
+    const Int expected = computeOutput();
     const Int actual = varNode(outputVarNodeId).lowerBound();
     EXPECT_EQ(expected, actual);
   } else {

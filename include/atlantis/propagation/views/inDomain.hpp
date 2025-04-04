@@ -1,17 +1,15 @@
 #pragma once
 
-#include "atlantis/propagation/solver.hpp"
-#include "atlantis/propagation/types.hpp"
+#include <vector>
+
 #include "atlantis/propagation/variables/committable.hpp"
 #include "atlantis/propagation/views/intView.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 
 class SolverBase;
 
 class InDomain : public IntView {
- private:
   std::vector<DomainEntry> _domain;
   Committable<std::pair<Int, Int>> _cache;
 

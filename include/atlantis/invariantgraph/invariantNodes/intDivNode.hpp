@@ -24,7 +24,7 @@ class IntDivNode : public InvariantNode {
   [[nodiscard]] VarNodeId denominator() const noexcept;
   [[nodiscard]] VarNodeId quotient() const noexcept;
 
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 
 }  // namespace atlantis::invariantgraph

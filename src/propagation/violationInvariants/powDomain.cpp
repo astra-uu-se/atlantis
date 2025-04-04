@@ -1,10 +1,13 @@
 #include "atlantis/propagation/violationInvariants/powDomain.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 /**
  * Constraint x != 0 && y >= 0
  * Required for Pow invariants since pow(0, v) where v < 0 is undefined.
+ * @param solver the solver that the invariant is added to
  * @param violationId id for the violationCount
  * @param x variable of lhs
  * @param y parameter of rhs
@@ -58,7 +61,7 @@ VarViewId PowDomain::nextInput(Timestamp ts) {
 
 void PowDomain::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
 
-[[nodiscard]] bool PowDomain::shouldPost(SolverBase& solver, VarViewId x,
+[[nodiscard]] bool PowDomain::shouldPost(const SolverBase& solver, VarViewId x,
                                          VarViewId y) {
   return solver.lowerBound(x) <= 0 && 0 <= solver.upperBound(x) &&
          solver.lowerBound(y) < 0;

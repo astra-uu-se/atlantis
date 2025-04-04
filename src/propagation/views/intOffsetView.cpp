@@ -1,5 +1,7 @@
 #include "atlantis/propagation/views/intOffsetView.hpp"
 
+#include "atlantis/propagation/solverBase.hpp"
+
 namespace atlantis::propagation {
 
 IntOffsetView::IntOffsetView(SolverBase& solver, VarViewId parentId, Int offset)

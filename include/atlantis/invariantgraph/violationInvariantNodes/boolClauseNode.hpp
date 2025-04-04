@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class BoolClauseNode : public ViolationInvariantNode {
- private:
   size_t _numAs;
   propagation::VarViewId _sumVarId{propagation::NULL_ID};
 
@@ -26,6 +25,6 @@ class BoolClauseNode : public ViolationInvariantNode {
   void registerOutputVars() override;
 
   void registerNode() override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

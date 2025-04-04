@@ -44,7 +44,7 @@ class CountConstTest : public InvariantTest {
     return invariant;
   }
 
-  Int computeOutput(Timestamp ts) {
+  [[nodiscard]] Int computeOutput(Timestamp ts) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = _solver->value(ts, inputVars.at(i));
@@ -52,7 +52,7 @@ class CountConstTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(bool committedValue = false) {
+  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = committedValue ? _solver->committedValue(inputVars.at(i))
@@ -61,7 +61,7 @@ class CountConstTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(const std::vector<Int>& values) {
+  [[nodiscard]] Int computeOutput(const std::vector<Int>& values) const {
     Int occurrences = 0;
     for (const Int val : values) {
       occurrences += (val == needleVal ? 1 : 0);
@@ -99,8 +99,6 @@ TEST_F(CountConstTest, Recompute) {
   numInputVars = 3;
   const Int lb = -5;
   const Int ub = 5;
-
-  std::uniform_int_distribution<Int> dist(lb, ub);
 
   for (Int needleVal = lb; needleVal <= ub; ++needleVal) {
     _solver->open();
@@ -201,12 +199,12 @@ TEST_F(CountConstTest, Commit) {
       committedValues.at(i) = _solver->committedValue(inputVars.at(i));
     }
 
-    std::shuffle(indices.begin(), indices.end(), rng);
+    std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
     EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
     for (const size_t i : indices) {
-      Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+      const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
       for (Int j = 0; j < numInputVars; ++j) {
         // Check that we do not accidentally commit:
         ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -250,8 +248,8 @@ RC_GTEST_FIXTURE_PROP(CountConstTest, rapidcheck, ()) {
 
   generate();
 
-  const size_t numCommits = 3;
-  const size_t numProbes = 3;
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
@@ -324,12 +322,11 @@ TEST_F(CountConstTest, SolverIntegration) {
     if (!_solver->isOpen()) {
       _solver->open();
     }
-    const size_t numArgs = 10;
-    const Int needleVal = 5;
+    constexpr Int numArgs = 10;
+    constexpr Int needleVal = 5;
     std::vector<VarViewId> varArray;
-    for (size_t value = 1; value <= numArgs; ++value) {
-      varArray.push_back(_solver->makeIntVar(static_cast<Int>(value), 1,
-                                             static_cast<Int>(numArgs)));
+    for (Int value = 1; value <= numArgs; ++value) {
+      varArray.push_back(_solver->makeIntVar(value, 1, numArgs));
     }
     const VarViewId modifiedVarId = varArray.front();
     const VarViewId output = _solver->makeIntVar(-10, -100, numArgs * numArgs);

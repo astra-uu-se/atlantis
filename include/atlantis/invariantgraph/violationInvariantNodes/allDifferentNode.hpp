@@ -4,7 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class AllDifferentNode : public ViolationInvariantNode {
- private:
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
@@ -27,7 +26,7 @@ class AllDifferentNode : public ViolationInvariantNode {
 
   void init(InvariantNodeId) override;
 
-  virtual void updateState() override;
+  void updateState() override;
 
   [[nodiscard]] bool canBeMadeImplicit() const override;
 
@@ -36,6 +35,6 @@ class AllDifferentNode : public ViolationInvariantNode {
   void registerOutputVars() override;
 
   void registerNode() override;
-  virtual std::string dotLangIdentifier() const override;
+  [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph
