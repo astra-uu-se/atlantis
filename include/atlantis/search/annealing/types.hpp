@@ -19,8 +19,7 @@ struct RoundStatistics {
 
   double temperature;
 
-  explicit RoundStatistics(double temperature) :
-  temperature(temperature) {}
+  explicit RoundStatistics(double temperature) : temperature(temperature) {}
 
   explicit RoundStatistics() : RoundStatistics(1.0) {}
 

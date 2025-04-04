@@ -74,17 +74,18 @@ struct InvariantGraphOutputVarArray {
   std::vector<Int> indexSetSizes;
   std::vector<VarNodeId> varNodeIds;
 
-  explicit InvariantGraphOutputVarArray(std::string&&  identifier,
-                               const std::vector<Int>& indexSetSizes,
-                               const std::vector<VarNodeId>& varNodeIds)
+  explicit InvariantGraphOutputVarArray(
+      std::string&& identifier, const std::vector<Int>& indexSetSizes,
+      const std::vector<VarNodeId>& varNodeIds)
       : identifier(std::move(identifier)),
         indexSetSizes(indexSetSizes),
         varNodeIds(varNodeIds) {}
 
-  explicit InvariantGraphOutputVarArray(const std::string&  identifier,
-                               const std::vector<Int>& indexSetSizes,
-                               const std::vector<VarNodeId>& varNodeIds)
-      : InvariantGraphOutputVarArray(std::move(std::string(identifier)), indexSetSizes, varNodeIds) {}
+  explicit InvariantGraphOutputVarArray(
+      const std::string& identifier, const std::vector<Int>& indexSetSizes,
+      const std::vector<VarNodeId>& varNodeIds)
+      : InvariantGraphOutputVarArray(std::move(std::string(identifier)),
+                                     indexSetSizes, varNodeIds) {}
 };
 
 enum struct InvariantNodeState : unsigned char {

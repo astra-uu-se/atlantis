@@ -120,10 +120,12 @@ static std::shared_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
 
 std::shared_ptr<AnnealingSchedule>
 AnnealingScheduleFactory::defaultAnnealingSchedule() {
-  return AnnealerContainer::loop(AnnealerContainer::sequence(std::vector<std::shared_ptr<AnnealingSchedule>>{
-    AnnealerContainer::heating(1.2, 0.75),
-    AnnealerContainer::cooling(0.99, 4)}),
-    5);
+  return AnnealerContainer::loop(
+      AnnealerContainer::sequence(
+          std::vector<std::shared_ptr<AnnealingSchedule>>{
+              AnnealerContainer::heating(1.2, 0.75),
+              AnnealerContainer::cooling(0.99, 4)}),
+      5);
 }
 
 std::shared_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {

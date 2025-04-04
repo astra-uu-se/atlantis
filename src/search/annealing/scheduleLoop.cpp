@@ -15,8 +15,12 @@ void ScheduleLoop::nextRound(const RoundStatistics& statistics) {
 
   if (_schedule->frozen()) {
     if (!_lastRoundStatistics) {
-      _consecutiveFutileIterations = statistics.bestCostOfThisRound < statistics.bestCostOfPreviousRound ? 0 : 1;
-    } else if (statistics.bestCostOfThisRound < _lastRoundStatistics->bestCostOfThisRound) {
+      _consecutiveFutileIterations =
+          statistics.bestCostOfThisRound < statistics.bestCostOfPreviousRound
+              ? 0
+              : 1;
+    } else if (statistics.bestCostOfThisRound <
+               _lastRoundStatistics->bestCostOfThisRound) {
       _consecutiveFutileIterations = 0;
     } else {
       ++_consecutiveFutileIterations;

@@ -22,7 +22,8 @@ Annealer::Annealer(RandomProvider& random, AnnealingSchedule& schedule,
           assignment.objectiveDirection()),
       _statistics(INITIAL_TEMPERATURE),
       _requiredMovesPerRound{static_cast<UInt>(
-        static_cast<double>(128 * assignment.searchVars().size()) / std::log2(assignment.searchVars().size()))}{}
+          static_cast<double>(128 * assignment.searchVars().size()) /
+          std::log2(assignment.searchVars().size()))} {}
 
 bool Annealer::isFinished() const { return _schedule.frozen(); }
 

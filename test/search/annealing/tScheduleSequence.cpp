@@ -29,7 +29,8 @@ class ScheduleSequenceTest : public ::testing::Test {
     inner1 = std::make_shared<DummyAnnealingSchedule>();
     inner2 = std::make_shared<DummyAnnealingSchedule>();
 
-    schedule = AnnealerContainer::sequence(std::vector<std::shared_ptr<AnnealingSchedule>>{inner1, inner2});
+    schedule = AnnealerContainer::sequence(
+        std::vector<std::shared_ptr<AnnealingSchedule>>{inner1, inner2});
     schedule->start(1.0);
   }
 };
