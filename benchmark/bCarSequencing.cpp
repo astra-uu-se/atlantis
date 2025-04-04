@@ -1,5 +1,6 @@
 #include <benchmark/benchmark.h>
 
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <random>
@@ -62,7 +63,7 @@ class CarSequencing : public ::benchmark::Fixture {
       for (size_t o = 0; o < classFeatureCount; ++o) {
         carData.at(c).at(o) = true;
       }
-      std::ranges::shuffle(carData.at(c).begin(), carData.at(c).end(), rng);
+      std::shuffle(carData.at(c).begin(), carData.at(c).end(), rng);
     }
 
     for (size_t o = 0; o < numFeatures; ++o) {

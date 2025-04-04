@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/types.hpp"
