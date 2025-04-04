@@ -1,5 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayIntMaximumNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 
 namespace atlantis::testing {
 

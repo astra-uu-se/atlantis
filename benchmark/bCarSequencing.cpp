@@ -8,7 +8,6 @@
 
 #include "atlantis/propagation/invariants/countConst.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/lessEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 #include "atlantis/propagation/violationInvariants/equal.hpp"

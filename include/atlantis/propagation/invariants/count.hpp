@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "atlantis/propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {

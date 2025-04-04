@@ -4,7 +4,6 @@
 
 #include "atlantis/propagation/variables/committable.hpp"
 #include "atlantis/propagation/views/intView.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "atlantis/search/annealing/annealerContainer.hpp"
+#include "atlantis/search/annealing/types.hpp"
 
 namespace atlantis::testing {
 

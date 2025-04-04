@@ -2,6 +2,7 @@
 
 #include "atlantis/search/annealing/annealerContainer.hpp"
 #include "atlantis/search/annealing/geometricHeatingSchedule.hpp"
+#include "atlantis/search/annealing/types.hpp"
 
 namespace atlantis::testing {
 

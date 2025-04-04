@@ -57,6 +57,7 @@
 #include "atlantis/invariantgraph/fzn/int_pow.hpp"
 #include "atlantis/invariantgraph/fzn/int_times.hpp"
 #include "atlantis/invariantgraph/fzn/set_in.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/utils/domains.hpp"
 #include "atlantis/utils/fznAst.hpp"
 #include "atlantis/utils/fznOutput.hpp"

@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {

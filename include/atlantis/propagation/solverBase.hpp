@@ -9,9 +9,6 @@
 
 namespace atlantis::propagation {
 
-class IntVar;
-class IntView;
-class Invariant;
 class ViolationInvariant;
 
 class SolverBase {

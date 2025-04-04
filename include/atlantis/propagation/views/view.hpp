@@ -1,6 +1,5 @@
 #pragma once
 
-#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/variables/var.hpp"
 
 namespace atlantis::propagation {

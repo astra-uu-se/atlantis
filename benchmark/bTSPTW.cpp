@@ -8,7 +8,6 @@
 #include "atlantis/propagation/invariants/elementVar.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/invariants/plus.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/elementConst.hpp"
 #include "atlantis/propagation/views/intMaxView.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"

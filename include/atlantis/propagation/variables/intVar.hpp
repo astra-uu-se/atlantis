@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "atlantis/propagation/types.hpp"
 #include "atlantis/propagation/variables/committableInt.hpp"
 #include "atlantis/propagation/variables/var.hpp"
 

@@ -7,6 +7,7 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intPlusNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/utils/domains.hpp"
 

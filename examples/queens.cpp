@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "atlantis/propagation/invariants/linear.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 

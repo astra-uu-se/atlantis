@@ -9,7 +9,6 @@
 #include "atlantis/propagation/invariants/element2dConst.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/invariants/plus.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/elementConst.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/views/lessEqualConst.hpp"

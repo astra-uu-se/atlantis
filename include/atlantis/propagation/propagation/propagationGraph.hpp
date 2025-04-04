@@ -1,10 +1,7 @@
 #pragma once
 
-#include <vector>
-
 #include "atlantis/propagation/propagation/propagationQueue.hpp"
 #include "atlantis/propagation/store/store.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

@@ -1,9 +1,9 @@
 #pragma once
 #include <cassert>
 #include <memory>
+#include <vector>
 
 #include "atlantis/propagation/propagation/propagationListNode.hpp"
-#include "atlantis/propagation/types.hpp"
 
 namespace atlantis::propagation {
 

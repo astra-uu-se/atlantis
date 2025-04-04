@@ -6,7 +6,6 @@
 #include "atlantis/search/iAssignment.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/searchVariable.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 class CommittableInt;

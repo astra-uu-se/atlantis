@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "atlantis/propagation/types.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis {
 

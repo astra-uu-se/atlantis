@@ -5,6 +5,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/variables/committableInt.hpp"
 #include "atlantis/search/neighborhoods/allDifferentNonUniformNeighborhood.hpp"
 #include "atlantis/search/neighborhoods/allDifferentUniformNeighborhood.hpp"

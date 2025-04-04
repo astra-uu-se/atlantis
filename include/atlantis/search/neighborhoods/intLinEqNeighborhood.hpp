@@ -2,7 +2,6 @@
 
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/searchVariable.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::search {
 class SearchVar;

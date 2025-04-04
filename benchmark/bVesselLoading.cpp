@@ -7,7 +7,6 @@
 #include "atlantis/propagation/invariants/ifThenElse.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/invariants/min.hpp"
-#include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 #include "benchmark.hpp"

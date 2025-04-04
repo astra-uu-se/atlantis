@@ -2,7 +2,6 @@
 
 #include <vector>
 
-#include "atlantis/propagation/types.hpp"
 #include "atlantis/search/cost.hpp"
 #include "atlantis/search/iAssignment.hpp"
 

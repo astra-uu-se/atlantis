@@ -4,7 +4,6 @@
 
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/search/cost.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::search {
 

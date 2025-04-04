@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "atlantis/propagation/variables/committable.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::propagation {
 

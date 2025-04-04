@@ -1,7 +1,6 @@
 #pragma once
 
 #include "atlantis/invariantgraph/implicitConstraintNode.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::search::neighborhoods {
 class Neighborhood;

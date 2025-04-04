@@ -1,4 +1,5 @@
 #pragma once
+
 #include "atlantis/propagation/types.hpp"
 
 namespace atlantis::propagation {

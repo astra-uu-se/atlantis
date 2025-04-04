@@ -1,5 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
 
 namespace atlantis::testing {

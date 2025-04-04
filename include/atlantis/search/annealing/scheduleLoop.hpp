@@ -4,6 +4,7 @@
 #include <optional>
 
 #include "atlantis/search/annealing/annealingSchedule.hpp"
+#include "atlantis/search/annealing/types.hpp"
 
 namespace atlantis::search {
 

@@ -9,7 +9,6 @@
 #include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
-#include "varNode.hpp"
 
 namespace atlantis {
 class SearchDomain;
@@ -21,6 +20,7 @@ class NeighborhoodCombinator;
 
 namespace atlantis::invariantgraph {
 class InvariantGraphRoot;
+class VarNode;
 
 class InvariantGraph : public virtual IInvariantGraph {
   propagation::SolverBase& _solver;

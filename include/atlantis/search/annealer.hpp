@@ -1,6 +1,7 @@
 #pragma once
 
 #include "atlantis/search/annealing/annealingSchedule.hpp"
+#include "atlantis/search/annealing/types.hpp"
 #include "atlantis/search/cost.hpp"
 
 namespace atlantis::search {
