@@ -47,8 +47,7 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
 
     while (controller.shouldRun(_assignment) && !annealer.isFinished()) {
       logger.timedProcedure(logging::Level::LVL_TRACE, "round", [&] {
-        while (controller.shouldRun(_assignment) &&
-               annealer.runMonteCarloSimulation()) {
+        while (controller.shouldRun(_assignment) && annealer.shouldRunRound()) {
           const auto cost = _assignment.performProbe(_random);
 
           if (annealer.acceptMove(cost)) {
