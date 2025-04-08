@@ -2,14 +2,14 @@
 
 #include <algorithm>
 
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/bool2IntView.hpp"
 
 namespace atlantis::invariantgraph {
 
-BoolNotNode::BoolNotNode(IInvariantGraph& graph, VarNodeId staticInput,
+BoolNotNode::BoolNotNode(InvariantGraph& graph, VarNodeId staticInput,
                          VarNodeId output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 

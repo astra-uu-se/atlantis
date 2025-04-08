@@ -8,9 +8,9 @@ class BoolAndNode : public ViolationInvariantNode {
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  BoolAndNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
+  BoolAndNode(InvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
 
-  BoolAndNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  BoolAndNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
               bool shouldHold = true);
 
   void init(InvariantNodeId) override;

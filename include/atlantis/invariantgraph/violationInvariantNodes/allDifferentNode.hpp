@@ -7,19 +7,19 @@ class AllDifferentNode : public ViolationInvariantNode {
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit AllDifferentNode(IInvariantGraph& graph,
+  explicit AllDifferentNode(InvariantGraph& graph,
 
                             VarNodeId a, VarNodeId b, VarNodeId r);
 
-  explicit AllDifferentNode(IInvariantGraph& graph,
+  explicit AllDifferentNode(InvariantGraph& graph,
 
                             VarNodeId a, VarNodeId b, bool shouldHold = true);
 
-  explicit AllDifferentNode(IInvariantGraph& graph,
+  explicit AllDifferentNode(InvariantGraph& graph,
 
                             std::vector<VarNodeId>&& vars, VarNodeId r);
 
-  explicit AllDifferentNode(IInvariantGraph& graph,
+  explicit AllDifferentNode(InvariantGraph& graph,
 
                             std::vector<VarNodeId>&& vars,
                             bool shouldHold = true);

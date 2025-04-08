@@ -6,9 +6,9 @@ namespace atlantis::invariantgraph {
 
 class IntLeNode : public ViolationInvariantNode {
  public:
-  IntLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
+  IntLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
 
-  IntLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  IntLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
             bool shouldHold = true);
 
   void init(InvariantNodeId) override;

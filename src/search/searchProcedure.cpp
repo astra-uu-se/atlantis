@@ -5,7 +5,7 @@
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealer.hpp"
 #include "atlantis/search/annealing/types.hpp"
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/searchController.hpp"
 
 namespace atlantis::search {

@@ -1,6 +1,6 @@
 #include "atlantis/search/neighborhoods/randomNeighborhood.hpp"
 
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
 
@@ -10,14 +10,14 @@ RandomNeighborhood::RandomNeighborhood(std::vector<SearchVar>&& vars)
     : _vars(std::move(vars)) {}
 
 void RandomNeighborhood::initialize(RandomProvider& random,
-                                    IAssignment& assignment) {
+                                    Assignment& assignment) {
   for (auto& var : _vars) {
     assignment.set(var.solverId(), random.inDomain(*var.domain()));
   }
 }
 
 size_t RandomNeighborhood::randomMove(RandomProvider& random,
-                                      IAssignment& assignment) {
+                                      Assignment& assignment) {
   assert(!_vars.empty());
   const Int index = random.intInRange(0, static_cast<Int>(_vars.size()) - 1);
   assignment.set(

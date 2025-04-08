@@ -8,9 +8,8 @@ namespace atlantis::testing {
 
 using namespace atlantis::search::neighborhoods;
 
-class AllDifferentUniformNeighborhoodTest : public NeighborhoodTestBase {
+class AllDifferentUniformNeighborhoodTest : public NeighborhoodTestBase<AllDifferentUniformNeighborhood> {
  public:
-  std::shared_ptr<AllDifferentUniformNeighborhood> _neighborhood;
   std::vector<SearchVar> _vars;
 
   void expectHolds() {
@@ -52,21 +51,20 @@ class AllDifferentUniformNeighborhoodTest : public NeighborhoodTestBase {
     }
     _solver->close();
 
-    _neighborhood = std::make_shared<AllDifferentUniformNeighborhood>(
-        std::vector<SearchVar>(_vars));
+    createNeighborhood(std::vector<SearchVar>(_vars));
   }
 };
 
 TEST_F(AllDifferentUniformNeighborhoodTest, initialize) {
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    initialize(*_neighborhood);
+    initialize();
     expectHolds();
   }
 }
 
 TEST_F(AllDifferentUniformNeighborhoodTest, swap) {
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    initialize(*_neighborhood);
+    initialize();
     expectHolds();
     EXPECT_EQ(_neighborhood->swapValues(_random, *_assignment), 2);
     std::vector<propagation::VarId> modified;
@@ -88,7 +86,7 @@ TEST_F(AllDifferentUniformNeighborhoodTest, swap) {
 
 TEST_F(AllDifferentUniformNeighborhoodTest, assignValue) {
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    initialize(*_neighborhood);
+    initialize();
     expectHolds();
     EXPECT_EQ(_neighborhood->assignValue(_random, *_assignment), 1);
     propagation::VarId modified{propagation::NULL_ID};
@@ -106,10 +104,10 @@ TEST_F(AllDifferentUniformNeighborhoodTest, assignValue) {
 }
 
 TEST_F(AllDifferentUniformNeighborhoodTest, randomMove) {
-  initialize(*_neighborhood);
+  initialize();
   expectHolds();
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    commitIf(*_neighborhood);
+    commitIf();
     expectHolds();
   }
 }

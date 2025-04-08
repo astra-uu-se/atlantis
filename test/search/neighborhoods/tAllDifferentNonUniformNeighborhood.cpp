@@ -9,10 +9,8 @@ namespace atlantis::testing {
 
 using namespace atlantis::search::neighborhoods;
 
-class AllDifferentNonUniformNeighborhoodTest : public NeighborhoodTestBase {
+class AllDifferentNonUniformNeighborhoodTest : public NeighborhoodTestBase<AllDifferentNonUniformNeighborhood> {
  public:
-  std::shared_ptr<AllDifferentNonUniformNeighborhood> _neighborhood;
-
   std::vector<SearchVar> _vars;
   std::vector<std::vector<Int>> _domains{
       std::vector<Int>{1, 3, 4},
@@ -61,13 +59,12 @@ class AllDifferentNonUniformNeighborhoodTest : public NeighborhoodTestBase {
     }
     _solver->close();
 
-    _neighborhood = std::make_shared<AllDifferentNonUniformNeighborhood>(
-        std::vector<SearchVar>(_vars), domainLb, domainUb);
+    createNeighborhood(std::vector<SearchVar>(_vars), domainLb, domainUb);
   }
 };
 
 TEST_F(AllDifferentNonUniformNeighborhoodTest, initialize) {
-  initialize(*_neighborhood);
+  initialize();
   expectHolds();
 
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
@@ -84,7 +81,7 @@ TEST_F(AllDifferentNonUniformNeighborhoodTest, canSwap) {
       setDomains.at(i).emplace(val);
     }
   }
-  initialize(*_neighborhood);
+  initialize();
   expectHolds();
   for (size_t var1Index = 0; var1Index < _vars.size(); ++var1Index) {
     const Int value1 = _solver->committedValue(_vars.at(var1Index).solverId());
@@ -117,7 +114,7 @@ TEST_F(AllDifferentNonUniformNeighborhoodTest, swap) {
   }
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
     for (size_t var1Index = 0; var1Index < _vars.size(); ++var1Index) {
-      initialize(*_neighborhood);
+      initialize();
       expectHolds();
       const Int value1 =
           _solver->committedValue(_vars.at(var1Index).solverId());
@@ -149,7 +146,7 @@ TEST_F(AllDifferentNonUniformNeighborhoodTest, assignValue) {
     }
   }
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    initialize(*_neighborhood);
+    initialize();
 
     for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
       for (const Int newValue : _domains.at(varIndex)) {
@@ -176,7 +173,7 @@ TEST_F(AllDifferentNonUniformNeighborhoodTest, assignValue) {
 }
 
 TEST_F(AllDifferentNonUniformNeighborhoodTest, randomMove) {
-  initialize(*_neighborhood);
+  initialize();
   expectHolds();
 
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
@@ -188,10 +185,10 @@ TEST_F(AllDifferentNonUniformNeighborhoodTest, randomMove) {
 }
 
 TEST_F(AllDifferentNonUniformNeighborhoodTest, commitIf) {
-  initialize(*_neighborhood);
+  initialize();
   expectHolds();
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    commitIf(*_neighborhood);
+    commitIf();
     expectHolds();
   }
 }

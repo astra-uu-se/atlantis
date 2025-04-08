@@ -9,7 +9,7 @@ class GlobalCardinalityNode : public InvariantNode {
   std::vector<propagation::VarViewId> _intermediate;
 
  public:
-  explicit GlobalCardinalityNode(IInvariantGraph& graph,
+  explicit GlobalCardinalityNode(InvariantGraph& graph,
 
                                  std::vector<VarNodeId>&& inputs,
                                  std::vector<Int>&& cover,

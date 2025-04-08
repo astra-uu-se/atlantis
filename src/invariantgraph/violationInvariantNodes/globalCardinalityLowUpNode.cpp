@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
@@ -13,7 +13,7 @@
 namespace atlantis::invariantgraph {
 
 GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& x,
+    InvariantGraph& graph, std::vector<VarNodeId>&& x,
     std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
     VarNodeId r)
     : ViolationInvariantNode(graph, {}, std::move(x), r),
@@ -22,7 +22,7 @@ GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
       _up(std::move(up)) {}
 
 GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& x,
+    InvariantGraph& graph, std::vector<VarNodeId>&& x,
     std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
     bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(x), shouldHold),

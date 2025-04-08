@@ -3,13 +3,13 @@
 #include <cmath>
 #include <limits>
 
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 
 namespace atlantis::search {
 
 Annealer::Annealer(RandomProvider& random, AnnealingSchedule& schedule,
-                   const IAssignment& assignment)
+                   const Assignment& assignment)
     : _random(random),
       _schedule(schedule),
       _cost(

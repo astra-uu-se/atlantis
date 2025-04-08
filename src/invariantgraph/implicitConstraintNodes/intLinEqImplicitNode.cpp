@@ -3,13 +3,13 @@
 #include <algorithm>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntLinEqImplicitNode::IntLinEqImplicitNode(IInvariantGraph& graph,
+IntLinEqImplicitNode::IntLinEqImplicitNode(InvariantGraph& graph,
                                            std::vector<Int>&& coeffs,
                                            std::vector<VarNodeId>&& inputVars,
                                            Int offset)

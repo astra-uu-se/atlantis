@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/boolLinear.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -13,7 +13,7 @@
 
 namespace atlantis::invariantgraph {
 
-BoolLinearNode::BoolLinearNode(IInvariantGraph& graph,
+BoolLinearNode::BoolLinearNode(InvariantGraph& graph,
                                std::vector<Int>&& coeffs,
                                std::vector<VarNodeId>&& vars, VarNodeId output,
                                Int offset)

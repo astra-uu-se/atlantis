@@ -6,7 +6,7 @@
 
 namespace atlantis::search {
 class SearchVar;
-class IAssignment;
+class Assignment;
 class RandomProvider;
 }  // namespace atlantis::search
 
@@ -18,9 +18,9 @@ class RandomNeighborhood : public Neighborhood {
  public:
   explicit RandomNeighborhood(std::vector<SearchVar>&& vars);
 
-  void initialize(RandomProvider&, IAssignment& assignment) override;
+  void initialize(RandomProvider&, Assignment& assignment) override;
 
-  size_t randomMove(RandomProvider&, IAssignment& assignment) override;
+  size_t randomMove(RandomProvider&, Assignment& assignment) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;

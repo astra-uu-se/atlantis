@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 
 class IntDivNode : public InvariantNode {
  public:
-  IntDivNode(IInvariantGraph& graph,
+  IntDivNode(InvariantGraph& graph,
 
              VarNodeId numerator, VarNodeId denominator, VarNodeId quotient);
 

@@ -4,7 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -14,19 +14,19 @@
 
 namespace atlantis::invariantgraph {
 
-AllDifferentNode::AllDifferentNode(IInvariantGraph& graph, VarNodeId a,
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph, VarNodeId a,
                                    VarNodeId b, VarNodeId r)
     : AllDifferentNode(graph, std::vector<VarNodeId>{a, b}, r) {}
 
-AllDifferentNode::AllDifferentNode(IInvariantGraph& graph, VarNodeId a,
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph, VarNodeId a,
                                    VarNodeId b, bool shouldHold)
     : AllDifferentNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
-AllDifferentNode::AllDifferentNode(IInvariantGraph& graph,
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
                                    std::vector<VarNodeId>&& vars, VarNodeId r)
     : ViolationInvariantNode(graph, std::move(vars), r) {}
 
-AllDifferentNode::AllDifferentNode(IInvariantGraph& graph,
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
                                    std::vector<VarNodeId>&& vars,
                                    bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold) {}

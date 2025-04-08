@@ -11,13 +11,13 @@ class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit GlobalCardinalityLowUpNode(IInvariantGraph& graph,
+  explicit GlobalCardinalityLowUpNode(InvariantGraph& graph,
                                       std::vector<VarNodeId>&& x,
                                       std::vector<Int>&& cover,
                                       std::vector<Int>&& low,
                                       std::vector<Int>&& up, VarNodeId r);
 
-  explicit GlobalCardinalityLowUpNode(IInvariantGraph& graph,
+  explicit GlobalCardinalityLowUpNode(InvariantGraph& graph,
                                       std::vector<VarNodeId>&& x,
                                       std::vector<Int>&& cover,
                                       std::vector<Int>&& low,

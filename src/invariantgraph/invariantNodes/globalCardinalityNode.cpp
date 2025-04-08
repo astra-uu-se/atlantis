@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
@@ -15,7 +15,7 @@
 
 namespace atlantis::invariantgraph {
 
-GlobalCardinalityNode::GlobalCardinalityNode(IInvariantGraph& graph,
+GlobalCardinalityNode::GlobalCardinalityNode(InvariantGraph& graph,
                                              std::vector<VarNodeId>&& inputs,
                                              std::vector<Int>&& cover,
                                              std::vector<VarNodeId>&& counts)

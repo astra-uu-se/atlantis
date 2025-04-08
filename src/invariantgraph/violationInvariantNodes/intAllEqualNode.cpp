@@ -5,7 +5,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -17,22 +17,22 @@
 
 namespace atlantis::invariantgraph {
 
-IntAllEqualNode::IntAllEqualNode(IInvariantGraph& graph, VarNodeId a,
+IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, VarNodeId a,
                                  VarNodeId b, VarNodeId r, bool breaksCycle)
     : IntAllEqualNode(graph, std::vector<VarNodeId>{a, b}, r, breaksCycle) {}
 
-IntAllEqualNode::IntAllEqualNode(IInvariantGraph& graph, VarNodeId a,
+IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, VarNodeId a,
                                  VarNodeId b, bool shouldHold, bool breaksCycle)
     : IntAllEqualNode(graph, std::vector<VarNodeId>{a, b}, shouldHold,
                       breaksCycle) {}
 
-IntAllEqualNode::IntAllEqualNode(IInvariantGraph& graph,
+IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph,
                                  std::vector<VarNodeId>&& vars, VarNodeId r,
                                  bool breaksCycle)
     : ViolationInvariantNode(graph, std::move(vars), r),
       _breaksCycle(breaksCycle) {}
 
-IntAllEqualNode::IntAllEqualNode(IInvariantGraph& graph,
+IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph,
                                  std::vector<VarNodeId>&& vars, bool shouldHold,
                                  bool breaksCycle)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),

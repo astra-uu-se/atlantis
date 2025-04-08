@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
@@ -15,14 +15,14 @@
 namespace atlantis::invariantgraph {
 
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& inputs,
+    InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
     std::vector<Int>&& cover, std::vector<VarNodeId>&& counts, bool shouldHold)
     : ViolationInvariantNode(graph, std::move(counts), std::move(inputs),
                              shouldHold),
       _cover(std::move(cover)) {}
 
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& inputs,
+    InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
     std::vector<Int>&& cover, std::vector<VarNodeId>&& counts, VarNodeId r)
     : ViolationInvariantNode(graph, std::move(counts), std::move(inputs), r),
       _cover(std::move(cover)) {}

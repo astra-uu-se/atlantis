@@ -3,14 +3,14 @@
 #include <algorithm>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/elementVar.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
-ArrayVarElementNode::ArrayVarElementNode(IInvariantGraph& graph, VarNodeId idx,
+ArrayVarElementNode::ArrayVarElementNode(InvariantGraph& graph, VarNodeId idx,
                                          std::vector<VarNodeId>&& varVector,
                                          VarNodeId output, Int offset)
     : InvariantNode(graph, {output}, {idx}, std::move(varVector)),

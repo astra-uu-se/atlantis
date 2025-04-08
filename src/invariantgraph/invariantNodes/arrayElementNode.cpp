@@ -3,7 +3,7 @@
 #include <algorithm>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/elementConst.hpp"
@@ -25,7 +25,7 @@ static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
   return intVec;
 }
 
-ArrayElementNode::ArrayElementNode(IInvariantGraph& graph,
+ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
                                    std::vector<Int>&& parVector, VarNodeId idx,
                                    VarNodeId output, Int offset,
                                    bool isIntVector)
@@ -34,7 +34,7 @@ ArrayElementNode::ArrayElementNode(IInvariantGraph& graph,
       _offset(offset),
       _isIntVector(isIntVector) {}
 
-ArrayElementNode::ArrayElementNode(IInvariantGraph& graph,
+ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
                                    std::vector<bool>&& parVector, VarNodeId idx,
                                    VarNodeId output, Int offset)
     : InvariantNode(graph, {output}, {idx}),

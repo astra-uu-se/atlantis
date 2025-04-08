@@ -8,16 +8,16 @@ class ArrayBoolAndNode : public ViolationInvariantNode {
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  ArrayBoolAndNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  ArrayBoolAndNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                    VarNodeId output);
 
-  ArrayBoolAndNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  ArrayBoolAndNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                    bool shouldHold = true);
 
-  ArrayBoolAndNode(IInvariantGraph& graph, std::vector<VarNodeId>&& as,
+  ArrayBoolAndNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
                    VarNodeId output);
 
-  ArrayBoolAndNode(IInvariantGraph& graph, std::vector<VarNodeId>&& as,
+  ArrayBoolAndNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
                    bool shouldHold = true);
 
   void init(InvariantNodeId) override;

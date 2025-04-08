@@ -2,14 +2,14 @@
 
 #include <algorithm>
 
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/modView.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntModViewNode::IntModViewNode(IInvariantGraph& graph, VarNodeId staticInput,
+IntModViewNode::IntModViewNode(InvariantGraph& graph, VarNodeId staticInput,
                                VarNodeId output, Int denominator)
     : InvariantNode(graph, {output}, {staticInput}),
       _denominator(std::abs(denominator)) {}

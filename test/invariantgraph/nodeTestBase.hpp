@@ -7,10 +7,9 @@
 #include <utility>
 #include <vector>
 
-#include "atlantis/invariantgraph/iImplicitConstraintNode.hpp"
-#include "atlantis/invariantgraph/iInvariantNode.hpp"
-#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/utils/domains.hpp"
@@ -21,7 +20,7 @@ using namespace atlantis::invariantgraph;
 
 class UnitInvariantNode : public InvariantNode {
  public:
-  explicit UnitInvariantNode(IInvariantGraph& graph,
+  explicit UnitInvariantNode(InvariantGraph& graph,
                              std::vector<VarNodeId>&& defVarNodes)
       : InvariantNode(graph, std::move(defVarNodes)) {}
 

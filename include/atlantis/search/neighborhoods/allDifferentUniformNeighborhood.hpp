@@ -17,17 +17,17 @@ class AllDifferentUniformNeighborhood : public Neighborhood {
   Timestamp _curTimestamp;
 
  public:
-  size_t swapValues(RandomProvider&, IAssignment& assignment);
+  size_t swapValues(RandomProvider&, Assignment& assignment);
 
-  size_t assignValue(RandomProvider&, IAssignment& assignment);
+  size_t assignValue(RandomProvider&, Assignment& assignment);
 
   explicit AllDifferentUniformNeighborhood(std::vector<SearchVar>&& vars);
 
-  void initialize(RandomProvider&, IAssignment&) override;
+  void initialize(RandomProvider&, Assignment&) override;
 
-  size_t randomMove(RandomProvider&, IAssignment&) override;
+  size_t randomMove(RandomProvider&, Assignment&) override;
 
-  void commitIf(const IAssignment&) override;
+  void commitIf(const Assignment&) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;

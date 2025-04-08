@@ -362,8 +362,8 @@ TEST_F(LinearTest, SolverIntegration) {
     }
     std::vector<VarViewId> args;
     constexpr size_t numArgs = 10;
-    for (Int value = 1; value <= numArgs; ++value) {
-      args.push_back(_solver->makeIntVar(value, 1, numArgs));
+    for (size_t value = 1; value <= numArgs; ++value) {
+      args.push_back(_solver->makeIntVar(static_cast<Int>(value), 1, numArgs));
     }
     const VarViewId modifiedVarId = args.front();
     const VarViewId output = _solver->makeIntVar(-10, -100, numArgs * numArgs);

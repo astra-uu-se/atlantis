@@ -4,7 +4,7 @@
 #include <fznparser/model.hpp>
 #include <ranges>
 
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 
 namespace atlantis::invariantgraph {
@@ -37,7 +37,7 @@ std::vector<VarNodeId> concat(const std::vector<VarNodeId> &fst,
 }
 
 static std::vector<std::pair<size_t, Int>> allDifferent(
-    IInvariantGraph &invariantGraph,
+    InvariantGraph &invariantGraph,
     const std::vector<VarNodeId> &inputVarNodeIds) {
   // pruned[i] = <index, value> where index is the index of the static
   // variable with singleton domain {value}.
@@ -75,7 +75,7 @@ static std::vector<std::pair<size_t, Int>> allDifferent(
 }
 
 std::vector<VarNodeId> pruneAllDifferentFree(
-    IInvariantGraph &invariantGraph,
+    InvariantGraph &invariantGraph,
     const std::vector<VarNodeId> &inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
   std::vector<bool> isFree(inputVarNodeIds.size(), true);
@@ -93,7 +93,7 @@ std::vector<VarNodeId> pruneAllDifferentFree(
 }
 
 std::vector<VarNodeId> pruneAllDifferentFixed(
-    IInvariantGraph &invariantGraph,
+    InvariantGraph &invariantGraph,
     const std::vector<VarNodeId> &inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
   std::vector<bool> isFree(inputVarNodeIds.size(), true);

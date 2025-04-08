@@ -8,9 +8,8 @@ namespace atlantis::testing {
 
 using namespace atlantis::search::neighborhoods;
 
-class RandomNeighborhoodTest : public NeighborhoodTestBase {
+class RandomNeighborhoodTest : public NeighborhoodTestBase<RandomNeighborhood> {
  public:
-  std::shared_ptr<RandomNeighborhood> _neighborhood;
   Int _offset = 1;
 
   std::vector<SearchVar> _vars;
@@ -26,8 +25,7 @@ class RandomNeighborhoodTest : public NeighborhoodTestBase {
 
     _solver->close();
 
-    _neighborhood =
-        std::make_shared<RandomNeighborhood>(std::vector<SearchVar>(_vars));
+    createNeighborhood(std::vector<SearchVar>(_vars));
   }
 
   size_t expectHolds() const {
@@ -46,7 +44,7 @@ class RandomNeighborhoodTest : public NeighborhoodTestBase {
 };
 
 TEST_F(RandomNeighborhoodTest, initialize) {
-  initialize(*_neighborhood);
+  initialize();
   expectHolds();
 
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
@@ -57,7 +55,7 @@ TEST_F(RandomNeighborhoodTest, initialize) {
 
 TEST_F(RandomNeighborhoodTest, randomMove) {
   for (auto i = 0; i < 1000; i++) {
-    initialize(*_neighborhood);
+    initialize();
     expectHolds();
     const size_t actual = _neighborhood->randomMove(_random, *_assignment);
     const size_t expected = expectHolds();
@@ -66,9 +64,9 @@ TEST_F(RandomNeighborhoodTest, randomMove) {
 }
 
 TEST_F(RandomNeighborhoodTest, commitIf) {
-  initialize(*_neighborhood);
+  initialize();
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    commitIf(*_neighborhood);
+    commitIf();
     expectHolds();
   }
 }

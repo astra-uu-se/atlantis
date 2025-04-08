@@ -5,7 +5,7 @@
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/annealer.hpp"
 #include "atlantis/search/annealing/annealingSchedule.hpp"
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 
@@ -17,7 +17,7 @@ using namespace atlantis::search::neighborhoods;
 class AlwaysAcceptingAnnealer : public Annealer {
  public:
   AlwaysAcceptingAnnealer(RandomProvider& random, AnnealingSchedule& schedule,
-                          const IAssignment& assignment)
+                          const Assignment& assignment)
       : Annealer(random, schedule, assignment) {}
 
  protected:
@@ -26,11 +26,11 @@ class AlwaysAcceptingAnnealer : public Annealer {
 
 class MockNeighborhood : public Neighborhood {
  public:
-  MOCK_METHOD(void, initialize, (RandomProvider&, IAssignment&), (override));
+  MOCK_METHOD(void, initialize, (RandomProvider&, Assignment&), (override));
 
-  MOCK_METHOD(size_t, randomMove, (RandomProvider&, IAssignment&), (override));
+  MOCK_METHOD(size_t, randomMove, (RandomProvider&, Assignment&), (override));
 
-  MOCK_METHOD(void, commitIf, (const IAssignment&), (override));
+  MOCK_METHOD(void, commitIf, (const Assignment&), (override));
 
   MOCK_METHOD(const std::vector<SearchVar>&, coveredVars, (), (const override));
 };

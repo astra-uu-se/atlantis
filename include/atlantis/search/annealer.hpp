@@ -6,7 +6,7 @@
 
 namespace atlantis::search {
 
-class IAssignment;
+class Assignment;
 class RandomProvider;
 
 /**
@@ -30,7 +30,7 @@ class Annealer {
   UInt _objectiveWeight{1};
 
  public:
-  Annealer(RandomProvider&, AnnealingSchedule&, const IAssignment&);
+  Annealer(RandomProvider&, AnnealingSchedule&, const Assignment&);
 
   virtual ~Annealer() = default;
 

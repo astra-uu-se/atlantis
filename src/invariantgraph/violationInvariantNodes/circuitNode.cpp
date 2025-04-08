@@ -4,7 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/circuitImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
@@ -15,7 +15,7 @@
 
 namespace atlantis::invariantgraph {
 
-CircuitNode::CircuitNode(IInvariantGraph& graph, std::vector<VarNodeId>&& vars,
+CircuitNode::CircuitNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
                          Int offset)
     : ViolationInvariantNode(graph, std::move(vars), true), _offset(offset) {}
 

@@ -10,11 +10,11 @@ class BoolLinEqNode : public ViolationInvariantNode {
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  BoolLinEqNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
+  BoolLinEqNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                 std::vector<VarNodeId>&& vars, Int bound,
                 bool shouldHold = true);
 
-  BoolLinEqNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
+  BoolLinEqNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                 std::vector<VarNodeId>&& vars, Int bound, VarNodeId reified);
 
   void init(InvariantNodeId) override;

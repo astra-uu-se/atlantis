@@ -8,10 +8,10 @@ class BoolClauseNode : public ViolationInvariantNode {
   propagation::VarViewId _sumVarId{propagation::NULL_ID};
 
  public:
-  explicit BoolClauseNode(IInvariantGraph& graph, std::vector<VarNodeId>&& as,
+  explicit BoolClauseNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
                           std::vector<VarNodeId>&& bs, VarNodeId r);
 
-  explicit BoolClauseNode(IInvariantGraph& graph, std::vector<VarNodeId>&& as,
+  explicit BoolClauseNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
                           std::vector<VarNodeId>&& bs, bool shouldHold = true);
 
   void init(InvariantNodeId) override;

@@ -9,7 +9,7 @@ class IntCountNode : public InvariantNode {
   Int _needle;
 
  public:
-  IntCountNode(IInvariantGraph& graph,
+  IntCountNode(InvariantGraph& graph,
 
                std::vector<VarNodeId>&& vars, Int needle, VarNodeId count);
 

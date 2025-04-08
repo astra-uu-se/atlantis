@@ -8,16 +8,16 @@ class ArrayBoolXorNode : public ViolationInvariantNode {
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  ArrayBoolXorNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  ArrayBoolXorNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                    VarNodeId reified);
 
-  ArrayBoolXorNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  ArrayBoolXorNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                    bool shouldHold = true);
 
-  ArrayBoolXorNode(IInvariantGraph& graph, std::vector<VarNodeId>&& inputVars,
+  ArrayBoolXorNode(InvariantGraph& graph, std::vector<VarNodeId>&& inputVars,
                    VarNodeId reified);
 
-  ArrayBoolXorNode(IInvariantGraph& graph,
+  ArrayBoolXorNode(InvariantGraph& graph,
                    std::vector<VarNodeId>&& inputVarNodeIds,
                    bool shouldHold = true);
 

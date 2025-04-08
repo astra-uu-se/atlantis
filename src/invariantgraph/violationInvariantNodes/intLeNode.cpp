@@ -4,7 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
@@ -12,11 +12,11 @@
 
 namespace atlantis::invariantgraph {
 
-IntLeNode::IntLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+IntLeNode::IntLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                      VarNodeId r)
     : ViolationInvariantNode(graph, {a, b}, r) {}
 
-IntLeNode::IntLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+IntLeNode::IntLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                      bool shouldHold)
     : ViolationInvariantNode(graph, {a, b}, shouldHold) {}
 

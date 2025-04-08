@@ -6,12 +6,16 @@
 #include <unordered_set>
 #include <vector>
 
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
 
 namespace atlantis {
 class SearchDomain;
+}
+
+namespace atlantis::propagation {
+class SolverBase;
 }
 
 namespace atlantis::search::neighborhoods {
@@ -21,16 +25,18 @@ class NeighborhoodCombinator;
 namespace atlantis::invariantgraph {
 class InvariantGraphRoot;
 class VarNode;
+class InvariantNode;
+class ImplicitConstraintNode;
 
-class InvariantGraph : public virtual IInvariantGraph {
+class InvariantGraph {
   propagation::SolverBase& _solver;
   std::vector<VarNode> _varNodes;
   std::unordered_map<std::string, VarNodeId> _namedVarNodeIndices;
   std::unordered_map<Int, VarNodeId> _intVarNodeIndices;
   std::array<VarNodeId, 2> _boolVarNodeIndices;
 
-  std::vector<std::shared_ptr<IInvariantNode>> _invariantNodes;
-  std::vector<std::shared_ptr<IImplicitConstraintNode>>
+  std::vector<std::shared_ptr<InvariantNode>> _invariantNodes;
+  std::vector<std::shared_ptr<ImplicitConstraintNode>>
       _implicitConstraintNodes;
   bool _breakDynamicCycles;
 
@@ -43,123 +49,123 @@ class InvariantGraph : public virtual IInvariantGraph {
  public:
   explicit InvariantGraph(propagation::SolverBase& solver,
                           bool breakDynamicCycles = false);
-  ~InvariantGraph() override = default;
+  virtual ~InvariantGraph() = default;
 
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
 
-  [[nodiscard]] propagation::SolverBase& solver() override;
+  [[nodiscard]] virtual propagation::SolverBase& solver();
 
-  [[nodiscard]] const propagation::SolverBase& solverConst() const override;
+  [[nodiscard]] virtual const propagation::SolverBase& solverConst() const;
 
-  [[nodiscard]] VarNodeId nextVarNodeId() const override;
+  [[nodiscard]] virtual VarNodeId nextVarNodeId() const;
 
-  [[nodiscard]] bool containsVarNode(const std::string&) const override;
+  [[nodiscard]] virtual bool containsVarNode(const std::string&) const;
 
-  [[nodiscard]] bool containsVarNode(Int) const override;
+  [[nodiscard]] virtual bool containsVarNode(Int) const;
 
-  [[nodiscard]] bool containsVarNode(bool) const override;
+  [[nodiscard]] virtual bool containsVarNode(bool) const;
 
-  VarNodeId retrieveBoolVarNode(DomainType) override;
+  virtual VarNodeId retrieveBoolVarNode(DomainType) ;
 
-  VarNodeId retrieveBoolVarNode() override {
+  virtual VarNodeId retrieveBoolVarNode() {
     return retrieveBoolVarNode(DomainType::DOM_RANGE);
   }
 
-  VarNodeId retrieveBoolVarNode(const std::string&, DomainType) override;
+  virtual VarNodeId retrieveBoolVarNode(const std::string&, DomainType) ;
 
-  VarNodeId retrieveBoolVarNode(const std::string& identifier) override {
+  virtual VarNodeId retrieveBoolVarNode(const std::string& identifier) {
     return retrieveBoolVarNode(identifier, DomainType::DOM_RANGE);
   }
 
-  VarNodeId retrieveBoolVarNode(bool) override;
+  virtual VarNodeId retrieveBoolVarNode(bool);
 
-  VarNodeId retrieveBoolVarNode(bool, const std::string&) override;
+  virtual VarNodeId retrieveBoolVarNode(bool, const std::string&);
 
-  VarNodeId retrieveBoolVarNode(const std::shared_ptr<SearchDomain>&,
-                                DomainType) override;
+  virtual VarNodeId retrieveBoolVarNode(const std::shared_ptr<SearchDomain>&,
+                                DomainType);
 
-  VarNodeId retrieveBoolVarNode(
-      const std::shared_ptr<SearchDomain>& dom) override {
+  virtual VarNodeId retrieveBoolVarNode(
+      const std::shared_ptr<SearchDomain>& dom) {
     return retrieveBoolVarNode(dom, DomainType::DOM_RANGE);
   }
 
-  VarNodeId retrieveIntVarNode(const std::string&) override;
+  virtual VarNodeId retrieveIntVarNode(const std::string&);
 
-  VarNodeId retrieveIntVarNode(Int) override;
+  virtual VarNodeId retrieveIntVarNode(Int);
 
-  VarNodeId retrieveIntVarNode(Int, const std::string&) override;
+  virtual VarNodeId retrieveIntVarNode(Int, const std::string&);
 
-  VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>&,
-                               DomainType) override;
+  virtual VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>&,
+                               DomainType);
 
-  VarNodeId retrieveIntVarNode(
-      const std::shared_ptr<SearchDomain>& domain) override;
+  virtual VarNodeId retrieveIntVarNode(
+      const std::shared_ptr<SearchDomain>& domain);
 
-  VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>&,
-                               const std::string&, DomainType) override;
+  virtual VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>&,
+                               const std::string&, DomainType);
 
-  VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>& dom,
-                               const std::string& identifier) override;
+  virtual VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>& dom,
+                               const std::string& identifier);
 
-  [[nodiscard]] VarNode& varNode(const std::string& identifier) override;
+  [[nodiscard]] VarNode& varNode(const std::string& identifier);
 
-  [[nodiscard]] VarNode& varNode(VarNodeId id) override;
+  [[nodiscard]] VarNode& varNode(VarNodeId id);
 
-  [[nodiscard]] VarNode& varNode(Int value) override;
+  [[nodiscard]] VarNode& varNode(Int value);
 
-  [[nodiscard]] const VarNode& varNodeConst(const std::string&) const override;
+  [[nodiscard]] const VarNode& varNodeConst(const std::string&) const;
 
-  [[nodiscard]] const VarNode& varNodeConst(VarNodeId id) const override;
+  [[nodiscard]] const VarNode& varNodeConst(VarNodeId id) const;
 
-  [[nodiscard]] VarNodeId varNodeId(bool val) const override;
+  [[nodiscard]] VarNodeId varNodeId(bool val) const;
 
-  [[nodiscard]] VarNodeId varNodeId(Int val) const override;
+  [[nodiscard]] VarNodeId varNodeId(Int val) const;
 
   [[nodiscard]] VarNodeId varNodeId(
-      const std::string& identifier) const override;
+      const std::string& identifier) const;
 
   [[nodiscard]] propagation::VarViewId varId(
-      const std::string& identifier) const override;
+      const std::string& identifier) const;
 
-  [[nodiscard]] propagation::VarViewId varId(VarNodeId id) const override;
+  [[nodiscard]] propagation::VarViewId varId(VarNodeId id) const;
 
-  [[nodiscard]] bool containsInvariantNode(InvariantNodeId) const override;
+  [[nodiscard]] bool containsInvariantNode(InvariantNodeId) const;
 
   [[nodiscard]] bool containsImplicitConstraintNode(
-      InvariantNodeId) const override;
+      InvariantNodeId) const;
 
-  [[nodiscard]] IInvariantNode& invariantNode(InvariantNodeId) override;
+  [[nodiscard]] InvariantNode& invariantNode(InvariantNodeId);
 
-  [[nodiscard]] IImplicitConstraintNode& implicitConstraintNode(
-      InvariantNodeId) override;
+  [[nodiscard]] ImplicitConstraintNode& implicitConstraintNode(
+      InvariantNodeId);
 
-  [[nodiscard]] InvariantNodeId nextInvariantNodeId() const override;
+  [[nodiscard]] InvariantNodeId nextInvariantNodeId() const;
 
-  [[nodiscard]] InvariantNodeId nextImplicitNodeId() const override;
+  [[nodiscard]] InvariantNodeId nextImplicitNodeId() const;
 
-  InvariantNodeId addInvariantNode(std::shared_ptr<IInvariantNode>&&) override;
+  InvariantNodeId addInvariantNode(std::shared_ptr<InvariantNode>&&);
 
   /**
    * @brief replaces the given old VarNode with the new VarNode in
    * all Invariants.
    */
-  void replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) override;
+  void replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId);
 
   InvariantNodeId addImplicitConstraintNode(
-      std::shared_ptr<IImplicitConstraintNode>&&) override;
+      std::shared_ptr<ImplicitConstraintNode>&&);
 
-  [[nodiscard]] propagation::VarViewId totalViolationVarId() const override;
+  [[nodiscard]] propagation::VarViewId totalViolationVarId() const;
 
-  [[nodiscard]] const VarNode& objectiveVarNode() const override;
+  [[nodiscard]] const VarNode& objectiveVarNode() const;
 
-  [[nodiscard]] propagation::VarViewId objectiveVarId() const override;
+  [[nodiscard]] propagation::VarViewId objectiveVarId() const;
 
-  void breakCycles() override;
+  void breakCycles();
 
-  void construct() override;
+  void construct();
 
-  void close() override;
+  void close();
 
   void splitMultiDefinedVars();
 

@@ -4,8 +4,8 @@
 
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/annealing/annealingSchedule.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/cost.hpp"
-#include "atlantis/search/iAssignment.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 
@@ -14,93 +14,55 @@ namespace atlantis::testing {
 using namespace atlantis::search;
 using namespace atlantis::search::neighborhoods;
 
-class SimpleAssignment : public virtual IAssignment {
- public:
-  std::shared_ptr<propagation::Solver> _solver;
-
-  explicit SimpleAssignment(const std::shared_ptr<propagation::Solver>& solver)
-      : _solver(solver) {}
-
-  Cost initialize(RandomProvider&) override {
-    return Cost{0, 0, ObjectiveDirection::NONE};
-  }
-
-  void initialize(Neighborhood& neighborhood, RandomProvider& random) {
-    _solver->beginMove();
-    neighborhood.initialize(random, *this);
-    _solver->endMove();
-    _solver->beginCommit();
-    _solver->endCommit();
-  }
-
-  Cost performProbe(RandomProvider&) override {
-    return Cost{0, 0, ObjectiveDirection::NONE};
-  }
-
-  void commitLastProbe() override {}
-
-  [[nodiscard]] Int currentValue(propagation::VarViewId var) const override {
-    return _solver->currentValue(var);
-  }
-
-  [[nodiscard]] Int committedValue(propagation::VarViewId var) const override {
-    return _solver->committedValue(var);
-  }
-
-  [[nodiscard]] bool satisfiesConstraints() const override { return true; }
-
-  [[nodiscard]] bool objectiveIsOptimal() const override { return true; }
-
-  void set(propagation::VarId searchVarId, Int val) override {
-    return _solver->setValue(searchVarId, val);
-  }
-
-  [[nodiscard]] const std::vector<propagation::VarId>& searchVars()
-      const override {
-    return _solver->searchVars();
-  }
-
-  [[nodiscard]] Timestamp currentTimestamp() const override {
-    return _solver->currentTimestamp();
-  }
-
-  [[nodiscard]] ObjectiveDirection objectiveDirection() const override {
-    return ObjectiveDirection::NONE;
-  }
-};
-
+template <class N>
 class NeighborhoodTestBase : public ::testing::Test {
  public:
   std::shared_ptr<propagation::Solver> _solver;
-  std::shared_ptr<SimpleAssignment> _assignment;
+  std::shared_ptr<N> _neighborhood{nullptr};
+  std::shared_ptr<Assignment> _assignment{nullptr};
   RandomProvider _random{123456789};
 
-  void SetUp() override {
-    _solver = std::make_shared<propagation::Solver>();
-    _assignment = std::make_shared<SimpleAssignment>(_solver);
+  void SetUp() override { _solver = std::make_shared<propagation::Solver>(); }
+
+  template <typename... Args>
+  void createNeighborhood(Args&&... args) {
+    EXPECT_EQ(_neighborhood, nullptr);
+    _neighborhood = std::make_shared<N>(
+        std::forward<Args>(args)...);
+    _assignment = std::make_shared<Assignment>(*_solver, *_neighborhood, propagation::NULL_ID,
+                     propagation::NULL_ID, ObjectiveDirection::NONE, 0);
   }
 
-  void initialize(Neighborhood& neighborhood) {
+  void initialize() {
+    if (_solver->isOpen()) {
+      _solver->close();
+    }
     _solver->beginMove();
-    neighborhood.initialize(_random, *_assignment);
+    _neighborhood->initialize(_random, *_assignment);
     _solver->endMove();
     _solver->beginCommit();
     _solver->endCommit();
   }
 
-  void randomMove(Neighborhood& neighborhood) {
+  void randomMove() {
+    if (_solver->isOpen()) {
+      _solver->close();
+    }
     _solver->beginMove();
-    neighborhood.randomMove(_random, *_assignment);
+    _neighborhood->randomMove(_random, *_assignment);
     _solver->endMove();
     _solver->beginProbe();
     _solver->endProbe();
   }
 
-  void commitIf(Neighborhood& neighborhood) {
+  void commitIf() {
+    if (_solver->isOpen()) {
+      _solver->close();
+    }
     _solver->beginMove();
-    neighborhood.randomMove(_random, *_assignment);
+    _neighborhood->randomMove(_random, *_assignment);
     _solver->endMove();
-    neighborhood.commitIf(*_assignment);
+    _neighborhood->commitIf(*_assignment);
     _solver->beginCommit();
     _solver->endCommit();
   }

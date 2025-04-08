@@ -5,7 +5,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/max.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -13,11 +13,11 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayIntMaximumNode::ArrayIntMaximumNode(IInvariantGraph& graph, VarNodeId a,
+ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph, VarNodeId a,
                                          VarNodeId b, VarNodeId output)
     : ArrayIntMaximumNode(graph, std::vector<VarNodeId>{a, b}, output) {}
 
-ArrayIntMaximumNode::ArrayIntMaximumNode(IInvariantGraph& graph,
+ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph,
                                          std::vector<VarNodeId>&& vars,
                                          VarNodeId output)
     : InvariantNode(graph, {output}, std::move(vars)),

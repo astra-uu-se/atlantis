@@ -6,7 +6,7 @@
 #include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph {
-class IInvariantGraph;
+class InvariantGraph;
 class FznInvariantGraph;
 }  // namespace atlantis::invariantgraph
 
@@ -24,7 +24,7 @@ void verifyNumArguments(const fznparser::Constraint& constraint, size_t size);
 std::vector<Int> getFixedValues(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray);
 
-std::vector<bool> getFixedBoolValues(const IInvariantGraph&,
+std::vector<bool> getFixedBoolValues(const InvariantGraph&,
                                      const std::vector<VarNodeId>&);
 
 std::vector<bool> getFixedValues(
@@ -36,7 +36,7 @@ std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
 std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
     FznInvariantGraph&, const std::shared_ptr<fznparser::BoolVarArray>&);
 
-std::vector<VarNodeId> getUnfixedVarNodeIds(const IInvariantGraph&,
+std::vector<VarNodeId> getUnfixedVarNodeIds(const InvariantGraph&,
                                             const std::vector<VarNodeId>&);
 
 void verifyAllDifferent(

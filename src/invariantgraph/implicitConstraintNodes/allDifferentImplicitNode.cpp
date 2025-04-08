@@ -15,7 +15,7 @@
 namespace atlantis::invariantgraph {
 
 AllDifferentImplicitNode::AllDifferentImplicitNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& inputVars)
+    InvariantGraph& graph, std::vector<VarNodeId>&& inputVars)
     : ImplicitConstraintNode(graph, std::move(inputVars)) {}
 
 void AllDifferentImplicitNode::init(InvariantNodeId id) {

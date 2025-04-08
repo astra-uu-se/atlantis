@@ -7,10 +7,9 @@ namespace atlantis::testing {
 
 using namespace atlantis::search::neighborhoods;
 
-class IntLinEqNeighborhoodTest : public NeighborhoodTestBase {
+class IntLinEqNeighborhoodTest : public NeighborhoodTestBase<IntLinEqNeighborhood> {
  public:
   Int numVars = 4;
-  std::shared_ptr<IntLinEqNeighborhood> _neighborhood;
   RandomProvider _random{123456789};
 
   std::vector<Int> _coeffs;
@@ -27,10 +26,8 @@ class IntLinEqNeighborhoodTest : public NeighborhoodTestBase {
       _coeffs.emplace_back(i % 2 == 0 ? 1 : -1);
     }
 
-    _neighborhood = std::make_shared<IntLinEqNeighborhood>(
+    createNeighborhood(
         std::vector<Int>{_coeffs}, std::vector<SearchVar>{_vars}, _offset);
-
-    _solver->close();
   }
 
   void expectHolds() const {
@@ -54,7 +51,7 @@ class IntLinEqNeighborhoodTest : public NeighborhoodTestBase {
 };
 
 TEST_F(IntLinEqNeighborhoodTest, initialise) {
-  initialize(*_neighborhood);
+  initialize();
   expectHolds();
 
   for (size_t m = 0; m < 100; ++m) {
@@ -65,7 +62,7 @@ TEST_F(IntLinEqNeighborhoodTest, initialise) {
 
 TEST_F(IntLinEqNeighborhoodTest, randomMove) {
   for (size_t m = 0; m < 100; ++m) {
-    initialize(*_neighborhood);
+    initialize();
     expectHolds();
 
     EXPECT_EQ(_neighborhood->randomMove(_random, *_assignment), 2);
@@ -74,10 +71,10 @@ TEST_F(IntLinEqNeighborhoodTest, randomMove) {
 }
 
 TEST_F(IntLinEqNeighborhoodTest, commitIf) {
-  initialize(*_neighborhood);
+  initialize();
   expectHolds();
   for (size_t m = 0; m < 100; ++m) {
-    commitIf(*_neighborhood);
+    commitIf();
     expectHolds();
   }
 }

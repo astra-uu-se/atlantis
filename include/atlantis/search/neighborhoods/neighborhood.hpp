@@ -4,7 +4,7 @@
 
 namespace atlantis::search {
 class SearchVar;
-class IAssignment;
+class Assignment;
 class RandomProvider;
 }  // namespace atlantis::search
 
@@ -20,7 +20,7 @@ class Neighborhood {
    * @param random The source of randomness.
    * @param assignment to modify and initialize
    */
-  virtual void initialize(RandomProvider& random, IAssignment& assignment) = 0;
+  virtual void initialize(RandomProvider& random, Assignment& assignment) = 0;
 
   /**
    * Make a random move.
@@ -29,15 +29,14 @@ class Neighborhood {
    * @param assignment the assignment to modify
    * @return the number of variables that were modified
    */
-  virtual size_t randomMove(RandomProvider& random,
-                            IAssignment& assignment) = 0;
+  virtual size_t randomMove(RandomProvider& random, Assignment& assignment) = 0;
 
   /**
    * @return The search variables covered by this neighborhood.
    */
   [[nodiscard]] virtual const std::vector<SearchVar>& coveredVars() const = 0;
 
-  virtual void commitIf(const IAssignment&) {}
+  virtual void commitIf(const Assignment&) {}
 };
 
 }  // namespace atlantis::search::neighborhoods
