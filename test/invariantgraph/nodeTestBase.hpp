@@ -112,14 +112,14 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   void createInvariantNode(Args&&... args) {
     EXPECT_EQ(_invNodeId, NULL_NODE_ID);
     _invNodeId = _invariantGraph->addInvariantNode(
-        std::make_unique<InvNode>(std::forward<Args>(args)...));
+        std::make_shared<InvNode>(std::forward<Args>(args)...));
   }
 
   template <typename... Args>
   void createImplicitConstraintNode(Args&&... args) {
     EXPECT_EQ(_invNodeId, NULL_NODE_ID);
     _invNodeId = _invariantGraph->addImplicitConstraintNode(
-        std::make_unique<InvNode>(std::forward<Args>(args)...));
+        std::make_shared<InvNode>(std::forward<Args>(args)...));
   }
 
   InvNode& invNode() {

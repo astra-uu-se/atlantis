@@ -13,8 +13,8 @@ class IntView;
 
 class Store {
   std::vector<IntVar> _intVars;
-  std::vector<std::unique_ptr<Invariant>> _invariants;
-  std::vector<std::unique_ptr<IntView>> _intViews;
+  std::vector<std::shared_ptr<Invariant>> _invariants;
+  std::vector<std::shared_ptr<IntView>> _intViews;
   std::vector<VarId> _intViewSourceId;
 
  public:
@@ -23,9 +23,9 @@ class Store {
   VarViewId createIntVar(Timestamp ts, Int initValue, Int lowerBound,
                          Int upperBound);
 
-  InvariantId createInvariantFromPtr(std::unique_ptr<Invariant>&&);
+  InvariantId createInvariantFromPtr(const std::shared_ptr<Invariant>&);
 
-  VarViewId createIntViewFromPtr(std::unique_ptr<IntView>&&);
+  VarViewId createIntViewFromPtr(const std::shared_ptr<IntView>&);
 
   [[nodiscard]] IntVar& intVar(VarId);
 
@@ -47,10 +47,10 @@ class Store {
 
   [[nodiscard]] std::vector<IntVar>::iterator intVarEnd();
 
-  [[nodiscard]] std::vector<std::unique_ptr<Invariant>>::iterator
+  [[nodiscard]] std::vector<std::shared_ptr<Invariant>>::iterator
   invariantBegin();
 
-  [[nodiscard]] std::vector<std::unique_ptr<Invariant>>::iterator
+  [[nodiscard]] std::vector<std::shared_ptr<Invariant>>::iterator
   invariantEnd();
 
   [[nodiscard]] size_t numVars() const;

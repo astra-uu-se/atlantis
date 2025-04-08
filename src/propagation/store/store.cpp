@@ -16,20 +16,21 @@ VarViewId Store::createIntVar(Timestamp ts, Int initValue, Int lowerBound,
   return newId;
 }
 
-InvariantId Store::createInvariantFromPtr(std::unique_ptr<Invariant>&& ptr) {
+InvariantId Store::createInvariantFromPtr(
+    const std::shared_ptr<Invariant>& ptr) {
   const auto newId = InvariantId{_invariants.size()};
   ptr->setId(newId);
-  _invariants.emplace_back(std::move(ptr));
+  _invariants.emplace_back(ptr);
   return newId;
 }
 
-VarViewId Store::createIntViewFromPtr(std::unique_ptr<IntView>&& ptr) {
+VarViewId Store::createIntViewFromPtr(const std::shared_ptr<IntView>& ptr) {
   const VarViewId newId(_intViews.size(), true);
   ptr->setId(ViewId(newId));
   const VarViewId parentId = ptr->parentId();
   const VarViewId source =
       parentId.isVar() ? parentId : _intViewSourceId[size_t(parentId)];
-  _intViews.emplace_back(std::move(ptr));
+  _intViews.emplace_back(ptr);
   _intViewSourceId.emplace_back(VarId(source));
   return newId;
 }
@@ -65,10 +66,10 @@ std::vector<IntVar>::iterator Store::intVarBegin() { return _intVars.begin(); }
 
 std::vector<IntVar>::iterator Store::intVarEnd() { return _intVars.end(); }
 
-std::vector<std::unique_ptr<Invariant>>::iterator Store::invariantBegin() {
+std::vector<std::shared_ptr<Invariant>>::iterator Store::invariantBegin() {
   return _invariants.begin();
 }
-std::vector<std::unique_ptr<Invariant>>::iterator Store::invariantEnd() {
+std::vector<std::shared_ptr<Invariant>>::iterator Store::invariantEnd() {
   return _invariants.end();
 }
 
