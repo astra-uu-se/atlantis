@@ -18,7 +18,8 @@ class Int2BoolNodeTestFixture : public NodeTestBase<Int2BoolNode> {
     return varNode(inputVar).inDomain(Int{1});
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     retrieveIntVarNode(0, 1, inputVar);
     retrieveBoolVarNode(outputVar);
 
@@ -36,7 +37,6 @@ class Int2BoolNodeTestFixture : public NodeTestBase<Int2BoolNode> {
 };
 
 TEST_P(Int2BoolNodeTestFixture, updateState) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -53,7 +53,6 @@ TEST_P(Int2BoolNodeTestFixture, updateState) {
 }
 
 TEST_P(Int2BoolNodeTestFixture, propagation) {
-  generate();
   if (shouldBeSubsumed()) {
     return;
   }
