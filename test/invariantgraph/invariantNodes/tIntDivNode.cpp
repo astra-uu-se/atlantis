@@ -33,7 +33,8 @@ class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
     return denominator != 0 ? numerator / denominator : 0;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     retrieveIntVarNode(-2, 2, numeratorVar);
     if (shouldBeReplaced()) {
       retrieveIntVarNode(1, 1, denominatorVar);
@@ -48,7 +49,7 @@ class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
 };
 
 TEST_P(IntDivNodeTestFixture, replace) {
-  generate();
+
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -63,7 +64,7 @@ TEST_P(IntDivNodeTestFixture, replace) {
 }
 
 TEST_P(IntDivNodeTestFixture, propagation) {
-  generate();
+
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

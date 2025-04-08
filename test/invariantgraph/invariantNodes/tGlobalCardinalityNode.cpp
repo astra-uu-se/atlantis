@@ -41,7 +41,8 @@ class GlobalCardinalityNodeTestFixture
     return outputVars;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     inputVars = {"input_1", "input_2"};
     if (shouldBeSubsumed()) {
       retrieveIntVarNode(2, 2, inputVars.at(0));
@@ -66,7 +67,7 @@ class GlobalCardinalityNodeTestFixture
 };
 
 TEST_P(GlobalCardinalityNodeTestFixture, updateState) {
-  generate();
+
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -88,7 +89,7 @@ TEST_P(GlobalCardinalityNodeTestFixture, updateState) {
 }
 
 TEST_P(GlobalCardinalityNodeTestFixture, replace) {
-  generate();
+
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -103,7 +104,7 @@ TEST_P(GlobalCardinalityNodeTestFixture, replace) {
 }
 
 TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
-  generate();
+
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

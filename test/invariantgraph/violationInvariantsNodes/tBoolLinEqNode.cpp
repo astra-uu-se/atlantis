@@ -46,7 +46,8 @@ class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinEqNode> {
     return sum != bound;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     for (Int i = 0; i < static_cast<Int>(numInputs); ++i) {
@@ -70,7 +71,7 @@ class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinEqNode> {
 };
 
 TEST_P(BoolLinEqNodeTestFixture, propagation) {
-  generate();
+  
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

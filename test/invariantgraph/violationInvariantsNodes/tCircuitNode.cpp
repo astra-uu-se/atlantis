@@ -34,7 +34,8 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
                                [](bool v) { return !v; });
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     for (Int i = 0; i < numInputs; ++i) {
       inputVars.emplace_back("input_" + std::to_string(i));
       std::vector<Int> domain;
@@ -51,13 +52,12 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
         _invariantGraph->root().addSearchVarNode(varNodeId(var));
       }
     }
-    createInvariantNode(*_invariantGraph,
-                        std::vector<VarNodeId>{inputVarNodeIds}, 1);
+    createInvariantNode(*_invariantGraph, varNodeIds(inputVars), 1);
   }
 };
 
 TEST_P(CircuitNodeTestFixture, makeImplicit) {
-  generate();
+  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeMadeImplicit()) {
@@ -70,7 +70,7 @@ TEST_P(CircuitNodeTestFixture, makeImplicit) {
 }
 
 TEST_P(CircuitNodeTestFixture, propagation) {
-  generate();  // Currently, we don't allow probes/moves that result in
+    // Currently, we don't allow probes/moves that result in
                // undeterminable
   // dynamic cycles. When the invariant graph is topologically sorted, then an
   // exception should be thrown, and the corresponding probe/move should be

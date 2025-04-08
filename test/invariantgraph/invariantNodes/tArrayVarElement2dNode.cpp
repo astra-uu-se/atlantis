@@ -27,7 +27,8 @@ class ArrayVarElement2dNodeTestFixture
     return shouldBeReplaced() && (_paramData.data == 1 || _paramData.data == 3);
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     varMatrix = {{"x00", "x01"}, {"x10", "x11"}};
     if (isIntElement()) {
       retrieveIntVarNode(-2, -1, varMatrix.at(0).at(0));
@@ -64,7 +65,7 @@ class ArrayVarElement2dNodeTestFixture
 };
 
 TEST_P(ArrayVarElement2dNodeTestFixture, replace) {
-  generate();
+
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -79,7 +80,7 @@ TEST_P(ArrayVarElement2dNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
-  generate();
+
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

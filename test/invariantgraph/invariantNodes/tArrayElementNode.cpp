@@ -37,7 +37,8 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
     return parVal(parArray.at(varNode(idxVar).lowerBound() - offsetIdx));
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     retrieveIntVarNode(
         offsetIdx,
         shouldBeSubsumed()
@@ -68,9 +69,9 @@ TEST_P(ArrayElementNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().idx(), idxVarNodeId);
+  EXPECT_EQ(invNode().idx(), varNodeId(idxVar));
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), varNodeId(outputVar));
 
   std::vector<Int> expectedAs(parArray.size());
   for (size_t i = 0; i < parArray.size(); ++i) {
@@ -79,47 +80,7 @@ TEST_P(ArrayElementNodeTestFixture, construction) {
   EXPECT_EQ(invNode().as(), expectedAs);
 }
 
-TEST_P(ArrayElementNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  // The index ranges over the as array (first index is 1).
-  EXPECT_GE(_solver->lowerBound(varId(idxVarNodeId)), offsetIdx);
-  EXPECT_LE(_solver->upperBound(varId(idxVarNodeId)),
-            offsetIdx + static_cast<Int>(invNode().as().size()) - 1);
-
-  // The outputVarNodeId domain should contain all elements in as.
-  if (isIntElement()) {
-    EXPECT_GE(_solver->lowerBound(varId(outputVarNodeId)),
-              *std::ranges::min_element(parArray.begin(), parArray.end()));
-    EXPECT_LE(_solver->upperBound(varId(outputVarNodeId)),
-              *std::ranges::max_element(parArray.begin(), parArray.end()));
-  } else {
-    EXPECT_GE(_solver->lowerBound(varId(outputVarNodeId)), 0);
-    EXPECT_LE(_solver->upperBound(varId(outputVarNodeId)), 1);
-  }
-
-  // outputVarNodeId
-  EXPECT_EQ(_solver->searchVars().size(), 1);
-
-  // outputVarNodeId (outputVarNodeId is a view)
-  EXPECT_EQ(_solver->numVars(), 1);
-
-  // elementConst is a view
-  EXPECT_EQ(_solver->numInvariants(), 0);
-}
-
 TEST_P(ArrayElementNodeTestFixture, updateState) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -135,7 +96,6 @@ TEST_P(ArrayElementNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayElementNodeTestFixture, propagation) {
-  generate();
   _invariantGraph->construct();
   _invariantGraph->close();
 

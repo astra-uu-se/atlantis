@@ -51,7 +51,8 @@ class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
     return false;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     for (Int i = 0; i < numInputs - 1; ++i) {
       inputVars.emplace_back("input_" + std::to_string(i));
       if (shouldBeSubsumed()) {
@@ -80,12 +81,14 @@ TEST_P(AllDifferentNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_THAT(inputVarNodeIds, ContainerEq(invNode().staticInputVarNodeIds()));
+  std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
+
+  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
   if (isReified()) {
     EXPECT_TRUE(invNode().isReified());
     EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), reifiedVarNodeId);
+    EXPECT_EQ(invNode().reifiedViolationNodeId(), varNodeId(reifiedVar));
   } else {
     EXPECT_FALSE(invNode().isReified());
     EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
@@ -107,10 +110,10 @@ TEST_P(AllDifferentNodeTestFixture, application) {
   invNode().registerNode();
   _solver->close();
 
-  for (const auto& inputVarNodeId : inputVarNodeIds) {
-    EXPECT_TRUE(varId(inputVarNodeId).isVar());
+  for (const auto& input : inputVars) {
+    EXPECT_TRUE(varId(input).isVar());
     EXPECT_THAT(_solver->searchVars(),
-                ::testing::Contains(size_t(varId(inputVarNodeId))));
+                ::testing::Contains(size_t(varId(input))));
   }
 
   EXPECT_GE(_solver->numVars(), size_t(invNode().violationVarId()));
@@ -123,7 +126,6 @@ TEST_P(AllDifferentNodeTestFixture, application) {
 }
 
 TEST_P(AllDifferentNodeTestFixture, makeImplicit) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeMadeImplicit()) {
@@ -136,7 +138,6 @@ TEST_P(AllDifferentNodeTestFixture, makeImplicit) {
 }
 
 TEST_P(AllDifferentNodeTestFixture, propagation) {
-  generate();
   if (shouldBeMadeImplicit()) {
     return;
   }

@@ -16,17 +16,18 @@ class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
     if (isRegistered) {
       return std::abs(_solver->currentValue(varId(inputVar)));
     }
-    return std::abs(varNode(inputVarNodeId).domain()->lowerBound());
+    return std::abs(varNode(inputVar).domain()->lowerBound());
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     retrieveIntVarNode(-10, 10, inputVar);
     retrieveIntVarNode(0, 10, outputVar);
 
     if (shouldBeSubsumed()) {
       varNode(inputVar).fixToValue(Int{-5});
     } else if (shouldBeReplaced()) {
-      varNode(inputVarNodeId).domain()->removeBelow(0);
+      varNode(inputVar).domain()->removeBelow(0);
     }
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVar),
@@ -35,7 +36,6 @@ class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
 };
 
 TEST_P(IntAbsNodeTestFixture, updateState) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -43,7 +43,7 @@ TEST_P(IntAbsNodeTestFixture, updateState) {
     EXPECT_TRUE(varNode(inputVar).isFixed());
     EXPECT_TRUE(varNode(outputVar).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).domain()->lowerBound();
+    const Int actual = varNode(outputVar).domain()->lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -52,7 +52,6 @@ TEST_P(IntAbsNodeTestFixture, updateState) {
 }
 
 TEST_P(IntAbsNodeTestFixture, replace) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -67,7 +66,6 @@ TEST_P(IntAbsNodeTestFixture, replace) {
 }
 
 TEST_P(IntAbsNodeTestFixture, propagation) {
-  generate();
   if (shouldBeSubsumed()) {
     return;
   }

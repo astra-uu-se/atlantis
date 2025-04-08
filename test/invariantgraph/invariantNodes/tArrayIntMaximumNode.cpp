@@ -32,7 +32,8 @@ class ArrayIntMaximumNodeTestFixture
     return val;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     std::vector<std::pair<Int, Int>> bounds;
 
     if (shouldBeSubsumed()) {
@@ -54,7 +55,7 @@ class ArrayIntMaximumNodeTestFixture
 };
 
 TEST_P(ArrayIntMaximumNodeTestFixture, updateState) {
-  generate();
+
   Int minVal = std::numeric_limits<Int>::max();
   Int maxVal = std::numeric_limits<Int>::min();
   for (const auto& var : inputVars) {
@@ -68,8 +69,7 @@ TEST_P(ArrayIntMaximumNodeTestFixture, updateState) {
     // TODO: disabled for the MZN challange. This should be computed by Gecode.
     // EXPECT_TRUE(_invariantGraph->varNode(outputVarNodeId).isFixed());
     [[maybe_unused]] const Int expected = computeOutput();
-    [[maybe_unused]] const Int actual =
-        _invariantGraph->varNode(outputVarNodeId).lowerBound();
+    [[maybe_unused]] const Int actual = varNode(outputVar).lowerBound();
     // TODO: disabled for the MZN challange. This should be computed by Gecode.
     // EXPECT_EQ(expected, actual);
   } else {
@@ -80,7 +80,7 @@ TEST_P(ArrayIntMaximumNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayIntMaximumNodeTestFixture, replace) {
-  generate();
+
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -95,7 +95,7 @@ TEST_P(ArrayIntMaximumNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
-  generate();
+
   Int lb = std::numeric_limits<Int>::min();
   for (const auto& var : inputVars) {
     lb = std::max(lb, varNode(var).lowerBound());
@@ -107,7 +107,7 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
 
   if (shouldBeSubsumed()) {
     [[maybe_unused]] const Int expected = computeOutput(true);
-    [[maybe_unused]] const Int actual = varNode(outputVarNodeId).lowerBound();
+    [[maybe_unused]] const Int actual = varNode(outputVar).lowerBound();
     // TODO: disabled for the MZN challange. This should be computed by Gecode.
     /*
     const Int expected = computeOutput(true);

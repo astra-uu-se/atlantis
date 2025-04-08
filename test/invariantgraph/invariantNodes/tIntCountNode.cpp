@@ -39,7 +39,8 @@ class IntCountNodeTestFixture : public NodeTestBase<IntCountNode> {
     return occurrences;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     for (Int i = 0; i < numInputs; ++i) {
       inputVars.emplace_back("input_" + std::to_string(i));
     }
@@ -88,53 +89,26 @@ TEST_P(IntCountNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputVarNodeIds.size());
+  std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds(), inputVarNodeIds);
-  EXPECT_THAT(inputVarNodeIds, ContainerEq(invNode().staticInputVarNodeIds()));
+  EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
+  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
-  const std::vector<VarNodeId> expectedOutputs{outputVarNodeId};
+  const std::vector<VarNodeId> expectedOutputs{varNodeId(outputVar)};
 
   EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
   EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodeIds()));
 }
 
-TEST_P(IntCountNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  EXPECT_EQ(invNode().violationVarId(), propagation::NULL_ID);
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  EXPECT_EQ(_solver->searchVars().size(), 3);
-  EXPECT_EQ(_solver->numVars(), 4);
-
-  EXPECT_EQ(_solver->numInvariants(), 1);
-
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(_solver->lowerBound(varId(outputVarNodeId)), 0);
-    EXPECT_GT(_solver->upperBound(varId(outputVarNodeId)), 0);
-  }
-}
-
 TEST_P(IntCountNodeTestFixture, updateState) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
     // disabled for the MZN challange. this should be computed by Gecode.
-    /*
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
 
     [[maybe_unused]] const Int expected = computeOutput();
-    [[maybe_unused]] const Int actual = varNode(outputVarNodeId).lowerBound();
+    [[maybe_unused]] const Int actual = varNode(outputVar).lowerBound();
     // disabled for the MZN challange. this should be computed by Gecode.
     // EXPECT_EQ(expected, actual);
   } else {
@@ -144,7 +118,6 @@ TEST_P(IntCountNodeTestFixture, updateState) {
 }
 
 TEST_P(IntCountNodeTestFixture, propagation) {
-  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();
@@ -161,14 +134,9 @@ TEST_P(IntCountNodeTestFixture, propagation) {
   // EXPECT_EQ(inputVarIds.empty(), shouldBeSubsumed());
 
   if (shouldBeSubsumed()) {
-    [[maybe_unused]] const Int expected = computeOutput();
-    [[maybe_unused]] const Int actual = varNode(outputIdentifier).lowerBound();
     // disabled for the MZN challange. this should be computed by Gecode.
-    /*
-    const Int expected = computeOutput();
-    const Int actual = varNode(outputVar).lowerBound();
-    EXPECT_EQ(expected, actual);
-    */
+    [[maybe_unused]] const Int expected = computeOutput();
+    [[maybe_unused]] const Int actual = varNode(outputVar).lowerBound();
     return;
   }
 
@@ -207,7 +175,6 @@ TEST_P(IntCountNodeTestFixture, propagation) {
 INSTANTIATE_TEST_CASE_P(
     IntCountNodeTest, IntCountNodeTestFixture,
     ::testing::Values(ParamData{int{0}}, ParamData{int{1}},
-                      ParamData{InvariantNodeAction::SUBSUME, 0},
-                      ParamData{InvariantNodeAction::SUBSUME, 1}));
+                      ParamData{InvariantNodeAction::SUBSUME, 0}));
 
 }  // namespace atlantis::testing

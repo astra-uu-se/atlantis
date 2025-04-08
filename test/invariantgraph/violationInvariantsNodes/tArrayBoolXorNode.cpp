@@ -51,7 +51,8 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
     return !trueFound;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     inputVars.clear();
     inputVars.reserve(numInputs);
     for (Int i = 0; i < numInputs; ++i) {
@@ -80,7 +81,7 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
 };
 
 TEST_P(ArrayBoolXorNodeTestFixture, updateState) {
-  generate();
+  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -100,7 +101,7 @@ TEST_P(ArrayBoolXorNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayBoolXorNodeTestFixture, replace) {
-  generate();
+  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -115,7 +116,7 @@ TEST_P(ArrayBoolXorNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayBoolXorNodeTestFixture, propagation) {
-  generate();
+  
   if (shouldBeMadeImplicit()) {
     return;
   }

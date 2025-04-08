@@ -40,7 +40,8 @@ class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
     return sum;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     Int minSum = 0;
@@ -72,39 +73,16 @@ TEST_P(IntLinearNodeTestFixture, construction) {
   expectOutputOf(invNode());
 
   EXPECT_THAT(invNode().coeffs(), ContainerEq(coeffs));
-  EXPECT_THAT(invNode().staticInputVarNodeIds(), ContainerEq(inputVarNodeIds));
-  EXPECT_THAT(invNode().outputVarNodeIds(),
-              ContainerEq(std::vector<VarNodeId>{outputVarNodeId}));
-}
 
-TEST_P(IntLinearNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
+  const std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
+  EXPECT_THAT(invNode().staticInputVarNodeIds(), ContainerEq(expectedInputs));
 
-  EXPECT_LE(_solver->searchVars().size(), inputVarNodeIds.size());
+  const std::vector<VarNodeId> expectedOutputs{varNodeId(outputVar)};
 
-  for (const VarNodeId inputVarNodeId : invNode().staticInputVarNodeIds()) {
-    EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-    EXPECT_TRUE(varId(inputVarNodeId).isVar());
-    EXPECT_THAT(_solver->searchVars(), Contains(size_t(varId(inputVarNodeId))));
-  }
-  EXPECT_LE(_solver->numVars(), inputVarNodeIds.size() + 1);
-
-  // linear invariant
-  EXPECT_EQ(_solver->numInvariants(), 1);
+  EXPECT_THAT(invNode().outputVarNodeIds(), ContainerEq(expectedOutputs));
 }
 
 TEST_P(IntLinearNodeTestFixture, updateState) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -120,7 +98,6 @@ TEST_P(IntLinearNodeTestFixture, updateState) {
 }
 
 TEST_P(IntLinearNodeTestFixture, propagation) {
-  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

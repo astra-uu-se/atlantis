@@ -28,7 +28,8 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
            varNode(bIdentifier).lowerBound();
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     aVarNodeId = retrieveIntVarNode(-5, 5, aIdentifier);
     bVarNodeId = retrieveIntVarNode(-5, 5, bIdentifier);
     if (shouldBeSubsumed()) {
@@ -52,7 +53,7 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
 };
 
 TEST_P(IntLtNodeTestFixture, propagation) {
-  generate();
+  
   if (shouldBeMadeImplicit()) {
     return;
   }

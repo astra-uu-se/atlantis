@@ -50,7 +50,8 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
     return parVal(parMatrix.at(row).at(col));
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     retrieveIntVarNode(
         idx1Offset,
         shouldBeSubsumed() || idx1ShouldBeReplaced()
@@ -98,7 +99,7 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
 };
 
 TEST_P(ArrayElement2dNodeTestFixture, updateState) {
-  generate();
+
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -114,7 +115,7 @@ TEST_P(ArrayElement2dNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayElement2dNodeTestFixture, replace) {
-  generate();
+
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -129,7 +130,7 @@ TEST_P(ArrayElement2dNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayElement2dNodeTestFixture, propagation) {
-  generate();
+
   _invariantGraph->construct();
   _invariantGraph->close();
 
@@ -205,7 +206,7 @@ RC_GTEST_PROP(ArrayElement2dNodeTest, RapidCheck, ()) {
     }
   }
 
-  generate();
+
 
   const size_t numCommits = 3;
   const size_t numProbes = 3;
