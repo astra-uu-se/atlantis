@@ -10,6 +10,7 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <ranges>
 
 #include "atlantis/fznBackend.hpp"
 #include "atlantis/logging/logger.hpp"
@@ -138,7 +139,7 @@ class MznChallange : public ::testing::Test {
     for (const auto& dirPath : dirs) {
       EXPECT_TRUE(fznModelsByDir.contains(dirPath));
       EXPECT_GT(fznModelsByDir.at(dirPath).size(), 0);
-      for (const auto& [_, fznModel] : fznModelsByDir.at(dirPath)) {
+      for (const auto& fznModel : std::views::values(fznModelsByDir.at(dirPath))) {
         if (malloc.contains(dirPath)) {
           mallocFznModels.emplace_back(fznModel);
         } else if (timeout.contains(dirPath)) {

@@ -5,8 +5,6 @@
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "atlantis/search/assignment.hpp"
-#include "atlantis/search/cost.hpp"
-#include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 
 namespace atlantis::testing {

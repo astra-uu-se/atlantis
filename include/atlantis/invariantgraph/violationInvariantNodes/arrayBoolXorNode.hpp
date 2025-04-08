@@ -14,11 +14,11 @@ class ArrayBoolXorNode : public ViolationInvariantNode {
   ArrayBoolXorNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                    bool shouldHold = true);
 
-  ArrayBoolXorNode(InvariantGraph& graph, std::vector<VarNodeId>&& inputVars,
+  ArrayBoolXorNode(InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
                    VarNodeId reified);
 
   ArrayBoolXorNode(InvariantGraph& graph,
-                   std::vector<VarNodeId>&& inputVarNodeIds,
+                   std::vector<VarNodeId>&& inputs,
                    bool shouldHold = true);
 
   void init(InvariantNodeId) override;

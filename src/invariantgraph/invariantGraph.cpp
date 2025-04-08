@@ -34,7 +34,7 @@ InvariantGraph::InvariantGraph(propagation::SolverBase& solver,
       _boolVarNodeIndices{VarNodeId{0}, VarNodeId{1}},
       _breakDynamicCycles(breakDynamicCycles),
       _objectiveVarNodeId{NULL_NODE_ID} {
-  InvariantGraph::addImplicitConstraintNode(
+  addImplicitConstraintNode(
       std::make_shared<InvariantGraphRoot>(*this));
 }
 
@@ -439,7 +439,7 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
       }
     }
   }
-  for (auto& [identifier, id] : _namedVarNodeIndices) {
+  for (auto& id : std::views::values(_namedVarNodeIndices)) {
     if (id == oldNodeId) {
       id = newNodeId;
     }

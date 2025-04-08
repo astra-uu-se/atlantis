@@ -125,9 +125,9 @@ class InvariantNode {
 
   [[nodiscard]] virtual std::string dotLangIdentifier() const = 0;
 
-  [[nodiscard]] virtual std::ostream& dotLangEdges(std::ostream&) const;
+  virtual std::ostream& dotLangEdges(std::ostream&) const;
 
-  [[nodiscard]] virtual std::ostream& dotLangEntry(std::ostream&) const;
+  virtual std::ostream& dotLangEntry(std::ostream&) const;
 };
 
 }  // namespace atlantis::invariantgraph

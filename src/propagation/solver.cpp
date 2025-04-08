@@ -76,7 +76,7 @@ void Solver::close() {
 
   assert(_propGraph.propagationQueueEmpty());
 
-  // assert that decsion variable varId is no longer modified.
+  // assert that decision variable varId is no longer modified.
   assert(std::ranges::all_of(
       _modifiedSearchVars.begin(), _modifiedSearchVars.end(),
       [&](const size_t varId) {
@@ -253,7 +253,7 @@ void Solver::endCommit() {
       propagate<CommitMode::COMMIT, false>();
     }
 
-    // assert that decsion variable varId is no longer modified.
+    // assert that decision variable varId is no longer modified.
     assert(_propagationMode != PropagationMode::OUTPUT_TO_INPUT ||
            std::ranges::all_of(
                _modifiedSearchVars.begin(), _modifiedSearchVars.end(),
@@ -381,7 +381,7 @@ void Solver::propagate() {
                _layerQueueIndex[curLayer] == 0);
 
       if (curLayer >= _propGraph.numLayers()) {
-        // All layers have been propogated
+        // All layers have been propagated
         assert(std::ranges::all_of(_layerQueueIndex.begin(),
                                    _layerQueueIndex.end(),
                                    [&](const size_t lqi) { return lqi == 0; }));
