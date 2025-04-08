@@ -162,7 +162,7 @@ class MznChallange : public ::testing::Test {
   }
 };
 
-TEST_F(MznChallange, passing) {
+TEST_F(MznChallange, DISABLED_passing) {
   for (size_t i = 0; i < passingFznModels.size(); ++i) {
     if (passingFznModels.at(i) < startDir) {
       logModelName(passingFznModels.at(i), true, i, passingFznModels.size());

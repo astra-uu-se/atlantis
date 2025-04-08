@@ -156,6 +156,11 @@ endif()
 option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.
 
+if (BUILD_TESTS)
+  include(CTest)
+  enable_testing()
+endif()
+
 if(BUILD_TESTS OR BUILD_BENCHMARKS)
   # Google Test is required for testing and benchmarking
   FetchContent_Declare(
@@ -189,10 +194,6 @@ if(BUILD_TESTS)
 
   FetchContent_MakeAvailable(googletest rapidcheck)
 
-  include(CTest)
-
-  enable_testing()
-
   # #############
   # Unit Tests
   # #############
@@ -217,6 +218,10 @@ if(BUILD_TESTS)
   # manually running the executable runUnitTests to see those specific tests.
   # add_test(NAME "UnitTests" COMMAND "runUnitTests")
   set_target_properties(runUnitTests PROPERTIES FOLDER tests)
+
+  include(GoogleTest)
+
+  gtest_discover_tests(runUnitTests)
 endif()
 
 if(BUILD_BENCHMARKS)
