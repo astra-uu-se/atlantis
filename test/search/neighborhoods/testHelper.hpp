@@ -25,10 +25,10 @@ class NeighborhoodTestBase : public ::testing::Test {
   template <typename... Args>
   void createNeighborhood(Args&&... args) {
     EXPECT_EQ(_neighborhood, nullptr);
-    _neighborhood = std::make_shared<N>(
-        std::forward<Args>(args)...);
-    _assignment = std::make_shared<Assignment>(*_solver, *_neighborhood, propagation::NULL_ID,
-                     propagation::NULL_ID, ObjectiveDirection::NONE, 0);
+    _neighborhood = std::make_shared<N>(std::forward<Args>(args)...);
+    _assignment = std::make_shared<Assignment>(
+        *_solver, *_neighborhood, propagation::NULL_ID, propagation::NULL_ID,
+        ObjectiveDirection::NONE, 0);
   }
 
   void initialize() {

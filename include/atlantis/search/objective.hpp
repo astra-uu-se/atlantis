@@ -25,7 +25,6 @@ class Objective {
   void tighten();
 
   [[nodiscard]] propagation::VarViewId bound() const noexcept;
-
 };
 
 }  // namespace atlantis::search

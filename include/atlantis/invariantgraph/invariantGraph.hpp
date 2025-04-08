@@ -36,8 +36,7 @@ class InvariantGraph {
   std::array<VarNodeId, 2> _boolVarNodeIndices;
 
   std::vector<std::shared_ptr<InvariantNode>> _invariantNodes;
-  std::vector<std::shared_ptr<ImplicitConstraintNode>>
-      _implicitConstraintNodes;
+  std::vector<std::shared_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
   bool _breakDynamicCycles;
 
   void populateRootNode();
@@ -66,13 +65,13 @@ class InvariantGraph {
 
   [[nodiscard]] virtual bool containsVarNode(bool) const;
 
-  virtual VarNodeId retrieveBoolVarNode(DomainType) ;
+  virtual VarNodeId retrieveBoolVarNode(DomainType);
 
   virtual VarNodeId retrieveBoolVarNode() {
     return retrieveBoolVarNode(DomainType::DOM_RANGE);
   }
 
-  virtual VarNodeId retrieveBoolVarNode(const std::string&, DomainType) ;
+  virtual VarNodeId retrieveBoolVarNode(const std::string&, DomainType);
 
   virtual VarNodeId retrieveBoolVarNode(const std::string& identifier) {
     return retrieveBoolVarNode(identifier, DomainType::DOM_RANGE);
@@ -83,7 +82,7 @@ class InvariantGraph {
   virtual VarNodeId retrieveBoolVarNode(bool, const std::string&);
 
   virtual VarNodeId retrieveBoolVarNode(const std::shared_ptr<SearchDomain>&,
-                                DomainType);
+                                        DomainType);
 
   virtual VarNodeId retrieveBoolVarNode(
       const std::shared_ptr<SearchDomain>& dom) {
@@ -97,16 +96,16 @@ class InvariantGraph {
   virtual VarNodeId retrieveIntVarNode(Int, const std::string&);
 
   virtual VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>&,
-                               DomainType);
+                                       DomainType);
 
   virtual VarNodeId retrieveIntVarNode(
       const std::shared_ptr<SearchDomain>& domain);
 
   virtual VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>&,
-                               const std::string&, DomainType);
+                                       const std::string&, DomainType);
 
   virtual VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>& dom,
-                               const std::string& identifier);
+                                       const std::string& identifier);
 
   [[nodiscard]] VarNode& varNode(const std::string& identifier);
 
@@ -122,8 +121,7 @@ class InvariantGraph {
 
   [[nodiscard]] VarNodeId varNodeId(Int val) const;
 
-  [[nodiscard]] VarNodeId varNodeId(
-      const std::string& identifier) const;
+  [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const;
 
   [[nodiscard]] propagation::VarViewId varId(
       const std::string& identifier) const;
@@ -132,13 +130,11 @@ class InvariantGraph {
 
   [[nodiscard]] bool containsInvariantNode(InvariantNodeId) const;
 
-  [[nodiscard]] bool containsImplicitConstraintNode(
-      InvariantNodeId) const;
+  [[nodiscard]] bool containsImplicitConstraintNode(InvariantNodeId) const;
 
   [[nodiscard]] InvariantNode& invariantNode(InvariantNodeId);
 
-  [[nodiscard]] ImplicitConstraintNode& implicitConstraintNode(
-      InvariantNodeId);
+  [[nodiscard]] ImplicitConstraintNode& implicitConstraintNode(InvariantNodeId);
 
   [[nodiscard]] InvariantNodeId nextInvariantNodeId() const;
 

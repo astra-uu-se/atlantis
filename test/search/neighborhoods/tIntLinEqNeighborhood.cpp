@@ -7,7 +7,8 @@ namespace atlantis::testing {
 
 using namespace atlantis::search::neighborhoods;
 
-class IntLinEqNeighborhoodTest : public NeighborhoodTestBase<IntLinEqNeighborhood> {
+class IntLinEqNeighborhoodTest
+    : public NeighborhoodTestBase<IntLinEqNeighborhood> {
  public:
   Int numVars = 4;
   RandomProvider _random{123456789};
@@ -26,8 +27,8 @@ class IntLinEqNeighborhoodTest : public NeighborhoodTestBase<IntLinEqNeighborhoo
       _coeffs.emplace_back(i % 2 == 0 ? 1 : -1);
     }
 
-    createNeighborhood(
-        std::vector<Int>{_coeffs}, std::vector<SearchVar>{_vars}, _offset);
+    createNeighborhood(std::vector<Int>{_coeffs}, std::vector<SearchVar>{_vars},
+                       _offset);
   }
 
   void expectHolds() const {

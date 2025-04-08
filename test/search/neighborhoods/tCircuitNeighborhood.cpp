@@ -8,7 +8,8 @@ namespace atlantis::testing {
 
 using namespace atlantis::search::neighborhoods;
 
-class CircuitNeighborhoodTest : public NeighborhoodTestBase<CircuitNeighborhood> {
+class CircuitNeighborhoodTest
+    : public NeighborhoodTestBase<CircuitNeighborhood> {
  public:
   Int _offset = 1;
 
@@ -25,8 +26,7 @@ class CircuitNeighborhoodTest : public NeighborhoodTestBase<CircuitNeighborhood>
 
     _solver->close();
 
-    createNeighborhood(
-        std::vector<SearchVar>(next), _offset);
+    createNeighborhood(std::vector<SearchVar>(next), _offset);
   }
 
   void expectHolds() const {

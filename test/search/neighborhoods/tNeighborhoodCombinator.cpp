@@ -16,7 +16,8 @@ using ::testing::Ref;
 using ::testing::Return;
 using ::testing::ReturnRef;
 
-class NeighborhoodCombinatorTest : public NeighborhoodTestBase<NeighborhoodCombinator> {
+class NeighborhoodCombinatorTest
+    : public NeighborhoodTestBase<NeighborhoodCombinator> {
  public:
   std::shared_ptr<MockNeighborhood> n1;
   std::shared_ptr<MockNeighborhood> n2;
@@ -35,8 +36,7 @@ class NeighborhoodCombinatorTest : public NeighborhoodTestBase<NeighborhoodCombi
     n2 = std::make_shared<MockNeighborhood>();
     EXPECT_CALL(*n2, coveredVars()).WillRepeatedly(ReturnRef(vars));
 
-    createNeighborhood(
-        std::vector<std::shared_ptr<Neighborhood>>{n1, n2});
+    createNeighborhood(std::vector<std::shared_ptr<Neighborhood>>{n1, n2});
   }
 };
 

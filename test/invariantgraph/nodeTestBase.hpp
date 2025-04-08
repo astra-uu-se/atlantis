@@ -8,8 +8,8 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/implicitConstraintNode.hpp"
-#include "atlantis/invariantgraph/invariantNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/utils/domains.hpp"

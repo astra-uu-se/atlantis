@@ -74,11 +74,9 @@ class InvariantNode {
    */
   [[nodiscard]] const std::vector<VarNodeId>& outputVarNodeIds() const;
 
-  [[nodiscard]] const std::vector<VarNodeId>& staticInputVarNodeIds()
-      const;
+  [[nodiscard]] const std::vector<VarNodeId>& staticInputVarNodeIds() const;
 
-  [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds()
-      const;
+  [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds() const;
 
   void setState(InvariantNodeState);
 
@@ -110,8 +108,7 @@ class InvariantNode {
 
   propagation::VarViewId makeSolverVar(VarNodeId varNodeId);
 
-  propagation::VarViewId makeSolverVar(VarNodeId varNodeId,
-                                       Int initialValue);
+  propagation::VarViewId makeSolverVar(VarNodeId varNodeId, Int initialValue);
 
   void markOutputTo(VarNodeId varNodeId, bool registerHere);
 

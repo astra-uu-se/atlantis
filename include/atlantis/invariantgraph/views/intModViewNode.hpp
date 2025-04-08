@@ -8,8 +8,8 @@ class IntModViewNode : public InvariantNode {
   Int _denominator;
 
  public:
-  IntModViewNode(InvariantGraph& graph, VarNodeId staticInput,
-                 VarNodeId output, Int denominator);
+  IntModViewNode(InvariantGraph& graph, VarNodeId staticInput, VarNodeId output,
+                 Int denominator);
 
   void init(InvariantNodeId) override;
 

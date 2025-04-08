@@ -9,7 +9,8 @@ namespace atlantis::testing {
 
 using namespace atlantis::search::neighborhoods;
 
-class AllDifferentNonUniformNeighborhoodTest : public NeighborhoodTestBase<AllDifferentNonUniformNeighborhood> {
+class AllDifferentNonUniformNeighborhoodTest
+    : public NeighborhoodTestBase<AllDifferentNonUniformNeighborhood> {
  public:
   std::vector<SearchVar> _vars;
   std::vector<std::vector<Int>> _domains{

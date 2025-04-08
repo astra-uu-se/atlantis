@@ -15,12 +15,10 @@ class IntAllEqualNode : public ViolationInvariantNode {
   explicit IntAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                            bool shouldHold = true, bool breaksCycle = false);
 
-  explicit IntAllEqualNode(InvariantGraph& graph,
-                           std::vector<VarNodeId>&& vars, VarNodeId r,
-                           bool breaksCycle = false);
+  explicit IntAllEqualNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+                           VarNodeId r, bool breaksCycle = false);
 
-  explicit IntAllEqualNode(InvariantGraph& graph,
-                           std::vector<VarNodeId>&& vars,
+  explicit IntAllEqualNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
                            bool shouldHold = true, bool breaksCycle = false);
 
   void init(InvariantNodeId) override;

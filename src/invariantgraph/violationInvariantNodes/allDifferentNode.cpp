@@ -4,8 +4,8 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"

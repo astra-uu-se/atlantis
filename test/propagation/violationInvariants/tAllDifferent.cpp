@@ -1,7 +1,6 @@
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 
-
 namespace atlantis::testing {
 
 using namespace atlantis::propagation;

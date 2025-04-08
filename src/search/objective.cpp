@@ -21,7 +21,9 @@ propagation::VarViewId Objective::registerNode(
     return totalViolationVarId;
   }
 
-  const Int initialBound = _problemType == fznparser::ProblemType::MINIMIZE ? _solver.upperBound(objectiveVarId) :  _solver.lowerBound(objectiveVarId);
+  const Int initialBound = _problemType == fznparser::ProblemType::MINIMIZE
+                               ? _solver.upperBound(objectiveVarId)
+                               : _solver.lowerBound(objectiveVarId);
 
   _bound = _solver.makeIntVar(initialBound, _solver.lowerBound(objectiveVarId),
                               _solver.upperBound(objectiveVarId));
@@ -29,10 +31,9 @@ propagation::VarViewId Objective::registerNode(
   const auto boundViolation = static_cast<propagation::VarId>(
       _solver.makeIntVar(0, 0, std::numeric_limits<Int>::max()));
 
-
   if (_problemType == fznparser::ProblemType::MINIMIZE) {
-          _solver.makeViolationInvariant<propagation::LessEqual>(
-              _solver, boundViolation, objectiveVarId, _bound);
+    _solver.makeViolationInvariant<propagation::LessEqual>(
+        _solver, boundViolation, objectiveVarId, _bound);
   } else {
     assert(_problemType == fznparser::ProblemType::MAXIMIZE);
     _solver.makeViolationInvariant<propagation::LessEqual>(
@@ -73,8 +74,6 @@ void Objective::tighten() {
   _solver.endCommit();
 }
 
-propagation::VarViewId Objective::bound() const noexcept {
-  return _bound;
-}
+propagation::VarViewId Objective::bound() const noexcept { return _bound; }
 
 }  // namespace atlantis::search

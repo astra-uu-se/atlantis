@@ -4,8 +4,8 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"

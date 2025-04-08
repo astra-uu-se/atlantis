@@ -8,7 +8,8 @@ namespace atlantis::testing {
 
 using namespace atlantis::search::neighborhoods;
 
-class AllDifferentUniformNeighborhoodTest : public NeighborhoodTestBase<AllDifferentUniformNeighborhood> {
+class AllDifferentUniformNeighborhoodTest
+    : public NeighborhoodTestBase<AllDifferentUniformNeighborhood> {
  public:
   std::vector<SearchVar> _vars;
 

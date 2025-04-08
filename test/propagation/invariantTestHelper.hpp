@@ -3,10 +3,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rapidcheck/gtest.h>
-#include <ranges>
 
 #include <deque>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include "atlantis/propagation/invariants/invariant.hpp"

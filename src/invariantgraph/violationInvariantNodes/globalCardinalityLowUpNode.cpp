@@ -13,18 +13,16 @@
 namespace atlantis::invariantgraph {
 
 GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& x,
-    std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
-    VarNodeId r)
+    InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
+    std::vector<Int>&& low, std::vector<Int>&& up, VarNodeId r)
     : ViolationInvariantNode(graph, {}, std::move(x), r),
       _cover(std::move(cover)),
       _low(std::move(low)),
       _up(std::move(up)) {}
 
 GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& x,
-    std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
-    bool shouldHold)
+    InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
+    std::vector<Int>&& low, std::vector<Int>&& up, bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(x), shouldHold),
       _cover(std::move(cover)),
       _low(std::move(low)),

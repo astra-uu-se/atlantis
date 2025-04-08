@@ -34,8 +34,7 @@ InvariantGraph::InvariantGraph(propagation::SolverBase& solver,
       _boolVarNodeIndices{VarNodeId{0}, VarNodeId{1}},
       _breakDynamicCycles(breakDynamicCycles),
       _objectiveVarNodeId{NULL_NODE_ID} {
-  addImplicitConstraintNode(
-      std::make_shared<InvariantGraphRoot>(*this));
+  addImplicitConstraintNode(std::make_shared<InvariantGraphRoot>(*this));
 }
 
 propagation::SolverBase& InvariantGraph::solver() { return _solver; }
