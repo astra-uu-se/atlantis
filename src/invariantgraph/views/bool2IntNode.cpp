@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/bool2IntView.hpp"
@@ -10,7 +10,7 @@
 
 namespace atlantis::invariantgraph {
 
-Bool2IntNode::Bool2IntNode(IInvariantGraph& graph, VarNodeId staticInput,
+Bool2IntNode::Bool2IntNode(InvariantGraph& graph, VarNodeId staticInput,
                            VarNodeId output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 

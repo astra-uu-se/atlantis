@@ -5,7 +5,7 @@
 namespace atlantis::invariantgraph {
 class VarIntCountNode : public InvariantNode {
  public:
-  VarIntCountNode(IInvariantGraph& graph,
+  VarIntCountNode(InvariantGraph& graph,
 
                   std::vector<VarNodeId>&& vars, VarNodeId needle,
                   VarNodeId count);

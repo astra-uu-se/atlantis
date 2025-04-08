@@ -3,7 +3,7 @@
 #include <algorithm>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/search/neighborhoods/circuitNeighborhood.hpp"
 #include "atlantis/search/searchVariable.hpp"
@@ -11,7 +11,7 @@
 
 namespace atlantis::invariantgraph {
 
-CircuitImplicitNode::CircuitImplicitNode(IInvariantGraph& graph,
+CircuitImplicitNode::CircuitImplicitNode(InvariantGraph& graph,
                                          std::vector<VarNodeId>&& vars,
                                          Int offset)
     : ImplicitConstraintNode(graph, std::move(vars)), _offset(offset) {

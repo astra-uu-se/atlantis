@@ -1,6 +1,6 @@
 #pragma once
 
-#include <iostream>
+#include <ostream>
 
 #include "atlantis/propagation/variables/committableInt.hpp"
 #include "atlantis/propagation/variables/var.hpp"

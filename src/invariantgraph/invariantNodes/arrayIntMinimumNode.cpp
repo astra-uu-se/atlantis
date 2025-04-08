@@ -5,7 +5,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/min.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -13,11 +13,11 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayIntMinimumNode::ArrayIntMinimumNode(IInvariantGraph& graph, VarNodeId a,
+ArrayIntMinimumNode::ArrayIntMinimumNode(InvariantGraph& graph, VarNodeId a,
                                          VarNodeId b, VarNodeId output)
     : ArrayIntMinimumNode(graph, std::vector<VarNodeId>{a, b}, output) {}
 
-ArrayIntMinimumNode::ArrayIntMinimumNode(IInvariantGraph& graph,
+ArrayIntMinimumNode::ArrayIntMinimumNode(InvariantGraph& graph,
                                          std::vector<VarNodeId>&& vars,
                                          VarNodeId output)
     : InvariantNode(graph, {output}, std::move(vars)),

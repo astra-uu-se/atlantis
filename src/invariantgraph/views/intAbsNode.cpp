@@ -1,16 +1,15 @@
 #include "atlantis/invariantgraph/views/intAbsNode.hpp"
 
 #include <algorithm>
-#include <utility>
 
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intAbsView.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntAbsNode::IntAbsNode(IInvariantGraph& graph, VarNodeId staticInput,
+IntAbsNode::IntAbsNode(InvariantGraph& graph, VarNodeId staticInput,
                        VarNodeId output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 

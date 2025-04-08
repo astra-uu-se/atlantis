@@ -82,9 +82,9 @@ class VesselLoading : public ::benchmark::Fixture {
 
     // Create containerCount containers
     for (size_t i = 0; i < containerCount; ++i) {
-      conLength[distDim(gen)];
-      conWidth[distDim(gen)];
-      conClass[distClass(gen)];
+      conLength.emplace_back(distDim(gen));
+      conWidth.emplace_back(distDim(gen));
+      conClass.emplace_back(distClass(gen));
 
       // Create variables
       Int m = std::min(static_cast<Int>(conWidth[i]),

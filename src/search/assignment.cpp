@@ -86,7 +86,8 @@ Int Assignment::committedValue(propagation::VarViewId var) const {
 }
 
 bool Assignment::satisfiesConstraints() const {
-  return _solver.committedValue(_violation) == 0;
+  return _violation == propagation::NULL_ID ||
+         _solver.committedValue(_violation) == 0;
 }
 
 bool Assignment::objectiveIsOptimal() const {

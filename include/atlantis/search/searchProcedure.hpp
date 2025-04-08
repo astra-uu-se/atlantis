@@ -11,7 +11,7 @@ namespace atlantis::search {
 
 class Annealer;
 class RandomProvider;
-class IAssignment;
+class Assignment;
 class SearchController;
 namespace neighborhoods {
 class Neighborhood;
@@ -25,12 +25,12 @@ class Neighborhood;
  */
 class SearchProcedure {
   RandomProvider& _random;
-  IAssignment& _assignment;
+  Assignment& _assignment;
   neighborhoods::Neighborhood& _neighborhood;
   Objective _objective;
 
  public:
-  SearchProcedure(RandomProvider& random, IAssignment& assignment,
+  SearchProcedure(RandomProvider& random, Assignment& assignment,
                   neighborhoods::Neighborhood& neighborhood,
                   const Objective& objective)
       : _random(random),

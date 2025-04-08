@@ -6,7 +6,7 @@
 
 namespace atlantis::search {
 
-class IAssignment;
+class Assignment;
 class RandomProvider;
 
 /**
@@ -30,7 +30,7 @@ class Annealer {
   UInt _objectiveWeight{1};
 
  public:
-  Annealer(RandomProvider&, AnnealingSchedule&, const IAssignment&);
+  Annealer(RandomProvider&, AnnealingSchedule&, const Assignment&);
 
   virtual ~Annealer() = default;
 
@@ -40,24 +40,16 @@ class Annealer {
 
   void nextRound();
 
-  [[nodiscard]] bool runMonteCarloSimulation() const;
+  [[nodiscard]] bool shouldRunRound() const;
 
-  bool acceptMove(const Cost& cost) {
-    _attemptedMovesPerRound++;
+  bool acceptMove(const Cost& cost);
 
-    return accept(evaluate(cost));
-  }
-
-  [[nodiscard]] const RoundStatistics& currentRoundStatistics() const {
-    return _statistics;
-  }
+  [[nodiscard]] const RoundStatistics& currentRoundStatistics() const;
 
  protected:
   virtual bool accept(Int moveCost);
 
-  [[nodiscard]] Int evaluate(const Cost& cost) const {
-    return cost.evaluate(_violationWeight, _objectiveWeight);
-  }
+  [[nodiscard]] Int evaluate(const Cost& cost) const;
 };
 
 }  // namespace atlantis::search

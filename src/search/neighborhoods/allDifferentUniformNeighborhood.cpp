@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
 #include "atlantis/utils/domains.hpp"
@@ -21,7 +21,7 @@ AllDifferentUniformNeighborhood::AllDifferentUniformNeighborhood(
 }
 
 void AllDifferentUniformNeighborhood::initialize(RandomProvider& random,
-                                                 IAssignment& assignment) {
+                                                 Assignment& assignment) {
   /*
   For each index in 0.._vars.size() - 1: (*_domain)[i] is the value assigned to
   _vars[i].
@@ -61,7 +61,7 @@ void AllDifferentUniformNeighborhood::initialize(RandomProvider& random,
 }
 
 size_t AllDifferentUniformNeighborhood::randomMove(RandomProvider& random,
-                                                   IAssignment& assignment) {
+                                                   Assignment& assignment) {
   if (_freeVals.empty()) {
     // There are no free variables, a move consists of swapping the values of
     // two variables:
@@ -72,7 +72,7 @@ size_t AllDifferentUniformNeighborhood::randomMove(RandomProvider& random,
 }
 
 size_t AllDifferentUniformNeighborhood::swapValues(RandomProvider& random,
-                                                   IAssignment& assignment) {
+                                                   Assignment& assignment) {
   const size_t i = random.intInRange(0, static_cast<Int>(_vars.size()) - 1);
   const size_t j =
       (i + random.intInRange(1, static_cast<Int>(_vars.size()) - 1)) %
@@ -89,7 +89,7 @@ size_t AllDifferentUniformNeighborhood::swapValues(RandomProvider& random,
 }
 
 size_t AllDifferentUniformNeighborhood::assignValue(RandomProvider& random,
-                                                    IAssignment& assignment) {
+                                                    Assignment& assignment) {
   assert(_vars.size() < _vars.front().domain()->size());
 
   _moveVarIdx = static_cast<size_t>(
@@ -104,7 +104,7 @@ size_t AllDifferentUniformNeighborhood::assignValue(RandomProvider& random,
   return 1;
 }
 
-void AllDifferentUniformNeighborhood::commitIf(const IAssignment& assignment) {
+void AllDifferentUniformNeighborhood::commitIf(const Assignment& assignment) {
   if (_curTimestamp == assignment.currentTimestamp()) {
     assert(_moveVarIdx < _vars.size());
     assert(_moveValIdx < _freeVals.size());

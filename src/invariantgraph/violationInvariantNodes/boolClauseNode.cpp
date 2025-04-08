@@ -5,20 +5,19 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolOrNode.hpp"
-#include "atlantis/propagation/invariants/boolLinear.hpp"
 
 namespace atlantis::invariantgraph {
 
-BoolClauseNode::BoolClauseNode(IInvariantGraph& graph,
+BoolClauseNode::BoolClauseNode(InvariantGraph& graph,
                                std::vector<VarNodeId>&& as,
                                std::vector<VarNodeId>&& bs, VarNodeId r)
     : ViolationInvariantNode(graph, concat(as, bs), r), _numAs(as.size()) {}
-BoolClauseNode::BoolClauseNode(IInvariantGraph& graph,
+BoolClauseNode::BoolClauseNode(InvariantGraph& graph,
                                std::vector<VarNodeId>&& as,
                                std::vector<VarNodeId>&& bs, bool shouldHold)
     : ViolationInvariantNode(graph, concat(as, bs), shouldHold),

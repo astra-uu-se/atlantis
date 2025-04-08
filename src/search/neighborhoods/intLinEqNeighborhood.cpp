@@ -5,7 +5,7 @@
 #include <cassert>
 #include <numeric>
 
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/utils/domains.hpp"
 
@@ -25,7 +25,7 @@ IntLinEqNeighborhood::IntLinEqNeighborhood(std::vector<Int>&& coeffs,
 }
 
 void IntLinEqNeighborhood::initialize(RandomProvider& random,
-                                      IAssignment& assignment) {
+                                      Assignment& assignment) {
   for (Int i = 0; i < static_cast<Int>(_indices.size()) - 1; ++i) {
     std::swap<size_t>(
         _indices[i],
@@ -76,7 +76,7 @@ void IntLinEqNeighborhood::initialize(RandomProvider& random,
 }
 
 size_t IntLinEqNeighborhood::randomMove(RandomProvider& random,
-                                        IAssignment& assignment) {
+                                        Assignment& assignment) {
   for (Int i = 0; i < static_cast<Int>(_indices.size()) - 1; ++i) {
     std::swap<size_t>(
         _indices[i],

@@ -4,7 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/inDomain.hpp"
@@ -12,11 +12,11 @@
 
 namespace atlantis::invariantgraph {
 
-SetInNode::SetInNode(IInvariantGraph& graph, VarNodeId input,
+SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
                      std::vector<Int>&& values, VarNodeId r)
     : ViolationInvariantNode(graph, {input}, r), _values(std::move(values)) {}
 
-SetInNode::SetInNode(IInvariantGraph& graph, VarNodeId input,
+SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
                      std::vector<Int>&& values, bool shouldHold)
     : ViolationInvariantNode(graph, {input}, shouldHold),
       _values(std::move(values)) {}

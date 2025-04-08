@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityLowUpNode.hpp"
@@ -15,18 +15,16 @@
 namespace atlantis::invariantgraph {
 
 GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& x,
-    std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
-    VarNodeId r)
+    InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
+    std::vector<Int>&& low, std::vector<Int>&& up, VarNodeId r)
     : ViolationInvariantNode(graph, {}, std::move(x), r),
       _cover(std::move(cover)),
       _low(std::move(low)),
       _up(std::move(up)) {}
 
 GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& x,
-    std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
-    bool shouldHold)
+    InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
+    std::vector<Int>&& low, std::vector<Int>&& up, bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(x), shouldHold),
       _cover(std::move(cover)),
       _low(std::move(low)),

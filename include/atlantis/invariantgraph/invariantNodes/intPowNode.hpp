@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 
 class IntPowNode : public InvariantNode {
  public:
-  IntPowNode(IInvariantGraph& graph, VarNodeId base, VarNodeId exponent,
+  IntPowNode(InvariantGraph& graph, VarNodeId base, VarNodeId exponent,
              VarNodeId power);
 
   void init(InvariantNodeId) override;

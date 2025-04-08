@@ -8,10 +8,10 @@ class SetInNode : public ViolationInvariantNode {
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit SetInNode(IInvariantGraph& graph, VarNodeId input,
+  explicit SetInNode(InvariantGraph& graph, VarNodeId input,
                      std::vector<Int>&& values, VarNodeId r);
 
-  explicit SetInNode(IInvariantGraph& graph, VarNodeId input,
+  explicit SetInNode(InvariantGraph& graph, VarNodeId input,
                      std::vector<Int>&& values, bool shouldHold = true);
 
   void init(InvariantNodeId) override;

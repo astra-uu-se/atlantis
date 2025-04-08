@@ -17,14 +17,14 @@ class Logger;
 }
 
 namespace search {
-class IAssignment;
+class Assignment;
 class SearchStatistics;
 }  // namespace search
 
 class FznBackend {
  public:
   static void onSolutionDefault(const invariantgraph::FznInvariantGraph&,
-                                const search::IAssignment&);
+                                const search::Assignment&);
   static void onFinishDefault(bool);
 
  private:
@@ -35,7 +35,7 @@ class FznBackend {
   std::optional<std::filesystem::path> _dotFilePath{};
 
   std::function<void(const invariantgraph::FznInvariantGraph&,
-                     const search::IAssignment&)>
+                     const search::Assignment&)>
       _onSolution = onSolutionDefault;
   std::function<void(bool)> _onFinish = onFinishDefault;
 
@@ -59,7 +59,7 @@ class FznBackend {
 
   void setOnSolution(
       const std::function<void(const invariantgraph::FznInvariantGraph&,
-                               const search::IAssignment&)>& onSolution) {
+                               const search::Assignment&)>& onSolution) {
     _onSolution = onSolution;
   }
 

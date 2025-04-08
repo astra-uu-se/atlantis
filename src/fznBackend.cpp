@@ -18,7 +18,7 @@
 
 namespace atlantis {
 
-std::string toIntString(const search::IAssignment& assignment,
+std::string toIntString(const search::Assignment& assignment,
                         const std::variant<propagation::VarViewId, Int>& var) {
   return std::to_string(
       std::holds_alternative<Int>(var)
@@ -26,7 +26,7 @@ std::string toIntString(const search::IAssignment& assignment,
           : assignment.committedValue(std::get<propagation::VarViewId>(var)));
 }
 
-std::string toBoolString(const search::IAssignment& assignment,
+std::string toBoolString(const search::Assignment& assignment,
                          const std::variant<propagation::VarViewId, Int>& var) {
   return ((std::holds_alternative<Int>(var)
                ? std::get<Int>(var)
@@ -36,13 +36,13 @@ std::string toBoolString(const search::IAssignment& assignment,
              : "false";
 }
 
-void printBoolVar(const search::IAssignment& assignment,
+void printBoolVar(const search::Assignment& assignment,
                   const FznOutputVar& outputVar) {
   std::cout << outputVar.identifier << " = "
             << toBoolString(assignment, outputVar.var) << ";\n";
 }
 
-void printIntVar(const search::IAssignment& assignment,
+void printIntVar(const search::Assignment& assignment,
                  const FznOutputVar& outputVar) {
   std::cout << outputVar.identifier << " = "
             << toIntString(assignment, outputVar.var) << ";\n";
@@ -58,7 +58,7 @@ std::string arrayVarPrefix(const std::vector<Int>& indexSetSizes) {
   return s;
 }
 
-void printBoolVarArray(const search::IAssignment& assignment,
+void printBoolVarArray(const search::Assignment& assignment,
                        const FznOutputVarArray& varArray) {
   std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
             << '[';
@@ -73,7 +73,7 @@ void printBoolVarArray(const search::IAssignment& assignment,
   std::cout << "]);\n";
 }
 
-void printIntVarArray(const search::IAssignment& assignment,
+void printIntVarArray(const search::Assignment& assignment,
                       const FznOutputVarArray& varArray) {
   std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
             << '[';
@@ -90,7 +90,7 @@ void printIntVarArray(const search::IAssignment& assignment,
 
 void FznBackend::onSolutionDefault(
     const invariantgraph::FznInvariantGraph& invariantGraph,
-    const search::IAssignment& assignment) {
+    const search::Assignment& assignment) {
   for (const auto& outputVar : invariantGraph.outputBoolVars()) {
     printBoolVar(assignment, outputVar);
   }
@@ -192,7 +192,7 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   search::SearchProcedure search(random, assignment, neighborhood,
                                  searchObjective);
 
-  auto onSolution = [&](const search::IAssignment& a) {
+  auto onSolution = [&](const search::Assignment& a) {
     _onSolution(invariantGraph, a);
   };
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };

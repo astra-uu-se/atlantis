@@ -4,7 +4,7 @@
 #include <typeinfo>
 
 #include "atlantis/logging/logger.hpp"
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
 #include "atlantis/utils/type.hpp"
@@ -38,14 +38,14 @@ NeighborhoodCombinator::NeighborhoodCombinator(
 }
 
 void NeighborhoodCombinator::initialize(RandomProvider& random,
-                                        IAssignment& assignment) {
+                                        Assignment& assignment) {
   for (const auto& neighborhood : _neighborhoods) {
     neighborhood->initialize(random, assignment);
   }
 }
 
 size_t NeighborhoodCombinator::randomMove(RandomProvider& random,
-                                          IAssignment& assignment) {
+                                          Assignment& assignment) {
   _curTimestamp = assignment.currentTimestamp();
   _curNeighborhood = random.fromDistribution<size_t>(_neighborhoodDistribution);
   return _neighborhoods[_curNeighborhood]->randomMove(random, assignment);
@@ -59,7 +59,7 @@ void NeighborhoodCombinator::printNeighborhood(logging::Logger& logger) const {
   }
 }
 
-void NeighborhoodCombinator::commitIf(const IAssignment& assignment) {
+void NeighborhoodCombinator::commitIf(const Assignment& assignment) {
   if (_curTimestamp == assignment.currentTimestamp() &&
       _curNeighborhood < _neighborhoods.size()) {
     _neighborhoods[_curNeighborhood]->commitIf(assignment);

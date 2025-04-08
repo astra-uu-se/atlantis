@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
@@ -10,7 +10,7 @@
 namespace atlantis::invariantgraph {
 
 ImplicitConstraintNode::ImplicitConstraintNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& outputVarNodeIds)
+    InvariantGraph& graph, std::vector<VarNodeId>&& outputVarNodeIds)
     : InvariantNode(graph, std::move(outputVarNodeIds)) {}
 
 void ImplicitConstraintNode::registerOutputVars() {

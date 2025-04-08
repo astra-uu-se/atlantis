@@ -19,7 +19,7 @@ class ViolationInvariantNode : public InvariantNode {
 
   void updateReified();
 
-  explicit ViolationInvariantNode(IInvariantGraph& graph,
+  explicit ViolationInvariantNode(InvariantGraph& graph,
                                   std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId,
@@ -35,21 +35,21 @@ class ViolationInvariantNode : public InvariantNode {
   void fixReified(bool);
 
  public:
-  explicit ViolationInvariantNode(IInvariantGraph& graph,
+  explicit ViolationInvariantNode(InvariantGraph& graph,
                                   std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId);
 
-  explicit ViolationInvariantNode(IInvariantGraph& graph,
+  explicit ViolationInvariantNode(InvariantGraph& graph,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   VarNodeId reifiedViolationId);
 
-  explicit ViolationInvariantNode(IInvariantGraph& graph,
+  explicit ViolationInvariantNode(InvariantGraph& graph,
                                   std::vector<VarNodeId>&& outputIds,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   bool shouldHold);
 
-  explicit ViolationInvariantNode(IInvariantGraph& graph,
+  explicit ViolationInvariantNode(InvariantGraph& graph,
                                   std::vector<VarNodeId>&& staticInputIds,
                                   bool shouldHold);
 

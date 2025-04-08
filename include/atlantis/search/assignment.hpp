@@ -2,8 +2,9 @@
 
 #include <vector>
 
+#include "atlantis/propagation/types.hpp"
 #include "atlantis/search/cost.hpp"
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/randomProvider.hpp"
 
 namespace atlantis::propagation {
 class Solver;
@@ -15,7 +16,7 @@ namespace neighborhoods {
 class Neighborhood;
 }
 
-class Assignment : public virtual IAssignment {
+class Assignment {
   propagation::Solver& _solver;
   neighborhoods::Neighborhood& _neighborhood;
   propagation::VarViewId _violation{propagation::NULL_ID};
@@ -31,38 +32,40 @@ class Assignment : public virtual IAssignment {
                       ObjectiveDirection objectiveDirection,
                       Int objectiveOptimalValue);
 
-  Cost initialize(RandomProvider&) override;
+  virtual ~Assignment() = default;
 
-  Cost performProbe(RandomProvider&) override;
+  virtual Cost initialize(RandomProvider&);
 
-  void commitLastProbe() override;
+  virtual Cost performProbe(RandomProvider&);
+
+  virtual void commitLastProbe();
 
   /**
    * Get the current value of a variable in the assignment.
    */
-  [[nodiscard]] Int currentValue(propagation::VarViewId) const override;
+  [[nodiscard]] virtual Int currentValue(propagation::VarViewId) const;
 
   /**
    * Get the committed of a variable in the assignment.
    */
-  [[nodiscard]] Int committedValue(propagation::VarViewId) const override;
+  [[nodiscard]] virtual Int committedValue(propagation::VarViewId) const;
 
   /**
    * @return True if the current assignment satisfies all the constraints, false
    * otherwise.
    */
-  [[nodiscard]] bool satisfiesConstraints() const override;
+  [[nodiscard]] virtual bool satisfiesConstraints() const;
 
-  [[nodiscard]] bool objectiveIsOptimal() const override;
+  [[nodiscard]] virtual bool objectiveIsOptimal() const;
 
-  void set(propagation::VarId searchVarId, Int val) override;
+  virtual void set(propagation::VarId searchVarId, Int val);
 
-  [[nodiscard]] const std::vector<propagation::VarId>& searchVars()
-      const override;
+  [[nodiscard]] virtual const std::vector<propagation::VarId>& searchVars()
+      const;
 
-  [[nodiscard]] Timestamp currentTimestamp() const override;
+  [[nodiscard]] virtual Timestamp currentTimestamp() const;
 
-  [[nodiscard]] ObjectiveDirection objectiveDirection() const override;
+  [[nodiscard]] virtual ObjectiveDirection objectiveDirection() const;
 };
 
 }  // namespace atlantis::search

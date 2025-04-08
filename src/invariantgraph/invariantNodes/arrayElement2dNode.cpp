@@ -3,7 +3,7 @@
 #include <algorithm>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/element2dConst.hpp"
@@ -26,7 +26,7 @@ static std::vector<std::vector<Int>> toIntMatrix(
 }
 
 ArrayElement2dNode::ArrayElement2dNode(
-    IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+    InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
     std::vector<std::vector<Int>>&& parMatrix, VarNodeId output, Int offset1,
     Int offset2)
     : InvariantNode(graph, {output}, {idx1, idx2}),
@@ -36,7 +36,7 @@ ArrayElement2dNode::ArrayElement2dNode(
       _isIntMatrix(true) {}
 
 ArrayElement2dNode::ArrayElement2dNode(
-    IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+    InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
     std::vector<std::vector<bool>>&& parMatrix, VarNodeId output, Int offset1,
     Int offset2)
     : InvariantNode(graph, {output}, {idx1, idx2}),

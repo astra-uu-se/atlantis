@@ -3,13 +3,13 @@
 #include <cmath>
 #include <limits>
 
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 
 namespace atlantis::search {
 
 Annealer::Annealer(RandomProvider& random, AnnealingSchedule& schedule,
-                   const IAssignment& assignment)
+                   const Assignment& assignment)
     : _random(random),
       _schedule(schedule),
       _cost(
@@ -33,8 +33,16 @@ void Annealer::nextRound() {
   _attemptedMovesPerRound = 0;
 }
 
-bool Annealer::runMonteCarloSimulation() const {
+bool Annealer::shouldRunRound() const {
   return _attemptedMovesPerRound < _requiredMovesPerRound;
+}
+bool Annealer::acceptMove(const Cost& cost) {
+  _attemptedMovesPerRound++;
+
+  return accept(evaluate(cost));
+}
+const RoundStatistics& Annealer::currentRoundStatistics() const {
+  return _statistics;
 }
 
 bool Annealer::accept(Int moveCost) {
@@ -65,6 +73,9 @@ bool Annealer::accept(Int moveCost) {
   }
 
   return false;
+}
+Int Annealer::evaluate(const Cost& cost) const {
+  return cost.evaluate(_violationWeight, _objectiveWeight);
 }
 
 void Annealer::start() {

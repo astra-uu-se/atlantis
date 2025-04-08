@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 
 class IntAbsNode : public InvariantNode {
  public:
-  IntAbsNode(IInvariantGraph& graph,
+  IntAbsNode(InvariantGraph& graph,
 
              VarNodeId staticInput, VarNodeId output);
 

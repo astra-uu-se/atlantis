@@ -3,7 +3,7 @@
 #include <array>
 #include <cassert>
 
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/searchVariable.hpp"
 
@@ -40,19 +40,19 @@ class AllDifferentNonUniformNeighborhood : public Neighborhood {
   AllDifferentNonUniformNeighborhood(std::vector<SearchVar>&& vars,
                                      Int domainLb, Int domainUb);
 
-  void initialize(RandomProvider&, IAssignment&) override;
+  void initialize(RandomProvider&, Assignment&) override;
 
-  size_t randomMove(RandomProvider&, IAssignment&) override;
+  size_t randomMove(RandomProvider&, Assignment&) override;
 
-  void commitIf(const IAssignment&) override;
+  void commitIf(const Assignment&) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;
   }
-  [[nodiscard]] bool canSwap(const IAssignment& assignment, size_t var1Index,
+  [[nodiscard]] bool canSwap(const Assignment& assignment, size_t var1Index,
                              size_t value2Index) const noexcept;
-  size_t swapValues(IAssignment&, size_t var1Index, size_t value2Index);
-  size_t assignValue(IAssignment&, size_t varIndex, size_t newValueIndex);
+  size_t swapValues(Assignment&, size_t var1Index, size_t value2Index);
+  size_t assignValue(Assignment&, size_t varIndex, size_t newValueIndex);
 
  private:
   [[nodiscard]] Int toValue(size_t valueIndex) const noexcept {
@@ -81,7 +81,7 @@ class AllDifferentNonUniformNeighborhood : public Neighborhood {
   }
 
 #ifndef NDEBUG
-  [[nodiscard]] bool sanity(const IAssignment& assignment,
+  [[nodiscard]] bool sanity(const Assignment& assignment,
                             bool committedValue) const {
     for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
       const Int value =

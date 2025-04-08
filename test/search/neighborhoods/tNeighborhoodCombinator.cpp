@@ -16,11 +16,11 @@ using ::testing::Ref;
 using ::testing::Return;
 using ::testing::ReturnRef;
 
-class NeighborhoodCombinatorTest : public NeighborhoodTestBase {
+class NeighborhoodCombinatorTest
+    : public NeighborhoodTestBase<NeighborhoodCombinator> {
  public:
   std::shared_ptr<MockNeighborhood> n1;
   std::shared_ptr<MockNeighborhood> n2;
-  std::shared_ptr<NeighborhoodCombinator> _combinator;
 
   std::vector<SearchVar> vars;
 
@@ -36,8 +36,7 @@ class NeighborhoodCombinatorTest : public NeighborhoodTestBase {
     n2 = std::make_shared<MockNeighborhood>();
     EXPECT_CALL(*n2, coveredVars()).WillRepeatedly(ReturnRef(vars));
 
-    _combinator = std::make_shared<NeighborhoodCombinator>(
-        std::vector<std::shared_ptr<Neighborhood>>{n1, n2});
+    createNeighborhood(std::vector<std::shared_ptr<Neighborhood>>{n1, n2});
   }
 };
 
@@ -45,7 +44,7 @@ TEST_F(NeighborhoodCombinatorTest, initialize) {
   EXPECT_CALL(*n1, initialize(Ref(_random), Ref(*_assignment))).Times(1);
   EXPECT_CALL(*n2, initialize(Ref(_random), Ref(*_assignment))).Times(1);
 
-  _combinator->initialize(_random, *_assignment);
+  _neighborhood->initialize(_random, *_assignment);
 }
 
 TEST_F(NeighborhoodCombinatorTest, randomMove) {
@@ -57,7 +56,7 @@ TEST_F(NeighborhoodCombinatorTest, randomMove) {
       .Times(AtMost(1))
       .WillOnce(Return(size_t{1}));
 
-  _combinator->randomMove(_random, *_assignment);
+  _neighborhood->randomMove(_random, *_assignment);
 }
 
 TEST_F(NeighborhoodCombinatorTest, commitIf) {
@@ -69,7 +68,7 @@ TEST_F(NeighborhoodCombinatorTest, commitIf) {
       .Times(AtMost(1))
       .WillOnce(Return(size_t{1}));
 
-  const size_t nIndex = _combinator->randomMove(_random, *_assignment);
+  const size_t nIndex = _neighborhood->randomMove(_random, *_assignment);
 
   EXPECT_CALL(*n2, commitIf(Ref(*_assignment)))
       .Times(Exactly(nIndex == 0 ? 1 : 0));
@@ -77,7 +76,7 @@ TEST_F(NeighborhoodCombinatorTest, commitIf) {
   EXPECT_CALL(*n2, commitIf(Ref(*_assignment)))
       .Times(Exactly(nIndex == 0 ? 0 : 1));
 
-  _combinator->commitIf(*_assignment);
+  _neighborhood->commitIf(*_assignment);
 }
 
 }  // namespace atlantis::testing

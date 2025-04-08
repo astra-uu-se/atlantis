@@ -2,14 +2,14 @@
 
 #include <utility>
 
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/search/neighborhoods/randomNeighborhood.hpp"
 #include "atlantis/search/searchVariable.hpp"
 
 namespace atlantis::invariantgraph {
 
-InvariantGraphRoot::InvariantGraphRoot(IInvariantGraph& graph,
+InvariantGraphRoot::InvariantGraphRoot(InvariantGraph& graph,
                                        std::vector<VarNodeId>&& vars)
     : ImplicitConstraintNode(graph, std::move(vars)) {}
 

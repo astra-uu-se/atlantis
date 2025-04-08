@@ -1,10 +1,10 @@
 #include "atlantis/search/searchController.hpp"
 
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 
 namespace atlantis::search {
 
-bool SearchController::shouldRun(const IAssignment& assignment) {
+bool SearchController::shouldRun(const Assignment& assignment) {
   if (_foundSolution &&
       (_isSatisfactionProblem || assignment.objectiveIsOptimal())) {
     return false;
@@ -19,7 +19,7 @@ bool SearchController::shouldRun(const IAssignment& assignment) {
   return true;
 }
 
-void SearchController::onSolution(const IAssignment& assignment) {
+void SearchController::onSolution(const Assignment& assignment) {
   _foundSolution = true;
   _onSolution(assignment);
 }

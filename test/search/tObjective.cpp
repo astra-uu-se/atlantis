@@ -53,9 +53,9 @@ TEST_F(ObjectiveTest, minimisation_objective) {
 
   auto violation = install(searchObjective, domain, 5);
 
-  EXPECT_EQ(_solver->lowerBound(*searchObjective.bound()), 1);
-  EXPECT_EQ(_solver->upperBound(*searchObjective.bound()), 10);
-  EXPECT_EQ(_solver->committedValue(*searchObjective.bound()), 10);
+  EXPECT_EQ(_solver->lowerBound(searchObjective.bound()), 1);
+  EXPECT_EQ(_solver->upperBound(searchObjective.bound()), 10);
+  EXPECT_EQ(_solver->committedValue(searchObjective.bound()), 10);
 
   EXPECT_EQ(_solver->numVars(), 5);
   EXPECT_EQ(_solver->numInvariants(), 2);
@@ -63,7 +63,7 @@ TEST_F(ObjectiveTest, minimisation_objective) {
 
   searchObjective.tighten();
   EXPECT_EQ(_solver->committedValue(violation), 1);
-  EXPECT_EQ(_solver->committedValue(*searchObjective.bound()), 4);
+  EXPECT_EQ(_solver->committedValue(searchObjective.bound()), 4);
 
   _solver->beginMove();
   _solver->setValue(objectiveVarId, 3);
@@ -75,7 +75,7 @@ TEST_F(ObjectiveTest, minimisation_objective) {
 
   searchObjective.tighten();
   EXPECT_EQ(_solver->committedValue(violation), 1);
-  EXPECT_EQ(_solver->committedValue(*searchObjective.bound()), 2);
+  EXPECT_EQ(_solver->committedValue(searchObjective.bound()), 2);
 }
 
 TEST_F(ObjectiveTest, maximisation_objective) {
@@ -87,9 +87,9 @@ TEST_F(ObjectiveTest, maximisation_objective) {
 
   auto violation = install(searchObjective, domain, 5);
 
-  EXPECT_EQ(_solver->lowerBound(*searchObjective.bound()), 1);
-  EXPECT_EQ(_solver->upperBound(*searchObjective.bound()), 10);
-  EXPECT_EQ(_solver->committedValue(*searchObjective.bound()), 1);
+  EXPECT_EQ(_solver->lowerBound(searchObjective.bound()), 1);
+  EXPECT_EQ(_solver->upperBound(searchObjective.bound()), 10);
+  EXPECT_EQ(_solver->committedValue(searchObjective.bound()), 1);
 
   EXPECT_EQ(_solver->numVars(), 5);
   EXPECT_EQ(_solver->numInvariants(), 2);
@@ -97,7 +97,7 @@ TEST_F(ObjectiveTest, maximisation_objective) {
 
   searchObjective.tighten();
   EXPECT_EQ(_solver->committedValue(violation), 1);
-  EXPECT_EQ(_solver->committedValue(*searchObjective.bound()), 6);
+  EXPECT_EQ(_solver->committedValue(searchObjective.bound()), 6);
 
   _solver->beginMove();
   _solver->setValue(objectiveVarId, 7);
@@ -109,7 +109,7 @@ TEST_F(ObjectiveTest, maximisation_objective) {
 
   searchObjective.tighten();
   EXPECT_EQ(_solver->committedValue(violation), 1);
-  EXPECT_EQ(_solver->committedValue(*searchObjective.bound()), 8);
+  EXPECT_EQ(_solver->committedValue(searchObjective.bound()), 8);
 }
 
 }  // namespace atlantis::testing

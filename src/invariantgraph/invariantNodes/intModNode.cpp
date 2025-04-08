@@ -2,14 +2,14 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/mod.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntModNode::IntModNode(IInvariantGraph& graph, VarNodeId numerator,
+IntModNode::IntModNode(InvariantGraph& graph, VarNodeId numerator,
                        VarNodeId denominator, VarNodeId remainder)
     : InvariantNode(graph, {remainder}, {numerator, denominator}) {}
 

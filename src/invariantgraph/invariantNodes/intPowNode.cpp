@@ -3,14 +3,14 @@
 #include <algorithm>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/pow.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntPowNode::IntPowNode(IInvariantGraph& graph, VarNodeId base,
+IntPowNode::IntPowNode(InvariantGraph& graph, VarNodeId base,
                        VarNodeId exponent, VarNodeId power)
     : InvariantNode(graph, {power}, {base, exponent}) {}
 

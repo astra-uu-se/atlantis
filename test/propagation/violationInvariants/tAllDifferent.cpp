@@ -42,7 +42,7 @@ class AllDifferentTest : public InvariantTest {
       }
     }
     Int expectedViolation = 0;
-    for (const auto& [_, count] : valueCounts) {
+    for (const Int count : std::views::values(valueCounts)) {
       if (count > 1) {
         expectedViolation += count - 1;
       }

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <array>
 
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
 #include "atlantis/utils/domains.hpp"
@@ -15,7 +15,7 @@ CircuitNeighborhood::CircuitNeighborhood(std::vector<SearchVar>&& vars,
     : _vars(std::move(vars)), _offset(offset) {}
 
 void CircuitNeighborhood::initialize(RandomProvider& random,
-                                     IAssignment& assignment) {
+                                     Assignment& assignment) {
   Int numAvailable = static_cast<Int>(_vars.size());
   std::vector<bool> idxIsAvailable(_vars.size(), true);
 
@@ -98,7 +98,7 @@ static size_t determineNewNext(RandomProvider& random, size_t node,
 }
 
 size_t CircuitNeighborhood::randomMove(RandomProvider& random,
-                                       IAssignment& assignment) {
+                                       Assignment& assignment) {
   auto nodeIdx = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(_vars.size() - 1)));
   auto oldNextIdx =

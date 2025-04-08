@@ -34,8 +34,7 @@ InvariantGraph::InvariantGraph(propagation::SolverBase& solver,
       _boolVarNodeIndices{VarNodeId{0}, VarNodeId{1}},
       _breakDynamicCycles(breakDynamicCycles),
       _objectiveVarNodeId{NULL_NODE_ID} {
-  InvariantGraph::addImplicitConstraintNode(
-      std::make_shared<InvariantGraphRoot>(*this));
+  addImplicitConstraintNode(std::make_shared<InvariantGraphRoot>(*this));
 }
 
 propagation::SolverBase& InvariantGraph::solver() { return _solver; }
@@ -323,7 +322,7 @@ bool InvariantGraph::containsImplicitConstraintNode(InvariantNodeId id) const {
          size_t(id) < _implicitConstraintNodes.size();
 }
 
-IInvariantNode& InvariantGraph::invariantNode(InvariantNodeId id) {
+InvariantNode& InvariantGraph::invariantNode(InvariantNodeId id) {
   if (id.isImplicitConstraint()) {
     assert(containsImplicitConstraintNode(id));
     return implicitConstraintNode(id);
@@ -332,7 +331,7 @@ IInvariantNode& InvariantGraph::invariantNode(InvariantNodeId id) {
   return *_invariantNodes.at(size_t(id));
 }
 
-IImplicitConstraintNode& InvariantGraph::implicitConstraintNode(
+ImplicitConstraintNode& InvariantGraph::implicitConstraintNode(
     InvariantNodeId id) {
   assert(containsImplicitConstraintNode(id));
   return *_implicitConstraintNodes.at(size_t(id));
@@ -347,7 +346,7 @@ InvariantNodeId InvariantGraph::nextImplicitNodeId() const {
 }
 
 InvariantNodeId InvariantGraph::addInvariantNode(
-    std::shared_ptr<IInvariantNode>&& node) {
+    std::shared_ptr<InvariantNode>&& node) {
   const InvariantNodeId id = nextInvariantNodeId();
   const auto& invNode = _invariantNodes.emplace_back(std::move(node));
   invNode->init(id);
@@ -439,7 +438,7 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
       }
     }
   }
-  for (auto& [identifier, id] : _namedVarNodeIndices) {
+  for (auto& id : std::views::values(_namedVarNodeIndices)) {
     if (id == oldNodeId) {
       id = newNodeId;
     }
@@ -447,7 +446,7 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
 }
 
 InvariantNodeId InvariantGraph::addImplicitConstraintNode(
-    std::shared_ptr<IImplicitConstraintNode>&& node) {
+    std::shared_ptr<ImplicitConstraintNode>&& node) {
   const InvariantNodeId id = nextImplicitNodeId();
   const auto& implNode = _implicitConstraintNodes.emplace_back(std::move(node));
   implNode->init(id);
@@ -575,7 +574,7 @@ InvariantGraphEdge InvariantGraph::findPivotInCycle(
   for (size_t i = 0; i < cycle.size(); ++i) {
     const size_t inputIndex = (i + cycle.size() - 1) % cycle.size();
     const VarNode& input = varNode(cycle.at(inputIndex).varNodeId);
-    IInvariantNode& invNode = invariantNode(cycle.at(i).invariantNodeId);
+    InvariantNode& invNode = invariantNode(cycle.at(i).invariantNodeId);
     const VarNode& output = varNode(cycle.at(i).varNodeId);
 
     assert(std::ranges::any_of(
@@ -865,7 +864,7 @@ std::vector<VarNodeId> InvariantGraph::breakCycles(
     cycleRoot = findCycleUtil(node, visitedGlobal, visitedLocal, path);
     assert(std::ranges::all_of(path.begin(), path.end(), [&](const auto& pair) {
       const VarNode& inputVar = varNodeConst(pair.first);
-      const IInvariantNode& inv = invariantNode(pair.second.invariantNodeId);
+      const InvariantNode& inv = invariantNode(pair.second.invariantNodeId);
       const VarNode& outputVar = varNodeConst(pair.second.varNodeId);
 
       const bool isStaticInput = std::ranges::any_of(
@@ -1233,20 +1232,20 @@ void InvariantGraph::sanity([[maybe_unused]] bool oneDefInv) {
   }
   for (const VarNode& vNode : _varNodes) {
     for (const InvariantNodeId& invNodeId : vNode.definingNodes()) {
-      IInvariantNode& invNode = invariantNode(invNodeId);
+      InvariantNode& invNode = invariantNode(invNodeId);
       assert(std::ranges::any_of(
           invNode.outputVarNodeIds().begin(), invNode.outputVarNodeIds().end(),
           [&](const VarNodeId vId) { return vId == vNode.varNodeId(); }));
     }
     for (const InvariantNodeId& invNodeId : vNode.staticInputTo()) {
-      IInvariantNode& invNode = invariantNode(invNodeId);
+      InvariantNode& invNode = invariantNode(invNodeId);
       assert(std::ranges::any_of(
           invNode.staticInputVarNodeIds().begin(),
           invNode.staticInputVarNodeIds().end(),
           [&](const VarNodeId vId) { return vId == vNode.varNodeId(); }));
     }
     for (const InvariantNodeId& invNodeId : vNode.dynamicInputTo()) {
-      IInvariantNode& invNode = invariantNode(invNodeId);
+      InvariantNode& invNode = invariantNode(invNodeId);
       assert(std::ranges::any_of(
           invNode.dynamicInputVarNodeIds().begin(),
           invNode.dynamicInputVarNodeIds().end(),

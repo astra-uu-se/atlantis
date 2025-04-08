@@ -3,7 +3,7 @@
 #include <cassert>
 
 #include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 
@@ -24,7 +24,7 @@ static std::vector<VarNodeId> combine(VarNodeId reifiedId,
  */
 
 ViolationInvariantNode::ViolationInvariantNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
+    InvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
     std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedViolationId,
     bool shouldHold)
     : InvariantNode(graph, combine(reifiedViolationId, std::move(outputIds)),
@@ -38,27 +38,27 @@ ViolationInvariantNode::ViolationInvariantNode(
 }
 
 ViolationInvariantNode::ViolationInvariantNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
+    InvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
     std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedViolationId)
     : ViolationInvariantNode(graph, std::move(outputIds),
                              std::move(staticInputIds), reifiedViolationId,
                              true) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
+    InvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
     VarNodeId reifiedViolationId)
     : ViolationInvariantNode(graph, {}, std::move(staticInputIds),
                              reifiedViolationId, true) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
+    InvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
     std::vector<VarNodeId>&& staticInputIds, bool shouldHold)
     : ViolationInvariantNode(graph, std::move(outputIds),
                              std::move(staticInputIds), VarNodeId{NULL_NODE_ID},
                              shouldHold) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
-    IInvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
+    InvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
     bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(staticInputIds),
                              VarNodeId{NULL_NODE_ID}, shouldHold) {}

@@ -8,9 +8,9 @@ namespace atlantis::testing {
 
 using namespace atlantis::search::neighborhoods;
 
-class CircuitNeighborhoodTest : public NeighborhoodTestBase {
+class CircuitNeighborhoodTest
+    : public NeighborhoodTestBase<CircuitNeighborhood> {
  public:
-  std::shared_ptr<CircuitNeighborhood> _neighborhood;
   Int _offset = 1;
 
   std::vector<SearchVar> next;
@@ -26,8 +26,7 @@ class CircuitNeighborhoodTest : public NeighborhoodTestBase {
 
     _solver->close();
 
-    _neighborhood = std::make_shared<CircuitNeighborhood>(
-        std::vector<SearchVar>(next), _offset);
+    createNeighborhood(std::vector<SearchVar>(next), _offset);
   }
 
   void expectHolds() const {
@@ -47,7 +46,7 @@ class CircuitNeighborhoodTest : public NeighborhoodTestBase {
 };
 
 TEST_F(CircuitNeighborhoodTest, initialize) {
-  initialize(*_neighborhood);
+  initialize();
   expectHolds();
 
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
@@ -57,7 +56,7 @@ TEST_F(CircuitNeighborhoodTest, initialize) {
 }
 
 TEST_F(CircuitNeighborhoodTest, randomMove) {
-  initialize(*_neighborhood);
+  initialize();
   expectHolds();
 
   for (auto i = 0; i < 1000; i++) {
@@ -67,9 +66,9 @@ TEST_F(CircuitNeighborhoodTest, randomMove) {
 }
 
 TEST_F(CircuitNeighborhoodTest, commitIf) {
-  initialize(*_neighborhood);
+  initialize();
   for (size_t iteration = 0; iteration < 1000; ++iteration) {
-    commitIf(*_neighborhood);
+    commitIf();
     expectHolds();
   }
 }

@@ -8,7 +8,7 @@ class ArrayVarElementNode : public InvariantNode {
   Int _offset;
 
  public:
-  ArrayVarElementNode(IInvariantGraph& graph, VarNodeId idx,
+  ArrayVarElementNode(InvariantGraph& graph, VarNodeId idx,
                       std::vector<VarNodeId>&& varVector, VarNodeId output,
                       Int offset);
 

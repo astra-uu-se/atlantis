@@ -144,7 +144,7 @@ std::vector<Int> getFixedValues(
   return values;
 }
 
-std::vector<bool> getFixedBoolValues(const IInvariantGraph& graph,
+std::vector<bool> getFixedBoolValues(const InvariantGraph& graph,
                                      const std::vector<VarNodeId>& varNodeIds) {
   std::vector<bool> values;
   values.reserve(varNodeIds.size());
@@ -215,7 +215,7 @@ std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
 }
 
 std::vector<VarNodeId> getUnfixedVarNodeIds(
-    const IInvariantGraph& graph, const std::vector<VarNodeId>& varNodeIds) {
+    const InvariantGraph& graph, const std::vector<VarNodeId>& varNodeIds) {
   std::vector<VarNodeId> unfixed;
   unfixed.reserve(varNodeIds.size());
   for (VarNodeId varNodeId : varNodeIds) {

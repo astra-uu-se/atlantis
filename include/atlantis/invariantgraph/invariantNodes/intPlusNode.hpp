@@ -9,7 +9,7 @@ class IntPlusNode : public InvariantNode {
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  IntPlusNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  IntPlusNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
               VarNodeId output);
 
   void init(InvariantNodeId) override;

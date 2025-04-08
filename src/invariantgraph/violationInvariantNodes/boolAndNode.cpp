@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/boolAnd.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -10,10 +10,10 @@
 
 namespace atlantis::invariantgraph {
 
-BoolAndNode::BoolAndNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+BoolAndNode::BoolAndNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                          VarNodeId r)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, r) {}
-BoolAndNode::BoolAndNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+BoolAndNode::BoolAndNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                          bool shouldHold)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 

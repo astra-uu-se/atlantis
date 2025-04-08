@@ -2,14 +2,14 @@
 
 #include <algorithm>
 
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/scalarView.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntScalarNode::IntScalarNode(IInvariantGraph& graph, VarNodeId staticInput,
+IntScalarNode::IntScalarNode(InvariantGraph& graph, VarNodeId staticInput,
                              VarNodeId output, Int factor, Int offset)
     : InvariantNode(graph, {output}, {staticInput}),
       _factor(factor),

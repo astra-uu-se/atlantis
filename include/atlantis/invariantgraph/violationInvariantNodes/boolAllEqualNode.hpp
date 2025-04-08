@@ -8,17 +8,17 @@ class BoolAllEqualNode : public ViolationInvariantNode {
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit BoolAllEqualNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  explicit BoolAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                             VarNodeId r, bool breaksCycle = false);
 
-  explicit BoolAllEqualNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  explicit BoolAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                             bool shouldHold = true, bool breaksCycle = false);
 
-  explicit BoolAllEqualNode(IInvariantGraph& graph,
+  explicit BoolAllEqualNode(InvariantGraph& graph,
                             std::vector<VarNodeId>&& vars, VarNodeId r,
                             bool breaksCycle = false);
 
-  explicit BoolAllEqualNode(IInvariantGraph& graph,
+  explicit BoolAllEqualNode(InvariantGraph& graph,
                             std::vector<VarNodeId>&& vars,
                             bool shouldHold = true, bool breaksCycle = false);
 

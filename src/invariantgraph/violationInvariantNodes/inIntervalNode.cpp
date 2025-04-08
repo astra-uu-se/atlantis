@@ -2,7 +2,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/inIntervalConst.hpp"
@@ -10,11 +10,11 @@
 
 namespace atlantis::invariantgraph {
 
-InIntervalNode::InIntervalNode(IInvariantGraph& graph, VarNodeId input, Int lb,
+InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
                                Int ub, VarNodeId r)
     : ViolationInvariantNode(graph, {input}, r), _lb(lb), _ub(ub) {}
 
-InIntervalNode::InIntervalNode(IInvariantGraph& graph, VarNodeId input, Int lb,
+InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
                                Int ub, bool shouldHold)
     : ViolationInvariantNode(graph, {input}, shouldHold), _lb(lb), _ub(ub) {}
 

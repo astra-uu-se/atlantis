@@ -8,10 +8,10 @@ class InIntervalNode : public ViolationInvariantNode {
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
-  explicit InIntervalNode(IInvariantGraph& graph, VarNodeId input, Int lb,
+  explicit InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
                           Int ub, VarNodeId r);
 
-  explicit InIntervalNode(IInvariantGraph& graph, VarNodeId input, Int lb,
+  explicit InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
                           Int ub, bool shouldHold = true);
 
   void init(InvariantNodeId) override;

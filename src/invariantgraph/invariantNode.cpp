@@ -4,7 +4,7 @@
 #include <fznparser/model.hpp>
 
 #include "atlantis/exceptions/exceptions.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 
@@ -13,7 +13,7 @@ namespace atlantis::invariantgraph {
  * A node in the invariant graph which defines a number of variables. This could
  * be an invariant, a soft constraint (which defines a violation), or a view.
  */
-InvariantNode::InvariantNode(IInvariantGraph& invariantGraph,
+InvariantNode::InvariantNode(InvariantGraph& invariantGraph,
                              std::vector<VarNodeId>&& outputIds,
                              std::vector<VarNodeId>&& staticInputIds,
                              std::vector<VarNodeId>&& dynamicInputIds)
@@ -22,11 +22,11 @@ InvariantNode::InvariantNode(IInvariantGraph& invariantGraph,
       _staticInputVarNodeIds(std::move(staticInputIds)),
       _dynamicInputVarNodeIds(std::move(dynamicInputIds)) {}
 
-IInvariantGraph& InvariantNode::invariantGraph() { return _invariantGraph; }
+InvariantGraph& InvariantNode::invariantGraph() { return _invariantGraph; }
 
 void InvariantNode::setState(const InvariantNodeState state) { _state = state; }
 
-const IInvariantGraph& InvariantNode::invariantGraphConst() const {
+const InvariantGraph& InvariantNode::invariantGraphConst() const {
   return _invariantGraph;
 }
 

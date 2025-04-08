@@ -7,10 +7,10 @@ class ArrayIntMaximumNode : public InvariantNode {
   Int _lb;
 
  public:
-  explicit ArrayIntMaximumNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  explicit ArrayIntMaximumNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                                VarNodeId output);
 
-  explicit ArrayIntMaximumNode(IInvariantGraph& graph,
+  explicit ArrayIntMaximumNode(InvariantGraph& graph,
 
                                std::vector<VarNodeId>&& vars, VarNodeId output);
 

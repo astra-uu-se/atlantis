@@ -158,7 +158,7 @@ std::enable_if_t<std::is_base_of_v<Invariant, T>, T&> SolverBase::makeInvariant(
     throw SolverClosedException("Cannot make invariant when store is closed.");
   }
   const InvariantId invariantId = _store.createInvariantFromPtr(
-      std::make_unique<T>(std::forward<Args>(args)...));
+      std::make_shared<T>(std::forward<Args>(args)...));
   registerInvariant(invariantId);
 
   T& invariant = static_cast<T&>(_store.invariant(invariantId));
@@ -176,7 +176,7 @@ SolverBase::makeIntView(Args&&... args) {
   // We don't actually register views as they are invisible to propagation.
 
   const VarViewId viewId = _store.createIntViewFromPtr(
-      std::make_unique<T>(std::forward<Args>(args)...));
+      std::make_shared<T>(std::forward<Args>(args)...));
   _store.intView(ViewId(viewId)).init(ViewId(viewId));
   return viewId;
 }
@@ -188,7 +188,7 @@ SolverBase::makeViolationInvariant(Args&&... args) {
     throw SolverClosedException("Cannot make invariant when store is closed.");
   }
   const InvariantId violationInvId = _store.createInvariantFromPtr(
-      std::make_unique<T>(std::forward<Args>(args)...));
+      std::make_shared<T>(std::forward<Args>(args)...));
   T& violationInvariant = static_cast<T&>(_store.invariant(violationInvId));
   // A violation invariant is a type of invariant:
   registerInvariant(violationInvId);

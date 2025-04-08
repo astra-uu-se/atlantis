@@ -10,14 +10,14 @@ class ArrayVarElement2dNode : public InvariantNode {
   Int _offset2;
 
  public:
-  ArrayVarElement2dNode(IInvariantGraph& graph,
+  ArrayVarElement2dNode(InvariantGraph& graph,
 
                         VarNodeId idx1, VarNodeId idx2,
                         std::vector<VarNodeId>&& flatVarMatrix,
                         VarNodeId output, size_t numRows, Int offset1,
                         Int offset2);
 
-  ArrayVarElement2dNode(IInvariantGraph& graph,
+  ArrayVarElement2dNode(InvariantGraph& graph,
 
                         VarNodeId idx1, VarNodeId idx2,
                         std::vector<std::vector<VarNodeId>>&& varMatrix,

@@ -3,7 +3,7 @@
 #include <algorithm>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/element2dVar.hpp"
@@ -23,7 +23,7 @@ static std::vector<VarNodeId> flatten(
 }
 
 ArrayVarElement2dNode::ArrayVarElement2dNode(
-    IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+    InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
     std::vector<VarNodeId>&& flatVarMatrix, VarNodeId output, size_t numRows,
     Int offset1, Int offset2)
     : InvariantNode(graph, {output}, {idx1, idx2}, std::move(flatVarMatrix)),
@@ -32,7 +32,7 @@ ArrayVarElement2dNode::ArrayVarElement2dNode(
       _offset2(offset2) {}
 
 ArrayVarElement2dNode::ArrayVarElement2dNode(
-    IInvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+    InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
     std::vector<std::vector<VarNodeId>>&& varMatrix, VarNodeId output,
     Int offset1, Int offset2)
     : ArrayVarElement2dNode(graph, idx1, idx2, flatten(varMatrix), output,

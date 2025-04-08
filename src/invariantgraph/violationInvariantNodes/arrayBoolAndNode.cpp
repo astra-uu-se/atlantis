@@ -4,7 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/propagation/invariants/boolAnd.hpp"
@@ -14,20 +14,20 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayBoolAndNode::ArrayBoolAndNode(IInvariantGraph& graph, VarNodeId a,
+ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, VarNodeId a,
                                    VarNodeId b, VarNodeId output)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, output) {}
 
-ArrayBoolAndNode::ArrayBoolAndNode(IInvariantGraph& graph, VarNodeId a,
+ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, VarNodeId a,
                                    VarNodeId b, bool shouldHold)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
-ArrayBoolAndNode::ArrayBoolAndNode(IInvariantGraph& graph,
+ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph,
                                    std::vector<VarNodeId>&& as,
                                    VarNodeId output)
     : ViolationInvariantNode(graph, std::move(as), output) {}
 
-ArrayBoolAndNode::ArrayBoolAndNode(IInvariantGraph& graph,
+ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph,
                                    std::vector<VarNodeId>&& as, bool shouldHold)
     : ViolationInvariantNode(graph, std::move(as), shouldHold) {}
 

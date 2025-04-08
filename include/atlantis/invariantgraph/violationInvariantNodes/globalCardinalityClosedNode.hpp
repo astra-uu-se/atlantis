@@ -7,13 +7,13 @@ class GlobalCardinalityClosedNode : public ViolationInvariantNode {
   std::vector<Int> _cover;
 
  public:
-  explicit GlobalCardinalityClosedNode(IInvariantGraph& graph,
+  explicit GlobalCardinalityClosedNode(InvariantGraph& graph,
                                        std::vector<VarNodeId>&& inputs,
                                        std::vector<Int>&& cover,
                                        std::vector<VarNodeId>&& counts,
                                        VarNodeId r);
 
-  explicit GlobalCardinalityClosedNode(IInvariantGraph& graph,
+  explicit GlobalCardinalityClosedNode(InvariantGraph& graph,
                                        std::vector<VarNodeId>&& inputs,
                                        std::vector<Int>&& cover,
                                        std::vector<VarNodeId>&& counts,

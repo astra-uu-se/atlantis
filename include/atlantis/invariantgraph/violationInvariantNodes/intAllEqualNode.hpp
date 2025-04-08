@@ -9,18 +9,16 @@ class IntAllEqualNode : public ViolationInvariantNode {
   propagation::VarViewId _allDifferentViolationVarId{propagation::NULL_ID};
 
  public:
-  explicit IntAllEqualNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  explicit IntAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                            VarNodeId r, bool breaksCycle = false);
 
-  explicit IntAllEqualNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  explicit IntAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                            bool shouldHold = true, bool breaksCycle = false);
 
-  explicit IntAllEqualNode(IInvariantGraph& graph,
-                           std::vector<VarNodeId>&& vars, VarNodeId r,
-                           bool breaksCycle = false);
+  explicit IntAllEqualNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+                           VarNodeId r, bool breaksCycle = false);
 
-  explicit IntAllEqualNode(IInvariantGraph& graph,
-                           std::vector<VarNodeId>&& vars,
+  explicit IntAllEqualNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
                            bool shouldHold = true, bool breaksCycle = false);
 
   void init(InvariantNodeId) override;

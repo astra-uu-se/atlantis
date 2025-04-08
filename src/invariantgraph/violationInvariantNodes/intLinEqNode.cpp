@@ -5,7 +5,7 @@
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -14,14 +14,14 @@
 
 namespace atlantis::invariantgraph {
 
-IntLinEqNode::IntLinEqNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
+IntLinEqNode::IntLinEqNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                            std::vector<VarNodeId>&& vars, Int bound,
                            VarNodeId reified)
     : ViolationInvariantNode(graph, std::move(vars), reified),
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
-IntLinEqNode::IntLinEqNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
+IntLinEqNode::IntLinEqNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                            std::vector<VarNodeId>&& vars, Int bound,
                            bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),

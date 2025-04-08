@@ -3,7 +3,7 @@
 #include <algorithm>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/times.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -11,7 +11,7 @@
 
 namespace atlantis::invariantgraph {
 
-IntTimesNode::IntTimesNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+IntTimesNode::IntTimesNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                            VarNodeId output)
     : InvariantNode(graph, {output}, {a, b}) {}
 

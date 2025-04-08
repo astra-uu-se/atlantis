@@ -9,7 +9,7 @@ class IntScalarNode : public InvariantNode {
   Int _offset;
 
  public:
-  IntScalarNode(IInvariantGraph& graph, VarNodeId staticInput, VarNodeId output,
+  IntScalarNode(InvariantGraph& graph, VarNodeId staticInput, VarNodeId output,
                 Int factor, Int offset);
 
   void init(InvariantNodeId) override;

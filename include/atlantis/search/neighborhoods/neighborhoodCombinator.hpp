@@ -28,8 +28,8 @@ class NeighborhoodCombinator : public Neighborhood {
   explicit NeighborhoodCombinator(
       std::vector<std::shared_ptr<Neighborhood>>&& neighborhoods);
 
-  void initialize(RandomProvider&, IAssignment&) override;
-  size_t randomMove(RandomProvider&, IAssignment&) override;
+  void initialize(RandomProvider&, Assignment&) override;
+  size_t randomMove(RandomProvider&, Assignment&) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;
@@ -37,7 +37,7 @@ class NeighborhoodCombinator : public Neighborhood {
 
   void printNeighborhood(logging::Logger&) const;
 
-  void commitIf(const IAssignment&) override;
+  void commitIf(const Assignment&) override;
 };
 
 }  // namespace atlantis::search::neighborhoods

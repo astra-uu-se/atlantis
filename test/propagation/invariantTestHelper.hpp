@@ -6,6 +6,7 @@
 
 #include <deque>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include "atlantis/propagation/invariants/invariant.hpp"

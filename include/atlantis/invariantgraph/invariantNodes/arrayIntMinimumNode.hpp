@@ -7,10 +7,10 @@ class ArrayIntMinimumNode : public InvariantNode {
   Int _ub;
 
  public:
-  explicit ArrayIntMinimumNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+  explicit ArrayIntMinimumNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                                VarNodeId output);
 
-  explicit ArrayIntMinimumNode(IInvariantGraph& graph,
+  explicit ArrayIntMinimumNode(InvariantGraph& graph,
 
                                std::vector<VarNodeId>&& vars, VarNodeId output);
 
@@ -25,6 +25,7 @@ class ArrayIntMinimumNode : public InvariantNode {
   [[nodiscard]] bool replace() override;
 
   void registerNode() override;
+
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

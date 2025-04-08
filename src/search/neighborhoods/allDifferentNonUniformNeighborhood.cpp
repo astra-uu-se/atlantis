@@ -4,7 +4,7 @@
 #include <numeric>
 
 #include "atlantis/propagation/variables/committableInt.hpp"
-#include "atlantis/search/iAssignment.hpp"
+#include "atlantis/search/assignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
 #include "atlantis/utils/domains.hpp"
@@ -63,7 +63,7 @@ static bool bipartiteMatching(
 }
 
 void AllDifferentNonUniformNeighborhood::initialize(RandomProvider& random,
-                                                    IAssignment& assignment) {
+                                                    Assignment& assignment) {
   std::vector<std::vector<size_t>> forwardArcs(_vars.size());
   std::ranges::fill(_valueIndexToVarIndex.begin(), _valueIndexToVarIndex.end(),
                     _vars.size());
@@ -118,7 +118,7 @@ void AllDifferentNonUniformNeighborhood::initialize(RandomProvider& random,
 }
 
 size_t AllDifferentNonUniformNeighborhood::randomMove(RandomProvider& random,
-                                                      IAssignment& assignment) {
+                                                      Assignment& assignment) {
   assert(sanity(assignment, true));
 
   for (Int i = 0; i < static_cast<Int>(_varIndices.size()); ++i) {
@@ -167,7 +167,7 @@ size_t AllDifferentNonUniformNeighborhood::randomMove(RandomProvider& random,
 }
 
 bool AllDifferentNonUniformNeighborhood::canSwap(
-    const IAssignment& assignment, size_t var1Index,
+    const Assignment& assignment, size_t var1Index,
     size_t value2Index) const noexcept {
   // var 1:
   assert(var1Index < _vars.size());
@@ -193,7 +193,7 @@ bool AllDifferentNonUniformNeighborhood::canSwap(
       toValueIndex(assignment.committedValue(_vars[var1Index].solverId())));
 }
 
-size_t AllDifferentNonUniformNeighborhood::swapValues(IAssignment& assignment,
+size_t AllDifferentNonUniformNeighborhood::swapValues(Assignment& assignment,
                                                       size_t var1Index,
                                                       size_t value2Index) {
   // var 1:
@@ -228,7 +228,7 @@ size_t AllDifferentNonUniformNeighborhood::swapValues(IAssignment& assignment,
   return 2;
 }
 
-size_t AllDifferentNonUniformNeighborhood::assignValue(IAssignment& assignment,
+size_t AllDifferentNonUniformNeighborhood::assignValue(Assignment& assignment,
                                                        size_t varIndex,
                                                        size_t newValueIndex) {
   assert(newValueIndex < _valueIndexToVarIndex.size());
@@ -249,7 +249,7 @@ size_t AllDifferentNonUniformNeighborhood::assignValue(IAssignment& assignment,
 }
 
 void AllDifferentNonUniformNeighborhood::commitIf(
-    const IAssignment& assignment) {
+    const Assignment& assignment) {
   if (assignment.currentTimestamp() != _curTimestamp) {
     return;
   }

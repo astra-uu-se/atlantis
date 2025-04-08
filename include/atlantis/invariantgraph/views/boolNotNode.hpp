@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 
 class BoolNotNode : public InvariantNode {
  public:
-  BoolNotNode(IInvariantGraph& graph,
+  BoolNotNode(InvariantGraph& graph,
 
               VarNodeId staticInput, VarNodeId output);
 

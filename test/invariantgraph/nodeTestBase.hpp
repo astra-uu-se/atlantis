@@ -7,8 +7,7 @@
 #include <utility>
 #include <vector>
 
-#include "atlantis/invariantgraph/iImplicitConstraintNode.hpp"
-#include "atlantis/invariantgraph/iInvariantNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
@@ -21,7 +20,7 @@ using namespace atlantis::invariantgraph;
 
 class UnitInvariantNode : public InvariantNode {
  public:
-  explicit UnitInvariantNode(IInvariantGraph& graph,
+  explicit UnitInvariantNode(InvariantGraph& graph,
                              std::vector<VarNodeId>&& defVarNodes)
       : InvariantNode(graph, std::move(defVarNodes)) {}
 
@@ -113,14 +112,14 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   void createInvariantNode(Args&&... args) {
     EXPECT_EQ(_invNodeId, NULL_NODE_ID);
     _invNodeId = _invariantGraph->addInvariantNode(
-        std::make_unique<InvNode>(std::forward<Args>(args)...));
+        std::make_shared<InvNode>(std::forward<Args>(args)...));
   }
 
   template <typename... Args>
   void createImplicitConstraintNode(Args&&... args) {
     EXPECT_EQ(_invNodeId, NULL_NODE_ID);
     _invNodeId = _invariantGraph->addImplicitConstraintNode(
-        std::make_unique<InvNode>(std::forward<Args>(args)...));
+        std::make_shared<InvNode>(std::forward<Args>(args)...));
   }
 
   InvNode& invNode() {

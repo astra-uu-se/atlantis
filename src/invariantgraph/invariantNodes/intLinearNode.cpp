@@ -4,8 +4,8 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
@@ -15,7 +15,7 @@
 
 namespace atlantis::invariantgraph {
 
-IntLinearNode::IntLinearNode(IInvariantGraph& graph, std::vector<Int>&& coeffs,
+IntLinearNode::IntLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars, VarNodeId output,
                              Int offset)
     : InvariantNode(graph, {output}, std::move(vars)),

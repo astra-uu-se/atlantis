@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 
 class Bool2IntNode : public InvariantNode {
  public:
-  Bool2IntNode(IInvariantGraph& graph, VarNodeId staticInput, VarNodeId output);
+  Bool2IntNode(InvariantGraph& graph, VarNodeId staticInput, VarNodeId output);
 
   void init(InvariantNodeId) override;
 

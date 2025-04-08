@@ -4,7 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/count.hpp"
@@ -12,7 +12,7 @@
 
 namespace atlantis::invariantgraph {
 
-VarIntCountNode::VarIntCountNode(IInvariantGraph& graph,
+VarIntCountNode::VarIntCountNode(InvariantGraph& graph,
                                  std::vector<VarNodeId>&& vars,
                                  VarNodeId needle, VarNodeId count)
     : InvariantNode(graph, {count}, append(std::move(vars), needle)) {}

@@ -4,7 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
-#include "atlantis/invariantgraph/iInvariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -14,11 +14,11 @@
 namespace atlantis::invariantgraph {
 class VarNode;
 
-BoolLeNode::BoolLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+BoolLeNode::BoolLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                        VarNodeId r)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, r) {}
 
-BoolLeNode::BoolLeNode(IInvariantGraph& graph, VarNodeId a, VarNodeId b,
+BoolLeNode::BoolLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                        bool shouldHold)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
