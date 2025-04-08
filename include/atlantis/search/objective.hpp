@@ -11,9 +11,9 @@ class Objective {
   propagation::Solver& _solver;
   fznparser::ProblemType _problemType;
 
-  std::optional<propagation::VarViewId> _bound{};
-  std::optional<propagation::VarViewId> _objective{};
-  std::optional<propagation::VarId> _violation{};
+  propagation::VarViewId _bound{propagation::NULL_ID};
+  propagation::VarViewId _objective{propagation::NULL_ID};
+  propagation::VarId _violation{propagation::NULL_ID};
 
  public:
   Objective(propagation::Solver& solver, fznparser::ProblemType problemType);
@@ -24,14 +24,8 @@ class Objective {
 
   void tighten();
 
-  [[nodiscard]] std::optional<propagation::VarViewId> bound() const noexcept;
+  [[nodiscard]] propagation::VarViewId bound() const noexcept;
 
- private:
-  propagation::VarViewId registerOptimisation(
-      propagation::VarViewId constraintViolation,
-      propagation::VarViewId objectiveVarId, Int initialBound,
-      std::function<void(propagation::VarId, propagation::VarViewId)>&&
-          constraintFactory);
 };
 
 }  // namespace atlantis::search
