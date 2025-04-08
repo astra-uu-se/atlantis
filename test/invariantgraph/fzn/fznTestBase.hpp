@@ -37,6 +37,9 @@ class FznTestBase : public ::testing::Test {
   std::shared_ptr<propagation::Solver> _solver;
   std::string constraintIdentifier;
 
+  constexpr Int defaultLb = -1;
+  constexpr Int defaultUb = 1;
+
   void SetUp() override {
     _model = std::make_shared<Model>();
     _solver = std::make_shared<propagation::Solver>();
@@ -130,6 +133,11 @@ class FznTestBase : public ::testing::Test {
         _model->addVar(std::make_shared<IntVar>(lb, ub, identifier)));
   }
 
+  [[nodiscard]] std::shared_ptr<IntVar> genIntVar(
+      const std::string& identifier = "i") const {
+    return genIntVar(defaultLb, defaultUb, identifier);
+  }
+
   [[nodiscard]] IntArg genIntArg(IntArgState state, Int lb, Int ub,
                                  const std::string& identifier = "i") const {
     switch (state) {
@@ -146,9 +154,18 @@ class FznTestBase : public ::testing::Test {
     }
   }
 
+  [[nodiscard]] IntArg genIntArg(IntArgState state,
+                                 const std::string& identifier = "i") const {
+    return genIntArg(state, defaultLb, defaultUb, identifier);
+  }
+
   [[nodiscard]] IntArg genIntArg(Int lb, Int ub,
                                  const std::string& identifier = "b") const {
     return genIntArg(genIntArgState(), lb, ub, identifier);
+  }
+
+  [[nodiscard]] IntArg genIntArg(const std::string& identifier = "b") const {
+    return genIntArg(defaultLb, defaultUb, identifier);
   }
 
   [[nodiscard]] std::shared_ptr<IntVarArray> genIntVarArray(
@@ -177,6 +194,12 @@ class FznTestBase : public ::testing::Test {
       }
     }
     return vars;
+  }
+
+  [[nodiscard]] std::shared_ptr<IntVarArray> genIntVarArray(
+      size_t numVars, const std::string& identifier = "i_arr",
+      const std::string& varPrefix = "i_") const {
+    return genIntVarArray(numVars, defaultLb, defaultUb, identifier, varPrefix);
   }
 
   static BoolArgState genBoolArgState() {
