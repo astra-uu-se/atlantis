@@ -53,7 +53,6 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
 };
 
 TEST_P(IntLtNodeTestFixture, propagation) {
-  
   if (shouldBeMadeImplicit()) {
     return;
   }

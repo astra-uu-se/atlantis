@@ -39,7 +39,6 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
 };
 
 TEST_P(IntModNodeTestFixture, propagation) {
-
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

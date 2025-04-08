@@ -109,7 +109,6 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
 };
 
 TEST_P(BoolClauseNodeTestFixture, updateState) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -129,7 +128,6 @@ TEST_P(BoolClauseNodeTestFixture, updateState) {
 }
 
 TEST_P(BoolClauseNodeTestFixture, replace) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -144,7 +142,6 @@ TEST_P(BoolClauseNodeTestFixture, replace) {
 }
 
 TEST_P(BoolClauseNodeTestFixture, propagation) {
-  
   if (shouldBeMadeImplicit()) {
     return;
   }

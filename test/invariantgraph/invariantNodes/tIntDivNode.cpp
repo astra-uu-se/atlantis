@@ -49,7 +49,6 @@ class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
 };
 
 TEST_P(IntDivNodeTestFixture, replace) {
-
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -64,7 +63,6 @@ TEST_P(IntDivNodeTestFixture, replace) {
 }
 
 TEST_P(IntDivNodeTestFixture, propagation) {
-
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

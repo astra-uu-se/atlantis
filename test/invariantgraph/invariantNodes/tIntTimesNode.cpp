@@ -57,7 +57,6 @@ class IntTimesNodeTestFixture : public NodeTestBase<IntTimesNode> {
 };
 
 TEST_P(IntTimesNodeTestFixture, updateState) {
-
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -77,7 +76,6 @@ TEST_P(IntTimesNodeTestFixture, updateState) {
 }
 
 TEST_P(IntTimesNodeTestFixture, replace) {
-
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -92,7 +90,6 @@ TEST_P(IntTimesNodeTestFixture, replace) {
 }
 
 TEST_P(IntTimesNodeTestFixture, propagation) {
-
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

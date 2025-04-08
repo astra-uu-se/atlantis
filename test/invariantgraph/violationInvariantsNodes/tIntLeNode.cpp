@@ -50,7 +50,6 @@ class IntLeNodeTestFixture : public NodeTestBase<IntLeNode> {
 };
 
 TEST_P(IntLeNodeTestFixture, updateState) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -70,7 +69,6 @@ TEST_P(IntLeNodeTestFixture, updateState) {
 }
 
 TEST_P(IntLeNodeTestFixture, replace) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -85,7 +83,6 @@ TEST_P(IntLeNodeTestFixture, replace) {
 }
 
 TEST_P(IntLeNodeTestFixture, propagation) {
-  
   if (shouldBeMadeImplicit()) {
     return;
   }

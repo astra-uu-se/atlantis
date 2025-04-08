@@ -65,7 +65,6 @@ class ArrayVarElement2dNodeTestFixture
 };
 
 TEST_P(ArrayVarElement2dNodeTestFixture, replace) {
-
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -80,7 +79,6 @@ TEST_P(ArrayVarElement2dNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
-
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

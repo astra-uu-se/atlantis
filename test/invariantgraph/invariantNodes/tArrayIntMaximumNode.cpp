@@ -55,7 +55,6 @@ class ArrayIntMaximumNodeTestFixture
 };
 
 TEST_P(ArrayIntMaximumNodeTestFixture, updateState) {
-
   Int minVal = std::numeric_limits<Int>::max();
   Int maxVal = std::numeric_limits<Int>::min();
   for (const auto& var : inputVars) {
@@ -80,7 +79,6 @@ TEST_P(ArrayIntMaximumNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayIntMaximumNodeTestFixture, replace) {
-
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -95,7 +93,6 @@ TEST_P(ArrayIntMaximumNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
-
   Int lb = std::numeric_limits<Int>::min();
   for (const auto& var : inputVars) {
     lb = std::max(lb, varNode(var).lowerBound());

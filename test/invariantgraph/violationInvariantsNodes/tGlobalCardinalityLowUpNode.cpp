@@ -78,7 +78,6 @@ class GlobalCardinalityLowUpNodeTestFixture
 };
 
 TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
-  
   if (shouldBeMadeImplicit()) {
     return;
   }

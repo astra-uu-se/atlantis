@@ -5,8 +5,8 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-using ::testing::Contains;
 using ::testing::ContainerEq;
+using ::testing::Contains;
 
 class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
  public:

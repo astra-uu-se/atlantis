@@ -57,7 +57,6 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
 };
 
 TEST_P(CircuitNodeTestFixture, makeImplicit) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeMadeImplicit()) {
@@ -70,8 +69,8 @@ TEST_P(CircuitNodeTestFixture, makeImplicit) {
 }
 
 TEST_P(CircuitNodeTestFixture, propagation) {
-    // Currently, we don't allow probes/moves that result in
-               // undeterminable
+  // Currently, we don't allow probes/moves that result in
+  // undeterminable
   // dynamic cycles. When the invariant graph is topologically sorted, then an
   // exception should be thrown, and the corresponding probe/move should be
   // ignored/skipped.

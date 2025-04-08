@@ -99,7 +99,6 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
 };
 
 TEST_P(ArrayElement2dNodeTestFixture, updateState) {
-
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -115,7 +114,6 @@ TEST_P(ArrayElement2dNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayElement2dNodeTestFixture, replace) {
-
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -130,7 +128,6 @@ TEST_P(ArrayElement2dNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayElement2dNodeTestFixture, propagation) {
-
   _invariantGraph->construct();
   _invariantGraph->close();
 

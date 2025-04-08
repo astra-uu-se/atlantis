@@ -20,8 +20,7 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
       return std::ranges::all_of(
-          inputVars.begin(), inputVars.end(),
-          [&](const auto& identifier) {
+          inputVars.begin(), inputVars.end(), [&](const auto& identifier) {
             if (varNode(identifier).isFixed()) {
               return !varNode(identifier).inDomain(bool{true});
             }
@@ -29,8 +28,7 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
           });
     }
     return std::ranges::all_of(
-        inputVars.begin(), inputVars.end(),
-        [&](const auto& identifier) {
+        inputVars.begin(), inputVars.end(), [&](const auto& identifier) {
           return !varNode(identifier).inDomain(bool{true});
         });
   }
@@ -66,7 +64,6 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
 };
 
 TEST_P(ArrayBoolOrNodeTestFixture, updateState) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -86,7 +83,6 @@ TEST_P(ArrayBoolOrNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayBoolOrNodeTestFixture, replace) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -101,7 +97,6 @@ TEST_P(ArrayBoolOrNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
-  
   if (shouldBeMadeImplicit()) {
     return;
   }

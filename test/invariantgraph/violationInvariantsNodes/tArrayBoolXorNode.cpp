@@ -81,7 +81,6 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
 };
 
 TEST_P(ArrayBoolXorNodeTestFixture, updateState) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -101,7 +100,6 @@ TEST_P(ArrayBoolXorNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayBoolXorNodeTestFixture, replace) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -116,7 +114,6 @@ TEST_P(ArrayBoolXorNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayBoolXorNodeTestFixture, propagation) {
-  
   if (shouldBeMadeImplicit()) {
     return;
   }
