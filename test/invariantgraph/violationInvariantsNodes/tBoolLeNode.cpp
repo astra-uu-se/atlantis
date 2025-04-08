@@ -28,7 +28,8 @@ class BoolLeNodeTestFixture : public NodeTestBase<BoolLeNode> {
     return aVal && !bVal;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     aVarNodeId = retrieveBoolVarNode("a");
     if (shouldBeSubsumed() && _paramData.data == 2) {
       bVarNodeId = aVarNodeId;
@@ -67,7 +68,7 @@ class BoolLeNodeTestFixture : public NodeTestBase<BoolLeNode> {
 };
 
 TEST_P(BoolLeNodeTestFixture, updateState) {
-  generate();
+  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -84,7 +85,7 @@ TEST_P(BoolLeNodeTestFixture, updateState) {
 }
 
 TEST_P(BoolLeNodeTestFixture, replace) {
-  generate();
+  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -99,7 +100,7 @@ TEST_P(BoolLeNodeTestFixture, replace) {
 }
 
 TEST_P(BoolLeNodeTestFixture, propagation) {
-  generate();
+  
   if (shouldBeMadeImplicit()) {
     return;
   }

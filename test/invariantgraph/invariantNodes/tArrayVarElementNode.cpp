@@ -17,7 +17,8 @@ class ArrayVarElementNodeTestFixture
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data == 0; }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     varArray = {"x1", "x2", "x3"};
     if (isIntElement()) {
       retrieveIntVarNode(-2, 0, varArray.at(0));
@@ -43,7 +44,6 @@ class ArrayVarElementNodeTestFixture
 };
 
 TEST_P(ArrayVarElementNodeTestFixture, replace) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -58,7 +58,7 @@ TEST_P(ArrayVarElementNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayVarElementNodeTestFixture, propagation) {
-  generate();
+
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

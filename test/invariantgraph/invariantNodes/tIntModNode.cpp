@@ -27,7 +27,8 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
     return denominator != 0 ? numerator % denominator : 0;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     retrieveIntVarNode(0, 6, numeratorVar);
     retrieveIntVarNode(1, 10, denominatorVar);
     retrieveIntVarNode(0, 10, outputVar);
@@ -38,7 +39,7 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
 };
 
 TEST_P(IntModNodeTestFixture, propagation) {
-  generate();
+
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

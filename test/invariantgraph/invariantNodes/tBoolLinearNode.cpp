@@ -43,7 +43,8 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
     return sum;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     Int minSum = 0;
@@ -67,14 +68,14 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
 };
 
 TEST_P(BoolLinearNodeTestFixture, updateState) {
-  generate();
+
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
+    EXPECT_TRUE(varNode(outputVar).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).lowerBound();
+    const Int actual = varNode(outputVar).lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -83,7 +84,7 @@ TEST_P(BoolLinearNodeTestFixture, updateState) {
 }
 
 TEST_P(BoolLinearNodeTestFixture, propagation) {
-  generate();
+
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

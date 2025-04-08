@@ -19,10 +19,11 @@ class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
     if (isRegistered) {
       return _solver->currentValue(varId(inputVar)) * factor + offset;
     }
-    return varNode(inputVarNodeId).domain()->lowerBound() * factor + offset;
+    return varNode(inputVar).domain()->lowerBound() * factor + offset;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     const Int lb = -10;
     const Int ub = 10;
     retrieveIntVarNode(lb, ub, inputVar);
@@ -34,7 +35,6 @@ class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
 };
 
 TEST_P(IntScalarNodeTestFixture, updateState) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -42,7 +42,7 @@ TEST_P(IntScalarNodeTestFixture, updateState) {
     EXPECT_TRUE(varNode(inputVar).isFixed());
     EXPECT_TRUE(varNode(outputVar).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).domain()->lowerBound();
+    const Int actual = varNode(outputVar).domain()->lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -51,7 +51,6 @@ TEST_P(IntScalarNodeTestFixture, updateState) {
 }
 
 TEST_P(IntScalarNodeTestFixture, propagation) {
-  generate();
   if (shouldBeSubsumed()) {
     return;
   }

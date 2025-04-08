@@ -44,7 +44,8 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinNeNode> {
     return sum == bound;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     Int minSum = 0;
@@ -76,7 +77,7 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinNeNode> {
 };
 
 TEST_P(IntLinNeNodeTestFixture, updateState) {
-  generate();
+  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -100,7 +101,7 @@ TEST_P(IntLinNeNodeTestFixture, updateState) {
 }
 
 TEST_P(IntLinNeNodeTestFixture, propagation) {
-  generate();
+  
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

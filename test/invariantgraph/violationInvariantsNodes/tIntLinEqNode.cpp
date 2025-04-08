@@ -44,7 +44,8 @@ class IntLinEqNodeTestFixture : public NodeTestBase<IntLinEqNode> {
     return sum != bound;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     const Int lb = -2;
@@ -72,7 +73,7 @@ class IntLinEqNodeTestFixture : public NodeTestBase<IntLinEqNode> {
 };
 
 TEST_P(IntLinEqNodeTestFixture, updateState) {
-  generate();
+  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -96,7 +97,7 @@ TEST_P(IntLinEqNodeTestFixture, updateState) {
 }
 
 TEST_P(IntLinEqNodeTestFixture, propagation) {
-  generate();
+  
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

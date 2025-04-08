@@ -25,7 +25,8 @@ class IntLeNodeTestFixture : public NodeTestBase<IntLeNode> {
     return varNode(aVarNodeId).lowerBound() > varNode(bVarNodeId).lowerBound();
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     aVarNodeId = retrieveIntVarNode(-5, 5, "a");
     bVarNodeId = retrieveIntVarNode(-5, 5, "b");
     if (shouldBeSubsumed()) {
@@ -49,7 +50,7 @@ class IntLeNodeTestFixture : public NodeTestBase<IntLeNode> {
 };
 
 TEST_P(IntLeNodeTestFixture, updateState) {
-  generate();
+  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -69,7 +70,7 @@ TEST_P(IntLeNodeTestFixture, updateState) {
 }
 
 TEST_P(IntLeNodeTestFixture, replace) {
-  generate();
+  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -84,7 +85,7 @@ TEST_P(IntLeNodeTestFixture, replace) {
 }
 
 TEST_P(IntLeNodeTestFixture, propagation) {
-  generate();
+  
   if (shouldBeMadeImplicit()) {
     return;
   }

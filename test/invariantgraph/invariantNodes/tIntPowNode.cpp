@@ -50,7 +50,8 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
     return int_exp(baseVal, exponentVal);
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     retrieveIntVarNode(0, 10, baseVar);
     retrieveIntVarNode(0, 10, exponentVar);
     retrieveIntVarNode(0, 10, outputVar);
@@ -61,7 +62,7 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
 };
 
 TEST_P(IntPowNodeTestFixture, propagation) {
-  generate();
+
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

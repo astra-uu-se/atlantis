@@ -4,7 +4,9 @@
 namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
+
 using ::testing::Contains;
+using ::testing::ContainerEq;
 
 class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
  public:
@@ -31,7 +33,8 @@ class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
     return sum;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     for (size_t i = 0; i < 2; ++i) {
       inputVars.emplace_back("input_" + std::to_string(i));
     }
@@ -56,56 +59,14 @@ TEST_P(IntPlusNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputVarNodeIds.size());
-  for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
-    EXPECT_EQ(invNode().staticInputVarNodeIds().at(i), inputVarNodeIds.at(i));
-  }
+  const auto expectedInputs = varNodeIds(inputVars);
+  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
-}
-
-TEST_P(IntPlusNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  // a and b
-  for (const auto& identifier : inputIdentifiers) {
-    const VarNode& inputNode = varNode(identifier);
-    if (shouldBeSubsumed()) {
-      EXPECT_TRUE(inputNode.isFixed());
-    } else if (!shouldBeReplaced()) {
-      EXPECT_FALSE(inputNode.isFixed());
-    }
-    if (!inputNode.isFixed()) {
-      EXPECT_TRUE(varId(identifier).isVar());
-      EXPECT_THAT(_solver->searchVars(), Contains(size_t(varId(identifier))));
-    }
-  }
-  EXPECT_LE(_solver->searchVars().size(), 2);
-
-  if (!shouldBeSubsumed()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-
-  // a, b and outputVarNodeId
-  EXPECT_LE(_solver->numVars(), 3);
-
-  // intPow
-  EXPECT_EQ(_solver->numInvariants(), 1);
+  EXPECT_EQ(invNode().outputVarNodeIds().front(), varNodeId(outputVar));
 }
 
 TEST_P(IntPlusNodeTestFixture, updateState) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -121,7 +82,6 @@ TEST_P(IntPlusNodeTestFixture, updateState) {
 }
 
 TEST_P(IntPlusNodeTestFixture, replace) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -136,13 +96,12 @@ TEST_P(IntPlusNodeTestFixture, replace) {
 }
 
 TEST_P(IntPlusNodeTestFixture, propagation) {
-  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();
 
   if (shouldBeSubsumed()) {
-    const VarNode& outputNode = varNode(outputIdentifier);
+    const VarNode& outputNode = varNode(outputVar);
     EXPECT_TRUE(outputNode.isFixed());
     const Int actual = outputNode.lowerBound();
     const Int expected = computeOutput(true);

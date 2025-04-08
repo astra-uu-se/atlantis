@@ -44,7 +44,8 @@ class IntLinLeNodeTestFixture : public NodeTestBase<IntLinLeNode> {
     return sum > bound;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     const Int lb = -2;
@@ -72,7 +73,7 @@ class IntLinLeNodeTestFixture : public NodeTestBase<IntLinLeNode> {
 };
 
 TEST_P(IntLinLeNodeTestFixture, propagation) {
-  generate();
+  
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

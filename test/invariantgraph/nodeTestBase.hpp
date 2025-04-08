@@ -152,24 +152,24 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return ids;
   }
 
-  [[nodiscard]] VarNodeId retrieveIntVarNode(
+  VarNodeId retrieveIntVarNode(
       Int lb, Int ub, const std::string& identifier) const {
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(lb, ub), identifier);
   }
 
-  [[nodiscard]] VarNodeId retrieveIntVarNode(
+  VarNodeId retrieveIntVarNode(
       std::vector<Int>&& vals, const std::string& identifier) const {
     assert(!vals.empty());
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(std::move(vals)), identifier);
   }
 
-  [[nodiscard]] VarNodeId retrieveIntVarNode(Int val) const {
+  VarNodeId retrieveIntVarNode(Int val) const {
     return _invariantGraph->retrieveIntVarNode(val);
   }
 
-  [[nodiscard]] VarNodeId retrieveBoolVarNode(
+  VarNodeId retrieveBoolVarNode(
       const std::string& identifier) const {
     return _invariantGraph->retrieveBoolVarNode(identifier);
   }
@@ -186,12 +186,30 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->varNode(varNodeId);
   }
 
-  propagation::VarViewId varId(const std::string& identifier) {
-    return varNode(identifier).varId();
+  [[nodiscard]] propagation::VarViewId varId(const std::string& identifier) const {
+    return _invariantGraph->varNodeConst(identifier).varId();
   }
 
-  [[nodiscard]] propagation::VarViewId varId(VarNodeId varNodeId) {
-    return varNode(varNodeId).varId();
+  [[nodiscard]] propagation::VarViewId varId(VarNodeId varNodeId) const {
+    return _invariantGraph->varNodeConst(varNodeId).varId();
+  }
+
+  [[nodiscard]] std::vector<propagation::VarViewId> varIds(const std::vector<std::string>& identifiers) const {
+    std::vector<propagation::VarViewId> ids;
+    ids.reserve(identifiers.size());
+    for (const auto& identifier : identifiers) {
+      ids.emplace_back(varId(identifier));
+    }
+    return ids;
+  }
+
+  [[nodiscard]] std::vector<propagation::VarViewId> varIds(const std::vector<VarNodeId>& varNodeIds) const {
+    std::vector<propagation::VarViewId> ids;
+    ids.reserve(varNodeIds.size());
+    for (const auto& id : varNodeIds) {
+      ids.emplace_back(varId(id));
+    }
+    return ids;
   }
 
   void addInputVarsToSolver() {

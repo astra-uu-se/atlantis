@@ -31,7 +31,8 @@ class ArrayIntMinimumNodeTestFixture
     return val;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     std::vector<std::pair<Int, Int>> bounds;
 
     if (shouldBeSubsumed()) {
@@ -54,7 +55,7 @@ class ArrayIntMinimumNodeTestFixture
 };
 
 TEST_P(ArrayIntMinimumNodeTestFixture, updateState) {
-  generate();
+
   Int minVal = std::numeric_limits<Int>::min();
   Int maxVal = std::numeric_limits<Int>::max();
   for (const auto& var : inputVars) {
@@ -68,8 +69,7 @@ TEST_P(ArrayIntMinimumNodeTestFixture, updateState) {
     // TODO: disabled for the MZN challange. This should be computed by Gecode.
     // EXPECT_TRUE(_invariantGraph->varNode(outputVarNodeId).isFixed());
     [[maybe_unused]] const Int expected = computeOutput();
-    [[maybe_unused]] const Int actual =
-        _invariantGraph->varNode(outputVarNodeId).upperBound();
+    [[maybe_unused]] const Int actual = varNode(outputVar).upperBound();
     // TODO: disabled for the MZN challange. This should be computed by Gecode.
     // EXPECT_EQ(expected, actual);
   } else {
@@ -80,7 +80,7 @@ TEST_P(ArrayIntMinimumNodeTestFixture, updateState) {
 }
 
 TEST_P(ArrayIntMinimumNodeTestFixture, replace) {
-  generate();
+
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -95,7 +95,7 @@ TEST_P(ArrayIntMinimumNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayIntMinimumNodeTestFixture, propagation) {
-  generate();
+
   Int ub = std::numeric_limits<Int>::max();
   for (const auto& var : inputVars) {
     ub = std::min(ub, varNode(var).upperBound());

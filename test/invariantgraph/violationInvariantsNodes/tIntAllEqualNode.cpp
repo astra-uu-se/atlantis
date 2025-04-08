@@ -77,7 +77,8 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
     return false;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     numInputs = 4;
 
     for (Int i = 0; i < numInputs; ++i) {
@@ -109,7 +110,8 @@ TEST_P(IntAllEqualNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_THAT(inputVarNodeIds, ContainerEq(invNode().staticInputVarNodeIds()));
+  const auto expectedInputs = varNodeIds(inputVars);
+  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
   if (!isReified()) {
     EXPECT_FALSE(invNode().isReified());
@@ -117,7 +119,7 @@ TEST_P(IntAllEqualNodeTestFixture, construction) {
   } else {
     EXPECT_TRUE(invNode().isReified());
     EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), reifiedVarNodeId);
+    EXPECT_EQ(invNode().reifiedViolationNodeId(), varNodeId(reifiedVar));
   }
 }
 
@@ -136,10 +138,10 @@ TEST_P(IntAllEqualNodeTestFixture, application) {
   invNode().registerNode();
   _solver->close();
 
-  for (const auto& inputVarNodeId : inputVarNodeIds) {
-    EXPECT_TRUE(varId(inputVarNodeId).isVar());
+  for (const auto& identifier : inputVars) {
+    EXPECT_TRUE(varId(identifier).isVar());
     EXPECT_THAT(_solver->searchVars(),
-                ::testing::Contains(size_t(varId(inputVarNodeId))));
+                ::testing::Contains(size_t(varId(identifier))));
   }
 
   EXPECT_GE(_solver->numVars(), size_t(invNode().violationVarId()));
@@ -148,7 +150,7 @@ TEST_P(IntAllEqualNodeTestFixture, application) {
 }
 
 TEST_P(IntAllEqualNodeTestFixture, updateState) {
-  generate();
+  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -168,7 +170,7 @@ TEST_P(IntAllEqualNodeTestFixture, updateState) {
 }
 
 TEST_P(IntAllEqualNodeTestFixture, propagation) {
-  generate();
+  
   if (shouldBeMadeImplicit()) {
     return;
   }

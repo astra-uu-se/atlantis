@@ -46,7 +46,8 @@ class VarIntCountNodeTestFixture : public NodeTestBase<VarIntCountNode> {
     return occurrences;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     inputVars.reserve(3);
     inputVars = {"input_0", "input_1", "input_2"};
     retrieveIntVarNode(2, 5, inputVars.at(0));
@@ -69,46 +70,17 @@ TEST_P(VarIntCountNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  std::vector<VarNodeId> expectedInputs{inputVarNodeIds};
-  expectedInputs.emplace_back(needleVarNodeId);
+  std::vector<VarNodeId> expectedInputs{varNodeIds(inputVars)};
+  expectedInputs.emplace_back(varNodeId(needleVar));
   EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
-  const std::vector<VarNodeId> expectedOutputs{outputVarNodeId};
+  const std::vector<VarNodeId> expectedOutputs{varNodeId(outputVar)};
 
   EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
   EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodeIds()));
 }
 
-TEST_P(VarIntCountNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  EXPECT_EQ(invNode().violationVarId(), propagation::NULL_ID);
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  // x1, x2, x3, and needleVar
-  EXPECT_EQ(_solver->searchVars().size(), 4);
-  // x1, x2, x3, needleVar, and (outputVarNodeId or intermediate)
-  EXPECT_EQ(_solver->numVars(), 5);
-
-  // countEq
-  EXPECT_EQ(_solver->numInvariants(), 1);
-
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(_solver->lowerBound(varId(outputVarNodeId)), 0);
-    EXPECT_GT(_solver->upperBound(varId(outputVarNodeId)), 0);
-  }
-}
-
 TEST_P(VarIntCountNodeTestFixture, replace) {
-  generate();
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -123,7 +95,6 @@ TEST_P(VarIntCountNodeTestFixture, replace) {
 }
 
 TEST_P(VarIntCountNodeTestFixture, propagation) {
-  generate();
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

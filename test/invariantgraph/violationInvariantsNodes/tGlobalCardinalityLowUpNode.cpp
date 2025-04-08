@@ -57,7 +57,8 @@ class GlobalCardinalityLowUpNodeTestFixture
     return false;
   }
 
-  void generate() {
+  void SetUp() {
+    NodeTestBase::SetUp();
     inputVars = {"x_0", "x_1"};
     retrieveIntVarNode(5, 10, inputVars.at(0));
 
@@ -77,7 +78,7 @@ class GlobalCardinalityLowUpNodeTestFixture
 };
 
 TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
-  generate();
+  
   if (shouldBeMadeImplicit()) {
     return;
   }
