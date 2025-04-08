@@ -105,7 +105,6 @@ TEST_P(ArrayBoolAndNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayBoolAndNodeTestFixture, propagation) {
-
   if (shouldBeMadeImplicit()) {
     return;
   }

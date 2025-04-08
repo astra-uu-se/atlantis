@@ -73,7 +73,6 @@ class IntLinLeNodeTestFixture : public NodeTestBase<IntLinLeNode> {
 };
 
 TEST_P(IntLinLeNodeTestFixture, propagation) {
-  
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

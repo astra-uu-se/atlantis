@@ -68,7 +68,6 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
 };
 
 TEST_P(BoolLinearNodeTestFixture, updateState) {
-
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -84,7 +83,6 @@ TEST_P(BoolLinearNodeTestFixture, updateState) {
 }
 
 TEST_P(BoolLinearNodeTestFixture, propagation) {
-
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

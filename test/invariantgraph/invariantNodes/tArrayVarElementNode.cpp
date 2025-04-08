@@ -58,7 +58,6 @@ TEST_P(ArrayVarElementNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayVarElementNodeTestFixture, propagation) {
-
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

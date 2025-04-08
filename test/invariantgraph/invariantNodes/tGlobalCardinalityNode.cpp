@@ -67,7 +67,6 @@ class GlobalCardinalityNodeTestFixture
 };
 
 TEST_P(GlobalCardinalityNodeTestFixture, updateState) {
-
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -89,7 +88,6 @@ TEST_P(GlobalCardinalityNodeTestFixture, updateState) {
 }
 
 TEST_P(GlobalCardinalityNodeTestFixture, replace) {
-
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -104,7 +102,6 @@ TEST_P(GlobalCardinalityNodeTestFixture, replace) {
 }
 
 TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
-
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

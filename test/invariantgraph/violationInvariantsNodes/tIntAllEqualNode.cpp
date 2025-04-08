@@ -150,7 +150,6 @@ TEST_P(IntAllEqualNodeTestFixture, application) {
 }
 
 TEST_P(IntAllEqualNodeTestFixture, updateState) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -170,7 +169,6 @@ TEST_P(IntAllEqualNodeTestFixture, updateState) {
 }
 
 TEST_P(IntAllEqualNodeTestFixture, propagation) {
-  
   if (shouldBeMadeImplicit()) {
     return;
   }

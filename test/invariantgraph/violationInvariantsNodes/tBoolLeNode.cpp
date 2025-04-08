@@ -68,7 +68,6 @@ class BoolLeNodeTestFixture : public NodeTestBase<BoolLeNode> {
 };
 
 TEST_P(BoolLeNodeTestFixture, updateState) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -85,7 +84,6 @@ TEST_P(BoolLeNodeTestFixture, updateState) {
 }
 
 TEST_P(BoolLeNodeTestFixture, replace) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeReplaced()) {
@@ -100,7 +98,6 @@ TEST_P(BoolLeNodeTestFixture, replace) {
 }
 
 TEST_P(BoolLeNodeTestFixture, propagation) {
-  
   if (shouldBeMadeImplicit()) {
     return;
   }

@@ -71,7 +71,6 @@ class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinEqNode> {
 };
 
 TEST_P(BoolLinEqNodeTestFixture, propagation) {
-  
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

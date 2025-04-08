@@ -73,7 +73,6 @@ class IntLinEqNodeTestFixture : public NodeTestBase<IntLinEqNode> {
 };
 
 TEST_P(IntLinEqNodeTestFixture, updateState) {
-  
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
@@ -97,7 +96,6 @@ TEST_P(IntLinEqNodeTestFixture, updateState) {
 }
 
 TEST_P(IntLinEqNodeTestFixture, propagation) {
-  
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

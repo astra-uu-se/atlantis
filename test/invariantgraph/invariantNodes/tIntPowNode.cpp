@@ -62,7 +62,6 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
 };
 
 TEST_P(IntPowNodeTestFixture, propagation) {
-
   propagation::Solver solver;
   _invariantGraph->construct();
   _invariantGraph->close();

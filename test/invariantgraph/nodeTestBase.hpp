@@ -152,14 +152,14 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return ids;
   }
 
-  VarNodeId retrieveIntVarNode(
-      Int lb, Int ub, const std::string& identifier) const {
+  VarNodeId retrieveIntVarNode(Int lb, Int ub,
+                               const std::string& identifier) const {
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(lb, ub), identifier);
   }
 
-  VarNodeId retrieveIntVarNode(
-      std::vector<Int>&& vals, const std::string& identifier) const {
+  VarNodeId retrieveIntVarNode(std::vector<Int>&& vals,
+                               const std::string& identifier) const {
     assert(!vals.empty());
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(std::move(vals)), identifier);
@@ -169,8 +169,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->retrieveIntVarNode(val);
   }
 
-  VarNodeId retrieveBoolVarNode(
-      const std::string& identifier) const {
+  VarNodeId retrieveBoolVarNode(const std::string& identifier) const {
     return _invariantGraph->retrieveBoolVarNode(identifier);
   }
 
@@ -186,7 +185,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->varNode(varNodeId);
   }
 
-  [[nodiscard]] propagation::VarViewId varId(const std::string& identifier) const {
+  [[nodiscard]] propagation::VarViewId varId(
+      const std::string& identifier) const {
     return _invariantGraph->varNodeConst(identifier).varId();
   }
 
@@ -194,7 +194,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->varNodeConst(varNodeId).varId();
   }
 
-  [[nodiscard]] std::vector<propagation::VarViewId> varIds(const std::vector<std::string>& identifiers) const {
+  [[nodiscard]] std::vector<propagation::VarViewId> varIds(
+      const std::vector<std::string>& identifiers) const {
     std::vector<propagation::VarViewId> ids;
     ids.reserve(identifiers.size());
     for (const auto& identifier : identifiers) {
@@ -203,7 +204,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return ids;
   }
 
-  [[nodiscard]] std::vector<propagation::VarViewId> varIds(const std::vector<VarNodeId>& varNodeIds) const {
+  [[nodiscard]] std::vector<propagation::VarViewId> varIds(
+      const std::vector<VarNodeId>& varNodeIds) const {
     std::vector<propagation::VarViewId> ids;
     ids.reserve(varNodeIds.size());
     for (const auto& id : varNodeIds) {
