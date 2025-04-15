@@ -41,7 +41,7 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
     return false;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.clear();
     inputVars.reserve(numInputs);
@@ -51,8 +51,12 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
     }
 
     if (shouldBeSubsumed()) {
-      for (const auto& var : inputVars) {
-        varNode(var).fixToValue(!shouldFail());
+      if (isReified()) {
+        for (const auto& var : inputVars) {
+          varNode(var).fixToValue(true);
+        }
+      } else if (!shouldHold()) {
+        varNode(inputVars.front()).fixToValue(false);
       }
     } else if (shouldBeReplaced()) {
       for (size_t i = 1; i < inputVars.size(); ++i) {
@@ -176,11 +180,14 @@ TEST_P(ArrayBoolAndNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     ArrayBoolAndNodeTest, ArrayBoolAndNodeTestFixture,
-    ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
-                      ParamData{InvariantNodeAction::REPLACE,
+    ::testing::Values(ParamData{InvariantNodeAction::REPLACE,
                                 ViolationInvariantType::REIFIED},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_TRUE},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_FALSE},
+                                ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::REIFIED},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED}));
 

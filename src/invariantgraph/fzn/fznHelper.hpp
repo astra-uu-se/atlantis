@@ -12,7 +12,8 @@ class FznInvariantGraph;
 
 namespace atlantis::invariantgraph::fzn {
 
-std::string to_string(const std::type_info& t, bool isVar);
+std::string arg_type_to_string(const std::type_info& t, bool isVar);
+std::string arg_type_to_string(const fznparser::Arg& arg);
 
 bool hasSuffix(const std::string& str, const std::string& suffix);
 
@@ -73,50 +74,50 @@ std::shared_ptr<T> getArgArray(const fznparser::Arg& argArray) {
   return std::get<std::shared_ptr<T>>(argArray);
 }
 
-#define FZN_CONSTRAINT_TYPE_CHECK(constraint, index, type, isVar)            \
-  do {                                                                       \
-    if (constraint.arguments().size() <= index) {                            \
-      throw FznArgumentException("Constraint " + constraint.identifier() +   \
-                                 " has too few arguments.");                 \
-    }                                                                        \
-    if (!std::holds_alternative<type>(constraint.arguments().at(index))) {   \
-      throw FznArgumentException(                                            \
-          "Invalid argument for constraint " + constraint.identifier() +     \
-          " at position" + std::to_string(index) + ": expected \"" +         \
-          to_string(typeid(type), isVar) + "\" but got \"" +                 \
-          to_string(typeid(constraint.arguments().at(index)), isVar) + '.'); \
-    }                                                                        \
+#define FZN_CONSTRAINT_TYPE_CHECK(constraint, index, type, isVar)          \
+  do {                                                                     \
+    if (constraint.arguments().size() <= index) {                          \
+      throw FznArgumentException("Constraint " + constraint.identifier() + \
+                                 " has too few arguments.");               \
+    }                                                                      \
+    if (!std::holds_alternative<type>(constraint.arguments().at(index))) { \
+      throw FznArgumentException(                                          \
+          "Invalid argument for constraint " + constraint.identifier() +   \
+          " at position " + std::to_string(index) + ": expected \"" +      \
+          arg_type_to_string(typeid(type), isVar) + "\" but got \"" +      \
+          arg_type_to_string(constraint.arguments().at(index)) + "\".");   \
+    }                                                                      \
   } while (false);
 
-#define FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, index, arrayType,        \
-                                        isVarArray)                          \
-  do {                                                                       \
-    if (constraint.arguments().size() <= index) {                            \
-      throw FznArgumentException("Constraint " + constraint.identifier() +   \
-                                 " has too few arguments.");                 \
-    }                                                                        \
-    if (constraint.arguments().at(index).isEmptyArray()) {                   \
-      return true;                                                           \
-    }                                                                        \
-    if (!std::holds_alternative<std::shared_ptr<arrayType>>(                 \
-            constraint.arguments().at(index))) {                             \
-      throw FznArgumentException(                                            \
-          "Invalid argument for constraint " + constraint.identifier() +     \
-          " at position " + std::to_string(index) + ": expected \"" +        \
-          to_string(typeid(arrayType), isVarArray) + "\" but got \"" +       \
-          to_string(typeid(constraint.arguments().at(index)), isVarArray) +  \
-          "\".");                                                            \
-    }                                                                        \
-    const auto& array = std::get<std::shared_ptr<arrayType>>(                \
-        constraint.arguments().at(index));                                   \
-    if (!isVarArray && !array->isParArray()) {                               \
-      throw FznArgumentException(                                            \
-          "Invalid argument for constraint " + constraint.identifier() +     \
-          " at position" + std::to_string(index) + ": expected \"" +         \
-          to_string(typeid(arrayType), isVarArray) + "\" but got \"" +       \
-          to_string(typeid(constraint.arguments().at(index)), !isVarArray) + \
-          "\".");                                                            \
-    }                                                                        \
+#define FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, index, arrayType,      \
+                                        isVarArray)                        \
+  do {                                                                     \
+    if (constraint.arguments().size() <= index) {                          \
+      throw FznArgumentException("Constraint " + constraint.identifier() + \
+                                 " has too few arguments.");               \
+    }                                                                      \
+    if (constraint.arguments().at(index).isEmptyArray()) {                 \
+      break;                                                               \
+    }                                                                      \
+    if (!std::holds_alternative<std::shared_ptr<arrayType>>(               \
+            constraint.arguments().at(index))) {                           \
+      throw FznArgumentException(                                          \
+          "Invalid argument for constraint " + constraint.identifier() +   \
+          " at position " + std::to_string(index) + ": expected \"" +      \
+          arg_type_to_string(typeid(arrayType), isVarArray) +              \
+          "\" but got \"" +                                                \
+          arg_type_to_string(constraint.arguments().at(index)) + "\".");   \
+    }                                                                      \
+    const auto& array = std::get<std::shared_ptr<arrayType>>(              \
+        constraint.arguments().at(index));                                 \
+    if (!isVarArray && !array->isParArray()) {                             \
+      throw FznArgumentException(                                          \
+          "Invalid argument for constraint " + constraint.identifier() +   \
+          " at position " + std::to_string(index) + ": expected \"" +      \
+          arg_type_to_string(typeid(arrayType), isVarArray) +              \
+          "\" but got \"" +                                                \
+          arg_type_to_string(constraint.arguments().at(index)) + "\".");   \
+    }                                                                      \
   } while (false);
 
 }  // namespace atlantis::invariantgraph::fzn
