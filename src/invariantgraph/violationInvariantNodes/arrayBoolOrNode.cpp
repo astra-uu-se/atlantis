@@ -46,6 +46,14 @@ void ArrayBoolOrNode::init(InvariantNodeId id) {
 
 void ArrayBoolOrNode::updateState() {
   ViolationInvariantNode::updateState();
+  if (!isReified() && !shouldHold()) {
+    for (const auto& id : staticInputVarNodeIds()) {
+      invariantGraph().varNode(id).fixToValue(bool{false});
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
   // remove fixed inputs that are false:
@@ -53,12 +61,13 @@ void ArrayBoolOrNode::updateState() {
     if (invariantGraphConst().varNodeConst(id).isFixed()) {
       if (invariantGraphConst().varNodeConst(id).inDomain(bool{false})) {
         varsToRemove.emplace_back(id);
-      } else if (isReified()) {
-        fixReified(true);
-      } else if (!shouldHold()) {
-        throw InconsistencyException(
-            "ArrayBoolOrNode::updateState constraint is violated");
       } else {
+        if (isReified()) {
+          fixReified(true);
+        } else if (!shouldHold()) {
+          throw InconsistencyException(
+              "ArrayBoolOrNode::updateState constraint is violated");
+        }
         setState(InvariantNodeState::SUBSUMED);
         return;
       }
@@ -71,7 +80,7 @@ void ArrayBoolOrNode::updateState() {
 
   if (staticInputVarNodeIds().empty()) {
     if (isReified()) {
-      fixReified(true);
+      fixReified(false);
     } else if (shouldHold()) {
       throw InconsistencyException(
           "ArrayBoolOrNode::updateState constraint is violated");
@@ -86,34 +95,25 @@ void ArrayBoolOrNode::updateState() {
 }
 
 bool ArrayBoolOrNode::canBeReplaced() const {
-  return state() == InvariantNodeState::ACTIVE &&
-         staticInputVarNodeIds().size() <= 1;
+  return state() == InvariantNodeState::ACTIVE && isReified() &&
+         staticInputVarNodeIds().size() == 1;
 }
 
 bool ArrayBoolOrNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (staticInputVarNodeIds().size() == 1) {
-    if (isReified()) {
-      invariantGraph().replaceVarNode(reifiedViolationNodeId(),
-                                      staticInputVarNodeIds().front());
-    }
+  if (staticInputVarNodeIds().size() == 1 && isReified()) {
+    invariantGraph().replaceVarNode(reifiedViolationNodeId(),
+                                    staticInputVarNodeIds().front());
   }
   return true;
 }
 
 void ArrayBoolOrNode::registerOutputVars() {
-  if (staticInputVarNodeIds().size() > 1 &&
+  if (staticInputVarNodeIds().size() > 1 && shouldHold() &&
       violationVarId() == propagation::NULL_ID) {
-    if (shouldHold()) {
-      registerViolation();
-    } else {
-      assert(!isReified());
-      _intermediate = solver().makeIntVar(0, 0, 0);
-      setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
-          solver(), _intermediate, 0));
-    }
+    registerViolation();
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
@@ -124,12 +124,12 @@ void ArrayBoolOrNode::registerOutputVars() {
 }
 
 void ArrayBoolOrNode::registerNode() {
-  if (staticInputVarNodeIds().size() <= 1) {
+  if (staticInputVarNodeIds().size() <= 1 || (!isReified() && !shouldHold())) {
     return;
   }
   assert(violationVarId() != propagation::NULL_ID);
-  assert(shouldHold() || _intermediate != propagation::NULL_ID);
-  assert(shouldHold() ? violationVarId().isVar() : _intermediate.isVar());
+  assert(shouldHold());
+  assert(violationVarId().isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   std::ranges::transform(
@@ -139,12 +139,10 @@ void ArrayBoolOrNode::registerNode() {
 
   if (solverVars.size() == 2) {
     solver().makeInvariant<propagation::BoolOr>(
-        solver(), !shouldHold() ? _intermediate : violationVarId(),
-        solverVars.front(), solverVars.back());
+        solver(), violationVarId(), solverVars.front(), solverVars.back());
   } else {
-    solver().makeInvariant<propagation::Min>(
-        solver(), !shouldHold() ? _intermediate : violationVarId(),
-        std::move(solverVars), Int{0});
+    solver().makeInvariant<propagation::Min>(solver(), violationVarId(),
+                                             std::move(solverVars), Int{0});
   }
 }
 

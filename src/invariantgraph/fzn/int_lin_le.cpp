@@ -22,14 +22,6 @@ bool int_lin_le(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
                 Int bound) {
   verifyInputs(coeffs, inputs);
-  if (coeffs.empty()) {
-    if (bound >= 0) {
-      return true;
-    }
-    throw FznArgumentException(
-        "int_lin_le constraint: total of empty arrays is always greater than " +
-        std::to_string(bound));
-  }
 
   graph.addInvariantNode(std::make_shared<IntLinLeNode>(
       graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound));

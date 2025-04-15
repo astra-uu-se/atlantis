@@ -65,7 +65,7 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
     return true;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     asVars.clear();
     bsVars.clear();
@@ -85,15 +85,19 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
     for (Int i = 0; i < numAs; ++i) {
       asVars.emplace_back("a_" + std::to_string(i));
       retrieveBoolVarNode(asVars.back());
-      if (shouldBeSubsumed() && (_paramData.data != 0 || i != 0)) {
-        varNode(asVars.back()).fixToValue(!shouldFail());
+      if (shouldBeSubsumed()) {
+        if ((isReified() || shouldHold()) && (_paramData.data != 0 || i != 0)) {
+          varNode(asVars.back()).fixToValue(!shouldFail());
+        }
       }
     }
     for (Int i = 0; i < numBs; ++i) {
       bsVars.emplace_back("b_" + std::to_string(i));
       retrieveBoolVarNode(bsVars.back());
-      if (shouldBeSubsumed() && (_paramData.data != 1 || i != 0)) {
-        varNode(bsVars.back()).fixToValue(shouldFail());
+      if (shouldBeSubsumed()) {
+        if ((isReified() || shouldHold()) && (_paramData.data != 1 || i != 0)) {
+          varNode(bsVars.back()).fixToValue(shouldFail());
+        }
       }
     }
 
@@ -234,10 +238,6 @@ INSTANTIATE_TEST_CASE_P(
                                 ViolationInvariantType::CONSTANT_TRUE, int{0}},
                       ParamData{InvariantNodeAction::REPLACE,
                                 ViolationInvariantType::CONSTANT_TRUE, int{1}},
-                      ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::CONSTANT_FALSE, int{0}},
-                      ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::CONSTANT_FALSE, int{1}},
                       ParamData{InvariantNodeAction::REPLACE,
                                 ViolationInvariantType::REIFIED}));
 

@@ -33,7 +33,7 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
         });
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.clear();
     inputVars.reserve(numInputVars);
@@ -43,8 +43,12 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
     }
 
     if (shouldBeSubsumed()) {
-      for (size_t i = 0; i < inputVars.size(); ++i) {
-        varNode(inputVars.at(i)).fixToValue(!shouldFail() && i == 0);
+      if (isReified()) {
+        for (size_t i = 0; i < inputVars.size(); ++i) {
+          varNode(inputVars.at(i)).fixToValue(false);
+        }
+      } else if (shouldHold()) {
+        varNode(inputVars.front()).fixToValue(true);
       }
     } else if (shouldBeReplaced()) {
       for (size_t i = 1; i < inputVars.size(); ++i) {
@@ -173,9 +177,11 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::REPLACE,
                                 ViolationInvariantType::REIFIED},
+                      ParamData{InvariantNodeAction::SUBSUME},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_TRUE},
-                      ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED}));
 
 }  // namespace atlantis::testing

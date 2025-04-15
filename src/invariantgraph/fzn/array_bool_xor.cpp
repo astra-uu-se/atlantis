@@ -20,6 +20,7 @@ bool array_bool_xor(FznInvariantGraph& graph,
   if (constraint.identifier() != "array_bool_xor") {
     return false;
   }
+  verifyNumArguments(constraint, 1);
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true)
   return array_bool_xor(graph, getArgArray<fznparser::BoolVarArray>(
                                    constraint.arguments().at(0)));

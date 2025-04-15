@@ -45,6 +45,14 @@ void ArrayBoolAndNode::init(InvariantNodeId id) {
 
 void ArrayBoolAndNode::updateState() {
   ViolationInvariantNode::updateState();
+  if (!isReified() && shouldHold()) {
+    for (const auto& vId : staticInputVarNodeIds()) {
+      invariantGraph().varNode(vId).fixToValue(bool{true});
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
   // remove fixed inputs that are true:
@@ -68,7 +76,7 @@ void ArrayBoolAndNode::updateState() {
     removeStaticInputVarNode(id);
   }
 
-  if (staticInputVarNodeIds().size() == 0) {
+  if (staticInputVarNodeIds().empty()) {
     if (isReified()) {
       fixReified(true);
     } else if (!shouldHold()) {
@@ -85,19 +93,17 @@ void ArrayBoolAndNode::updateState() {
 }
 
 bool ArrayBoolAndNode::canBeReplaced() const {
-  return state() == InvariantNodeState::ACTIVE &&
-         staticInputVarNodeIds().size() <= 1;
+  return state() == InvariantNodeState::ACTIVE && isReified() &&
+         staticInputVarNodeIds().size() == 1;
 }
 
 bool ArrayBoolAndNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (staticInputVarNodeIds().size() == 1) {
-    if (isReified()) {
-      invariantGraph().replaceVarNode(reifiedViolationNodeId(),
-                                      staticInputVarNodeIds().front());
-    }
+  if (staticInputVarNodeIds().size() == 1 && isReified()) {
+    invariantGraph().replaceVarNode(reifiedViolationNodeId(),
+                                    staticInputVarNodeIds().front());
   }
   return true;
 }
