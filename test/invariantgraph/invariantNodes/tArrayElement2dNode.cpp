@@ -8,7 +8,7 @@ using namespace atlantis::invariantgraph;
 class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
  public:
   std::vector<std::vector<Int>> parMatrix{std::vector<Int>{-2, -1},
-                                          std::vector<Int>{0, 1}};
+                                          std::vector<Int>{1, 0}};
 
   std::string idx1Var{"idx1"};
   std::string idx2Var{"idx2"};

@@ -6,8 +6,8 @@ namespace atlantis::invariantgraph {
 
 class ArrayElement2dNode : public InvariantNode {
   std::vector<std::vector<Int>> _parMatrix;
-  Int _offset1;
-  Int _offset2;
+  Int _rowOffset;
+  Int _colOffset;
   bool _isIntMatrix;
 
  public:
@@ -31,11 +31,11 @@ class ArrayElement2dNode : public InvariantNode {
 
   void registerNode() override;
 
-  [[nodiscard]] VarNodeId idx1() const noexcept {
+  [[nodiscard]] VarNodeId rowIdx() const noexcept {
     return staticInputVarNodeIds().front();
   }
 
-  [[nodiscard]] VarNodeId idx2() const noexcept {
+  [[nodiscard]] VarNodeId colIdx() const noexcept {
     return staticInputVarNodeIds().back();
   }
 

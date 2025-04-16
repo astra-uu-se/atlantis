@@ -11,11 +11,11 @@ class FznInvariantGraph;
 
 namespace atlantis::invariantgraph::fzn {
 
-bool array_bool_element2d(FznInvariantGraph&, const fznparser::IntArg& idx1,
-                          const fznparser::IntArg& idx2,
+bool array_bool_element2d(FznInvariantGraph&, const fznparser::IntArg& rowIndex,
+                          const fznparser::IntArg& colIndex,
                           std::vector<bool>&& parVector,
                           const fznparser::BoolArg& output, Int numRows,
-                          Int offset1, Int offset2);
+                          Int rowOffset, Int colOffset);
 
 bool array_bool_element2d(FznInvariantGraph&, const fznparser::Constraint&);
 

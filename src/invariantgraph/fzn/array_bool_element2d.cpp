@@ -9,26 +9,26 @@
 namespace atlantis::invariantgraph::fzn {
 
 bool array_bool_element2d(FznInvariantGraph& graph,
-                          const fznparser::IntArg& idx1,
-                          const fznparser::IntArg& idx2,
+                          const fznparser::IntArg& rowIndex,
+                          const fznparser::IntArg& colIndex,
                           std::vector<bool>&& parVector,
                           const fznparser::BoolArg& output, Int numRows,
-                          Int offset1, Int offset2) {
+                          Int rowOffset, Int colOffset) {
   if (numRows <= 0 || parVector.size() % numRows != 0) {
     throw FznArgumentException(
         "Constraint array_bool_element2d the number of rows must be strictly "
         "positive and a divide the number of elements in the array.");
   }
 
-  if (offset1 >
-      (idx1.isParameter() ? idx1.toParameter() : idx1.var()->lowerBound())) {
+  if (rowOffset > (rowIndex.isParameter() ? rowIndex.toParameter()
+                                          : rowIndex.var()->lowerBound())) {
     throw FznArgumentException(
         "Constraint array_bool_element2d the first offset must be smaller than "
         "the lower bound of the first index var.");
   }
 
-  if (offset2 >
-      (idx2.isParameter() ? idx2.toParameter() : idx2.var()->lowerBound())) {
+  if (colOffset > (colIndex.isParameter() ? colIndex.toParameter()
+                                          : colIndex.var()->lowerBound())) {
     throw FznArgumentException(
         "Constraint array_bool_element2d the second offset must be smaller "
         "than the lower bound of the second index var.");
@@ -44,8 +44,9 @@ bool array_bool_element2d(FznInvariantGraph& graph,
   }
 
   graph.addInvariantNode(std::make_shared<ArrayElement2dNode>(
-      graph, graph.retrieveVarNode(idx1), graph.retrieveVarNode(idx2),
-      std::move(parMatrix), graph.retrieveVarNode(output), offset1, offset2));
+      graph, graph.retrieveVarNode(rowIndex), graph.retrieveVarNode(colIndex),
+      std::move(parMatrix), graph.retrieveVarNode(output), rowOffset,
+      colOffset));
   return true;
 }
 

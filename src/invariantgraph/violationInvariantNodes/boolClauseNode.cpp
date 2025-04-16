@@ -40,13 +40,13 @@ void BoolClauseNode::updateState() {
   if (!isReified() && !shouldHold()) {
     for (size_t i = 0; i < _numAs; ++i) {
       invariantGraph()
-              .varNode(staticInputVarNodeIds().at(i))
-              .fixToValue(bool{false});
+          .varNode(staticInputVarNodeIds().at(i))
+          .fixToValue(bool{false});
     }
     for (size_t i = _numAs; i < staticInputVarNodeIds().size(); ++i) {
       invariantGraph()
-              .varNode(staticInputVarNodeIds().at(i))
-              .fixToValue(bool{true});
+          .varNode(staticInputVarNodeIds().at(i))
+          .fixToValue(bool{true});
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
