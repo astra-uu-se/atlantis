@@ -566,7 +566,7 @@ void SearchDomain::intersect(const std::vector<Int>& values) {
     --end;
   }
   if (begin > end) {
-    throw std::runtime_error("SearchDomain::intersect: Empty domain");
+    throw InconsistencyException("SearchDomain::intersect: Empty domain");
   }
   std::vector<Int> newDomain;
   newDomain.reserve(end - begin + 1);
