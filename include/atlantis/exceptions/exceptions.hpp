@@ -112,11 +112,6 @@ class InfeasibleException : public std::runtime_error {
       : std::runtime_error(msg) {}
 };
 
-class DomainException : public std::runtime_error {
- public:
-  explicit DomainException(const std::string& msg) : std::runtime_error(msg) {}
-};
-
 class InconsistencyException : public std::runtime_error {
  public:
   explicit InconsistencyException(const std::string& msg)
