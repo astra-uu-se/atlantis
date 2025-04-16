@@ -96,7 +96,7 @@ bool Domain::Iterator::operator!=(const Iterator& other) const {
 
 IntervalDomain::IntervalDomain(Int lb, Int ub) : _lb(lb), _ub(ub) {
   if (lb > ub) {
-    throw DomainException("InterValDomain::InterValDomain: " +
+    throw InconsistencyException("InterValDomain::InterValDomain: " +
                           std::to_string(lb) + " > " + std::to_string(ub));
   }
 }
@@ -144,7 +144,7 @@ Int IntervalDomain::operator[](size_t offset) const { return at(offset); }
 
 void IntervalDomain::setLowerBound(Int lb) {
   if (lb > _ub) {
-    throw DomainException("IntervalDomain::setLowerBound: " +
+    throw InconsistencyException("IntervalDomain::setLowerBound: " +
                           std::to_string(lb) + " > " + std::to_string(_ub));
   }
   _lb = lb;
@@ -152,7 +152,7 @@ void IntervalDomain::setLowerBound(Int lb) {
 
 void IntervalDomain::setUpperBound(Int ub) {
   if (_lb > ub) {
-    throw DomainException("InterValDomain::setUpperBound: " +
+    throw InconsistencyException("InterValDomain::setUpperBound: " +
                           std::to_string(_lb) + " > " + std::to_string(ub));
   }
   _ub = ub;
@@ -170,13 +170,13 @@ void IntervalDomain::intersect(Int lb, Int ub) {
   _lb = std::max(lb, _lb);
   _ub = std::min(ub, _ub);
   if (_lb > _ub) {
-    throw DomainException("IntervalDomain::intersect: Empty domain");
+    throw InconsistencyException("IntervalDomain::intersect: Empty domain");
   }
 }
 
 void IntervalDomain::fix(Int value) {
   if (!contains(value)) {
-    throw DomainException("IntervalDomain::fix: Empty domain");
+    throw InconsistencyException("IntervalDomain::fix: Empty domain");
   }
   _lb = value;
   _ub = value;
@@ -192,7 +192,7 @@ bool IntervalDomain::operator!=(const IntervalDomain& other) const {
 
 SetDomain::SetDomain(std::vector<Int>&& values) : _values(std::move(values)) {
   if (_values.empty()) {
-    throw DomainException("SetDomain::SetDomain: empty domain");
+    throw InconsistencyException("SetDomain::SetDomain: empty domain");
   }
   std::ranges::sort(_values.begin(), _values.end());
   _values.erase(std::ranges::unique(_values).begin(), _values.end());
@@ -283,7 +283,7 @@ void SetDomain::remove(Int value) {
     return;
   }
   if (isFixed()) {
-    throw DomainException("SetDomain::remove: Empty domain");
+    throw InconsistencyException("SetDomain::remove: Empty domain");
   }
   auto it = std::ranges::find(_values.begin(), _values.end(), value);
   if (it != _values.end()) {
@@ -296,7 +296,7 @@ void SetDomain::removeBelow(Int newLowerBound) {
     return;
   }
   if (upperBound() < newLowerBound) {
-    throw DomainException("SetDomain::removeBelow: Empty domain");
+    throw InconsistencyException("SetDomain::removeBelow: Empty domain");
   }
   Int offset = 0;
   for (size_t i = 0; i < _values.size() && _values[i] < newLowerBound; ++i) {
@@ -310,7 +310,7 @@ void SetDomain::removeAbove(Int newUpperBound) {
     return;
   }
   if (newUpperBound < lowerBound()) {
-    throw DomainException("SetDomain::removeAbove: Empty domain");
+    throw InconsistencyException("SetDomain::removeAbove: Empty domain");
   }
   Int offset = static_cast<Int>(_values.size()) - 1;
   for (Int i = static_cast<Int>(_values.size()) - 1;
@@ -337,7 +337,7 @@ void SetDomain::remove(const std::vector<Int>& values) {
     }
   }
   if (_values.empty()) {
-    throw DomainException("SetDomain::remove: Empty domain");
+    throw InconsistencyException("SetDomain::remove: Empty domain");
   }
 }
 
@@ -372,13 +372,13 @@ void SetDomain::intersect(const std::vector<Int>& otherVals) {
 
   _values = std::move(newValues);
   if (_values.empty()) {
-    throw DomainException("SetDomain::intersect: Empty domain");
+    throw InconsistencyException("SetDomain::intersect: Empty domain");
   }
 }
 
 void SetDomain::fix(Int value) {
   if (!contains(value)) {
-    throw DomainException("SetDomain::fix: Empty domain");
+    throw InconsistencyException("SetDomain::fix: Empty domain");
   }
   _values = std::vector<Int>{value};
 }
