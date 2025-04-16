@@ -363,22 +363,13 @@ bool SetDomain::isDisjoint(const SetDomain& other) const {
 void SetDomain::intersect(const std::vector<Int>& otherVals) {
   std::vector<Int> cpy(otherVals);
   std::ranges::sort(cpy.begin(), cpy.end());
+  cpy.erase(std::ranges::unique(cpy).begin(), cpy.end());
+
   std::vector<Int> newValues;
   newValues.reserve(std::min(_values.size(), otherVals.size()));
 
-  size_t i = 0;
-  size_t j = 0;
-  while (j < otherVals.size()) {
-    while (i < _values.size() && _values[i] < otherVals[j]) {
-      ++i;
-    }
-    if (_values[i] == otherVals[j]) {
-      newValues.emplace_back(_values[i]);
-    }
-    while (j < otherVals.size() && otherVals[j] < _values[i]) {
-      ++j;
-    }
-  }
+  std::ranges::set_intersection(_values, cpy, std::back_inserter(newValues));
+
   _values = std::move(newValues);
   if (_values.empty()) {
     throw DomainException("SetDomain::intersect: Empty domain");
