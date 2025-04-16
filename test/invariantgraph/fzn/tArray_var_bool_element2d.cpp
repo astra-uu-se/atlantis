@@ -1,10 +1,12 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <string>
 #include <vector>
 
+#include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/array_var_bool_element2d.hpp"
-#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
 
