@@ -67,7 +67,8 @@ void ArrayElementNode::updateState() {
     const Int val = outputNode.lowerBound();
     std::vector<Int> valsToRemove;
     valsToRemove.reserve(idxNode.domain()->size());
-    for (auto it = idxNode.constDomain()->begin(); it != idxNode.constDomain()->end(); ++it) {
+    for (auto it = idxNode.constDomain()->begin();
+         it != idxNode.constDomain()->end(); ++it) {
       if (getVal(_parVector, *it, _offset) != val) {
         valsToRemove.emplace_back(*it);
       }

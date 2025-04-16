@@ -30,7 +30,7 @@ enum struct BoolArgState : unsigned char {
 };
 enum struct IntArgState : unsigned char { PAR = 0, FIXED = 1, VAR = 2 };
 
-inline std::ostream &operator<<(std::ostream &os, BoolArgState state) {
+inline std::ostream& operator<<(std::ostream& os, BoolArgState state) {
   switch (state) {
     case BoolArgState::PAR_FALSE:
       return os << "BoolArgState::PAR_FALSE";
@@ -46,7 +46,7 @@ inline std::ostream &operator<<(std::ostream &os, BoolArgState state) {
   }
 }
 
-inline std::ostream &operator<<(std::ostream &os, IntArgState state) {
+inline std::ostream& operator<<(std::ostream& os, IntArgState state) {
   switch (state) {
     case IntArgState::PAR:
       return os << "IntArgState::PAR";
@@ -54,27 +54,30 @@ inline std::ostream &operator<<(std::ostream &os, IntArgState state) {
       return os << "IntArgState::FIXED";
     case IntArgState::VAR:
     default:
-        return os << "IntArgState::VAR";
+      return os << "IntArgState::VAR";
   }
 }
 
-}
+}  // namespace atlantis::testing
 
 namespace rc {
-  using namespace atlantis::testing;
-  template <>
-  struct Arbitrary<BoolArgState> {
-    static Gen<BoolArgState> arbitrary() {
-      return gen::element<BoolArgState>(BoolArgState::PAR_FALSE, BoolArgState::PAR_TRUE, BoolArgState::FIXED_FALSE, BoolArgState::FIXED_TRUE, BoolArgState::VAR);
-    }
-  };
+using namespace atlantis::testing;
 template <>
-  struct Arbitrary<IntArgState> {
-  static Gen<IntArgState> arbitrary() {
-    return gen::element<IntArgState>(IntArgState::PAR, IntArgState::FIXED, IntArgState::VAR);
+struct Arbitrary<BoolArgState> {
+  static Gen<BoolArgState> arbitrary() {
+    return gen::element<BoolArgState>(
+        BoolArgState::PAR_FALSE, BoolArgState::PAR_TRUE,
+        BoolArgState::FIXED_FALSE, BoolArgState::FIXED_TRUE, BoolArgState::VAR);
   }
 };
-}
+template <>
+struct Arbitrary<IntArgState> {
+  static Gen<IntArgState> arbitrary() {
+    return gen::element<IntArgState>(IntArgState::PAR, IntArgState::FIXED,
+                                     IntArgState::VAR);
+  }
+};
+}  // namespace rc
 
 namespace atlantis::testing {
 
@@ -469,7 +472,8 @@ class FznTestBase : public ::testing::Test {
   }
 
   [[nodiscard]] Int violation(bool committedValue) const {
-    return committedValue ? _solver->committedValue(totalViolationVarId()) : _solver->currentValue(totalViolationVarId());
+    return committedValue ? _solver->committedValue(totalViolationVarId())
+                          : _solver->currentValue(totalViolationVarId());
   }
 
   [[nodiscard]] std::vector<propagation::VarViewId> getVarIds(
@@ -534,11 +538,13 @@ class FznTestBase : public ::testing::Test {
     return genIntVar(defaultLb, defaultUb, identifier);
   }
 
-  std::shared_ptr<IntVar> genIntVar(IntArgState state, const std::string& identifier = "i") {
+  std::shared_ptr<IntVar> genIntVar(IntArgState state,
+                                    const std::string& identifier = "i") {
     return genIntVar(state, defaultLb, defaultUb, identifier);
   }
 
-  std::shared_ptr<IntVar> genIntVar(IntArgState state, Int lb, Int ub, const std::string& identifier = "i") {
+  std::shared_ptr<IntVar> genIntVar(IntArgState state, Int lb, Int ub,
+                                    const std::string& identifier = "i") {
     switch (state) {
       case IntArgState::FIXED: {
         const Int val = *rc::gen::inRange<Int>(lb, ub + 1);
@@ -570,14 +576,14 @@ class FznTestBase : public ::testing::Test {
                    const std::string& identifier = "i") {
     switch (state) {
       case IntArgState::PAR: {
-        const Int val = *rc::gen::inRange<Int>(lb, ub + 1);
+        const Int val = lb == ub ? lb : *rc::gen::inRange<Int>(lb, ub + 1);
         addIntPar(identifier, val);
         auto arg = IntArg{val};
         args.emplace_back(arg);
         return arg;
       }
       case IntArgState::FIXED: {
-        const Int val = *rc::gen::inRange<Int>(lb, ub + 1);
+        const Int val = lb == ub ? lb : *rc::gen::inRange<Int>(lb, ub + 1);
         auto var = genIntVar(val, val, identifier);
         args.emplace_back(var);
         return var;
@@ -597,7 +603,7 @@ class FznTestBase : public ::testing::Test {
   }
 
   IntArg addIntArg(Int lb, Int ub, const std::string& identifier = "i") {
-    return addIntArg(*rc::gen::arbitrary<IntArgState>(), lb, ub, identifier);
+    return addIntArg(lb == ub ? *rc::gen::element(IntArgState::PAR, IntArgState::FIXED) : *rc::gen::arbitrary<IntArgState>(), lb, ub, identifier);
   }
 
   IntArg addIntArg(const std::string& identifier = "i") {
@@ -748,7 +754,8 @@ class FznTestBase : public ::testing::Test {
         case BoolArgState::PAR_FALSE:
         case BoolArgState::PAR_TRUE:
           vars->append(argStates.at(i) == BoolArgState::PAR_TRUE);
-          addBoolPar(identifiers.at(i), argStates.at(i) == BoolArgState::PAR_TRUE);
+          addBoolPar(identifiers.at(i),
+                     argStates.at(i) == BoolArgState::PAR_TRUE);
           break;
         default:
           vars->append(genBoolVar(argStates.at(i), identifiers.at(i)));
@@ -891,9 +898,6 @@ class FznTestBase : public ::testing::Test {
     try {
       _invariantGraph->construct();
       _invariantGraph->close();
-    } catch (const DomainException&) {
-      RC_ASSERT(neverSat);
-      return;
     } catch (const InconsistencyException&) {
       RC_ASSERT(neverSat);
       return;

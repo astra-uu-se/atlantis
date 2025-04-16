@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "./fznTestBase.hpp"
-#include "atlantis/invariantgraph/fzn/array_bool_and.hpp"
+#include "atlantis/invariantgraph/fzn/array_bool_element.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
@@ -85,10 +85,10 @@ class array_bool_elementTest : public FznTestBase {
     if (!isFixed(idx)) {
       const auto& idxNode = _invariantGraph->varNode(idx);
       return std::all_of(idxNode.constDomain()->begin(),
-                          idxNode.constDomain()->end(), [&](const Int val) {
-                            return parameters.at(val - offset) ==
-                                   boolVal(output);
-                          });
+                         idxNode.constDomain()->end(), [&](const Int val) {
+                           return parameters.at(val - offset) ==
+                                  boolVal(output);
+                         });
     }
     return parameters.at(intVal(idx) - offset) != boolVal(output);
   }

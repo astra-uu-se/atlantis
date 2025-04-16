@@ -186,7 +186,7 @@ INSTANTIATE_TEST_CASE_P(
                                 ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_FALSE},
-                                ParamData{InvariantNodeAction::SUBSUME,
+                      ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::REIFIED},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED}));
