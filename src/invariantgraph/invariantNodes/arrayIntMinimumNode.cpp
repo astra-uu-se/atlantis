@@ -36,11 +36,18 @@ void ArrayIntMinimumNode::init(InvariantNodeId id) {
 }
 
 void ArrayIntMinimumNode::updateState() {
+  auto& outNode = invariantGraph().varNode(outputVarNodeIds().front());
+
   Int lb = _ub;
   for (const auto& input : staticInputVarNodeIds()) {
-    lb = std::min(lb, invariantGraphConst().varNodeConst(input).lowerBound());
-    _ub = std::min(_ub, invariantGraphConst().varNodeConst(input).upperBound());
+    auto& vNode = invariantGraph().varNode(input);
+    vNode.removeValuesBelow(outNode.lowerBound());
+    lb = std::min(lb, vNode.lowerBound());
+    _ub = std::min(_ub, vNode.upperBound());
   }
+  outNode.removeValuesBelow(lb);
+  outNode.removeValuesAbove(_ub);
+
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
 
@@ -52,23 +59,15 @@ void ArrayIntMinimumNode::updateState() {
   for (const auto& input : varsToRemove) {
     removeStaticInputVarNode(input);
   }
-  auto& outputVar = invariantGraph().varNode(outputVarNodeIds().front());
-  // outputVar.removeValuesBelow(lb);
-  // outputVar.removeValuesAbove(_ub);
-  if (staticInputVarNodeIds().empty() || outputVar.isFixed()) {
+  if (staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 bool ArrayIntMinimumNode::canBeReplaced() const {
-  if (state() != InvariantNodeState::ACTIVE ||
-      staticInputVarNodeIds().size() > 1) {
-    return false;
-  }
-  if (staticInputVarNodeIds().empty()) {
-    return true;
-  }
-  return _ub >= invariantGraphConst()
+  return state() == InvariantNodeState::ACTIVE &&
+         staticInputVarNodeIds().size() == 1 &&
+         _ub >= invariantGraphConst()
                     .varNodeConst(staticInputVarNodeIds().front())
                     .upperBound();
 }
@@ -77,10 +76,8 @@ bool ArrayIntMinimumNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (staticInputVarNodeIds().size() == 1) {
     invariantGraph().replaceVarNode(outputVarNodeIds().front(),
                                     staticInputVarNodeIds().front());
-  }
   return true;
 }
 
@@ -107,6 +104,7 @@ void ArrayIntMinimumNode::registerNode() {
     return;
   }
   std::vector<propagation::VarViewId> solverVars;
+  solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars),
