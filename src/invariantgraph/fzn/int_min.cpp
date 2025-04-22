@@ -11,16 +11,9 @@ namespace atlantis::invariantgraph::fzn {
 
 bool int_min(FznInvariantGraph& graph, const fznparser::IntArg& a,
              const fznparser::IntArg& b, const fznparser::IntArg& minimum) {
-  const VarNodeId outputVarNodeId = graph.retrieveVarNode(minimum);
-
-  if (a.isFixed() && b.isFixed()) {
-    graph.varNode(outputVarNodeId)
-        .fixToValue(std::min(a.toParameter(), b.toParameter()));
-    return true;
-  }
   graph.addInvariantNode(std::make_shared<ArrayIntMinimumNode>(
       graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
-      outputVarNodeId));
+      graph.retrieveVarNode(minimum)));
   return true;
 }
 
