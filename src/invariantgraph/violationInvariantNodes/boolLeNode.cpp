@@ -67,20 +67,36 @@ void BoolLeNode::updateState() {
                                                 : "BoolLeNode neg: a <= b");
     }
     setState(InvariantNodeState::SUBSUMED);
+    return;
   }
   if (aNode.isFixed() || bNode.isFixed()) {
     assert(aNode.isFixed() != bNode.isFixed());
-    const bool isSatisfied = (aNode.isFixed() && aNode.inDomain(bool{false})) ||
-                             (bNode.isFixed() && bNode.inDomain(bool{true}));
-    if (isSatisfied) {
-      if (isReified()) {
-        fixReified(true);
-      } else if (!shouldHold()) {
-        throw InconsistencyException("BoolLeNode neg: a <= b");
+    assert(shouldHold());
+    if ((aNode.isFixed() && aNode.inDomain(bool{false})) ||
+        (bNode.isFixed() && bNode.inDomain(bool{true}))) {
+      fixReified(true);
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+    if (!isReified()) {
+      assert(shouldHold());
+      if (aNode.isFixed()) {
+        if (aNode.inDomain(bool{true})) {
+          bNode.fixToValue(bool{true});
+        }
+      } else if (bNode.inDomain(bool{false})) {
+        aNode.fixToValue(bool{false});
       }
       setState(InvariantNodeState::SUBSUMED);
     }
   }
+}
+
+bool BoolLeNode::canBeReplaced() const {
+  return state() == InvariantNodeState::ACTIVE &&
+         staticInputVarNodeIds().size() == 2 && isReified() &&
+         invariantGraphConst().varNodeConst(a()).isFixed() !=
+             invariantGraphConst().varNodeConst(b()).isFixed();
 }
 
 bool BoolLeNode::replace() {
@@ -98,13 +114,6 @@ bool BoolLeNode::replace() {
         invariantGraph(), a(), reifiedViolationNodeId()));
   }
   return true;
-}
-
-bool BoolLeNode::canBeReplaced() const {
-  return state() == InvariantNodeState::ACTIVE &&
-         staticInputVarNodeIds().size() == 2 &&
-         (isReified() && invariantGraphConst().varNodeConst(a()).isFixed() !=
-                             invariantGraphConst().varNodeConst(b()).isFixed());
 }
 
 void BoolLeNode::registerOutputVars() {
