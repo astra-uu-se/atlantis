@@ -96,8 +96,9 @@ bool Domain::Iterator::operator!=(const Iterator& other) const {
 
 IntervalDomain::IntervalDomain(Int lb, Int ub) : _lb(lb), _ub(ub) {
   if (lb > ub) {
-    throw InconsistencyException("InterValDomain::InterValDomain: " +
-                          std::to_string(lb) + " > " + std::to_string(ub));
+    throw InconsistencyException(
+        "InterValDomain::InterValDomain: " + std::to_string(lb) + " > " +
+        std::to_string(ub));
   }
 }
 
@@ -144,16 +145,18 @@ Int IntervalDomain::operator[](size_t offset) const { return at(offset); }
 
 void IntervalDomain::setLowerBound(Int lb) {
   if (lb > _ub) {
-    throw InconsistencyException("IntervalDomain::setLowerBound: " +
-                          std::to_string(lb) + " > " + std::to_string(_ub));
+    throw InconsistencyException(
+        "IntervalDomain::setLowerBound: " + std::to_string(lb) + " > " +
+        std::to_string(_ub));
   }
   _lb = lb;
 }
 
 void IntervalDomain::setUpperBound(Int ub) {
   if (_lb > ub) {
-    throw InconsistencyException("InterValDomain::setUpperBound: " +
-                          std::to_string(_lb) + " > " + std::to_string(ub));
+    throw InconsistencyException(
+        "InterValDomain::setUpperBound: " + std::to_string(_lb) + " > " +
+        std::to_string(ub));
   }
   _ub = ub;
 }

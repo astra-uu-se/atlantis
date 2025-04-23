@@ -54,11 +54,13 @@ class array_int_elementTest : public FznTestBase {
     const Int idxVal = intVal(idx, committedValue);
     const Int expected = parameters.at(idxVal - offset);
     const Int actual = intVal(output, committedValue);
-    if (actual != expected) {
-      const Int tmp = intVal(output, committedValue);
-      return false;
+
+    if (isFixed(output)) {
+      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
+      const bool shouldHold = violation(committedValue) == 0;
+      return shouldHold ? expected == actual : expected != actual;
     }
-    return true;
+    return expected == actual;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {

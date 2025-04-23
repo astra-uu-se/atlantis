@@ -25,17 +25,13 @@ class array_bool_orTest : public FznTestBase {
     const bool expected = std::ranges::any_of(inputs, [&](const auto& input) {
       return boolVal(input, committedValue);
     });
+    const bool actual = boolVal(output, committedValue);
 
-    const bool actual =
-        isFixed(output) && totalViolationVarId() != propagation::NULL_ID
-            ? (violation(committedValue) == 0)
-            : boolVal(output, committedValue);
-
-    if (expected != actual) {
-      const bool tmp = boolVal(output, committedValue);
-      return expected != actual;
+    if (isFixed(output)) {
+      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
+      const bool shouldHold = violation(committedValue) == 0;
+      return shouldHold ? expected == actual : expected != actual;
     }
-
     return expected == actual;
   }
 
@@ -93,6 +89,7 @@ class array_bool_orTest : public FznTestBase {
   }
 
   void generate() override {
+    constraintIdentifier = "array_bool_or";
     const size_t size = *rc::gen::inRange(0, 3);
     inputs.reserve(size);
     for (size_t i = 0; i < size; i++) {
@@ -101,11 +98,6 @@ class array_bool_orTest : public FznTestBase {
     addBoolVarArray(inputs);
     addBoolArg(output);
     generateConstraint();
-  }
-
-  void SetUp() override {
-    FznTestBase::SetUp();
-    constraintIdentifier = "array_bool_or";
   }
 
   [[nodiscard]] bool canMove() const override {

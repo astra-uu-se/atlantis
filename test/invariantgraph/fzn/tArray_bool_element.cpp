@@ -50,7 +50,13 @@ class array_bool_elementTest : public FznTestBase {
     const Int idxVal = intVal(idx, committedValue);
     const bool expected = parameters.at(idxVal - offset);
     const bool actual = boolVal(output, committedValue);
-    return actual == expected;
+
+    if (isFixed(output)) {
+      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
+      const bool shouldHold = violation(committedValue) == 0;
+      return shouldHold ? expected == actual : expected != actual;
+    }
+    return expected == actual;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {

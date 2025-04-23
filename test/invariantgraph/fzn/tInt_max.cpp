@@ -60,7 +60,10 @@ class int_maxTest : public FznTestBase {
     const Int actual = intVal(output, committedValue);
     if (isFixed(output) && totalViolationVarId() != propagation::NULL_ID) {
       const bool isViolating = violation(committedValue) > 0;
-      const bool inDomain = isFixed(output) ? expected == intVal(output) :  _invariantGraph->varNodeConst(output).inDomain(expected);
+      const bool inDomain =
+          isFixed(output)
+              ? expected == intVal(output)
+              : _invariantGraph->varNodeConst(output).inDomain(expected);
       return isViolating != inDomain;
     }
     return actual == expected;
@@ -71,16 +74,17 @@ class int_maxTest : public FznTestBase {
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
-    const size_t numCandidates = std::ranges::count_if(inputs, [&](const std::string& input) {
-      return !isFixed(input) && lowerBound(input) <= lowerBound(output) && upperBound(output) <= upperBound(input);
-    });
+    const size_t numCandidates =
+        std::ranges::count_if(inputs, [&](const std::string& input) {
+          return !isFixed(input) && lowerBound(input) <= lowerBound(output) &&
+                 upperBound(output) <= upperBound(input);
+        });
     return numCandidates <= 1;
   }
 
   [[nodiscard]] bool canMove() const override {
-    return std::ranges::any_of(inputs, [&](const std::string& input) {
-      return !isFixed(input);
-    });
+    return std::ranges::any_of(
+        inputs, [&](const std::string& input) { return !isFixed(input); });
   }
 
   void move(bool committedValue) override {

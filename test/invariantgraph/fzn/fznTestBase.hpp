@@ -603,7 +603,10 @@ class FznTestBase : public ::testing::Test {
   }
 
   IntArg addIntArg(Int lb, Int ub, const std::string& identifier = "i") {
-    return addIntArg(lb == ub ? *rc::gen::element(IntArgState::PAR, IntArgState::FIXED) : *rc::gen::arbitrary<IntArgState>(), lb, ub, identifier);
+    return addIntArg(
+        lb == ub ? *rc::gen::element(IntArgState::PAR, IntArgState::FIXED)
+                 : *rc::gen::arbitrary<IntArgState>(),
+        lb, ub, identifier);
   }
 
   IntArg addIntArg(const std::string& identifier = "i") {

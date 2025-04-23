@@ -61,11 +61,13 @@ void ArrayElement2dNode::init(InvariantNodeId id) {
 void ArrayElement2dNode::updateState() {
   auto& rowNode = invariantGraph().varNode(rowIdx());
   rowNode.domain()->removeBelow(_rowOffset);
-  rowNode.domain()->removeAbove(_rowOffset + static_cast<Int>(_parMatrix.size()) - 1);
+  rowNode.domain()->removeAbove(_rowOffset +
+                                static_cast<Int>(_parMatrix.size()) - 1);
 
   auto& colNode = invariantGraph().varNode(colIdx());
   colNode.domain()->removeBelow(_colOffset);
-  colNode.domain()->removeAbove(_colOffset + static_cast<Int>(_parMatrix.front().size()) - 1);
+  colNode.domain()->removeAbove(
+      _colOffset + static_cast<Int>(_parMatrix.front().size()) - 1);
 
   auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
 
@@ -74,12 +76,17 @@ void ArrayElement2dNode::updateState() {
   std::unordered_set<Int> colIndices;
   colIndices.reserve(colNode.constDomain()->size());
   std::unordered_set<Int> outputVals;
-  outputVals.reserve(std::min(_parMatrix.size() * _parMatrix.front().size(), outputNode.constDomain()->size()));
+  outputVals.reserve(std::min(_parMatrix.size() * _parMatrix.front().size(),
+                              outputNode.constDomain()->size()));
 
-  for (auto rowIt = rowNode.constDomain()->begin(); rowIt != rowNode.constDomain()->end(); ++rowIt) {
-    for (auto colIt = colNode.constDomain()->begin(); colIt != colNode.constDomain()->end(); ++colIt) {
-      const Int val = getValue(_parMatrix, *rowIt, *colIt, _rowOffset, _colOffset);
-      if (outputNode.isIntVar() ? outputNode.inDomain(val) : outputNode.inDomain(bool{val == 0})) {
+  for (auto rowIt = rowNode.constDomain()->begin();
+       rowIt != rowNode.constDomain()->end(); ++rowIt) {
+    for (auto colIt = colNode.constDomain()->begin();
+         colIt != colNode.constDomain()->end(); ++colIt) {
+      const Int val =
+          getValue(_parMatrix, *rowIt, *colIt, _rowOffset, _colOffset);
+      if (outputNode.isIntVar() ? outputNode.inDomain(val)
+                                : outputNode.inDomain(bool{val == 0})) {
         rowIndices.emplace(*rowIt);
         colIndices.emplace(*colIt);
         outputVals.emplace(val);
@@ -94,7 +101,8 @@ void ArrayElement2dNode::updateState() {
     std::vector<Int> newOutDom(outputVals.begin(), outputVals.end());
     outputNode.domain()->intersect(newOutDom);
   } else if (outputVals.empty()) {
-    throw InconsistencyException("array_bool_element2d: output has empty domain");
+    throw InconsistencyException(
+        "array_bool_element2d: output has empty domain");
   } else if (outputVals.size() == 1) {
     const bool val = (*outputVals.begin()) == 0;
     outputNode.fixToValue(val);
@@ -102,8 +110,7 @@ void ArrayElement2dNode::updateState() {
 
   if (rowNode.isFixed() && colNode.isFixed()) {
     const Int val = getValue(_parMatrix, rowNode.lowerBound(),
-                                     colNode.lowerBound(), _rowOffset,
-                                     _colOffset);
+                             colNode.lowerBound(), _rowOffset, _colOffset);
     if (outputNode.isIntVar()) {
       outputNode.fixToValue(val);
     } else {
@@ -111,7 +118,6 @@ void ArrayElement2dNode::updateState() {
     }
     setState(InvariantNodeState::SUBSUMED);
   }
-
 }
 
 bool ArrayElement2dNode::canBeReplaced() const {

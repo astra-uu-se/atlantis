@@ -67,7 +67,9 @@ void ArrayIntMaximumNode::updateState() {
 bool ArrayIntMaximumNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
          staticInputVarNodeIds().size() == 1 &&
-         _lb <= invariantGraphConst().varNodeConst(staticInputVarNodeIds().front()).lowerBound();
+         _lb <= invariantGraphConst()
+                    .varNodeConst(staticInputVarNodeIds().front())
+                    .lowerBound();
 }
 
 bool ArrayIntMaximumNode::replace() {
