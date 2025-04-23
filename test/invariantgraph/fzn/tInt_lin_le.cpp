@@ -61,7 +61,6 @@ class int_lin_leTest : public FznTestBase {
       const bool expected = shouldHold ? sum <= bound : sum > bound;
       const bool actual = violation(committedValue) == 0;
       if (actual != expected) {
-        const Int viol = violation(committedValue);
         return false;
       }
       return expected == actual;
