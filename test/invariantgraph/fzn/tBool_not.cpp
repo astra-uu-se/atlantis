@@ -40,9 +40,14 @@ class bool_notTest : public FznTestBase {
     generateConstraint();
   }
 
-  [[nodiscard]] bool alwaysSatisfied() const override { return true; }
+  [[nodiscard]] bool alwaysSatisfied() const override {
+    return !neverSatisfied();
+  }
 
-  [[nodiscard]] bool neverSatisfied() const override { return false; }
+  [[nodiscard]] bool neverSatisfied() const override {
+    return isFixed(input) && isFixed(output) &&
+           boolVal(input) == boolVal(output);
+  }
 
   [[nodiscard]] bool canMove() const override {
     return varId(input) != propagation::NULL_ID;
