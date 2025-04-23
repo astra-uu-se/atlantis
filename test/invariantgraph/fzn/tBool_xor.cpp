@@ -97,7 +97,11 @@ class bool_xorTest : public FznTestBase {
     }
   }
 
-  void query() override { _solver->query(totalViolationVarId()); }
+  void query() override {
+    _solver->query(totalViolationVarId() != propagation::NULL_ID
+                       ? totalViolationVarId()
+                       : varId(reified));
+  }
 };
 
 RC_GTEST_FIXTURE_PROP(bool_xorTest, RapidCheck, ()) { rapidCheck(); }

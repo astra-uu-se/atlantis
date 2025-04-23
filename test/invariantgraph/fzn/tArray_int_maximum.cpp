@@ -97,7 +97,11 @@ class array_int_maximumTest : public FznTestBase {
     }
   }
 
-  void query() override { _solver->query(varId(output)); }
+  void query() override {
+    _solver->query(totalViolationVarId() != propagation::NULL_ID
+                       ? totalViolationVarId()
+                       : varId(output));
+  }
 };
 
 RC_GTEST_FIXTURE_PROP(array_int_maximumTest, RapidCheck, ()) { rapidCheck(); }
