@@ -97,6 +97,7 @@ class FznTestBase : public ::testing::Test {
   std::shared_ptr<FznInvariantGraph> _invariantGraph;
   std::shared_ptr<propagation::Solver> _solver;
   std::string constraintIdentifier;
+  std::vector<Annotation> annotations{};
   std::vector<ArgState> argStates;
   std::vector<Arg> args;
   std::mt19937 gen;
@@ -119,8 +120,14 @@ class FznTestBase : public ::testing::Test {
   }
 
   void generateConstraint() {
-    _model->addConstraint(
-        Constraint{constraintIdentifier, std::vector<Arg>{args}});
+    if (annotations.empty()) {
+      _model->addConstraint(
+          Constraint{constraintIdentifier, std::vector<Arg>{args}});
+    } else {
+      _model->addConstraint(Constraint{constraintIdentifier,
+                                       std::vector<Arg>{args},
+                                       std::vector<Annotation>{annotations}});
+    }
     _invariantGraph->build(*_model);
   }
 
