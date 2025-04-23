@@ -105,7 +105,11 @@ class array_bool_elementTest : public FznTestBase {
 
   void move(bool committedValue) override { changeValue(idx, committedValue); }
 
-  void query() override { _solver->query(varId(output)); }
+  void query() override {
+    _solver->query(totalViolationVarId() != propagation::NULL_ID
+                       ? totalViolationVarId()
+                       : varId(output));
+  }
 };
 
 RC_GTEST_FIXTURE_PROP(array_bool_elementTest, RapidCheck, ()) { rapidCheck(); }

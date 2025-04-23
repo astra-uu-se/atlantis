@@ -50,7 +50,8 @@ class bool_eqTest : public FznTestBase {
 
   [[nodiscard]] bool alwaysSatisfied() const override {
     if (isFixed(a) && isFixed(b) && isFixed(reified)) {
-      return boolVal(reified) ? boolVal(a) == boolVal(b) : boolVal(a) != boolVal(b);
+      return boolVal(reified) ? boolVal(a) == boolVal(b)
+                              : boolVal(a) != boolVal(b);
     }
     return isFixed(a) || isFixed(b) || isFixed(reified);
   }
@@ -78,7 +79,11 @@ class bool_eqTest : public FznTestBase {
     }
   }
 
-  void query() override { _solver->query(totalViolationVarId()); }
+  void query() override {
+    _solver->query(totalViolationVarId() != propagation::NULL_ID
+                       ? totalViolationVarId()
+                       : varId(reified));
+  }
 };
 
 RC_GTEST_FIXTURE_PROP(bool_eqTest, RapidCheck, ()) { rapidCheck(); }
