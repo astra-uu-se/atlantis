@@ -18,7 +18,7 @@ using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
 class array_int_elementTest : public FznTestBase {
-public:
+ public:
   std::vector<VarNodeId> inputVarNodeIds{};
   std::string idx{"idx"};
   Int offset{1};
@@ -115,5 +115,5 @@ public:
   }
 };
 
-  RC_GTEST_FIXTURE_PROP(array_int_elementTest, RapidCheck, ()) { rapidCheck(); }
+RC_GTEST_FIXTURE_PROP(array_int_elementTest, RapidCheck, ()) { rapidCheck(); }
 }  // namespace atlantis::testing
