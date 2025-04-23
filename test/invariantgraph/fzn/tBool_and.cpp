@@ -18,34 +18,53 @@ using namespace atlantis::invariantgraph::fzn;
 
 class bool_andTest : public FznTestBase {
  public:
-  std::string a{"a"};
-  std::string b{"b"};
-  std::string output{"output"};
+  std::vector<std::string> inputs{"b_1", "b_2"};
+  std::string output = "output";
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     const bool expected =
-        boolVal(a, committedValue) && boolVal(b, committedValue);
+        std::ranges::all_of(inputs, [&](const std::string& input) {
+          return boolVal(input, committedValue);
+        });
+    const bool actual = boolVal(output, committedValue);
 
-    if (isFixed(output) && totalViolationVarId() != propagation::NULL_ID) {
-      return expected == (violation(committedValue) == 0);
+    if (isFixed(output)) {
+      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
+      const bool shouldHold = violation(committedValue) == 0;
+      return shouldHold ? expected == actual : expected != actual;
     }
-
-    return expected == boolVal(output, committedValue);
+    return expected == actual;
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
-    const bool alwaysUnsat =
-        isFixedTo(a, bool{false}) || isFixedTo(b, bool{false});
+    const bool alwaysUnsat = std::ranges::any_of(
+        inputs,
+        [&](const std::string& input) { return !inDomain(input, bool{true}); });
     if (alwaysUnsat) {
       return inDomain(output, bool{false});
     }
-    const bool alwaysSat = isFixedTo(a, bool{true}) && isFixedTo(b, bool{true});
+    const bool alwaysSat =
+        std::ranges::all_of(inputs, [&](const std::string& input) {
+          return !inDomain(input, bool{false});
+        });
     if (alwaysSat) {
       return inDomain(output, bool{true});
     }
-    if (!isFixed(output) && isFixed(a) != isFixed(b)) {
-      const VarNodeId unfixedVar = varNodeId(isFixed(a) ? b : a);
-      return varNodeId(output) == unfixedVar;
+    if (!isFixed(output)) {
+      VarNodeId unfixedVar = NULL_NODE_ID;
+      for (const std::string& input : inputs) {
+        if (!isFixed(input)) {
+          if (unfixedVar == NULL_NODE_ID) {
+            unfixedVar = varNodeId(input);
+          } else {
+            unfixedVar = NULL_NODE_ID;
+            break;
+          }
+        }
+      }
+      if (unfixedVar != NULL_NODE_ID) {
+        return varNodeId(output) == unfixedVar;
+      }
     }
     return false;
   }
@@ -55,39 +74,40 @@ class bool_andTest : public FznTestBase {
       return false;
     }
     const bool alwaysUnsat =
-        isFixedTo(a, bool{false}) || isFixedTo(b, bool{false});
+        std::ranges::any_of(inputs, [&](const std::string& input) {
+          return isFixedTo(input, bool{false});
+        });
     if (alwaysUnsat) {
       return !inDomain(output, bool{false});
     }
-    const bool alwaysSat = isFixedTo(a, bool{true}) && isFixedTo(b, bool{true});
+    const bool alwaysSat = std::ranges::all_of(
+        inputs,
+        [&](const std::string& input) { return isFixedTo(input, bool{true}); });
     if (alwaysSat) {
       return !inDomain(output, bool{true});
     }
     return false;
   }
 
-  void SetUp() override {
-    FznTestBase::SetUp();
-    constraintIdentifier = "bool_and";
-  }
-
   void generate() override {
-    addBoolArg(BoolArgState::PAR_FALSE, a);
-    addBoolArg(BoolArgState::PAR_TRUE, b);
-    addBoolArg(BoolArgState::PAR_FALSE, output);
+    constraintIdentifier = "bool_and";
+    addBoolArg(inputs.front());
+    addBoolArg(inputs.back());
+    addBoolArg(output);
     generateConstraint();
   }
 
   [[nodiscard]] bool canMove() const override {
-    return varId(a) != propagation::NULL_ID || varId(b) != propagation::NULL_ID;
+    return std::ranges::any_of(inputs, [&](const std::string& input) {
+      return varId(input) != propagation::NULL_ID;
+    });
   }
 
   void move(bool committedValue) override {
-    if (varId(a) != propagation::NULL_ID && randBool()) {
-      changeValue(a, committedValue);
-    }
-    if (varId(b) != propagation::NULL_ID && randBool()) {
-      changeValue(b, committedValue);
+    for (const auto& input : inputs) {
+      if (varId(input) != propagation::NULL_ID && randBool()) {
+        changeValue(input, committedValue);
+      }
     }
   }
 

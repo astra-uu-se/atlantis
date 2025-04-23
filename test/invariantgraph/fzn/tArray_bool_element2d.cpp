@@ -76,11 +76,14 @@ class array_bool_element2dTest : public FznTestBase {
     const Int colIdxVal = intVal(colIndex, committedValue);
     const bool expected =
         parameters.at(rowIdxVal - rowOffset).at(colIdxVal - colOffset);
-    const bool actual =
-        isFixed(output) && totalViolationVarId() != propagation::NULL_ID
-            ? (violation(committedValue) == 0)
-            : boolVal(output, committedValue);
-    return actual == expected;
+    const bool actual = boolVal(output, committedValue);
+
+    if (isFixed(output)) {
+      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
+      const bool shouldHold = violation(committedValue) == 0;
+      return shouldHold ? expected == actual : expected != actual;
+    }
+    return expected == actual;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {

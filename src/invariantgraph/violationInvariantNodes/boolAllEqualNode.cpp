@@ -8,6 +8,9 @@
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/views/boolNotNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolOrNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
 #include "atlantis/propagation/invariants/boolXor.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -39,6 +42,18 @@ BoolAllEqualNode::BoolAllEqualNode(InvariantGraph& graph,
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
       _breaksCycle(breaksCycle) {}
 
+bool BoolAllEqualNode::isFixed() const { return _dom < 2; }
+
+bool BoolAllEqualNode::inDomain(bool val) const {
+  return val ? holdsTrue() : holdsFalse();
+}
+
+bool BoolAllEqualNode::holdsTrue() const { return _dom > 0; }
+
+bool BoolAllEqualNode::holdsFalse() const { return _dom != 1; }
+
+void BoolAllEqualNode::fixToVal(bool val) { _dom = val ? 1 : 0; }
+
 void BoolAllEqualNode::init(InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
@@ -53,70 +68,147 @@ void BoolAllEqualNode::init(InvariantNodeId id) {
 
 void BoolAllEqualNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (staticInputVarNodeIds().size() < 2) {
-    if (isReified()) {
-      fixReified(true);
-    } else if (!shouldHold()) {
-      throw InconsistencyException(
-          "BoolAllEqualNode::updateState constraint is violated");
-    }
-    if (isReified()) {
-      fixReified(true);
-    }
-    setState(InvariantNodeState::SUBSUMED);
-  }
-  size_t numFixed = 0;
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    const VarNode& iNode =
-        invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
-    if (!iNode.isFixed()) {
-      continue;
-    }
-    ++numFixed;
-    const bool iVal = iNode.inDomain(bool{true});
-    for (size_t j = i + 1; j < staticInputVarNodeIds().size(); ++j) {
-      const VarNode& jNode =
-          invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(j));
-      if (!jNode.isFixed()) {
-        continue;
+
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
+
+  for (const auto vId : staticInputVarNodeIds()) {
+    VarNode& vNode = invariantGraph().varNode(vId);
+    if (!vNode.isFixed()) {
+      if (!isReified() && shouldHold() && isFixed()) {
+        vNode.fixToValue(holdsTrue());
+        varsToRemove.emplace_back(vId);
       }
-      const bool jVal = jNode.inDomain(bool{true});
-      if (iVal != jVal) {
-        if (isReified()) {
-          fixReified(false);
-        } else if (shouldHold()) {
-          throw InconsistencyException(
-              "BoolAllEqualNode::updateState constraint is violated");
+    } else {
+      const bool val = vNode.inDomain(bool{true});
+      if (inDomain(val)) {
+        if (!isFixed()) {
+          fixToVal(val);
         }
+      } else if (isReified()) {
+        fixReified(false);
+        setState(InvariantNodeState::SUBSUMED);
+        return;
+      } else if (!shouldHold()) {
+        setState(InvariantNodeState::SUBSUMED);
+        return;
+      } else {
+        throw InconsistencyException(
+            "BoolAllEqualNode::updateState constraint is violated");
       }
+      varsToRemove.emplace_back(vId);
     }
   }
-  if (numFixed == staticInputVarNodeIds().size()) {
-    setState(InvariantNodeState::SUBSUMED);
+
+  for (const auto vId : varsToRemove) {
+    removeStaticInputVarNode(vId);
+  }
+
+  if (staticInputVarNodeIds().empty()) {
+    if (isReified()) {
+      fixReified(true);
+      setState(InvariantNodeState::SUBSUMED);
+    } else if (shouldHold()) {
+      setState(InvariantNodeState::SUBSUMED);
+    } else {
+      throw InconsistencyException(
+          "BoolAllEqualNode::updateState constraint is Violated");
+    }
+  } else if (staticInputVarNodeIds().size() == 1) {
+    auto& vNode = invariantGraph().varNode(staticInputVarNodeIds().front());
+    if (!isReified() && !shouldHold()) {
+      if (isFixed()) {
+        vNode.fixToValue(!holdsTrue());
+        setState(InvariantNodeState::SUBSUMED);
+      } else {
+        throw InconsistencyException(
+            "BoolAllEqualNode::updateState constraint is violated");
+      }
+    } else if (!isReified()) {
+      if (isFixed()) {
+        vNode.fixToValue(holdsTrue());
+      }
+      setState(InvariantNodeState::SUBSUMED);
+    } else if (!isFixed()) {
+      fixReified(true);
+      setState(InvariantNodeState::SUBSUMED);
+    }
   }
 }
 
 bool BoolAllEqualNode::canBeReplaced() const {
-  return state() == InvariantNodeState::ACTIVE && !_breaksCycle &&
-         (!isReified() &&
-          (shouldHold() || staticInputVarNodeIds().size() <= 2));
+  if (state() != InvariantNodeState::ACTIVE || _breaksCycle) {
+    return false;
+  }
+  if (isFixed()) {
+    return true;
+  }
+  return !isReified() && (shouldHold() || staticInputVarNodeIds().size() == 2);
 }
 
 bool BoolAllEqualNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (!shouldHold()) {
-    assert(staticInputVarNodeIds().size() == 2);
-    invariantGraph().addInvariantNode(std::make_shared<ArrayBoolXorNode>(
-        invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
-        true));
-  } else if (!staticInputVarNodeIds().empty()) {
-    const VarNodeId firstVar = staticInputVarNodeIds().front();
-    for (size_t i = 1; i < staticInputVarNodeIds().size(); ++i) {
-      invariantGraph().replaceVarNode(staticInputVarNodeIds().at(i), firstVar);
+  if (isFixed()) {
+    if (shouldHold()) {
+      // node is reified
+      if (holdsTrue()) {
+        // all fixed vars takes value true
+        if (isReified()) {
+          // The reified var is true iff all unfixed vars takes value true
+          invariantGraph().addInvariantNode(std::make_shared<ArrayBoolAndNode>(
+              invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
+              reifiedViolationNodeId()));
+        } else {
+          // The constraint holds iff all unfixed vars takes value true
+          invariantGraph().addInvariantNode(std::make_shared<ArrayBoolAndNode>(
+              invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
+              true));
+        }
+      } else if (isReified()) {
+        // The reified var is true iff all unfixed vars takes value false
+        const VarNodeId invReif = invariantGraph().retrieveBoolVarNode();
+        invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(
+            invariantGraph(), reifiedViolationNodeId(), invReif));
+        invariantGraph().addInvariantNode(std::make_shared<ArrayBoolOrNode>(
+            invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
+            invReif));
+      } else {
+        // The constraint holds iff all unfixed vars takes value false
+        invariantGraph().addInvariantNode(std::make_shared<ArrayBoolOrNode>(
+            invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
+            false));
+      }
+    } else {
+      assert(!isReified());
+      if (holdsTrue()) {
+        // The constraint holds iff any unfixed var takes value false
+        invariantGraph().addInvariantNode(std::make_shared<ArrayBoolAndNode>(
+            invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
+            false));
+      } else {
+        // The constraint holds iff any unfixed var takes value true
+        invariantGraph().addInvariantNode(std::make_shared<ArrayBoolOrNode>(
+            invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
+            true));
+      }
     }
+    return true;
   }
+  assert(!isReified());
+  if (shouldHold()) {
+    const VarNodeId frontVarId = staticInputVarNodeIds().front();
+    for (size_t i = 1; i < staticInputVarNodeIds().size(); ++i) {
+      invariantGraph().replaceVarNode(staticInputVarNodeIds().at(i),
+                                      frontVarId);
+    }
+    return true;
+  }
+  assert(staticInputVarNodeIds().size() == 2);
+  assert(!isReified() && !shouldHold());
+  invariantGraph().addInvariantNode(std::make_shared<ArrayBoolXorNode>(
+      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
   return true;
 }
 
@@ -146,6 +238,7 @@ void BoolAllEqualNode::registerNode() {
   assert(violationVarId() != propagation::NULL_ID);
 
   std::vector<propagation::VarViewId> solverVars;
+  solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars),

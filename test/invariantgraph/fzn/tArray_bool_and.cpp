@@ -26,12 +26,14 @@ class array_bool_andTest : public FznTestBase {
         std::ranges::all_of(inputs, [&](const std::string& input) {
           return boolVal(input, committedValue);
         });
+    const bool actual = boolVal(output, committedValue);
 
-    if (isFixed(output) && totalViolationVarId() != propagation::NULL_ID) {
-      return expected == (violation(committedValue) == 0);
+    if (isFixed(output)) {
+      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
+      const bool shouldHold = violation(committedValue) == 0;
+      return shouldHold ? expected == actual : expected != actual;
     }
-
-    return expected == boolVal(output, committedValue);
+    return expected == actual;
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
@@ -87,13 +89,9 @@ class array_bool_andTest : public FznTestBase {
     return false;
   }
 
-  void SetUp() override {
-    FznTestBase::SetUp();
-    constraintIdentifier = "array_bool_and";
-  }
-
   void generate() override {
-    const size_t size = 1;  // *rc::gen::inRange(0, 3);
+    constraintIdentifier = "array_bool_and";
+    const size_t size = *rc::gen::inRange(0, 3);
     inputs.reserve(size);
     for (size_t i = 0; i < size; i++) {
       inputs.emplace_back("b_" + std::to_string(i));

@@ -19,45 +19,56 @@ using namespace atlantis::invariantgraph::fzn;
 class array_bool_xorTest : public FznTestBase {
  public:
   std::vector<std::string> inputs{};
+  std::string reified{"reified"};
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     const size_t numTrue = std::ranges::count_if(
         inputs,
         [&](const auto& input) { return boolVal(input, committedValue); });
     const bool expected = numTrue == 1;
+    const bool actual = boolVal(reified, committedValue);
 
-    RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
-    return expected == (violation(committedValue) == 0);
-  }
-
-  void SetUp() override {
-    FznTestBase::SetUp();
-    constraintIdentifier = "array_bool_xor";
+    if (isFixed(reified)) {
+      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
+      const bool shouldHold = violation(committedValue) == 0;
+      return shouldHold ? expected == actual : expected != actual;
+    }
+    return expected == actual;
   }
 
   void generate() override {
+    constraintIdentifier = "array_bool_xor";
     const size_t size = *rc::gen::inRange(0, 3);
     inputs.reserve(size);
     for (size_t i = 0; i < size; i++) {
       inputs.emplace_back("b_" + std::to_string(i));
     }
     addBoolVarArray(inputs);
+    addBoolPar(reified, true);
     generateConstraint();
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
-    const size_t numTrue = std::ranges::count_if(
-        inputs,
-        [&](const std::string& input) { return !inDomain(input, bool{true}); });
-
-    if (numTrue == 1) {
-      return true;
+    if (!isFixed(reified)) {
+      const size_t numFalse =
+          std::ranges::count_if(inputs, [&](const std::string& input) {
+            return isFixedTo(input, bool{false});
+          });
+      return numFalse + 1 == inputs.size();
     }
 
-    return false;
+    const size_t numTrue = std::ranges::count_if(
+        inputs,
+        [&](const std::string& input) { return isFixedTo(input, bool{true}); });
+
+    return boolVal(reified) ? numTrue == 1 : numTrue != 1;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
+    if (!isFixed(reified)) {
+      return false;
+    }
+
     const size_t numTrue = std::ranges::count_if(
         inputs,
         [&](const std::string& input) { return isFixedTo(input, bool{true}); });
@@ -67,11 +78,8 @@ class array_bool_xorTest : public FznTestBase {
           return isFixedTo(input, bool{false});
         });
 
-    if (numTrue > 1 || numFalse == inputs.size()) {
-      return true;
-    }
-
-    return false;
+    return boolVal(reified) ? (numTrue > 1 || numFalse == inputs.size())
+                            : (numTrue == 1 && (numFalse + 1 == inputs.size()));
   }
 
   [[nodiscard]] bool canMove() const override {

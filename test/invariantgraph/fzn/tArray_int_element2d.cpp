@@ -75,10 +75,13 @@ class array_int_element2dTest : public FznTestBase {
     const Int expected =
         parameters.at(rowIdxVal - rowOffset).at(colIdxVal - colOffset);
     const Int actual = intVal(output, committedValue);
-    if (totalViolationVarId() != propagation::NULL_ID) {
-      return actual != expected;
+
+    if (isFixed(output)) {
+      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
+      const bool shouldHold = violation(committedValue) == 0;
+      return shouldHold ? expected == actual : expected != actual;
     }
-    return actual == expected;
+    return expected == actual;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
@@ -91,26 +94,22 @@ class array_int_element2dTest : public FznTestBase {
             [&](const Int rowVal) {
               if (!isFixed(colIndex)) {
                 const auto& colIdxNode = _invariantGraph->varNode(colIndex);
-                return std::any_of(colIdxNode.constDomain()->begin(),
-                                    colIdxNode.constDomain()->end(),
-                                    [&](const Int colVal) {
-                                      return outputNode.inDomain(
-                                          getValue(rowVal, colVal));
-                                    });
+                return std::any_of(
+                    colIdxNode.constDomain()->begin(),
+                    colIdxNode.constDomain()->end(), [&](const Int colVal) {
+                      return outputNode.inDomain(getValue(rowVal, colVal));
+                    });
               }
-              return outputNode.inDomain(
-                  getValue(rowVal, intVal(colIndex)));
+              return outputNode.inDomain(getValue(rowVal, intVal(colIndex)));
             });
       }
       if (!isFixed(colIndex)) {
         const auto& colIdxNode = _invariantGraph->varNode(colIndex);
-        return std::none_of(colIdxNode.constDomain()->begin(),
-                            colIdxNode.constDomain()->end(),
-                            [&](const Int colVal) {
-                              return outputNode.inDomain(
-                                  getValue(intVal(rowIndex), colVal));
-                            });
-
+        return std::none_of(
+            colIdxNode.constDomain()->begin(), colIdxNode.constDomain()->end(),
+            [&](const Int colVal) {
+              return outputNode.inDomain(getValue(intVal(rowIndex), colVal));
+            });
       }
       return !outputNode.inDomain(getValue(intVal(colIndex), intVal(rowIndex)));
     }
@@ -198,7 +197,5 @@ class array_int_element2dTest : public FznTestBase {
   void query() override { _solver->query(varId(output)); }
 };
 
-RC_GTEST_FIXTURE_PROP(array_int_element2dTest, RapidCheck, ()) {
-  rapidCheck();
-}
+RC_GTEST_FIXTURE_PROP(array_int_element2dTest, RapidCheck, ()) { rapidCheck(); }
 }  // namespace atlantis::testing

@@ -76,8 +76,8 @@ bool ArrayIntMinimumNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                    staticInputVarNodeIds().front());
+  invariantGraph().replaceVarNode(outputVarNodeIds().front(),
+                                  staticInputVarNodeIds().front());
   return true;
 }
 
