@@ -76,7 +76,8 @@ class array_int_element2dTest : public FznTestBase {
         parameters.at(rowIdxVal - rowOffset).at(colIdxVal - colOffset);
     const Int actual = intVal(output, committedValue);
 
-    RC_ASSERT(isFixed(output) == (totalViolationVarId() != propagation::NULL_ID));
+    RC_ASSERT(isFixed(output) ==
+              (totalViolationVarId() != propagation::NULL_ID));
 
     if (totalViolationVarId() != propagation::NULL_ID) {
       const bool isSolution = violation(committedValue) == 0;

@@ -28,7 +28,8 @@ class array_bool_andTest : public FznTestBase {
         });
     const bool actual = boolVal(output, committedValue);
 
-    RC_ASSERT(isFixed(output) == (totalViolationVarId() != propagation::NULL_ID));
+    RC_ASSERT(isFixed(output) ==
+              (totalViolationVarId() != propagation::NULL_ID));
 
     if (isFixed(output)) {
       const bool shouldHold = violation(committedValue) == 0;
