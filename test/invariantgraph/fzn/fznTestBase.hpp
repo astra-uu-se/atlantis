@@ -892,9 +892,11 @@ class FznTestBase : public ::testing::Test {
     const Int curVal = committedValue
                            ? _solver->committedValue(varId(identifier))
                            : _solver->currentValue(varId(identifier));
-    const size_t offset = std::uniform_int_distribution<size_t>(0, dom->size() - 2)(gen);
+    const size_t offset =
+        std::uniform_int_distribution<size_t>(0, dom->size() - 2)(gen);
     const Int newVal = *(dom->begin() + offset);
-    _solver->setValue(varId(identifier), curVal != newVal ? newVal : dom->upperBound());
+    _solver->setValue(varId(identifier),
+                      curVal != newVal ? newVal : dom->upperBound());
   }
 
   void rapidCheck() {
