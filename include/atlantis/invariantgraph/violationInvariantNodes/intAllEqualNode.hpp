@@ -1,12 +1,15 @@
 #pragma once
 
+#include <optional>
+
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
 
 namespace atlantis::invariantgraph {
 
 class IntAllEqualNode : public ViolationInvariantNode {
   bool _breaksCycle{false};
-  propagation::VarViewId _allDifferentViolationVarId{propagation::NULL_ID};
+  propagation::VarViewId _intermediate{propagation::NULL_ID};
+  std::optional<Int> _boundVal;
 
  public:
   explicit IntAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
