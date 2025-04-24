@@ -25,7 +25,8 @@ class bool_notTest : public FznTestBase {
     const bool expected = !boolVal(input, committedValue);
     const bool actual = boolVal(output, committedValue);
 
-    RC_ASSERT(isFixed(output) == (totalViolationVarId() != propagation::NULL_ID));
+    RC_ASSERT(isFixed(output) ==
+              (totalViolationVarId() != propagation::NULL_ID));
 
     if (isFixed(output)) {
       const bool shouldHold = violation(committedValue) == 0;
