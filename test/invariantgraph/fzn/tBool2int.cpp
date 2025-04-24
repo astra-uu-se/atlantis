@@ -40,24 +40,27 @@ class bool2intTest : public FznTestBase {
     annotations.clear();
     if (!boolArg.isParameter() && !intArg.isParameter()) {
       boolDefinesInt = *rc::gen::arbitrary<bool>();
-      annotations.emplace_back(
-        "defines_var", std::vector<std::vector<AnnotationExpression>>{
-                           std::vector<AnnotationExpression>{Annotation{boolDefinesInt ? intVar : boolVar}}});
+      annotations.emplace_back("defines_var",
+                               std::vector<std::vector<AnnotationExpression>>{
+                                   std::vector<AnnotationExpression>{Annotation{
+                                       boolDefinesInt ? intVar : boolVar}}});
     } else if (!boolArg.isParameter()) {
       RC_ASSERT(intArg.isParameter());
       boolDefinesInt = *rc::gen::arbitrary<bool>();
       if (!boolDefinesInt) {
         annotations.emplace_back(
-        "defines_var", std::vector<std::vector<AnnotationExpression>>{
-                           std::vector<AnnotationExpression>{Annotation{boolVar}}});
+            "defines_var",
+            std::vector<std::vector<AnnotationExpression>>{
+                std::vector<AnnotationExpression>{Annotation{boolVar}}});
       }
     } else if (!intArg.isParameter()) {
       RC_ASSERT(boolArg.isParameter());
       boolDefinesInt = *rc::gen::arbitrary<bool>();
       if (boolDefinesInt) {
         annotations.emplace_back(
-        "defines_var", std::vector<std::vector<AnnotationExpression>>{
-                           std::vector<AnnotationExpression>{Annotation{intVar}}});
+            "defines_var",
+            std::vector<std::vector<AnnotationExpression>>{
+                std::vector<AnnotationExpression>{Annotation{intVar}}});
       }
     }
 

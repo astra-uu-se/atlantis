@@ -9,8 +9,6 @@
 
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/int_lin_le.hpp"
-#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/propagation/solver.hpp"
 
 namespace atlantis::testing {
 
