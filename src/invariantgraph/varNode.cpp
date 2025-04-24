@@ -10,6 +10,7 @@
 #include "atlantis/propagation/views/inIntervalConst.hpp"
 #include "atlantis/propagation/views/inSparseDomain.hpp"
 #include "atlantis/propagation/views/lessEqualConst.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/search/searchVariable.hpp"
 #include "atlantis/utils/domains.hpp"
 
@@ -84,6 +85,29 @@ propagation::VarViewId VarNode::postDomainConstraint(
 
   const Int solverLb = solver.lowerBound(varId());
   const Int solverUb = solver.upperBound(varId());
+
+  if (!isIntVar()) {
+    const bool holdsTrue = solverLb <= 0 && 0 <= solverUb;
+    const bool holdsFalse = solverUb >= 1;
+    if (!isFixed()) {
+      return propagation::VarViewId{propagation::NULL_ID};
+    }
+    if ((inDomain(bool{true}) && !holdsTrue) || (inDomain(bool {false}) && !holdsFalse)) {
+      throw InconsistencyException("VarNode::postDomainConstraint: Solver domain and invariant graph domain do not overlap");
+    }
+    if ((inDomain(bool{true}) && !holdsFalse) || (inDomain(bool{false}) && !holdsTrue)) {
+      return propagation::VarViewId{propagation::NULL_ID};
+    }
+    if (inDomain(bool{true})) {
+      _domainViolationId = solver.makeIntView<propagation::EqualConst>(
+        solver, varId(), 0);
+    } else {
+      _domainViolationId = solver.makeIntView<propagation::NotEqualConst>(
+        solver, varId(), 0);
+    }
+    return _domainViolationId;
+  }
+
 
   if (_domainType == DomainType::DOM_FIXED || _domain->isFixed()) {
     if (lowerBound() < solverLb || solverUb < lowerBound()) {

@@ -16,6 +16,7 @@
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solver.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
 using namespace fznparser;
@@ -881,25 +882,19 @@ class FznTestBase : public ::testing::Test {
   bool randBool() { return binaryDist(gen) == 1; }
 
   void changeValue(const std::string& identifier, bool committedValue) {
-    const auto& var = _model->var(identifier);
-    Int lb = 0;
-    Int ub = 0;
-    if (std::holds_alternative<std::shared_ptr<BoolVar>>(var)) {
-      lb = std::get<std::shared_ptr<BoolVar>>(var)->contains(true) ? 0 : 1;
-      ub = std::get<std::shared_ptr<BoolVar>>(var)->contains(false) ? 1 : 0;
+    if (varId(identifier) == propagation::NULL_ID) {
+      return;
     }
-    if (std::holds_alternative<std::shared_ptr<IntVar>>(var)) {
-      lb = std::get<std::shared_ptr<IntVar>>(var)->lowerBound();
-      ub = std::get<std::shared_ptr<IntVar>>(var)->upperBound();
-    }
-    if (lb == ub) {
+    const auto& dom = _invariantGraph->varNodeConst(identifier).constDomain();
+    if (dom->size() <= 1) {
       return;
     }
     const Int curVal = committedValue
                            ? _solver->committedValue(varId(identifier))
                            : _solver->currentValue(varId(identifier));
-    const Int newVal = std::uniform_int_distribution<Int>(lb, ub - 1)(gen);
-    _solver->setValue(varId(identifier), curVal != newVal ? newVal : ub);
+    const size_t offset = std::uniform_int_distribution<size_t>(0, dom->size() - 2)(gen);
+    const Int newVal = *(dom->begin() + offset);
+    _solver->setValue(varId(identifier), curVal != newVal ? newVal : dom->upperBound());
   }
 
   void rapidCheck() {

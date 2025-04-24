@@ -87,8 +87,7 @@ void IntLinEqNode::updateState() {
   if (lb == ub && lb == _bound) {
     if (isReified()) {
       fixReified(true);
-    }
-    if (!shouldHold()) {
+    } else if (!shouldHold()) {
       throw InconsistencyException(
           "IntLinEqNode neg: Invariant is always false");
     }
@@ -97,9 +96,8 @@ void IntLinEqNode::updateState() {
   }
   if (_bound < lb || ub < _bound) {
     if (isReified()) {
-      fixReified(true);
-    }
-    if (shouldHold()) {
+      fixReified(false);
+    } else if (shouldHold()) {
       throw InconsistencyException("IntLinEqNode: Invariant is always false");
     }
     setState(InvariantNodeState::SUBSUMED);
@@ -134,11 +132,12 @@ void IntLinEqNode::registerNode() {
   assert(_intermediate.isVar());
 
   std::vector<propagation::VarViewId> solverVars;
+  solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars), [&](const VarNodeId varNodeId) {
         assert(invariantGraph().varId(varNodeId) != propagation::NULL_ID);
-        return invariantGraph().varId(varNodeId);
+        return invariantGraphConst().varId(varNodeId);
       });
   solver().makeInvariant<propagation::Linear>(solver(), _intermediate,
                                               std::vector<Int>(_coeffs),
