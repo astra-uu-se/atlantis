@@ -103,9 +103,8 @@ class int_lin_eqTest : public FznTestBase {
   }
 
   void generate() override {
-    const size_t size = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
-    coeffs = true ? std::vector<Int>{-2}
-                  : *rc::gen::container<std::vector<Int>>(
+    const size_t size = *rc::gen::inRange<size_t>(0, 4);
+    coeffs = *rc::gen::container<std::vector<Int>>(
                         size, rc::gen::inRange(-2, 2));
     addArg(coeffs);
     inputs.reserve(size);
@@ -128,13 +127,13 @@ class int_lin_eqTest : public FznTestBase {
       lb += std::min<Int>(0, c);
     }
 
-    bound = true ? -2 : *rc::gen::inRange<Int>(lb, ub);
+    bound = *rc::gen::inRange<Int>(lb, ub);
     addArg(bound);
 
-    const bool isReified = true || *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "int_lin_eq_reif" : "int_lin_eq";
     if (isReified) {
-      addBoolArg(BoolArgState::VAR, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }
