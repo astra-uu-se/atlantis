@@ -25,14 +25,15 @@ class bool_leTest : public FznTestBase {
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     const bool expected = (boolVal(a, committedValue) ? 1 : 0) <=
                           (boolVal(b, committedValue) ? 1 : 0);
-    const bool shouldHold = boolVal(reified, committedValue);
+    const bool actual = boolVal(reified, committedValue);
 
-    if (isFixed(reified)) {
-      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
-      const bool actual = violation(committedValue) == 0;
-      return shouldHold ? expected == actual : expected != actual;
+    RC_ASSERT(isFixed(reified) == (totalViolationVarId() != propagation::NULL_ID));
+
+    if (totalViolationVarId() != propagation::NULL_ID) {
+      const bool isSolution = violation(committedValue) == 0;
+      return isSolution ? expected == actual : expected != actual;
     }
-    return shouldHold ? expected : !expected;
+    return expected  == actual;
   }
 
   void generate() override {

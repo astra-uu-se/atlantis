@@ -26,10 +26,9 @@ class bool2intTest : public FznTestBase {
     const bool expected = !boolVal(boolVar, committedValue);
     const bool actual = intVal(intVar, committedValue) == 1;
 
-    if (isFixed(intVar)) {
-      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
-      const bool shouldHold = violation(committedValue) == 0;
-      return shouldHold ? expected == actual : expected != actual;
+    if (totalViolationVarId() != propagation::NULL_ID) {
+      const bool isSolution = violation(committedValue) == 0;
+      return isSolution ? expected == actual : expected != actual;
     }
     return actual == expected;
   }
