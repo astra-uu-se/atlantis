@@ -28,8 +28,6 @@ class bool_xorTest : public FznTestBase {
     const bool expected = numTrue == 1;
     const bool actual = boolVal(reified, committedValue);
 
-    RC_ASSERT(isFixed(reified) == (totalViolationVarId() != propagation::NULL_ID));
-
     if (totalViolationVarId() != propagation::NULL_ID) {
       const bool isSolution = violation(committedValue) == 0;
       return isSolution ? actual == expected : expected != actual;

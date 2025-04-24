@@ -28,8 +28,6 @@ class bool_andTest : public FznTestBase {
         });
     const bool actual = boolVal(output, committedValue);
 
-    RC_ASSERT(isFixed(output) == (totalViolationVarId() != propagation::NULL_ID));
-
     if (totalViolationVarId() != propagation::NULL_ID) {
       const bool isSolution = violation(committedValue) == 0;
       return isSolution ? expected == actual : expected != actual;

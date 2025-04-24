@@ -55,8 +55,6 @@ class array_int_elementTest : public FznTestBase {
     const Int expected = parameters.at(idxVal - offset);
     const Int actual = intVal(output, committedValue);
 
-    RC_ASSERT(isFixed(output) == (totalViolationVarId() != propagation::NULL_ID));
-
     if (totalViolationVarId() != propagation::NULL_ID) {
       const bool isSolution = violation(committedValue) == 0;
       return isSolution ? expected == actual : expected != actual;

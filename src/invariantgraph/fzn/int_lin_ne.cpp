@@ -22,15 +22,6 @@ bool int_lin_ne(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
                 Int bound) {
   verifyInputs(coeffs, inputs);
-  if (coeffs.empty()) {
-    if (bound != 0) {
-      return true;
-    }
-    throw FznArgumentException(
-        "int_lin_ne constraint with empty arrays must have a total sum other "
-        "than 0");
-  }
-
   graph.addInvariantNode(std::make_shared<IntLinNeNode>(
       graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
 
