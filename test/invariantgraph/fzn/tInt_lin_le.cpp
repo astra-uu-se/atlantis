@@ -53,17 +53,14 @@ class int_lin_leTest : public FznTestBase {
         sum += coeffs.at(i) * intVal(inputs.at(i), committedValue);
       }
     }
+    const bool actual = boolVal(reified, committedValue);
+    const bool expected = sum <= bound;
 
-    if (isFixed(reified) && totalViolationVarId() != propagation::NULL_ID) {
-      const bool shouldHold = boolVal(reified, committedValue);
-      const bool expected = shouldHold ? sum <= bound : sum > bound;
-      const bool actual = violation(committedValue) == 0;
-      if (actual != expected) {
-        return false;
-      }
-      return expected == actual;
+    if (totalViolationVarId() != propagation::NULL_ID) {
+      const bool isSolution = violation(committedValue) == 0;
+      return isSolution ? expected == actual : expected != actual;
     }
-    return (sum <= bound) == boolVal(reified, committedValue);
+    return expected == actual;
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {

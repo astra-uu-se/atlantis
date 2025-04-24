@@ -51,10 +51,11 @@ class array_bool_elementTest : public FznTestBase {
     const bool expected = parameters.at(idxVal - offset);
     const bool actual = boolVal(output, committedValue);
 
-    if (isFixed(output)) {
-      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
-      const bool shouldHold = violation(committedValue) == 0;
-      return shouldHold ? expected == actual : expected != actual;
+    RC_ASSERT(isFixed(output) == (totalViolationVarId() != propagation::NULL_ID));
+
+    if (totalViolationVarId() != propagation::NULL_ID) {
+      const bool isSolution = violation(committedValue) == 0;
+      return isSolution ? expected == actual : expected != actual;
     }
     return expected == actual;
   }

@@ -28,10 +28,11 @@ class array_bool_xorTest : public FznTestBase {
     const bool expected = numTrue == 1;
     const bool actual = boolVal(reified, committedValue);
 
-    if (isFixed(reified)) {
-      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
-      const bool shouldHold = violation(committedValue) == 0;
-      return shouldHold ? expected == actual : expected != actual;
+    RC_ASSERT(isFixed(reified) == (totalViolationVarId() != propagation::NULL_ID));
+
+    if (totalViolationVarId() != propagation::NULL_ID) {
+      const bool isSolution = violation(committedValue) == 0;
+      return isSolution ? expected == actual : expected != actual;
     }
     return expected == actual;
   }

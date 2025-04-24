@@ -26,14 +26,15 @@ class bool_xorTest : public FznTestBase {
         inputs,
         [&](const auto& input) { return boolVal(input, committedValue); });
     const bool expected = numTrue == 1;
-    const bool shouldHold = boolVal(reified, committedValue);
+    const bool actual = boolVal(reified, committedValue);
 
-    if (isFixed(reified)) {
-      RC_ASSERT(totalViolationVarId() != propagation::NULL_ID);
-      const bool actual = violation(committedValue) == 0;
-      return shouldHold ? expected == actual : expected != actual;
+    RC_ASSERT(isFixed(reified) == (totalViolationVarId() != propagation::NULL_ID));
+
+    if (totalViolationVarId() != propagation::NULL_ID) {
+      const bool isSolution = violation(committedValue) == 0;
+      return isSolution ? actual == expected : expected != actual;
     }
-    return shouldHold ? expected : !expected;
+    return actual ? expected : !expected;
   }
 
   void generate() override {
