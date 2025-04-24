@@ -121,19 +121,17 @@ bool int_lin_eq(FznInvariantGraph& graph,
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0))
           ->toParVector();
 
-  if (!isReified &&
-    constraint.definedVar().has_value() &&
+  if (!isReified && constraint.definedVar().has_value() &&
       std::holds_alternative<std::shared_ptr<fznparser::IntVar>>(
           constraint.definedVar().value())) {
     const std::shared_ptr<const fznparser::IntVar> definedVar =
         std::get<std::shared_ptr<fznparser::IntVar>>(
             constraint.definedVar().value());
-      return int_lin_eq(
-          graph, std::move(coeffs),
-          getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
-          std::get<fznparser::IntArg>(constraint.arguments().at(2))
-              .toParameter(),
-          definedVar);
+    return int_lin_eq(
+        graph, std::move(coeffs),
+        getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
+        std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter(),
+        definedVar);
   }
   if (!isReified) {
     return int_lin_eq(

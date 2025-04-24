@@ -92,22 +92,25 @@ propagation::VarViewId VarNode::postDomainConstraint(
     if (!isFixed()) {
       return propagation::VarViewId{propagation::NULL_ID};
     }
-    if ((inDomain(bool{true}) && !holdsTrue) || (inDomain(bool {false}) && !holdsFalse)) {
-      throw InconsistencyException("VarNode::postDomainConstraint: Solver domain and invariant graph domain do not overlap");
+    if ((inDomain(bool{true}) && !holdsTrue) ||
+        (inDomain(bool{false}) && !holdsFalse)) {
+      throw InconsistencyException(
+          "VarNode::postDomainConstraint: Solver domain and invariant graph "
+          "domain do not overlap");
     }
-    if ((inDomain(bool{true}) && !holdsFalse) || (inDomain(bool{false}) && !holdsTrue)) {
+    if ((inDomain(bool{true}) && !holdsFalse) ||
+        (inDomain(bool{false}) && !holdsTrue)) {
       return propagation::VarViewId{propagation::NULL_ID};
     }
     if (inDomain(bool{true})) {
-      _domainViolationId = solver.makeIntView<propagation::EqualConst>(
-        solver, varId(), 0);
+      _domainViolationId =
+          solver.makeIntView<propagation::EqualConst>(solver, varId(), 0);
     } else {
-      _domainViolationId = solver.makeIntView<propagation::NotEqualConst>(
-        solver, varId(), 0);
+      _domainViolationId =
+          solver.makeIntView<propagation::NotEqualConst>(solver, varId(), 0);
     }
     return _domainViolationId;
   }
-
 
   if (_domainType == DomainType::DOM_FIXED || _domain->isFixed()) {
     if (lowerBound() < solverLb || solverUb < lowerBound()) {
