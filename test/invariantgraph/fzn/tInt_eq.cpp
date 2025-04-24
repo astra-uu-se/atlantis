@@ -1,8 +1,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <rapidcheck/gtest.h>
 
+#include <algorithm>
 #include <vector>
 
+#include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/int_eq.hpp"
 
 namespace atlantis::testing {
@@ -13,12 +16,76 @@ using ::testing::AtMost;
 using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
-class int_eqTest : public ::testing::Test {
+class int_eqTest : public FznTestBase {
  public:
-  std::vector<VarNodeId> inputVarNodeIds{};
-  Int numInputs = 3;
+  std::string a{"i_1"};
+  std::string b{"i_2"};
+  std::string reified{"reified"};
 
-  void SetUp() override {}
+  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+    const bool expected =
+        intVal(a, committedValue) == intVal(b, committedValue);
+    const bool actual = boolVal(reified, committedValue);
+
+    RC_ASSERT(isFixed(reified) ==
+              (totalViolationVarId() != propagation::NULL_ID));
+
+    if (totalViolationVarId() != propagation::NULL_ID) {
+      const bool isSolution = violation(committedValue) == 0;
+      return isSolution ? expected == actual : expected != actual;
+    }
+    return expected == actual;
+  }
+
+  void generate() override {
+    addIntArg(a);
+    addIntArg(b);
+    const bool isReified = *rc::gen::arbitrary<bool>();
+    constraintIdentifier = isReified ? "int_eq_reif" : "int_eq";
+    if (isReified) {
+      addBoolArg(reified);
+    } else {
+      addBoolPar(reified, true);
+    }
+    generateConstraint();
+  }
+
+  [[nodiscard]] bool alwaysSatisfied() const override {
+    if (isFixed(a) && isFixed(b) && isFixed(reified)) {
+      return boolVal(reified) ? intVal(a) == intVal(b) : intVal(a) != intVal(b);
+    }
+    return isFixed(a) || isFixed(b) || isFixed(reified);
+  }
+
+  [[nodiscard]] bool neverSatisfied() const override {
+    if (!isFixed(reified)) {
+      return false;
+    }
+    if (isFixed(a) && isFixed(b)) {
+      return boolVal(reified) ? intVal(a) != intVal(b) : intVal(a) == intVal(b);
+    }
+    return false;
+  }
+
+  [[nodiscard]] bool canMove() const override {
+    return varId(a) != propagation::NULL_ID || varId(b) != propagation::NULL_ID;
+  }
+
+  void move(bool committedValue) override {
+    for (const auto& input : std::array{a, b}) {
+      if (varId(input) != propagation::NULL_ID && randBool()) {
+        changeValue(input, committedValue);
+      }
+    }
+  }
+
+  void query() override {
+    _solver->query(totalViolationVarId() != propagation::NULL_ID
+                       ? totalViolationVarId()
+                       : varId(reified));
+  }
 };
+
+RC_GTEST_FIXTURE_PROP(int_eqTest, RapidCheck, ()) { rapidCheck(); }
 
 }  // namespace atlantis::testing
