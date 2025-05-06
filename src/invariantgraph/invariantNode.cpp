@@ -164,25 +164,39 @@ void InvariantNode::removeOutputVarNode(VarNodeId outputVarNodeId) {
 void InvariantNode::replaceStaticInputVarNode(VarNodeId oldInputVarNodeId,
                                               VarNodeId newInputVarNodeId) {
   // Replace all occurrences:
+  bool wasInput = false;
   for (auto& sVarId : _staticInputVarNodeIds) {
     if (sVarId == oldInputVarNodeId) {
       sVarId = newInputVarNodeId;
+      wasInput = true;
     }
   }
-  _invariantGraph.varNode(oldInputVarNodeId).unmarkAsInputFor(_id, true);
-  _invariantGraph.varNode(newInputVarNodeId).markAsInputFor(_id, true);
+  assert(wasInput == std::ranges::any_of(_invariantGraph.varNode(oldInputVarNodeId).staticInputTo(), [&](InvariantNodeId invId) {
+    return invId == _id;
+  }));
+  if (wasInput) {
+    _invariantGraph.varNode(oldInputVarNodeId).unmarkAsInputFor(_id, true);
+    _invariantGraph.varNode(newInputVarNodeId).markAsInputFor(_id, true);
+  }
 }
 
 void InvariantNode::replaceDynamicInputVarNode(VarNodeId oldInputVarNodeId,
                                                VarNodeId newInputVarNodeId) {
   // Replace all occurrences:
+  bool wasInput = false;
   for (auto& dVarId : _dynamicInputVarNodeIds) {
     if (dVarId == oldInputVarNodeId) {
       dVarId = newInputVarNodeId;
+      wasInput = true;
     }
   }
-  _invariantGraph.varNode(oldInputVarNodeId).unmarkAsInputFor(_id, false);
-  _invariantGraph.varNode(newInputVarNodeId).markAsInputFor(_id, false);
+  assert(wasInput == std::ranges::any_of(_invariantGraph.varNode(oldInputVarNodeId).dynamicInputTo(), [&](InvariantNodeId invId) {
+    return invId == _id;
+  }));
+  if (wasInput) {
+    _invariantGraph.varNode(oldInputVarNodeId).unmarkAsInputFor(_id, false);
+    _invariantGraph.varNode(newInputVarNodeId).markAsInputFor(_id, false);
+  }
 }
 
 std::ostream& InvariantNode::dotLangEntry(std::ostream& o) const {
