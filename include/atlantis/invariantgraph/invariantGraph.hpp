@@ -9,6 +9,7 @@
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
+#include "implicitConstraintNode.hpp"
 
 namespace atlantis {
 class SearchDomain;
@@ -40,6 +41,14 @@ class InvariantGraph {
   bool _breakDynamicCycles;
 
   void populateRootNode();
+
+  void breakSelfCycles();
+
+  void createVars();
+  void createImplicitConstraints();
+  void createInvariants();
+  propagation::VarViewId createViolations();
+  void sanity(bool);
 
  protected:
   propagation::VarViewId _totalViolationVarId{propagation::NULL_ID};
@@ -117,6 +126,11 @@ class InvariantGraph {
 
   [[nodiscard]] const VarNode& varNodeConst(VarNodeId id) const;
 
+  [[nodiscard]] const InvariantNode& invariantNodeConst(InvariantNodeId) const;
+
+  [[nodiscard]] const std::vector<std::shared_ptr<ImplicitConstraintNode>>&
+  implicitConstraintNodes() const;
+
   [[nodiscard]] VarNodeId varNodeId(bool val) const;
 
   [[nodiscard]] VarNodeId varNodeId(Int val) const;
@@ -175,30 +189,6 @@ class InvariantGraph {
       const;
 
   void writeDotFile(std::ostream&) const;
-
- private:
-  std::unordered_set<VarNodeId> dynamicVarNodeFrontier(
-      VarNodeId node, const std::unordered_set<VarNodeId>& visitedGlobal);
-
-  VarNodeId findCycleUtil(
-      VarNodeId varNodeId, const std::unordered_set<VarNodeId>& visitedGlobal,
-      std::unordered_set<VarNodeId>& visitedLocal,
-      std::unordered_map<VarNodeId, InvariantGraphEdge>& path);
-
-  InvariantGraphEdge findPivotInCycle(
-      const std::vector<InvariantGraphEdge>& cycle);
-
-  void breakSelfCycles();
-
-  std::vector<VarNodeId> breakCycles(
-      VarNodeId node, std::unordered_set<VarNodeId>& visitedGlobal);
-  VarNodeId breakCycle(const std::vector<InvariantGraphEdge>& cycle);
-
-  void createVars();
-  void createImplicitConstraints();
-  void createInvariants();
-  propagation::VarViewId createViolations();
-  void sanity(bool);
 };
 
 }  // namespace atlantis::invariantgraph
