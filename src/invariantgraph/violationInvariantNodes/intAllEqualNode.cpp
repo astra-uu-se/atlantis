@@ -62,23 +62,24 @@ void IntAllEqualNode::updateState() {
       fixReified(true);
     }
     setState(InvariantNodeState::SUBSUMED);
+    return;
   }
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
   for (const auto vId : staticInputVarNodeIds()) {
-    VarNode& vNode = invariantGraph().varNode(vId);
+    const VarNode& vNode = invariantGraphConst().varNodeConst(vId);
     if (!vNode.isFixed()) {
       continue;
     }
     const Int val = vNode.lowerBound();
     if (_boundVal.has_value() && val != _boundVal.value()) {
-      if (!isReified() && shouldHold()) {
+      if (isReified()) {
+        fixReified(false);
+      } else if (shouldHold()) {
         throw InconsistencyException(
             "IntAllEqualNode::updateState constraint is violated");
       }
-      if (isReified()) {
-        fixReified(false);
-      }
+
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
