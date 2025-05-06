@@ -56,7 +56,7 @@ class int_lin_eqTest : public FznTestBase {
     const bool expected = sum == bound;
     const bool actual = boolVal(reified, committedValue);
 
-    if (totalViolationVarId() != propagation::NULL_ID) {
+    if (isFixed(reified)) {
       const bool satAssignment = violation(committedValue) == 0;
       return satAssignment ? expected == actual : expected != actual;
     }
@@ -168,7 +168,7 @@ class int_lin_eqTest : public FznTestBase {
     if (!reified.empty()) {
       _solver->query(varId(reified));
     }
-    if (totalViolationVarId() != propagation::NULL_ID) {
+    if (isFixed(reified)) {
       _solver->query(totalViolationVarId());
     }
     if (definedIndex >= 0 &&

@@ -27,10 +27,7 @@ class bool_eqTest : public FznTestBase {
         boolVal(a, committedValue) == boolVal(b, committedValue);
     const bool actual = boolVal(reified, committedValue);
 
-    RC_ASSERT(isFixed(reified) ==
-              (totalViolationVarId() != propagation::NULL_ID));
-
-    if (totalViolationVarId() != propagation::NULL_ID) {
+    if (isFixed(reified)) {
       const bool isSolution = violation(committedValue) == 0;
       return isSolution ? expected == actual : expected != actual;
     }

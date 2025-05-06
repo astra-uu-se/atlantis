@@ -78,7 +78,7 @@ class array_bool_element2dTest : public FznTestBase {
         parameters.at(rowIdxVal - rowOffset).at(colIdxVal - colOffset);
     const bool actual = boolVal(output, committedValue);
 
-    if (totalViolationVarId() != propagation::NULL_ID) {
+    if (isFixed(output)) {
       const bool isSolution = violation(committedValue) == 0;
       return isSolution ? expected == actual : expected != actual;
     }

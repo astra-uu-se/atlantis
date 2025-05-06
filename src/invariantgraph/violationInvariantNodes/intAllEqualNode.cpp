@@ -101,6 +101,8 @@ void IntAllEqualNode::updateState() {
   if (staticInputVarNodeIds().empty()) {
     if (isReified()) {
       fixReified(true);
+    } else if (!shouldHold()) {
+      throw InconsistencyException("IntAllEqualNode::updateState constraint is violated");
     }
     setState(InvariantNodeState::SUBSUMED);
   }
@@ -174,8 +176,7 @@ void IntAllEqualNode::registerNode() {
   std::vector<propagation::VarViewId> inputVarIds;
   inputVarIds.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      std::back_inserter(inputVarIds),
+      staticInputVarNodeIds(), std::back_inserter(inputVarIds),
       [&](const auto& id) { return invariantGraph().varId(id); });
 
   if (_boundVal.has_value()) {

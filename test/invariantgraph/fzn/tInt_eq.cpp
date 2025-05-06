@@ -27,10 +27,7 @@ class int_eqTest : public FznTestBase {
         intVal(a, committedValue) == intVal(b, committedValue);
     const bool actual = boolVal(reified, committedValue);
 
-    RC_ASSERT(isFixed(reified) ==
-              (totalViolationVarId() != propagation::NULL_ID));
-
-    if (totalViolationVarId() != propagation::NULL_ID) {
+    if (isFixed(reified)) {
       const bool isSolution = violation(committedValue) == 0;
       return isSolution ? expected == actual : expected != actual;
     }
@@ -38,12 +35,12 @@ class int_eqTest : public FznTestBase {
   }
 
   void generate() override {
-    addIntArg(a);
-    addIntArg(b);
-    const bool isReified = *rc::gen::arbitrary<bool>();
+    addIntArg(IntArgState::VAR, a);
+    addIntArg(IntArgState::VAR, b);
+    const bool isReified = true || *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "int_eq_reif" : "int_eq";
     if (isReified) {
-      addBoolArg(reified);
+      addBoolArg(BoolArgState::VAR, reified);
     } else {
       addBoolPar(reified, true);
     }

@@ -216,6 +216,7 @@ void BoolAllEqualNode::registerOutputVars() {
   if (violationVarId() == propagation::NULL_ID) {
     if (shouldHold() || staticInputVarNodeIds().size() == 2) {
       registerViolation();
+      assert(_intermediate == propagation::NULL_ID);
     } else if (!shouldHold()) {
       assert(!isReified());
       _intermediate = solver().makeIntVar(0, 0, 0);
@@ -240,8 +241,7 @@ void BoolAllEqualNode::registerNode() {
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      std::back_inserter(solverVars),
+      staticInputVarNodeIds(), std::back_inserter(solverVars),
       [&](const auto& id) { return invariantGraph().varId(id); });
 
   if (solverVars.size() == 2) {
@@ -258,11 +258,12 @@ void BoolAllEqualNode::registerNode() {
     return;
   }
 
-  assert(shouldHold() || _intermediate != propagation::NULL_ID);
-  assert(shouldHold() ? violationVarId().isVar() : _intermediate.isVar());
+  assert(shouldHold() != (_intermediate != propagation::NULL_ID));
+  assert(shouldHold() ? violationVarId().isVar() : violationVarId().isView());
 
   solver().makeViolationInvariant<propagation::BoolAllEqual>(
-      solver(), !shouldHold() ? _intermediate : violationVarId(),
+      solver(),
+      _intermediate == propagation::NULL_ID ? violationVarId() : _intermediate,
       std::move(solverVars));
 }
 
