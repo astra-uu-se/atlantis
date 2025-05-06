@@ -34,12 +34,11 @@ void ArrayVarElementNode::init(InvariantNodeId id) {
 }
 
 void ArrayVarElementNode::updateState() {
-  const VarNode& idxNode = invariantGraph().varNode(idx());
-  /*
+  VarNode& idxNode = invariantGraph().varNode(idx());
+
   idxNode.removeValuesBelow(_offset);
   idxNode.removeValuesAbove(
       _offset + static_cast<Int>(dynamicInputVarNodeIds().size()) - 1);
-  */
 
   const Int overflow = _offset +
                        static_cast<Int>(dynamicInputVarNodeIds().size()) -
@@ -91,7 +90,6 @@ bool ArrayVarElementNode::replace() {
   const auto& idxNode = invariantGraph().varNode(idx());
   const VarNodeId input =
       dynamicInputVarNodeIds().at(idxNode.lowerBound() - _offset);
-
   invariantGraph().replaceVarNode(outputVarNodeIds().front(), input);
   return true;
 }
