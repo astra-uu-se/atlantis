@@ -1,7 +1,6 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
 
 #include <algorithm>
-#include <boost/fiber/algo/algorithm.hpp>
 #include <utility>
 
 #include "../parseHelper.hpp"

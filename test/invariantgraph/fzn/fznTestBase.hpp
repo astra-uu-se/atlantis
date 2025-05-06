@@ -5,7 +5,6 @@
 #include <rapidcheck/gen/Numeric.h>
 #include <rapidcheck/gtest.h>
 
-#include <boost/spirit/home/classic/phoenix/primitives.hpp>
 #include <fznparser/constraint.hpp>
 #include <fznparser/model.hpp>
 #include <fznparser/variables.hpp>
