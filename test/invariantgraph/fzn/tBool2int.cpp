@@ -23,13 +23,8 @@ class bool2intTest : public FznTestBase {
   bool boolDefinesInt;
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
-    const bool expected = !boolVal(boolVar, committedValue);
-    const bool actual = intVal(intVar, committedValue) == 1;
-
-    if (totalViolationVarId() != propagation::NULL_ID) {
-      const bool isSolution = violation(committedValue) == 0;
-      return isSolution ? expected == actual : expected != actual;
-    }
+    const bool expected = boolVal(boolVar, committedValue);
+    const bool actual = intVal(intVar, committedValue) == 0;
     return actual == expected;
   }
 

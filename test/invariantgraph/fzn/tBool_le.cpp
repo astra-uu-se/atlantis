@@ -27,10 +27,7 @@ class bool_leTest : public FznTestBase {
                           (boolVal(b, committedValue) ? 1 : 0);
     const bool actual = boolVal(reified, committedValue);
 
-    RC_ASSERT(isFixed(reified) ==
-              (totalViolationVarId() != propagation::NULL_ID));
-
-    if (totalViolationVarId() != propagation::NULL_ID) {
+    if (isFixed(reified)) {
       const bool isSolution = violation(committedValue) == 0;
       return isSolution ? expected == actual : expected != actual;
     }

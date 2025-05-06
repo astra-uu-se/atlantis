@@ -62,7 +62,7 @@ class array_int_minimumTest : public FznTestBase {
     const auto expected = getValue(committedValue);
     const Int actual = intVal(output, committedValue);
 
-    if (totalViolationVarId() != propagation::NULL_ID) {
+    if (isFixed(output)) {
       const bool isSolution = violation(committedValue) == 0;
       return isSolution ? expected == actual : expected != actual;
     }

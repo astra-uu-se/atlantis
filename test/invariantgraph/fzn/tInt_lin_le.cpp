@@ -56,7 +56,7 @@ class int_lin_leTest : public FznTestBase {
     const bool actual = boolVal(reified, committedValue);
     const bool expected = sum <= bound;
 
-    if (totalViolationVarId() != propagation::NULL_ID) {
+    if (isFixed(reified)) {
       const bool isSolution = violation(committedValue) == 0;
       return isSolution ? expected == actual : expected != actual;
     }
