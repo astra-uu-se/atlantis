@@ -20,6 +20,241 @@
 
 namespace atlantis::invariantgraph {
 
+static void SCCUtil(const InvariantGraph& graph, VarNodeId inputId,
+                    std::vector<Int>& discoverTime, std::vector<Int>& lowTime,
+                    std::vector<VarNodeId>& stack, std::vector<bool>& onStack,
+                    Int& time,
+                    std::vector<std::vector<VarNodeId>>& components) {
+  assert(inputId < discoverTime.size());
+  assert(discoverTime.size() == lowTime.size());
+  assert(discoverTime.size() == onStack.size());
+  assert(!onStack[inputId]);
+  discoverTime[inputId] = lowTime[inputId] = time;
+  ++time;
+  stack.emplace_back(inputId);
+  onStack[inputId] = true;
+
+  assert(graph.varNodeConst(inputId).definingNodes().size() <= 1);
+  for (size_t i = 0; i < 2; ++i) {
+    for (const InvariantNodeId invId :
+         i == 0 ? graph.varNodeConst(inputId).staticInputTo()
+                : graph.varNodeConst(inputId).dynamicInputTo()) {
+      for (const VarNodeId outputId :
+           graph.invariantNodeConst(invId).outputVarNodeIds()) {
+        if (discoverTime[outputId] < 0) {
+          SCCUtil(graph, outputId, discoverTime, lowTime, stack, onStack, time,
+                  components);
+          lowTime[inputId] = std::min(lowTime[outputId], lowTime[inputId]);
+        } else if (onStack[outputId]) {
+          lowTime[inputId] = std::min(lowTime[outputId], discoverTime[inputId]);
+        }
+      }
+    }
+  }
+  if (lowTime[inputId] == discoverTime[inputId]) {
+    const bool inSCC = stack.back() != inputId;
+    if (inSCC) {
+      components.emplace_back();
+      while (stack.back() != inputId) {
+        onStack[stack.back()] = false;
+        components.back().emplace_back(stack.back());
+        stack.pop_back();
+      }
+    }
+    onStack[inputId] = false;
+    assert(stack.back() == inputId);
+    if (inSCC) {
+      components.back().emplace_back(inputId);
+    }
+    stack.pop_back();
+  }
+}
+
+static std::vector<std::vector<VarNodeId>> SCC(const InvariantGraph& graph) {
+  std::vector<Int> discoverTime(graph.nextVarNodeId(), -1);
+  std::vector<Int> lowTime(graph.nextVarNodeId(), -1);
+  std::vector<VarNodeId> stack;
+  stack.reserve(graph.nextVarNodeId());
+  std::vector<bool> onStack(graph.nextVarNodeId(), false);
+  std::vector<std::vector<VarNodeId>> components;
+  components.reserve(graph.nextVarNodeId());
+  Int time = 0;
+  for (const std::shared_ptr<ImplicitConstraintNode>& invNode :
+       graph.implicitConstraintNodes()) {
+    for (const VarNodeId searchVar : invNode->outputVarNodeIds()) {
+      if (discoverTime[searchVar] < 0) {
+        SCCUtil(graph, searchVar, discoverTime, lowTime, stack, onStack, time,
+                components);
+      }
+    }
+  }
+  for (VarNodeId varId = 0; varId < graph.nextVarNodeId(); ++varId) {
+    if (graph.varNodeConst(varId).definingNodes().empty() && discoverTime[varId] < 0) {
+      SCCUtil(graph, varId, discoverTime, lowTime, stack, onStack, time,
+                components);
+    }
+  }
+  assert(std::ranges::none_of(onStack, [&](const bool b) { return b; }));
+  assert(
+      std::ranges::all_of(discoverTime, [&](const Int t) { return t >= 0; }));
+  return components;
+}
+
+static std::vector<VarNodeId> findStaticCycle(
+    const InvariantGraph& graph, const std::vector<VarNodeId>& component,
+    const size_t componentIndex, const std::vector<size_t>& componentOfVar) {
+  std::vector<VarNodeId> stack;
+  std::vector<Int> discoverTime(componentOfVar.size(), -1);
+  std::vector<VarNodeId> parent(componentOfVar.size(), NULL_NODE_ID);
+  stack.reserve(component.size());
+  Int time = 0;
+  for (const VarNodeId orig : component) {
+    if (discoverTime[orig] >= 0) {
+      continue;
+    }
+    discoverTime[orig] = time;
+    ++time;
+    stack.emplace_back(orig);
+
+    while (!stack.empty()) {
+      const VarNodeId outputId = stack.back();
+      stack.pop_back();
+      discoverTime[outputId] = discoverTime[orig];
+      assert(graph.varNodeConst(outputId).definingNodes().size() <= 1);
+      if (graph.varNodeConst(outputId).definingNodes().empty()) {
+        continue;
+      }
+      const auto defInv = *graph.varNodeConst(outputId).definingNodes().begin();
+      assert(defInv != NULL_NODE_ID);
+      const auto& invNode = graph.invariantNodeConst(defInv);
+      for (const VarNodeId inputId : invNode.staticInputVarNodeIds()) {
+        if (componentOfVar[inputId] != componentIndex) {
+          continue;
+        }
+        parent[inputId] = outputId;
+        if (discoverTime[inputId] == discoverTime[orig]) {
+          std::vector<VarNodeId> cycle;
+          cycle.reserve(component.size());
+          cycle.emplace_back(inputId);
+          for (VarNodeId vId = outputId; vId != inputId; vId = parent[vId]) {
+            assert(vId != NULL_NODE_ID);
+            cycle.emplace_back(vId);
+          }
+          return cycle;
+        }
+        if (discoverTime[inputId] < 0) {
+          stack.emplace_back(inputId);
+        }
+      }
+    }
+  }
+  return {};
+}
+
+static std::vector<VarNodeId> findDynamicCycle(
+    const InvariantGraph& graph, const std::vector<VarNodeId>& component,
+    const size_t componentIndex, const std::vector<size_t>& componentOfVar) {
+  std::vector<VarNodeId> stack;
+  std::vector<Int> discoverTime(componentOfVar.size(), -1);
+  std::vector<VarNodeId> parent(componentOfVar.size(), NULL_NODE_ID);
+  stack.reserve(component.size());
+  Int time = 0;
+  for (const VarNodeId orig : component) {
+    if (discoverTime[orig] < 0) {
+      continue;
+    }
+    discoverTime[orig] = time;
+    ++time;
+    stack.emplace_back(orig);
+
+    while (!stack.empty()) {
+      const VarNodeId outputId = stack.back();
+      stack.pop_back();
+      discoverTime[outputId] = discoverTime[orig];
+      assert(graph.varNodeConst(outputId).definingNodes().size() <= 1);
+      if (graph.varNodeConst(outputId).definingNodes().empty()) {
+        continue;
+      }
+      const auto defInv = *graph.varNodeConst(outputId).definingNodes().begin();
+      assert(defInv != NULL_NODE_ID);
+      const auto& invNode = graph.invariantNodeConst(defInv);
+      for (size_t i = 0; i < 2; ++i) {
+        for (const VarNodeId inputId : i == 0
+                                           ? invNode.staticInputVarNodeIds()
+                                           : invNode.dynamicInputVarNodeIds()) {
+          if (componentOfVar[inputId] != componentIndex) {
+            continue;
+          }
+          parent[inputId] = outputId;
+          if (discoverTime[inputId] == discoverTime[orig]) {
+            std::vector<VarNodeId> cycle;
+            cycle.reserve(component.size());
+            cycle.emplace_back(inputId);
+            for (VarNodeId vId = outputId; vId != inputId; vId = parent[vId]) {
+              assert(vId != NULL_NODE_ID);
+              cycle.emplace_back(vId);
+            }
+            return cycle;
+          }
+          if (discoverTime[inputId] < 0) {
+            stack.emplace_back(inputId);
+          }
+        }
+      }
+    }
+  }
+  return {};
+}
+
+static std::pair<VarNodeId, InvariantNodeId> findPivotInCycle(
+    const InvariantGraph& graph, const std::vector<VarNodeId>& cycle) {
+  assert(cycle.size() > 1);
+  size_t index = 0;
+  size_t domSize = graph.varNodeConst(cycle.front()).constDomain()->size();
+  for (size_t i = 1; i < cycle.size(); ++i) {
+    const size_t ds = graph.varNodeConst(cycle[i]).constDomain()->size();
+    if (ds < domSize) {
+      domSize = ds;
+      index = i;
+    }
+  }
+  assert(index < cycle.size());
+  assert(domSize > 1);
+
+  const VarNodeId pivot = cycle[index];
+
+  assert(!graph.varNodeConst(pivot).isFixed());
+
+  assert(std::ranges::all_of(cycle, [&](const VarNodeId vId) {
+    return graph.varNodeConst(vId).definingNodes().size() == 1;
+  }));
+
+  const size_t outputIndex = (index + 1) % cycle.size();
+  const auto& outputNode = graph.varNodeConst(cycle[outputIndex]);
+
+  assert(outputNode.definingNodes().size() == 1);
+  const InvariantNodeId invId = *outputNode.definingNodes().begin();
+
+  assert(std::ranges::any_of(
+      graph.invariantNodeConst(invId).outputVarNodeIds(),
+      [&](const VarNodeId vId) { return vId == outputNode.varNodeId(); }));
+
+  assert(std::ranges::any_of(
+             graph.invariantNodeConst(invId).staticInputVarNodeIds(),
+             [&](const VarNodeId vId) { return vId == pivot; }) ||
+         std::ranges::any_of(
+             graph.invariantNodeConst(invId).dynamicInputVarNodeIds(),
+             [&](const VarNodeId vId) { return vId == pivot; }));
+
+  assert(pivot != NULL_NODE_ID);
+
+  // Dont create a VarNode& reference to pivot, since the _varNodes vector is
+  // modified, this reference could be invalidated!
+  assert(!graph.varNodeConst(pivot).isFixed());
+
+  return {pivot, invId};
+}
+
 InvariantGraphRoot& InvariantGraph::root() const {
   return dynamic_cast<InvariantGraphRoot&>(*_implicitConstraintNodes.front());
 }
@@ -217,11 +452,15 @@ void InvariantGraph::replaceInvariantNodes() {
         invNode.deactivate();
       } else {
         if (invNode.canBeReplaced()) {
-          if (invNode.replace()) {
+          const bool wasReplaced =invNode.replace();
+          assert(wasReplaced);
+          if (wasReplaced) {
             invNode.deactivate();
           }
         } else if (invNode.canBeMadeImplicit()) {
-          if (invNode.makeImplicit()) {
+          const bool isImplicit = invNode.makeImplicit();
+          assert(isImplicit);
+          if (isImplicit) {
             invNode.deactivate();
           }
         }
@@ -280,6 +519,22 @@ const VarNode& InvariantGraph::varNodeConst(
 const VarNode& InvariantGraph::varNodeConst(VarNodeId id) const {
   assert(size_t(id) < _varNodes.size());
   return _varNodes.at(size_t(id));
+}
+
+const InvariantNode& InvariantGraph::invariantNodeConst(
+    InvariantNodeId id) const {
+  if (id.isInvariant()) {
+    assert(size_t(id) < _invariantNodes.size());
+    return *_invariantNodes.at(size_t(id));
+  }
+  assert(size_t(id) < _implicitConstraintNodes.size());
+  return static_cast<const InvariantNode&>(
+      *_implicitConstraintNodes.at(size_t(id)));
+}
+
+const std::vector<std::shared_ptr<ImplicitConstraintNode>>&
+InvariantGraph::implicitConstraintNodes() const {
+  return _implicitConstraintNodes;
 }
 
 VarNodeId InvariantGraph::varNodeId(const std::string& identifier) const {
@@ -564,241 +819,6 @@ void InvariantGraph::splitMultiDefinedVars() {
   assert(_varNodes.size() == newSize);
 }
 
-InvariantGraphEdge InvariantGraph::findPivotInCycle(
-    const std::vector<InvariantGraphEdge>& cycle) {
-  // Each edge (i, v) is from invariant i to variable v that i defines
-  // For each subsequent edges (i1, v1), (i2, v2) in the cycle (wrapped around)
-  // v1 is a static input to i2
-  assert(cycle.size() > 1);
-#ifndef NDEBUG
-  for (size_t i = 0; i < cycle.size(); ++i) {
-    const size_t inputIndex = (i + cycle.size() - 1) % cycle.size();
-    const VarNode& input = varNode(cycle.at(inputIndex).varNodeId);
-    InvariantNode& invNode = invariantNode(cycle.at(i).invariantNodeId);
-    const VarNode& output = varNode(cycle.at(i).varNodeId);
-
-    assert(std::ranges::any_of(
-               invNode.staticInputVarNodeIds().begin(),
-               invNode.staticInputVarNodeIds().end(),
-               [&](const VarNodeId vId) { return vId == input.varNodeId(); }) ||
-           std::ranges::any_of(
-               invNode.dynamicInputVarNodeIds().begin(),
-               invNode.dynamicInputVarNodeIds().end(),
-               [&](const VarNodeId vId) { return vId == input.varNodeId(); }));
-
-    assert(std::ranges::any_of(input.staticInputTo().begin(),
-                               input.staticInputTo().end(),
-                               [&](const InvariantNodeId& invId) {
-                                 return invId == invNode.id();
-                               }) ||
-           std::ranges::any_of(input.dynamicInputTo().begin(),
-                               input.dynamicInputTo().end(),
-                               [&](const InvariantNodeId& invId) {
-                                 return invId == invNode.id();
-                               }));
-
-    assert(std::ranges::any_of(
-        output.definingNodes().begin(), output.definingNodes().end(),
-        [&](const InvariantNodeId& invId) { return invId == invNode.id(); }));
-
-    assert(std::ranges::any_of(
-        invNode.outputVarNodeIds().begin(), invNode.outputVarNodeIds().end(),
-        [&](const VarNodeId vId) { return vId == output.varNodeId(); }));
-  }
-#endif
-  VarNodeId pivot = cycle[0].varNodeId;
-  InvariantNodeId listeningInvNodeId = cycle[1].invariantNodeId;
-
-  assert(std::ranges::any_of(
-             invariantNode(listeningInvNodeId).staticInputVarNodeIds().begin(),
-             invariantNode(listeningInvNodeId).staticInputVarNodeIds().end(),
-             [&](VarNodeId input) { return input == pivot; }) ||
-         std::ranges::any_of(
-             invariantNode(listeningInvNodeId).dynamicInputVarNodeIds().begin(),
-             invariantNode(listeningInvNodeId).dynamicInputVarNodeIds().end(),
-             [&](VarNodeId input) { return input == pivot; }));
-
-  assert(std::ranges::any_of(
-             varNodeConst(pivot).staticInputTo().begin(),
-             varNodeConst(pivot).staticInputTo().end(),
-             [&](InvariantNodeId inv) { return inv == listeningInvNodeId; }) ||
-         std::ranges::any_of(
-             varNodeConst(pivot).dynamicInputTo().begin(),
-             varNodeConst(pivot).dynamicInputTo().end(),
-             [&](InvariantNodeId inv) { return inv == listeningInvNodeId; }));
-
-  size_t minDomainSize = varNodeConst(pivot).isIntVar()
-                             ? varNodeConst(pivot).constDomain()->size()
-                             : 2;
-
-  for (size_t i = 1; i < cycle.size() && minDomainSize > 2; ++i) {
-    const VarNode& vNode = varNodeConst(cycle[i].varNodeId);
-    if (!vNode.isIntVar() || vNode.constDomain()->size() < minDomainSize) {
-      minDomainSize = !vNode.isIntVar() ? 2 : vNode.constDomain()->size();
-      pivot = vNode.varNodeId();
-      const size_t listeningInvIndex = i + 1 % cycle.size();
-      listeningInvNodeId = cycle[listeningInvIndex].invariantNodeId;
-      assert(
-          std::ranges::any_of(
-              invariantNode(listeningInvNodeId).staticInputVarNodeIds().begin(),
-              invariantNode(listeningInvNodeId).staticInputVarNodeIds().end(),
-              [&](const VarNodeId input) { return input == pivot; }) ||
-          std::ranges::any_of(
-              invariantNode(listeningInvNodeId)
-                  .dynamicInputVarNodeIds()
-                  .begin(),
-              invariantNode(listeningInvNodeId).dynamicInputVarNodeIds().end(),
-              [&](const VarNodeId input) { return input == pivot; }));
-    }
-  }
-  assert(pivot != NULL_NODE_ID);
-  assert(minDomainSize > 0);
-  return InvariantGraphEdge{listeningInvNodeId, pivot};
-}
-
-VarNodeId InvariantGraph::breakCycle(
-    const std::vector<InvariantGraphEdge>& cycle) {
-  // Each edge (v, i) is from a variable v to an invariant that v is a static
-  // input variable to
-  const auto [listeningInvariant, pivot] = findPivotInCycle(cycle);
-
-  assert(pivot != NULL_NODE_ID);
-  assert(listeningInvariant != NULL_NODE_ID);
-
-  // Dont create a VarNode& reference to pivot, since the _varNodes vector is
-  // modified, this reference could be invalidated!
-  assert(!varNodeConst(pivot).isFixed());
-
-  const VarNode& newInputNode = _varNodes.emplace_back(
-      nextVarNodeId(), varNodeConst(pivot).isIntVar(),
-      std::make_shared<SearchDomain>(varNodeConst(pivot).lowerBound(),
-                                     varNodeConst(pivot).upperBound()),
-      DomainType::DOM_NONE);
-
-  invariantNode(listeningInvariant)
-      .replaceStaticInputVarNode(pivot, newInputNode.varNodeId());
-  if (varNodeConst(pivot).isIntVar()) {
-    addInvariantNode(std::make_shared<IntAllEqualNode>(
-        *this, pivot, newInputNode.varNodeId(), true, true));
-  } else {
-    addInvariantNode(std::make_shared<BoolAllEqualNode>(
-        *this, pivot, newInputNode.varNodeId(), true, true));
-  }
-  root().addSearchVarNode(newInputNode.varNodeId());
-  return newInputNode.varNodeId();
-}
-
-std::unordered_set<VarNodeId> InvariantGraph::dynamicVarNodeFrontier(
-    const VarNodeId node, const std::unordered_set<VarNodeId>& visitedGlobal) {
-  std::unordered_set<VarNodeId> visitedLocal;
-  std::unordered_set<VarNodeId> visitedDynamic;
-  std::queue<VarNodeId> q;
-  q.push(node);
-  visitedLocal.emplace(node);
-  while (!q.empty()) {
-    const auto cur = q.front();
-    q.pop();
-    // Add unvisited dynamic neighbors to set of visited dynamic variable
-    // nodes:
-    for (const auto& dynamicInvNodeId : varNode(cur).dynamicInputTo()) {
-      for (const auto& outputVarId :
-           invariantNode(dynamicInvNodeId).outputVarNodeIds()) {
-        if (!visitedGlobal.contains(outputVarId) &&
-            !visitedDynamic.contains(outputVarId)) {
-          visitedDynamic.emplace(outputVarId);
-        }
-      }
-    }
-    // add unvisited static neighbors to queue:
-    for (const auto& staticInvNodeId : varNode(cur).staticInputTo()) {
-      for (const auto& outputVarId :
-           invariantNode(staticInvNodeId).outputVarNodeIds()) {
-        if (!visitedLocal.contains(outputVarId)) {
-          visitedLocal.emplace(outputVarId);
-          q.push(outputVarId);
-        }
-      }
-    }
-  }
-  return visitedDynamic;
-}
-
-VarNodeId InvariantGraph::findCycleUtil(
-    const VarNodeId varNodeId,
-    const std::unordered_set<VarNodeId>& visitedGlobal,
-    std::unordered_set<VarNodeId>& visitedLocal,
-    std::unordered_map<VarNodeId, InvariantGraphEdge>& path) {
-  assert(!path.contains(varNodeId));
-  // The path here is a map (x, (i, y)), where the variable x is a static input
-  // to invariant i and y is an output variable of i.
-  // Note therefore that each InvariantGraphEdge is from an invariant i to a
-  // variable y that i defines.
-  if (visitedGlobal.contains(varNodeId)) {
-    assert(!path.contains(varNodeId));
-    return VarNodeId{NULL_NODE_ID};
-  }
-
-  if (visitedLocal.contains(varNodeId)) {
-    // this variable is part of a cycle, return the root node of the cycle:
-    assert(path.contains(varNodeId));
-    return path.at(varNodeId).varNodeId;
-  }
-
-  visitedLocal.emplace(varNodeId);
-  // iterate over all invariants that the variable is a static input to:
-  // TODO: we now also break dynamic cycles. this should be fixed by having a
-  // better implicit constraint/neighborhood initialisation process when
-  // closing the propagation _solver.
-  for (size_t i = 0; i < (_breakDynamicCycles ? 2 : 1); ++i) {
-    for (const InvariantNodeId& listeningInvNodeId :
-         i == 0 ? varNode(varNodeId).staticInputTo()
-                : varNode(varNodeId).dynamicInputTo()) {
-      // iterate over all variables that the invariant defines:
-      for (const VarNodeId definedVarId :
-           invariantNode(listeningInvNodeId).outputVarNodeIds()) {
-        if (path.contains(definedVarId)) {
-          assert(visitedLocal.contains(definedVarId));
-          // this is the first variable that is in the cycle
-          // add the last edge to the path (each edge is from a defining
-          // invariant i to a variable i defines):
-          auto iter = path.find(varNodeId);
-          if (iter == path.end()) {
-            path.emplace(varNodeId,
-                         InvariantGraphEdge{listeningInvNodeId, definedVarId});
-          } else {
-            iter->second.invariantNodeId = listeningInvNodeId;
-            iter->second.varNodeId = definedVarId;
-          }
-          // return the root node of the cycle:
-          return definedVarId;
-        }
-        if (!visitedGlobal.contains(definedVarId) &&
-            !visitedLocal.contains(definedVarId)) {
-          // we have not visited this variable yet, add it to the path:
-          // each edge is from a defining invariant i to a variable i defines:
-          auto iter = path.find(varNodeId);
-          if (iter == path.end()) {
-            path.emplace(varNodeId,
-                         InvariantGraphEdge{listeningInvNodeId, definedVarId});
-          } else {
-            iter->second.invariantNodeId = listeningInvNodeId;
-            iter->second.varNodeId = definedVarId;
-          }
-          const VarNodeId cycleRoot =
-              findCycleUtil(definedVarId, visitedGlobal, visitedLocal, path);
-          if (cycleRoot != NULL_NODE_ID) {
-            return cycleRoot;
-          }
-        }
-      }
-    }
-  }
-  // this variable is not part of a cycle, remove it from the path and return
-  // null:
-  path.erase(varNodeId);
-  return VarNodeId{NULL_NODE_ID};
-}
-
 void InvariantGraph::breakSelfCycles() {
   for (const auto& invNode : _invariantNodes) {
     std::unordered_set<VarNodeId> visitedOutputs;
@@ -848,152 +868,83 @@ void InvariantGraph::breakSelfCycles() {
   }
 }
 
-std::vector<VarNodeId> InvariantGraph::breakCycles(
-    VarNodeId node, std::unordered_set<VarNodeId>& visitedGlobal) {
-  std::unordered_map<VarNodeId, InvariantGraphEdge> path;
-  // The path here is a map (x, (i, y)), where the variable x is a static input
-  // to invariant i and y is an output variable of i.
-  // Note therefore that each InvariantGraphEdge is from an invariant i to a
-  // variable y that i defines.
-  std::unordered_set<VarNodeId> visitedLocal;
-  VarNodeId cycleRoot;
-  std::vector<VarNodeId> newSearchNodes;
-  do {
-    path.clear();
-    visitedLocal.clear();
-    cycleRoot = findCycleUtil(node, visitedGlobal, visitedLocal, path);
-    assert(std::ranges::all_of(path.begin(), path.end(), [&](const auto& pair) {
-      const VarNode& inputVar = varNodeConst(pair.first);
-      const InvariantNode& inv = invariantNode(pair.second.invariantNodeId);
-      const VarNode& outputVar = varNodeConst(pair.second.varNodeId);
-
-      const bool isStaticInput = std::ranges::any_of(
-          inputVar.staticInputTo().begin(), inputVar.staticInputTo().end(),
-          [&](const InvariantNodeId& invNodeId) {
-            return invNodeId == inv.id();
-          });
-      const bool isDynamicInput =
-          _breakDynamicCycles &&
-          std::ranges::any_of(inputVar.dynamicInputTo().begin(),
-                              inputVar.dynamicInputTo().end(),
-                              [&](const InvariantNodeId& invNodeId) {
-                                return invNodeId == inv.id();
-                              });
-      const bool isOutput = std::ranges::any_of(
-          outputVar.definingNodes().begin(), outputVar.definingNodes().end(),
-          [&](const InvariantNodeId& invNodeId) {
-            return invNodeId == inv.id();
-          });
-      const bool hasStaticInput = std::ranges::any_of(
-          inv.staticInputVarNodeIds().begin(),
-          inv.staticInputVarNodeIds().end(), [&](const VarNodeId varNodeId) {
-            return varNodeId == inputVar.varNodeId();
-          });
-      const bool hasDynamicInput =
-          _breakDynamicCycles &&
-          std::ranges::any_of(inv.dynamicInputVarNodeIds().begin(),
-                              inv.dynamicInputVarNodeIds().end(),
-                              [&](const VarNodeId varNodeId) {
-                                return varNodeId == inputVar.varNodeId();
-                              });
-      const bool hasOutput = std::ranges::any_of(
-          inv.outputVarNodeIds().begin(), inv.outputVarNodeIds().end(),
-          [&](const VarNodeId varNodeId) {
-            return varNodeId == outputVar.varNodeId();
-          });
-      assert(isStaticInput || isDynamicInput);
-      assert(isOutput);
-      assert(hasStaticInput || hasDynamicInput);
-      assert(hasOutput);
-
-      assert(isStaticInput == hasStaticInput);
-      assert(isDynamicInput == hasDynamicInput);
-
-      return (isStaticInput || isDynamicInput) && isOutput &&
-             (hasStaticInput || hasDynamicInput) && hasOutput;
-    }));
-
-    if (cycleRoot != NULL_NODE_ID) {
-      // Each edge (i, v) in cycle is from a defining invariant i to the
-      // variable v that i defines:
-      std::vector<InvariantGraphEdge> cycle;
-      VarNodeId cur = cycleRoot;
-      while (cycle.empty() || cur != cycleRoot) {
-        assert(path.contains(cur));
-        cycle.emplace_back(path.at(cur));
-        cur = path.at(cur).varNodeId;
-      }
-      assert(path.contains(cur));
-      newSearchNodes.emplace_back(breakCycle(cycle));
-      assert(newSearchNodes.back() != NULL_NODE_ID);
-    }
-  } while (cycleRoot != NULL_NODE_ID);
-
-  // add the visited nodes to the global set of visited nodes
-  for (const auto& visitedNodeId : visitedLocal) {
-    assert(!visitedGlobal.contains(visitedNodeId));
-    visitedGlobal.emplace(visitedNodeId);
+void InvariantGraph::breakCycles() {
+  std::vector<std::vector<VarNodeId>> components = SCC(*this);
+  if (components.empty()) {
+    return;
   }
-  return newSearchNodes;
+
+  std::vector<size_t> componentOfVar(_varNodes.size(), components.size());
+  for (size_t c = 0; c < components.size(); ++c) {
+    for (const VarNodeId vId : components[c]) {
+      componentOfVar[size_t(vId)] = c;
+    }
+  }
+
+  for (size_t c = 0; c < components.size(); ++c) {
+    for (size_t i = 0; i < (_breakDynamicCycles ? 2 : 1); ++i) {
+      while (true) {
+        std::vector<VarNodeId> cycle =
+            i == 0 ? findStaticCycle(*this, components[c], c, componentOfVar)
+                   : findDynamicCycle(*this, components[c], c, componentOfVar);
+        if (cycle.empty()) {
+          break;
+        }
+        const auto [pivotId, invId] = findPivotInCycle(*this, cycle);
+        assert(pivotId != NULL_NODE_ID);
+        auto& invNode = invariantNode(invId);
+        const VarNodeId newDefinedVar =
+            _varNodes
+                .emplace_back(nextVarNodeId(), varNodeConst(pivotId).isIntVar(),
+                              std::make_shared<SearchDomain>(
+                                  varNodeConst(pivotId).lowerBound(),
+                                  varNodeConst(pivotId).upperBound()),
+                              DomainType::DOM_NONE)
+                .varNodeId();
+        invNode.replaceStaticInputVarNode(pivotId, newDefinedVar);
+        invNode.replaceDynamicInputVarNode(pivotId, newDefinedVar);
+        if (varNodeConst(pivotId).isIntVar()) {
+          addInvariantNode(std::make_shared<IntAllEqualNode>(
+              *this, pivotId, newDefinedVar, true, true));
+        } else {
+          addInvariantNode(std::make_shared<BoolAllEqualNode>(
+              *this, pivotId, newDefinedVar, true, true));
+        }
+        assert(varNodeConst(newDefinedVar).definingNodes().empty());
+        root().addSearchVarNode(newDefinedVar);
+      }
+    }
+  }
 }
 
-void InvariantGraph::breakCycles() {
-  std::unordered_set<VarNodeId> visitedGlobal;
-  std::queue<VarNodeId> searchNodeIds;
-
-  for (auto const& implicitConstraint : _implicitConstraintNodes) {
-    for (const auto& searchVarId : implicitConstraint->outputVarNodeIds()) {
-      searchNodeIds.emplace(searchVarId);
-    }
+void createVarsUtil(InvariantGraph& graph, InvariantNodeId invNodeId, std::unordered_set<InvariantNodeId, InvariantNodeIdHash>& visitedInvNodes, std::unordered_set<InvariantNodeId, InvariantNodeIdHash>& onStack) {
+  if (visitedInvNodes.contains(invNodeId)) {
+    return;
   }
-
-  for (const VarNode& vNode : _varNodes) {
-    if (vNode.definingNodes().empty() &&
-        (!vNode.staticInputTo().empty() || !vNode.dynamicInputTo().empty())) {
-      assert(vNode.isFixed());
-      assert((vNode.isIntVar() &&
-              varNodeId(vNode.lowerBound()) == vNode.varNodeId()) ||
-             (!vNode.isIntVar() &&
-              varNodeId(vNode.inDomain(bool{true})) == vNode.varNodeId()));
-      searchNodeIds.emplace(vNode.varNodeId());
-    }
+  visitedInvNodes.emplace(invNodeId);
+  InvariantNode& invNode = graph.invariantNode(invNodeId);
+  if (invNode.state() != InvariantNodeState::ACTIVE) {
+    return;
   }
-
-  while (!searchNodeIds.empty()) {
-    std::vector<VarNodeId> visitedSearchNodes;
-    while (!searchNodeIds.empty()) {
-      VarNodeId searchNodeId = searchNodeIds.front();
-      searchNodeIds.pop();
-      visitedSearchNodes.emplace_back(searchNodeId);
-      for (auto newSearchNodeId : breakCycles(searchNodeId, visitedGlobal)) {
-        searchNodeIds.emplace(newSearchNodeId);
-        assert(varNode(newSearchNodeId).outputOf() == root().id());
-      }
-    }
-    // If some part of the invariant graph is unreachable if not traversing
-    // dynamic inputs of dynamic invariants, then add those dynamic inputs to
-    // the set of search nodes:
-    std::unordered_set<VarNodeId> dynamicSearchNodeIds;
-    for (const auto searchNodeId : visitedSearchNodes) {
-      for (auto dynamicVarNodeId :
-           dynamicVarNodeFrontier(searchNodeId, visitedGlobal)) {
-        assert(!visitedGlobal.contains(dynamicVarNodeId));
-        if (!dynamicSearchNodeIds.contains(dynamicVarNodeId)) {
-          searchNodeIds.emplace(dynamicVarNodeId);
-          dynamicSearchNodeIds.emplace(dynamicVarNodeId);
-        }
+  onStack.emplace(invNodeId);
+  for (const VarNodeId inputId : invNode.staticInputVarNodeIds() ) {
+    for (const InvariantNodeId defInv : graph.varNodeConst(inputId).definingNodes()) {
+      assert(!onStack.contains(defInv));
+      if (!visitedInvNodes.contains(defInv)) {
+        createVarsUtil(graph, defInv, visitedInvNodes, onStack);
       }
     }
   }
+  assert(std::ranges::none_of(invNode.staticInputVarNodeIds(), [&](const VarNodeId inputId) { return inputId == propagation::NULL_ID; }));
+  invNode.registerOutputVars();
+  onStack.erase(invNodeId);
 }
 
 void InvariantGraph::createVars() {
-  std::unordered_set<InvariantNodeId, InvariantNodeIdHash> visitedInvNodes;
-  std::queue<InvariantNodeId> unregisteredInvNodes;
-
   // create a _solver var for each fixed boolean:
   for (const auto& varNodeId : _boolVarNodeIndices) {
     VarNode& vNode = varNode(varNodeId);
+    assert(vNode.definingNodes().empty());
     if (vNode.staticInputTo().empty() && vNode.dynamicInputTo().empty()) {
       continue;
     }
@@ -1002,20 +953,12 @@ void InvariantGraph::createVars() {
       const Int constant = *vNode.constantValue();
       vNode.setVarId(_solver.makeIntVar(constant, constant, constant));
     }
-    for (int i = 0; i < 2; ++i) {
-      for (const auto& listeningInvNode :
-           i == 0 ? vNode.staticInputTo() : vNode.dynamicInputTo()) {
-        if (!visitedInvNodes.contains(listeningInvNode)) {
-          visitedInvNodes.emplace(listeningInvNode);
-          unregisteredInvNodes.emplace(listeningInvNode);
-        }
-      }
-    }
   }
 
   // create a _solver var for each fixed integer var
   for (const auto& [constant, varNodeId] : _intVarNodeIndices) {
     VarNode& vNode = varNode(varNodeId);
+    assert(vNode.definingNodes().empty());
     if (vNode.staticInputTo().empty() && vNode.dynamicInputTo().empty()) {
       continue;
     }
@@ -1023,15 +966,6 @@ void InvariantGraph::createVars() {
       assert(vNode.constantValue().has_value() &&
              vNode.constantValue().value() == constant);
       vNode.setVarId(_solver.makeIntVar(constant, constant, constant));
-    }
-    for (int i = 0; i < 2; ++i) {
-      for (const auto& listeningInvNode :
-           i == 0 ? vNode.staticInputTo() : vNode.dynamicInputTo()) {
-        if (!visitedInvNodes.contains(listeningInvNode)) {
-          visitedInvNodes.emplace(listeningInvNode);
-          unregisteredInvNodes.emplace(listeningInvNode);
-        }
-      }
     }
   }
 
@@ -1046,73 +980,22 @@ void InvariantGraph::createVars() {
       vNode.setVarId(_solver.makeIntVar(vNode.lowerBound(), vNode.upperBound(),
                                         vNode.lowerBound()));
     }
-    for (int i = 0; i < 2; ++i) {
-      for (const auto& listeningInvNode :
-           i == 0 ? vNode.staticInputTo() : vNode.dynamicInputTo()) {
-        if (!visitedInvNodes.contains(listeningInvNode)) {
-          visitedInvNodes.emplace(listeningInvNode);
-          unregisteredInvNodes.emplace(listeningInvNode);
-        }
-      }
+  }
+
+  std::unordered_set<InvariantNodeId, InvariantNodeIdHash> visitedInvNodes;
+  std::unordered_set<InvariantNodeId, InvariantNodeIdHash> onStack;
+  visitedInvNodes.reserve(_invariantNodes.size() + _implicitConstraintNodes.size());
+  onStack.reserve(_invariantNodes.size() + _implicitConstraintNodes.size());
+
+  for (const auto& implNode : _implicitConstraintNodes) {
+    if (implNode->state() == InvariantNodeState::ACTIVE) {
+      createVarsUtil(*this, implNode->id(), visitedInvNodes, onStack);
     }
   }
 
-  // enqueue each implicit constraint:
-  for (auto const& implicitConstraint : _implicitConstraintNodes) {
-    if (implicitConstraint->state() == InvariantNodeState::ACTIVE) {
-      visitedInvNodes.emplace(implicitConstraint->id());
-      unregisteredInvNodes.emplace(implicitConstraint->id());
-    }
-  }
-
-  while (!unregisteredInvNodes.empty()) {
-    const auto invNodeId = unregisteredInvNodes.front();
-    unregisteredInvNodes.pop();
-    assert(visitedInvNodes.contains(invNodeId));
-    auto& invNode = invariantNode(invNodeId);
-    // If the invNodeId only defines a single variable, then it is a view:
-    assert(!invNode.dynamicInputVarNodeIds().empty() ||
-           invNode.staticInputVarNodeIds().size() != 1 ||
-           varId(invNode.staticInputVarNodeIds().front()) !=
-               propagation::NULL_ID);
-
-    // The output variables have not been created in the _solver yet:
-    assert(std::ranges::all_of(
-        invNode.outputVarNodeIds().begin(), invNode.outputVarNodeIds().end(),
-        [&](VarNodeId outputVarNodeId) {
-          return varId(outputVarNodeId) == propagation::NULL_ID;
-        }));
-    if (invNode.state() != InvariantNodeState::ACTIVE) {
-      continue;
-    }
-
-    invNode.registerOutputVars();
-    for (const auto& outputVarNodeId : invNode.outputVarNodeIds()) {
-      assert(outputVarNodeId != NULL_NODE_ID);
-      const auto& vn = varNode(outputVarNodeId);
-      assert(std::ranges::any_of(
-          vn.definingNodes().begin(), vn.definingNodes().end(),
-          [&](InvariantNodeId defNodeId) { return defNodeId == invNodeId; }));
-
-      assert(vn.varId() != propagation::NULL_ID);
-      for (int i = 0; i < 2; ++i) {
-        for (const auto& nextVarDefNode :
-             i == 0 ? vn.staticInputTo() : vn.dynamicInputTo()) {
-          if (!visitedInvNodes.contains(nextVarDefNode)) {
-            visitedInvNodes.emplace(nextVarDefNode);
-            unregisteredInvNodes.emplace(nextVarDefNode);
-          }
-        }
-      }
-    }
-  }
-
-  // Each invariant that is not reachable from a search variable is deactivated:
   for (const auto& invNode : _invariantNodes) {
-    if (invNode->state() == InvariantNodeState::ACTIVE &&
-        !visitedInvNodes.contains(invNode->id())) {
-      invNode->deactivate();
-      assert(invNode->state() == InvariantNodeState::SUBSUMED);
+    if (invNode->state() == InvariantNodeState::ACTIVE) {
+      createVarsUtil(*this, invNode->id(), visitedInvNodes, onStack);
     }
   }
 }
