@@ -142,18 +142,18 @@ bool ArrayElement2dNode::replace() {
     _parMatrix.clear();
     return true;
   }
-  std::vector<Int> parMatrixRow;
+  std::vector<Int> parMatrixCol;
   const Int colIndex =
       invariantGraph().varNode(colIdx()).lowerBound() - _colOffset;
   assert(colIndex >= 0);
   assert(colIndex < static_cast<Int>(_parMatrix.front().size()));
-  parMatrixRow.reserve(_parMatrix.size());
+  parMatrixCol.reserve(_parMatrix.size());
   for (const std::vector<Int>& row : _parMatrix) {
-    parMatrixRow.emplace_back(row.at(colIndex));
+    parMatrixCol.emplace_back(row.at(colIndex));
   }
   _parMatrix.clear();
   invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
-      invariantGraph(), std::move(parMatrixRow), rowIdx(),
+      invariantGraph(), std::move(parMatrixCol), rowIdx(),
       outputVarNodeIds().front(), _rowOffset, _isIntMatrix));
   return true;
 }
