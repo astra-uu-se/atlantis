@@ -1030,7 +1030,8 @@ void InvariantGraph::createInvariants() {
 propagation::VarViewId InvariantGraph::createViolations() {
   std::vector<propagation::VarViewId> violations;
   for (const auto& definingNode : _invariantNodes) {
-    if (!definingNode->isReified() &&
+    if (definingNode->state() == InvariantNodeState::ACTIVE &&
+        !definingNode->isReified() &&
         definingNode->violationVarId() != propagation::NULL_ID) {
       violations.emplace_back(definingNode->violationVarId());
     }
