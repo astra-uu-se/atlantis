@@ -4,9 +4,11 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/elementVar.hpp"
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -41,8 +43,8 @@ void ArrayVarElementNode::updateState() {
       _offset + static_cast<Int>(dynamicInputVarNodeIds().size()) - 1);
 
   const Int overflow = _offset +
-                       static_cast<Int>(dynamicInputVarNodeIds().size()) -
-                       idxNode.upperBound() - 1;
+                       static_cast<Int>(dynamicInputVarNodeIds().size()) - 1
+                       - idxNode.upperBound();
 
   const Int underflow = idxNode.lowerBound() - _offset;
 
@@ -79,18 +81,39 @@ void ArrayVarElementNode::updateState() {
 }
 
 bool ArrayVarElementNode::canBeReplaced() const {
-  return state() == InvariantNodeState::ACTIVE &&
-         invariantGraphConst().varNodeConst(idx()).isFixed();
+  if (state() != InvariantNodeState::ACTIVE) {
+    return false;
+  }
+  if (invariantGraphConst().varNodeConst(idx()).isFixed()) {
+    return true;
+  }
+  const auto& dom = invariantGraphConst().varNodeConst(idx()).constDomain();
+  return std::all_of(dom->begin(), dom->end(), [&](const Int val) {
+    if (val < _offset || val >= _offset + static_cast<Int>(dynamicInputVarNodeIds().size())) {
+      return true;
+    }
+    return invariantGraphConst().varNodeConst(dynamicInputVarNodeIds().at(val - _offset)).isFixed();
+  });
 }
 
 bool ArrayVarElementNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  const auto& idxNode = invariantGraph().varNode(idx());
-  const VarNodeId input =
-      dynamicInputVarNodeIds().at(idxNode.lowerBound() - _offset);
-  invariantGraph().replaceVarNode(outputVarNodeIds().front(), input);
+  const auto& idxNode = invariantGraphConst().varNodeConst(idx());
+  if (invariantGraphConst().varNodeConst(idx()).isFixed()) {
+    const VarNodeId input =
+        dynamicInputVarNodeIds().at(idxNode.lowerBound() - _offset);
+    invariantGraph().replaceVarNode(outputVarNodeIds().front(), input);
+    return true;
+  }
+  const Int defVal = invariantGraph().varNodeConst(idxNode.lowerBound() - _offset).lowerBound();
+  std::vector<Int> parameters(dynamicInputVarNodeIds().size(), defVal);
+  for (const Int idxVal : *idxNode.constDomain()) {
+    const Int index = idxVal - _offset;
+    parameters[index] = invariantGraph().varNodeConst(dynamicInputVarNodeIds().at(index)).lowerBound();
+  }
+  invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(invariantGraph(), std::move(parameters), idx(), outputVarNodeIds().front(), _offset, invariantGraphConst().varNodeConst(outputVarNodeIds().front()).isIntVar()));
   return true;
 }
 
