@@ -29,8 +29,8 @@ class array_var_int_elementTest : public FznTestBase {
     const Int size = *rc::gen::inRange(1, 10);
     const bool useOffset = *rc::gen::arbitrary<bool>();
 
-    constraintIdentifier =
-        useOffset ? "array_var_int_element_offset" : "array_var_int_element_nonshifted";
+    constraintIdentifier = useOffset ? "array_var_int_element_offset"
+                                     : "array_var_int_element_nonshifted";
     for (Int i = 0; i < size; i++) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
@@ -69,11 +69,14 @@ class array_var_int_elementTest : public FznTestBase {
       return isFixed(input) && intVal(input) != outVal;
     }
     const auto& idxNode = _invariantGraph->varNode(idx);
-    return std::none_of(idxNode.constDomain()->begin(),
-                        idxNode.constDomain()->end(), [&](const Int val) {
-                          const auto& input = inputs.at(val - offset);
-                          return isFixed(input) ? intVal(input) == outVal : _invariantGraph->varNodeConst(input).inDomain(outVal);
-                        });
+    return std::none_of(
+        idxNode.constDomain()->begin(), idxNode.constDomain()->end(),
+        [&](const Int val) {
+          const auto& input = inputs.at(val - offset);
+          return isFixed(input)
+                     ? intVal(input) == outVal
+                     : _invariantGraph->varNodeConst(input).inDomain(outVal);
+        });
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
@@ -90,26 +93,26 @@ class array_var_int_elementTest : public FznTestBase {
     const auto& dom = _invariantGraph->varNodeConst(idx).constDomain();
     if (isFixed(output)) {
       const Int outVal = intVal(output);
-      return std::all_of(dom->begin(),
-                         dom->end(), [&](const Int val) {
-                           const auto& input = inputs.at(val - offset);
-                           return isFixed(input) && intVal(input) == outVal;
-                         });
+      return std::all_of(dom->begin(), dom->end(), [&](const Int val) {
+        const auto& input = inputs.at(val - offset);
+        return isFixed(input) && intVal(input) == outVal;
+      });
     }
     return false;
   }
 
   [[nodiscard]] bool canMove() const override {
-    return varId(idx) != propagation::NULL_ID || std::ranges::any_of(inputs, [&](const auto& input) {
-      return varId(input) != propagation::NULL_ID;
-    });
+    return varId(idx) != propagation::NULL_ID ||
+           std::ranges::any_of(inputs, [&](const auto& input) {
+             return varId(input) != propagation::NULL_ID;
+           });
   }
 
   void move(bool committedValue) override {
     if (randBool()) {
       changeValue(idx, committedValue);
     }
-    for (const auto& input: inputs) {
+    for (const auto& input : inputs) {
       if (varId(input) != propagation::NULL_ID && randBool()) {
         changeValue(input, committedValue);
       }
@@ -123,5 +126,7 @@ class array_var_int_elementTest : public FznTestBase {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(array_var_int_elementTest, RapidCheck, ()) { rapidCheck(); }
+RC_GTEST_FIXTURE_PROP(array_var_int_elementTest, RapidCheck, ()) {
+  rapidCheck();
+}
 }  // namespace atlantis::testing

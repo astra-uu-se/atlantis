@@ -43,8 +43,8 @@ void ArrayVarElementNode::updateState() {
       _offset + static_cast<Int>(dynamicInputVarNodeIds().size()) - 1);
 
   const Int overflow = _offset +
-                       static_cast<Int>(dynamicInputVarNodeIds().size()) - 1
-                       - idxNode.upperBound();
+                       static_cast<Int>(dynamicInputVarNodeIds().size()) - 1 -
+                       idxNode.upperBound();
 
   const Int underflow = idxNode.lowerBound() - _offset;
 
@@ -89,10 +89,13 @@ bool ArrayVarElementNode::canBeReplaced() const {
   }
   const auto& dom = invariantGraphConst().varNodeConst(idx()).constDomain();
   return std::all_of(dom->begin(), dom->end(), [&](const Int val) {
-    if (val < _offset || val >= _offset + static_cast<Int>(dynamicInputVarNodeIds().size())) {
+    if (val < _offset ||
+        val >= _offset + static_cast<Int>(dynamicInputVarNodeIds().size())) {
       return true;
     }
-    return invariantGraphConst().varNodeConst(dynamicInputVarNodeIds().at(val - _offset)).isFixed();
+    return invariantGraphConst()
+        .varNodeConst(dynamicInputVarNodeIds().at(val - _offset))
+        .isFixed();
   });
 }
 
@@ -107,13 +110,22 @@ bool ArrayVarElementNode::replace() {
     invariantGraph().replaceVarNode(outputVarNodeIds().front(), input);
     return true;
   }
-  const Int defVal = invariantGraph().varNodeConst(idxNode.lowerBound() - _offset).lowerBound();
+  const Int defVal = invariantGraph()
+                         .varNodeConst(idxNode.lowerBound() - _offset)
+                         .lowerBound();
   std::vector<Int> parameters(dynamicInputVarNodeIds().size(), defVal);
   for (const Int idxVal : *idxNode.constDomain()) {
     const Int index = idxVal - _offset;
-    parameters[index] = invariantGraph().varNodeConst(dynamicInputVarNodeIds().at(index)).lowerBound();
+    parameters[index] = invariantGraph()
+                            .varNodeConst(dynamicInputVarNodeIds().at(index))
+                            .lowerBound();
   }
-  invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(invariantGraph(), std::move(parameters), idx(), outputVarNodeIds().front(), _offset, invariantGraphConst().varNodeConst(outputVarNodeIds().front()).isIntVar()));
+  invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
+      invariantGraph(), std::move(parameters), idx(),
+      outputVarNodeIds().front(), _offset,
+      invariantGraphConst()
+          .varNodeConst(outputVarNodeIds().front())
+          .isIntVar()));
   return true;
 }
 

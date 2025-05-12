@@ -103,7 +103,8 @@ void IntAllEqualNode::updateState() {
     if (isReified()) {
       fixReified(true);
     } else if (!shouldHold()) {
-      throw InconsistencyException("IntAllEqualNode::updateState constraint is violated");
+      throw InconsistencyException(
+          "IntAllEqualNode::updateState constraint is violated");
     }
     setState(InvariantNodeState::SUBSUMED);
   }

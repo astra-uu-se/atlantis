@@ -67,13 +67,26 @@ void ArrayElementNode::updateState() {
     const Int val = outputNode.lowerBound();
     std::vector<Int> valsToRemove;
     valsToRemove.reserve(idxNode.domain()->size());
-    for (auto it = idxNode.constDomain()->begin();
-         it != idxNode.constDomain()->end(); ++it) {
-      if (getVal(_parVector, *it, _offset) != val) {
-        valsToRemove.emplace_back(*it);
+    for (const Int index : *idxNode.constDomain()) {
+      if (getVal(_parVector, index, _offset) != val) {
+        valsToRemove.emplace_back(index);
       }
     }
     idxNode.domain()->remove(valsToRemove);
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  const Int val = getVal(_parVector, idxNode.lowerBound(), _offset);
+  const bool allSameVal = std::all_of(idxNode.domain()->begin(), idxNode.domain()->end(),
+    [&](const Int index) {
+      return getVal(_parVector, index, _offset) == val;
+    });
+  if (allSameVal) {
+    if (outputNode.isIntVar()) {
+      outputNode.fixToValue(val);
+    } else {
+      outputNode.fixToValue(bool{val == 0});
+    }
     setState(InvariantNodeState::SUBSUMED);
   }
 }

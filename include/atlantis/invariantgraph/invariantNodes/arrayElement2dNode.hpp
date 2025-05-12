@@ -11,13 +11,14 @@ class ArrayElement2dNode : public InvariantNode {
   bool _isIntMatrix;
 
  public:
-  ArrayElement2dNode(InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+  ArrayElement2dNode(InvariantGraph& graph, VarNodeId rowIdx, VarNodeId colIdx,
                      std::vector<std::vector<Int>>&& parMatrix,
-                     VarNodeId output, Int offset1, Int offset2);
+                     VarNodeId output, Int rowOffset, Int colOffset,
+                     bool isIntMatrix = true);
 
-  ArrayElement2dNode(InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+  ArrayElement2dNode(InvariantGraph& graph, VarNodeId rowIdx, VarNodeId colIdx,
                      std::vector<std::vector<bool>>&& parMatrix,
-                     VarNodeId output, Int offset1, Int offset2);
+                     VarNodeId output, Int rowOffset, Int colOffset);
 
   void init(InvariantNodeId) override;
 

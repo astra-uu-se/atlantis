@@ -89,9 +89,10 @@ static std::vector<std::vector<VarNodeId>> SCC(const InvariantGraph& graph) {
     }
   }
   for (VarNodeId varId = 0; varId < graph.nextVarNodeId(); ++varId) {
-    if (graph.varNodeConst(varId).definingNodes().empty() && discoverTime[varId] < 0) {
+    if (graph.varNodeConst(varId).definingNodes().empty() &&
+        discoverTime[varId] < 0) {
       SCCUtil(graph, varId, discoverTime, lowTime, stack, onStack, time,
-                components);
+              components);
     }
   }
   assert(std::ranges::none_of(onStack, [&](const bool b) { return b; }));
@@ -452,7 +453,7 @@ void InvariantGraph::replaceInvariantNodes() {
         invNode.deactivate();
       } else {
         if (invNode.canBeReplaced()) {
-          const bool wasReplaced =invNode.replace();
+          const bool wasReplaced = invNode.replace();
           assert(wasReplaced);
           if (wasReplaced) {
             invNode.deactivate();
@@ -917,7 +918,10 @@ void InvariantGraph::breakCycles() {
   }
 }
 
-void createVarsUtil(InvariantGraph& graph, InvariantNodeId invNodeId, std::unordered_set<InvariantNodeId, InvariantNodeIdHash>& visitedInvNodes, std::unordered_set<InvariantNodeId, InvariantNodeIdHash>& onStack) {
+void createVarsUtil(
+    InvariantGraph& graph, InvariantNodeId invNodeId,
+    std::unordered_set<InvariantNodeId, InvariantNodeIdHash>& visitedInvNodes,
+    std::unordered_set<InvariantNodeId, InvariantNodeIdHash>& onStack) {
   if (visitedInvNodes.contains(invNodeId)) {
     return;
   }
@@ -927,15 +931,19 @@ void createVarsUtil(InvariantGraph& graph, InvariantNodeId invNodeId, std::unord
     return;
   }
   onStack.emplace(invNodeId);
-  for (const VarNodeId inputId : invNode.staticInputVarNodeIds() ) {
-    for (const InvariantNodeId defInv : graph.varNodeConst(inputId).definingNodes()) {
+  for (const VarNodeId inputId : invNode.staticInputVarNodeIds()) {
+    for (const InvariantNodeId defInv :
+         graph.varNodeConst(inputId).definingNodes()) {
       assert(!onStack.contains(defInv));
       if (!visitedInvNodes.contains(defInv)) {
         createVarsUtil(graph, defInv, visitedInvNodes, onStack);
       }
     }
   }
-  assert(std::ranges::none_of(invNode.staticInputVarNodeIds(), [&](const VarNodeId inputId) { return inputId == propagation::NULL_ID; }));
+  assert(std::ranges::none_of(invNode.staticInputVarNodeIds(),
+                              [&](const VarNodeId inputId) {
+                                return inputId == propagation::NULL_ID;
+                              }));
   invNode.registerOutputVars();
   onStack.erase(invNodeId);
 }
@@ -984,7 +992,8 @@ void InvariantGraph::createVars() {
 
   std::unordered_set<InvariantNodeId, InvariantNodeIdHash> visitedInvNodes;
   std::unordered_set<InvariantNodeId, InvariantNodeIdHash> onStack;
-  visitedInvNodes.reserve(_invariantNodes.size() + _implicitConstraintNodes.size());
+  visitedInvNodes.reserve(_invariantNodes.size() +
+                          _implicitConstraintNodes.size());
   onStack.reserve(_invariantNodes.size() + _implicitConstraintNodes.size());
 
   for (const auto& implNode : _implicitConstraintNodes) {
@@ -1118,21 +1127,19 @@ void InvariantGraph::sanity([[maybe_unused]] bool oneDefInv) {
     for (const InvariantNodeId& invNodeId : vNode.definingNodes()) {
       InvariantNode& invNode = invariantNode(invNodeId);
       assert(std::ranges::any_of(
-          invNode.outputVarNodeIds().begin(), invNode.outputVarNodeIds().end(),
+          invNode.outputVarNodeIds(),
           [&](const VarNodeId vId) { return vId == vNode.varNodeId(); }));
     }
     for (const InvariantNodeId& invNodeId : vNode.staticInputTo()) {
       InvariantNode& invNode = invariantNode(invNodeId);
       assert(std::ranges::any_of(
-          invNode.staticInputVarNodeIds().begin(),
-          invNode.staticInputVarNodeIds().end(),
+          invNode.staticInputVarNodeIds(),
           [&](const VarNodeId vId) { return vId == vNode.varNodeId(); }));
     }
     for (const InvariantNodeId& invNodeId : vNode.dynamicInputTo()) {
       InvariantNode& invNode = invariantNode(invNodeId);
       assert(std::ranges::any_of(
-          invNode.dynamicInputVarNodeIds().begin(),
-          invNode.dynamicInputVarNodeIds().end(),
+          invNode.dynamicInputVarNodeIds(),
           [&](const VarNodeId vId) { return vId == vNode.varNodeId(); }));
     }
     if (oneDefInv) {
@@ -1142,8 +1149,7 @@ void InvariantGraph::sanity([[maybe_unused]] bool oneDefInv) {
   for (const auto& implNode : _implicitConstraintNodes) {
     for (const VarNodeId vId : implNode->outputVarNodeIds()) {
       const VarNode& vNode = varNode(vId);
-      assert(std::ranges::any_of(vNode.definingNodes().begin(),
-                                 vNode.definingNodes().end(),
+      assert(std::ranges::any_of(vNode.definingNodes(),
                                  [&](const InvariantNodeId& invId) {
                                    return invId == implNode->id();
                                  }));
@@ -1154,24 +1160,21 @@ void InvariantGraph::sanity([[maybe_unused]] bool oneDefInv) {
   for (const auto& invNode : _invariantNodes) {
     for (const VarNodeId vId : invNode->outputVarNodeIds()) {
       const VarNode& vNode = varNode(vId);
-      assert(std::ranges::any_of(vNode.definingNodes().begin(),
-                                 vNode.definingNodes().end(),
+      assert(std::ranges::any_of(vNode.definingNodes(),
                                  [&](const InvariantNodeId& invId) {
                                    return invId == invNode->id();
                                  }));
     }
     for (const VarNodeId vId : invNode->staticInputVarNodeIds()) {
       const VarNode& vNode = varNode(vId);
-      assert(std::ranges::any_of(vNode.staticInputTo().begin(),
-                                 vNode.staticInputTo().end(),
+      assert(std::ranges::any_of(vNode.staticInputTo(),
                                  [&](const InvariantNodeId& invId) {
                                    return invId == invNode->id();
                                  }));
     }
     for (const VarNodeId vId : invNode->dynamicInputVarNodeIds()) {
       const VarNode& vNode = varNode(vId);
-      assert(std::ranges::any_of(vNode.dynamicInputTo().begin(),
-                                 vNode.dynamicInputTo().end(),
+      assert(std::ranges::any_of(vNode.dynamicInputTo(),
                                  [&](const InvariantNodeId& invId) {
                                    return invId == invNode->id();
                                  }));

@@ -1,6 +1,9 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayElement2dNode.hpp"
 
 #include <algorithm>
+#include <boost/fusion/sequence/intrinsic/at.hpp>
+#include <boost/mpl/at.hpp>
+#include <boost/xpressive/detail/core/access.hpp>
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
@@ -32,24 +35,22 @@ static std::vector<std::vector<Int>> toIntMatrix(
 }
 
 ArrayElement2dNode::ArrayElement2dNode(
-    InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
-    std::vector<std::vector<Int>>&& parMatrix, VarNodeId output, Int offset1,
-    Int offset2)
-    : InvariantNode(graph, {output}, {idx1, idx2}),
+    InvariantGraph& graph, VarNodeId rowIdx, VarNodeId colIdx,
+    std::vector<std::vector<Int>>&& parMatrix, VarNodeId output, Int rowOffset,
+    Int colOffset, bool isIntMatrix)
+    : InvariantNode(graph, {output}, {rowIdx, colIdx}),
       _parMatrix(std::move(parMatrix)),
-      _rowOffset(offset1),
-      _colOffset(offset2),
-      _isIntMatrix(true) {}
+      _rowOffset(rowOffset),
+      _colOffset(colOffset),
+      _isIntMatrix(isIntMatrix) {}
 
 ArrayElement2dNode::ArrayElement2dNode(
-    InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
-    std::vector<std::vector<bool>>&& parMatrix, VarNodeId output, Int offset1,
-    Int offset2)
-    : InvariantNode(graph, {output}, {idx1, idx2}),
-      _parMatrix(toIntMatrix(std::move(parMatrix))),
-      _rowOffset(offset1),
-      _colOffset(offset2),
-      _isIntMatrix(false) {}
+    InvariantGraph& graph, VarNodeId rowIdx, VarNodeId colIdx,
+    std::vector<std::vector<bool>>&& parMatrix, VarNodeId output, Int rowOffset,
+    Int colOffset)
+    : ArrayElement2dNode(graph, rowIdx, colIdx,
+                         toIntMatrix(std::move(parMatrix)), output, rowOffset,
+                         colOffset, false) {}
 
 void ArrayElement2dNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
@@ -111,6 +112,26 @@ void ArrayElement2dNode::updateState() {
   if (rowNode.isFixed() && colNode.isFixed()) {
     const Int val = getValue(_parMatrix, rowNode.lowerBound(),
                              colNode.lowerBound(), _rowOffset, _colOffset);
+    if (outputNode.isIntVar()) {
+      outputNode.fixToValue(val);
+    } else {
+      outputNode.fixToValue(bool{val == 0});
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  const Int val = getValue(_parMatrix, rowNode.lowerBound(),
+                           colNode.lowerBound(), _rowOffset, _colOffset);
+  const bool allSameVal = std::all_of(
+      rowNode.constDomain()->begin(), rowNode.constDomain()->end(),
+      [&](const Int row) {
+        return std::all_of(colNode.constDomain()->begin(),
+                    colNode.constDomain()->end(), [&](const Int col) {
+                      return getValue(_parMatrix, row, col, _rowOffset,
+                                      _colOffset) == val;
+                    });
+      });
+  if (allSameVal) {
     if (outputNode.isIntVar()) {
       outputNode.fixToValue(val);
     } else {
