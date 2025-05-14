@@ -19,12 +19,9 @@ InvariantGraphRoot::createNeighborhood() {
   searchVars.reserve(outputVarNodeIds().size());
 
   for (const auto& nId : outputVarNodeIds()) {
-    auto dom = invariantGraphConst()
-                   .varNodeConst(outputVarNodeIds().front())
-                   .constDomain();
     auto& node = invariantGraph().varNode(nId);
     assert(node.varId() != propagation::NULL_ID);
-    searchVars.emplace_back(node.varId(), dom);
+    searchVars.emplace_back(node.varId(), node.constDomain());
     node.setDomainType(DomainType::DOM_NONE);
   }
 

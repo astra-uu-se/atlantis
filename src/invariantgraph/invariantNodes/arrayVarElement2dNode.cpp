@@ -99,8 +99,8 @@ void ArrayVarElement2dNode::updateState() {
 
   _numRows = rowIdxNode.upperBound() - _rowOffset + 1;
   std::vector<VarNodeId> varNodeIdsToRemove;
-  varNodeIdsToRemove.reserve(static_cast<Int>(dynamicInputVarNodeIds().size() -
-                             _numRows * numCols()));
+  varNodeIdsToRemove.reserve(
+      static_cast<Int>(dynamicInputVarNodeIds().size() - _numRows * numCols()));
 
   Int index = 0;
   for (Int row = rowIdxNode.lowerBound(); row <= rowIdxNode.upperBound();
@@ -215,7 +215,10 @@ bool ArrayVarElement2dNode::replace() {
   }
   invariantGraph().addInvariantNode(std::make_shared<ArrayElement2dNode>(
       invariantGraph(), rowIdx(), colIdx(), std::move(parMatrix),
-      outputVarNodeIds().front(), _rowOffset, _colOffset));
+      outputVarNodeIds().front(), _rowOffset, _colOffset,
+      invariantGraphConst()
+          .varNodeConst(outputVarNodeIds().front())
+          .isIntVar()));
   return true;
 }
 

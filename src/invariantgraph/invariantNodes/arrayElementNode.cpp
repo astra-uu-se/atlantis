@@ -77,10 +77,10 @@ void ArrayElementNode::updateState() {
     return;
   }
   const Int val = getVal(_parVector, idxNode.lowerBound(), _offset);
-  const bool allSameVal = std::all_of(idxNode.domain()->begin(), idxNode.domain()->end(),
-    [&](const Int index) {
-      return getVal(_parVector, index, _offset) == val;
-    });
+  const bool allSameVal = std::all_of(
+      idxNode.domain()->begin(), idxNode.domain()->end(), [&](const Int index) {
+        return getVal(_parVector, index, _offset) == val;
+      });
   if (allSameVal) {
     if (outputNode.isIntVar()) {
       outputNode.fixToValue(val);

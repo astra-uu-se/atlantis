@@ -64,8 +64,8 @@ class array_int_elementTest : public FznTestBase {
 
   [[nodiscard]] bool neverSatisfied() const override {
     if (!isFixed(idx) && !isFixed(output)) {
-      const auto& idxNode = _invariantGraph->varNode(idx);
-      const auto& outputNode = _invariantGraph->varNode(output);
+      const auto& idxNode = varNodeConst(idx);
+      const auto& outputNode = varNodeConst(output);
       return std::none_of(idxNode.constDomain()->begin(),
                           idxNode.constDomain()->end(), [&](const Int val) {
                             return outputNode.constDomain()->contains(
@@ -73,7 +73,7 @@ class array_int_elementTest : public FznTestBase {
                           });
     }
     if (!isFixed(idx)) {
-      const auto& idxNode = _invariantGraph->varNode(idx);
+      const auto& idxNode = varNodeConst(idx);
       return std::none_of(idxNode.constDomain()->begin(),
                           idxNode.constDomain()->end(), [&](const Int val) {
                             return parameters.at(val - offset) ==
@@ -81,7 +81,7 @@ class array_int_elementTest : public FznTestBase {
                           });
     }
     if (!isFixed(output)) {
-      return !_invariantGraph->varNodeConst(output).constDomain()->contains(
+      return !varNodeConst(output).constDomain()->contains(
           parameters.at(intVal(idx) - offset));
     }
     return parameters.at(intVal(idx) - offset) != intVal(output);
@@ -92,7 +92,7 @@ class array_int_elementTest : public FznTestBase {
       return false;
     }
     if (!isFixed(idx)) {
-      const auto& idxNode = _invariantGraph->varNode(idx);
+      const auto& idxNode = varNodeConst(idx);
       return std::all_of(idxNode.constDomain()->begin(),
                          idxNode.constDomain()->end(), [&](const Int val) {
                            return parameters.at(val - offset) == intVal(output);

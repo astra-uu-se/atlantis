@@ -45,10 +45,20 @@ void AllDifferentNode::init(InvariantNodeId id) {
 
 void AllDifferentNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (isReified() || !shouldHold()) {
-    return;
+  if (!isReified() && shouldHold()) {
+    const std::vector<VarNodeId> varsToRemove =
+        pruneAllDifferentFixed(invariantGraph(), staticInputVarNodeIds());
+    for (const auto vId : varsToRemove) {
+      removeStaticInputVarNode(vId);
+    }
   }
   if (staticInputVarNodeIds().size() <= 1) {
+    if (isReified()) {
+      fixReified(true);
+    } else if (!shouldHold()) {
+      throw InconsistencyException(
+          "AllDifferentNode neg: one or less input variables");
+    }
     setState(InvariantNodeState::SUBSUMED);
   }
 }

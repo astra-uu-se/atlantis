@@ -68,7 +68,7 @@ class array_var_bool_elementTest : public FznTestBase {
       const auto& input = inputs.at(intVal(idx) - offset);
       return isFixed(input) && boolVal(input) != outVal;
     }
-    const auto& idxNode = _invariantGraph->varNode(idx);
+    const auto& idxNode = varNodeConst(idx);
     return std::none_of(idxNode.constDomain()->begin(),
                         idxNode.constDomain()->end(), [&](const Int val) {
                           const auto& input = inputs.at(val - offset);
@@ -89,15 +89,14 @@ class array_var_bool_elementTest : public FznTestBase {
     }
     const bool outVal = boolVal(output);
     if (!isFixed(idx)) {
-      const auto& idxNode = _invariantGraph->varNode(idx);
+      const auto& idxNode = varNodeConst(idx);
       return std::all_of(idxNode.constDomain()->begin(),
                          idxNode.constDomain()->end(), [&](const Int val) {
                            const auto& input = inputs.at(val - offset);
                            return isFixed(input) && boolVal(input) == outVal;
                          });
     }
-    const auto& vNode =
-        _invariantGraph->varNodeConst(inputs.at(intVal(idx) - offset));
+    const auto& vNode = varNodeConst(inputs.at(intVal(idx) - offset));
     return !vNode.isFixed() && vNode.inDomain(outVal);
   }
 

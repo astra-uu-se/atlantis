@@ -15,6 +15,11 @@
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solver.hpp"
+#include "atlantis/search/assignment.hpp"
+#include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
+#include "atlantis/search/neighborhoods/randomNeighborhood.hpp"
+#include "atlantis/search/randomProvider.hpp"
+#include "atlantis/search/searchVariable.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
@@ -96,9 +101,11 @@ class FznTestBase : public ::testing::Test {
   std::shared_ptr<Model> _model;
   std::shared_ptr<FznInvariantGraph> _invariantGraph;
   std::shared_ptr<propagation::Solver> _solver;
+  std::shared_ptr<search::neighborhoods::NeighborhoodCombinator> _neighborhood;
+  std::shared_ptr<search::Assignment> _assignment;
+  std::shared_ptr<search::RandomProvider> _randomProvider;
   std::string constraintIdentifier;
   std::vector<Annotation> annotations{};
-  std::vector<ArgState> argStates;
   std::vector<Arg> args;
   std::mt19937 gen;
   std::default_random_engine rng;
@@ -313,6 +320,17 @@ class FznTestBase : public ::testing::Test {
     throw std::logic_error("Unhandled argument type");
   }
 
+  [[nodiscard]] VarNode& varNode(const std::string& identifier) {
+    RC_ASSERT(_invariantGraph->containsVarNode(identifier));
+    return _invariantGraph->varNode(identifier);
+  }
+
+  [[nodiscard]] const VarNode& varNodeConst(
+      const std::string& identifier) const {
+    RC_ASSERT(_invariantGraph->containsVarNode(identifier));
+    return _invariantGraph->varNodeConst(identifier);
+  }
+
   [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const {
     if (_invariantGraph->containsVarNode(identifier)) {
       return _invariantGraph->varNodeId(identifier);
@@ -338,7 +356,7 @@ class FznTestBase : public ::testing::Test {
 
   [[nodiscard]] Int lowerBound(const std::string& identifier) const {
     if (_invariantGraph->containsVarNode(identifier)) {
-      return _invariantGraph->varNodeConst(identifier).lowerBound();
+      return varNodeConst(identifier).lowerBound();
     }
     if (intPars.contains(identifier)) {
       return intPars.at(identifier);
@@ -365,7 +383,7 @@ class FznTestBase : public ::testing::Test {
 
   [[nodiscard]] Int upperBound(const std::string& identifier) const {
     if (_invariantGraph->containsVarNode(identifier)) {
-      return _invariantGraph->varNodeConst(identifier).upperBound();
+      return varNodeConst(identifier).upperBound();
     }
     if (intPars.contains(identifier)) {
       return intPars.at(identifier);
@@ -392,7 +410,7 @@ class FznTestBase : public ::testing::Test {
 
   [[nodiscard]] bool isFixed(const std::string& identifier) const {
     if (_invariantGraph->containsVarNode(identifier)) {
-      return _invariantGraph->varNodeConst(identifier).isFixed();
+      return varNodeConst(identifier).isFixed();
     }
     if (boolPars.contains(identifier) || intPars.contains(identifier)) {
       return true;
@@ -403,7 +421,7 @@ class FznTestBase : public ::testing::Test {
   [[nodiscard]] bool boolVal(const std::string& identifier,
                              bool committedValue = false) const {
     if (_invariantGraph->containsVarNode(identifier)) {
-      const auto& vNode = _invariantGraph->varNodeConst(identifier);
+      const auto& vNode = varNodeConst(identifier);
       assert(!vNode.isIntVar());
       if (vNode.varId() != propagation::NULL_ID) {
         return (committedValue ? _solver->committedValue(vNode.varId())
@@ -420,7 +438,7 @@ class FznTestBase : public ::testing::Test {
 
   [[nodiscard]] bool inDomain(const std::string& identifier, bool val) const {
     if (_invariantGraph->containsVarNode(identifier)) {
-      const auto& vNode = _invariantGraph->varNodeConst(identifier);
+      const auto& vNode = varNodeConst(identifier);
       assert(!vNode.isIntVar());
       return vNode.inDomain(val);
     }
@@ -447,7 +465,7 @@ class FznTestBase : public ::testing::Test {
   [[nodiscard]] Int intVal(const std::string& identifier,
                            bool committedValue = false) const {
     if (_invariantGraph->containsVarNode(identifier)) {
-      const auto& vNode = _invariantGraph->varNodeConst(identifier);
+      const auto& vNode = varNodeConst(identifier);
       assert(vNode.isIntVar());
       if (vNode.varId() != propagation::NULL_ID) {
         return committedValue ? _solver->committedValue(vNode.varId())
@@ -464,7 +482,7 @@ class FznTestBase : public ::testing::Test {
 
   [[nodiscard]] bool inDomain(const std::string& identifier, Int val) const {
     if (_invariantGraph->containsVarNode(identifier)) {
-      const auto& vNode = _invariantGraph->varNodeConst(identifier);
+      const auto& vNode = varNodeConst(identifier);
       assert(vNode.isIntVar());
       return vNode.inDomain(val);
     }
@@ -489,7 +507,7 @@ class FznTestBase : public ::testing::Test {
     varIds.reserve(varIdentifiers.size());
     for (const std::string& identifier : varIdentifiers) {
       EXPECT_TRUE(_invariantGraph->containsVarNode(identifier));
-      const VarNode& vNode = _invariantGraph->varNode(identifier);
+      const VarNode& vNode = varNodeConst(identifier);
       const propagation::VarViewId vId = vNode.varId();
       if (!vNode.isFixed() && vId != propagation::NULL_ID) {
         varIds.emplace_back(vId);
@@ -884,7 +902,7 @@ class FznTestBase : public ::testing::Test {
     if (varId(identifier) == propagation::NULL_ID) {
       return;
     }
-    const auto& dom = _invariantGraph->varNodeConst(identifier).constDomain();
+    const auto& dom = varNodeConst(identifier).constDomain();
     if (dom->size() <= 1) {
       return;
     }
@@ -903,7 +921,15 @@ class FznTestBase : public ::testing::Test {
     const bool neverSat = neverSatisfied();
     try {
       _invariantGraph->construct();
+      _neighborhood =
+          std::make_shared<search::neighborhoods::NeighborhoodCombinator>(
+              _invariantGraph->neighborhood());
       _invariantGraph->close();
+      _assignment = std::make_shared<search::Assignment>(
+          *_solver, *_neighborhood, _invariantGraph->totalViolationVarId(),
+          _invariantGraph->objectiveVarId(), ObjectiveDirection::NONE, 0);
+      _randomProvider = std::make_shared<search::RandomProvider>(1234);
+      _assignment->initialize(*_randomProvider);
     } catch (const InconsistencyException&) {
       RC_ASSERT(neverSat);
       return;
@@ -939,6 +965,22 @@ class FznTestBase : public ::testing::Test {
         }
         query();
         if (p == numProbes) {
+          for (size_t i = 0;
+               i < _invariantGraph->implicitConstraintNodes().size(); ++i) {
+            auto neighborhood =
+                _invariantGraph
+                    ->implicitConstraintNode(InvariantNodeId(i, true))
+                    .neighborhood();
+            if (dynamic_cast<search::neighborhoods::NeighborhoodCombinator*>(
+                    neighborhood.get()) != nullptr) {
+              continue;
+            }
+            if (dynamic_cast<search::neighborhoods::RandomNeighborhood*>(
+                    neighborhood.get()) != nullptr) {
+              continue;
+            }
+            neighborhood->commitIf(*_assignment);
+          }
           _solver->endCommit();
         } else {
           _solver->endProbe();

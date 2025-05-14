@@ -33,22 +33,24 @@ class array_bool_element2dTest : public FznTestBase {
   }
 
   void generate() override {
-    const Int numRows = *rc::gen::inRange(1, 3);
-    const Int numCols = *rc::gen::inRange(1, 3);
+    const Int numRows = true ? 2 : *rc::gen::inRange(1, 3);
+    const Int numCols = true ? 2 : *rc::gen::inRange(1, 3);
 
-    constraintIdentifier = *rc::gen::arbitrary<bool>()
+    constraintIdentifier = false && *rc::gen::arbitrary<bool>()
                                ? "array_bool_element2d"
                                : "array_bool_element2d_nonshifted_flat";
 
-    const Int rowLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(rowLb, numRows + rowLb - 1, rowIndex);
+    const Int rowLb = true ? -1024 : *rc::gen::element(-1024, -1, 0, 1, 1024);
+    addIntArg(IntArgState::VAR, rowLb, numRows + rowLb - 1, rowIndex);
 
-    const Int colLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(colLb, numCols + colLb - 1, colIndex);
+    const Int colLb = true ? 0 : *rc::gen::element(-1024, -1, 0, 1, 1024);
+    addIntArg(IntArgState::VAR, colLb, numCols + colLb - 1, colIndex);
 
-    parameters = *rc::gen::container<std::vector<std::vector<bool>>>(
-        numRows, rc::gen::container<std::vector<bool>>(
-                     numCols, rc::gen::arbitrary<bool>()));
+    parameters =
+        true ? std::vector<std::vector<bool>>{{true, false}, {false, false}}
+             : *rc::gen::container<std::vector<std::vector<bool>>>(
+                   numRows, rc::gen::container<std::vector<bool>>(
+                                numCols, rc::gen::arbitrary<bool>()));
 
     std::vector<bool> flatPars;
     flatPars.reserve(numRows * numCols);
@@ -60,7 +62,7 @@ class array_bool_element2dTest : public FznTestBase {
 
     addArg(flatPars);
 
-    addBoolArg(output);
+    addBoolArg(BoolArgState::VAR, output);
 
     addArg(numRows);
     rowOffset = lowerBound(rowIndex);
@@ -90,9 +92,9 @@ class array_bool_element2dTest : public FznTestBase {
       return false;
     }
     if (!isFixed(rowIndex)) {
-      const auto& rowIdxNode = _invariantGraph->varNode(rowIndex);
+      const auto& rowIdxNode = varNodeConst(rowIndex);
       if (!isFixed(colIndex)) {
-        const auto& colIdxNode = _invariantGraph->varNode(colIndex);
+        const auto& colIdxNode = varNodeConst(colIndex);
         return std::none_of(
             rowIdxNode.constDomain()->begin(), rowIdxNode.constDomain()->end(),
             [&](const Int rowVal) {
@@ -110,7 +112,7 @@ class array_bool_element2dTest : public FznTestBase {
           });
     }
     if (!isFixed(colIndex)) {
-      const auto& colIdxNode = _invariantGraph->varNode(colIndex);
+      const auto& colIdxNode = varNodeConst(colIndex);
       return std::none_of(
           colIdxNode.constDomain()->begin(), colIdxNode.constDomain()->end(),
           [&](const Int colVal) {
@@ -127,9 +129,9 @@ class array_bool_element2dTest : public FznTestBase {
       return false;
     }
     if (!isFixed(rowIndex)) {
-      const auto& rowIdxNode = _invariantGraph->varNode(rowIndex);
+      const auto& rowIdxNode = varNodeConst(rowIndex);
       if (!isFixed(colIndex)) {
-        const auto& colIdxNode = _invariantGraph->varNode(colIndex);
+        const auto& colIdxNode = varNodeConst(colIndex);
         return std::all_of(
             rowIdxNode.constDomain()->begin(), rowIdxNode.constDomain()->end(),
             [&](const Int rowVal) {
@@ -147,7 +149,7 @@ class array_bool_element2dTest : public FznTestBase {
           });
     }
     if (!isFixed(colIndex)) {
-      const auto& colIdxNode = _invariantGraph->varNode(colIndex);
+      const auto& colIdxNode = varNodeConst(colIndex);
       return std::all_of(
           colIdxNode.constDomain()->begin(), colIdxNode.constDomain()->end(),
           [&](const Int colVal) {

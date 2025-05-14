@@ -60,10 +60,9 @@ class int_maxTest : public FznTestBase {
     const Int actual = intVal(output, committedValue);
     if (isFixed(output) && totalViolationVarId() != propagation::NULL_ID) {
       const bool isViolating = violation(committedValue) > 0;
-      const bool inDomain =
-          isFixed(output)
-              ? expected == intVal(output)
-              : _invariantGraph->varNodeConst(output).inDomain(expected);
+      const bool inDomain = isFixed(output)
+                                ? expected == intVal(output)
+                                : varNodeConst(output).inDomain(expected);
       return isViolating != inDomain;
     }
     return actual == expected;

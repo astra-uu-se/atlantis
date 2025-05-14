@@ -96,18 +96,13 @@ std::vector<VarNodeId> pruneAllDifferentFixed(
     InvariantGraph &invariantGraph,
     const std::vector<VarNodeId> &inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
-  std::vector<bool> isFree(inputVarNodeIds.size(), true);
-  for (const auto &index : std::views::keys(fixed)) {
-    isFree[index] = false;
+  std::vector<VarNodeId> fixedVars;
+  fixedVars.reserve(fixed.size());
+  for (const size_t index : std::views::keys(fixed)) {
+    fixedVars.emplace_back(inputVarNodeIds[index]);
+    assert(invariantGraph.varNodeConst(fixedVars.back()).isFixed());
   }
-  std::vector<VarNodeId> freeVars;
-  freeVars.reserve(inputVarNodeIds.size() - fixed.size());
-  for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
-    if (!isFree[i]) {
-      freeVars.push_back(inputVarNodeIds[i]);
-    }
-  }
-  return freeVars;
+  return fixedVars;
 }
 
 std::vector<Int> toIntVector(const std::vector<bool> &argument) {

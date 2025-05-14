@@ -126,10 +126,10 @@ void ArrayElement2dNode::updateState() {
       rowNode.constDomain()->begin(), rowNode.constDomain()->end(),
       [&](const Int row) {
         return std::all_of(colNode.constDomain()->begin(),
-                    colNode.constDomain()->end(), [&](const Int col) {
-                      return getValue(_parMatrix, row, col, _rowOffset,
-                                      _colOffset) == val;
-                    });
+                           colNode.constDomain()->end(), [&](const Int col) {
+                             return getValue(_parMatrix, row, col, _rowOffset,
+                                             _colOffset) == val;
+                           });
       });
   if (allSameVal) {
     if (outputNode.isIntVar()) {

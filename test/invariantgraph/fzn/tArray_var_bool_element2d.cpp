@@ -88,7 +88,7 @@ class array_var_bool_element2dTest : public FznTestBase {
     }
     if (isFixed(rowIdx)) {
       const Int row = intVal(rowIdx) - rowOffset;
-      const auto& colDom = _invariantGraph->varNodeConst(colIdx).constDomain();
+      const auto& colDom = varNodeConst(colIdx).constDomain();
       return std::none_of(colDom->begin(), colDom->end(), [&](const Int val) {
         const Int col = val - colOffset;
         return !isFixed(inputs.at(row).at(col)) ||
@@ -97,15 +97,15 @@ class array_var_bool_element2dTest : public FznTestBase {
     }
     if (isFixed(colIdx)) {
       const Int col = intVal(colIdx) - colOffset;
-      const auto& rowDom = _invariantGraph->varNodeConst(rowIdx).constDomain();
+      const auto& rowDom = varNodeConst(rowIdx).constDomain();
       return std::none_of(rowDom->begin(), rowDom->end(), [&](const Int val) {
         const Int row = val - rowOffset;
         return !isFixed(inputs.at(row).at(col)) ||
                boolVal(inputs.at(row).at(col)) == outVal;
       });
     }
-    const auto& rowDom = _invariantGraph->varNodeConst(rowIdx).constDomain();
-    const auto& colDom = _invariantGraph->varNodeConst(colIdx).constDomain();
+    const auto& rowDom = varNodeConst(rowIdx).constDomain();
+    const auto& colDom = varNodeConst(colIdx).constDomain();
     return std::none_of(rowDom->begin(), rowDom->end(), [&](const Int rowIdx) {
       const Int row = rowIdx - rowOffset;
       return std::any_of(colDom->begin(), colDom->end(), [&](const Int colIdx) {
@@ -135,7 +135,7 @@ class array_var_bool_element2dTest : public FznTestBase {
     const bool outVal = boolVal(output);
     if (isFixed(rowIdx)) {
       const Int row = intVal(rowIdx) - rowOffset;
-      const auto& colDom = _invariantGraph->varNodeConst(colIdx).constDomain();
+      const auto& colDom = varNodeConst(colIdx).constDomain();
       return std::all_of(colDom->begin(), colDom->end(), [&](const Int val) {
         const Int col = val - colOffset;
         return isFixed(inputs.at(row).at(col)) &&
@@ -144,15 +144,15 @@ class array_var_bool_element2dTest : public FznTestBase {
     }
     if (isFixed(colIdx)) {
       const Int col = intVal(colIdx) - colOffset;
-      const auto& rowDom = _invariantGraph->varNodeConst(rowIdx).constDomain();
+      const auto& rowDom = varNodeConst(rowIdx).constDomain();
       return std::all_of(rowDom->begin(), rowDom->end(), [&](const Int val) {
         const Int row = val - rowOffset;
         return isFixed(inputs.at(row).at(col)) &&
                boolVal(inputs.at(row).at(col)) == outVal;
       });
     }
-    const auto& rowDom = _invariantGraph->varNodeConst(rowIdx).constDomain();
-    const auto& colDom = _invariantGraph->varNodeConst(colIdx).constDomain();
+    const auto& rowDom = varNodeConst(rowIdx).constDomain();
+    const auto& colDom = varNodeConst(colIdx).constDomain();
     return std::all_of(rowDom->begin(), rowDom->end(), [&](const Int rowIdx) {
       const Int row = rowIdx - rowOffset;
       return std::all_of(colDom->begin(), colDom->end(), [&](const Int colIdx) {

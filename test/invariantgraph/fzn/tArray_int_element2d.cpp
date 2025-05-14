@@ -85,14 +85,14 @@ class array_int_element2dTest : public FznTestBase {
 
   [[nodiscard]] bool neverSatisfied() const override {
     if (!isFixed(output)) {
-      const auto& outputNode = _invariantGraph->varNode(output);
+      const auto& outputNode = varNodeConst(output);
       if (!isFixed(rowIndex)) {
-        const auto& rowIdxNode = _invariantGraph->varNode(rowIndex);
+        const auto& rowIdxNode = varNodeConst(rowIndex);
         return std::none_of(
             rowIdxNode.constDomain()->begin(), rowIdxNode.constDomain()->end(),
             [&](const Int rowVal) {
               if (!isFixed(colIndex)) {
-                const auto& colIdxNode = _invariantGraph->varNode(colIndex);
+                const auto& colIdxNode = varNodeConst(colIndex);
                 return std::any_of(
                     colIdxNode.constDomain()->begin(),
                     colIdxNode.constDomain()->end(), [&](const Int colVal) {
@@ -103,7 +103,7 @@ class array_int_element2dTest : public FznTestBase {
             });
       }
       if (!isFixed(colIndex)) {
-        const auto& colIdxNode = _invariantGraph->varNode(colIndex);
+        const auto& colIdxNode = varNodeConst(colIndex);
         return std::none_of(
             colIdxNode.constDomain()->begin(), colIdxNode.constDomain()->end(),
             [&](const Int colVal) {
@@ -113,9 +113,9 @@ class array_int_element2dTest : public FznTestBase {
       return !outputNode.inDomain(getValue(intVal(colIndex), intVal(rowIndex)));
     }
     if (!isFixed(rowIndex)) {
-      const auto& rowIdxNode = _invariantGraph->varNode(rowIndex);
+      const auto& rowIdxNode = varNodeConst(rowIndex);
       if (!isFixed(colIndex)) {
-        const auto& colIdxNode = _invariantGraph->varNode(colIndex);
+        const auto& colIdxNode = varNodeConst(colIndex);
         return std::none_of(
             rowIdxNode.constDomain()->begin(), rowIdxNode.constDomain()->end(),
             [&](const Int rowVal) {
@@ -133,7 +133,7 @@ class array_int_element2dTest : public FznTestBase {
           });
     }
     if (!isFixed(colIndex)) {
-      const auto& colIdxNode = _invariantGraph->varNode(colIndex);
+      const auto& colIdxNode = varNodeConst(colIndex);
       return std::none_of(
           colIdxNode.constDomain()->begin(), colIdxNode.constDomain()->end(),
           [&](const Int colVal) {
@@ -150,9 +150,9 @@ class array_int_element2dTest : public FznTestBase {
       return false;
     }
     if (!isFixed(rowIndex)) {
-      const auto& rowIdxNode = _invariantGraph->varNode(rowIndex);
+      const auto& rowIdxNode = varNodeConst(rowIndex);
       if (!isFixed(colIndex)) {
-        const auto& colIdxNode = _invariantGraph->varNode(colIndex);
+        const auto& colIdxNode = varNodeConst(colIndex);
         return std::all_of(
             rowIdxNode.constDomain()->begin(), rowIdxNode.constDomain()->end(),
             [&](const Int rowVal) {
@@ -170,7 +170,7 @@ class array_int_element2dTest : public FznTestBase {
           });
     }
     if (!isFixed(colIndex)) {
-      const auto& colIdxNode = _invariantGraph->varNode(colIndex);
+      const auto& colIdxNode = varNodeConst(colIndex);
       return std::all_of(
           colIdxNode.constDomain()->begin(), colIdxNode.constDomain()->end(),
           [&](const Int colVal) {

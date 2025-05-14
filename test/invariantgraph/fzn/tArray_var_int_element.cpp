@@ -68,15 +68,14 @@ class array_var_int_elementTest : public FznTestBase {
       const auto& input = inputs.at(intVal(idx) - offset);
       return isFixed(input) && intVal(input) != outVal;
     }
-    const auto& idxNode = _invariantGraph->varNode(idx);
-    return std::none_of(
-        idxNode.constDomain()->begin(), idxNode.constDomain()->end(),
-        [&](const Int val) {
-          const auto& input = inputs.at(val - offset);
-          return isFixed(input)
-                     ? intVal(input) == outVal
-                     : _invariantGraph->varNodeConst(input).inDomain(outVal);
-        });
+    const auto& idxNode = varNodeConst(idx);
+    return std::none_of(idxNode.constDomain()->begin(),
+                        idxNode.constDomain()->end(), [&](const Int val) {
+                          const auto& input = inputs.at(val - offset);
+                          return isFixed(input)
+                                     ? intVal(input) == outVal
+                                     : varNodeConst(input).inDomain(outVal);
+                        });
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
@@ -90,7 +89,7 @@ class array_var_int_elementTest : public FznTestBase {
       }
       return false;
     }
-    const auto& dom = _invariantGraph->varNodeConst(idx).constDomain();
+    const auto& dom = varNodeConst(idx).constDomain();
     if (isFixed(output)) {
       const Int outVal = intVal(output);
       return std::all_of(dom->begin(), dom->end(), [&](const Int val) {
