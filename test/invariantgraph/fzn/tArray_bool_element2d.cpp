@@ -33,24 +33,22 @@ class array_bool_element2dTest : public FznTestBase {
   }
 
   void generate() override {
-    const Int numRows = true ? 2 : *rc::gen::inRange(1, 3);
-    const Int numCols = true ? 2 : *rc::gen::inRange(1, 3);
+    const Int numRows = *rc::gen::inRange(1, 3);
+    const Int numCols = *rc::gen::inRange(1, 3);
 
-    constraintIdentifier = false && *rc::gen::arbitrary<bool>()
+    constraintIdentifier = *rc::gen::arbitrary<bool>()
                                ? "array_bool_element2d"
                                : "array_bool_element2d_nonshifted_flat";
 
-    const Int rowLb = true ? -1024 : *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(IntArgState::VAR, rowLb, numRows + rowLb - 1, rowIndex);
+    const Int rowLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
+    addIntArg(rowLb, numRows + rowLb - 1, rowIndex);
 
-    const Int colLb = true ? 0 : *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(IntArgState::VAR, colLb, numCols + colLb - 1, colIndex);
+    const Int colLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
+    addIntArg(colLb, numCols + colLb - 1, colIndex);
 
-    parameters =
-        true ? std::vector<std::vector<bool>>{{true, false}, {false, false}}
-             : *rc::gen::container<std::vector<std::vector<bool>>>(
-                   numRows, rc::gen::container<std::vector<bool>>(
-                                numCols, rc::gen::arbitrary<bool>()));
+    parameters = *rc::gen::container<std::vector<std::vector<bool>>>(
+        numRows, rc::gen::container<std::vector<bool>>(
+                     numCols, rc::gen::arbitrary<bool>()));
 
     std::vector<bool> flatPars;
     flatPars.reserve(numRows * numCols);
@@ -62,7 +60,7 @@ class array_bool_element2dTest : public FznTestBase {
 
     addArg(flatPars);
 
-    addBoolArg(BoolArgState::VAR, output);
+    addBoolArg(output);
 
     addArg(numRows);
     rowOffset = lowerBound(rowIndex);

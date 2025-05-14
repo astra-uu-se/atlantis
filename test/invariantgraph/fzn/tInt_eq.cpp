@@ -35,12 +35,12 @@ class int_eqTest : public FznTestBase {
   }
 
   void generate() override {
-    addIntArg(IntArgState::VAR, a);
-    addIntArg(IntArgState::VAR, b);
-    const bool isReified = true || *rc::gen::arbitrary<bool>();
+    addIntArg(a);
+    addIntArg(b);
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "int_eq_reif" : "int_eq";
     if (isReified) {
-      addBoolArg(BoolArgState::VAR, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }

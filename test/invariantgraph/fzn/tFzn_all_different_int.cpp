@@ -35,8 +35,8 @@ class fzn_all_different_intTest : public FznTestBase {
   }
 
   void generate() override {
-    Int numVars = true ? 2 : *rc::gen::inRange<Int>(0, 10);
-    const bool isReified = false && *rc::gen::arbitrary<bool>();
+    Int numVars = *rc::gen::inRange<Int>(0, 10);
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_all_different_int_reif" : "fzn_all_different_int";
 

@@ -54,12 +54,11 @@ void IntAllEqualNode::init(InvariantNodeId id) {
 void IntAllEqualNode::updateState() {
   ViolationInvariantNode::updateState();
   if (staticInputVarNodeIds().size() < 2 && !_boundVal.has_value()) {
-    if (!isReified() && !shouldHold()) {
-      throw InconsistencyException(
-          "IntAllEqualNode::updateState constraint is violated");
-    }
     if (isReified()) {
       fixReified(true);
+    } else if (!shouldHold()) {
+      throw InconsistencyException(
+          "IntAllEqualNode::updateState constraint is violated");
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
