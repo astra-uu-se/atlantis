@@ -36,14 +36,15 @@ class fzn_all_different_intTest : public FznTestBase {
 
   void generate() override {
     Int numVars = *rc::gen::inRange<Int>(0, 10);
-    const bool isReified = *rc::gen::arbitrary<bool>();
-    constraintIdentifier =
-        isReified ? "fzn_all_different_int_reif" : "fzn_all_different_int";
-
     for (Int i = 0; i < numVars; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
     addIntVarArray(inputs);
+
+    const bool isReified = *rc::gen::arbitrary<bool>();
+    constraintIdentifier =
+        isReified ? "fzn_all_different_int_reif" : "fzn_all_different_int";
+
     if (isReified) {
       addBoolArg(reified);
     } else {
@@ -63,13 +64,7 @@ class fzn_all_different_intTest : public FznTestBase {
     return expected == actual;
   }
 
-  [[nodiscard]] bool neverSatisfied() const override {
-    if (!isFixed(reified)) {
-      return false;
-    }
-    if (inputs.size() <= 1) {
-      return !boolVal(reified);
-    }
+  std::vector<std::unordered_set<Int>> getDomains() const {
     std::vector<std::unordered_set<Int>> domains;
     domains.reserve(inputs.size());
     for (const auto& var : inputs) {
@@ -84,30 +79,67 @@ class fzn_all_different_intTest : public FznTestBase {
         domains.back().emplace(val);
       }
     }
-    for (size_t j = 0; j < inputs.size(); ++j) {
-      for (size_t k = j + 1; k < inputs.size(); k++) {
-        if (domains.at(k).size() == 1) {
-          domains.at(j).erase(*domains.at(k).begin());
-        }
+    std::vector<size_t> singletons;
+    singletons.reserve(inputs.size());
+    for (size_t i = 0; i < inputs.size(); i++) {
+      if (domains.at(i).size() == 1) {
+        singletons.emplace_back(i);
       }
-      if (domains.at(j).empty()) {
-        return boolVal(reified);
-      }
-      if (domains.at(j).size() > 1) {
+    }
+    for (size_t index = 0; index < singletons.size(); ++index) {
+      const size_t i = singletons.at(index);
+      RC_ASSERT(domains.at(i).size() <= size_t{1});
+      if (domains.at(i).empty()) {
         continue;
       }
-      const Int val = *domains.at(j).begin();
-      for (size_t i = 0; i < j; i++) {
-        domains.at(i).erase(val);
-        if (domains.at(i).empty()) {
-          return boolVal(reified);
+      const Int val = *domains.at(i).begin();
+
+      for (size_t j = 0; j < inputs.size(); j++) {
+        if (j != i) {
+          const size_t prevSize = domains.at(j).size();
+          domains.at(j).erase(val);
+          if (prevSize != 1 && domains.at(j).size() == 1) {
+            singletons.emplace_back(j);
+          }
         }
       }
-      for (size_t k = j + 1; k < inputs.size(); k++) {
-        domains.at(k).erase(val);
-        if (domains.at(k).empty()) {
-          return boolVal(reified);
+    }
+    return domains;
+  }
+
+  [[nodiscard]] bool neverSatisfied() const override {
+    if (!isFixed(reified)) {
+      return false;
+    }
+    if (boolVal(reified)) {
+      if (inputs.size() <= 1) {
+        return false;
+      }
+      Int unionLb = std::numeric_limits<Int>::max();
+      Int unionUb = std::numeric_limits<Int>::min();
+      for (const auto& input : inputs) {
+        unionLb = std::min(unionLb, lowerBound(input));
+        unionUb = std::max(unionUb, upperBound(input));
+      }
+      if (unionUb - unionLb + 1 < static_cast<Int>(inputs.size())) {
+        return true;
+      }
+      std::vector<std::unordered_set<Int>> domains = getDomains();
+      return std::ranges::any_of(domains, [&](const auto& dom) {
+        return dom.empty();
+      });
+    }
+    if (inputs.size() <= 1) {
+      return true;
+    }
+    std::unordered_set<Int> unionDom;
+    for (const auto& input : inputs) {
+      if (isFixed(input)) {
+        const Int val = intVal(input);
+        if (unionDom.contains(val)) {
+          return false;
         }
+        unionDom.emplace(val);
       }
     }
     return false;
