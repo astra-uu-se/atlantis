@@ -1,5 +1,6 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 
+#include <limits>
 #include <utility>
 
 #include "../parseHelper.hpp"
@@ -11,6 +12,7 @@
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -58,6 +60,41 @@ void AllDifferentNode::updateState() {
     } else if (!shouldHold()) {
       throw InconsistencyException(
           "AllDifferentNode neg: one or less input variables");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+  }
+  Int unionLb = std::numeric_limits<Int>::max();
+  Int unionUb = std::numeric_limits<Int>::min();
+  for (const auto vId : staticInputVarNodeIds()) {
+    unionLb = std::min(unionLb, invariantGraph().varNodeConst(vId).lowerBound());
+    unionUb = std::max(unionUb, invariantGraph().varNodeConst(vId).upperBound());
+  }
+  const Int numVals = unionUb - unionLb + 1;
+  if (numVals < static_cast<Int>(staticInputVarNodeIds().size())) {
+    if (isReified()) {
+      fixReified(false);
+    } else if (shouldHold()) {
+      throw InconsistencyException("AllDifferentNode: the union of the domains is smaller than the number of variables.");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  bool allDisjoint = true;
+  for (size_t i = 0; allDisjoint && i < staticInputVarNodeIds().size(); ++i) {
+    const auto& iNode =invariantGraphConst().varNodeConst(staticInputVarNodeIds()[i]);
+    for (size_t j = i+1; j < staticInputVarNodeIds().size(); ++j) {
+      const auto& jNode = invariantGraphConst().varNodeConst(staticInputVarNodeIds()[i]);
+      if (!iNode.constDomain()->isDisjoint(*jNode.constDomain())) {
+        allDisjoint = false;
+        break;
+      }
+    }
+  }
+  if (allDisjoint) {
+    if (isReified()) {
+      fixReified(true);
+    } else if (!shouldHold()) {
+      throw InconsistencyException("AllDifferentNode neg: domains do not intersect");
     }
     setState(InvariantNodeState::SUBSUMED);
   }
