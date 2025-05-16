@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <utility>
 
 #include "../parseHelper.hpp"
@@ -15,6 +16,7 @@
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 #include "atlantis/propagation/violationInvariants/equal.hpp"
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -87,7 +89,7 @@ void IntAllEqualNode::updateState() {
   }
 
   if (_boundVal.has_value() && !isReified() && shouldHold()) {
-    for (const auto vId : varsToRemove) {
+    for (const auto vId : staticInputVarNodeIds()) {
       invariantGraph().varNode(vId).fixToValue(_boundVal.value());
     }
     setState(InvariantNodeState::SUBSUMED);
@@ -98,6 +100,51 @@ void IntAllEqualNode::updateState() {
     removeStaticInputVarNode(vId);
   }
 
+  if (!_boundVal.has_value()) {
+    Int overlapLb = std::numeric_limits<Int>::min();
+    Int overlapUb = std::numeric_limits<Int>::max();
+    for (const auto& vId : staticInputVarNodeIds()) {
+      const VarNode& vNode = invariantGraphConst().varNodeConst(vId);
+      overlapLb = std::max(overlapLb, vNode.lowerBound());
+      overlapUb = std::max(overlapUb, vNode.upperBound());
+    }
+    if (overlapLb > overlapUb) {
+      if (isReified()) {
+        fixReified(false);
+      } else if (shouldHold()) {
+        throw InconsistencyException(
+            "IntAllEqualNode::updateState constraint is violated");
+      }
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+    if (overlapLb == overlapUb && !isReified() && shouldHold()) {
+      _boundVal.emplace(overlapLb);
+      for (const auto vId : staticInputVarNodeIds()) {
+        invariantGraph().varNode(vId).fixToValue(_boundVal.value());
+      }
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+    if (overlapLb + 1 < overlapUb) {
+      SearchDomain overlap(overlapLb, overlapUb);
+      try {
+        for (const auto vId : staticInputVarNodeIds()) {
+          overlap.intersect(
+              *invariantGraphConst().varNodeConst(vId).constDomain());
+        }
+      } catch (const InconsistencyException&) {
+        if (isReified()) {
+          fixReified(false);
+        } else if (shouldHold()) {
+          throw;
+        }
+        setState(InvariantNodeState::SUBSUMED);
+        return;
+      }
+    }
+  }
+
   if (staticInputVarNodeIds().empty()) {
     if (isReified()) {
       fixReified(true);
@@ -106,6 +153,7 @@ void IntAllEqualNode::updateState() {
           "IntAllEqualNode::updateState constraint is violated");
     }
     setState(InvariantNodeState::SUBSUMED);
+    return;
   }
   if (staticInputVarNodeIds().size() == 1 && _boundVal.has_value() &&
       !isReified()) {
@@ -133,14 +181,10 @@ void IntAllEqualNode::registerOutputVars() {
         _intermediate = solver().makeIntVar(0, 0, 0);
         if (shouldHold()) {
           setViolationVarId(solver().makeIntView<propagation::EqualConst>(
-              solver(),
-              invariantGraphConst().varId(staticInputVarNodeIds().front()),
-              staticInputVarNodeIds().size()));
+              solver(), _intermediate, staticInputVarNodeIds().size()));
         } else {
           setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
-              solver(),
-              invariantGraphConst().varId(staticInputVarNodeIds().front()),
-              staticInputVarNodeIds().size()));
+              solver(), _intermediate, staticInputVarNodeIds().size()));
         }
       }
     } else if (staticInputVarNodeIds().size() == 2) {

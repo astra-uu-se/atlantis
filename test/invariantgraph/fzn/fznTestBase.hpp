@@ -795,37 +795,10 @@ class FznTestBase : public ::testing::Test {
   }
 
   std::shared_ptr<IntVarArray> addIntVarArray(
-      size_t arraySize, const std::string& identifier = "i_arr",
-      const std::string& varPrefix = "i_") {
-    std::vector<IntArgState> argStates =
-        *rc::gen::container<std::vector<IntArgState>>(
-            arraySize, rc::gen::arbitrary<IntArgState>());
-    auto vars = std::get<std::shared_ptr<IntVarArray>>(
-        _model->addVar(std::make_shared<IntVarArray>(identifier)));
-    for (size_t i = 0; i < arraySize; ++i) {
-      const std::string varIdentifier = varPrefix + std::to_string(i);
-      switch (argStates.at(i)) {
-        case IntArgState::PAR: {
-          const Int val = *rc::gen::inRange<Int>(defaultLb, defaultUb + 1);
-          vars->append(val);
-          addIntPar(varIdentifier, val);
-          break;
-        }
-        default:
-          vars->append(genIntVar(argStates.at(i), varIdentifier));
-          break;
-      }
-    }
-    args.emplace_back(vars);
-    return vars;
-  }
-
-  std::shared_ptr<IntVarArray> addIntVarArray(
+      const std::vector<IntArgState>& argStates,
       const std::vector<std::string>& identifiers,
       const std::string& identifier = "i_arr") {
-    std::vector<IntArgState> argStates =
-        *rc::gen::container<std::vector<IntArgState>>(
-            identifiers.size(), rc::gen::arbitrary<IntArgState>());
+    RC_ASSERT(argStates.size() == identifiers.size());
     auto vars = std::get<std::shared_ptr<IntVarArray>>(
         _model->addVar(std::make_shared<IntVarArray>(identifier)));
     for (size_t i = 0; i < identifiers.size(); ++i) {
@@ -843,6 +816,27 @@ class FznTestBase : public ::testing::Test {
     }
     args.emplace_back(vars);
     return vars;
+  }
+
+  std::shared_ptr<IntVarArray> addIntVarArray(
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "i_arr") {
+    return addIntVarArray(
+        *rc::gen::container<std::vector<IntArgState>>(
+            identifiers.size(), rc::gen::arbitrary<IntArgState>()),
+        identifiers, identifier);
+  }
+
+  std::shared_ptr<IntVarArray> addIntVarArray(
+      size_t arraySize, const std::string& identifier = "i_arr",
+      const std::string& varPrefix = "i_") {
+    std::vector<std::string> identifiers(arraySize);
+    for (size_t i = 0; i < arraySize; ++i) {
+      identifiers.at(i) = varPrefix + std::to_string(i);
+    }
+    return addIntVarArray(*rc::gen::container<std::vector<IntArgState>>(
+                              arraySize, rc::gen::arbitrary<IntArgState>()),
+                          identifiers, identifier);
   }
 
   Arg genArg(ArgState argState, const std::string& identifierPrefix = "") {

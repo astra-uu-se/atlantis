@@ -21,16 +21,25 @@ class fzn_all_equal_intTest : public FznTestBase {
   std::vector<std::string> inputs;
   std::string reified{"reified"};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      const Int val = intVal(inputs.at(i), committedValue);
-      for (size_t j = i + 1; j < inputs.size(); ++j) {
-        if (val != intVal(inputs.at(j), committedValue)) {
-          return false;
-        }
+  [[nodiscard]] bool getValue(bool committedValue) const {
+    for (size_t i = 0; i < inputs.size() - 1; ++i) {
+      if (intVal(inputs.at(i), committedValue) !=
+          intVal(inputs.at(i + 1), committedValue)) {
+        return false;
       }
     }
     return true;
+  }
+
+  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+    const bool expected = getValue(committedValue);
+    const bool actual = boolVal(reified, committedValue);
+
+    if (isFixed(reified)) {
+      const bool isSolution = violation(committedValue) == 0;
+      return isSolution ? expected == actual : expected != actual;
+    }
+    return expected == actual;
   }
 
   void generate() override {
@@ -54,34 +63,88 @@ class fzn_all_equal_intTest : public FznTestBase {
     if (!isFixed(reified)) {
       return false;
     }
-    std::optional<int> val{};
-    size_t numUnfixed = 0;
-    for (const auto& input : inputs) {
-      if (!isFixed(input)) {
-        ++numUnfixed;
-        continue;
+    if (boolVal(reified)) {
+      if (inputs.size() <= 1) {
+        return true;
       }
-      if (!val.has_value()) {
-        val.emplace(intVal(input));
+      Int unionLb = std::numeric_limits<Int>::max();
+      Int unionUb = std::numeric_limits<Int>::min();
+      for (const auto& input : inputs) {
+        unionLb = std::min(unionLb, lowerBound(input));
+        unionUb = std::max(unionUb, upperBound(input));
       }
-      if (val.value() != intVal(input)) {
-        return !boolVal(reified);
+      if (unionLb == unionUb) {
+        return true;
       }
     }
-    if (val.has_value()) {
+    Int overlapLb = std::numeric_limits<Int>::min();
+    Int overlapUb = std::numeric_limits<Int>::max();
+    for (const auto& input : inputs) {
+      overlapLb = std::max(overlapLb, lowerBound(input));
+      overlapUb = std::min(overlapUb, upperBound(input));
+    }
+    if (overlapLb > overlapUb) {
+      return true;
+    }
+    SearchDomain overlap(overlapLb, overlapUb);
+    try {
       for (const auto& input : inputs) {
-        if (!isFixed(input)) {
-          if (!varNodeConst(input).inDomain(Int{val.value()})) {
-            return !boolVal(reified);
-          }
+        if (isFixed(input)) {
+          overlap.fix(intVal(input));
+        } else {
+          overlap.intersect(*varNodeConst(input).constDomain());
         }
       }
+    } catch (const InconsistencyException&) {
+      return true;
     }
-    return numUnfixed == inputs.size() ? boolVal(reified) : !boolVal(reified);
+    return false;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
-    return !alwaysSatisfied();
+    if (!isFixed(reified)) {
+      return false;
+    }
+    if (boolVal(reified)) {
+      if (inputs.size() <= 1) {
+        return false;
+      }
+      Int overlapLb = std::numeric_limits<Int>::min();
+      Int overlapUb = std::numeric_limits<Int>::max();
+      for (const auto& input : inputs) {
+        overlapLb = std::max(overlapLb, lowerBound(input));
+        overlapUb = std::min(overlapUb, upperBound(input));
+      }
+      if (overlapLb > overlapUb) {
+        return true;
+      }
+      SearchDomain overlap(overlapLb, overlapUb);
+      try {
+        for (const auto& input : inputs) {
+          if (isFixed(input)) {
+            overlap.fix(intVal(input));
+          } else {
+            overlap.intersect(*varNodeConst(input).constDomain());
+          }
+        }
+      } catch (const InconsistencyException&) {
+        return true;
+      }
+      return false;
+    }
+    if (inputs.size() <= 1) {
+      return true;
+    }
+    Int unionLb = std::numeric_limits<Int>::max();
+    Int unionUb = std::numeric_limits<Int>::min();
+    for (const auto& input : inputs) {
+      unionLb = std::min(unionLb, lowerBound(input));
+      unionUb = std::max(unionUb, upperBound(input));
+    }
+    if (unionLb == unionUb) {
+      return true;
+    }
+    return false;
   }
 
   [[nodiscard]] bool canMove() const override {
