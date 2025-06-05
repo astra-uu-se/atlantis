@@ -46,7 +46,7 @@ class fzn_all_different_intTest : public FznTestBase {
         isReified ? "fzn_all_different_int_reif" : "fzn_all_different_int";
 
     if (isReified) {
-      addBoolArg(reified);
+      addBoolArg(BoolArgState::VAR, reified);
     } else {
       addBoolPar(reified, true);
     }
@@ -149,15 +149,25 @@ class fzn_all_different_intTest : public FznTestBase {
     if (!isFixed(reified)) {
       return false;
     }
+    const bool shouldHold = boolVal(reified);
     if (inputs.empty()) {
-      return boolVal(reified);
+      return shouldHold;
     }
-    const size_t numFree = std::ranges::count_if(
-        inputs, [&](const auto& var) { return !isFixed(var); });
+    std::unordered_set<Int> fixedVals;
+    fixedVals.reserve(inputs.size());
+    for (const auto& input : inputs) {
+      if (isFixed(input)) {
+        if (fixedVals.contains(intVal(input))) {
+          return !shouldHold;
+        }
+        fixedVals.emplace(intVal(input));
+      }
+    }
+    const size_t numFree = inputs.size() - fixedVals.size();
     if (numFree <= 1) {
-      return boolVal(reified);
+      return shouldHold;
     }
-    return !boolVal(reified);
+    return !shouldHold;
   }
 
   [[nodiscard]] bool canMove() const override {
