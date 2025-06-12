@@ -158,9 +158,8 @@ void IntAllEqualNode::updateState() {
   if (staticInputVarNodeIds().size() == 1 && _boundVal.has_value() &&
       !isReified()) {
     assert(!shouldHold());
-    invariantGraph()
-        .varNode(staticInputVarNodeIds().front())
-        .removeValue(_boundVal.value());
+    auto& vNode = invariantGraph().varNode(staticInputVarNodeIds().front());
+    vNode.removeValueAndTightenDomainType(_boundVal.value());
     setState(InvariantNodeState::SUBSUMED);
   }
 }

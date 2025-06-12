@@ -164,7 +164,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
           std::to_string(lowerBound()) + ".." + std::to_string(upperBound()));
     }
     if (lowerBound() < solverLb || solverUb < upperBound()) {
-      solver.makeIntView<propagation::InIntervalConst>(
+      _domainViolationId = solver.makeIntView<propagation::InIntervalConst>(
           solver, varId(), lowerBound(), upperBound());
     }
     return _domainViolationId;
@@ -290,6 +290,30 @@ void VarNode::fixToValue(bool val) {
     throw std::runtime_error("fixToValue(bool) called on IntVar");
   }
   _domain->fix(val ? 0 : 1);
+}
+
+void VarNode::removeValueAndTightenDomainType(Int val) {
+  if (lowerBound() <= val && val <= upperBound()) {
+    removeValue(val);
+    tightenDomainType(isFixed()             ? DomainType::DOM_FIXED
+                      : val < lowerBound() ? DomainType::DOM_LOWER_BOUND
+                      : val > upperBound() ? DomainType::DOM_UPPER_BOUND
+                                            : DomainType::DOM_DOMAIN);
+  }
+}
+
+void VarNode::removeValuesBelowAndTightenDomainType(Int val) {
+  if (val > lowerBound()) {
+    removeValuesBelow(val);
+    tightenDomainType(DomainType::DOM_LOWER_BOUND);
+  }
+}
+
+void VarNode::removeValuesAboveAndTightenDomainType(Int val) {
+  if (val < upperBound()) {
+    removeValuesAbove(val);
+    tightenDomainType(DomainType::DOM_LOWER_BOUND);
+  }
 }
 
 std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) const {

@@ -133,7 +133,7 @@ class bool_lin_leTest : public FznTestBase {
   }
 
   void query() override {
-    if (!reified.empty()) {
+    if (varId(reified) != propagation::NULL_ID) {
       _solver->query(varId(reified));
     } else if (totalViolationVarId() != propagation::NULL_ID) {
       _solver->query(totalViolationVarId());

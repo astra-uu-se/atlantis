@@ -30,6 +30,14 @@ class Committable {
     return currentTimestamp == _tmpTimestamp ? _tmpValue : _committedValue;
   }
 
+  [[gnu::always_inline]] [[nodiscard]] T committed() const noexcept {
+    return _committedValue;
+  }
+
+  [[gnu::always_inline]] [[nodiscard]] T current() const noexcept {
+    return _tmpValue;
+  }
+
   [[gnu::always_inline]] T set(Timestamp ts, T newValue) noexcept {
     _tmpTimestamp = ts;
     _tmpValue = newValue;

@@ -140,6 +140,19 @@ void InvariantNode::removeStaticInputVarNode(VarNodeId retrieveVarNodeId) {
   _invariantGraph.varNode(retrieveVarNodeId).unmarkAsInputFor(_id, true);
 }
 
+void InvariantNode::removeStaticInputAtIndex(size_t index) {
+  // remove all occurrences:
+  assert(index < _staticInputVarNodeIds.size());
+  const VarNodeId vId = _staticInputVarNodeIds[index];
+  _staticInputVarNodeIds.erase(_staticInputVarNodeIds.begin() +
+                               static_cast<Int>(index));
+  const bool shouldUnmark = std::ranges::none_of(
+      _staticInputVarNodeIds, [&](const VarNodeId id) { return id == vId; });
+  if (shouldUnmark) {
+    _invariantGraph.varNode(vId).unmarkAsInputFor(_id, true);
+  }
+}
+
 void InvariantNode::removeDynamicInputVarNode(VarNodeId retrieveVarNodeId) {
   // remove all occurrences:
   for (Int i = static_cast<Int>(_dynamicInputVarNodeIds.size()) - 1; i >= 0;
@@ -149,6 +162,19 @@ void InvariantNode::removeDynamicInputVarNode(VarNodeId retrieveVarNodeId) {
     }
   }
   _invariantGraph.varNode(retrieveVarNodeId).unmarkAsInputFor(_id, false);
+}
+
+void InvariantNode::removeDynamicInputAtIndex(size_t index) {
+  // remove all occurrences:
+  assert(index < _dynamicInputVarNodeIds.size());
+  const VarNodeId vId = _dynamicInputVarNodeIds[index];
+  _dynamicInputVarNodeIds.erase(_dynamicInputVarNodeIds.begin() +
+                                static_cast<Int>(index));
+  const bool shouldUnmark = std::ranges::none_of(
+      _dynamicInputVarNodeIds, [&](const VarNodeId id) { return id == vId; });
+  if (shouldUnmark) {
+    _invariantGraph.varNode(vId).unmarkAsInputFor(_id, false);
+  }
 }
 
 void InvariantNode::removeOutputVarNode(VarNodeId outputVarNodeId) {

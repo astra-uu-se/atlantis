@@ -125,9 +125,8 @@ class fzn_all_different_intTest : public FznTestBase {
         return true;
       }
       std::vector<std::unordered_set<Int>> domains = getDomains();
-      return std::ranges::any_of(domains, [&](const auto& dom) {
-        return dom.empty();
-      });
+      return std::ranges::any_of(domains,
+                                 [&](const auto& dom) { return dom.empty(); });
     }
     if (inputs.size() <= 1) {
       return true;

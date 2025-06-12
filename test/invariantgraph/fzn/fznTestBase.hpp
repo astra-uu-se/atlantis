@@ -572,7 +572,7 @@ class FznTestBase : public ::testing::Test {
                                     const std::string& identifier = "i") {
     switch (state) {
       case IntArgState::FIXED: {
-        const Int val = *rc::gen::inRange<Int>(lb, ub + 1);
+        const Int val = lb == ub ? lb : *rc::gen::inRange<Int>(lb, ub + 1);
         return genIntVar(val, val, identifier);
       }
       case IntArgState::VAR: {
@@ -610,6 +610,7 @@ class FznTestBase : public ::testing::Test {
       case IntArgState::FIXED: {
         const Int val = lb == ub ? lb : *rc::gen::inRange<Int>(lb, ub + 1);
         auto var = genIntVar(val, val, identifier);
+        addIntPar(identifier, val);
         args.emplace_back(var);
         return var;
       }
@@ -723,6 +724,9 @@ class FznTestBase : public ::testing::Test {
       default: {
         auto var = genBoolVar(state, identifier);
         args.emplace_back(var);
+        if (state != BoolArgState::VAR) {
+          addBoolPar(identifier, state == BoolArgState::FIXED_TRUE);
+        }
         return var;
       }
     }
@@ -788,6 +792,34 @@ class FznTestBase : public ::testing::Test {
         default:
           vars->append(genBoolVar(argStates.at(i), identifiers.at(i)));
           break;
+      }
+    }
+    args.emplace_back(vars);
+    return vars;
+  }
+
+  std::shared_ptr<IntVarArray> addIntVarArray(
+      const std::vector<IntArgState>& argStates,
+      const std::vector<std::pair<Int,Int>>& domains,
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "i_arr") {
+    RC_ASSERT(argStates.size() == identifiers.size());
+    RC_ASSERT(domains.size() == identifiers.size());
+    auto vars = std::get<std::shared_ptr<IntVarArray>>(
+        _model->addVar(std::make_shared<IntVarArray>(identifier)));
+    for (size_t i = 0; i < identifiers.size(); ++i) {
+      const auto [lb, ub] = domains.at(i);
+      switch (argStates.at(i)) {
+        case IntArgState::PAR: {
+          RC_ASSERT(lb == ub);
+          const Int val = *rc::gen::inRange<Int>(defaultLb, defaultUb + 1);
+          vars->append(val);
+          addIntPar(identifiers.at(i), val);
+          break;
+        }
+        default:
+          vars->append(genIntVar(argStates.at(i), lb, ub, identifiers.at(i)));
+        break;
       }
     }
     args.emplace_back(vars);

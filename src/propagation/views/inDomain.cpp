@@ -66,10 +66,10 @@ Int InDomain::value(Timestamp ts) {
 
 Int InDomain::committedValue() {
   const Int val = _solver.committedValue(_parentId);
-  if (_cache.get(_cache.tmpTimestamp()).first != val) {
+  if (_cache.committed().first != val) {
     _cache.commitValue(std::pair<Int, Int>{val, compute(val)});
   }
-  return _cache.get(_cache.tmpTimestamp()).second;
+  return _cache.committed().second;
 }
 
 Int InDomain::lowerBound() const {

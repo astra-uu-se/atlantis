@@ -52,7 +52,8 @@ bool fzn_count_eq(FznInvariantGraph& graph,
   return fzn_count_eq(
       graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),
-      std::get<fznparser::IntArg>(constraint.arguments().at(2)));
+      std::get<fznparser::IntArg>(constraint.arguments().at(2)),
+      std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

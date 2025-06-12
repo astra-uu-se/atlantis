@@ -79,6 +79,12 @@ class VarNode {
 
   void fixToValue(bool);
 
+  void removeValueAndTightenDomainType(Int);
+
+  void removeValuesBelowAndTightenDomainType(Int);
+
+  void removeValuesAboveAndTightenDomainType(Int);
+
   DomainType domainType() const noexcept;
 
   void tightenDomainType(DomainType);
