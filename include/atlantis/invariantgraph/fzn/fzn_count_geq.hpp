@@ -14,11 +14,11 @@ bool fzn_count_geq(FznInvariantGraph&,
                    const fznparser::IntArg& needle,
                    const fznparser::IntArg& count);
 
-bool fzn_count_geq(FznInvariantGraph&,
-                   const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                   const fznparser::IntArg& needle,
-                   const fznparser::IntArg& count,
-                   const fznparser::BoolArg& reified);
+bool fzn_count_geq_reif(FznInvariantGraph&,
+                        const std::shared_ptr<fznparser::IntVarArray>& inputs,
+                        const fznparser::IntArg& needle,
+                        const fznparser::IntArg& count,
+                        const fznparser::BoolArg& reified);
 
 bool fzn_count_geq(FznInvariantGraph&, const fznparser::Constraint&);
 

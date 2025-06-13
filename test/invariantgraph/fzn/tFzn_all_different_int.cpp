@@ -17,6 +17,7 @@ using ::testing::AtMost;
 using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
+// rapid check: seed=2973283369362366998
 class fzn_all_different_intTest : public FznTestBase {
  public:
   std::vector<std::string> inputs;
@@ -46,7 +47,7 @@ class fzn_all_different_intTest : public FznTestBase {
         isReified ? "fzn_all_different_int_reif" : "fzn_all_different_int";
 
     if (isReified) {
-      addBoolArg(BoolArgState::VAR, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }
@@ -132,6 +133,7 @@ class fzn_all_different_intTest : public FznTestBase {
       return true;
     }
     std::unordered_set<Int> unionDom;
+    unionDom.reserve(inputs.size());
     for (const auto& input : inputs) {
       if (isFixed(input)) {
         const Int val = intVal(input);
@@ -140,6 +142,9 @@ class fzn_all_different_intTest : public FznTestBase {
         }
         unionDom.emplace(val);
       }
+    }
+    if (unionDom.size() == inputs.size()) {
+      return true;
     }
     return false;
   }
@@ -160,6 +165,21 @@ class fzn_all_different_intTest : public FznTestBase {
           return !shouldHold;
         }
         fixedVals.emplace(intVal(input));
+      }
+    }
+    for (const auto& input : inputs) {
+      if (isFixed(input)) {
+        continue;
+      }
+      const auto& vNode = varNodeConst(input);
+      if (vNode.constDomain()->size() > fixedVals.size()) {
+        continue;
+      }
+      const bool noFreeVal =
+          std::all_of(vNode.constDomain()->begin(), vNode.constDomain()->end(),
+                      [&](Int val) { return fixedVals.contains(val); });
+      if (noFreeVal) {
+        return !shouldHold;
       }
     }
     const size_t numFree = inputs.size() - fixedVals.size();

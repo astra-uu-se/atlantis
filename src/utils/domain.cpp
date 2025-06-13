@@ -120,7 +120,7 @@ bool IntervalDomain::contains(Int value) const noexcept {
 
 bool IntervalDomain::isInterval() const noexcept { return true; }
 
-std::vector<DomainEntry> IntervalDomain::relativeComplementIfIntersects(
+std::vector<DomainEntry> IntervalDomain::createDomainEntries(
     const Int lb, const Int ub) const {
   if (_lb <= lb && ub <= _ub) {
     return {};
@@ -235,48 +235,32 @@ Int SetDomain::at(size_t offset) const { return _values.at(offset); }
 
 Int SetDomain::operator[](size_t offset) const { return _values[offset]; }
 
-std::vector<DomainEntry> SetDomain::relativeComplementIfIntersects(
-    const Int lb, const Int ub) const {
-  if (lowerBound() <= lb && ub <= upperBound() &&
-      static_cast<Int>(size()) == upperBound() - lowerBound() + 1) {
+std::vector<DomainEntry> SetDomain::createDomainEntries(const Int lb,
+                                                        const Int ub) const {
+  if (ub < lowerBound() || upperBound() < lb) {
     return {};
   }
-  assert(size() > 0);
-
   std::vector<DomainEntry> ret;
-  // domEntryLb: the lb of the current DomainEntry (ub + 1 is a dummy value)
-  Int domEntryLb = ub + 1;
-  for (size_t i = 0; i < _values.size(); ++i) {
-    if (_values[i] < lb) {
-      continue;
-    }
-    if (_values[i] > ub) {
-      // the remaining values of the domain are outside the range
-      if (domEntryLb <= ub) {
-        if (lb < domEntryLb || _values[i - 1] < ub) {
-          // There exists a current domain entry: add it.
-          ret.emplace_back(domEntryLb, _values[i - 1]);
-          domEntryLb = ub + 1;
-        }
-      }
+
+  size_t i = 0;
+  for (; i < _values.size(); ++i) {
+    if (_values[i] >= lb) {
       break;
     }
-    if (domEntryLb > ub) {
-      // store lowerBound for the current DomainEntry:
-      domEntryLb = _values[i];
-    } else if (0 < i && lb <= _values[i - 1] &&
-               _values[i] != _values[i - 1] + 1) {
-      // There is a hole in the domain in the range lb..ub:
-      assert(domEntryLb <= ub);
-      ret.emplace_back(domEntryLb, _values[i - 1]);
-      domEntryLb = ub + 1;
-    }
   }
-  if (domEntryLb <= ub) {
-    // There exists a current domain entry
-    if (lb < domEntryLb || _values.back() < ub) {
-      ret.emplace_back(domEntryLb, std::min(ub, _values.back()));
+  for (; i < _values.size() && _values[i] <= ub; ++i) {
+    const Int iLb = _values[i];
+    for (; i + 1 < _values.size() && _values[i + 1] <= ub; ++i) {
+      if (_values[i] + 1 != _values[i + 1]) {
+        break;
+      }
     }
+    const Int iUb = _values[i];
+    ret.emplace_back(iLb, iUb);
+  }
+  if (ret.size() == 1 && ret.front().lowerBound == lb &&
+      ret.front().upperBound == ub) {
+    return {};
   }
   return ret;
 }
@@ -470,12 +454,10 @@ Int SearchDomain::operator[](size_t offset) const {
   return std::visit<Int>([&](const auto& dom) { return dom[offset]; }, _domain);
 }
 
-std::vector<DomainEntry> SearchDomain::relativeComplementIfIntersects(
-    const Int lb, const Int ub) const {
+std::vector<DomainEntry> SearchDomain::createDomainEntries(const Int lb,
+                                                           const Int ub) const {
   return std::visit<std::vector<DomainEntry>>(
-      [&](const auto& dom) {
-        return dom.relativeComplementIfIntersects(lb, ub);
-      },
+      [&](const auto& dom) { return dom.createDomainEntries(lb, ub); },
       _domain);
 }
 

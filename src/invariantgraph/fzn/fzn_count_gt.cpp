@@ -8,24 +8,29 @@
 
 namespace atlantis::invariantgraph::fzn {
 
+/*
+ * Constrains count to be strictly greater than the number of occurrences of
+ *needle in inputs.
+ **/
+
 bool fzn_count_gt(FznInvariantGraph& graph,
                   const std::shared_ptr<fznparser::IntVarArray>& inputs,
                   const fznparser::IntArg& needle,
                   const fznparser::IntArg& count) {
   const VarNodeId output = createCountNode(graph, inputs, needle);
   graph.addInvariantNode(
-      std::make_shared<IntLtNode>(graph, graph.retrieveVarNode(count), output));
+      std::make_shared<IntLtNode>(graph, output, graph.retrieveVarNode(count)));
   return true;
 }
 
-bool fzn_count_gt(FznInvariantGraph& graph,
-                  const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                  const fznparser::IntArg& needle,
-                  const fznparser::IntArg& count,
-                  const fznparser::BoolArg& reified) {
+bool fzn_count_gt_reif(FznInvariantGraph& graph,
+                       const std::shared_ptr<fznparser::IntVarArray>& inputs,
+                       const fznparser::IntArg& needle,
+                       const fznparser::IntArg& count,
+                       const fznparser::BoolArg& reified) {
   const VarNodeId output = createCountNode(graph, inputs, needle);
   graph.addInvariantNode(
-      std::make_shared<IntLtNode>(graph, graph.retrieveVarNode(count), output,
+      std::make_shared<IntLtNode>(graph, output, graph.retrieveVarNode(count),
                                   graph.retrieveVarNode(reified)));
   return true;
 }
@@ -51,10 +56,11 @@ bool fzn_count_gt(FznInvariantGraph& graph,
         std::get<fznparser::IntArg>(constraint.arguments().at(2)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
-  return fzn_count_gt(
+  return fzn_count_gt_reif(
       graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),
-      std::get<fznparser::IntArg>(constraint.arguments().at(2)));
+      std::get<fznparser::IntArg>(constraint.arguments().at(2)),
+      std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

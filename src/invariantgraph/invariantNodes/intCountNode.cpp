@@ -63,9 +63,9 @@ void IntCountNode::updateState() {
       for (const auto& input : staticInputVarNodeIds()) {
         invariantGraph().varNode(input).fixToValue(_needle);
       }
+      setState(InvariantNodeState::SUBSUMED);
+      return;
     }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
   }
 
   if (staticInputVarNodeIds().empty()) {

@@ -28,6 +28,10 @@ class IntAllEqualNode : public ViolationInvariantNode {
 
   void updateState() override;
 
+  [[nodiscard]] bool canBeReplaced() const override;
+
+  bool replace() override;
+
   void registerOutputVars() override;
 
   void registerNode() override;

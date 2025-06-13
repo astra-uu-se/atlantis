@@ -16,11 +16,11 @@ bool fzn_count_eq(FznInvariantGraph& graph,
   return true;
 }
 
-bool fzn_count_eq(FznInvariantGraph& graph,
-                  const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                  const fznparser::IntArg& needle,
-                  const fznparser::IntArg& count,
-                  const fznparser::BoolArg& reified) {
+bool fzn_count_eq_reif(FznInvariantGraph& graph,
+                       const std::shared_ptr<fznparser::IntVarArray>& inputs,
+                       const fznparser::IntArg& needle,
+                       const fznparser::IntArg& count,
+                       const fznparser::BoolArg& reified) {
   const VarNodeId output = createCountNode(graph, inputs, needle);
   graph.addInvariantNode(std::make_shared<IntAllEqualNode>(
       graph, output, graph.retrieveVarNode(count),
@@ -49,7 +49,7 @@ bool fzn_count_eq(FznInvariantGraph& graph,
         std::get<fznparser::IntArg>(constraint.arguments().at(2)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
-  return fzn_count_eq(
+  return fzn_count_eq_reif(
       graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)),

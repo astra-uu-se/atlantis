@@ -48,8 +48,8 @@ void IntLeNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  const VarNode& aNode = invariantGraph().varNode(a());
-  const VarNode& bNode = invariantGraph().varNode(b());
+  VarNode& aNode = invariantGraph().varNode(a());
+  VarNode& bNode = invariantGraph().varNode(b());
   if (a() == b()) {
     if (isReified()) {
       fixReified(true);
@@ -59,19 +59,22 @@ void IntLeNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  /*
   if (!isReified()) {
     if (shouldHold()) {
-      a <= b
-      aNode.removeValuesAbove(bNode.upperBound());
-      bNode.removeValuesBelow(aNode.lowerBound());
+      // a <= b
+      aNode.removeValuesAboveAndTightenDomainType(bNode.upperBound());
+      bNode.removeValuesBelowAndTightenDomainType(aNode.lowerBound());
     } else {
-      a > b
-      aNode.removeValuesBelow(bNode.lowerBound() + 1);
-      bNode.removeValuesAbove(aNode.upperBound() - 1);
+      // !(a <= b) <==> a > b
+      // !(a <= b) <==> a > b
+      aNode.removeValuesBelowAndTightenDomainType(bNode.lowerBound() + 1);
+      bNode.removeValuesAboveAndTightenDomainType(aNode.upperBound() - 1);
+    }
+    if (aNode.isFixed() || bNode.isFixed()) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
     }
   }
-  */
   if (aNode.upperBound() <= bNode.lowerBound()) {
     // always true
     if (isReified()) {

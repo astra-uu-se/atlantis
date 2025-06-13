@@ -102,11 +102,11 @@ class Domain {
   [[nodiscard]] virtual Iterator end() const = 0;
 
   /**
-   * @return if the domain is not a superset of lb..ub,
-   * then returns the relative complement of lb..ub in domain,
-   * otherwise an empty vector is returned.
+   * @return if the domain is a superset of lb..ub,
+   * then returns an empty vector,
+   * otherwise returns the intersection of the domain and lb..ub.
    */
-  [[nodiscard]] virtual std::vector<DomainEntry> relativeComplementIfIntersects(
+  [[nodiscard]] virtual std::vector<DomainEntry> createDomainEntries(
       Int lb, Int ub) const = 0;
 };
 
@@ -129,7 +129,7 @@ class IntervalDomain : public Domain {
   [[nodiscard]] Int at(size_t) const override;
   [[nodiscard]] Int operator[](size_t) const override;
 
-  [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
+  [[nodiscard]] std::vector<DomainEntry> createDomainEntries(
       Int lb, Int ub) const override;
 
   void setLowerBound(Int lb);
@@ -169,7 +169,7 @@ class SetDomain : public Domain {
   [[nodiscard]] Int at(size_t) const override;
   [[nodiscard]] Int operator[](size_t) const override;
 
-  [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
+  [[nodiscard]] std::vector<DomainEntry> createDomainEntries(
       Int lb, Int ub) const override;
 
   void remove(Int value);
@@ -230,7 +230,7 @@ class SearchDomain : public Domain {
   [[nodiscard]] Int at(size_t) const override;
   [[nodiscard]] Int operator[](size_t) const override;
 
-  [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
+  [[nodiscard]] std::vector<DomainEntry> createDomainEntries(
       Int lb, Int ub) const override;
 
   void remove(Int value);

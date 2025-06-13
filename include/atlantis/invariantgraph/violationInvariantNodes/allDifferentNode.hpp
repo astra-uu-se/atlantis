@@ -32,6 +32,10 @@ class AllDifferentNode : public ViolationInvariantNode {
 
   [[nodiscard]] bool makeImplicit() override;
 
+  [[nodiscard]] bool canBeReplaced() const override;
+
+  [[nodiscard]] bool replace() override;
+
   void registerOutputVars() override;
 
   void registerNode() override;

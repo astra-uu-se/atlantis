@@ -8,6 +8,8 @@
 #include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
@@ -127,6 +129,23 @@ bool AllDifferentNode::makeImplicit() {
   invariantGraph().addImplicitConstraintNode(
       std::make_shared<AllDifferentImplicitNode>(
           invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
+  return true;
+}
+
+bool AllDifferentNode::canBeReplaced() const {
+  return state() == InvariantNodeState::ACTIVE && !isReified() &&
+         !shouldHold() && staticInputVarNodeIds().size() <= 2;
+}
+
+bool AllDifferentNode::replace() {
+  if (!canBeReplaced()) {
+    return false;
+  }
+  assert(invariantGraphConst()
+             .varNodeConst(staticInputVarNodeIds().front())
+             .isIntVar());
+  invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
+      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
   return true;
 }
 

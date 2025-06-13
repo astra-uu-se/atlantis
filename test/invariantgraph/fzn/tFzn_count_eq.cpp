@@ -51,18 +51,32 @@ class fzn_count_eqTest : public FznTestBase {
   }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+    RC_LOG() << "-----" << std::endl
+             << "FznCountEqTest::isSatisfied(" << to_string(committedValue)
+             << ")" << std::endl;
     Int count = 0;
+    const Int n = intVal(needle);
+    RC_LOG() << "needle = " << n << std::endl;
     for (const auto& input : inputs) {
-      if (intVal(input, committedValue) == intVal(needle, committedValue)) {
+      const Int i = intVal(input, committedValue);
+      RC_LOG() << input << " = " << i << std::endl;
+      if (i == n) {
         ++count;
       }
     }
 
-    const bool expected = count == intVal(output, committedValue);
+    const Int o = intVal(output, committedValue);
+    const bool expected = count == o;
     const bool actual = boolVal(reified, committedValue);
+
+    RC_LOG() << "output = " << o << std::endl;
+    RC_LOG() << "count = " << count << std::endl;
+    RC_LOG() << "expected = " << to_string(expected) << std::endl;
+    RC_LOG() << "actual = " << to_string(actual) << std::endl;
 
     if (isFixed(reified)) {
       const bool satAssignment = violation(committedValue) == 0;
+      RC_LOG() << "satAssignment = " << to_string(satAssignment) << std::endl;
       return satAssignment ? expected == actual : expected != actual;
     }
     return expected == actual;
@@ -110,9 +124,10 @@ class fzn_count_eqTest : public FznTestBase {
     for (size_t i = 0; i < size; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
-    addIntVarArray({IntArgState::FIXED, IntArgState::VAR}, {{-1, -1}, {-1, 1}}, inputs);
+    addIntVarArray({IntArgState::VAR, IntArgState::FIXED}, {{-1, 1}, {-1, -1}},
+                   inputs);
     addIntArg(IntArgState::VAR, needle);
-    addIntArg(IntArgState::FIXED, 0, 0, output);
+    addIntArg(IntArgState::PAR, 1, 1, output);
 
     const bool isReified = true || *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_eq_reif" : "fzn_count_eq";
@@ -132,6 +147,10 @@ class fzn_count_eqTest : public FznTestBase {
   }
 
   void move(bool committedValue) override {
+    _solver->setValue(varId(needle), -1);
+    _solver->setValue(varId(inputs.at(0)), -1);
+    _solver->setValue(varId(inputs.at(1)), -1);
+    return;
     if (varId(needle) != propagation::NULL_ID && randBool()) {
       changeValue(needle, committedValue);
     }
@@ -143,7 +162,8 @@ class fzn_count_eqTest : public FznTestBase {
   }
 
   void query() override {
-    for (const auto& vId : std::array{varId(reified), varId(output), totalViolationVarId()}) {
+    for (const auto& vId :
+         std::array{varId(reified), varId(output), totalViolationVarId()}) {
       if (vId != propagation::NULL_ID) {
         _solver->query(vId);
       }

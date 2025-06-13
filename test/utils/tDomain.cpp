@@ -34,7 +34,7 @@ class DomainTest : public ::testing::Test {
   std::mt19937 gen;
 };
 
-TEST_F(DomainTest, relativeComplementIfIntersects) {
+TEST_F(DomainTest, createDomainEntries) {
   std::vector<std::vector<DomainEntry>> domains{
       std::vector<DomainEntry>{{0, 0}},
       std::vector<DomainEntry>{{0, 10}},
@@ -78,7 +78,7 @@ TEST_F(DomainTest, relativeComplementIfIntersects) {
            intervalUb += inc) {
         SetDomain setDomain(values);
         const std::vector<DomainEntry> setComplement =
-            setDomain.relativeComplementIfIntersects(intervalLb, intervalUb);
+            setDomain.createDomainEntries(intervalLb, intervalUb);
 
         if (!isDisjoint(dom, intervalLb, intervalUb)) {
           EXPECT_EQ(setComplement.empty(),
@@ -105,8 +105,7 @@ TEST_F(DomainTest, relativeComplementIfIntersects) {
         IntervalDomain intervalDomain(dom.front().lowerBound,
                                       dom.back().upperBound);
         const std::vector<DomainEntry> intervalComplement =
-            intervalDomain.relativeComplementIfIntersects(intervalLb,
-                                                          intervalUb);
+            intervalDomain.createDomainEntries(intervalLb, intervalUb);
         if (!isDisjoint(dom, intervalLb, intervalUb)) {
           EXPECT_EQ(intervalComplement.empty(),
                     domainCoversInterval(dom, intervalLb, intervalUb));

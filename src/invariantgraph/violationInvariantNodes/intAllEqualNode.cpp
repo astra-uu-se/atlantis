@@ -164,6 +164,21 @@ void IntAllEqualNode::updateState() {
   }
 }
 
+bool IntAllEqualNode::canBeReplaced() const {
+  return state() == InvariantNodeState::ACTIVE && !isReified() &&
+         !shouldHold() && staticInputVarNodeIds().size() <= 2 &&
+         !_boundVal.has_value();
+}
+
+bool IntAllEqualNode::replace() {
+  if (!canBeReplaced()) {
+    return false;
+  }
+  invariantGraph().addInvariantNode(std::make_shared<AllDifferentNode>(
+      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
+  return true;
+}
+
 void IntAllEqualNode::registerOutputVars() {
   assert(!staticInputVarNodeIds().empty());
   if (violationVarId() == propagation::NULL_ID) {

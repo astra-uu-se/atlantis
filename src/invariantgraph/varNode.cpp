@@ -172,7 +172,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
   assert(_domainType == DomainType::DOM_DOMAIN);
 
   std::vector<DomainEntry> domain =
-      _domain->relativeComplementIfIntersects(solverLb, solverUb);
+      _domain->createDomainEntries(solverLb, solverUb);
 
   if (domain.empty()) {
     // The node domain contains the solver domain:
@@ -295,10 +295,10 @@ void VarNode::fixToValue(bool val) {
 void VarNode::removeValueAndTightenDomainType(Int val) {
   if (lowerBound() <= val && val <= upperBound()) {
     removeValue(val);
-    tightenDomainType(isFixed()             ? DomainType::DOM_FIXED
+    tightenDomainType(isFixed()            ? DomainType::DOM_FIXED
                       : val < lowerBound() ? DomainType::DOM_LOWER_BOUND
                       : val > upperBound() ? DomainType::DOM_UPPER_BOUND
-                                            : DomainType::DOM_DOMAIN);
+                                           : DomainType::DOM_DOMAIN);
   }
 }
 
@@ -317,7 +317,7 @@ void VarNode::removeValuesAboveAndTightenDomainType(Int val) {
 }
 
 std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) const {
-  return _domain->relativeComplementIfIntersects(lb, ub);
+  return _domain->createDomainEntries(lb, ub);
 }
 
 std::pair<Int, Int> VarNode::bounds() const { return _domain->bounds(); }

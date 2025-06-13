@@ -86,6 +86,8 @@ struct Arbitrary<IntArgState> {
 
 namespace atlantis::testing {
 
+inline std::string to_string(bool v) { return v ? "true" : "false"; }
+
 struct ArgState {
   std::variant<BoolArgState, IntArgState> state;
   bool isArray{false};
@@ -146,187 +148,15 @@ class FznTestBase : public ::testing::Test {
   virtual void move(bool committedValue) = 0;
   virtual void query() = 0;
 
-  [[nodiscard]] const std::string& identifier(size_t argIndex) const {
-    if (std::holds_alternative<BoolArg>(args.at(argIndex))) {
-      const auto& arg = std::get<BoolArg>(args.at(argIndex));
-      if (!arg.isParameter()) {
-        return std::get<BoolArg>(args.at(argIndex)).var()->identifier();
-      }
-    } else if (std::holds_alternative<IntArg>(args.at(argIndex))) {
-      const auto& arg = std::get<IntArg>(args.at(argIndex));
-      if (!arg.isParameter()) {
-        return std::get<BoolArg>(args.at(argIndex)).var()->identifier();
-      }
-    }
-    if (std::holds_alternative<FloatArg>(args.at(argIndex))) {
-      const auto& arg = std::get<FloatArg>(args.at(argIndex));
-      if (!arg.isParameter()) {
-        return std::get<BoolArg>(args.at(argIndex)).var()->identifier();
-      }
-    }
-    if (std::holds_alternative<IntSetArg>(args.at(argIndex))) {
-      const auto& arg = std::get<IntSetArg>(args.at(argIndex));
-      if (!arg.isParameter()) {
-        return std::get<BoolArg>(args.at(argIndex)).var()->identifier();
-      }
-    }
-    if (std::holds_alternative<std::shared_ptr<BoolVarArray>>(
-            args.at(argIndex))) {
-      return std::get<std::shared_ptr<BoolVarArray>>(args.at(argIndex))
-          ->identifier();
-    }
-    if (std::holds_alternative<std::shared_ptr<IntVarArray>>(
-            args.at(argIndex))) {
-      return std::get<std::shared_ptr<IntVarArray>>(args.at(argIndex))
-          ->identifier();
-    }
-    if (std::holds_alternative<std::shared_ptr<FloatVarArray>>(
-            args.at(argIndex))) {
-      return std::get<std::shared_ptr<FloatVarArray>>(args.at(argIndex))
-          ->identifier();
-    }
-    if (std::holds_alternative<std::shared_ptr<SetVarArray>>(
-            args.at(argIndex))) {
-      return std::get<std::shared_ptr<SetVarArray>>(args.at(argIndex))
-          ->identifier();
-    }
-    throw std::logic_error("Unhandled argument type");
-  }
-
-  [[nodiscard]] bool boolPar(size_t argIndex) const {
-    if (std::holds_alternative<BoolArg>(args.at(argIndex)) &&
-        std::get<BoolArg>(args.at(argIndex)).isParameter()) {
-      return std::get<BoolArg>(args.at(argIndex)).parameter();
-    }
-    throw std::logic_error("Unhandled argument type");
-  }
-
-  [[nodiscard]] bool boolPar(size_t argIndex, size_t vectorIndex) const {
-    if (std::holds_alternative<std::shared_ptr<BoolVarArray>>(
-            args.at(argIndex))) {
-      const auto& varArray =
-          std::get<std::shared_ptr<BoolVarArray>>(args.at(argIndex));
-      if (std::holds_alternative<bool>(varArray->at(vectorIndex))) {
-        return std::get<bool>(varArray->at(vectorIndex));
-      }
-    }
-    throw std::logic_error("Unhandled argument type");
-  }
-
-  [[nodiscard]] bool intPar(size_t argIndex) const {
-    if (std::holds_alternative<BoolArg>(args.at(argIndex)) &&
-        std::get<BoolArg>(args.at(argIndex)).isParameter()) {
-      return std::get<BoolArg>(args.at(argIndex)).parameter();
-    }
-    throw std::logic_error("Unhandled argument type");
-  }
-
-  [[nodiscard]] Int intPar(size_t argIndex, size_t vectorIndex) const {
-    if (std::holds_alternative<std::shared_ptr<IntVarArray>>(
-            args.at(argIndex))) {
-      const auto& varArray =
-          std::get<std::shared_ptr<IntVarArray>>(args.at(argIndex));
-      if (std::holds_alternative<Int>(varArray->at(vectorIndex))) {
-        return std::get<Int>(varArray->at(vectorIndex));
-      }
-    }
-    throw std::logic_error("Unhandled argument type");
-  }
-
-  [[nodiscard]] double floatPar(size_t argIndex) const {
-    if (std::holds_alternative<FloatArg>(args.at(argIndex)) &&
-        std::get<FloatArg>(args.at(argIndex)).isParameter()) {
-      return std::get<FloatArg>(args.at(argIndex)).parameter();
-    }
-    throw std::logic_error("Unhandled argument type");
-  }
-
-  [[nodiscard]] double floatPar(size_t argIndex, size_t vectorIndex) const {
-    if (std::holds_alternative<std::shared_ptr<FloatVarArray>>(
-            args.at(argIndex))) {
-      const auto& varArray =
-          std::get<std::shared_ptr<FloatVarArray>>(args.at(argIndex));
-      if (std::holds_alternative<double>(varArray->at(vectorIndex))) {
-        return std::get<double>(varArray->at(vectorIndex));
-      }
-    }
-    throw std::logic_error("Unhandled argument type");
-  }
-
-  [[nodiscard]] const IntSet& intSetPar(size_t argIndex) const {
-    if (std::holds_alternative<IntSetArg>(args.at(argIndex)) &&
-        std::get<IntSetArg>(args.at(argIndex)).isParameter()) {
-      return std::get<IntSetArg>(args.at(argIndex)).parameter();
-    }
-    throw std::logic_error("Unhandled argument type");
-  }
-
-  [[nodiscard]] const IntSet& intSetPar(size_t argIndex,
-                                        size_t vectorIndex) const {
-    if (std::holds_alternative<std::shared_ptr<SetVarArray>>(
-            args.at(argIndex))) {
-      const auto& varArray =
-          std::get<std::shared_ptr<SetVarArray>>(args.at(argIndex));
-      if (std::holds_alternative<IntSet>(varArray->at(argIndex))) {
-        return std::get<IntSet>(varArray->at(vectorIndex));
-      }
-    }
-    throw std::logic_error("Unhandled argument type");
-  }
-
-  [[nodiscard]] const std::string& identifier(size_t argIndex,
-                                              size_t vectorIndex) const {
-    if (std::holds_alternative<std::shared_ptr<BoolVarArray>>(
-            args.at(argIndex))) {
-      const auto& varArray =
-          std::get<std::shared_ptr<BoolVarArray>>(args.at(argIndex));
-      if (std::holds_alternative<std::shared_ptr<const BoolVar>>(
-              varArray->at(argIndex))) {
-        return std::get<std::shared_ptr<const BoolVar>>(
-                   varArray->at(vectorIndex))
-            ->identifier();
-      }
-    } else if (std::holds_alternative<std::shared_ptr<IntVarArray>>(
-                   args.at(argIndex))) {
-      const auto& varArray =
-          std::get<std::shared_ptr<IntVarArray>>(args.at(argIndex));
-      if (std::holds_alternative<std::shared_ptr<const IntVar>>(
-              varArray->at(argIndex))) {
-        return std::get<std::shared_ptr<const IntVar>>(
-                   varArray->at(vectorIndex))
-            ->identifier();
-      }
-    } else if (std::holds_alternative<std::shared_ptr<FloatVarArray>>(
-                   args.at(argIndex))) {
-      const auto& varArray =
-          std::get<std::shared_ptr<FloatVarArray>>(args.at(argIndex));
-      if (std::holds_alternative<std::shared_ptr<const FloatVar>>(
-              varArray->at(argIndex))) {
-        return std::get<std::shared_ptr<const FloatVar>>(
-                   varArray->at(vectorIndex))
-            ->identifier();
-      }
-    } else if (std::holds_alternative<std::shared_ptr<SetVarArray>>(
-                   args.at(argIndex))) {
-      const auto& varArray =
-          std::get<std::shared_ptr<SetVarArray>>(args.at(argIndex));
-      if (std::holds_alternative<std::shared_ptr<const SetVar>>(
-              varArray->at(argIndex))) {
-        return std::get<std::shared_ptr<const SetVar>>(
-                   varArray->at(vectorIndex))
-            ->identifier();
-      }
-    }
-    throw std::logic_error("Unhandled argument type");
-  }
-
   [[nodiscard]] VarNode& varNode(const std::string& identifier) {
+    RC_LOG() << "varNode(\"" << identifier << "\")" << std::endl;
     RC_ASSERT(_invariantGraph->containsVarNode(identifier));
     return _invariantGraph->varNode(identifier);
   }
 
   [[nodiscard]] const VarNode& varNodeConst(
       const std::string& identifier) const {
+    RC_LOG() << "varNodeConst(\"" << identifier << "\")" << std::endl;
     RC_ASSERT(_invariantGraph->containsVarNode(identifier));
     return _invariantGraph->varNodeConst(identifier);
   }
@@ -378,7 +208,8 @@ class FznTestBase : public ::testing::Test {
             ->lowerBound();
       }
     }
-    throw std::logic_error("Unhandled argument type");
+    RC_LOG() << "unknown var \"" << identifier << "\"" << std::endl;
+    RC_FAIL();
   }
 
   [[nodiscard]] Int upperBound(const std::string& identifier) const {
@@ -405,7 +236,8 @@ class FznTestBase : public ::testing::Test {
             ->upperBound();
       }
     }
-    throw std::logic_error("Unhandled argument type");
+    RC_LOG() << "unknown var \"" << identifier << "\"" << std::endl;
+    RC_FAIL();
   }
 
   [[nodiscard]] bool isFixed(const std::string& identifier) const {
@@ -415,37 +247,43 @@ class FznTestBase : public ::testing::Test {
     if (boolPars.contains(identifier) || intPars.contains(identifier)) {
       return true;
     }
-    throw std::logic_error("Unhandled argument type");
+    RC_LOG() << "unknown var \"" << identifier << "\"" << std::endl;
+    RC_FAIL();
   }
 
   [[nodiscard]] bool boolVal(const std::string& identifier,
                              bool committedValue = false) const {
+    RC_LOG() << "boolVal(\"" << identifier << "\", "
+             << to_string(committedValue) << ')' << std::endl;
     if (_invariantGraph->containsVarNode(identifier)) {
       const auto& vNode = varNodeConst(identifier);
-      assert(!vNode.isIntVar());
+      RC_ASSERT(!vNode.isIntVar());
       if (vNode.varId() != propagation::NULL_ID) {
         return (committedValue ? _solver->committedValue(vNode.varId())
                                : _solver->currentValue(vNode.varId())) == 0;
       }
-      assert(vNode.isFixed());
       return vNode.inDomain(bool{true});
     }
     if (boolPars.contains(identifier)) {
       return boolPars.at(identifier);
     }
-    throw std::logic_error("Unhandled argument type");
+    RC_LOG() << "unhandled argument type" << std::endl;
+    RC_FAIL();
   }
 
   [[nodiscard]] bool inDomain(const std::string& identifier, bool val) const {
+    RC_LOG() << "inDomain(\"" << identifier << "\", " << to_string(val) << ')'
+             << std::endl;
     if (_invariantGraph->containsVarNode(identifier)) {
       const auto& vNode = varNodeConst(identifier);
-      assert(!vNode.isIntVar());
+      RC_ASSERT(!vNode.isIntVar());
       return vNode.inDomain(val);
     }
     if (boolPars.contains(identifier)) {
       return boolPars.at(identifier) == val;
     }
-    throw std::logic_error("Unhandled argument type");
+    RC_LOG() << "unhandled argument type" << std::endl;
+    RC_FAIL();
   }
 
   [[nodiscard]] bool isFixedTo(const std::string& identifier, bool val) const {
@@ -464,32 +302,38 @@ class FznTestBase : public ::testing::Test {
 
   [[nodiscard]] Int intVal(const std::string& identifier,
                            bool committedValue = false) const {
+    RC_LOG() << "intVal(\"" << identifier << "\", " << to_string(committedValue)
+             << ')' << std::endl;
     if (_invariantGraph->containsVarNode(identifier)) {
       const auto& vNode = varNodeConst(identifier);
-      assert(vNode.isIntVar());
+      RC_ASSERT(vNode.isIntVar());
       if (vNode.varId() != propagation::NULL_ID) {
         return committedValue ? _solver->committedValue(vNode.varId())
                               : _solver->currentValue(vNode.varId());
       }
-      assert(vNode.isFixed());
+      RC_ASSERT(vNode.isFixed());
       return vNode.lowerBound();
     }
     if (intPars.contains(identifier)) {
       return intPars.at(identifier);
     }
-    throw std::logic_error("Unhandled argument type");
+    RC_LOG() << "no var \"" << identifier << "'" << std::endl;
+    RC_FAIL();
   }
 
   [[nodiscard]] bool inDomain(const std::string& identifier, Int val) const {
+    RC_LOG() << "inDomain(\"" << identifier << "\", " << val << ')'
+             << std::endl;
     if (_invariantGraph->containsVarNode(identifier)) {
       const auto& vNode = varNodeConst(identifier);
-      assert(vNode.isIntVar());
+      RC_ASSERT(vNode.isIntVar());
       return vNode.inDomain(val);
     }
     if (intPars.contains(identifier)) {
       return intPars.at(identifier) == val;
     }
-    throw std::logic_error("Unhandled argument type");
+    RC_LOG() << "unhandled argument type" << std::endl;
+    RC_FAIL();
   }
 
   [[nodiscard]] propagation::VarViewId totalViolationVarId() const {
@@ -499,58 +343,6 @@ class FznTestBase : public ::testing::Test {
   [[nodiscard]] Int violation(bool committedValue) const {
     return committedValue ? _solver->committedValue(totalViolationVarId())
                           : _solver->currentValue(totalViolationVarId());
-  }
-
-  [[nodiscard]] std::vector<propagation::VarViewId> getVarIds(
-      const std::vector<std::string>& varIdentifiers) const {
-    std::vector<propagation::VarViewId> varIds;
-    varIds.reserve(varIdentifiers.size());
-    for (const std::string& identifier : varIdentifiers) {
-      EXPECT_TRUE(_invariantGraph->containsVarNode(identifier));
-      const VarNode& vNode = varNodeConst(identifier);
-      const propagation::VarViewId vId = vNode.varId();
-      if (!vNode.isFixed() && vId != propagation::NULL_ID) {
-        varIds.emplace_back(vId);
-      }
-    }
-    return varIds;
-  }
-
-  [[nodiscard]] std::vector<Int> makeInputVals(
-      const std::vector<propagation::VarViewId>& varIds) const {
-    std::vector<Int> inputVals;
-    inputVals.reserve(varIds.size());
-    for (const propagation::VarViewId& vId : varIds) {
-      EXPECT_NE(vId, propagation::NULL_ID);
-      inputVals.emplace_back(_solver->lowerBound(vId));
-    }
-    return inputVals;
-  }
-
-  Int increaseNextVal(const std::vector<propagation::VarViewId>& varIds,
-                      std::vector<Int>& inputVals) const {
-    EXPECT_EQ(varIds.size(), inputVals.size());
-    for (Int i = static_cast<Int>(inputVals.size() - 1); i >= 0; --i) {
-      if (varIds.at(i) == propagation::NULL_ID) {
-        continue;
-      }
-      if (inputVals.at(i) < _solver->upperBound(varIds.at(i))) {
-        ++inputVals.at(i);
-        return i;
-      }
-      inputVals.at(i) = _solver->lowerBound(varIds.at(i));
-    }
-    return -1;
-  }
-
-  void setVarVals(const std::vector<propagation::VarViewId>& varIds,
-                  const std::vector<Int>& vals) const {
-    EXPECT_EQ(varIds.size(), vals.size());
-    for (size_t i = 0; i < varIds.size(); ++i) {
-      if (varIds.at(i) != propagation::NULL_ID) {
-        _solver->setValue(varIds.at(i), vals.at(i));
-      }
-    }
   }
 
   std::shared_ptr<IntVar> genIntVar(Int lb, Int ub,
@@ -579,21 +371,26 @@ class FznTestBase : public ::testing::Test {
         return genIntVar(lb, ub, identifier);
       }
       default:
-        throw std::logic_error("Unhandled argument type");
+        RC_LOG() << "unhandled IntArgState" << std::endl;
+        RC_FAIL();
     }
   }
 
   void addBoolPar(const std::string& identifier, bool val) {
-    assert(!identifier.empty());
-    assert(!boolPars.contains(identifier));
-    assert(!intPars.contains(identifier));
+    RC_LOG() << "addBoolPar(\"" << identifier << "\", " << to_string(val) << ')'
+             << std::endl;
+    RC_ASSERT(!identifier.empty());
+    RC_ASSERT(!boolPars.contains(identifier));
+    RC_ASSERT(!intPars.contains(identifier));
     boolPars.emplace(identifier, val);
   }
 
   void addIntPar(const std::string& identifier, Int val) {
-    assert(!identifier.empty());
-    assert(!boolPars.contains(identifier));
-    assert(!intPars.contains(identifier));
+    RC_LOG() << "addIntPar(\"" << identifier << "\", " << val << ')'
+             << std::endl;
+    RC_ASSERT(!identifier.empty());
+    RC_ASSERT(!boolPars.contains(identifier));
+    RC_ASSERT(!intPars.contains(identifier));
     intPars.emplace(identifier, val);
   }
 
@@ -620,7 +417,8 @@ class FznTestBase : public ::testing::Test {
         return var;
       }
       default:
-        throw std::invalid_argument("Invalid IntArgState");
+        RC_LOG() << "Invalid IntArgState" << std::endl;
+        RC_FAIL();
     }
   }
 
@@ -674,7 +472,8 @@ class FznTestBase : public ::testing::Test {
           vars->append(genIntVar(lb, ub, varPrefix + std::to_string(i)));
           break;
         default:
-          throw std::invalid_argument("Invalid IntArgState");
+          RC_LOG() << "unknown IntArgState" << std::endl;
+          RC_FAIL();
       }
     }
     return vars;
@@ -708,7 +507,8 @@ class FznTestBase : public ::testing::Test {
         return var;
       }
       default:
-        throw std::invalid_argument("Invalid BoolArgState");
+        RC_LOG() << "invalid BoolArgState" << std::endl;
+        RC_FAIL();
     }
   }
 
@@ -800,7 +600,7 @@ class FznTestBase : public ::testing::Test {
 
   std::shared_ptr<IntVarArray> addIntVarArray(
       const std::vector<IntArgState>& argStates,
-      const std::vector<std::pair<Int,Int>>& domains,
+      const std::vector<std::pair<Int, Int>>& domains,
       const std::vector<std::string>& identifiers,
       const std::string& identifier = "i_arr") {
     RC_ASSERT(argStates.size() == identifiers.size());
@@ -809,17 +609,17 @@ class FznTestBase : public ::testing::Test {
         _model->addVar(std::make_shared<IntVarArray>(identifier)));
     for (size_t i = 0; i < identifiers.size(); ++i) {
       const auto [lb, ub] = domains.at(i);
+      RC_ASSERT(lb <= ub);
       switch (argStates.at(i)) {
         case IntArgState::PAR: {
-          RC_ASSERT(lb == ub);
-          const Int val = *rc::gen::inRange<Int>(defaultLb, defaultUb + 1);
+          const Int val = lb == ub ? lb : *rc::gen::inRange<Int>(lb, ub + 1);
           vars->append(val);
           addIntPar(identifiers.at(i), val);
           break;
         }
         default:
           vars->append(genIntVar(argStates.at(i), lb, ub, identifiers.at(i)));
-        break;
+          break;
       }
     }
     args.emplace_back(vars);
@@ -905,8 +705,8 @@ class FznTestBase : public ::testing::Test {
   Arg addArg(const std::vector<Int>& parameters,
              const std::string& identifier = "i_par_arr") {
     auto i_par_arr = std::make_shared<IntVarArray>(identifier);
-    for (size_t i = 0; i < parameters.size(); ++i) {
-      i_par_arr->append(parameters.at(i));
+    for (const Int p : parameters) {
+      i_par_arr->append(p);
     }
     args.emplace_back(i_par_arr);
     return i_par_arr;
