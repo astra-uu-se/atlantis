@@ -347,6 +347,9 @@ class FznTestBase : public ::testing::Test {
 
   std::shared_ptr<IntVar> genIntVar(Int lb, Int ub,
                                     const std::string& identifier = "i") {
+    if (lb == ub) {
+      addIntPar(identifier, lb);
+    }
     return std::get<std::shared_ptr<IntVar>>(
         _model->addVar(std::make_shared<IntVar>(lb, ub, identifier)));
   }
@@ -407,7 +410,6 @@ class FznTestBase : public ::testing::Test {
       case IntArgState::FIXED: {
         const Int val = lb == ub ? lb : *rc::gen::inRange<Int>(lb, ub + 1);
         auto var = genIntVar(val, val, identifier);
-        addIntPar(identifier, val);
         args.emplace_back(var);
         return var;
       }
@@ -498,6 +500,7 @@ class FznTestBase : public ::testing::Test {
       case BoolArgState::FIXED_TRUE: {
         auto fixedVar = std::make_shared<BoolVar>(
             state == BoolArgState::FIXED_TRUE, identifier);
+        addBoolPar(identifier, state == BoolArgState::FIXED_TRUE);
         _model->addVar(fixedVar);
         return fixedVar;
       }
@@ -524,9 +527,6 @@ class FznTestBase : public ::testing::Test {
       default: {
         auto var = genBoolVar(state, identifier);
         args.emplace_back(var);
-        if (state != BoolArgState::VAR) {
-          addBoolPar(identifier, state == BoolArgState::FIXED_TRUE);
-        }
         return var;
       }
     }

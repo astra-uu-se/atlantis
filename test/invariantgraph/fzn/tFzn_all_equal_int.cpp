@@ -64,10 +64,8 @@ class fzn_all_equal_intTest : public FznTestBase {
       inputs.emplace_back("i_" + std::to_string(i));
     }
     addIntVarArray(inputs);
-    const bool isReified =
-        size == 2 && !isFixed(inputs.front()) && !isFixed(inputs.back())
-            ? true
-            : *rc::gen::arbitrary<bool>();
+    // two vars corresponds to all_different
+    const bool isReified = size == 2 ? false : *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_all_equal_int_reif" : "fzn_all_equal_int";
     if (isReified) {
