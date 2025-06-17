@@ -91,7 +91,7 @@ void AllDifferentNode::updateState() {
         invariantGraphConst().varNodeConst(staticInputVarNodeIds()[i]);
     for (size_t j = i + 1; j < staticInputVarNodeIds().size(); ++j) {
       const auto& jNode =
-          invariantGraphConst().varNodeConst(staticInputVarNodeIds()[i]);
+          invariantGraphConst().varNodeConst(staticInputVarNodeIds()[j]);
       if (!iNode.constDomain()->isDisjoint(*jNode.constDomain())) {
         allDisjoint = false;
         break;
