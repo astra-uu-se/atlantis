@@ -12,9 +12,9 @@ include(cmake/CPM.cmake)
 
 CPMAddPackage(
   NAME PackageProject.cmake
-  VERSION 1.10.0
+  VERSION 1.13.0
   GITHUB_REPOSITORY "TheLartians/PackageProject.cmake"
-  GIT_TAG "v1.10.0"
+  GIT_TAG "v1.13.0"
 )
 
 # Check if microsoft visual code. I have no idea if this works
