@@ -55,13 +55,15 @@ class fzn_count_eqTest : public FznTestBase {
              << "FznCountEqTest::isSatisfied(" << to_string(committedValue)
              << ")" << std::endl;
     Int count = 0;
-    const Int n = intVal(needle);
-    RC_LOG() << "needle = " << n << std::endl;
-    for (const auto& input : inputs) {
-      const Int i = intVal(input, committedValue);
-      RC_LOG() << input << " = " << i << std::endl;
-      if (i == n) {
-        ++count;
+    if (!inputs.empty()) {
+      const Int n = intVal(needle);
+      RC_LOG() << "needle = " << n << std::endl;
+      for (const auto& input : inputs) {
+        const Int i = intVal(input, committedValue);
+        RC_LOG() << input << " = " << i << std::endl;
+        if (i == n) {
+          ++count;
+        }
       }
     }
 
@@ -119,20 +121,19 @@ class fzn_count_eqTest : public FznTestBase {
   }
 
   void generate() override {
-    const size_t size = true ? 2 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t size = true ? 0 : *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
-    addIntVarArray({IntArgState::VAR, IntArgState::FIXED}, {{-1, 1}, {-1, -1}},
-                   inputs);
+    addIntVarArray(inputs);
     addIntArg(IntArgState::VAR, needle);
-    addIntArg(IntArgState::PAR, 1, 1, output);
+    addIntArg(IntArgState::VAR, output);
 
     const bool isReified = true || *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_eq_reif" : "fzn_count_eq";
     if (isReified) {
-      addBoolArg(BoolArgState::PAR_FALSE, reified);
+      addBoolArg(BoolArgState::VAR, reified);
     } else {
       addBoolPar(reified, true);
     }
@@ -147,10 +148,6 @@ class fzn_count_eqTest : public FznTestBase {
   }
 
   void move(bool committedValue) override {
-    _solver->setValue(varId(needle), -1);
-    _solver->setValue(varId(inputs.at(0)), -1);
-    _solver->setValue(varId(inputs.at(1)), -1);
-    return;
     if (varId(needle) != propagation::NULL_ID && randBool()) {
       changeValue(needle, committedValue);
     }
