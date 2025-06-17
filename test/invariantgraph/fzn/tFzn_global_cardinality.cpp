@@ -130,7 +130,8 @@ class fzn_global_cardinalityTest : public FznTestBase {
     addIntArg(IntArgState::PAR, 1, 1, output);
 
     const bool isReified = *rc::gen::arbitrary<bool>();
-    constraintIdentifier = isReified ? "fzn_global_cardinality" : "fzn_global_cardinality_reif";
+    constraintIdentifier =
+        isReified ? "fzn_global_cardinality" : "fzn_global_cardinality_reif";
     if (isReified) {
       addBoolArg(BoolArgState::PAR_FALSE, reified);
     } else {
@@ -171,6 +172,8 @@ class fzn_global_cardinalityTest : public FznTestBase {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(fzn_global_cardinalityTest, RapidCheck, ()) { rapidCheck(); }
+RC_GTEST_FIXTURE_PROP(fzn_global_cardinalityTest, RapidCheck, ()) {
+  rapidCheck();
+}
 
 }  // namespace atlantis::testing

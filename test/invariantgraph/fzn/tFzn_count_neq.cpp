@@ -51,7 +51,9 @@ class fzn_count_neqTest : public FznTestBase {
   }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
-    RC_LOG() << "-----" << std::endl << "FznCountEqTest::isSatisfied(" << to_string(committedValue) << ")" << std::endl;
+    RC_LOG() << "-----" << std::endl
+             << "FznCountEqTest::isSatisfied(" << to_string(committedValue)
+             << ")" << std::endl;
     Int count = 0;
     if (!inputs.empty()) {
       const Int n = intVal(needle, committedValue);

@@ -190,11 +190,15 @@ void AllDifferentNode::registerNode() {
 
   if (solverVars.size() == 2) {
     solver().makeViolationInvariant<propagation::NotEqual>(
-        solver(), _intermediate != propagation::NULL_ID ? _intermediate : violationVarId(),
+        solver(),
+        _intermediate != propagation::NULL_ID ? _intermediate
+                                              : violationVarId(),
         solverVars.front(), solverVars.back());
   } else {
     solver().makeViolationInvariant<propagation::AllDifferent>(
-        solver(), _intermediate != propagation::NULL_ID ? _intermediate : violationVarId(),
+        solver(),
+        _intermediate != propagation::NULL_ID ? _intermediate
+                                              : violationVarId(),
         std::move(solverVars));
   }
 }
