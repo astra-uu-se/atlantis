@@ -16,7 +16,7 @@ bool fzn_global_cardinality(
     std::vector<Int>&& cover,
     const std::shared_ptr<fznparser::IntVarArray>& counts);
 
-bool fzn_global_cardinality(
+bool fzn_global_cardinality_reif(
     FznInvariantGraph&, const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover,
     const std::shared_ptr<fznparser::IntVarArray>& counts,

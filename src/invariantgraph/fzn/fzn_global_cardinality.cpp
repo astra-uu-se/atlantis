@@ -33,7 +33,7 @@ bool fzn_global_cardinality(
   return true;
 }
 
-bool fzn_global_cardinality(
+bool fzn_global_cardinality_reif(
     FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover,
@@ -92,7 +92,7 @@ bool fzn_global_cardinality(FznInvariantGraph& graph,
         getArgArray<fznparser::IntVarArray>(constraint.arguments().at(2)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
-  return fzn_global_cardinality(
+  return fzn_global_cardinality_reif(
       graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::move(cover),
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(2)),
