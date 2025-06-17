@@ -131,8 +131,8 @@ std::string arg_type_to_string(const fznparser::Arg& arg) {
   }
   if (std::holds_alternative<std::shared_ptr<fznparser::IntVarArray>>(arg)) {
     return !std::get<std::shared_ptr<fznparser::IntVarArray>>(arg)->isParArray()
-               ? "array[int] of var bool"
-               : "array[int] of bool";
+               ? "array[int] of var int"
+               : "array[int] of int";
   }
   if (std::holds_alternative<std::shared_ptr<fznparser::FloatVarArray>>(arg)) {
     return !std::get<std::shared_ptr<fznparser::FloatVarArray>>(arg)
