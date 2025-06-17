@@ -128,7 +128,7 @@ class fzn_count_neqTest : public FznTestBase {
     addIntArg(needle);
     addIntArg(output);
 
-    const bool isReified = false && *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_neq_reif" : "fzn_count_neq";
     if (isReified) {
       addBoolArg(reified);
