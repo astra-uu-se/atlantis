@@ -166,7 +166,7 @@ bool IntervalDomain::isDisjoint(const SetDomain& other) const {
 }
 
 bool IntervalDomain::isDisjoint(const IntervalDomain& other) const {
-  return other.upperBound() < _lb || _ub <= other.lowerBound();
+  return other.upperBound() < _lb || _ub < other.lowerBound();
 }
 
 void IntervalDomain::intersect(Int lb, Int ub) {
