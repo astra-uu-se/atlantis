@@ -51,18 +51,30 @@ class fzn_count_neqTest : public FznTestBase {
   }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+    RC_LOG() << "-----" << std::endl << "FznCountEqTest::isSatisfied(" << to_string(committedValue) << ")" << std::endl;
     Int count = 0;
-    for (const auto& input : inputs) {
-      if (intVal(input, committedValue) == intVal(needle, committedValue)) {
-        ++count;
+    if (!inputs.empty()) {
+      const Int n = intVal(needle, committedValue);
+      RC_LOG() << "needle = " << n << std::endl;
+      for (const auto& input : inputs) {
+        const Int i = intVal(input, committedValue);
+        RC_LOG() << input << " = " << i << std::endl;
+        if (i == n) {
+          ++count;
+        }
       }
     }
-
-    const bool expected = count == intVal(output, committedValue);
+    RC_LOG() << "count = " << count << std::endl;
+    const Int o = intVal(output, committedValue);
+    RC_LOG() << "output = " << o << std::endl;
+    const bool expected = count != o;
+    RC_LOG() << "expected = " << to_string(expected) << std::endl;
     const bool actual = boolVal(reified, committedValue);
+    RC_LOG() << "actual = " << to_string(actual) << std::endl;
 
     if (isFixed(reified)) {
-      const bool satAssignment = violation(committedValue) != 0;
+      const bool satAssignment = violation(committedValue) == 0;
+      RC_LOG() << "satAssignment = " << to_string(satAssignment) << std::endl;
       return satAssignment ? expected == actual : expected != actual;
     }
     return expected == actual;
@@ -105,19 +117,19 @@ class fzn_count_neqTest : public FznTestBase {
   }
 
   void generate() override {
-    const size_t size = true ? 0 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t size = *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
     addIntVarArray(inputs);
-    addIntArg(IntArgState::FIXED, -1, -1, needle);
-    addIntArg(IntArgState::PAR, -1, -1, output);
+    addIntArg(needle);
+    addIntArg(output);
 
-    const bool isReified = true || *rc::gen::arbitrary<bool>();
+    const bool isReified = false && *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_neq_reif" : "fzn_count_neq";
     if (isReified) {
-      addBoolArg(BoolArgState::FIXED_FALSE, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }
