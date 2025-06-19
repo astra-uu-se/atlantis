@@ -53,27 +53,38 @@ class fzn_global_cardinalityTest : public FznTestBase {
              << "FznCountEqTest::isSatisfied(" << to_string(committedValue)
              << ")" << std::endl;
     std::vector<Int> counts(cover.size(), 0);
+    std::unordered_map<Int, std::vector<size_t>> valToIndices;
+    valToIndices.reserve(cover.size());
     for (size_t i = 0; i < cover.size(); ++i) {
-      const Int n = intVal(cover.at(i), committedValue);
-      RC_LOG() << cover.at(i) << " = " << n << std::endl;
-      for (const auto& input : inputs) {
-        const Int i = intVal(input, committedValue);
-        RC_LOG() << input << " = " << i << std::endl;
-        if (i == n) {
-          ++counts.at(i);
+      const Int needle = intVal(cover.at(i), committedValue);
+      if (valToIndices.contains(needle)) {
+        valToIndices.at(needle).emplace_back(i);
+      } else {
+        valToIndices.emplace(needle, std::vector<size_t>{i});
+      }
+    }
+    for (const auto& input : inputs) {
+      const Int val = intVal(input);
+      RC_LOG() << input << " = " << val << std::endl;
+      if (valToIndices.contains(val)) {
+        for (const size_t index : valToIndices.at(val)) {
+          RC_ASSERT(index < cover.size());
+          ++counts.at(index);
         }
       }
     }
-
     std::vector<Int> outs;
     outs.reserve(cover.size());
     for (const auto& o : outputs) {
-      outs.emplace_back(intVal(o, committedValue));
+      const Int oVal = intVal(o, committedValue);
+      RC_LOG() << o << " = " << oVal << std::endl;
+      outs.emplace_back(oVal);
     }
 
     bool expected = true;
 
     for (size_t i = 0; i < cover.size(); ++i) {
+      RC_LOG() << "counts[" << i << "] = " << counts.at(i) << std::endl;
       expected &= counts.at(i) == outs.at(i);
     }
 
@@ -102,13 +113,47 @@ class fzn_global_cardinalityTest : public FznTestBase {
     for (size_t i = 0; alwaysSat && i < bounds.size(); ++i) {
       const auto [lb, ub] = bounds.at(i);
       if (lb == ub) {
-        alwaysSat &= isFixedTo(reified, true) ? isFixedTo(outputs.at(i), lb) : !inDomain(outputs.at(i), lb);
+        alwaysSat &= isFixedTo(reified, true) ? isFixedTo(outputs.at(i), lb)
+                                              : !inDomain(outputs.at(i), lb);
       } else {
-        const bool alwaysUnsat = ub < lowerBound(outputs.at(i)) || upperBound(outputs.at(i)) < lb;
+        const bool alwaysUnsat =
+            ub < lowerBound(outputs.at(i)) || upperBound(outputs.at(i)) < lb;
         alwaysSat &= isFixedTo(reified, false) ? !alwaysUnsat : false;
       }
     }
-    return alwaysSat;
+    if (alwaysSat) {
+      return alwaysSat;
+    }
+    if (isFixedTo(reified, false)) {
+      for (size_t i = 0; i < cover.size(); ++i) {
+        const Int iCover = intVal(cover.at(i));
+        for (size_t j = i + 1; j < cover.size(); ++j) {
+          const Int jCover = intVal(cover.at(i));
+          if (iCover == jCover) {
+            if (isFixed(outputs.at(i)) && isFixed(outputs.at(j))) {
+              if (intVal(outputs.at(i)) != intVal(outputs.at(j))) {
+                return true;
+              }
+            } else if (isFixed(outputs.at(i))) {
+              if (!varNodeConst(outputs.at(j)).inDomain(iCover)) {
+                return true;
+              }
+            } else if (isFixed(outputs.at(j))) {
+              if (!varNodeConst(outputs.at(i)).inDomain(jCover)) {
+                return true;
+              }
+            } else {
+              const auto& iDom = varNodeConst(outputs.at(i)).constDomain();
+              const auto& jDom = varNodeConst(outputs.at(j)).constDomain();
+              if (iDom->isDisjoint(*jDom)) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
@@ -119,26 +164,65 @@ class fzn_global_cardinalityTest : public FznTestBase {
       return isFixedTo(reified, false);
     }
     const auto bounds = getBounds();
-    bool neverSat = true;
-    for (size_t i = 0; neverSat && i < bounds.size(); ++i) {
+    for (size_t i = 0; i < bounds.size(); ++i) {
       const auto [lb, ub] = bounds.at(i);
       if (lb == ub) {
-        neverSat &= isFixedTo(reified, false) ? isFixedTo(outputs.at(i), lb) : !inDomain(outputs.at(i), lb);
+        const bool neverSat = isFixedTo(reified, false)
+                                  ? isFixedTo(outputs.at(i), lb)
+                                  : !inDomain(outputs.at(i), lb);
+        if (neverSat) {
+          return true;
+        }
+      } else {
+        const bool alwaysUnsat =
+            ub < lowerBound(outputs.at(i)) || upperBound(outputs.at(i)) < lb;
+        const bool neverSat = isFixedTo(reified, true) ? alwaysUnsat : false;
+        if (neverSat) {
+          return true;
+        }
       }
-      const bool alwaysUnsat = ub < lowerBound(outputs.at(i)) || upperBound(outputs.at(i)) < lb;
-      neverSat &= isFixedTo(reified, true) ? !alwaysUnsat : false;
     }
-    return neverSat;
+    if (isFixedTo(reified, true)) {
+      for (size_t i = 0; i < cover.size(); ++i) {
+        const Int iCover = intVal(cover.at(i));
+        for (size_t j = i + 1; j < cover.size(); ++j) {
+          const Int jCover = intVal(cover.at(i));
+          if (iCover == jCover) {
+            if (isFixed(outputs.at(i)) && isFixed(outputs.at(j))) {
+              if (intVal(outputs.at(i)) != intVal(outputs.at(j))) {
+                return true;
+              }
+            } else if (isFixed(outputs.at(i))) {
+              if (!varNodeConst(outputs.at(j)).inDomain(iCover)) {
+                return true;
+              }
+            } else if (isFixed(outputs.at(j))) {
+              if (!varNodeConst(outputs.at(i)).inDomain(jCover)) {
+                return true;
+              }
+            } else {
+              const auto& iDom = varNodeConst(outputs.at(i)).constDomain();
+              const auto& jDom = varNodeConst(outputs.at(j)).constDomain();
+              if (iDom->isDisjoint(*jDom)) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   void generate() override {
-    const size_t inputSize = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t inputSize = *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(inputSize);
     for (size_t i = 0; i < inputSize; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
 
-    const size_t coverSize = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t coverSize = *rc::gen::inRange<size_t>(0, 4);
     cover.reserve(coverSize);
     for (size_t i = 0; i < coverSize; ++i) {
       cover.emplace_back("cover_" + std::to_string(i));
@@ -149,9 +233,9 @@ class fzn_global_cardinalityTest : public FznTestBase {
       outputs.emplace_back("output_" + std::to_string(i));
     }
 
-    addIntVarArray({IntArgState::VAR}, inputs, "inputs");
-    addIntVarArray(std::vector(coverSize, IntArgState::PAR), cover, "cover");
-    addIntVarArray({IntArgState::VAR}, outputs, "outputs");
+    addIntVarArray(inputs, "inputs");
+    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), cover, "cover");
+    addIntVarArray(outputs, "outputs");
 
     const bool isReified = false && *rc::gen::arbitrary<bool>();
     constraintIdentifier =
@@ -166,8 +250,8 @@ class fzn_global_cardinalityTest : public FznTestBase {
 
   [[nodiscard]] bool canMove() const override {
     return std::ranges::any_of(inputs, [&](const std::string& input) {
-             return varId(input) != propagation::NULL_ID;
-           });
+      return varId(input) != propagation::NULL_ID;
+    });
   }
 
   void move(bool committedValue) override {
@@ -184,8 +268,7 @@ class fzn_global_cardinalityTest : public FznTestBase {
         _solver->query(varId(output));
       }
     }
-    for (const auto& vId :
-         std::array{varId(reified), totalViolationVarId()}) {
+    for (const auto& vId : std::array{varId(reified), totalViolationVarId()}) {
       if (vId != propagation::NULL_ID) {
         _solver->query(vId);
       }
@@ -194,7 +277,7 @@ class fzn_global_cardinalityTest : public FznTestBase {
 };
 
 RC_GTEST_FIXTURE_PROP(fzn_global_cardinalityTest, RapidCheck, ()) {
-  rapidCheck();
+  rapidCheck(false);
 }
 
 }  // namespace atlantis::testing

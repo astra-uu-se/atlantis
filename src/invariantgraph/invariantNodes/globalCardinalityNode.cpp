@@ -1,7 +1,10 @@
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
 
 #include <algorithm>
+#include <numeric>
+#include <stack>
 #include <utility>
+#include <vector>
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
@@ -14,6 +17,16 @@
 #include "atlantis/propagation/views/intOffsetView.hpp"
 
 namespace atlantis::invariantgraph {
+bool removeFirstOccurrence(std::vector<size_t>& vector, size_t val) {
+  for (size_t i = 0; i < vector.size(); i++) {
+    if (vector[i] == val) {
+      vector[i] = vector.back();
+      vector.pop_back();
+      return true;
+    }
+  }
+  return false;
+}
 
 GlobalCardinalityNode::GlobalCardinalityNode(InvariantGraph& graph,
                                              std::vector<VarNodeId>&& inputs,
@@ -55,43 +68,117 @@ void GlobalCardinalityNode::updateState() {
     invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
         invariantGraph(), oldVarNodeId, newVarNodeId, true, true));
   }
-
-  std::vector<bool> coverIsFixed(_cover.size(), true);
-  std::vector<VarNodeId> inputsToRemove;
-  inputsToRemove.reserve(staticInputVarNodeIds().size());
-  for (const auto& input : staticInputVarNodeIds()) {
-    const auto& var = invariantGraphConst().varNodeConst(input);
-    if (var.isFixed()) {
-      for (size_t i = 0; i < _cover.size(); ++i) {
-        if (var.lowerBound() == _cover[i]) {
-          ++_countOffsets[i];
-        }
-      }
-      inputsToRemove.emplace_back(input);
-    } else {
-      for (size_t i = 0; i < _cover.size(); ++i) {
-        coverIsFixed[i] = coverIsFixed[i] && !var.inDomain(_cover[i]);
+  for (Int i = 0; i < static_cast<Int>(_cover.size()); i++) {
+    for (Int j = static_cast<Int>(_cover.size()) - 1; j > i; --j) {
+      if (_cover[i] == _cover[j]) {
+        _cover.erase(_cover.begin() + j);
+        _intermediate.erase(_intermediate.begin() + j);
+        const VarNodeId duplicate = outputVarNodeIds()[j];
+        removeOutputAtIndex(j);
+        invariantGraph().replaceVarNode(duplicate, outputVarNodeIds()[i]);
       }
     }
   }
-  for (const auto& input : inputsToRemove) {
-    removeStaticInputVarNode(input);
+
+  std::vector<std::vector<size_t>> supportedInputs(_cover.size());
+  std::vector<std::vector<size_t>> supportedCovers(
+      staticInputVarNodeIds().size());
+  for (size_t inputIndex = 0; inputIndex < staticInputVarNodeIds().size();
+       inputIndex++) {
+    const auto& var =
+        invariantGraphConst().varNodeConst(staticInputVarNodeIds()[inputIndex]);
+    if (var.isFixed()) {
+      for (size_t coverIndex = 0; coverIndex < _cover.size(); ++coverIndex) {
+        if (var.lowerBound() == _cover[coverIndex]) {
+          ++_countOffsets[coverIndex];
+        }
+      }
+    } else {
+      for (size_t coverIndex = 0; coverIndex < _cover.size(); ++coverIndex) {
+        if (var.inDomain(_cover[coverIndex])) {
+          supportedInputs[coverIndex].emplace_back(inputIndex);
+          supportedCovers[inputIndex].emplace_back(coverIndex);
+        }
+      }
+    }
   }
+  std::vector<bool> onStack(_cover.size(), true);
+  std::stack<size_t> stack;
+  for (size_t coverIndex = 0; coverIndex < _cover.size(); ++coverIndex) {
+    stack.push(coverIndex);
+  }
+
+  while (!stack.empty()) {
+    const size_t coverIndex = stack.top();
+    stack.pop();
+    auto& outVar = invariantGraph().varNode(outputVarNodeIds()[coverIndex]);
+    const Int lb = _countOffsets[coverIndex];
+    const Int ub = _countOffsets[coverIndex] +
+                   static_cast<Int>(supportedInputs[coverIndex].size());
+    outVar.removeValuesBelow(lb);
+    outVar.removeValuesAbove(ub);
+    if (outVar.lowerBound() == ub) {
+      for (const size_t inputIndex : supportedInputs[coverIndex]) {
+        auto& vNode =
+            invariantGraph().varNode(staticInputVarNodeIds()[inputIndex]);
+        vNode.fixToValue(_cover[coverIndex]);
+        for (const size_t otherCover : supportedCovers[coverIndex]) {
+          if (otherCover != coverIndex) {
+            removeFirstOccurrence(supportedInputs[otherCover], inputIndex);
+            if (!onStack[otherCover]) {
+              stack.push(otherCover);
+              onStack[otherCover] = true;
+            }
+          }
+        }
+        supportedInputs[coverIndex].clear();
+      }
+    } else if (outVar.upperBound() == lb) {
+      for (const size_t inputIndex : supportedInputs[coverIndex]) {
+        auto& vNode =
+            invariantGraph().varNode(staticInputVarNodeIds()[inputIndex]);
+        vNode.removeValue(_cover[coverIndex]);
+        removeFirstOccurrence(supportedCovers[inputIndex], coverIndex);
+        if (vNode.isFixed() && !supportedCovers[inputIndex].empty()) {
+          assert(supportedCovers[inputIndex].size() == 1);
+          const size_t otherCover = supportedCovers[inputIndex].front();
+          assert(otherCover != coverIndex);
+          ++_countOffsets[otherCover];
+          removeFirstOccurrence(supportedInputs[otherCover], inputIndex);
+          if (!onStack[otherCover]) {
+            stack.push(otherCover);
+            onStack[otherCover] = true;
+          }
+        }
+      }
+      supportedInputs[coverIndex].clear();
+    }
+    onStack[coverIndex] = false;
+  }
+
   std::vector<VarNodeId> outputsToRemove;
-  outputsToRemove.reserve(outputVarNodeIds().size());
+  outputsToRemove.reserve(_cover.size());
   for (Int i = static_cast<Int>(_cover.size()) - 1; i >= 0; --i) {
-    if (coverIsFixed[i]) {
-      invariantGraph()
-          .varNode(outputVarNodeIds()[i])
-          .fixToValue(_countOffsets[i]);
+    if (supportedInputs[i].empty()) {
+      outputsToRemove.emplace_back(outputVarNodeIds()[i]);
       _countOffsets.erase(_countOffsets.begin() + i);
       _cover.erase(_cover.begin() + i);
       _intermediate.erase(_intermediate.begin() + i);
-      outputsToRemove.emplace_back(outputVarNodeIds()[i]);
     }
   }
   for (const auto& output : outputsToRemove) {
     removeOutputVarNode(output);
+  }
+  std::vector<VarNodeId> inputsToRemove;
+  inputsToRemove.reserve(_cover.size());
+  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
+       --i) {
+    if (supportedCovers[i].empty()) {
+      inputsToRemove.emplace_back(staticInputVarNodeIds()[i]);
+    }
+  }
+  for (const auto& input : inputsToRemove) {
+    removeStaticInputVarNode(input);
   }
   if (_cover.empty()) {
     setState(InvariantNodeState::SUBSUMED);

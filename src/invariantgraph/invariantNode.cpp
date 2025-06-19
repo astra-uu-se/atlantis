@@ -187,6 +187,18 @@ void InvariantNode::removeOutputVarNode(VarNodeId outputVarNodeId) {
   _invariantGraph.varNode(outputVarNodeId).unmarkOutputTo(_id);
 }
 
+void InvariantNode::removeOutputAtIndex(size_t index) {
+  // remove all occurrences:
+  assert(index < _outputVarNodeIds.size());
+  const VarNodeId vId = _outputVarNodeIds[index];
+  _outputVarNodeIds.erase(_outputVarNodeIds.begin() + static_cast<Int>(index));
+  const bool shouldUnmark = std::ranges::none_of(
+      _outputVarNodeIds, [&](const VarNodeId id) { return id == vId; });
+  if (shouldUnmark) {
+    _invariantGraph.varNode(vId).unmarkOutputTo(_id);
+  }
+}
+
 void InvariantNode::replaceStaticInputVarNode(VarNodeId oldInputVarNodeId,
                                               VarNodeId newInputVarNodeId) {
   // Replace all occurrences:

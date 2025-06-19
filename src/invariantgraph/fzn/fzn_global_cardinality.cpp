@@ -6,7 +6,7 @@
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph::fzn {
@@ -54,14 +54,17 @@ bool fzn_global_cardinality_reif(
         std::make_shared<SearchDomain>(0, static_cast<Int>(inputs->size())),
         DomainType::DOM_NONE));
     binaryOutputVarNodeIds.emplace_back(graph.retrieveBoolVarNode());
-    graph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
-        graph, outputVarNodeIds.at(i), countVarNodeIds.at(i),
-        binaryOutputVarNodeIds.at(i)));
   }
 
   graph.addInvariantNode(std::make_shared<GlobalCardinalityNode>(
       graph, graph.retrieveVarNodes(inputs), std::move(cover),
-      std::move(outputVarNodeIds)));
+      std::vector(outputVarNodeIds)));
+
+  for (size_t i = 0; i < counts->size(); ++i) {
+    graph.addInvariantNode(std::make_shared<IntAllEqualNode>(
+        graph, outputVarNodeIds.at(i), countVarNodeIds.at(i),
+        binaryOutputVarNodeIds.at(i)));
+  }
 
   graph.addInvariantNode(std::make_shared<ArrayBoolAndNode>(
       graph, std::move(binaryOutputVarNodeIds),

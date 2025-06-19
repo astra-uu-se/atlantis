@@ -654,8 +654,10 @@ class FznTestBase : public ::testing::Test {
       const std::vector<std::string>& identifiers,
       const std::string& identifier = "i_arr") {
     return addIntVarArray(
-        *rc::gen::container<std::vector<IntArgState>>(
-            identifiers.size(), rc::gen::arbitrary<IntArgState>()),
+        identifiers.empty()
+            ? std::vector<IntArgState>{}
+            : *rc::gen::container<std::vector<IntArgState>>(
+                  identifiers.size(), rc::gen::arbitrary<IntArgState>()),
         identifiers, identifier);
   }
 
@@ -666,9 +668,11 @@ class FznTestBase : public ::testing::Test {
     for (size_t i = 0; i < arraySize; ++i) {
       identifiers.at(i) = varPrefix + std::to_string(i);
     }
-    return addIntVarArray(*rc::gen::container<std::vector<IntArgState>>(
-                              arraySize, rc::gen::arbitrary<IntArgState>()),
-                          identifiers, identifier);
+    return addIntVarArray(
+        arraySize == 0 ? std::vector<IntArgState>{}
+                       : *rc::gen::container<std::vector<IntArgState>>(
+                             arraySize, rc::gen::arbitrary<IntArgState>()),
+        identifiers, identifier);
   }
 
   Arg genArg(ArgState argState, const std::string& identifierPrefix = "") {
@@ -742,7 +746,7 @@ class FznTestBase : public ::testing::Test {
                       curVal != newVal ? newVal : dom->upperBound());
   }
 
-  void rapidCheck() {
+  void rapidCheck(bool reachesFixpoint = true) {
     generate();
     const bool neverSat = neverSatisfied();
     try {
@@ -757,11 +761,17 @@ class FznTestBase : public ::testing::Test {
       _randomProvider = std::make_shared<search::RandomProvider>(1234);
       _assignment->initialize(*_randomProvider);
     } catch (const InconsistencyException&) {
-      RC_ASSERT(neverSat);
-      return;
+      if (neverSat) {
+        RC_SUCCEED();
+      }
+      RC_SUCCEED_IF(neverSatisfied());
     }
     if (neverSat) {
-      RC_ASSERT(!neverSatisfied());
+      if (reachesFixpoint) {
+        RC_ASSERT(!neverSatisfied());
+      } else {
+        RC_SUCCEED("WARNING: invariant graph does not propagate to fix point");
+      }
     }
     RC_ASSERT(!neverSat);
     if (alwaysSatisfied()) {

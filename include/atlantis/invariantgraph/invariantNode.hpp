@@ -97,6 +97,8 @@ class InvariantNode {
 
   void removeOutputVarNode(VarNodeId);
 
+  void removeOutputAtIndex(size_t);
+
   void eraseStaticInputVarNode(size_t index);
 
   void eraseDynamicInputVarNode(size_t index);
