@@ -237,7 +237,7 @@ class fzn_global_cardinalityTest : public FznTestBase {
     addIntVarArray(std::vector(cover.size(), IntArgState::PAR), cover, "cover");
     addIntVarArray(outputs, "outputs");
 
-    const bool isReified = false && *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_global_cardinality_reif" : "fzn_global_cardinality";
     if (isReified) {
