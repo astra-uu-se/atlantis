@@ -196,7 +196,7 @@ bool GlobalCardinalityNode::replace() {
   assert(_cover.size() == 1);
   invariantGraph().addInvariantNode(std::make_shared<IntCountNode>(
       invariantGraph(), std::vector<VarNodeId>(staticInputVarNodeIds()),
-      _cover.front(), outputVarNodeIds().front()));
+      _cover.front(), outputVarNodeIds().front(), _countOffsets.front()));
   return true;
 }
 

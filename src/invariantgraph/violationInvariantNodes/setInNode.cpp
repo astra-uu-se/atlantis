@@ -69,7 +69,7 @@ void SetInNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (vNode.constDomain()->contains(_values)) {
+  if (vNode.constDomain()->isContained(_values)) {
     fixReified(true);
     setState(InvariantNodeState::SUBSUMED);
     return;

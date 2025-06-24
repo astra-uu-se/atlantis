@@ -15,6 +15,60 @@ static bool sortedVectorIsInterval(const std::vector<Int>& sortedVals) {
              sortedVals.back();
 }
 
+static bool isSubsetOf(const std::vector<Int>& subset, const std::vector<Int>& superset) {
+  assert(std::ranges::adjacent_find(subset, std::greater_equal<>()) == subset.end());
+  assert(std::ranges::adjacent_find(superset, std::greater_equal<>()) == superset.end());
+  if (subset.empty()) {
+    return true;
+  }
+
+  if (superset.empty()) {
+    return false;
+  }
+
+  return std::ranges::includes(superset, subset);
+}
+
+static bool isSubsetOf(Int subsetLb, Int subsetUb, const std::vector<Int>& superset) {
+  assert(subsetLb <= subsetUb);
+  assert(std::ranges::adjacent_find(superset, std::greater_equal<>()) == superset.end());
+  if (superset.empty()) {
+    return false;
+  }
+
+  if (subsetLb < superset.front() || superset.back() < subsetUb) {
+    return false;
+  }
+
+  auto iter = std::ranges::find_if(superset, [&](const Int v) { return v == subsetLb; });
+  if (iter == superset.end()) {
+    return false;
+  }
+  Int last = *iter;
+  for (++iter; iter != superset.end(); ++iter) {
+    if (++last != *iter) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool isSubsetOf(const std::vector<Int>& subset, Int supersetLb, Int supersetUb) {
+  assert(std::ranges::adjacent_find(subset, std::greater_equal<>()) == subset.end());
+  assert(supersetLb <= supersetUb);
+  if (subset.empty()) {
+    return true;
+  }
+
+  return supersetLb <= subset.front() && subset.back() <= supersetUb && sortedVectorIsInterval(subset);
+}
+
+static bool isSubsetOf(Int subsetLb, Int subsetUb, Int supersetLb, Int supersetUb) {
+  assert(subsetLb <= subsetUb);
+  assert(supersetLb <= supersetUb);
+  return supersetLb <= subsetLb && subsetUb <= supersetUb;
+}
+
 Domain::Iterator::Iterator(Int lb, Int ub, Int pos)
     : _data(std::pair<Int, Int>(lb, ub + 1)), _pos{pos} {}
 
@@ -120,35 +174,35 @@ bool IntervalDomain::contains(Int value) const noexcept {
 }
 
 bool IntervalDomain::contains(Int lb, Int ub) const noexcept {
-  assert(lb <= ub);
-  return _lb <= lb && _ub <= ub;
+  return isSubsetOf(lb, ub, _lb, _ub);
 }
 
 bool IntervalDomain::contains(const IntervalDomain& other) const noexcept {
-  return contains(other._lb, other._ub);
+  return isSubsetOf(other._lb, other._ub, _lb, _ub);
 }
 
 bool IntervalDomain::contains(const SetDomain& other) const noexcept {
-  if (other.lowerBound() < _lb || _ub < other.upperBound()) {
-    return false;
-  }
-  if (!other.isInterval()) {
-    return false;
-  }
-  return contains(other.lowerBound(), other.upperBound());
+  return isSubsetOf(other.values(), _lb, _ub);
 }
 
 bool IntervalDomain::contains(const SortedUniqueVector& vals) const noexcept {
-  if ((*vals).empty()) {
-    return true;
-  }
-  if ((*vals).front() < _lb || _ub < (*vals).back()) {
-    return false;
-  }
-  if (!vals.isInterval()) {
-    return false;
-  }
-  return contains((*vals).front(), (*vals).back());
+  return isSubsetOf(*vals, _lb, _ub);
+}
+
+bool IntervalDomain::isContained(const IntervalDomain& other) const {
+  return isSubsetOf(_lb, _ub, other._lb, other._ub);
+}
+
+bool IntervalDomain::isContained(const SetDomain& other) const {
+  return isSubsetOf(_lb, _ub, other.values());
+}
+
+bool IntervalDomain::isContained(Int lb, Int ub) const {
+  return isSubsetOf(_lb, _ub, lb, ub);
+}
+
+bool IntervalDomain::isContained(const SortedUniqueVector& vals) const {
+  return isSubsetOf(_lb, _ub, *vals);
 }
 
 bool IntervalDomain::isInterval() const noexcept { return true; }
@@ -267,50 +321,39 @@ bool SetDomain::contains(Int value) const noexcept {
 }
 
 bool SetDomain::contains(Int lb, Int ub) const noexcept {
-  assert(lb <= ub);
-  if (lb == ub) {
-    return contains(lb);
-  }
-  if (lb < lowerBound() || upperBound() < ub) {
-    return false;
-  }
-  auto iter = std::ranges::find_if(_values, [&](Int value) { return value == lb; });
-  if (iter == _values.end()) {
-    return false;
-  }
-  Int last = *iter;
-  for (++iter; iter != _values.end(); ++iter) {
-    if (++last != *iter) {
-      return false;
-    }
-    if (last == ub) {
-      return true;
-    }
-  }
-  return true;
+  return isSubsetOf(lb, ub, _values);
 }
 
 bool SetDomain::contains(const IntervalDomain& other) const noexcept {
-  return contains(other.lowerBound(), other.upperBound());
+  return isSubsetOf(other.lowerBound(), other.upperBound(), _values);
 }
 
 bool SetDomain::contains(const std::vector<Int>& vals) const noexcept {
-  assert(std::ranges::adjacent_find(vals, std::greater_equal<>()) == vals.end());
-  if (vals.empty()) {
-    return true;
-  }
-  if (vals.front() < lowerBound() || upperBound() < vals.back()) {
-    return false;
-  }
-  return std::ranges::includes(_values, vals);
+  return isSubsetOf(vals, _values);
 }
 
-bool SetDomain::contains(const SortedUniqueVector& values) const noexcept {
-  return contains(*values);
+bool SetDomain::contains(const SortedUniqueVector& vals) const noexcept {
+  return isSubsetOf(*vals, _values);
 }
 
 bool SetDomain::contains(const SetDomain& other) const noexcept {
-  return contains(other._values);
+  return isSubsetOf(other._values, _values);
+}
+
+bool SetDomain::isContained(const IntervalDomain& other) const {
+  return isSubsetOf(_values, other.lowerBound(), other.upperBound());
+}
+
+bool SetDomain::isContained(const SetDomain& other) const {
+  return isSubsetOf(_values, other._values);
+}
+
+bool SetDomain::isContained(Int lb, Int ub) const {
+  return isSubsetOf(_values, lb, ub);
+}
+
+bool SetDomain::isContained(const SortedUniqueVector& vals) const {
+  return isSubsetOf(_values, *vals);
 }
 
 bool SetDomain::isInterval() const noexcept {
@@ -575,6 +618,32 @@ bool SearchDomain::contains(const SearchDomain& other) const noexcept {
   return std::visit<bool>([&](const auto& o) { return this->contains(o); },
                           other._domain);
 
+}
+
+bool SearchDomain::isContained(Int lb, Int ub) const {
+  return std::visit<bool>([&](const auto& dom) { return dom.isContained(lb, ub); },
+                          _domain);
+}
+
+bool SearchDomain::isContained(const IntervalDomain& other) const {
+  return std::visit<bool>([&](const auto& dom) { return dom.isContained(other); },
+                          _domain);
+}
+
+bool SearchDomain::isContained(const SetDomain& other) const {
+  return std::visit<bool>([&](const auto& dom) { return dom.isContained(other); },
+                          _domain);
+}
+
+bool SearchDomain::isContained(const SortedUniqueVector& vals) const {
+  return std::visit<bool>([&](const auto& dom) { return dom.isContained(vals); },
+                          _domain);
+}
+
+
+bool SearchDomain::isContained(const SearchDomain& other) const {
+  return std::visit<bool>([&](const auto& o) { return this->isContained(o); },
+                          other._domain);
 }
 
 bool SearchDomain::isInterval() const noexcept {

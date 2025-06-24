@@ -271,13 +271,13 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
   }
 
   void generate() override {
-    const size_t inputSize = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t inputSize = *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(inputSize);
     for (size_t i = 0; i < inputSize; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
 
-    const size_t coverSize = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t coverSize = *rc::gen::inRange<size_t>(0, 4);
     cover.reserve(coverSize);
     for (size_t i = 0; i < coverSize; ++i) {
       cover.emplace_back("cover_" + std::to_string(i));
@@ -288,15 +288,15 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
       outputs.emplace_back("output_" + std::to_string(i));
     }
 
-    addIntVarArray({IntArgState::PAR, IntArgState::FIXED, IntArgState::VAR}, {{-1, -1}, {-1, -1}, {-1, 1}},  inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), {{-1, -1}}, cover, "cover");
-    addIntVarArray({IntArgState::FIXED}, {{-1, -1}}, outputs, "outputs");
+    addIntVarArray(inputs, "inputs");
+    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), cover, "cover");
+    addIntVarArray(outputs, "outputs");
 
-    const bool isReified = true || *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_global_cardinality_closed_reif" : "fzn_global_cardinality_closed";
     if (isReified) {
-      addBoolArg(BoolArgState::VAR, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }

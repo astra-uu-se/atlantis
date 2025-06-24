@@ -108,6 +108,10 @@ class Domain {
 
   [[nodiscard]] virtual bool isDisjoint(const SortedUniqueVector&) const = 0;
 
+  [[nodiscard]] virtual bool isContained(Int lb, Int ub) const = 0;
+
+  [[nodiscard]] virtual bool isContained(const SortedUniqueVector&) const = 0;
+
   [[nodiscard]] virtual Int at(size_t) const = 0;
 
   [[nodiscard]] virtual Int operator[](size_t) const = 0;
@@ -163,6 +167,11 @@ class IntervalDomain : public Domain {
   [[nodiscard]] bool isDisjoint(const SortedUniqueVector&) const override;
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;
   [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
+
+  [[nodiscard]] bool isContained(Int lb, Int ub) const override;
+  [[nodiscard]] bool isContained(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool isContained(const SetDomain&) const;
+  [[nodiscard]] bool isContained(const IntervalDomain&) const;
 
   bool operator==(const IntervalDomain&) const;
 
@@ -229,6 +238,11 @@ class SetDomain : public Domain {
   [[nodiscard]] bool isDisjoint(const SortedUniqueVector&) const override;
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;
   [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
+
+  [[nodiscard]] bool isContained(Int lb, Int ub) const override;
+  [[nodiscard]] bool isContained(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool isContained(const SetDomain&) const;
+  [[nodiscard]] bool isContained(const IntervalDomain&) const;
 
   void fix(Int value) override;
 
@@ -307,6 +321,12 @@ class SearchDomain : public Domain {
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;
   [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
   [[nodiscard]] bool isDisjoint(const SearchDomain&) const;
+
+  [[nodiscard]] bool isContained(Int lb, Int ub) const override;
+  [[nodiscard]] bool isContained(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool isContained(const SetDomain&) const;
+  [[nodiscard]] bool isContained(const IntervalDomain&) const;
+  [[nodiscard]] bool isContained(const SearchDomain&) const;
 
   void fix(Int value) override;
 

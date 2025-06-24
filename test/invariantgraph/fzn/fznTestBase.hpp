@@ -341,6 +341,9 @@ class FznTestBase : public ::testing::Test {
   }
 
   [[nodiscard]] Int violation(bool committedValue) const {
+    if (totalViolationVarId() == propagation::NULL_ID) {
+      return 0;
+    }
     return committedValue ? _solver->committedValue(totalViolationVarId())
                           : _solver->currentValue(totalViolationVarId());
   }
@@ -761,17 +764,14 @@ class FznTestBase : public ::testing::Test {
       _randomProvider = std::make_shared<search::RandomProvider>(1234);
       _assignment->initialize(*_randomProvider);
     } catch (const InconsistencyException&) {
-      if (neverSat) {
-        RC_SUCCEED();
-      }
+      RC_SUCCEED_IF(neverSat);
       RC_SUCCEED_IF(neverSatisfied());
+      RC_FAIL();
     }
     if (neverSat) {
-      if (reachesFixpoint) {
-        RC_ASSERT(!neverSatisfied());
-      } else {
-        RC_SUCCEED("WARNING: invariant graph does not propagate to fix point");
-      }
+      RC_SUCCEED_IF(!reachesFixpoint);
+      RC_SUCCEED_IF(!neverSatisfied());
+      RC_FAIL();
     }
     RC_ASSERT(!neverSat);
     if (alwaysSatisfied()) {

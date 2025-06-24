@@ -14,9 +14,9 @@
 namespace atlantis::invariantgraph {
 
 IntCountNode::IntCountNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           Int needle, VarNodeId count)
+                           Int needle, VarNodeId count, Int offset)
     : InvariantNode(graph, std::vector<VarNodeId>{count}, std::move(vars)),
-      _needle(needle) {}
+      _needle(needle), _offset(offset) {}
 
 const std::vector<VarNodeId>& IntCountNode::haystack() const {
   return staticInputVarNodeIds();

@@ -5,13 +5,12 @@
 namespace atlantis::invariantgraph {
 class IntCountNode : public InvariantNode {
   propagation::VarViewId _intermediate{propagation::NULL_ID};
-  Int _offset{0};
   Int _needle;
+  Int _offset;
 
  public:
   IntCountNode(InvariantGraph& graph,
-
-               std::vector<VarNodeId>&& vars, Int needle, VarNodeId count);
+               std::vector<VarNodeId>&& vars, Int needle, VarNodeId count, Int offset = 0);
 
   void init(InvariantNodeId) override;
 

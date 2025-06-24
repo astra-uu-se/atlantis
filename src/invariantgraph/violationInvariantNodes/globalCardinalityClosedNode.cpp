@@ -93,7 +93,7 @@ bool GlobalCardinalityClosedNode::canBeReplaced() const {
 }
 
 bool GlobalCardinalityClosedNode::replace() {
-  if (!shouldHold()) {
+  if (!canBeReplaced()) {
     return false;
   }
   if (!isReified() && shouldHold()) {
