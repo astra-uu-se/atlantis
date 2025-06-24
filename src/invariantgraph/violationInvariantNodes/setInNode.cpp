@@ -49,20 +49,31 @@ void SetInNode::updateState() {
     if (isReified()) {
       fixReified(false);
     } else if (shouldHold()) {
-      throw FznException("SetInNode::updateState: empty set");
+      throw InconsistencyException("SetInNode::updateState: empty set");
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (isReified()) {
+  auto& vNode =invariantGraph().varNode(staticInputVarNodeIds().front());
+  if (!isReified()) {
+    if (shouldHold()) {
+      vNode.removeAllValuesExcept(_values);
+    } else {
+      vNode.removeValues(_values);
+    }
+    setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (shouldHold()) {
-    invariantGraph().varNode(staticInputVarNodeIds().front()).domain()->intersect(_values);
-  } else {
-    invariantGraph().varNode(staticInputVarNodeIds().front()).removeValues(_values);
+  if (vNode.constDomain()->isDisjoint(_values)) {
+    fixReified(false);
+    setState(InvariantNodeState::SUBSUMED);
+    return;
   }
-  setState(InvariantNodeState::SUBSUMED);
+  if (vNode.constDomain()->contains(_values)) {
+    fixReified(true);
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
 }
 
 

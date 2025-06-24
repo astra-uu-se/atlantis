@@ -122,7 +122,7 @@ void GlobalCardinalityNode::updateState() {
         auto& vNode =
             invariantGraph().varNode(staticInputVarNodeIds()[inputIndex]);
         vNode.fixToValue(_cover[coverIndex]);
-        for (const size_t otherCover : supportedCovers[coverIndex]) {
+        for (const size_t otherCover : supportedCovers[inputIndex]) {
           if (otherCover != coverIndex) {
             removeFirstOccurrence(supportedInputs[otherCover], inputIndex);
             if (!onStack[otherCover]) {

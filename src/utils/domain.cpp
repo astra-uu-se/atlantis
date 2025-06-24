@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -118,6 +119,38 @@ bool IntervalDomain::contains(Int value) const noexcept {
   return _lb <= value && value <= _ub;
 }
 
+bool IntervalDomain::contains(Int lb, Int ub) const noexcept {
+  assert(lb <= ub);
+  return _lb <= lb && _ub <= ub;
+}
+
+bool IntervalDomain::contains(const IntervalDomain& other) const noexcept {
+  return contains(other._lb, other._ub);
+}
+
+bool IntervalDomain::contains(const SetDomain& other) const noexcept {
+  if (other.lowerBound() < _lb || _ub < other.upperBound()) {
+    return false;
+  }
+  if (!other.isInterval()) {
+    return false;
+  }
+  return contains(other.lowerBound(), other.upperBound());
+}
+
+bool IntervalDomain::contains(const SortedUniqueVector& vals) const noexcept {
+  if ((*vals).empty()) {
+    return true;
+  }
+  if ((*vals).front() < _lb || _ub < (*vals).back()) {
+    return false;
+  }
+  if (!vals.isInterval()) {
+    return false;
+  }
+  return contains((*vals).front(), (*vals).back());
+}
+
 bool IntervalDomain::isInterval() const noexcept { return true; }
 
 std::vector<DomainEntry> IntervalDomain::createDomainEntries(
@@ -161,12 +194,23 @@ void IntervalDomain::setUpperBound(Int ub) {
   _ub = ub;
 }
 
-bool IntervalDomain::isDisjoint(const SetDomain& other) const {
-  return other.upperBound() < _lb || _ub < other.lowerBound();
+bool IntervalDomain::isDisjoint(Int lb, Int ub) const {
+  return ub < _lb || _ub < lb;
 }
 
 bool IntervalDomain::isDisjoint(const IntervalDomain& other) const {
-  return other.upperBound() < _lb || _ub < other.lowerBound();
+  return isDisjoint(other._lb, other._ub);
+}
+
+bool IntervalDomain::isDisjoint(const SortedUniqueVector& vals) const {
+  if ((*vals).empty()) {
+    return true;
+  }
+  return isDisjoint((*vals).front(), (*vals).back());
+}
+
+bool IntervalDomain::isDisjoint(const SetDomain& other) const {
+  return isDisjoint(other.lowerBound(), other.upperBound());
 }
 
 void IntervalDomain::intersect(Int lb, Int ub) {
@@ -219,7 +263,54 @@ size_t SetDomain::size() const noexcept { return _values.size(); }
 bool SetDomain::isFixed() const noexcept { return _values.size() == 1; }
 
 bool SetDomain::contains(Int value) const noexcept {
-  return std::ranges::binary_search(_values.begin(), _values.end(), value);
+  return std::ranges::binary_search(_values, value);
+}
+
+bool SetDomain::contains(Int lb, Int ub) const noexcept {
+  assert(lb <= ub);
+  if (lb == ub) {
+    return contains(lb);
+  }
+  if (lb < lowerBound() || upperBound() < ub) {
+    return false;
+  }
+  auto iter = std::ranges::find_if(_values, [&](Int value) { return value == lb; });
+  if (iter == _values.end()) {
+    return false;
+  }
+  Int last = *iter;
+  for (++iter; iter != _values.end(); ++iter) {
+    if (++last != *iter) {
+      return false;
+    }
+    if (last == ub) {
+      return true;
+    }
+  }
+  return true;
+}
+
+bool SetDomain::contains(const IntervalDomain& other) const noexcept {
+  return contains(other.lowerBound(), other.upperBound());
+}
+
+bool SetDomain::contains(const std::vector<Int>& vals) const noexcept {
+  assert(std::ranges::adjacent_find(vals, std::greater_equal<>()) == vals.end());
+  if (vals.empty()) {
+    return true;
+  }
+  if (vals.front() < lowerBound() || upperBound() < vals.back()) {
+    return false;
+  }
+  return std::ranges::includes(_values, vals);
+}
+
+bool SetDomain::contains(const SortedUniqueVector& values) const noexcept {
+  return contains(*values);
+}
+
+bool SetDomain::contains(const SetDomain& other) const noexcept {
+  return contains(other._values);
 }
 
 bool SetDomain::isInterval() const noexcept {
@@ -327,23 +418,48 @@ void SetDomain::remove(const SortedUniqueVector& values) {
   }
 }
 
-bool SetDomain::isDisjoint(const IntervalDomain& other) const {
-  return other.upperBound() < lowerBound() || upperBound() < other.lowerBound();
-}
-
-bool SetDomain::isDisjoint(const SetDomain& other) const {
+bool SetDomain::isDisjoint(const std::vector<Int>& vals) const {
+  assert(std::ranges::adjacent_find(vals, std::greater_equal<>()) == vals.end());
+  if (_values.empty()) {
+    return true;
+  }
+  if (vals.front() < lowerBound() || upperBound() < vals.back()) {
+    return true;
+  }
   size_t i = 0;
   size_t j = 0;
-  while (i < _values.size() && j < other._values.size()) {
-    if (_values[i] < other._values[j]) {
+  while (i < _values.size() && j < vals.size()) {
+    if (_values[i] < vals[j]) {
       ++i;
-    } else if (_values[i] > other._values[j]) {
+    } else if (_values[i] > vals[j]) {
       ++j;
     } else {
       return false;
     }
   }
   return true;
+}
+
+bool SetDomain::isDisjoint(const SortedUniqueVector& values) const {
+  return isDisjoint(*values);
+}
+
+bool SetDomain::isDisjoint(Int lb, Int ub) const {
+  assert(lb <= ub);
+  if (ub < lowerBound() || upperBound() < lb) {
+    return true;
+  }
+  return std::ranges::none_of(_values, [&](const Int v) {
+    return lb <= v && v <= ub;
+  });
+}
+
+bool SetDomain::isDisjoint(const IntervalDomain& other) const {
+  return isDisjoint(other.lowerBound(), other.upperBound());
+}
+
+bool SetDomain::isDisjoint(const SetDomain& other) const {
+  return isDisjoint(other._values);
 }
 
 void SetDomain::intersect(const std::vector<Int>& otherVals) {
@@ -433,6 +549,32 @@ bool SearchDomain::isFixed() const noexcept {
 bool SearchDomain::contains(Int value) const noexcept {
   return std::visit<bool>([&](const auto& dom) { return dom.contains(value); },
                           _domain);
+}
+
+bool SearchDomain::contains(Int lb, Int ub) const noexcept {
+  return std::visit<bool>([&](const auto& dom) { return dom.contains(lb, ub); },
+                          _domain);
+}
+
+bool SearchDomain::contains(const SortedUniqueVector& vals) const noexcept {
+  return std::visit<bool>([&](const auto& dom) { return dom.contains(vals); },
+                          _domain);
+}
+
+bool SearchDomain::contains(const IntervalDomain& other) const noexcept {
+  return std::visit<bool>([&](const auto& dom) { return dom.contains(other); },
+                          _domain);
+}
+
+bool SearchDomain::contains(const SetDomain& other) const noexcept {
+  return std::visit<bool>([&](const auto& dom) { return dom.contains(other); },
+                          _domain);
+}
+
+bool SearchDomain::contains(const SearchDomain& other) const noexcept {
+  return std::visit<bool>([&](const auto& o) { return this->contains(o); },
+                          other._domain);
+
 }
 
 bool SearchDomain::isInterval() const noexcept {
@@ -532,19 +674,22 @@ void SearchDomain::remove(const SortedUniqueVector& values) {
   }
 }
 
-void SearchDomain::intersect(const std::vector<Int>& values) {
-  assert(std::ranges::adjacent_find(values, std::greater_equal<>()) == values.end());
+void SearchDomain::intersect(const std::vector<Int>& vals) {
+  assert(std::ranges::adjacent_find(vals, std::greater_equal<>()) == vals.end());
   assert(std::holds_alternative<IntervalDomain>(_domain));
-  if (sortedVectorIsInterval(values)) {
-    std::get<IntervalDomain>(_domain).intersect((values).front(), (values).back());
+  if (vals.empty()) {
+    throw InconsistencyException("SearchDomain::intersect: Empty domain");
+  }
+  if (sortedVectorIsInterval(vals)) {
+    std::get<IntervalDomain>(_domain).intersect((vals).front(), (vals).back());
     return;
   }
   Int begin = 0;
-  Int end = static_cast<Int>(values.size()) - 1;
-  while (begin < end && values[begin] < lowerBound()) {
+  Int end = static_cast<Int>(vals.size()) - 1;
+  while (begin < end && vals[begin] < lowerBound()) {
     ++begin;
   }
-  while (end >= 0 && upperBound() < values[end]) {
+  while (end >= 0 && upperBound() < vals[end]) {
     --end;
   }
   if (begin > end) {
@@ -552,7 +697,7 @@ void SearchDomain::intersect(const std::vector<Int>& values) {
   }
   std::vector<Int> newDomain;
   newDomain.reserve(end - begin + 1);
-  std::copy(values.begin() + begin, values.begin() + end + 1,
+  std::copy(vals.begin() + begin, vals.begin() + end + 1,
             std::back_inserter(newDomain));
   _domain = SetDomain(std::move(newDomain));
 }
@@ -586,6 +731,16 @@ void SearchDomain::intersect(const SearchDomain& other) {
   assert(std::holds_alternative<IntervalDomain>(other._domain));
   intersect(std::get<IntervalDomain>(other._domain).lowerBound(),
             std::get<IntervalDomain>(other._domain).upperBound());
+}
+
+bool SearchDomain::isDisjoint(Int lb, Int ub) const {
+  return std::visit<bool>(
+      [&](const auto& dom) { return dom.isDisjoint(lb, ub); }, _domain);
+}
+
+bool SearchDomain::isDisjoint(const SortedUniqueVector& vals) const {
+  return std::visit<bool>(
+      [&](const auto& dom) { return dom.isDisjoint(vals); }, _domain);
 }
 
 bool SearchDomain::isDisjoint(const IntervalDomain& other) const {

@@ -88,11 +88,25 @@ class Domain {
   [[nodiscard]] virtual bool contains(Int value) const noexcept = 0;
 
   /**
+   * @return true if the domain contains the interval lb..ub, else false.
+   */
+  [[nodiscard]] virtual bool contains(Int lb, Int ub) const noexcept = 0;
+
+  /**
+   * @return true if the domain contains all the values in the vector, else false.
+   */
+  [[nodiscard]] virtual bool contains(const SortedUniqueVector&) const noexcept = 0;
+
+  /**
    * @return true if the domain is an interval, else false.
    */
   [[nodiscard]] virtual bool isInterval() const noexcept = 0;
 
   virtual void fix(Int) = 0;
+
+  [[nodiscard]] virtual bool isDisjoint(Int lb, Int ub) const = 0;
+
+  [[nodiscard]] virtual bool isDisjoint(const SortedUniqueVector&) const = 0;
 
   [[nodiscard]] virtual Int at(size_t) const = 0;
 
@@ -124,6 +138,10 @@ class IntervalDomain : public Domain {
   [[nodiscard]] size_t size() const noexcept override;
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
+  [[nodiscard]] bool contains(Int lb, Int ub) const noexcept override;
+  [[nodiscard]] bool contains(const SortedUniqueVector&) const noexcept override;
+  [[nodiscard]] bool contains(const IntervalDomain&) const noexcept;
+  [[nodiscard]] bool contains(const SetDomain&) const noexcept;
   [[nodiscard]] bool isInterval() const noexcept override;
   [[nodiscard]] Iterator begin() const override;
   [[nodiscard]] Iterator end() const override;
@@ -141,6 +159,8 @@ class IntervalDomain : public Domain {
 
   void intersect(Int lb, Int ub);
 
+  [[nodiscard]] bool isDisjoint(Int lb, Int ub) const override;
+  [[nodiscard]] bool isDisjoint(const SortedUniqueVector&) const override;
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;
   [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
 
@@ -152,6 +172,8 @@ class IntervalDomain : public Domain {
 class SetDomain : public Domain {
   std::vector<Int> _values;
   void intersect(const std::vector<Int>&);
+  [[nodiscard]] bool contains(const std::vector<Int>&) const noexcept;
+  [[nodiscard]] bool isDisjoint(const std::vector<Int>&) const;
 
  public:
   explicit SetDomain(std::vector<Int>&&);
@@ -165,6 +187,10 @@ class SetDomain : public Domain {
   [[nodiscard]] size_t size() const noexcept override;
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
+  [[nodiscard]] bool contains(Int lb, Int ub) const noexcept override;
+  [[nodiscard]] bool contains(const SortedUniqueVector&) const noexcept override;
+  [[nodiscard]] bool contains(const IntervalDomain&) const noexcept;
+  [[nodiscard]] bool contains(const SetDomain&) const noexcept;
   [[nodiscard]] bool isInterval() const noexcept override;
   [[nodiscard]] Iterator begin() const override;
   [[nodiscard]] Iterator end() const override;
@@ -199,6 +225,8 @@ class SetDomain : public Domain {
   void intersect(const SortedUniqueVector&);
   void intersect(const SetDomain&);
 
+  [[nodiscard]] bool isDisjoint(Int lb, Int ub) const override;
+  [[nodiscard]] bool isDisjoint(const SortedUniqueVector&) const override;
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;
   [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
 
@@ -228,6 +256,11 @@ class SearchDomain : public Domain {
   [[nodiscard]] size_t size() const noexcept override;
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
+  [[nodiscard]] bool contains(Int lb, Int ub) const noexcept override;
+  [[nodiscard]] bool contains(const SortedUniqueVector&) const noexcept override;
+  [[nodiscard]] bool contains(const IntervalDomain&) const noexcept;
+  [[nodiscard]] bool contains(const SetDomain&) const noexcept;
+  [[nodiscard]] bool contains(const SearchDomain&) const noexcept;
   [[nodiscard]] bool isInterval() const noexcept override;
   [[nodiscard]] Iterator begin() const override;
   [[nodiscard]] Iterator end() const override;
@@ -269,6 +302,8 @@ class SearchDomain : public Domain {
   void intersect(const SetDomain& other);
   void intersect(const SearchDomain& other);
 
+  [[nodiscard]] bool isDisjoint(Int lb, Int ub) const override;
+  [[nodiscard]] bool isDisjoint(const SortedUniqueVector&) const override;
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;
   [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
   [[nodiscard]] bool isDisjoint(const SearchDomain&) const;
