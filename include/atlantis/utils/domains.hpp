@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "atlantis/types.hpp"
+#include "atlantis/sortedUniqueVector.hpp"
 
 namespace atlantis {
 
@@ -150,6 +151,7 @@ class IntervalDomain : public Domain {
 
 class SetDomain : public Domain {
   std::vector<Int> _values;
+  void intersect(const std::vector<Int>&);
 
  public:
   explicit SetDomain(std::vector<Int>&&);
@@ -173,7 +175,7 @@ class SetDomain : public Domain {
       Int lb, Int ub) const override;
 
   void remove(Int value);
-  void remove(const std::vector<Int>& values);
+  void remove(const SortedUniqueVector& values);
 
   /**
    * @brief removes all values that are strictly less than the given value.
@@ -194,7 +196,8 @@ class SetDomain : public Domain {
    * @brief removes all values in the domain, except the values in the given
    * vector.
    */
-  void intersect(const std::vector<Int>&);
+  void intersect(const SortedUniqueVector&);
+  void intersect(const SetDomain&);
 
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;
   [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
@@ -208,6 +211,7 @@ class SetDomain : public Domain {
 
 class SearchDomain : public Domain {
   std::variant<IntervalDomain, SetDomain> _domain;
+  void intersect(const std::vector<Int>&);
 
  public:
   explicit SearchDomain(std::vector<Int>&&);
@@ -254,16 +258,15 @@ class SearchDomain : public Domain {
    *
    * @param values the values to remove from the domain.
    */
-  void remove(const std::vector<Int>& values);
+  void remove(const SortedUniqueVector& values);
 
   /**
    * @brief removes all values in the domain, except the values in the given
    * vector.
    */
-  void intersect(const std::vector<Int>&);
-
+  void intersect(const SortedUniqueVector&);
   void intersect(Int lb, Int ub);
-
+  void intersect(const SetDomain& other);
   void intersect(const SearchDomain& other);
 
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;

@@ -198,7 +198,8 @@ SetDomain::SetDomain(std::vector<Int>&& values) : _values(std::move(values)) {
     throw InconsistencyException("SetDomain::SetDomain: empty domain");
   }
   std::ranges::sort(_values.begin(), _values.end());
-  _values.erase(std::ranges::unique(_values).begin(), _values.end());
+  const auto [first, last] = std::ranges::unique(_values);
+  _values.erase(first, last);
 }
 
 SetDomain::SetDomain(const std::vector<Int>& values)
@@ -307,17 +308,15 @@ void SetDomain::removeAbove(Int newUpperBound) {
   _values.erase(_values.begin() + offset, _values.end());
 }
 
-void SetDomain::remove(const std::vector<Int>& values) {
-  std::vector<Int> cpy(values);
-  std::ranges::sort(cpy.begin(), cpy.end());
+void SetDomain::remove(const SortedUniqueVector& values) {
 
   size_t i = 0;
   Int j = 0;
-  while (i < cpy.size() && j < static_cast<Int>(_values.size())) {
-    if (cpy[i] > _values[j]) {
+  while (i < (*values).size() && j < static_cast<Int>(_values.size())) {
+    if ((*values)[i] > _values[j]) {
       ++j;
     } else {
-      if (cpy[i] == _values[j]) {
+      if ((*values)[i] == _values[j]) {
         _values.erase(_values.begin() + j);
       }
       ++i;
@@ -348,19 +347,25 @@ bool SetDomain::isDisjoint(const SetDomain& other) const {
 }
 
 void SetDomain::intersect(const std::vector<Int>& otherVals) {
-  std::vector<Int> cpy(otherVals);
-  std::ranges::sort(cpy.begin(), cpy.end());
-  cpy.erase(std::ranges::unique(cpy).begin(), cpy.end());
-
+  assert(std::ranges::adjacent_find(otherVals, std::greater_equal<>()) == otherVals.end());
   std::vector<Int> newValues;
   newValues.reserve(std::min(_values.size(), otherVals.size()));
 
-  std::ranges::set_intersection(_values, cpy, std::back_inserter(newValues));
+  std::ranges::set_intersection(_values, otherVals, std::back_inserter(newValues));
 
   _values = std::move(newValues);
   if (_values.empty()) {
     throw InconsistencyException("SetDomain::intersect: Empty domain");
   }
+}
+
+
+void SetDomain::intersect(const SortedUniqueVector& otherVals) {
+  intersect(*otherVals);
+}
+
+void SetDomain::intersect(const SetDomain& otherVals) {
+  intersect(otherVals._values);
 }
 
 void SetDomain::fix(Int value) {
@@ -516,38 +521,30 @@ void SearchDomain::removeAbove(Int newUpperBound) {
   std::get<IntervalDomain>(_domain).setUpperBound(newUpperBound);
 }
 
-void SearchDomain::remove(const std::vector<Int>& values) {
+void SearchDomain::remove(const SortedUniqueVector& values) {
   if (std::holds_alternative<SetDomain>(_domain)) {
     // Remove the value from the set domain:
     return std::get<SetDomain>(_domain).remove(values);
   }
   assert(std::holds_alternative<IntervalDomain>(_domain));
-  std::vector<Int> cpy(values);
-  std::ranges::sort(cpy.begin(), cpy.end());
-  for (const Int value : cpy) {
+  for (const Int value : *values) {
     remove(value);
   }
 }
 
 void SearchDomain::intersect(const std::vector<Int>& values) {
-  if (std::holds_alternative<SetDomain>(_domain)) {
-    // Remove the values from the set domain:
-    return std::get<SetDomain>(_domain).intersect(values);
-  }
+  assert(std::ranges::adjacent_find(values, std::greater_equal<>()) == values.end());
   assert(std::holds_alternative<IntervalDomain>(_domain));
-  std::vector<Int> cpy(values);
-  std::ranges::sort(cpy.begin(), cpy.end());
-  cpy.erase(std::ranges::unique(cpy).begin(), cpy.end());
-  if (sortedVectorIsInterval(cpy)) {
-    std::get<IntervalDomain>(_domain).intersect(cpy.front(), cpy.back());
+  if (sortedVectorIsInterval(values)) {
+    std::get<IntervalDomain>(_domain).intersect((values).front(), (values).back());
     return;
   }
   Int begin = 0;
-  Int end = static_cast<Int>(cpy.size()) - 1;
-  while (begin < end && cpy[begin] < lowerBound()) {
+  Int end = static_cast<Int>(values.size()) - 1;
+  while (begin < end && values[begin] < lowerBound()) {
     ++begin;
   }
-  while (end >= 0 && upperBound() < cpy[end]) {
+  while (end >= 0 && upperBound() < values[end]) {
     --end;
   }
   if (begin > end) {
@@ -555,9 +552,18 @@ void SearchDomain::intersect(const std::vector<Int>& values) {
   }
   std::vector<Int> newDomain;
   newDomain.reserve(end - begin + 1);
-  std::copy(cpy.begin() + begin, cpy.begin() + end + 1,
+  std::copy(values.begin() + begin, values.begin() + end + 1,
             std::back_inserter(newDomain));
   _domain = SetDomain(std::move(newDomain));
+}
+
+
+void SearchDomain::intersect(const SortedUniqueVector& values) {
+  if (std::holds_alternative<SetDomain>(_domain)) {
+    // Remove the values from the set domain:
+    return std::get<SetDomain>(_domain).intersect(values);
+  }
+  intersect(*values);
 }
 
 void SearchDomain::intersect(Int lb, Int ub) {
@@ -565,9 +571,16 @@ void SearchDomain::intersect(Int lb, Int ub) {
   removeAbove(ub);
 }
 
+void SearchDomain::intersect(const SetDomain& other) {
+  if (std::holds_alternative<SetDomain>(_domain)) {
+    return std::get<SetDomain>(_domain).intersect(other);
+  }
+  intersect(other.values());
+}
+
 void SearchDomain::intersect(const SearchDomain& other) {
   if (std::holds_alternative<SetDomain>(other._domain)) {
-    intersect(std::get<SetDomain>(other._domain).values());
+    intersect(std::get<SetDomain>(other._domain));
     return;
   }
   assert(std::holds_alternative<IntervalDomain>(other._domain));

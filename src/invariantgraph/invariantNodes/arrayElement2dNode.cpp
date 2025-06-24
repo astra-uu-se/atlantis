@@ -94,12 +94,12 @@ void ArrayElement2dNode::updateState() {
       }
     }
   }
-  std::vector<Int> newRowDom(rowIndices.begin(), rowIndices.end());
-  std::vector<Int> newColDom(colIndices.begin(), colIndices.end());
+  const SortedUniqueVector newRowDom(std::vector<Int>(rowIndices.begin(), rowIndices.end()));
+  const SortedUniqueVector newColDom(std::vector<Int>(colIndices.begin(), colIndices.end()));
   rowNode.domain()->intersect(newRowDom);
   colNode.domain()->intersect(newColDom);
   if (outputNode.isIntVar()) {
-    std::vector<Int> newOutDom(outputVals.begin(), outputVals.end());
+    const SortedUniqueVector newOutDom(std::vector<Int>(outputVals.begin(), outputVals.end()));
     outputNode.domain()->intersect(newOutDom);
   } else if (outputVals.empty()) {
     throw InconsistencyException(

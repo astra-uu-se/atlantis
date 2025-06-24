@@ -72,7 +72,7 @@ void ArrayElementNode::updateState() {
         valsToRemove.emplace_back(index);
       }
     }
-    idxNode.domain()->remove(valsToRemove);
+    idxNode.domain()->remove(SortedUniqueVector(std::move(valsToRemove)));
     setState(InvariantNodeState::SUBSUMED);
     return;
   }

@@ -70,9 +70,10 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
       Int lb = std::numeric_limits<Int>::max();
       Int ub = std::numeric_limits<Int>::max();
       for (const auto& row : parMatrix) {
-        const auto [mn, mx] = std::minmax(row.begin(), row.end());
-        lb = std::min(lb, *mn);
-        ub = std::max(ub, *mx);
+        const Int mn = std::ranges::min(row);
+        const Int mx = std::ranges::max(row);
+        lb = std::min(lb, mn);
+        ub = std::max(ub, mx);
       }
 
       retrieveIntVarNode(lb, ub, outputVar);

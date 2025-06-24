@@ -13,6 +13,7 @@
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/search/searchVariable.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/sortedUniqueVector.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -253,17 +254,17 @@ void VarNode::removeValuesAbove(Int newUpperBound) {
   return _domain->removeAbove(newUpperBound);
 }
 
-void VarNode::removeValues(const std::vector<Int>& values) {
+void VarNode::removeValues(const SortedUniqueVector& values) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  if (!values.empty()) {
+  if (!(*values).empty()) {
     return _domain->remove(values);
   }
 }
 
-void VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
+void VarNode::removeAllValuesExcept(const SortedUniqueVector& values) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");

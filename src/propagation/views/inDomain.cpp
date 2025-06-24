@@ -36,6 +36,7 @@ InDomain::InDomain(SolverBase& solver, VarViewId parentId,
 }
 
 Int InDomain::compute(const Int val) const {
+  assert(!_domain.empty());
   if (val < _domain.front().lowerBound) {
     return _domain.front().lowerBound - val;
   }

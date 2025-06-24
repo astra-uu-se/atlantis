@@ -1,5 +1,6 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/setInNode.hpp"
 
+#include <boost/xpressive/detail/core/access.hpp>
 #include <utility>
 
 #include "../parseHelper.hpp"
@@ -9,17 +10,26 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/inDomain.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
+std::vector<Int> sortDistinct(std::vector<Int>&& values) {
+  std::ranges::sort(values);
+  const auto [first, last] = std::ranges::unique(values);
+  values.erase(first, last);
+  return values;
+}
+
 SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
                      std::vector<Int>&& values, VarNodeId r)
-    : ViolationInvariantNode(graph, {input}, r), _values(std::move(values)) {}
+    : ViolationInvariantNode(graph, {input}, r), _values(sortDistinct(std::move(values))) {}
 
 SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
                      std::vector<Int>&& values, bool shouldHold)
     : ViolationInvariantNode(graph, {input}, shouldHold),
-      _values(std::move(values)) {}
+      _values( sortDistinct(std::move(values))) {
+}
 
 void SetInNode::init(InvariantNodeId id) {
   ViolationInvariantNode::init(id);
@@ -33,14 +43,38 @@ void SetInNode::init(InvariantNodeId id) {
       }));
 }
 
+void SetInNode::updateState() {
+  ViolationInvariantNode::updateState();
+  if ((*_values).empty()) {
+    if (isReified()) {
+      fixReified(false);
+    } else if (shouldHold()) {
+      throw FznException("SetInNode::updateState: empty set");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (isReified()) {
+    return;
+  }
+  if (shouldHold()) {
+    invariantGraph().varNode(staticInputVarNodeIds().front()).domain()->intersect(_values);
+  } else {
+    invariantGraph().varNode(staticInputVarNodeIds().front()).removeValues(_values);
+  }
+  setState(InvariantNodeState::SUBSUMED);
+}
+
+
+
 void SetInNode::registerOutputVars() {
   if (violationVarId() == propagation::NULL_ID) {
     const propagation::VarViewId input =
         invariantGraph().varId(staticInputVarNodeIds().front());
     std::vector<DomainEntry> domainEntries;
-    domainEntries.reserve(_values.size());
+    domainEntries.reserve((*_values).size());
     std::ranges::transform(
-        _values.begin(), _values.end(), std::back_inserter(domainEntries),
+        *_values, std::back_inserter(domainEntries),
         [](const auto& value) { return DomainEntry(value, value); });
 
     if (!shouldHold()) {

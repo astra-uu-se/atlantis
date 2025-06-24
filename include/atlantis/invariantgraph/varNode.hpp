@@ -9,6 +9,9 @@
 #include "atlantis/propagation/types.hpp"
 
 namespace atlantis {
+class SortedUniqueVector;
+}
+namespace atlantis {
 class SearchDomain;  // forward declaration
 }
 
@@ -71,9 +74,9 @@ class VarNode {
 
   void removeValuesAbove(Int);
 
-  void removeValues(const std::vector<Int>&);
+  void removeValues(const SortedUniqueVector&);
 
-  void removeAllValuesExcept(const std::vector<Int>&);
+  void removeAllValuesExcept(const SortedUniqueVector&);
 
   void removeValue(bool);
 
