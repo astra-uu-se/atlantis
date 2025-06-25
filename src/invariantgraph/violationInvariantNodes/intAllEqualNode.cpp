@@ -106,7 +106,7 @@ void IntAllEqualNode::updateState() {
     for (const auto& vId : staticInputVarNodeIds()) {
       const VarNode& vNode = invariantGraphConst().varNodeConst(vId);
       overlapLb = std::max(overlapLb, vNode.lowerBound());
-      overlapUb = std::max(overlapUb, vNode.upperBound());
+      overlapUb = std::min(overlapUb, vNode.upperBound());
     }
     if (overlapLb > overlapUb) {
       if (isReified()) {

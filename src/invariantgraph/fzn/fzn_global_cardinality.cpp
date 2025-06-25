@@ -5,6 +5,7 @@
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/utils/domains.hpp"
@@ -40,6 +41,11 @@ bool fzn_global_cardinality_reif(
     const std::shared_ptr<fznparser::IntVarArray>& counts,
     const fznparser::BoolArg& reified) {
   checkInputs(cover, counts);
+  if (cover.empty()) {
+    const auto r = graph.retrieveVarNode(reified);
+    graph.varNode(r).fixToValue(bool{true});
+    return true;
+  }
   if (reified.isFixed() && reified.toParameter()) {
     return fzn_global_cardinality(graph, inputs, std::move(cover), counts);
   }

@@ -3,6 +3,7 @@
 #include <rapidcheck/gen/Numeric.h>
 #include <rapidcheck/gtest.h>
 
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -101,13 +102,33 @@ public:
     if (cover.empty()) {
       return isFixedTo(reified, true);
     }
+
+    if (isFixedTo(reified, false)) {
+      std::unordered_map<Int, std::pair<Int, Int>> lowUp;
+      for (size_t i = 0; i < cover.size(); ++i) {
+        const Int cv = intVal(cover.at(i));
+        const Int lv = intVal(low.at(i));
+        const Int uv = intVal(up.at(i));
+        if (lowUp.contains(cv)) {
+          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),  std::min(lowUp.at(cv).second, uv)};
+        } else {
+          lowUp.emplace(cv, std::pair<Int,Int>{lv, uv});
+        }
+      }
+      for (const auto& [lv, uv] : std::views::values(lowUp)) {
+        if (uv < 0 || lv > uv) {
+          return true;
+        }
+      }
+    }
+
     const auto bounds = getBounds();
     bool alwaysSat = true;
     for (size_t i = 0; alwaysSat && i < bounds.size(); ++i) {
       const auto [lb, ub] = bounds.at(i);
       const Int lv = intVal(low.at(i));
       const Int uv = intVal(up.at(i));
-      if (lv <= lb && uv <= ub) {
+      if (lv <= lb && ub <= uv) {
         alwaysSat &= isFixedTo(reified, true);
       } else {
         const bool alwaysUnsat = ub < lv || uv < lb;
@@ -140,12 +161,31 @@ public:
     if (cover.empty()) {
       return isFixedTo(reified, false);
     }
+    if (isFixedTo(reified, true)) {
+      std::unordered_map<Int, std::pair<Int, Int>> lowUp;
+      for (size_t i = 0; i < cover.size(); ++i) {
+        const Int cv = intVal(cover.at(i));
+        const Int lv = intVal(low.at(i));
+        const Int uv = intVal(up.at(i));
+        if (lowUp.contains(cv)) {
+          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),  std::min(lowUp.at(cv).second, uv)};
+        } else {
+          lowUp.emplace(cv, std::pair<Int,Int>{lv, uv});
+        }
+      }
+      for (const auto& [lv, uv] : std::views::values(lowUp)) {
+        if (uv < 0 || lv > uv) {
+          return true;
+        }
+      }
+    }
+
     const auto bounds = getBounds();
     for (size_t i = 0; i < bounds.size(); ++i) {
       const Int lv = intVal(low.at(i));
       const Int uv = intVal(up.at(i));
       const auto [lb, ub] = bounds.at(i);
-      if (lv <= lb && uv <= ub) {
+      if (lv <= lb && ub <= uv) {
         if (isFixedTo(reified, false)) {
           return true;
         }

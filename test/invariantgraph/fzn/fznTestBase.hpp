@@ -750,9 +750,10 @@ class FznTestBase : public ::testing::Test {
   }
 
   void rapidCheck(bool reachesFixpoint = true) {
-    generate();
-    const bool neverSat = neverSatisfied();
+    bool neverSat = false;
     try {
+      generate();
+      neverSat = neverSatisfied();
       _invariantGraph->construct();
       _neighborhood =
           std::make_shared<search::neighborhoods::NeighborhoodCombinator>(

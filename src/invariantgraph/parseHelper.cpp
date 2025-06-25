@@ -116,4 +116,16 @@ std::vector<Int> toIntVector(const std::vector<bool> &argument) {
   return ints;
 }
 
+bool removeFirstOccurrence(std::vector<size_t>& vector, size_t val) {
+  for (size_t i = 0; i < vector.size(); i++) {
+    if (vector[i] == val) {
+      vector[i] = vector.back();
+      vector.pop_back();
+      return true;
+    }
+  }
+  return false;
+}
+
+
 }  // namespace atlantis::invariantgraph

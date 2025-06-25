@@ -25,6 +25,10 @@ class GlobalCardinalityLowUpNode : public ViolationInvariantNode {
                                       bool shouldHold = true);
 
   void init(InvariantNodeId) override;
+  void verifyCover();
+  void propagate();
+
+  void updateState() override;
 
   void registerOutputVars() override;
 

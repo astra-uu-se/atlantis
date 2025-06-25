@@ -118,7 +118,7 @@ class fzn_global_cardinalityTest : public FznTestBase {
       } else {
         const bool alwaysUnsat =
             ub < lowerBound(outputs.at(i)) || upperBound(outputs.at(i)) < lb;
-        alwaysSat &= isFixedTo(reified, false) ? !alwaysUnsat : false;
+        alwaysSat &= isFixedTo(reified, false) ? alwaysUnsat : false;
       }
     }
     if (alwaysSat) {

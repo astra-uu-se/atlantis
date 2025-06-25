@@ -17,16 +17,6 @@
 #include "atlantis/propagation/views/intOffsetView.hpp"
 
 namespace atlantis::invariantgraph {
-bool removeFirstOccurrence(std::vector<size_t>& vector, size_t val) {
-  for (size_t i = 0; i < vector.size(); i++) {
-    if (vector[i] == val) {
-      vector[i] = vector.back();
-      vector.pop_back();
-      return true;
-    }
-  }
-  return false;
-}
 
 GlobalCardinalityNode::GlobalCardinalityNode(InvariantGraph& graph,
                                              std::vector<VarNodeId>&& inputs,
@@ -35,7 +25,12 @@ GlobalCardinalityNode::GlobalCardinalityNode(InvariantGraph& graph,
     : InvariantNode(graph, std::move(counts), std::move(inputs)),
       _cover(std::move(cover)),
       _countOffsets(_cover.size(), 0),
-      _intermediate(_cover.size(), propagation::NULL_ID) {}
+      _intermediate(_cover.size(), propagation::NULL_ID) {
+  assert(_cover.size() == outputVarNodeIds().size());
+  if (_cover.empty()) {
+    setState(InvariantNodeState::SUBSUMED);
+  }
+}
 
 void GlobalCardinalityNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
