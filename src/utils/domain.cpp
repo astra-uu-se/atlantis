@@ -283,11 +283,38 @@ void IntervalDomain::fix(Int value) {
   _ub = value;
 }
 
+bool IntervalDomain::isEqual(Int lb, Int ub) const {
+  assert(lb <= ub);
+  return lb == _lb && ub == _ub;
+}
+
+bool IntervalDomain::operator==(const SortedUniqueVector& vals) const {
+  if ((*vals).empty() || !vals.isInterval()) {
+    return false;
+  }
+  return isEqual((*vals).front(), (*vals).back());
+}
+
 bool IntervalDomain::operator==(const IntervalDomain& other) const {
-  return other._lb == _lb && other._ub == _ub;
+  return isEqual(other._lb, other._ub);
+}
+
+bool IntervalDomain::operator==(const SetDomain& other) const {
+  if (other.isInterval()) {
+    return false;
+  }
+  return isEqual(other.lowerBound(), other.upperBound());
+}
+
+bool IntervalDomain::operator!=(const SortedUniqueVector& vals) const {
+  return !(*this == vals);
 }
 
 bool IntervalDomain::operator!=(const IntervalDomain& other) const {
+  return !(*this == other);
+}
+
+bool IntervalDomain::operator!=(const SetDomain& other) const {
   return !(*this == other);
 }
 
@@ -298,6 +325,7 @@ SetDomain::SetDomain(std::vector<Int>&& values) : _values(std::move(values)) {
   std::ranges::sort(_values.begin(), _values.end());
   const auto [first, last] = std::ranges::unique(_values);
   _values.erase(first, last);
+  assert(!_values.empty());
 }
 
 SetDomain::SetDomain(const std::vector<Int>& values)
@@ -411,6 +439,7 @@ void SetDomain::remove(Int value) {
   if (it != _values.end()) {
     _values.erase(it);
   }
+  assert(!_values.empty());
 }
 
 void SetDomain::removeBelow(Int newLowerBound) {
@@ -420,11 +449,11 @@ void SetDomain::removeBelow(Int newLowerBound) {
   if (upperBound() < newLowerBound) {
     throw InconsistencyException("SetDomain::removeBelow: Empty domain");
   }
-  Int offset = 0;
-  for (size_t i = 0; i < _values.size() && _values[i] < newLowerBound; ++i) {
-    ++offset;
-  }
-  _values.erase(_values.begin(), _values.begin() + offset);
+  const auto iter = std::ranges::find_if(_values, [&](Int value) {
+    return value >= newLowerBound;
+  });
+  _values.erase(_values.begin(), iter);
+  assert(!_values.empty());
 }
 
 void SetDomain::removeAbove(Int newUpperBound) {
@@ -434,12 +463,16 @@ void SetDomain::removeAbove(Int newUpperBound) {
   if (newUpperBound < lowerBound()) {
     throw InconsistencyException("SetDomain::removeAbove: Empty domain");
   }
-  Int offset = static_cast<Int>(_values.size()) - 1;
-  for (Int i = static_cast<Int>(_values.size()) - 1;
-       0 <= i && newUpperBound < _values[i]; --i) {
+  Int offset = static_cast<Int>(_values.size());
+  while (0 <= offset) {
+    if (_values[offset] <= newUpperBound) {
+      offset += _values[offset] == newUpperBound ? 1 : 0;
+      break;
+    }
     --offset;
   }
   _values.erase(_values.begin() + offset, _values.end());
+  assert(!_values.empty());
 }
 
 void SetDomain::remove(const SortedUniqueVector& values) {
@@ -534,9 +567,34 @@ void SetDomain::fix(Int value) {
   _values = std::vector<Int>{value};
 }
 
+bool SetDomain::isEqual(Int lb, Int ub) const {
+  assert(lb <= ub);
+  if (!isInterval()) {
+    return false;
+  }
+  return lowerBound() == lb && upperBound() == ub;
+}
+
+bool SetDomain::operator==(const SortedUniqueVector& vals) const {
+  return (*vals) == _values;
+}
+
+bool SetDomain::operator==(const IntervalDomain& other) const {
+  return isEqual(other.lowerBound(), other.upperBound());
+}
+
+
 bool SetDomain::operator==(const SetDomain& other) const {
   return _values == other._values;
 }
+
+bool SetDomain::operator!=(const SortedUniqueVector& vals) const { return !(*this == vals); }
+
+
+bool SetDomain::operator!=(const IntervalDomain& other) const {
+  return !(*this == other);
+}
+
 
 bool SetDomain::operator!=(const SetDomain& other) const {
   return !(*this == other);
@@ -839,30 +897,49 @@ void SearchDomain::fix(Int value) {
   std::get<IntervalDomain>(_domain).fix(value);
 }
 
+bool SearchDomain::isEqual(Int lb, Int ub) const {
+  return std::visit<bool>(
+      [&](const auto& dom) { return dom.isEqual(lb, ub); }, _domain);
+}
+
+bool SearchDomain::operator==(const SortedUniqueVector& vals) const {
+  return std::visit<bool>(
+      [&](const auto& dom) { return dom == vals; }, _domain);
+}
+
+bool SearchDomain::operator==(const IntervalDomain& other) const {
+  return std::visit<bool>(
+      [&](const auto& dom) { return dom == other; }, _domain);
+}
+
+bool SearchDomain::operator==(const SetDomain& other) const {
+  return std::visit<bool>(
+      [&](const auto& dom) { return dom == other; }, _domain);
+}
+
 bool SearchDomain::operator==(const SearchDomain& other) const {
-  if (std::holds_alternative<IntervalDomain>(_domain) &&
-      std::holds_alternative<IntervalDomain>(other._domain)) {
-    return std::get<IntervalDomain>(_domain) ==
-           std::get<IntervalDomain>(other._domain);
-  }
-  if (std::holds_alternative<SetDomain>(_domain) &&
-      std::holds_alternative<SetDomain>(other._domain)) {
-    return std::get<SetDomain>(_domain) == std::get<SetDomain>(other._domain);
-  }
-  return false;
+  return std::visit<bool>(
+     [&](const auto& o) { return *this == o; }, other._domain);
+}
+
+bool SearchDomain::operator!=(const SortedUniqueVector& vals) const {
+  return std::visit<bool>(
+      [&](const auto& dom) { return dom != vals; }, _domain);
+}
+
+bool SearchDomain::operator!=(const IntervalDomain& other) const {
+  return std::visit<bool>(
+      [&](const auto& dom) { return dom != other; }, _domain);
+}
+
+bool SearchDomain::operator!=(const SetDomain& other) const {
+  return std::visit<bool>(
+      [&](const auto& dom) { return dom != other; }, _domain);
 }
 
 bool SearchDomain::operator!=(const SearchDomain& other) const {
-  if (std::holds_alternative<IntervalDomain>(_domain) &&
-      std::holds_alternative<IntervalDomain>(other._domain)) {
-    return std::get<IntervalDomain>(_domain) !=
-           std::get<IntervalDomain>(other._domain);
-  }
-  if (std::holds_alternative<SetDomain>(_domain) &&
-      std::holds_alternative<SetDomain>(other._domain)) {
-    return std::get<SetDomain>(_domain) != std::get<SetDomain>(other._domain);
-  }
-  return true;
+  return std::visit<bool>(
+     [&](const auto& o) { return !(*this == o); }, other._domain);
 }
 
 }  // namespace atlantis

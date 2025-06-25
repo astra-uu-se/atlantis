@@ -112,6 +112,12 @@ class Domain {
 
   [[nodiscard]] virtual bool isContained(const SortedUniqueVector&) const = 0;
 
+  [[nodiscard]] virtual bool isEqual(Int lb, Int ub) const = 0;
+
+  [[nodiscard]] virtual bool operator==(const SortedUniqueVector&) const = 0;
+
+  [[nodiscard]] virtual bool operator!=(const SortedUniqueVector&) const = 0;
+
   [[nodiscard]] virtual Int at(size_t) const = 0;
 
   [[nodiscard]] virtual Int operator[](size_t) const = 0;
@@ -173,9 +179,14 @@ class IntervalDomain : public Domain {
   [[nodiscard]] bool isContained(const SetDomain&) const;
   [[nodiscard]] bool isContained(const IntervalDomain&) const;
 
-  bool operator==(const IntervalDomain&) const;
+  [[nodiscard]] bool isEqual(Int lb, Int ub) const override;
+  [[nodiscard]] bool operator==(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator==(const IntervalDomain&) const;
+  [[nodiscard]] bool operator==(const SetDomain&) const;
 
-  bool operator!=(const IntervalDomain&) const;
+  [[nodiscard]] bool operator!=(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator!=(const IntervalDomain&) const;
+  [[nodiscard]] bool operator!=(const SetDomain&) const;
 };
 
 class SetDomain : public Domain {
@@ -246,9 +257,14 @@ class SetDomain : public Domain {
 
   void fix(Int value) override;
 
-  bool operator==(const SetDomain&) const;
+  [[nodiscard]] bool isEqual(Int lb, Int ub) const override;
+  [[nodiscard]] bool operator==(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator==(const IntervalDomain&) const;
+  [[nodiscard]] bool operator==(const SetDomain&) const;
 
-  bool operator!=(const SetDomain&) const;
+  [[nodiscard]] bool operator!=(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator!=(const IntervalDomain&) const;
+  [[nodiscard]] bool operator!=(const SetDomain&) const;
 };
 
 class SearchDomain : public Domain {
@@ -330,9 +346,16 @@ class SearchDomain : public Domain {
 
   void fix(Int value) override;
 
-  bool operator==(const SearchDomain&) const;
+  [[nodiscard]] bool isEqual(Int lb, Int ub) const override;
+  [[nodiscard]] bool operator==(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator==(const IntervalDomain&) const;
+  [[nodiscard]] bool operator==(const SetDomain&) const;
+  [[nodiscard]] bool operator==(const SearchDomain&) const;
 
-  bool operator!=(const SearchDomain&) const;
+  [[nodiscard]] bool operator!=(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator!=(const IntervalDomain&) const;
+  [[nodiscard]] bool operator!=(const SetDomain&) const;
+  [[nodiscard]] bool operator!=(const SearchDomain&) const;
 };
 
 }  // namespace atlantis
