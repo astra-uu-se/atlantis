@@ -48,6 +48,9 @@ class int_divTest : public FznTestBase {
     if (isFixedTo(quotient, Int{0})) {
       return isFixedTo(numerator, Int{0});
     }
+    if (isFixedTo(denominator, Int{1})) {
+      return varNodeId(numerator) == varNodeId(quotient);
+    }
     if (isFixed(numerator) && isFixed(denominator) && isFixed(quotient)) {
       return intVal(numerator) / intVal(denominator) == intVal(quotient);
     }
@@ -71,12 +74,9 @@ class int_divTest : public FznTestBase {
   }
 
   [[nodiscard]] bool canMove() const override {
-    for (const auto vId : std::array{varId(numerator), varId(denominator)}) {
-      if (vId != propagation::NULL_ID) {
-        return true;
-      }
-    }
-    return false;
+    return std::ranges::any_of(std::array{varId(numerator), varId(denominator)}, [&](const auto vId) {
+      return vId != propagation::NULL_ID;
+    });
   }
 
   void move(bool committedValue) override {
