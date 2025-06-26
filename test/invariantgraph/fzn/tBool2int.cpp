@@ -20,7 +20,7 @@ class bool2intTest : public FznTestBase {
  public:
   std::string boolVar{"boolVar"};
   std::string intVar{"intVar"};
-  bool boolDefinesInt;
+  bool boolDefinesInt{true};
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     const bool expected = boolVal(boolVar, committedValue);
