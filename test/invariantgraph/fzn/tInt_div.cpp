@@ -31,9 +31,9 @@ class int_divTest : public FznTestBase {
   }
 
   void generate() override {
-    addIntArg(IntArgState::VAR, numerator);
-    addIntArg(IntArgState::FIXED, 1, 1, denominator);
-    addIntArg(IntArgState::VAR, quotient);
+    addIntArg(numerator);
+    addIntArg(denominator);
+    addIntArg(quotient);
     constraintIdentifier = "int_div";
     generateConstraint();
   }
