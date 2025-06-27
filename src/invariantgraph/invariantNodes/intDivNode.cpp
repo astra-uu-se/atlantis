@@ -65,7 +65,7 @@ void IntDivNode::updateState() {
       for (const auto& [q, d] : arr) {
         Int prod;
         if (__builtin_smull_overflow(q, d, &prod)) {
-          if (q >= 0 == d >= 0) {
+          if ((q >= 0) == (d >= 0)) {
             newUb = std::numeric_limits<Int>::max();
           } else {
             newLb = std::numeric_limits<Int>::min();
@@ -198,9 +198,9 @@ bool IntDivNode::canBeReplaced() const {
   const auto& dNode = invariantGraphConst().varNodeConst(denominator());
   const auto& qNode = invariantGraphConst().varNodeConst(quotient());
   return state() == InvariantNodeState::ACTIVE &&
-             (dNode.isFixed() && dNode.lowerBound() == 1) ||
-         ((!nNode.isFixed() || !dNode.isFixed()) && qNode.isFixed() &&
-          qNode.lowerBound() == 0);
+         ((dNode.isFixed() && dNode.lowerBound() == 1) ||
+          ((!nNode.isFixed() || !dNode.isFixed()) && qNode.isFixed() &&
+           qNode.lowerBound() == 0));
 }
 
 bool IntDivNode::replace() {

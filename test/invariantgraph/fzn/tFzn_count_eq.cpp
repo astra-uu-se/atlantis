@@ -122,19 +122,19 @@ class fzn_count_eqTest : public FznTestBase {
   }
 
   void generate() override {
-    const size_t size = true ? 0 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t size = *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
     addIntVarArray(inputs);
-    addIntArg(IntArgState::VAR, needle);
-    addIntArg(IntArgState::VAR, output);
+    addIntArg(needle);
+    addIntArg(output);
 
-    const bool isReified = true || *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_eq_reif" : "fzn_count_eq";
     if (isReified) {
-      addBoolArg(BoolArgState::VAR, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }
