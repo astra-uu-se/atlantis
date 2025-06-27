@@ -9,8 +9,8 @@ class IntCountNode : public InvariantNode {
   Int _offset;
 
  public:
-  IntCountNode(InvariantGraph& graph,
-               std::vector<VarNodeId>&& vars, Int needle, VarNodeId count, Int offset = 0);
+  IntCountNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
+               VarNodeId count, Int offset = 0);
 
   void init(InvariantNodeId) override;
 

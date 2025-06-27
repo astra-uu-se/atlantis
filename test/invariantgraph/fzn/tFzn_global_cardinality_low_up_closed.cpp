@@ -20,7 +20,7 @@ using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
 class fzn_global_cardinality_low_up_closedTest : public FznTestBase {
-public:
+ public:
   std::vector<std::string> inputs{};
   std::vector<std::string> cover{};
   std::vector<std::string> low{};
@@ -51,7 +51,8 @@ public:
     return bounds;
   }
 
-  std::unordered_map<Int, std::vector<size_t>> valToIndices(bool committedValue) const {
+  std::unordered_map<Int, std::vector<size_t>> valToIndices(
+      bool committedValue) const {
     std::unordered_map<Int, std::vector<size_t>> vti;
     vti.reserve(cover.size());
     for (size_t i = 0; i < cover.size(); ++i) {
@@ -90,7 +91,8 @@ public:
     for (size_t i = 0; i < cover.size(); ++i) {
       const Int lv = intVal(low.at(i), committedValue);
       const Int uv = intVal(up.at(i), committedValue);
-      RC_LOG() << cover.at(i) << " = " << counts.at(i) << " [" << lv << " .. " << uv << ']' << std::endl;
+      RC_LOG() << cover.at(i) << " = " << counts.at(i) << " [" << lv << " .. "
+               << uv << ']' << std::endl;
       expected &= lv <= counts.at(i) && counts.at(i) <= uv;
     }
 
@@ -112,7 +114,8 @@ public:
       return false;
     }
     if (cover.empty()) {
-      return inputs.empty() ? isFixedTo(reified, true) : isFixedTo(reified, false);
+      return inputs.empty() ? isFixedTo(reified, true)
+                            : isFixedTo(reified, false);
     }
 
     if (isFixedTo(reified, false)) {
@@ -122,9 +125,10 @@ public:
         const Int lv = intVal(low.at(i));
         const Int uv = intVal(up.at(i));
         if (lowUp.contains(cv)) {
-          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),  std::min(lowUp.at(cv).second, uv)};
+          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),
+                          std::min(lowUp.at(cv).second, uv)};
         } else {
-          lowUp.emplace(cv, std::pair<Int,Int>{lv, uv});
+          lowUp.emplace(cv, std::pair<Int, Int>{lv, uv});
         }
       }
       for (const auto& [lv, uv] : std::views::values(lowUp)) {
@@ -143,9 +147,9 @@ public:
           }
         } else {
           const auto& dom = varNodeConst(input).constDomain();
-          const bool noOverlap = std::none_of(dom->begin(), dom->end(), [&](const Int v) {
-            return vti.contains(v);
-          });
+          const bool noOverlap =
+              std::none_of(dom->begin(), dom->end(),
+                           [&](const Int v) { return vti.contains(v); });
           if (noOverlap) {
             return true;
           }
@@ -190,7 +194,8 @@ public:
       return false;
     }
     if (cover.empty()) {
-      return inputs.empty() ? isFixedTo(reified, false) : isFixedTo(reified, true);
+      return inputs.empty() ? isFixedTo(reified, false)
+                            : isFixedTo(reified, true);
     }
     if (isFixedTo(reified, true)) {
       std::unordered_map<Int, std::pair<Int, Int>> lowUp;
@@ -199,9 +204,10 @@ public:
         const Int lv = intVal(low.at(i));
         const Int uv = intVal(up.at(i));
         if (lowUp.contains(cv)) {
-          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),  std::min(lowUp.at(cv).second, uv)};
+          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),
+                          std::min(lowUp.at(cv).second, uv)};
         } else {
-          lowUp.emplace(cv, std::pair<Int,Int>{lv, uv});
+          lowUp.emplace(cv, std::pair<Int, Int>{lv, uv});
         }
       }
       for (const auto& [lv, uv] : std::views::values(lowUp)) {
@@ -220,9 +226,9 @@ public:
           }
         } else {
           const auto& dom = varNodeConst(input).constDomain();
-          const bool noOverlap = std::none_of(dom->begin(), dom->end(), [&](const Int v) {
-            return vti.contains(v);
-          });
+          const bool noOverlap =
+              std::none_of(dom->begin(), dom->end(),
+                           [&](const Int v) { return vti.contains(v); });
           if (noOverlap) {
             return true;
           }
@@ -285,8 +291,9 @@ public:
     addIntVarArray(std::vector(up.size(), IntArgState::PAR), up, "up");
 
     const bool isReified = *rc::gen::arbitrary<bool>();
-    constraintIdentifier =
-        isReified ? "fzn_global_cardinality_low_up_closed_reif" : "fzn_global_cardinality_low_up_closed";
+    constraintIdentifier = isReified
+                               ? "fzn_global_cardinality_low_up_closed_reif"
+                               : "fzn_global_cardinality_low_up_closed";
     if (isReified) {
       addBoolArg(reified);
     } else {
@@ -318,7 +325,8 @@ public:
   }
 };
 
-RC_GTEST_FIXTURE_PROP(fzn_global_cardinality_low_up_closedTest, RapidCheck, ()) {
+RC_GTEST_FIXTURE_PROP(fzn_global_cardinality_low_up_closedTest, RapidCheck,
+                      ()) {
   rapidCheck(false);
 }
-}
+}  // namespace atlantis::testing

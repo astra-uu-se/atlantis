@@ -15,13 +15,9 @@
 
 namespace atlantis::invariantgraph {
 
-static Int div_ceil(Int n, Int d) {
-  return n / d + (n % d > 0 ? 1 : 0);
-}
+static Int div_ceil(Int n, Int d) { return n / d + (n % d > 0 ? 1 : 0); }
 
-static Int div_floor(Int n, Int d) {
-  return n / d - (n % d < 0 ? 1 : 0);
-}
+static Int div_floor(Int n, Int d) { return n / d - (n % d < 0 ? 1 : 0); }
 
 IntDivNode::IntDivNode(InvariantGraph& graph, VarNodeId numerator,
                        VarNodeId denominator, VarNodeId quotient)
@@ -52,16 +48,20 @@ void IntDivNode::updateState() {
     stack.pop();
     if (index == 0) {
       // numerator
-      const auto arr = std::array{
-        std::pair{qNode.lowerBound(), dNode.lowerBound()},
-        std::pair{qNode.lowerBound(),dNode.upperBound()},
-        std::pair{qNode.upperBound(), dNode.lowerBound()},
-        std::pair{qNode.upperBound(), dNode.upperBound()}};
+      const auto arr =
+          std::array{std::pair{qNode.lowerBound(), dNode.lowerBound()},
+                     std::pair{qNode.lowerBound(), dNode.upperBound()},
+                     std::pair{qNode.upperBound(), dNode.lowerBound()},
+                     std::pair{qNode.upperBound(), dNode.upperBound()}};
 
       const bool zeroInQ = qNode.inDomain(Int{0});
 
-      Int newLb = zeroInQ ? (std::min(dNode.lowerBound(), -dNode.upperBound()) + 1) : std::numeric_limits<Int>::max();
-      Int newUb = zeroInQ ? (std::max(-dNode.lowerBound(), dNode.upperBound()) - 1) : std::numeric_limits<Int>::min();
+      Int newLb = zeroInQ
+                      ? (std::min(dNode.lowerBound(), -dNode.upperBound()) + 1)
+                      : std::numeric_limits<Int>::max();
+      Int newUb = zeroInQ
+                      ? (std::max(-dNode.lowerBound(), dNode.upperBound()) - 1)
+                      : std::numeric_limits<Int>::min();
       for (const auto& [q, d] : arr) {
         Int prod;
         if (__builtin_smull_overflow(q, d, &prod)) {
@@ -92,18 +92,30 @@ void IntDivNode::updateState() {
       }
     } else if (index == 1 && !(qNode.isFixed() && qNode.lowerBound() == 0)) {
       // denominator
-      // the case where the quotient is fixed to 0 is handled below and in the replace method.
+      // the case where the quotient is fixed to 0 is handled below and in the
+      // replace method.
       const auto arr = std::array{
-        std::pair{nNode.lowerBound(), qNode.lowerBound() != 0 ? qNode.lowerBound() : qNode.domain()->at(1)},
-        std::pair{nNode.lowerBound(), qNode.upperBound() != 0 ? qNode.upperBound() : qNode.domain()->at(qNode.domain()->size() - 2)},
-        std::pair{nNode.upperBound(), qNode.lowerBound() != 0 ? qNode.lowerBound() : qNode.domain()->at(1)},
-        std::pair{nNode.upperBound(), qNode.upperBound() != 0 ? qNode.upperBound() : qNode.domain()->at(qNode.domain()->size() - 2)}
-      };
+          std::pair{nNode.lowerBound(), qNode.lowerBound() != 0
+                                            ? qNode.lowerBound()
+                                            : qNode.domain()->at(1)},
+          std::pair{nNode.lowerBound(),
+                    qNode.upperBound() != 0
+                        ? qNode.upperBound()
+                        : qNode.domain()->at(qNode.domain()->size() - 2)},
+          std::pair{nNode.upperBound(), qNode.lowerBound() != 0
+                                            ? qNode.lowerBound()
+                                            : qNode.domain()->at(1)},
+          std::pair{nNode.upperBound(),
+                    qNode.upperBound() != 0
+                        ? qNode.upperBound()
+                        : qNode.domain()->at(qNode.domain()->size() - 2)}};
       Int newLb = std::numeric_limits<Int>::max();
       Int newUb = std::numeric_limits<Int>::min();
       for (const auto& [n, d] : arr) {
-        newLb = std::ranges::min(std::array{newLb, div_floor(n, d), div_ceil(n, d)});
-        newUb = std::ranges::max(std::array{newUb, div_floor(n, d), div_ceil(n, d)});
+        newLb = std::ranges::min(
+            std::array{newLb, div_floor(n, d), div_ceil(n, d)});
+        newUb = std::ranges::max(
+            std::array{newUb, div_floor(n, d), div_ceil(n, d)});
       }
       const Int pLb = dNode.lowerBound();
       const Int pUb = dNode.upperBound();
@@ -122,17 +134,18 @@ void IntDivNode::updateState() {
     } else if (index == 2) {
       // quotient
       assert(!dNode.inDomain(Int{0}));
-      const auto arr = std::array{
-        std::pair{nNode.lowerBound(), dNode.lowerBound()},
-        std::pair{nNode.lowerBound(), dNode.upperBound()},
-        std::pair{nNode.upperBound(), dNode.lowerBound()},
-        std::pair{nNode.upperBound(), dNode.upperBound()}
-      };
+      const auto arr =
+          std::array{std::pair{nNode.lowerBound(), dNode.lowerBound()},
+                     std::pair{nNode.lowerBound(), dNode.upperBound()},
+                     std::pair{nNode.upperBound(), dNode.lowerBound()},
+                     std::pair{nNode.upperBound(), dNode.upperBound()}};
       Int newLb = std::numeric_limits<Int>::max();
       Int newUb = std::numeric_limits<Int>::min();
       for (const auto& [n, d] : arr) {
-        newLb = std::ranges::min(std::array{newLb, div_floor(n, d), div_ceil(n, d)});
-        newUb = std::ranges::max(std::array{newUb, div_floor(n, d), div_ceil(n, d)});
+        newLb = std::ranges::min(
+            std::array{newLb, div_floor(n, d), div_ceil(n, d)});
+        newUb = std::ranges::max(
+            std::array{newUb, div_floor(n, d), div_ceil(n, d)});
       }
       const Int pLb = qNode.lowerBound();
       const Int pUb = qNode.upperBound();
@@ -178,7 +191,6 @@ void IntDivNode::updateState() {
       return;
     }
   }
-
 }
 
 bool IntDivNode::canBeReplaced() const {
@@ -186,8 +198,9 @@ bool IntDivNode::canBeReplaced() const {
   const auto& dNode = invariantGraphConst().varNodeConst(denominator());
   const auto& qNode = invariantGraphConst().varNodeConst(quotient());
   return state() == InvariantNodeState::ACTIVE &&
-         (dNode.isFixed() && dNode.lowerBound() == 1) ||
-         ((!nNode.isFixed() || !dNode.isFixed()) && qNode.isFixed() && qNode.lowerBound() == 0);
+             (dNode.isFixed() && dNode.lowerBound() == 1) ||
+         ((!nNode.isFixed() || !dNode.isFixed()) && qNode.isFixed() &&
+          qNode.lowerBound() == 0);
 }
 
 bool IntDivNode::replace() {
@@ -201,37 +214,55 @@ bool IntDivNode::replace() {
   }
   auto& nNode = invariantGraph().varNode(numerator());
   const auto& qNode = invariantGraph().varNode(quotient());
-  assert((!nNode.isFixed() || !dNode.isFixed()) && qNode.isFixed() && qNode.lowerBound() == 0);
+  assert((!nNode.isFixed() || !dNode.isFixed()) && qNode.isFixed() &&
+         qNode.lowerBound() == 0);
   if (!nNode.isFixed() && !dNode.isFixed()) {
     if (nNode.lowerBound() >= 0 && dNode.lowerBound() >= 0) {
-      invariantGraph().addInvariantNode(std::make_shared<IntLtNode>(invariantGraph(), numerator(), denominator()));
+      invariantGraph().addInvariantNode(std::make_shared<IntLtNode>(
+          invariantGraph(), numerator(), denominator()));
       return true;
     }
     if (nNode.upperBound() <= 0 && dNode.upperBound() <= 0) {
-      invariantGraph().addInvariantNode(std::make_shared<IntLtNode>(invariantGraph(), denominator(), numerator()));
+      invariantGraph().addInvariantNode(std::make_shared<IntLtNode>(
+          invariantGraph(), denominator(), numerator()));
       return true;
     }
     if (nNode.lowerBound() >= 0) {
       assert(dNode.lowerBound() < 0);
-      const auto dAbs = invariantGraph().retrieveIntVarNode(std::make_shared<SearchDomain>(1, std::max(dNode.upperBound(), -dNode.lowerBound())));
-      invariantGraph().addInvariantNode(std::make_shared<IntAbsNode>(invariantGraph(), denominator(), dAbs));
-      invariantGraph().addInvariantNode(std::make_shared<IntLtNode>(invariantGraph(), numerator(), dAbs));
+      const auto dAbs =
+          invariantGraph().retrieveIntVarNode(std::make_shared<SearchDomain>(
+              1, std::max(dNode.upperBound(), -dNode.lowerBound())));
+      invariantGraph().addInvariantNode(
+          std::make_shared<IntAbsNode>(invariantGraph(), denominator(), dAbs));
+      invariantGraph().addInvariantNode(
+          std::make_shared<IntLtNode>(invariantGraph(), numerator(), dAbs));
       return true;
     }
     if (dNode.lowerBound() >= 0) {
       assert(nNode.lowerBound() < 0);
-      const auto nAbs = invariantGraph().retrieveIntVarNode(std::make_shared<SearchDomain>(0, std::max(nNode.upperBound(), -nNode.lowerBound())));
-      invariantGraph().addInvariantNode(std::make_shared<IntAbsNode>(invariantGraph(), numerator(), nAbs));
-      invariantGraph().addInvariantNode(std::make_shared<IntLtNode>(invariantGraph(), nAbs, denominator()));
+      const auto nAbs =
+          invariantGraph().retrieveIntVarNode(std::make_shared<SearchDomain>(
+              0, std::max(nNode.upperBound(), -nNode.lowerBound())));
+      invariantGraph().addInvariantNode(
+          std::make_shared<IntAbsNode>(invariantGraph(), numerator(), nAbs));
+      invariantGraph().addInvariantNode(
+          std::make_shared<IntLtNode>(invariantGraph(), nAbs, denominator()));
       return true;
     }
     assert(nNode.lowerBound() < 0);
     assert(dNode.lowerBound() < 0);
-    const auto nAbs = invariantGraph().retrieveIntVarNode(std::make_shared<SearchDomain>(0, std::max(nNode.upperBound(), -nNode.lowerBound())));
-    const auto dAbs = invariantGraph().retrieveIntVarNode(std::make_shared<SearchDomain>(1, std::max(dNode.upperBound(), -dNode.lowerBound())));
-    invariantGraph().addInvariantNode(std::make_shared<IntAbsNode>(invariantGraph(), numerator(), nAbs));
-    invariantGraph().addInvariantNode(std::make_shared<IntAbsNode>(invariantGraph(), denominator(), dAbs));
-    invariantGraph().addInvariantNode(std::make_shared<IntLtNode>(invariantGraph(), nAbs, dAbs));
+    const auto nAbs =
+        invariantGraph().retrieveIntVarNode(std::make_shared<SearchDomain>(
+            0, std::max(nNode.upperBound(), -nNode.lowerBound())));
+    const auto dAbs =
+        invariantGraph().retrieveIntVarNode(std::make_shared<SearchDomain>(
+            1, std::max(dNode.upperBound(), -dNode.lowerBound())));
+    invariantGraph().addInvariantNode(
+        std::make_shared<IntAbsNode>(invariantGraph(), numerator(), nAbs));
+    invariantGraph().addInvariantNode(
+        std::make_shared<IntAbsNode>(invariantGraph(), denominator(), dAbs));
+    invariantGraph().addInvariantNode(
+        std::make_shared<IntLtNode>(invariantGraph(), nAbs, dAbs));
     return true;
   }
   if (!nNode.isFixed()) {

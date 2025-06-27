@@ -32,18 +32,18 @@ GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
 void GlobalCardinalityClosedNode::init(InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   if (isReified()) {
-    assert(!invariantGraphConst().varNodeConst(outputVarNodeIds().front()).isIntVar());
+    assert(!invariantGraphConst()
+                .varNodeConst(outputVarNodeIds().front())
+                .isIntVar());
     assert(std::ranges::all_of(
-      outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+        outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+        [&](const VarNodeId vId) {
+          return invariantGraphConst().varNodeConst(vId).isIntVar();
+        }));
   } else {
-    assert(std::ranges::all_of(
-      outputVarNodeIds(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+    assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+      return invariantGraphConst().varNodeConst(vId).isIntVar();
+    }));
   }
   assert(std::ranges::all_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
@@ -62,7 +62,9 @@ void GlobalCardinalityClosedNode::updateState() {
     if (isReified()) {
       fixReified(true);
     } else if (!shouldHold()) {
-      throw InconsistencyException("GlobalCardinalityClosedNode::updateState neg: no inputs and empty cover");
+      throw InconsistencyException(
+          "GlobalCardinalityClosedNode::updateState neg: no inputs and empty "
+          "cover");
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
@@ -71,7 +73,8 @@ void GlobalCardinalityClosedNode::updateState() {
     if (isReified()) {
       fixReified(false);
     } else if (shouldHold()) {
-      throw InconsistencyException("GlobalCardinalityClosedNode::updateState: empty cover");
+      throw InconsistencyException(
+          "GlobalCardinalityClosedNode::updateState: empty cover");
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
@@ -86,7 +89,6 @@ void GlobalCardinalityClosedNode::updateState() {
     }
   }
 }
-
 
 bool GlobalCardinalityClosedNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE;
@@ -104,7 +106,8 @@ bool GlobalCardinalityClosedNode::replace() {
   }
 
   std::vector<VarNodeId> violationVarNodeIds;
-  violationVarNodeIds.reserve(outputVarNodeIds().size() + staticInputVarNodeIds().size());
+  violationVarNodeIds.reserve(outputVarNodeIds().size() +
+                              staticInputVarNodeIds().size());
 
   std::vector<VarNodeId> intermediateOutputNodeIds;
   intermediateOutputNodeIds.reserve(outputVarNodeIds().size());
@@ -119,8 +122,8 @@ bool GlobalCardinalityClosedNode::replace() {
     violationVarNodeIds.emplace_back(invariantGraph().retrieveBoolVarNode());
 
     invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
-        invariantGraph(), outputVarNodeIds()[i], intermediateOutputNodeIds.back(),
-        violationVarNodeIds.back()));
+        invariantGraph(), outputVarNodeIds()[i],
+        intermediateOutputNodeIds.back(), violationVarNodeIds.back()));
   }
 
   for (VarNodeId inputId : staticInputVarNodeIds()) {

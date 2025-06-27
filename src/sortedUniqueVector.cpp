@@ -1,4 +1,5 @@
 #include "atlantis/sortedUniqueVector.hpp"
+
 #include <algorithm>
 
 namespace atlantis {
@@ -10,8 +11,8 @@ std::vector<Int> sortedUniqueVector(std::vector<Int>&& vec) {
   return vec;
 }
 
-SortedUniqueVector::SortedUniqueVector(std::vector<Int>&& v) :
-  vec(sortedUniqueVector(std::move(v))) {}
+SortedUniqueVector::SortedUniqueVector(std::vector<Int>&& v)
+    : vec(sortedUniqueVector(std::move(v))) {}
 
 bool SortedUniqueVector::isInterval() const noexcept {
   if (vec.empty()) {
@@ -20,9 +21,6 @@ bool SortedUniqueVector::isInterval() const noexcept {
   return vec.back() - vec.front() == static_cast<int>(vec.size()) - 1;
 }
 
-
-const std::vector<Int>& SortedUniqueVector::operator*() const {
-  return vec;
-}
+const std::vector<Int>& SortedUniqueVector::operator*() const { return vec; }
 
 }  // namespace atlantis

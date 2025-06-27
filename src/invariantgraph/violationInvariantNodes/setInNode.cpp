@@ -21,8 +21,7 @@ SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
 SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
                      std::vector<Int>&& values, bool shouldHold)
     : ViolationInvariantNode(graph, {input}, shouldHold),
-      _values( std::move(values)) {
-}
+      _values(std::move(values)) {}
 
 void SetInNode::init(InvariantNodeId id) {
   ViolationInvariantNode::init(id);
@@ -47,7 +46,7 @@ void SetInNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  auto& vNode =invariantGraph().varNode(staticInputVarNodeIds().front());
+  auto& vNode = invariantGraph().varNode(staticInputVarNodeIds().front());
   if (!isReified()) {
     if (shouldHold()) {
       vNode.removeAllValuesExcept(_values);
@@ -68,8 +67,6 @@ void SetInNode::updateState() {
     return;
   }
 }
-
-
 
 void SetInNode::registerOutputVars() {
   if (violationVarId() == propagation::NULL_ID) {

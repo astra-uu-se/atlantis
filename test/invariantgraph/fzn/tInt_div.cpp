@@ -23,8 +23,10 @@ class int_divTest : public FznTestBase {
   std::string quotient{"quotient"};
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
-    const bool expected = intVal(denominator) == 0 ? false :
-        intVal(numerator) / intVal(denominator) == intVal(quotient);
+    const bool expected =
+        intVal(denominator) == 0
+            ? false
+            : intVal(numerator) / intVal(denominator) == intVal(quotient);
 
     const bool isSolution = violation(committedValue) == 0;
     return isSolution ? expected : !expected;
@@ -74,9 +76,9 @@ class int_divTest : public FznTestBase {
   }
 
   [[nodiscard]] bool canMove() const override {
-    return std::ranges::any_of(std::array{varId(numerator), varId(denominator)}, [&](const auto vId) {
-      return vId != propagation::NULL_ID;
-    });
+    return std::ranges::any_of(
+        std::array{varId(numerator), varId(denominator)},
+        [&](const auto vId) { return vId != propagation::NULL_ID; });
   }
 
   void move(bool committedValue) override {

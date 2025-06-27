@@ -64,9 +64,15 @@ void IntTimesNode::updateState() {
   if (outputNode.isFixed() && staticInputVarNodeIds().size() == 1) {
     const Int numerator = outputNode.lowerBound();
     if (numerator % _scalar != 0) {
-      throw InconsistencyException("IntTimesNode::updateState: fixed output must be divisible by scalar (" + std::to_string(numerator) + " % " + std::to_string(_scalar) + " = " + std::to_string(numerator % _scalar) + ").");
+      throw InconsistencyException(
+          "IntTimesNode::updateState: fixed output must be divisible by scalar "
+          "(" +
+          std::to_string(numerator) + " % " + std::to_string(_scalar) + " = " +
+          std::to_string(numerator % _scalar) + ").");
     }
-    invariantGraph().varNode(staticInputVarNodeIds().front()).fixToValue(numerator / _scalar);
+    invariantGraph()
+        .varNode(staticInputVarNodeIds().front())
+        .fixToValue(numerator / _scalar);
     setState(InvariantNodeState::SUBSUMED);
     return;
   }

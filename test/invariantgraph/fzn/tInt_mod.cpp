@@ -23,8 +23,11 @@ class int_modTest : public FznTestBase {
   std::string remainder{"quotient"};
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
-    const bool expected = intVal(denominator) == 0 ? false :
-        intVal(numerator) % std::abs(intVal(denominator)) == intVal(remainder);
+    const bool expected =
+        intVal(denominator) == 0
+            ? false
+            : intVal(numerator) % std::abs(intVal(denominator)) ==
+                  intVal(remainder);
 
     const bool isSolution = violation(committedValue) == 0;
     return isSolution ? expected : !expected;
@@ -46,7 +49,8 @@ class int_modTest : public FznTestBase {
       return isFixedTo(remainder, Int{0});
     }
     if (isFixed(numerator) && isFixed(denominator) && isFixed(remainder)) {
-      return intVal(numerator) % std::abs(intVal(denominator)) == intVal(remainder);
+      return intVal(numerator) % std::abs(intVal(denominator)) ==
+             intVal(remainder);
     }
     return false;
   }
@@ -57,11 +61,14 @@ class int_modTest : public FznTestBase {
     }
 
     if (isFixed(numerator) && isFixed(denominator) && isFixed(remainder)) {
-      return intVal(numerator) % std::abs(intVal(denominator)) != intVal(remainder);
+      return intVal(numerator) % std::abs(intVal(denominator)) !=
+             intVal(remainder);
     }
 
-    const Int lb = std::min(lowerBound(denominator), -upperBound(denominator)) + 1;
-    const Int ub = std::max(upperBound(denominator), -lowerBound(denominator)) - 1;
+    const Int lb =
+        std::min(lowerBound(denominator), -upperBound(denominator)) + 1;
+    const Int ub =
+        std::max(upperBound(denominator), -lowerBound(denominator)) - 1;
 
     if (upperBound(remainder) < lb || ub < lowerBound(remainder)) {
       return true;
@@ -71,9 +78,9 @@ class int_modTest : public FznTestBase {
   }
 
   [[nodiscard]] bool canMove() const override {
-    return std::ranges::any_of(std::array{varId(numerator), varId(denominator)}, [&](const auto vId) {
-      return vId != propagation::NULL_ID;
-    });
+    return std::ranges::any_of(
+        std::array{varId(numerator), varId(denominator)},
+        [&](const auto vId) { return vId != propagation::NULL_ID; });
   }
 
   void move(bool committedValue) override {

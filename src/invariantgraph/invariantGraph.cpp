@@ -607,7 +607,9 @@ InvariantNodeId InvariantGraph::addInvariantNode(
     return InvariantNodeId(NULL_NODE_ID);
   }
   if (node->state() != InvariantNodeState::UNINITIALIZED) {
-    throw InvariantGraphException("InvariantGraph::addInvariantNode: invariant: \"" + node->dotLangIdentifier() + "\" already initialized.");
+    throw InvariantGraphException(
+        "InvariantGraph::addInvariantNode: invariant: \"" +
+        node->dotLangIdentifier() + "\" already initialized.");
   }
   const InvariantNodeId id = nextInvariantNodeId();
   const auto& invNode = _invariantNodes.emplace_back(std::move(node));

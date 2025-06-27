@@ -18,7 +18,7 @@ using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
 class fzn_global_cardinality_low_upTest : public FznTestBase {
-public:
+ public:
   std::vector<std::string> inputs{};
   std::vector<std::string> cover{};
   std::vector<std::string> low{};
@@ -78,7 +78,8 @@ public:
     for (size_t i = 0; i < cover.size(); ++i) {
       const Int lv = intVal(low.at(i), committedValue);
       const Int uv = intVal(up.at(i), committedValue);
-      RC_LOG() << cover.at(i) << " = " << counts.at(i) << " [" << lv << " .. " << uv << ']' << std::endl;
+      RC_LOG() << cover.at(i) << " = " << counts.at(i) << " [" << lv << " .. "
+               << uv << ']' << std::endl;
       expected &= lv <= counts.at(i) && counts.at(i) <= uv;
     }
 
@@ -110,9 +111,10 @@ public:
         const Int lv = intVal(low.at(i));
         const Int uv = intVal(up.at(i));
         if (lowUp.contains(cv)) {
-          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),  std::min(lowUp.at(cv).second, uv)};
+          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),
+                          std::min(lowUp.at(cv).second, uv)};
         } else {
-          lowUp.emplace(cv, std::pair<Int,Int>{lv, uv});
+          lowUp.emplace(cv, std::pair<Int, Int>{lv, uv});
         }
       }
       for (const auto& [lv, uv] : std::views::values(lowUp)) {
@@ -168,9 +170,10 @@ public:
         const Int lv = intVal(low.at(i));
         const Int uv = intVal(up.at(i));
         if (lowUp.contains(cv)) {
-          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),  std::min(lowUp.at(cv).second, uv)};
+          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),
+                          std::min(lowUp.at(cv).second, uv)};
         } else {
-          lowUp.emplace(cv, std::pair<Int,Int>{lv, uv});
+          lowUp.emplace(cv, std::pair<Int, Int>{lv, uv});
         }
       }
       for (const auto& [lv, uv] : std::views::values(lowUp)) {
@@ -235,8 +238,8 @@ public:
     addIntVarArray(std::vector(up.size(), IntArgState::PAR), up, "up");
 
     const bool isReified = *rc::gen::arbitrary<bool>();
-    constraintIdentifier =
-        isReified ? "fzn_global_cardinality_low_up_reif" : "fzn_global_cardinality_low_up";
+    constraintIdentifier = isReified ? "fzn_global_cardinality_low_up_reif"
+                                     : "fzn_global_cardinality_low_up";
     if (isReified) {
       addBoolArg(reified);
     } else {
@@ -271,4 +274,4 @@ public:
 RC_GTEST_FIXTURE_PROP(fzn_global_cardinality_low_upTest, RapidCheck, ()) {
   rapidCheck(false);
 }
-}
+}  // namespace atlantis::testing

@@ -18,7 +18,6 @@
 #include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
 #include "atlantis/search/randomProvider.hpp"
 
-
 namespace atlantis::testing {
 using namespace fznparser;
 using namespace atlantis::invariantgraph;
@@ -152,7 +151,8 @@ class FznTestBase : public ::testing::Test {
 
   [[nodiscard]] bool inDomain(const std::string& identifier, Int val) const;
 
-  [[nodiscard]] const std::vector<Int>& intSetVal(const std::string& identifier) const;
+  [[nodiscard]] const std::vector<Int>& intSetVal(
+      const std::string& identifier) const;
 
   [[nodiscard]] propagation::VarViewId totalViolationVarId() const;
 
@@ -182,7 +182,7 @@ class FznTestBase : public ::testing::Test {
                    const std::string& identifier = "i");
 
   IntArg addIntArg(IntArgState state, const std::vector<Int>& dom,
-                 const std::string& identifier = "i");
+                   const std::string& identifier = "i");
 
   IntArg addIntArg(IntArgState state, const std::string& identifier = "i");
 
@@ -257,7 +257,7 @@ class FznTestBase : public ::testing::Test {
   Arg addIntSetArg(Int lb, Int ub, const std::string& identifier = "i_set");
 
   Arg addIntSetArg(const std::vector<Int>& elements,
-                const std::string& identifier = "i_set");
+                   const std::string& identifier = "i_set");
 
   Arg addIntSetArg(const std::string& identifier = "i_set");
 

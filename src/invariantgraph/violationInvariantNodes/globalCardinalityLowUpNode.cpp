@@ -53,7 +53,10 @@ void GlobalCardinalityLowUpNode::verifyCover() {
       if (isReified()) {
         fixReified(false);
       } else if (shouldHold()) {
-        throw InconsistencyException("GlobalCardinalityLowUpNode::updateState: low[" + std::to_string(i) + "] > up[" + std::to_string(i) + "] (" + std::to_string(_low[i]) + " > " + std::to_string(_up[i]) + ").");
+        throw InconsistencyException(
+            "GlobalCardinalityLowUpNode::updateState: low[" +
+            std::to_string(i) + "] > up[" + std::to_string(i) + "] (" +
+            std::to_string(_low[i]) + " > " + std::to_string(_up[i]) + ").");
       }
       setState(InvariantNodeState::SUBSUMED);
       return;
@@ -98,7 +101,8 @@ void GlobalCardinalityLowUpNode::propagate() {
   while (!stack.empty()) {
     const size_t coverIndex = stack.top();
     stack.pop();
-    if (_low[coverIndex] == static_cast<Int>(supportedInputs[coverIndex].size())) {
+    if (_low[coverIndex] ==
+        static_cast<Int>(supportedInputs[coverIndex].size())) {
       for (const size_t inputIndex : supportedInputs[coverIndex]) {
         auto& vNode =
             invariantGraph().varNode(staticInputVarNodeIds()[inputIndex]);
@@ -169,7 +173,8 @@ void GlobalCardinalityLowUpNode::updateState() {
     if (isReified()) {
       fixReified(true);
     } else if (!shouldHold()) {
-      throw InconsistencyException("GlobalCardinalityLowUpNode neg: empty domain.");
+      throw InconsistencyException(
+          "GlobalCardinalityLowUpNode neg: empty domain.");
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
@@ -198,7 +203,8 @@ void GlobalCardinalityLowUpNode::updateState() {
     if (isReified()) {
       fixReified(satisfied);
     } else if (shouldHold() != satisfied) {
-      throw InconsistencyException("GlobalCardinalityLowUpNode neg: no inputs and bad low up.");
+      throw InconsistencyException(
+          "GlobalCardinalityLowUpNode neg: no inputs and bad low up.");
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
@@ -211,7 +217,6 @@ void GlobalCardinalityLowUpNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
-
 
 void GlobalCardinalityLowUpNode::registerOutputVars() {
   if (violationVarId() == propagation::NULL_ID) {

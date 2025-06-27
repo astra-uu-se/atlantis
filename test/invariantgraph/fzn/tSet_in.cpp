@@ -27,7 +27,8 @@ class set_inTest : public FznTestBase {
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     const auto& is = intSetVal(set);
 
-    const bool expected = std::ranges::find(is, intVal(input, committedValue)) != is.end();
+    const bool expected =
+        std::ranges::find(is, intVal(input, committedValue)) != is.end();
     const bool actual = boolVal(reified);
 
     if (isFixed(reified)) {

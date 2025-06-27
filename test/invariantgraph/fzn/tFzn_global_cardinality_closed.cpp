@@ -49,7 +49,8 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
     return bounds;
   }
 
-  std::unordered_map<Int, std::vector<size_t>> valToIndices(bool committedValue) const {
+  std::unordered_map<Int, std::vector<size_t>> valToIndices(
+      bool committedValue) const {
     std::unordered_map<Int, std::vector<size_t>> vti;
     vti.reserve(cover.size());
     for (size_t i = 0; i < cover.size(); ++i) {
@@ -62,8 +63,6 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
     }
     return vti;
   }
-
-
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     RC_LOG() << "-----" << std::endl
@@ -131,9 +130,9 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
           }
         } else {
           const auto& dom = varNodeConst(input).constDomain();
-          const bool noOverlap = std::none_of(dom->begin(), dom->end(), [&](const Int v) {
-            return vti.contains(v);
-          });
+          const bool noOverlap =
+              std::none_of(dom->begin(), dom->end(),
+                           [&](const Int v) { return vti.contains(v); });
           if (noOverlap) {
             return true;
           }
@@ -209,9 +208,9 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
           }
         } else {
           const auto& dom = varNodeConst(input).constDomain();
-          const bool noOverlap = std::none_of(dom->begin(), dom->end(), [&](const Int v) {
-            return vti.contains(v);
-          });
+          const bool noOverlap =
+              std::none_of(dom->begin(), dom->end(),
+                           [&](const Int v) { return vti.contains(v); });
           if (noOverlap) {
             return true;
           }
@@ -294,8 +293,8 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
     addIntVarArray(outputs, "outputs");
 
     const bool isReified = *rc::gen::arbitrary<bool>();
-    constraintIdentifier =
-        isReified ? "fzn_global_cardinality_closed_reif" : "fzn_global_cardinality_closed";
+    constraintIdentifier = isReified ? "fzn_global_cardinality_closed_reif"
+                                     : "fzn_global_cardinality_closed";
     if (isReified) {
       addBoolArg(reified);
     } else {

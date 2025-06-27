@@ -5,8 +5,8 @@
 #include <variant>
 #include <vector>
 
-#include "atlantis/types.hpp"
 #include "atlantis/sortedUniqueVector.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis {
 
@@ -93,9 +93,11 @@ class Domain {
   [[nodiscard]] virtual bool contains(Int lb, Int ub) const noexcept = 0;
 
   /**
-   * @return true if the domain contains all the values in the vector, else false.
+   * @return true if the domain contains all the values in the vector, else
+   * false.
    */
-  [[nodiscard]] virtual bool contains(const SortedUniqueVector&) const noexcept = 0;
+  [[nodiscard]] virtual bool contains(
+      const SortedUniqueVector&) const noexcept = 0;
 
   /**
    * @return true if the domain is an interval, else false.
@@ -149,7 +151,8 @@ class IntervalDomain : public Domain {
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
   [[nodiscard]] bool contains(Int lb, Int ub) const noexcept override;
-  [[nodiscard]] bool contains(const SortedUniqueVector&) const noexcept override;
+  [[nodiscard]] bool contains(
+      const SortedUniqueVector&) const noexcept override;
   [[nodiscard]] bool contains(const IntervalDomain&) const noexcept;
   [[nodiscard]] bool contains(const SetDomain&) const noexcept;
   [[nodiscard]] bool isInterval() const noexcept override;
@@ -209,7 +212,8 @@ class SetDomain : public Domain {
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
   [[nodiscard]] bool contains(Int lb, Int ub) const noexcept override;
-  [[nodiscard]] bool contains(const SortedUniqueVector&) const noexcept override;
+  [[nodiscard]] bool contains(
+      const SortedUniqueVector&) const noexcept override;
   [[nodiscard]] bool contains(const IntervalDomain&) const noexcept;
   [[nodiscard]] bool contains(const SetDomain&) const noexcept;
   [[nodiscard]] bool isInterval() const noexcept override;
@@ -292,7 +296,8 @@ class SearchDomain : public Domain {
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
   [[nodiscard]] bool contains(Int lb, Int ub) const noexcept override;
-  [[nodiscard]] bool contains(const SortedUniqueVector&) const noexcept override;
+  [[nodiscard]] bool contains(
+      const SortedUniqueVector&) const noexcept override;
   [[nodiscard]] bool contains(const IntervalDomain&) const noexcept;
   [[nodiscard]] bool contains(const SetDomain&) const noexcept;
   [[nodiscard]] bool contains(const SearchDomain&) const noexcept;
@@ -304,8 +309,6 @@ class SearchDomain : public Domain {
 
   [[nodiscard]] std::vector<DomainEntry> createDomainEntries(
       Int lb, Int ub) const override;
-
-
 
   /**
    * @brief removes all values that are strictly less than the given value.
@@ -320,7 +323,6 @@ class SearchDomain : public Domain {
    * @param newUpperBound the maximum value that is allowed in the domain.
    */
   void removeAbove(Int newUpperBound);
-
 
   void remove(Int value);
   /**

@@ -22,11 +22,9 @@ std::vector<VarNodeId> pruneAllDifferentFixed(
 
 std::vector<Int> toIntVector(const std::vector<bool>& argument);
 
-
 /**
-* This potentially rearranges the vector.
-*/
+ * This potentially rearranges the vector.
+ */
 bool removeFirstOccurrence(std::vector<size_t>&, size_t);
-
 
 }  // namespace atlantis::invariantgraph

@@ -53,10 +53,9 @@ void IntModNode::updateState() {
   rNode.removeValuesAbove(ub);
 }
 
-
 bool IntModNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-    invariantGraphConst().varNodeConst(denominator()).isFixed();
+         invariantGraphConst().varNodeConst(denominator()).isFixed();
 }
 
 bool IntModNode::replace() {
@@ -64,7 +63,9 @@ bool IntModNode::replace() {
     return false;
   }
   assert(invariantGraphConst().varNodeConst(denominator()).isFixed());
-  invariantGraph().addInvariantNode(std::make_shared<IntModViewNode>(invariantGraph(), numerator(), remainder(), invariantGraphConst().varNodeConst(denominator()).lowerBound()));
+  invariantGraph().addInvariantNode(std::make_shared<IntModViewNode>(
+      invariantGraph(), numerator(), remainder(),
+      invariantGraphConst().varNodeConst(denominator()).lowerBound()));
   return true;
 }
 

@@ -17,14 +17,13 @@ using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
 class int_ltTest : public FznTestBase {
-public:
+ public:
   std::string a{"i_1"};
   std::string b{"i_2"};
   std::string reified{"reified"};
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
-    const bool expected =
-        intVal(a, committedValue) < intVal(b, committedValue);
+    const bool expected = intVal(a, committedValue) < intVal(b, committedValue);
     const bool actual = boolVal(reified, committedValue);
 
     if (isFixed(reified)) {

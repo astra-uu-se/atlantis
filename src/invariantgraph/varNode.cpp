@@ -12,8 +12,8 @@
 #include "atlantis/propagation/views/lessEqualConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/search/searchVariable.hpp"
-#include "atlantis/utils/domains.hpp"
 #include "atlantis/sortedUniqueVector.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 

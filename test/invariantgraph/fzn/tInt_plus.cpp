@@ -27,7 +27,8 @@ class int_plusTest : public FznTestBase {
     const Int aVal = intVal(a);
     const Int bVal = intVal(b);
     const Int sumVal = intVal(sum);
-    RC_LOG() << aVal << " + " << bVal << " == " << sumVal << " (" << (aVal + bVal) << " == " << sumVal << ')' << std::endl;
+    RC_LOG() << aVal << " + " << bVal << " == " << sumVal << " ("
+             << (aVal + bVal) << " == " << sumVal << ')' << std::endl;
     const bool expected = aVal + bVal == sumVal;
 
     const bool inDom = inDomain(sum, sumVal);
@@ -72,9 +73,9 @@ class int_plusTest : public FznTestBase {
   }
 
   [[nodiscard]] bool canMove() const override {
-    return std::ranges::any_of(std::array{varId(a), varId(b)}, [&](const auto vId) {
-      return vId != propagation::NULL_ID;
-    });
+    return std::ranges::any_of(
+        std::array{varId(a), varId(b)},
+        [&](const auto vId) { return vId != propagation::NULL_ID; });
   }
 
   void move(bool committedValue) override {

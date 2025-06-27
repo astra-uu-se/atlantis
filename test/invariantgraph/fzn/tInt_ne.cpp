@@ -56,10 +56,12 @@ class int_neTest : public FznTestBase {
       return boolVal(reified) ? intVal(a) != intVal(b) : intVal(a) == intVal(b);
     }
     if (isFixed(a)) {
-      return boolVal(reified) ? !inDomain(b, intVal(a)) : inDomain(b, intVal(a));
+      return boolVal(reified) ? !inDomain(b, intVal(a))
+                              : inDomain(b, intVal(a));
     }
     if (isFixed(b)) {
-      return boolVal(reified) ? !inDomain(a, intVal(b)) : inDomain(a, intVal(b));
+      return boolVal(reified) ? !inDomain(a, intVal(b))
+                              : inDomain(a, intVal(b));
     }
     const auto& aDom = varNodeConst(a).constDomain();
     const auto& bDom = varNodeConst(b).constDomain();
@@ -74,10 +76,12 @@ class int_neTest : public FznTestBase {
       return boolVal(reified) ? intVal(a) == intVal(b) : intVal(a) != intVal(b);
     }
     if (isFixed(a)) {
-      return boolVal(reified) ? inDomain(b, intVal(a)) : !inDomain(b, intVal(a));
+      return boolVal(reified) ? inDomain(b, intVal(a))
+                              : !inDomain(b, intVal(a));
     }
     if (isFixed(b)) {
-      return boolVal(reified) ? inDomain(a, intVal(b)) : !inDomain(a, intVal(b));
+      return boolVal(reified) ? inDomain(a, intVal(b))
+                              : !inDomain(a, intVal(b));
     }
     const auto& aDom = varNodeConst(a).constDomain();
     const auto& bDom = varNodeConst(b).constDomain();
@@ -109,10 +113,9 @@ class int_neTest : public FznTestBase {
 
     for (size_t i = 0; i < 2; ++i) {
       const auto& input = i == 0 ? a : b;
-      if (!hasImplicitConstraints.at(i) && !isFixed(input) &&
-          randBool()) {
+      if (!hasImplicitConstraints.at(i) && !isFixed(input) && randBool()) {
         changeValue(input, committedValue);
-          }
+      }
     }
 
     for (const InvariantNodeId implId : implicitConstraints) {

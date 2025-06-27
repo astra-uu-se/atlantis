@@ -38,7 +38,8 @@ class int_timesTest : public FznTestBase {
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
-    if ((isFixedTo(a, Int{0}) || isFixedTo(b, Int{0})) && isFixedTo(product, Int {0})) {
+    if ((isFixedTo(a, Int{0}) || isFixedTo(b, Int{0})) &&
+        isFixedTo(product, Int{0})) {
       return true;
     }
     if (isFixed(a) && isFixed(b) && isFixed(product)) {
@@ -55,7 +56,7 @@ class int_timesTest : public FznTestBase {
 
   [[nodiscard]] bool neverSatisfied() const override {
     if (isFixedTo(a, Int{0}) || isFixedTo(b, Int{0})) {
-      return !isFixedTo(product, Int {0});
+      return !isFixedTo(product, Int{0});
     }
     if (isFixed(a) && isFixed(b) && isFixed(product)) {
       return intVal(a) * intVal(b) != intVal(product);
@@ -64,9 +65,9 @@ class int_timesTest : public FznTestBase {
   }
 
   [[nodiscard]] bool canMove() const override {
-    return std::ranges::any_of(std::array{varId(a), varId(b)}, [&](const auto vId) {
-      return vId != propagation::NULL_ID;
-    });
+    return std::ranges::any_of(
+        std::array{varId(a), varId(b)},
+        [&](const auto vId) { return vId != propagation::NULL_ID; });
   }
 
   void move(bool committedValue) override {

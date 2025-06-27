@@ -66,7 +66,7 @@ class int_absTest : public FznTestBase {
     std::vector<Int> ad;
     ad.reserve(aDom->size());
     std::transform(aDom->begin(), aDom->end(), std::back_inserter(ad),
-      [&](const Int aVal) { return std::abs(aVal); });
+                   [&](const Int aVal) { return std::abs(aVal); });
     if ((*bDom) == SortedUniqueVector(std::move(ad))) {
       return true;
     }
@@ -96,7 +96,7 @@ class int_absTest : public FznTestBase {
     std::vector<Int> ad;
     ad.reserve(aDom->size());
     std::transform(aDom->begin(), aDom->end(), std::back_inserter(ad),
-      [&](const Int aVal) { return std::abs(aVal); });
+                   [&](const Int aVal) { return std::abs(aVal); });
     if (bDom->isDisjoint(SortedUniqueVector(std::move(ad)))) {
       return true;
     }
@@ -114,9 +114,7 @@ class int_absTest : public FznTestBase {
     }
   }
 
-  void query() override {
-    _solver->query(totalViolationVarId());
-  }
+  void query() override { _solver->query(totalViolationVarId()); }
 };
 
 RC_GTEST_FIXTURE_PROP(int_absTest, RapidCheck, ()) { rapidCheck(); }

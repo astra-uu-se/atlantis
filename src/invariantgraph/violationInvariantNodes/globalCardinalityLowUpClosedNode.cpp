@@ -50,7 +50,9 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
     if (isReified()) {
       fixReified(true);
     } else if (!shouldHold()) {
-      throw InconsistencyException("GlobalCardinalityClosedNode::updateState neg: no inputs and empty cover");
+      throw InconsistencyException(
+          "GlobalCardinalityClosedNode::updateState neg: no inputs and empty "
+          "cover");
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
@@ -59,7 +61,8 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
     if (isReified()) {
       fixReified(false);
     } else if (shouldHold()) {
-      throw InconsistencyException("GlobalCardinalityClosedNode::updateState: empty cover");
+      throw InconsistencyException(
+          "GlobalCardinalityClosedNode::updateState: empty cover");
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
