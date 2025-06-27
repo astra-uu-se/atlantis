@@ -194,6 +194,7 @@ class SetDomain : public Domain {
   void intersect(const std::vector<Int>&);
   [[nodiscard]] bool contains(const std::vector<Int>&) const noexcept;
   [[nodiscard]] bool isDisjoint(const std::vector<Int>&) const;
+  void remove(const std::vector<Int>&);
 
  public:
   explicit SetDomain(std::vector<Int>&&);
@@ -221,7 +222,10 @@ class SetDomain : public Domain {
       Int lb, Int ub) const override;
 
   void remove(Int value);
-  void remove(const SortedUniqueVector& values);
+  void remove(Int lb, Int ub);
+  void remove(const SortedUniqueVector&);
+  void remove(const IntervalDomain&);
+  void remove(const SetDomain&);
 
   /**
    * @brief removes all values that are strictly less than the given value.
@@ -270,6 +274,7 @@ class SetDomain : public Domain {
 class SearchDomain : public Domain {
   std::variant<IntervalDomain, SetDomain> _domain;
   void intersect(const std::vector<Int>&);
+  void remove(const std::vector<Int>&);
 
  public:
   explicit SearchDomain(std::vector<Int>&&);
@@ -300,7 +305,7 @@ class SearchDomain : public Domain {
   [[nodiscard]] std::vector<DomainEntry> createDomainEntries(
       Int lb, Int ub) const override;
 
-  void remove(Int value);
+
 
   /**
    * @brief removes all values that are strictly less than the given value.
@@ -316,12 +321,23 @@ class SearchDomain : public Domain {
    */
   void removeAbove(Int newUpperBound);
 
+
+  void remove(Int value);
+  /**
+   * Removes all values in the given interval from the domain.
+   * @param lb the lower bound of the interval
+   * @param ub the upper bound of the interval
+   */
+  void remove(Int lb, Int ub);
   /**
    * @brief removes all values in the given vector from the domain.
    *
-   * @param values the values to remove from the domain.
+   * @param vals the values to remove from the domain.
    */
-  void remove(const SortedUniqueVector& values);
+  void remove(const SortedUniqueVector& vals);
+  void remove(const IntervalDomain&);
+  void remove(const SetDomain&);
+  void remove(const SearchDomain&);
 
   /**
    * @brief removes all values in the domain, except the values in the given

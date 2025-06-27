@@ -161,6 +161,9 @@ class FznTestBase : public ::testing::Test {
   std::shared_ptr<IntVar> genIntVar(Int lb, Int ub,
                                     const std::string& identifier = "i");
 
+  std::shared_ptr<IntVar> genIntVar(const std::vector<Int>& dom,
+                                    const std::string& identifier = "i");
+
   std::shared_ptr<IntVar> genIntVar(const std::string& identifier = "i");
 
   std::shared_ptr<IntVar> genIntVar(IntArgState state,
@@ -177,6 +180,9 @@ class FznTestBase : public ::testing::Test {
 
   IntArg addIntArg(IntArgState state, Int lb, Int ub,
                    const std::string& identifier = "i");
+
+  IntArg addIntArg(IntArgState state, const std::vector<Int>& dom,
+                 const std::string& identifier = "i");
 
   IntArg addIntArg(IntArgState state, const std::string& identifier = "i");
 
@@ -201,6 +207,10 @@ class FznTestBase : public ::testing::Test {
 
   std::shared_ptr<BoolVar> genBoolVar(BoolArgState state,
                                       const std::string& identifier = "b");
+  std::vector<Int> genDomain(size_t size) const;
+
+  std::vector<Int> genDomain(IntArgState state) const;
+  std::vector<Int> genDomain() const;
 
   BoolArg addBoolArg(BoolArgState state, const std::string& identifier = "b");
 

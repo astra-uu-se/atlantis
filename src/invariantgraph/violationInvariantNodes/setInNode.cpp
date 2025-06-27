@@ -14,21 +14,14 @@
 
 namespace atlantis::invariantgraph {
 
-std::vector<Int> sortDistinct(std::vector<Int>&& values) {
-  std::ranges::sort(values);
-  const auto [first, last] = std::ranges::unique(values);
-  values.erase(first, last);
-  return values;
-}
-
 SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
                      std::vector<Int>&& values, VarNodeId r)
-    : ViolationInvariantNode(graph, {input}, r), _values(sortDistinct(std::move(values))) {}
+    : ViolationInvariantNode(graph, {input}, r), _values(std::move(values)) {}
 
 SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
                      std::vector<Int>&& values, bool shouldHold)
     : ViolationInvariantNode(graph, {input}, shouldHold),
-      _values( sortDistinct(std::move(values))) {
+      _values( std::move(values)) {
 }
 
 void SetInNode::init(InvariantNodeId id) {

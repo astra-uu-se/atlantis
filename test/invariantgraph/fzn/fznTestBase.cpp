@@ -241,6 +241,17 @@ const std::vector<Int>& FznTestBase::intSetVal(const std::string& identifier) co
   return std::get<std::shared_ptr<IntVar>>(
       _model->addVar(std::make_shared<IntVar>(lb, ub, identifier)));
 }
+
+std::shared_ptr<IntVar> FznTestBase::genIntVar(
+    const std::vector<Int>& dom, const std::string& identifier) {
+  RC_ASSERT(!dom.empty());
+  if (dom.size() == 1) {
+    addIntPar(identifier, dom.front());
+  }
+  return std::get<std::shared_ptr<IntVar>>(
+      _model->addVar(std::make_shared<IntVar>(std::vector{dom}, identifier)));
+}
+
  std::shared_ptr<IntVar> FznTestBase::genIntVar(
     const std::string& identifier) {
   return genIntVar(defaultLb, defaultUb, identifier);
@@ -322,6 +333,36 @@ const std::vector<Int>& FznTestBase::intSetVal(const std::string& identifier) co
       RC_FAIL();
   }
 }
+
+IntArg FznTestBase::addIntArg(IntArgState state, const std::vector<Int>& dom,
+                                     const std::string& identifier) {
+  RC_ASSERT(!dom.empty());
+  switch (state) {
+    case IntArgState::PAR: {
+      const Int val = dom.size() == 1 ? dom.front() : *rc::gen::elementOf(dom);
+      addIntPar(identifier, val);
+      auto arg = IntArg{val};
+      args.emplace_back(arg);
+      return arg;
+    }
+    case IntArgState::FIXED: {
+      const Int val = dom.size() == 1 ? dom.front() : *rc::gen::elementOf(dom);
+      auto var = genIntVar(val, val, identifier);
+      args.emplace_back(var);
+      return var;
+    }
+    case IntArgState::VAR: {
+      RC_ASSERT(dom.size() > size_t{1});
+      auto var = genIntVar(dom, identifier);
+      args.emplace_back(var);
+      return var;
+    }
+    default:
+      RC_LOG() << "Invalid IntArgState" << std::endl;
+    RC_FAIL();
+  }
+}
+
  IntArg FznTestBase::addIntArg(IntArgState state,
                                      const std::string& identifier) {
   return addIntArg(state, defaultLb, defaultUb, identifier);
@@ -405,7 +446,22 @@ const std::vector<Int>& FznTestBase::intSetVal(const std::string& identifier) co
       RC_FAIL();
   }
 }
- BoolArg FznTestBase::addBoolArg(BoolArgState state,
+
+std::vector<Int> FznTestBase::genDomain(size_t size) const {
+  RC_ASSERT(size < static_cast<size_t>(defaultUb - defaultLb + 2));
+  return *rc::gen::unique<std::vector<Int>>(size, rc::gen::inRange<Int>(defaultLb, defaultUb + 1));
+}
+
+std::vector<Int> FznTestBase::genDomain(IntArgState state) const {
+  const size_t size = state != IntArgState::VAR ? 1 : *rc::gen::inRange<size_t>(2, defaultUb -defaultLb + 2);
+  return genDomain(size);
+}
+
+std::vector<Int> FznTestBase::genDomain() const {
+  return genDomain(*rc::gen::arbitrary<IntArgState>());
+}
+
+BoolArg FznTestBase::addBoolArg(BoolArgState state,
                                        const std::string& identifier) {
   switch (state) {
     case BoolArgState::PAR_FALSE:

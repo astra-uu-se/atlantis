@@ -20,6 +20,7 @@ using namespace atlantis::invariantgraph::fzn;
 class set_inTest : public FznTestBase {
  public:
   std::string input{"input"};
+  std::string domain{"domain"};
   std::string set{"set"};
   std::string reified{"reified"};
 
@@ -37,34 +38,57 @@ class set_inTest : public FznTestBase {
   }
 
   void generate() override {
-    addIntArg(input);
+    const auto is = *rc::gen::arbitrary<IntArgState>();
+    auto dom = genDomain(is);
+    addIntArg(is, dom, input);
+    addIntSetPar(domain, std::move(dom));
     addIntSetArg(set);
-    constraintIdentifier = "set_in";
+    const bool isReified = *rc::gen::arbitrary<bool>();
+    constraintIdentifier = isReified ? "set_in_reif" : "set_in";
+    if (isReified) {
+      addBoolArg(reified);
+    } else {
+      addBoolPar(reified, true);
+    }
     generateConstraint();
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
+    const auto& setVals = intSetVal(set);
+    if (setVals.empty()) {
+      return isFixedTo(reified, false);
+    }
     if (!isFixed(reified)) {
       return false;
     }
-    const SortedUniqueVector vals(std::vector{intSetVal(set)});
-    const auto& dom = varNodeConst(input).constDomain();
+    const auto& dom = intSetVal(domain);
     if (boolVal(reified)) {
-      return dom->isContained(vals);
+      return std::ranges::any_of(dom, [&](const Int dVal) {
+        return std::ranges::find(setVals, dVal) != setVals.end();
+      });
     }
-    return dom->isDisjoint(vals);
+    return std::ranges::any_of(dom, [&](const Int dVal) {
+      return std::ranges::find(setVals, dVal) == setVals.end();
+    });
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
+    const auto& setVals = intSetVal(set);
+    if (setVals.empty()) {
+      return isFixedTo(reified, true);
+    }
     if (!isFixed(reified)) {
       return false;
     }
-    const SortedUniqueVector vals(std::vector{intSetVal(set)});
-    const auto& dom = varNodeConst(input).constDomain();
+    const auto& dom = intSetVal(domain);
     if (boolVal(reified)) {
-      return dom->isDisjoint(vals);
+      return std::ranges::all_of(dom, [&](const Int dVal) {
+        return std::ranges::find(setVals, dVal) == setVals.end();
+      });
     }
-    return dom->isContained(vals);
+    return std::ranges::all_of(dom, [&](const Int dVal) {
+      return std::ranges::find(setVals, dVal) != setVals.end();
+    });
   }
 
   [[nodiscard]] bool canMove() const override {

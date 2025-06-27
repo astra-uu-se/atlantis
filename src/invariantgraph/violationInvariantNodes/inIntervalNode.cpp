@@ -7,6 +7,7 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/inIntervalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -28,6 +29,38 @@ void InIntervalNode::init(InvariantNodeId id) {
       [&](const VarNodeId vId) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
+}
+void InIntervalNode::updateState() {
+  ViolationInvariantNode::updateState();
+  if (_ub < _lb) {
+    if (isReified()) {
+      fixReified(false);
+    } else if (shouldHold()) {
+      throw InconsistencyException("InIntervalNode::updateState: empty set");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  auto& vNode = invariantGraph().varNode(staticInputVarNodeIds().front());
+  if (!isReified()) {
+    if (shouldHold()) {
+      vNode.domain()->intersect(_lb, _ub);
+    } else {
+      vNode.domain()->remove(_lb, _ub);
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (vNode.constDomain()->isDisjoint(_lb, _ub)) {
+    fixReified(false);
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (vNode.constDomain()->isContained(_lb, _ub)) {
+    fixReified(true);
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
 }
 
 void InIntervalNode::registerOutputVars() {

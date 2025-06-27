@@ -88,12 +88,9 @@ void IntDivNode::updateState() {
           onStack[2] = true;
         }
       }
-    } else if (index == 1) {
+    } else if (index == 1 && !(qNode.isFixed() && qNode.lowerBound() == 0)) {
       // denominator
-      if (qNode.isFixed() && qNode.lowerBound() == 0) {
-        // this should be replaced by: abs(numerator) < abs(denominator)
-        break;
-      }
+      // the case where the quotient is fixed to 0 is handled below and in the replace method.
       const auto arr = std::array{
         std::pair{nNode.lowerBound(), qNode.lowerBound() != 0 ? qNode.lowerBound() : qNode.domain()->at(1)},
         std::pair{nNode.lowerBound(), qNode.upperBound() != 0 ? qNode.upperBound() : qNode.domain()->at(qNode.domain()->size() - 2)},
@@ -156,6 +153,30 @@ void IntDivNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
+  if (nNode.isFixed() && nNode.lowerBound() == 0) {
+    assert(qNode.isFixed() && qNode.lowerBound() == 0);
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (qNode.isFixed() && qNode.lowerBound() == 0) {
+    if (!nNode.isFixed() && dNode.isFixed()) {
+      assert(dNode.isFixed());
+      const Int dVal = dNode.lowerBound();
+      nNode.removeValuesBelow((dVal > 0 ? -dVal : dVal) + 1);
+      nNode.removeValuesAbove((dVal < 0 ? -dVal : dVal) - 1);
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+    if (!dNode.isFixed() && nNode.isFixed()) {
+      const Int nVal = nNode.lowerBound();
+      const Int lb = std::min(-nVal, nVal) + 1;
+      const Int ub = std::max(-nVal, nVal) - 1;
+      dNode.domain()->intersect(lb, ub - 1);
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+  }
+
 }
 
 bool IntDivNode::canBeReplaced() const {
@@ -221,7 +242,9 @@ bool IntDivNode::replace() {
   assert(!dNode.isFixed());
   assert(nNode.isFixed());
   const Int nVal = nNode.lowerBound();
-  dNode.domain()->intersect(std::min(-nVal, nVal) + 1, std::max(-nVal, nVal) + 1);
+  const Int lb = std::min(-nVal, nVal) + 1;
+  const Int ub = std::max(-nVal, nVal) - 1;
+  dNode.domain()->intersect(lb, ub - 1);
   return true;
 }
 
