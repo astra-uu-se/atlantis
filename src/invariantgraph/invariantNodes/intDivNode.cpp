@@ -58,8 +58,10 @@ void IntDivNode::updateState() {
         std::pair{qNode.upperBound(), dNode.lowerBound()},
         std::pair{qNode.upperBound(), dNode.upperBound()}};
 
-      Int newLb = std::numeric_limits<Int>::max();
-      Int newUb = std::numeric_limits<Int>::min();
+      const bool zeroInQ = qNode.inDomain(Int{0});
+
+      Int newLb = zeroInQ ? (std::min(dNode.lowerBound(), -dNode.upperBound()) + 1) : std::numeric_limits<Int>::max();
+      Int newUb = zeroInQ ? (std::max(-dNode.lowerBound(), dNode.upperBound()) - 1) : std::numeric_limits<Int>::min();
       for (const auto& [q, d] : arr) {
         Int prod;
         if (__builtin_smull_overflow(q, d, &prod)) {

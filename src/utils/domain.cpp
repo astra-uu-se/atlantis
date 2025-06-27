@@ -497,10 +497,11 @@ void SetDomain::removeBelow(Int newLowerBound) {
   if (upperBound() < newLowerBound) {
     throw InconsistencyException("SetDomain::removeBelow: Empty domain");
   }
-  const auto iter = std::ranges::find_if(_values, [&](Int value) {
+  const auto end = std::ranges::find_if(_values, [&](Int value) {
     return value >= newLowerBound;
   });
-  _values.erase(_values.begin(), iter);
+  assert(end != _values.begin());
+  _values.erase(_values.begin(), end);
   assert(!_values.empty());
 }
 
@@ -511,15 +512,9 @@ void SetDomain::removeAbove(Int newUpperBound) {
   if (newUpperBound < lowerBound()) {
     throw InconsistencyException("SetDomain::removeAbove: Empty domain");
   }
-  Int offset = static_cast<Int>(_values.size());
-  while (0 <= offset) {
-    if (_values[offset] <= newUpperBound) {
-      offset += _values[offset] == newUpperBound ? 1 : 0;
-      break;
-    }
-    --offset;
-  }
-  _values.erase(_values.begin() + offset, _values.end());
+  const auto begin = std::ranges::find_if(_values, [&](const Int val) {return val > newUpperBound; });
+  assert(begin != _values.end());
+  _values.erase(begin, _values.end());
   assert(!_values.empty());
 }
 
