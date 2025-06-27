@@ -7,6 +7,7 @@
 
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/int_abs.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
 

@@ -7,6 +7,7 @@
 
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_equal_int.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
 

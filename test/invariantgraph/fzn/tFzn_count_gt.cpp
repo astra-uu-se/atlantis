@@ -8,6 +8,7 @@
 
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_gt.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
 

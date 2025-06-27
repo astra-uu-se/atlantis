@@ -8,6 +8,7 @@
 
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_global_cardinality.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
 
