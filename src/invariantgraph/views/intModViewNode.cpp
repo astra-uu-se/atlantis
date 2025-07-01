@@ -25,17 +25,31 @@ void IntModViewNode::init(InvariantNodeId id) {
 }
 
 void IntModViewNode::updateState() {
-  if (invariantGraph()
-          .varNodeConst(staticInputVarNodeIds().front())
-          .isFixed()) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .fixToValue(invariantGraph()
-                        .varNodeConst(staticInputVarNodeIds().front())
-                        .lowerBound() %
-                    _denominator);
-    setState(InvariantNodeState::SUBSUMED);
+  auto& numerator = invariantGraph().varNode(staticInputVarNodeIds().front());
+  auto& remainder = invariantGraph().varNode(outputVarNodeIds().front());
+
+  if (numerator.lowerBound() >= 0) {
+    remainder.removeValuesBelow(0);
   }
+  if (numerator.upperBound() <= 0) {
+    remainder.removeValuesAbove(0);
+  }
+  if (remainder.lowerBound() > 0) {
+    numerator.removeValuesBelow(0);
+  }
+  if (remainder.upperBound() < 0) {
+    numerator.removeValuesAbove(0);
+  }
+
+  if (numerator.isFixed()) {
+    remainder.fixToValue(numerator.lowerBound() % _denominator);
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  const Int lb = std::min(-_denominator + 1, Int{0});
+  const Int ub = std::max(_denominator - 1, Int{0});
+  remainder.removeValuesBelow(lb);
+  remainder.removeValuesAbove(ub);
 }
 
 void IntModViewNode::registerOutputVars() {

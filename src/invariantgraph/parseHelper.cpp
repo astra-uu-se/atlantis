@@ -49,7 +49,7 @@ static std::vector<std::pair<size_t, Int>> allDifferent(
       // remove all fixed values from the current variable:
       assert(index < i);
       invariantGraph.varNode(inputVarNodeIds[i])
-          .removeValueAndTightenDomainType(value);
+          .removeValue(value);
     }
     if (!invariantGraph.varNode(inputVarNodeIds[i]).isFixed()) {
       continue;
@@ -64,7 +64,7 @@ static std::vector<std::pair<size_t, Int>> allDifferent(
         const bool wasConstant =
             invariantGraph.varNode(inputVarNodeIds[j]).isFixed();
         invariantGraph.varNode(inputVarNodeIds[j])
-            .removeValueAndTightenDomainType(value);
+            .removeValue(value);
         if (!wasConstant &&
             invariantGraph.varNode(inputVarNodeIds[j]).isFixed()) {
           fixed.emplace_back(j,

@@ -623,7 +623,7 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
   }
   const VarNode& oldNode = varNode(oldNodeId);
   VarNode& newNode = varNode(newNodeId);
-  newNode.domain()->intersect(*oldNode.constDomain());
+  newNode.domain()->removeAllValuesExcept(*oldNode.constDomain());
   while (!oldNode.definingNodes().empty()) {
     const InvariantNodeId invNodeId = *(oldNode.definingNodes().begin());
     invariantNode(invNodeId).replaceDefinedVar(oldNode.varNodeId(),

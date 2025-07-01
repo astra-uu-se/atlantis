@@ -62,13 +62,13 @@ void IntLeNode::updateState() {
   if (!isReified()) {
     if (shouldHold()) {
       // a <= b
-      aNode.removeValuesAboveAndTightenDomainType(bNode.upperBound());
-      bNode.removeValuesBelowAndTightenDomainType(aNode.lowerBound());
+      aNode.removeValuesAbove(bNode.upperBound());
+      bNode.removeValuesBelow(aNode.lowerBound());
     } else {
       // !(a <= b) <==> a > b
       // !(a <= b) <==> a > b
-      aNode.removeValuesBelowAndTightenDomainType(bNode.lowerBound() + 1);
-      bNode.removeValuesAboveAndTightenDomainType(aNode.upperBound() - 1);
+      aNode.removeValuesBelow(bNode.lowerBound() + 1);
+      bNode.removeValuesAbove(aNode.upperBound() - 1);
     }
     if (aNode.isFixed() || bNode.isFixed()) {
       setState(InvariantNodeState::SUBSUMED);

@@ -19,8 +19,12 @@ Int ModView::committedValue() {
   return _solver.committedValue(_parentId) % _denominator;
 }
 
-Int ModView::lowerBound() const { return 0; }
+Int ModView::lowerBound() const {
+  return _solver.lowerBound(_parentId) >= 0 ? 0 : std::min(-_denominator + 1, Int{0});
+}
 
-Int ModView::upperBound() const { return _denominator - 1; }
+Int ModView::upperBound() const {
+  return _solver.upperBound(_parentId) <= 0 ? 0 : std::max(_denominator - 1, Int{0});
+}
 
 }  // namespace atlantis::propagation

@@ -5,6 +5,10 @@
 namespace atlantis::invariantgraph {
 
 class IntDivNode : public InvariantNode {
+  [[nodiscard]] bool updateNumerator();
+  [[nodiscard]] bool updateDenominator();
+  [[nodiscard]] bool updateQuotient();
+
  public:
   IntDivNode(InvariantGraph& graph,
 

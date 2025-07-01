@@ -61,6 +61,14 @@ void IntTimesNode::updateState() {
   outputNode.removeValuesBelow(lb);
   outputNode.removeValuesAbove(ub);
 
+  if (staticInputVarNodeIds().size() == 1 && _scalar != 0) {
+    const Int v1 = outputNode.lowerBound() / _scalar;
+    const Int v2 = outputNode.upperBound() / _scalar;
+    auto& inputNode = invariantGraph().varNode(staticInputVarNodeIds().front());
+    inputNode.removeValuesBelow(std::min(v1, v2));
+    inputNode.removeValuesAbove(std::max(v1, v2));
+  }
+
   if (outputNode.isFixed() && staticInputVarNodeIds().size() == 1) {
     const Int numerator = outputNode.lowerBound();
     if (numerator % _scalar != 0) {

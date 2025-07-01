@@ -98,12 +98,12 @@ void ArrayElement2dNode::updateState() {
       std::vector<Int>(rowIndices.begin(), rowIndices.end()));
   const SortedUniqueVector newColDom(
       std::vector<Int>(colIndices.begin(), colIndices.end()));
-  rowNode.domain()->intersect(newRowDom);
-  colNode.domain()->intersect(newColDom);
+  rowNode.domain()->removeAllValuesExcept(newRowDom);
+  colNode.domain()->removeAllValuesExcept(newColDom);
   if (outputNode.isIntVar()) {
     const SortedUniqueVector newOutDom(
         std::vector<Int>(outputVals.begin(), outputVals.end()));
-    outputNode.domain()->intersect(newOutDom);
+    outputNode.domain()->removeAllValuesExcept(newOutDom);
   } else if (outputVals.empty()) {
     throw InconsistencyException(
         "array_bool_element2d: output has empty domain");

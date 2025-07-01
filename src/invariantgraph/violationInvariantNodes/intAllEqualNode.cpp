@@ -130,7 +130,7 @@ void IntAllEqualNode::updateState() {
       SearchDomain overlap(overlapLb, overlapUb);
       try {
         for (const auto vId : staticInputVarNodeIds()) {
-          overlap.intersect(
+          overlap.removeAllValuesExcept(
               *invariantGraphConst().varNodeConst(vId).constDomain());
         }
       } catch (const InconsistencyException&) {
@@ -159,7 +159,7 @@ void IntAllEqualNode::updateState() {
       !isReified()) {
     assert(!shouldHold());
     auto& vNode = invariantGraph().varNode(staticInputVarNodeIds().front());
-    vNode.removeValueAndTightenDomainType(_boundVal.value());
+    vNode.removeValue(_boundVal.value());
     setState(InvariantNodeState::SUBSUMED);
   }
 }

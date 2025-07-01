@@ -233,69 +233,13 @@ bool VarNode::inDomain(bool val) const {
   return val ? lowerBound() == 0 : upperBound() > 0;
 }
 
-void VarNode::removeValue(Int val) {
+void VarNode::removeValue(Int val, bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValue(Int) called on BoolVar");
   }
+  const size_t prevSize = _domain->size();
   _domain->remove(val);
-}
-
-void VarNode::removeValuesBelow(Int newLowerBound) {
-  if (!isIntVar()) {
-    throw std::runtime_error("removeValuesBelow(Int) called on BoolVar");
-  }
-  return _domain->removeBelow(newLowerBound);
-}
-
-void VarNode::removeValuesAbove(Int newUpperBound) {
-  if (!isIntVar()) {
-    throw std::runtime_error("removeValuesAbove(Int) called on BoolVar");
-  }
-  return _domain->removeAbove(newUpperBound);
-}
-
-void VarNode::removeValues(const SortedUniqueVector& values) {
-  if (!isIntVar()) {
-    throw std::runtime_error(
-        "removeValues(const std::vector<Int>&) called on BoolVar");
-  }
-  if (!(*values).empty()) {
-    return _domain->remove(values);
-  }
-}
-
-void VarNode::removeAllValuesExcept(const SortedUniqueVector& values) {
-  if (!isIntVar()) {
-    throw std::runtime_error(
-        "removeValues(const std::vector<Int>&) called on BoolVar");
-  }
-  _domain->intersect(values);
-}
-
-void VarNode::fixToValue(Int val) {
-  if (!isIntVar()) {
-    throw std::runtime_error("fixToValue(Int) called on BoolVar");
-  }
-  _domain->fix(val);
-}
-
-void VarNode::removeValue(bool val) {
-  if (isIntVar()) {
-    throw std::runtime_error("removeValue(bool) called on IntVar");
-  }
-  _domain->fix(val ? 0 : 1);
-}
-
-void VarNode::fixToValue(bool val) {
-  if (isIntVar()) {
-    throw std::runtime_error("fixToValue(bool) called on IntVar");
-  }
-  _domain->fix(val ? 0 : 1);
-}
-
-void VarNode::removeValueAndTightenDomainType(Int val) {
-  if (lowerBound() <= val && val <= upperBound()) {
-    removeValue(val);
+  if (tightenDomainState && prevSize != _domain->size()) {
     tightenDomainType(isFixed()            ? DomainType::DOM_FIXED
                       : val < lowerBound() ? DomainType::DOM_LOWER_BOUND
                       : val > upperBound() ? DomainType::DOM_UPPER_BOUND
@@ -303,18 +247,81 @@ void VarNode::removeValueAndTightenDomainType(Int val) {
   }
 }
 
-void VarNode::removeValuesBelowAndTightenDomainType(Int val) {
-  if (val > lowerBound()) {
-    removeValuesBelow(val);
+void VarNode::removeValuesBelow(Int newLowerBound, bool tightenDomainState) {
+  if (!isIntVar()) {
+    throw std::runtime_error("removeValuesBelow(Int) called on BoolVar");
+  }
+  const size_t prevSize = _domain->size();
+  _domain->removeBelow(newLowerBound);
+  if (tightenDomainState && prevSize != _domain->size()) {
     tightenDomainType(DomainType::DOM_LOWER_BOUND);
   }
 }
 
-void VarNode::removeValuesAboveAndTightenDomainType(Int val) {
-  if (val < upperBound()) {
-    removeValuesAbove(val);
+void VarNode::removeValuesAbove(Int newUpperBound, bool tightenDomainState) {
+  if (!isIntVar()) {
+    throw std::runtime_error("removeValuesAbove(Int) called on BoolVar");
+  }
+  const size_t prevSize = _domain->size();
+  _domain->removeAbove(newUpperBound);
+  if (tightenDomainState && prevSize != _domain->size()) {
     tightenDomainType(DomainType::DOM_LOWER_BOUND);
   }
+}
+
+void VarNode::removeValues(const SortedUniqueVector& values, bool tightenDomainState) {
+  if (!isIntVar()) {
+    throw std::runtime_error(
+        "removeValues(const std::vector<Int>&) called on BoolVar");
+  }
+  if ((*values).empty()) {
+    return;
+  }
+  if ((*values).size() == 1) {
+    return removeValue((*values).front(), tightenDomainState);
+  }
+  const size_t prevSize = _domain->size();
+  _domain->remove(values);
+  if (tightenDomainState && prevSize != _domain->size()) {
+    tightenDomainType(DomainType::DOM_DOMAIN);
+  }
+}
+
+void VarNode::removeAllValuesExcept(const SortedUniqueVector& values, bool tightenDomainState) {
+  if (!isIntVar()) {
+    throw std::runtime_error(
+        "removeValues(const std::vector<Int>&) called on BoolVar");
+  }
+  if ((*values).size() == 1) {
+    return fixToValue((*values).front(), tightenDomainState);
+  }
+  const size_t prevSize = _domain->size();
+  _domain->removeAllValuesExcept(values);
+  if (tightenDomainState && prevSize != _domain->size()) {
+    tightenDomainType(DomainType::DOM_DOMAIN);
+  }
+}
+
+void VarNode::fixToValue(Int val, bool tightenDomainState) {
+  if (!isIntVar()) {
+    throw std::runtime_error("fixToValue(Int) called on BoolVar");
+  }
+  _domain->fix(val);
+  if (tightenDomainState) {
+    tightenDomainType(DomainType::DOM_FIXED);
+  }
+}
+
+void VarNode::removeValue(bool val) {
+  return fixToValue(!val);
+}
+
+void VarNode::fixToValue(bool val) {
+  if (isIntVar()) {
+    throw std::runtime_error("fixToValue(bool) called on IntVar");
+  }
+  _domain->fix(val ? 0 : 1);
+  tightenDomainType(DomainType::DOM_FIXED);
 }
 
 std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) const {

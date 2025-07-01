@@ -102,8 +102,8 @@ class FznTestBase : public ::testing::Test {
   std::unordered_map<std::string, bool> boolPars;
   std::unordered_map<std::string, std::vector<Int>> intSetPars;
 
-  const Int defaultLb = -1;
-  const Int defaultUb = 1;
+  const Int defaultLb = -3;
+  const Int defaultUb = 3;
 
   void SetUp() override;
 

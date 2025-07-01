@@ -44,7 +44,7 @@ void InIntervalNode::updateState() {
   auto& vNode = invariantGraph().varNode(staticInputVarNodeIds().front());
   if (!isReified()) {
     if (shouldHold()) {
-      vNode.domain()->intersect(_lb, _ub);
+      vNode.domain()->removeAllValuesExcept(_lb, _ub);
     } else {
       vNode.domain()->remove(_lb, _ub);
     }

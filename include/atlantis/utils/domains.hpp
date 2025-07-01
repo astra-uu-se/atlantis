@@ -277,7 +277,7 @@ class SetDomain : public Domain {
 
 class SearchDomain : public Domain {
   std::variant<IntervalDomain, SetDomain> _domain;
-  void intersect(const std::vector<Int>&);
+  void removeAllValuesExcept(const std::vector<Int>&);
   void remove(const std::vector<Int>&);
 
  public:
@@ -345,10 +345,10 @@ class SearchDomain : public Domain {
    * @brief removes all values in the domain, except the values in the given
    * vector.
    */
-  void intersect(const SortedUniqueVector&);
-  void intersect(Int lb, Int ub);
-  void intersect(const SetDomain& other);
-  void intersect(const SearchDomain& other);
+  void removeAllValuesExcept(const SortedUniqueVector&);
+  void removeAllValuesExcept(Int lb, Int ub);
+  void removeAllValuesExcept(const SetDomain& other);
+  void removeAllValuesExcept(const SearchDomain& other);
 
   [[nodiscard]] bool isDisjoint(Int lb, Int ub) const override;
   [[nodiscard]] bool isDisjoint(const SortedUniqueVector&) const override;

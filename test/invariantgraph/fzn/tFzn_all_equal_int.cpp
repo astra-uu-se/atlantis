@@ -110,7 +110,7 @@ class fzn_all_equal_intTest : public FznTestBase {
         if (isFixed(input)) {
           overlap.fix(intVal(input));
         } else {
-          overlap.intersect(*varNodeConst(input).constDomain());
+          overlap.removeAllValuesExcept(*varNodeConst(input).constDomain());
         }
       }
     } catch (const InconsistencyException&) {
@@ -142,7 +142,7 @@ class fzn_all_equal_intTest : public FznTestBase {
           if (isFixed(input)) {
             overlap.fix(intVal(input));
           } else {
-            overlap.intersect(*varNodeConst(input).constDomain());
+            overlap.removeAllValuesExcept(*varNodeConst(input).constDomain());
           }
         }
       } catch (const InconsistencyException&) {

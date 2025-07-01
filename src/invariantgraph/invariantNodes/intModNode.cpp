@@ -25,7 +25,7 @@ void IntModNode::updateState() {
   auto& dNode = invariantGraph().varNode(denominator());
   dNode.removeValue(Int{0});
 
-  const auto& nNode = invariantGraphConst().varNodeConst(numerator());
+  auto& nNode = invariantGraph().varNode(numerator());
   auto& rNode = invariantGraph().varNode(remainder());
 
   if (nNode.isFixed() && nNode.lowerBound() == 0) {
@@ -42,9 +42,17 @@ void IntModNode::updateState() {
 
   if (nNode.lowerBound() >= 0) {
     rNode.removeValuesBelow(0);
+    rNode.removeValuesAbove(nNode.upperBound());
   }
   if (nNode.upperBound() <= 0) {
     rNode.removeValuesAbove(0);
+    rNode.removeValuesBelow(nNode.lowerBound());
+  }
+  if (rNode.lowerBound() > 0) {
+    nNode.removeValuesBelow(rNode.lowerBound());
+  }
+  if (rNode.upperBound() < 0) {
+    nNode.removeValuesAbove(rNode.upperBound());
   }
 
   const Int lb = std::min(dNode.lowerBound(), -dNode.upperBound()) + 1;

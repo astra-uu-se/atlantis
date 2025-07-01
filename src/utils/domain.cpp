@@ -887,7 +887,7 @@ void SearchDomain::remove(const SearchDomain& other) {
                    other._domain);
 }
 
-void SearchDomain::intersect(const std::vector<Int>& vals) {
+void SearchDomain::removeAllValuesExcept(const std::vector<Int>& vals) {
   assert(std::ranges::adjacent_find(vals, std::greater_equal<>()) ==
          vals.end());
   assert(std::holds_alternative<IntervalDomain>(_domain));
@@ -916,33 +916,33 @@ void SearchDomain::intersect(const std::vector<Int>& vals) {
   _domain = SetDomain(std::move(newDomain));
 }
 
-void SearchDomain::intersect(const SortedUniqueVector& values) {
+void SearchDomain::removeAllValuesExcept(const SortedUniqueVector& values) {
   if (std::holds_alternative<SetDomain>(_domain)) {
     // Remove the values from the set domain:
     return std::get<SetDomain>(_domain).intersect(values);
   }
-  intersect(*values);
+  removeAllValuesExcept(*values);
 }
 
-void SearchDomain::intersect(Int lb, Int ub) {
+void SearchDomain::removeAllValuesExcept(Int lb, Int ub) {
   removeBelow(lb);
   removeAbove(ub);
 }
 
-void SearchDomain::intersect(const SetDomain& other) {
+void SearchDomain::removeAllValuesExcept(const SetDomain& other) {
   if (std::holds_alternative<SetDomain>(_domain)) {
     return std::get<SetDomain>(_domain).intersect(other);
   }
-  intersect(other.values());
+  removeAllValuesExcept(other.values());
 }
 
-void SearchDomain::intersect(const SearchDomain& other) {
+void SearchDomain::removeAllValuesExcept(const SearchDomain& other) {
   if (std::holds_alternative<SetDomain>(other._domain)) {
-    intersect(std::get<SetDomain>(other._domain));
+    removeAllValuesExcept(std::get<SetDomain>(other._domain));
     return;
   }
   assert(std::holds_alternative<IntervalDomain>(other._domain));
-  intersect(std::get<IntervalDomain>(other._domain).lowerBound(),
+  removeAllValuesExcept(std::get<IntervalDomain>(other._domain).lowerBound(),
             std::get<IntervalDomain>(other._domain).upperBound());
 }
 

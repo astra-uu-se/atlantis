@@ -42,9 +42,16 @@ TEST_F(ModViewTest, bounds) {
       EXPECT_LE(inputLb, inputUb);
 
       _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
-
-      EXPECT_EQ(_solver->lowerBound(outputVar), 0);
-      EXPECT_EQ(_solver->upperBound(outputVar), std::abs(v) - 1);
+      if (inputLb >= 0) {
+        EXPECT_EQ(_solver->lowerBound(outputVar), 0);
+      } else {
+        EXPECT_EQ(_solver->lowerBound(outputVar), -std::abs(v) + 1);
+      }
+      if (inputUb <= 0) {
+        EXPECT_EQ(_solver->upperBound(outputVar), 0);
+      } else {
+        EXPECT_EQ(_solver->upperBound(outputVar), std::abs(v) - 1);
+      }
     }
   }
 }

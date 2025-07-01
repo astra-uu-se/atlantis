@@ -64,6 +64,16 @@ class int_modTest : public FznTestBase {
       return intVal(numerator) % std::abs(intVal(denominator)) !=
              intVal(remainder);
     }
+    if ((upperBound(numerator) < 0 && lowerBound(remainder) > 0) ||
+        (upperBound(remainder) < 0 && lowerBound(numerator) > 0)) {
+      return true;
+    }
+    if (lowerBound(remainder) > 0 && upperBound(numerator) < lowerBound(remainder)) {
+      return true;
+    }
+    if (lowerBound(remainder) < 0 && lowerBound(numerator) > upperBound(remainder)) {
+      return true;
+    }
 
     const Int lb =
         std::min(lowerBound(denominator), -upperBound(denominator)) + 1;

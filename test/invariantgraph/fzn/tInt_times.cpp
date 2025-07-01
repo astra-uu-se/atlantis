@@ -23,10 +23,20 @@ class int_timesTest : public FznTestBase {
   std::string product{"product"};
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
-    const bool expected = intVal(a) * intVal(b) == intVal(product);
+    const Int expectedVal = intVal(product);
+    const Int actualVal = intVal(a) * intVal(b);
+    const bool expected = actualVal == expectedVal;
 
     const bool isSolution = violation(committedValue) == 0;
-    return isSolution ? expected : !expected;
+
+    if (!isFixed(product)) {
+
+      RC_ASSERT(expected);
+      return expected;
+    }
+    const bool inDom = inDomain(product, actualVal);
+    RC_ASSERT(inDom == isSolution);
+    return inDom == isSolution;
   }
 
   void generate() override {
@@ -60,6 +70,20 @@ class int_timesTest : public FznTestBase {
     }
     if (isFixed(a) && isFixed(b) && isFixed(product)) {
       return intVal(a) * intVal(b) != intVal(product);
+    }
+    if (isFixed(a) && isFixed(b)) {
+      const Int productVal = intVal(a) * intVal(b);
+      if (productVal < lowerBound(product) || upperBound(product) < productVal) {
+        return true;
+      }
+    } else if ((isFixed(a) || isFixed(b)) && isFixed(product)) {
+      const auto& unfixed = isFixed(a) ? b : a;
+      const Int factor = isFixed(a) ? intVal(a) : intVal(b);
+      RC_ASSERT(!isFixed(unfixed));
+      const Int quotient = intVal(product) / factor;
+      if (quotient < lowerBound(unfixed) || upperBound(unfixed) < quotient) {
+        return true;
+      }
     }
     return false;
   }

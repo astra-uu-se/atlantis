@@ -64,29 +64,23 @@ class VarNode {
   [[nodiscard]] bool inDomain(Int) const;
   [[nodiscard]] bool inDomain(bool) const;
 
-  void setIsViolationVar(bool isViolVar);
-
-  void removeValue(Int);
-
-  void fixToValue(Int);
-
-  void removeValuesBelow(Int);
-
-  void removeValuesAbove(Int);
-
-  void removeValues(const SortedUniqueVector&);
-
-  void removeAllValuesExcept(const SortedUniqueVector&);
-
   void removeValue(bool);
 
   void fixToValue(bool);
 
-  void removeValueAndTightenDomainType(Int);
+  void setIsViolationVar(bool isViolVar);
 
-  void removeValuesBelowAndTightenDomainType(Int);
+  void removeValue(Int, bool tightenDomainState = true);
 
-  void removeValuesAboveAndTightenDomainType(Int);
+  void fixToValue(Int, bool tightenDomainState = true);
+
+  void removeValuesBelow(Int, bool tightenDomainState = true);
+
+  void removeValuesAbove(Int, bool tightenDomainState = true);
+
+  void removeValues(const SortedUniqueVector&, bool tightenDomainState = true);
+
+  void removeAllValuesExcept(const SortedUniqueVector&, bool tightenDomainState = true);
 
   DomainType domainType() const noexcept;
 
