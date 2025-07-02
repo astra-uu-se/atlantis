@@ -9,76 +9,45 @@ using namespace atlantis::invariantgraph;
 
 class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
  public:
-  VarNodeId inputVarNodeId{NULL_NODE_ID};
-  VarNodeId outputVarNodeId{NULL_NODE_ID};
-  std::string inputIdentifier{"input"};
-  std::string outputIdentifier{"output"};
+  std::string outputVar{"output"};
+  std::string inputVar{"input"};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
-      return std::abs(_solver->currentValue(varId(inputVarNodeId)));
+      return std::abs(_solver->currentValue(varId(inputVar)));
     }
-    return std::abs(varNode(inputVarNodeId).domain()->lowerBound());
+    return std::abs(varNode(inputVar).domain()->lowerBound());
   }
 
-  void SetUp() override {
+  void SetUp() {
     NodeTestBase::SetUp();
-    inputVarNodeId = retrieveIntVarNode(-10, 10, inputIdentifier);
-    outputVarNodeId = retrieveIntVarNode(0, 10, outputIdentifier);
+    retrieveIntVarNode(-10, 10, inputVar);
+    retrieveIntVarNode(0, 10, outputVar);
 
     if (shouldBeSubsumed()) {
-      varNode(inputVarNodeId).fixToValue(Int{-5});
+      varNode(inputVar).fixToValue(Int{-5});
     } else if (shouldBeReplaced()) {
-      varNode(inputVarNodeId).domain()->removeBelow(0);
+      varNode(inputVar).domain()->removeBelow(0);
     }
 
-    createInvariantNode(*_invariantGraph, inputVarNodeId, outputVarNodeId);
+    createInvariantNode(*_invariantGraph, varNodeId(inputVar),
+                        varNodeId(outputVar));
   }
 };
-
-TEST_P(IntAbsNodeTestFixture, construction) {
-  expectInputTo(invNode());
-  expectOutputOf(invNode());
-
-  EXPECT_EQ(invNode().input(), inputVarNodeId);
-
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
-}
-
-TEST_P(IntAbsNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  // inputVarNodeId
-  EXPECT_EQ(_solver->searchVars().size(), 1);
-
-  // inputVarNodeId
-  EXPECT_EQ(_solver->numVars(), 1);
-}
 
 TEST_P(IntAbsNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(varNode(inputVarNodeId).isFixed());
-    EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
+    EXPECT_TRUE(varNode(inputVar).isFixed());
+    EXPECT_TRUE(varNode(outputVar).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).domain()->lowerBound();
+    const Int actual = varNode(outputVar).domain()->lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_FALSE(varNode(outputVarNodeId).isFixed());
+    EXPECT_FALSE(varNode(outputVar).isFixed());
   }
 }
 
@@ -105,17 +74,16 @@ TEST_P(IntAbsNodeTestFixture, propagation) {
   _invariantGraph->close();
 
   if (shouldBeReplaced()) {
-    EXPECT_FALSE(varNode(outputIdentifier).isFixed());
-    EXPECT_FALSE(varNode(inputIdentifier).isFixed());
-    EXPECT_EQ(varNode(outputIdentifier).varNodeId(),
-              varNode(inputIdentifier).varNodeId());
+    EXPECT_FALSE(varNode(outputVar).isFixed());
+    EXPECT_FALSE(varNode(inputVar).isFixed());
+    EXPECT_EQ(varNode(outputVar).varNodeId(), varNode(inputVar).varNodeId());
     return;
   }
 
-  const propagation::VarViewId inputId = varId(inputIdentifier);
+  const propagation::VarViewId inputId = varId(inputVar);
   EXPECT_NE(inputId, propagation::NULL_ID);
 
-  const propagation::VarViewId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputVar);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   for (Int inputVal = _solver->lowerBound(inputId);

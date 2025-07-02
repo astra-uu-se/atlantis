@@ -16,6 +16,8 @@ class InIntervalNode : public ViolationInvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void updateState() override;
+
   void registerOutputVars() override;
 
   void registerNode() override;

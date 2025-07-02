@@ -196,7 +196,8 @@ static std::vector<bool> partitionIntoLayersUsingSCC(
   for (Int c = static_cast<Int>(components.size()) - 1; c >= 0; --c) {
     for (const VarId varId : components[c]) {
       if (!visited[varId]) {
-        partitionIntoLayersUtil(graph, components, varId, componentOfVar, visited, layerOfVar, layerHasSCC);
+        partitionIntoLayersUtil(graph, components, varId, componentOfVar,
+                                visited, layerOfVar, layerHasSCC);
       }
     }
   }
@@ -351,8 +352,7 @@ void topologicallyOrderUtil(
                                return true;
                              }));
 
-  const VarId dynInput =
-      isDynInv ? graph.dynamicInputVar(ts, defInv) : NULL_ID;
+  const VarId dynInput = isDynInv ? graph.dynamicInputVar(ts, defInv) : NULL_ID;
   const size_t numVars = graph.numVars();
   for (const auto& [inputId, isDynamicInput] : graph.inputVars(defInv)) {
     if (isDynInv && isDynamicInput && dynInput != inputId) {

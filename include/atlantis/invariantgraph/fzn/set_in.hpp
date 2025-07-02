@@ -11,8 +11,8 @@ namespace atlantis::invariantgraph::fzn {
 bool set_in(FznInvariantGraph&, const fznparser::IntArg&,
             const fznparser::IntSet&);
 
-bool set_in(FznInvariantGraph&, const fznparser::IntArg&,
-            const fznparser::IntSet&, const fznparser::BoolArg& reified);
+bool set_in_reif(FznInvariantGraph&, const fznparser::IntArg&,
+                 const fznparser::IntSet&, const fznparser::BoolArg& reified);
 
 bool set_in(FznInvariantGraph&, const fznparser::Constraint&);
 

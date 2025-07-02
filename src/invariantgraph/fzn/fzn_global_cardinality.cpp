@@ -5,8 +5,9 @@
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph::fzn {
@@ -33,13 +34,18 @@ bool fzn_global_cardinality(
   return true;
 }
 
-bool fzn_global_cardinality(
+bool fzn_global_cardinality_reif(
     FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover,
     const std::shared_ptr<fznparser::IntVarArray>& counts,
     const fznparser::BoolArg& reified) {
   checkInputs(cover, counts);
+  if (cover.empty()) {
+    const auto r = graph.retrieveVarNode(reified);
+    graph.varNode(r).fixToValue(bool{true});
+    return true;
+  }
   if (reified.isFixed() && reified.toParameter()) {
     return fzn_global_cardinality(graph, inputs, std::move(cover), counts);
   }
@@ -54,14 +60,17 @@ bool fzn_global_cardinality(
         std::make_shared<SearchDomain>(0, static_cast<Int>(inputs->size())),
         DomainType::DOM_NONE));
     binaryOutputVarNodeIds.emplace_back(graph.retrieveBoolVarNode());
-    graph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
-        graph, outputVarNodeIds.at(i), countVarNodeIds.at(i),
-        binaryOutputVarNodeIds.at(i)));
   }
 
   graph.addInvariantNode(std::make_shared<GlobalCardinalityNode>(
       graph, graph.retrieveVarNodes(inputs), std::move(cover),
-      std::move(outputVarNodeIds)));
+      std::vector(outputVarNodeIds)));
+
+  for (size_t i = 0; i < counts->size(); ++i) {
+    graph.addInvariantNode(std::make_shared<IntAllEqualNode>(
+        graph, outputVarNodeIds.at(i), countVarNodeIds.at(i),
+        binaryOutputVarNodeIds.at(i)));
+  }
 
   graph.addInvariantNode(std::make_shared<ArrayBoolAndNode>(
       graph, std::move(binaryOutputVarNodeIds),
@@ -92,7 +101,7 @@ bool fzn_global_cardinality(FznInvariantGraph& graph,
         getArgArray<fznparser::IntVarArray>(constraint.arguments().at(2)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
-  return fzn_global_cardinality(
+  return fzn_global_cardinality_reif(
       graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::move(cover),
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(2)),

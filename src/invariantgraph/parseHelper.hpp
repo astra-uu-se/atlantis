@@ -15,11 +15,16 @@ std::vector<VarNodeId> concat(const std::vector<VarNodeId>&,
                               const std::vector<VarNodeId>&);
 
 std::vector<VarNodeId> pruneAllDifferentFree(
-    InvariantGraph&, std::vector<VarNodeId> staticInputVarNodeIds);
+    InvariantGraph&, const std::vector<VarNodeId>& staticInputVarNodeIds);
 
 std::vector<VarNodeId> pruneAllDifferentFixed(
-    InvariantGraph&, std::vector<VarNodeId> staticInputVarNodeIds);
+    InvariantGraph&, const std::vector<VarNodeId>& staticInputVarNodeIds);
 
 std::vector<Int> toIntVector(const std::vector<bool>& argument);
+
+/**
+ * This potentially rearranges the vector.
+ */
+bool removeFirstOccurrence(std::vector<size_t>&, size_t);
 
 }  // namespace atlantis::invariantgraph

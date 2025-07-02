@@ -1,0 +1,754 @@
+#include "./fznTestBase.hpp"
+
+#include <rapidcheck/gen/Numeric.h>
+
+#include <ranges>
+
+#include "atlantis/search/neighborhoods/randomNeighborhood.hpp"
+#include "atlantis/search/searchVariable.hpp"
+#include "atlantis/utils/domains.hpp"
+
+namespace atlantis::testing {
+using namespace fznparser;
+using namespace atlantis::invariantgraph;
+
+std::string to_string(bool v) { return v ? "true" : "false"; }
+
+void FznTestBase::SetUp() {
+  _model = std::make_shared<Model>();
+  _solver = std::make_shared<propagation::Solver>();
+  _invariantGraph = std::make_shared<FznInvariantGraph>(*_solver, true);
+
+  std::random_device rd;
+  gen = std::mt19937(rd());
+  binaryDist = std::uniform_int_distribution<unsigned char>(0, 1);
+}
+
+void FznTestBase::generateConstraint() {
+  if (annotations.empty()) {
+    _model->addConstraint(
+        Constraint{constraintIdentifier, std::vector<Arg>{args}});
+  } else {
+    _model->addConstraint(Constraint{constraintIdentifier,
+                                     std::vector<Arg>{args},
+                                     std::vector<Annotation>{annotations}});
+  }
+  _invariantGraph->build(*_model);
+}
+VarNode& FznTestBase::varNode(const std::string& identifier) {
+  RC_LOG() << "varNode(\"" << identifier << "\")" << std::endl;
+  RC_ASSERT(_invariantGraph->containsVarNode(identifier));
+  return _invariantGraph->varNode(identifier);
+}
+const VarNode& FznTestBase::varNodeConst(const std::string& identifier) const {
+  RC_LOG() << "varNodeConst(\"" << identifier << "\")" << std::endl;
+  RC_ASSERT(_invariantGraph->containsVarNode(identifier));
+  return _invariantGraph->varNodeConst(identifier);
+}
+VarNodeId FznTestBase::varNodeId(const std::string& identifier) const {
+  if (_invariantGraph->containsVarNode(identifier)) {
+    return _invariantGraph->varNodeId(identifier);
+  }
+  return NULL_NODE_ID;
+}
+propagation::VarViewId FznTestBase::varId(const std::string& identifier) const {
+  if (_invariantGraph->containsVarNode(identifier)) {
+    return _invariantGraph->varId(identifier);
+  }
+  return propagation::NULL_ID;
+}
+void FznTestBase::setValue(const std::string& identifier, Int val) const {
+  _solver->setValue(varId(identifier), val);
+}
+Int FznTestBase::currentValue(const std::string& identifier) const {
+  return _solver->currentValue(varId(identifier));
+}
+Int FznTestBase::lowerBound(const std::string& identifier) const {
+  if (_invariantGraph->containsVarNode(identifier)) {
+    return varNodeConst(identifier).lowerBound();
+  }
+  if (intPars.contains(identifier)) {
+    return intPars.at(identifier);
+  }
+  if (boolPars.contains(identifier)) {
+    return boolPars.at(identifier) ? 0 : 1;
+  }
+  if (_model->hasVar(identifier)) {
+    if (std::holds_alternative<std::shared_ptr<BoolVar>>(
+            _model->var(identifier))) {
+      return std::get<std::shared_ptr<BoolVar>>(_model->var(identifier))
+                     ->contains(true)
+                 ? 0
+                 : 1;
+    }
+    if (std::holds_alternative<std::shared_ptr<IntVar>>(
+            _model->var(identifier))) {
+      return std::get<std::shared_ptr<IntVar>>(_model->var(identifier))
+          ->lowerBound();
+    }
+  }
+  RC_LOG() << "unknown var \"" << identifier << "\"" << std::endl;
+  RC_FAIL();
+}
+Int FznTestBase::upperBound(const std::string& identifier) const {
+  if (_invariantGraph->containsVarNode(identifier)) {
+    return varNodeConst(identifier).upperBound();
+  }
+  if (intPars.contains(identifier)) {
+    return intPars.at(identifier);
+  }
+  if (boolPars.contains(identifier)) {
+    return boolPars.at(identifier) ? 0 : 1;
+  }
+  if (_model->hasVar(identifier)) {
+    if (std::holds_alternative<std::shared_ptr<BoolVar>>(
+            _model->var(identifier))) {
+      return std::get<std::shared_ptr<BoolVar>>(_model->var(identifier))
+                     ->contains(false)
+                 ? 1
+                 : 0;
+    }
+    if (std::holds_alternative<std::shared_ptr<IntVar>>(
+            _model->var(identifier))) {
+      return std::get<std::shared_ptr<IntVar>>(_model->var(identifier))
+          ->upperBound();
+    }
+  }
+  RC_LOG() << "unknown var \"" << identifier << "\"" << std::endl;
+  RC_FAIL();
+}
+bool FznTestBase::isFixed(const std::string& identifier) const {
+  if (_invariantGraph->containsVarNode(identifier)) {
+    return varNodeConst(identifier).isFixed();
+  }
+  if (boolPars.contains(identifier) || intPars.contains(identifier)) {
+    return true;
+  }
+  RC_LOG() << "unknown var \"" << identifier << "\"" << std::endl;
+  RC_FAIL();
+}
+bool FznTestBase::boolVal(const std::string& identifier,
+                          bool committedValue) const {
+  RC_LOG() << "boolVal(\"" << identifier << "\", " << to_string(committedValue)
+           << ')' << std::endl;
+  if (_invariantGraph->containsVarNode(identifier)) {
+    const auto& vNode = varNodeConst(identifier);
+    RC_ASSERT(!vNode.isIntVar());
+    if (vNode.varId() != propagation::NULL_ID) {
+      return (committedValue ? _solver->committedValue(vNode.varId())
+                             : _solver->currentValue(vNode.varId())) == 0;
+    }
+    return vNode.inDomain(bool{true});
+  }
+  if (boolPars.contains(identifier)) {
+    return boolPars.at(identifier);
+  }
+  RC_LOG() << "unhandled argument type" << std::endl;
+  RC_FAIL();
+}
+bool FznTestBase::inDomain(const std::string& identifier, bool val) const {
+  RC_LOG() << "inDomain(\"" << identifier << "\", " << to_string(val) << ')'
+           << std::endl;
+  if (_invariantGraph->containsVarNode(identifier)) {
+    const auto& vNode = varNodeConst(identifier);
+    RC_ASSERT(!vNode.isIntVar());
+    return vNode.inDomain(val);
+  }
+  if (boolPars.contains(identifier)) {
+    return boolPars.at(identifier) == val;
+  }
+  RC_LOG() << "unhandled argument type" << std::endl;
+  RC_FAIL();
+}
+bool FznTestBase::isFixedTo(const std::string& identifier, bool val) const {
+  if (isFixed(identifier)) {
+    return boolVal(identifier, val) == val;
+  }
+  return false;
+}
+bool FznTestBase::isFixedTo(const std::string& identifier, Int val) const {
+  if (isFixed(identifier)) {
+    return intVal(identifier, val) == val;
+  }
+  return false;
+}
+Int FznTestBase::intVal(const std::string& identifier,
+                        bool committedValue) const {
+  RC_LOG() << "intVal(\"" << identifier << "\", " << to_string(committedValue)
+           << ')' << std::endl;
+  if (_invariantGraph->containsVarNode(identifier)) {
+    const auto& vNode = varNodeConst(identifier);
+    RC_ASSERT(vNode.isIntVar());
+    if (vNode.varId() != propagation::NULL_ID) {
+      return committedValue ? _solver->committedValue(vNode.varId())
+                            : _solver->currentValue(vNode.varId());
+    }
+    RC_ASSERT(vNode.isFixed());
+    return vNode.lowerBound();
+  }
+  if (intPars.contains(identifier)) {
+    return intPars.at(identifier);
+  }
+  RC_LOG() << "no var \"" << identifier << "'" << std::endl;
+  RC_FAIL();
+}
+
+bool FznTestBase::inDomain(const std::string& identifier, Int val) const {
+  RC_LOG() << "inDomain(\"" << identifier << "\", " << val << ')' << std::endl;
+  if (_invariantGraph->containsVarNode(identifier)) {
+    const auto& vNode = varNodeConst(identifier);
+    RC_ASSERT(vNode.isIntVar());
+    return vNode.inDomain(val);
+  }
+  if (intPars.contains(identifier)) {
+    return intPars.at(identifier) == val;
+  }
+  RC_LOG() << "unhandled argument type" << std::endl;
+  RC_FAIL();
+}
+
+const std::vector<Int>& FznTestBase::intSetVal(
+    const std::string& identifier) const {
+  RC_LOG() << "intSetVal(\"" << identifier << ')' << std::endl;
+  if (intSetPars.contains(identifier)) {
+    return intSetPars.at(identifier);
+  }
+  RC_LOG() << "unhandled argument type" << std::endl;
+  RC_FAIL();
+}
+
+propagation::VarViewId FznTestBase::totalViolationVarId() const {
+  return _invariantGraph->totalViolationVarId();
+}
+Int FznTestBase::violation(bool committedValue) const {
+  if (totalViolationVarId() == propagation::NULL_ID) {
+    return 0;
+  }
+  return committedValue ? _solver->committedValue(totalViolationVarId())
+                        : _solver->currentValue(totalViolationVarId());
+}
+std::shared_ptr<IntVar> FznTestBase::genIntVar(Int lb, Int ub,
+                                               const std::string& identifier) {
+  if (lb == ub) {
+    addIntPar(identifier, lb);
+  }
+  return std::get<std::shared_ptr<IntVar>>(
+      _model->addVar(std::make_shared<IntVar>(lb, ub, identifier)));
+}
+
+std::shared_ptr<IntVar> FznTestBase::genIntVar(const std::vector<Int>& dom,
+                                               const std::string& identifier) {
+  RC_ASSERT(!dom.empty());
+  if (dom.size() == 1) {
+    addIntPar(identifier, dom.front());
+  }
+  return std::get<std::shared_ptr<IntVar>>(
+      _model->addVar(std::make_shared<IntVar>(std::vector{dom}, identifier)));
+}
+
+std::shared_ptr<IntVar> FznTestBase::genIntVar(const std::string& identifier) {
+  return genIntVar(defaultLb, defaultUb, identifier);
+}
+std::shared_ptr<IntVar> FznTestBase::genIntVar(IntArgState state,
+                                               const std::string& identifier) {
+  return genIntVar(state, defaultLb, defaultUb, identifier);
+}
+std::shared_ptr<IntVar> FznTestBase::genIntVar(IntArgState state, Int lb,
+                                               Int ub,
+                                               const std::string& identifier) {
+  switch (state) {
+    case IntArgState::FIXED: {
+      const Int val = lb == ub ? lb : *rc::gen::inRange<Int>(lb, ub + 1);
+      return genIntVar(val, val, identifier);
+    }
+    case IntArgState::VAR: {
+      return genIntVar(lb, ub, identifier);
+    }
+    default:
+      RC_LOG() << "unhandled IntArgState" << std::endl;
+      RC_FAIL();
+  }
+}
+void FznTestBase::addBoolPar(const std::string& identifier, bool val) {
+  RC_LOG() << "addBoolPar(\"" << identifier << "\", " << to_string(val) << ')'
+           << std::endl;
+  RC_ASSERT(!identifier.empty());
+  RC_ASSERT(!boolPars.contains(identifier));
+  RC_ASSERT(!intPars.contains(identifier));
+  RC_ASSERT(!intSetPars.contains(identifier));
+  boolPars.emplace(identifier, val);
+}
+
+void FznTestBase::addIntPar(const std::string& identifier, Int val) {
+  RC_LOG() << "addIntPar(\"" << identifier << "\", " << val << ')' << std::endl;
+  RC_ASSERT(!identifier.empty());
+  RC_ASSERT(!boolPars.contains(identifier));
+  RC_ASSERT(!intPars.contains(identifier));
+  RC_ASSERT(!intSetPars.contains(identifier));
+  intPars.emplace(identifier, val);
+}
+
+void FznTestBase::addIntSetPar(const std::string& identifier,
+                               std::vector<Int>&& vals) {
+  RC_LOG() << "addIntSetPar(\"" << identifier << "\", {";
+  for (size_t i = 0; i < vals.size(); ++i) {
+    RC_LOG() << (i != 0 ? "" : ", ") << vals.at(i);
+  }
+  RC_LOG() << "})" << std::endl;
+  RC_ASSERT(!identifier.empty());
+  RC_ASSERT(!boolPars.contains(identifier));
+  RC_ASSERT(!intPars.contains(identifier));
+  RC_ASSERT(!intSetPars.contains(identifier));
+  intSetPars.emplace(identifier, std::move(vals));
+}
+
+IntArg FznTestBase::addIntArg(IntArgState state, Int lb, Int ub,
+                              const std::string& identifier) {
+  switch (state) {
+    case IntArgState::PAR: {
+      const Int val = lb == ub ? lb : *rc::gen::inRange<Int>(lb, ub + 1);
+      addIntPar(identifier, val);
+      auto arg = IntArg{val};
+      args.emplace_back(arg);
+      return arg;
+    }
+    case IntArgState::FIXED: {
+      const Int val = lb == ub ? lb : *rc::gen::inRange<Int>(lb, ub + 1);
+      auto var = genIntVar(val, val, identifier);
+      args.emplace_back(var);
+      return var;
+    }
+    case IntArgState::VAR: {
+      auto var = genIntVar(lb, ub, identifier);
+      args.emplace_back(var);
+      return var;
+    }
+    default:
+      RC_LOG() << "Invalid IntArgState" << std::endl;
+      RC_FAIL();
+  }
+}
+
+IntArg FznTestBase::addIntArg(IntArgState state, const std::vector<Int>& dom,
+                              const std::string& identifier) {
+  RC_ASSERT(!dom.empty());
+  switch (state) {
+    case IntArgState::PAR: {
+      const Int val = dom.size() == 1 ? dom.front() : *rc::gen::elementOf(dom);
+      addIntPar(identifier, val);
+      auto arg = IntArg{val};
+      args.emplace_back(arg);
+      return arg;
+    }
+    case IntArgState::FIXED: {
+      const Int val = dom.size() == 1 ? dom.front() : *rc::gen::elementOf(dom);
+      auto var = genIntVar(val, val, identifier);
+      args.emplace_back(var);
+      return var;
+    }
+    case IntArgState::VAR: {
+      RC_ASSERT(dom.size() > size_t{1});
+      auto var = genIntVar(dom, identifier);
+      args.emplace_back(var);
+      return var;
+    }
+    default:
+      RC_LOG() << "Invalid IntArgState" << std::endl;
+      RC_FAIL();
+  }
+}
+
+IntArg FznTestBase::addIntArg(IntArgState state,
+                              const std::string& identifier) {
+  return addIntArg(state, defaultLb, defaultUb, identifier);
+}
+IntArg FznTestBase::addIntArg(Int lb, Int ub, const std::string& identifier) {
+  return addIntArg(lb == ub
+                       ? *rc::gen::element(IntArgState::PAR, IntArgState::FIXED)
+                       : *rc::gen::arbitrary<IntArgState>(),
+                   lb, ub, identifier);
+}
+IntArg FznTestBase::addIntArg(const std::string& identifier) {
+  return addIntArg(defaultLb, defaultUb, identifier);
+}
+std::shared_ptr<IntVarArray> FznTestBase::genIntParArray(
+    size_t arraySize, Int lb, Int ub, const std::string& identifier) {
+  auto parArray = std::get<std::shared_ptr<IntVarArray>>(
+      _model->addVar(std::make_shared<IntVarArray>(identifier)));
+  const std::vector<Int> pars = *rc::gen::container<std::vector<Int>>(
+      arraySize, rc::gen::inRange<Int>(lb, ub));
+  for (size_t i = 0; i < arraySize; ++i) {
+    parArray->append(pars.at(i));
+  }
+  return parArray;
+}
+std::shared_ptr<IntVarArray> FznTestBase::genIntVarArray(
+    size_t arraySize, Int lb, Int ub, const std::string& identifier,
+    const std::string& varPrefix) {
+  auto vars = std::get<std::shared_ptr<IntVarArray>>(
+      _model->addVar(std::make_shared<IntVarArray>(identifier)));
+  std::vector<IntArgState> argStates =
+      *rc::gen::container<std::vector<IntArgState>>(
+          arraySize, rc::gen::arbitrary<IntArgState>());
+  for (size_t i = 0; i < arraySize; ++i) {
+    switch (argStates.at(i)) {
+      case IntArgState::PAR:
+        vars->append(*rc::gen::inRange<Int>(lb, ub + 1));
+        break;
+      case IntArgState::FIXED: {
+        const Int val = *rc::gen::inRange<Int>(lb, ub + 1);
+        vars->append(genIntVar(val, val, varPrefix + std::to_string(i)));
+        break;
+      }
+      case IntArgState::VAR:
+        vars->append(genIntVar(lb, ub, varPrefix + std::to_string(i)));
+        break;
+      default:
+        RC_LOG() << "unknown IntArgState" << std::endl;
+        RC_FAIL();
+    }
+  }
+  return vars;
+}
+std::shared_ptr<IntVarArray> FznTestBase::genIntVarArray(
+    size_t arraySize, const std::string& identifier,
+    const std::string& varPrefix) {
+  return genIntVarArray(arraySize, defaultLb, defaultUb, identifier, varPrefix);
+}
+std::shared_ptr<IntVarArray> FznTestBase::genIntParArray(
+    size_t arraySize, const std::string& identifier) {
+  return genIntParArray(arraySize, defaultLb, defaultUb, identifier);
+}
+std::shared_ptr<BoolVar> FznTestBase::genBoolVar(
+    BoolArgState state, const std::string& identifier) {
+  switch (state) {
+    case BoolArgState::FIXED_FALSE:
+    case BoolArgState::FIXED_TRUE: {
+      auto fixedVar = std::make_shared<BoolVar>(
+          state == BoolArgState::FIXED_TRUE, identifier);
+      addBoolPar(identifier, state == BoolArgState::FIXED_TRUE);
+      _model->addVar(fixedVar);
+      return fixedVar;
+    }
+    case BoolArgState::VAR: {
+      auto var = std::make_shared<BoolVar>(identifier);
+      _model->addVar(var);
+      return var;
+    }
+    default:
+      RC_LOG() << "invalid BoolArgState" << std::endl;
+      RC_FAIL();
+  }
+}
+
+std::vector<Int> FznTestBase::genDomain(size_t size) const {
+  RC_ASSERT(size < static_cast<size_t>(defaultUb - defaultLb + 2));
+  return *rc::gen::unique<std::vector<Int>>(
+      size, rc::gen::inRange<Int>(defaultLb, defaultUb + 1));
+}
+
+std::vector<Int> FznTestBase::genDomain(IntArgState state) const {
+  const size_t size =
+      state != IntArgState::VAR
+          ? 1
+          : *rc::gen::inRange<size_t>(2, defaultUb - defaultLb + 2);
+  return genDomain(size);
+}
+
+std::vector<Int> FznTestBase::genDomain() const {
+  return genDomain(*rc::gen::arbitrary<IntArgState>());
+}
+
+BoolArg FznTestBase::addBoolArg(BoolArgState state,
+                                const std::string& identifier) {
+  switch (state) {
+    case BoolArgState::PAR_FALSE:
+    case BoolArgState::PAR_TRUE: {
+      BoolArg par{state == BoolArgState::PAR_TRUE};
+      addBoolPar(identifier, state == BoolArgState::PAR_TRUE);
+      args.emplace_back(par);
+      return par;
+    }
+    default: {
+      auto var = genBoolVar(state, identifier);
+      args.emplace_back(var);
+      return var;
+    }
+  }
+}
+BoolArg FznTestBase::addBoolArg(const std::string& identifier) {
+  return addBoolArg(*rc::gen::arbitrary<BoolArgState>(), identifier);
+}
+std::shared_ptr<BoolVarArray> FznTestBase::genBoolParArray(
+    size_t arraySize, const std::string& identifier) {
+  std::vector<bool> pars = *rc::gen::container<std::vector<bool>>(
+      arraySize, rc::gen::arbitrary<bool>());
+  auto argArray = std::get<std::shared_ptr<BoolVarArray>>(
+      _model->addVar(std::make_shared<BoolVarArray>(identifier)));
+  for (size_t i = 0; i < arraySize; ++i) {
+    argArray->append(pars.at(i));
+  }
+  return argArray;
+}
+std::shared_ptr<BoolVarArray> FznTestBase::addBoolVarArray(
+    size_t arraySize, const std::string& identifier,
+    const std::string& varPrefix) {
+  std::vector<BoolArgState> argStates =
+      *rc::gen::container<std::vector<BoolArgState>>(
+          arraySize, rc::gen::arbitrary<BoolArgState>());
+  auto vars = std::get<std::shared_ptr<BoolVarArray>>(
+      _model->addVar(std::make_shared<BoolVarArray>(identifier)));
+  for (size_t i = 0; i < arraySize; ++i) {
+    const std::string varIdentifier = varPrefix + std::to_string(i);
+    switch (argStates.at(i)) {
+      case BoolArgState::PAR_FALSE:
+      case BoolArgState::PAR_TRUE:
+        vars->append(argStates.at(i) == BoolArgState::PAR_TRUE);
+        addBoolPar(varIdentifier, argStates.at(i) == BoolArgState::PAR_TRUE);
+        break;
+      default:
+        vars->append(genBoolVar(argStates.at(i), varIdentifier));
+        break;
+    }
+  }
+  args.emplace_back(vars);
+  return vars;
+}
+std::shared_ptr<BoolVarArray> FznTestBase::addBoolVarArray(
+    const std::vector<std::string>& identifiers,
+    const std::string& identifier) {
+  std::vector<BoolArgState> argStates =
+      *rc::gen::container<std::vector<BoolArgState>>(
+          identifiers.size(), rc::gen::arbitrary<BoolArgState>());
+  auto vars = std::get<std::shared_ptr<BoolVarArray>>(
+      _model->addVar(std::make_shared<BoolVarArray>(identifier)));
+  for (size_t i = 0; i < identifiers.size(); ++i) {
+    switch (argStates.at(i)) {
+      case BoolArgState::PAR_FALSE:
+      case BoolArgState::PAR_TRUE:
+        vars->append(argStates.at(i) == BoolArgState::PAR_TRUE);
+        addBoolPar(identifiers.at(i),
+                   argStates.at(i) == BoolArgState::PAR_TRUE);
+        break;
+      default:
+        vars->append(genBoolVar(argStates.at(i), identifiers.at(i)));
+        break;
+    }
+  }
+  args.emplace_back(vars);
+  return vars;
+}
+std::shared_ptr<IntVarArray> FznTestBase::addIntVarArray(
+    const std::vector<IntArgState>& argStates,
+    const std::vector<std::pair<Int, Int>>& domains,
+    const std::vector<std::string>& identifiers,
+    const std::string& identifier) {
+  RC_ASSERT(argStates.size() == identifiers.size());
+  RC_ASSERT(domains.size() == identifiers.size());
+  auto vars = std::get<std::shared_ptr<IntVarArray>>(
+      _model->addVar(std::make_shared<IntVarArray>(identifier)));
+  for (size_t i = 0; i < identifiers.size(); ++i) {
+    const auto [lb, ub] = domains.at(i);
+    RC_ASSERT(lb <= ub);
+    switch (argStates.at(i)) {
+      case IntArgState::PAR: {
+        const Int val = lb == ub ? lb : *rc::gen::inRange<Int>(lb, ub + 1);
+        vars->append(val);
+        addIntPar(identifiers.at(i), val);
+        break;
+      }
+      default:
+        vars->append(genIntVar(argStates.at(i), lb, ub, identifiers.at(i)));
+        break;
+    }
+  }
+  args.emplace_back(vars);
+  return vars;
+}
+std::shared_ptr<IntVarArray> FznTestBase::addIntVarArray(
+    const std::vector<IntArgState>& argStates,
+    const std::vector<std::string>& identifiers,
+    const std::string& identifier) {
+  RC_ASSERT(argStates.size() == identifiers.size());
+  auto vars = std::get<std::shared_ptr<IntVarArray>>(
+      _model->addVar(std::make_shared<IntVarArray>(identifier)));
+  for (size_t i = 0; i < identifiers.size(); ++i) {
+    switch (argStates.at(i)) {
+      case IntArgState::PAR: {
+        const Int val = *rc::gen::inRange<Int>(defaultLb, defaultUb + 1);
+        vars->append(val);
+        addIntPar(identifiers.at(i), val);
+        break;
+      }
+      default:
+        vars->append(genIntVar(argStates.at(i), identifiers.at(i)));
+        break;
+    }
+  }
+  args.emplace_back(vars);
+  return vars;
+}
+std::shared_ptr<IntVarArray> FznTestBase::addIntVarArray(
+    const std::vector<std::string>& identifiers,
+    const std::string& identifier) {
+  return addIntVarArray(
+      identifiers.empty()
+          ? std::vector<IntArgState>{}
+          : *rc::gen::container<std::vector<IntArgState>>(
+                identifiers.size(), rc::gen::arbitrary<IntArgState>()),
+      identifiers, identifier);
+}
+std::shared_ptr<IntVarArray> FznTestBase::addIntVarArray(
+    size_t arraySize, const std::string& identifier,
+    const std::string& varPrefix) {
+  std::vector<std::string> identifiers(arraySize);
+  for (size_t i = 0; i < arraySize; ++i) {
+    identifiers.at(i) = varPrefix + std::to_string(i);
+  }
+  return addIntVarArray(arraySize == 0
+                            ? std::vector<IntArgState>{}
+                            : *rc::gen::container<std::vector<IntArgState>>(
+                                  arraySize, rc::gen::arbitrary<IntArgState>()),
+                        identifiers, identifier);
+}
+
+Arg FznTestBase::addArg(Int val) { return args.emplace_back(IntArg{val}); }
+Arg FznTestBase::addArg(const std::vector<Int>& parameters,
+                        const std::string& identifier) {
+  auto i_par_arr = std::make_shared<IntVarArray>(identifier);
+  for (const Int p : parameters) {
+    i_par_arr->append(p);
+  }
+  args.emplace_back(i_par_arr);
+  return i_par_arr;
+}
+Arg FznTestBase::addArg(const std::vector<bool>& parameters,
+                        const std::string& identifier) {
+  auto b_par_arr = std::make_shared<BoolVarArray>(identifier);
+  for (size_t i = 0; i < parameters.size(); ++i) {
+    b_par_arr->append(parameters.at(i));
+  }
+  args.emplace_back(b_par_arr);
+  return b_par_arr;
+}
+
+Arg FznTestBase::addIntSetArg(Int lb, Int ub, const std::string& identifier) {
+  std::vector<Int> elements(ub - lb + 1);
+  std::iota(elements.begin(), elements.end(), lb);
+  addIntSetPar(identifier, std::move(elements));
+  return args.emplace_back(IntSetArg{IntSet{lb, ub}});
+}
+
+Arg FznTestBase::addIntSetArg(const std::vector<Int>& elements,
+                              const std::string& identifier) {
+  addIntSetPar(identifier, std::vector{elements});
+  return args.emplace_back(IntSetArg{IntSet{std::vector{elements}}});
+}
+
+Arg FznTestBase::addIntSetArg(const std::string& identifier) {
+  const size_t size = *rc::gen::inRange<size_t>(0, defaultUb + defaultLb + 2);
+  auto elements = *rc::gen::unique<std::vector<Int>>(
+      size, rc::gen::inRange<Int>(defaultLb, defaultUb + 1));
+  addIntSetPar(identifier, std::vector{elements});
+  return args.emplace_back(IntSetArg{IntSet{std::move(elements)}});
+}
+
+bool FznTestBase::randBool() { return binaryDist(gen) == 1; }
+
+void FznTestBase::changeValue(const std::string& identifier,
+                              bool committedValue) {
+  if (varId(identifier) == propagation::NULL_ID) {
+    return;
+  }
+  const auto& dom = varNodeConst(identifier).constDomain();
+  if (dom->size() <= 1) {
+    return;
+  }
+  const Int curVal = committedValue ? _solver->committedValue(varId(identifier))
+                                    : _solver->currentValue(varId(identifier));
+  const size_t offset =
+      std::uniform_int_distribution<size_t>(0, dom->size() - 2)(gen);
+  const Int newVal = *(dom->begin() + offset);
+  _solver->setValue(varId(identifier),
+                    curVal != newVal ? newVal : dom->upperBound());
+}
+
+void FznTestBase::rapidCheck(bool reachesFixpoint) {
+  bool neverSat = false;
+  try {
+    generate();
+    neverSat = neverSatisfied();
+    _invariantGraph->construct();
+    _neighborhood =
+        std::make_shared<search::neighborhoods::NeighborhoodCombinator>(
+            _invariantGraph->neighborhood());
+    _invariantGraph->close();
+    _assignment = std::make_shared<search::Assignment>(
+        *_solver, *_neighborhood, _invariantGraph->totalViolationVarId(),
+        _invariantGraph->objectiveVarId(), ObjectiveDirection::NONE, 0);
+    _randomProvider = std::make_shared<search::RandomProvider>(1234);
+    _assignment->initialize(*_randomProvider);
+  } catch (const InconsistencyException&) {
+    RC_SUCCEED_IF(neverSat);
+    RC_SUCCEED_IF(neverSatisfied());
+    RC_FAIL();
+  }
+  if (neverSat) {
+    RC_SUCCEED_IF(!reachesFixpoint);
+    RC_SUCCEED_IF(!neverSatisfied());
+    RC_FAIL();
+  }
+  RC_ASSERT(!neverSat);
+  if (alwaysSatisfied()) {
+    return;
+  }
+
+  if (!canMove()) {
+    RC_ASSERT(isSatisfied(false));
+    RC_ASSERT(isSatisfied(true));
+    return;
+  }
+  constexpr size_t numCommits = 3;
+  constexpr size_t numProbes = 3;
+
+  for (size_t c = 0; c < numCommits; ++c) {
+    RC_ASSERT(isSatisfied(true));
+
+    for (size_t p = 0; p <= numProbes; ++p) {
+      _solver->beginMove();
+      move(p == numProbes);
+      _solver->endMove();
+
+      if (p == numProbes) {
+        _solver->beginCommit();
+      } else {
+        _solver->beginProbe();
+      }
+      query();
+      if (p == numProbes) {
+        for (size_t i = 0;
+             i < _invariantGraph->implicitConstraintNodes().size(); ++i) {
+          auto neighborhood =
+              _invariantGraph->implicitConstraintNode(InvariantNodeId(i, true))
+                  .neighborhood();
+          if (dynamic_cast<search::neighborhoods::NeighborhoodCombinator*>(
+                  neighborhood.get()) != nullptr) {
+            continue;
+          }
+          if (dynamic_cast<search::neighborhoods::RandomNeighborhood*>(
+                  neighborhood.get()) != nullptr) {
+            continue;
+          }
+          neighborhood->commitIf(*_assignment);
+        }
+        _solver->endCommit();
+      } else {
+        _solver->endProbe();
+      }
+      RC_ASSERT(isSatisfied(false));
+    }
+    RC_ASSERT(isSatisfied(true));
+  }
+}
+
+}  // namespace atlantis::testing

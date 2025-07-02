@@ -6,22 +6,22 @@ namespace atlantis::invariantgraph {
 
 class ArrayVarElement2dNode : public InvariantNode {
   size_t _numRows;
-  Int _offset1;
-  Int _offset2;
+  Int _rowOffset;
+  Int _colOffset;
 
  public:
   ArrayVarElement2dNode(InvariantGraph& graph,
 
-                        VarNodeId idx1, VarNodeId idx2,
+                        VarNodeId rowIdx, VarNodeId colIdx,
                         std::vector<VarNodeId>&& flatVarMatrix,
-                        VarNodeId output, size_t numRows, Int offset1,
-                        Int offset2);
+                        VarNodeId output, size_t numRows, Int rowOffset,
+                        Int colOffset);
 
   ArrayVarElement2dNode(InvariantGraph& graph,
 
-                        VarNodeId idx1, VarNodeId idx2,
+                        VarNodeId rowIdx, VarNodeId colIdx,
                         std::vector<std::vector<VarNodeId>>&& varMatrix,
-                        VarNodeId output, Int offset1, Int offset2);
+                        VarNodeId output, Int rowOffset, Int colOffset);
 
   void init(InvariantNodeId) override;
 
@@ -37,11 +37,11 @@ class ArrayVarElement2dNode : public InvariantNode {
 
   [[nodiscard]] VarNodeId at(Int row, Int col) const;
 
-  [[nodiscard]] VarNodeId idx1() const noexcept {
+  [[nodiscard]] VarNodeId rowIdx() const noexcept {
     return staticInputVarNodeIds().front();
   }
 
-  [[nodiscard]] VarNodeId idx2() const noexcept {
+  [[nodiscard]] VarNodeId colIdx() const noexcept {
     return staticInputVarNodeIds().back();
   }
 

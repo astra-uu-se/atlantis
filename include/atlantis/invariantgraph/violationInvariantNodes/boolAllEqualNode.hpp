@@ -5,7 +5,14 @@
 namespace atlantis::invariantgraph {
 class BoolAllEqualNode : public ViolationInvariantNode {
   bool _breaksCycle{false};
+  unsigned char _dom{2};
   propagation::VarViewId _intermediate{propagation::NULL_ID};
+
+  [[nodiscard]] bool isFixed() const;
+  [[nodiscard]] bool inDomain(bool) const;
+  [[nodiscard]] bool holdsTrue() const;
+  [[nodiscard]] bool holdsFalse() const;
+  void fixToVal(bool);
 
  public:
   explicit BoolAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,

@@ -7,6 +7,7 @@
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/elementConst.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -50,14 +51,41 @@ void ArrayElementNode::init(InvariantNodeId id) {
 }
 
 void ArrayElementNode::updateState() {
-  const auto& idxNode = invariantGraphConst().varNodeConst(idx());
+  auto& idxNode = invariantGraph().varNode(idx());
+  auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
+
   if (idxNode.isFixed()) {
-    auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
     if (outputNode.isIntVar()) {
       outputNode.fixToValue(getVal(_parVector, idxNode.lowerBound(), _offset));
     } else {
       outputNode.fixToValue(getVal(_parVector, idxNode.lowerBound(), _offset) ==
                             0);
+    }
+    setState(InvariantNodeState::SUBSUMED);
+  }
+  if (outputNode.isFixed()) {
+    const Int val = outputNode.lowerBound();
+    std::vector<Int> valsToRemove;
+    valsToRemove.reserve(idxNode.domain()->size());
+    for (const Int index : *idxNode.constDomain()) {
+      if (getVal(_parVector, index, _offset) != val) {
+        valsToRemove.emplace_back(index);
+      }
+    }
+    idxNode.domain()->remove(SortedUniqueVector(std::move(valsToRemove)));
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  const Int val = getVal(_parVector, idxNode.lowerBound(), _offset);
+  const bool allSameVal = std::all_of(
+      idxNode.domain()->begin(), idxNode.domain()->end(), [&](const Int index) {
+        return getVal(_parVector, index, _offset) == val;
+      });
+  if (allSameVal) {
+    if (outputNode.isIntVar()) {
+      outputNode.fixToValue(val);
+    } else {
+      outputNode.fixToValue(bool{val == 0});
     }
     setState(InvariantNodeState::SUBSUMED);
   }

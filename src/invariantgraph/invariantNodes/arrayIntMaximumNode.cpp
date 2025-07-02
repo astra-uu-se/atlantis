@@ -36,11 +36,18 @@ void ArrayIntMaximumNode::init(InvariantNodeId id) {
 }
 
 void ArrayIntMaximumNode::updateState() {
+  auto& outNode = invariantGraph().varNode(outputVarNodeIds().front());
+
   Int ub = _lb;
   for (const auto& input : staticInputVarNodeIds()) {
-    _lb = std::max(_lb, invariantGraphConst().varNodeConst(input).lowerBound());
-    ub = std::max(ub, invariantGraphConst().varNodeConst(input).upperBound());
+    auto& vNode = invariantGraph().varNode(input);
+    vNode.removeValuesAbove(outNode.upperBound());
+    _lb = std::max(_lb, vNode.lowerBound());
+    ub = std::max(ub, vNode.upperBound());
   }
+  outNode.removeValuesBelow(_lb);
+  outNode.removeValuesAbove(ub);
+
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
 
@@ -52,23 +59,15 @@ void ArrayIntMaximumNode::updateState() {
   for (const auto& input : varsToRemove) {
     removeStaticInputVarNode(input);
   }
-  auto& outputVar = invariantGraph().varNode(outputVarNodeIds().front());
-  // outputVar.removeValuesBelow(_lb);
-  // outputVar.removeValuesAbove(ub);
-  if (staticInputVarNodeIds().empty() || outputVar.isFixed()) {
+  if (staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 bool ArrayIntMaximumNode::canBeReplaced() const {
-  if (state() != InvariantNodeState::ACTIVE ||
-      staticInputVarNodeIds().size() > 1) {
-    return false;
-  }
-  if (staticInputVarNodeIds().empty()) {
-    return true;
-  }
-  return _lb <= invariantGraphConst()
+  return state() == InvariantNodeState::ACTIVE &&
+         staticInputVarNodeIds().size() == 1 &&
+         _lb <= invariantGraphConst()
                     .varNodeConst(staticInputVarNodeIds().front())
                     .lowerBound();
 }
@@ -77,10 +76,8 @@ bool ArrayIntMaximumNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (staticInputVarNodeIds().size() == 1) {
-    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                    staticInputVarNodeIds().front());
-  }
+  invariantGraph().replaceVarNode(outputVarNodeIds().front(),
+                                  staticInputVarNodeIds().front());
   return true;
 }
 
@@ -107,6 +104,7 @@ void ArrayIntMaximumNode::registerNode() {
     return;
   }
   std::vector<propagation::VarViewId> solverVars;
+  solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars),

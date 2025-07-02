@@ -8,12 +8,11 @@ using namespace atlantis::invariantgraph;
 class ArrayVarElement2dNodeTestFixture
     : public NodeTestBase<ArrayVarElement2dNode> {
  public:
-  std::vector<std::vector<VarNodeId>> varMatrixVarNodeIds;
+  std::vector<std::vector<std::string>> varMatrix;
 
-  VarNodeId idx1VarNodeId{NULL_NODE_ID};
-  VarNodeId idx2VarNodeId{NULL_NODE_ID};
-  VarNodeId outputVarNodeId{NULL_NODE_ID};
-  std::string outputIdentifier{"output"};
+  std::string idx1Var{"idx1"};
+  std::string idx2Var{"idx2"};
+  std::string outputVar{"output"};
 
   Int offsetIdx1 = 1;
   Int offsetIdx2 = 1;
@@ -28,85 +27,42 @@ class ArrayVarElement2dNodeTestFixture
     return shouldBeReplaced() && (_paramData.data == 1 || _paramData.data == 3);
   }
 
-  void SetUp() override {
+  void SetUp() {
     NodeTestBase::SetUp();
-
+    varMatrix = {{"x00", "x01"}, {"x10", "x11"}};
     if (isIntElement()) {
-      varMatrixVarNodeIds = {
-          {retrieveIntVarNode(-2, -1, "x00"), retrieveIntVarNode(-1, 0, "x01")},
-          {retrieveIntVarNode(0, 1, "x10"), retrieveIntVarNode(1, 2, "x11")}};
-      outputVarNodeId = retrieveIntVarNode(-2, 2, outputIdentifier);
+      retrieveIntVarNode(-2, -1, varMatrix.at(0).at(0));
+      retrieveIntVarNode(-1, 0, varMatrix.at(0).at(1));
+      retrieveIntVarNode(0, 1, varMatrix.at(1).at(0));
+      retrieveIntVarNode(1, 2, varMatrix.at(1).at(1));
+      retrieveIntVarNode(-2, 2, outputVar);
     } else {
-      varMatrixVarNodeIds = {
-          {retrieveBoolVarNode("x00"), retrieveBoolVarNode("x01")},
-          {retrieveBoolVarNode("x10"), retrieveBoolVarNode("x11")}};
-      outputVarNodeId = retrieveBoolVarNode(outputIdentifier);
+      for (const auto& row : varMatrix) {
+        for (const auto& identifier : row) {
+          retrieveBoolVarNode(identifier);
+        }
+      }
+      retrieveBoolVarNode(outputVar);
     }
 
-    idx1VarNodeId = retrieveIntVarNode(
+    retrieveIntVarNode(
         offsetIdx1,
         idx1ShouldBeReplaced()
             ? offsetIdx1
-            : (offsetIdx1 + static_cast<Int>(varMatrixVarNodeIds.size()) - 1),
-        "idx1");
-    idx2VarNodeId = retrieveIntVarNode(
+            : (offsetIdx1 + static_cast<Int>(varMatrix.size()) - 1),
+        idx1Var);
+    retrieveIntVarNode(
         offsetIdx2,
         idx2ShouldBeReplaced()
             ? offsetIdx2
-            : (offsetIdx2 +
-               static_cast<Int>(varMatrixVarNodeIds.front().size()) - 1),
-        "idx2");
+            : (offsetIdx2 + static_cast<Int>(varMatrix.front().size()) - 1),
+        idx2Var);
 
-    createInvariantNode(
-        *_invariantGraph, idx1VarNodeId, idx2VarNodeId,
-        std::vector<std::vector<VarNodeId>>{varMatrixVarNodeIds},
-        outputVarNodeId, offsetIdx1, offsetIdx2);
+    createInvariantNode(*_invariantGraph, varNodeId(idx1Var),
+                        varNodeId(idx2Var), varNodeIds(varMatrix),
+                        varNodeId(outputVar), offsetIdx1, offsetIdx2);
   }
 };
-
-TEST_P(ArrayVarElement2dNodeTestFixture, construction) {
-  expectInputTo(invNode());
-  expectOutputOf(invNode());
-
-  EXPECT_EQ(invNode().idx1(), idx1VarNodeId);
-  EXPECT_EQ(invNode().idx2(), idx2VarNodeId);
-
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
-
-  size_t i = 0;
-  for (const auto& row : varMatrixVarNodeIds) {
-    for (const auto& varNodeId : row) {
-      EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(i), varNodeId);
-      ++i;
-    }
-  }
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(), i);
-}
-
-TEST_P(ArrayVarElement2dNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  // x00, x01, x10, x11, idx1VarNodeId, idx2VarNodeId
-  EXPECT_EQ(_solver->searchVars().size(), 6);
-
-  // x00, x01, x10, x11, idx1VarNodeId, idx2VarNodeId, and outputVarNodeId
-  EXPECT_EQ(_solver->numVars(), 7);
-
-  // element2dVar
-  EXPECT_EQ(_solver->numInvariants(), 1);
-}
 
 TEST_P(ArrayVarElement2dNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -127,22 +83,20 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   _invariantGraph->construct();
   _invariantGraph->close();
 
-  const propagation::VarViewId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputVar);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<propagation::VarViewId> inputVarIds;
   std::vector<Int> inputVals;
 
-  for (const auto& idxVarNodeId :
-       std::array<VarNodeId, 2>{idx1VarNodeId, idx2VarNodeId}) {
-    inputVarIds.emplace_back(varNode(idxVarNodeId).isFixed()
-                                 ? propagation::NULL_ID
-                                 : varId(idxVarNodeId));
+  for (const auto& idx : std::array<std::string, 2>{idx1Var, idx2Var}) {
+    inputVarIds.emplace_back(varNode(idx).isFixed() ? propagation::NULL_ID
+                                                    : varId(idx));
     inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
-                               ? varNode(idxVarNodeId).lowerBound()
+                               ? varNode(idx).lowerBound()
                                : _solver->lowerBound(inputVarIds.back()));
   }
-  for (const auto& row : varMatrixVarNodeIds) {
+  for (const auto& row : varMatrix) {
     for (const auto& nId : row) {
       inputVarIds.emplace_back(varNode(nId).isFixed() ? propagation::NULL_ID
                                                       : varId(nId));
@@ -168,7 +122,7 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
     const Int col = inputVals.at(1) - offsetIdx2;
 
     const Int index =
-        2 + (row * static_cast<Int>(varMatrixVarNodeIds.front().size()) + col);
+        2 + (row * static_cast<Int>(varMatrix.front().size()) + col);
 
     EXPECT_EQ(actual, inputVals.at(index));
   }

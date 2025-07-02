@@ -15,7 +15,7 @@ bool fzn_global_cardinality_low_up_closed(
     FznInvariantGraph&, const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up);
 
-bool fzn_global_cardinality_low_up_closed(
+bool fzn_global_cardinality_low_up_closed_reif(
     FznInvariantGraph&, const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
     const fznparser::BoolArg& reified);

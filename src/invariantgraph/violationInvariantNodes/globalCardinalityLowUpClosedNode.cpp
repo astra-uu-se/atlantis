@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
@@ -35,11 +36,7 @@ void GlobalCardinalityLowUpClosedNode::init(InvariantNodeId id) {
   assert(
       !isReified() ||
       !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+  assert(outputVarNodeIds().size() <= 1);
   assert(std::ranges::all_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       [&](const VarNodeId vId) {
@@ -47,8 +44,39 @@ void GlobalCardinalityLowUpClosedNode::init(InvariantNodeId id) {
       }));
 }
 
-void GlobalCardinalityLowUpClosedNode::registerOutputVars() {
-  throw std::runtime_error("Not implemented");
+void GlobalCardinalityLowUpClosedNode::updateState() {
+  ViolationInvariantNode::updateState();
+  if (staticInputVarNodeIds().empty() && _cover.empty()) {
+    if (isReified()) {
+      fixReified(true);
+    } else if (!shouldHold()) {
+      throw InconsistencyException(
+          "GlobalCardinalityClosedNode::updateState neg: no inputs and empty "
+          "cover");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (_cover.empty()) {
+    if (isReified()) {
+      fixReified(false);
+    } else if (shouldHold()) {
+      throw InconsistencyException(
+          "GlobalCardinalityClosedNode::updateState: empty cover");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (isReified()) {
+    return;
+  }
+  const SortedUniqueVector coveredVals(std::vector<Int>{_cover});
+  if (shouldHold()) {
+    for (const auto vId : staticInputVarNodeIds()) {
+      invariantGraph().varNode(vId).domain()->removeAllValuesExcept(
+          coveredVals);
+    }
+  }
 }
 
 bool GlobalCardinalityLowUpClosedNode::canBeReplaced() const {
@@ -56,6 +84,9 @@ bool GlobalCardinalityLowUpClosedNode::canBeReplaced() const {
 }
 
 bool GlobalCardinalityLowUpClosedNode::replace() {
+  if (!canBeReplaced()) {
+    return false;
+  }
   if (!isReified() && shouldHold()) {
     invariantGraph().addInvariantNode(
         std::make_shared<GlobalCardinalityLowUpNode>(
@@ -66,24 +97,7 @@ bool GlobalCardinalityLowUpClosedNode::replace() {
   }
 
   std::vector<VarNodeId> violationVarNodeIds;
-  violationVarNodeIds.reserve(staticInputVarNodeIds().size() +
-                              outputVarNodeIds().size() + 1);
-
-  std::vector<VarNodeId> intermediateOutputNodeIds;
-  intermediateOutputNodeIds.reserve(outputVarNodeIds().size());
-
-  for (VarNodeId countId : outputVarNodeIds()) {
-    intermediateOutputNodeIds.emplace_back(invariantGraph().retrieveIntVarNode(
-        std::make_shared<SearchDomain>(
-            0, static_cast<Int>(staticInputVarNodeIds().size())),
-        DomainType::DOM_NONE));
-
-    violationVarNodeIds.emplace_back(invariantGraph().retrieveBoolVarNode());
-
-    invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
-        invariantGraph(), countId, intermediateOutputNodeIds.back(),
-        violationVarNodeIds.back()));
-  }
+  violationVarNodeIds.reserve(staticInputVarNodeIds().size() + 1);
 
   for (VarNodeId inputId : staticInputVarNodeIds()) {
     violationVarNodeIds.emplace_back(invariantGraph().retrieveBoolVarNode());
@@ -111,6 +125,10 @@ bool GlobalCardinalityLowUpClosedNode::replace() {
   }
 
   return true;
+}
+
+void GlobalCardinalityLowUpClosedNode::registerOutputVars() {
+  throw std::runtime_error("Not implemented");
 }
 
 void GlobalCardinalityLowUpClosedNode::registerNode() {

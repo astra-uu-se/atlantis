@@ -1,5 +1,6 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 
+#include <limits>
 #include <utility>
 
 #include "../parseHelper.hpp"
@@ -7,10 +8,13 @@
 #include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -45,10 +49,62 @@ void AllDifferentNode::init(InvariantNodeId id) {
 
 void AllDifferentNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (isReified() || !shouldHold()) {
-    return;
+  if (!isReified() && shouldHold()) {
+    const std::vector<VarNodeId> varsToRemove =
+        pruneAllDifferentFixed(invariantGraph(), staticInputVarNodeIds());
+    for (const auto vId : varsToRemove) {
+      removeStaticInputVarNode(vId);
+    }
   }
   if (staticInputVarNodeIds().size() <= 1) {
+    if (isReified()) {
+      fixReified(true);
+    } else if (!shouldHold()) {
+      throw InconsistencyException(
+          "AllDifferentNode neg: one or less input variables");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+  }
+  Int unionLb = std::numeric_limits<Int>::max();
+  Int unionUb = std::numeric_limits<Int>::min();
+  for (const auto vId : staticInputVarNodeIds()) {
+    unionLb =
+        std::min(unionLb, invariantGraph().varNodeConst(vId).lowerBound());
+    unionUb =
+        std::max(unionUb, invariantGraph().varNodeConst(vId).upperBound());
+  }
+  const Int numVals = unionUb - unionLb + 1;
+  if (numVals < static_cast<Int>(staticInputVarNodeIds().size())) {
+    if (isReified()) {
+      fixReified(false);
+    } else if (shouldHold()) {
+      throw InconsistencyException(
+          "AllDifferentNode: the union of the domains is smaller than the "
+          "number of variables.");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  bool allDisjoint = true;
+  for (size_t i = 0; allDisjoint && i < staticInputVarNodeIds().size(); ++i) {
+    const auto& iNode =
+        invariantGraphConst().varNodeConst(staticInputVarNodeIds()[i]);
+    for (size_t j = i + 1; j < staticInputVarNodeIds().size(); ++j) {
+      const auto& jNode =
+          invariantGraphConst().varNodeConst(staticInputVarNodeIds()[j]);
+      if (!iNode.constDomain()->isDisjoint(*jNode.constDomain())) {
+        allDisjoint = false;
+        break;
+      }
+    }
+  }
+  if (allDisjoint) {
+    if (isReified()) {
+      fixReified(true);
+    } else if (!shouldHold()) {
+      throw InconsistencyException(
+          "AllDifferentNode neg: domains do not intersect");
+    }
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -73,6 +129,23 @@ bool AllDifferentNode::makeImplicit() {
   invariantGraph().addImplicitConstraintNode(
       std::make_shared<AllDifferentImplicitNode>(
           invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
+  return true;
+}
+
+bool AllDifferentNode::canBeReplaced() const {
+  return state() == InvariantNodeState::ACTIVE && !isReified() &&
+         !shouldHold() && staticInputVarNodeIds().size() <= 2;
+}
+
+bool AllDifferentNode::replace() {
+  if (!canBeReplaced()) {
+    return false;
+  }
+  assert(invariantGraphConst()
+             .varNodeConst(staticInputVarNodeIds().front())
+             .isIntVar());
+  invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
+      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
   return true;
 }
 
@@ -117,11 +190,15 @@ void AllDifferentNode::registerNode() {
 
   if (solverVars.size() == 2) {
     solver().makeViolationInvariant<propagation::NotEqual>(
-        solver(), !shouldHold() ? _intermediate : violationVarId(),
+        solver(),
+        _intermediate != propagation::NULL_ID ? _intermediate
+                                              : violationVarId(),
         solverVars.front(), solverVars.back());
   } else {
     solver().makeViolationInvariant<propagation::AllDifferent>(
-        solver(), !shouldHold() ? _intermediate : violationVarId(),
+        solver(),
+        _intermediate != propagation::NULL_ID ? _intermediate
+                                              : violationVarId(),
         std::move(solverVars));
   }
 }

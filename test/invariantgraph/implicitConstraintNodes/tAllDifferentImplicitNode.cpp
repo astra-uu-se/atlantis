@@ -14,7 +14,7 @@ class AllDifferentImplicitNodeTestFixture
   VarNodeId c{NULL_NODE_ID};
   VarNodeId d{NULL_NODE_ID};
 
-  void SetUp() override {
+  void SetUp() {
     NodeTestBase::SetUp();
     a = retrieveIntVarNode(2, 7, "a");
     b = retrieveIntVarNode(2, 7, "b");

@@ -19,7 +19,7 @@ bool fzn_global_cardinality_closed(
   return true;
 }
 
-bool fzn_global_cardinality_closed(
+bool fzn_global_cardinality_closed_reif(
     FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover,
@@ -54,7 +54,7 @@ bool fzn_global_cardinality_closed(FznInvariantGraph& graph,
         getArgArray<fznparser::IntVarArray>(constraint.arguments().at(2)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
-  return fzn_global_cardinality_closed(
+  return fzn_global_cardinality_closed_reif(
       graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::move(cover),
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(2)),

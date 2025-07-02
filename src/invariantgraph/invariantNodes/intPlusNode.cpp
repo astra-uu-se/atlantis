@@ -50,17 +50,16 @@ void IntPlusNode::updateState() {
 
 bool IntPlusNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         staticInputVarNodeIds().size() <= 1 && _offset == 0;
+         staticInputVarNodeIds().size() == 1 && _offset == 0;
 }
 
 bool IntPlusNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (staticInputVarNodeIds().size() == 1) {
-    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                    staticInputVarNodeIds().front());
-  }
+  assert(staticInputVarNodeIds().size() == 1 && _offset == 0);
+  invariantGraph().replaceVarNode(outputVarNodeIds().front(),
+                                  staticInputVarNodeIds().front());
   return true;
 }
 

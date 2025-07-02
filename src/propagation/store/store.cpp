@@ -10,10 +10,9 @@ Store::Store() = default;
 
 VarViewId Store::createIntVar(Timestamp ts, Int initValue, Int lowerBound,
                               Int upperBound) {
-  VarId vId(_intVars.size());
-  const VarViewId newId(vId, false);
+  const VarId vId(_intVars.size());
   _intVars.emplace_back(ts, vId, initValue, lowerBound, upperBound);
-  return newId;
+  return {vId, false};
 }
 
 InvariantId Store::createInvariantFromPtr(

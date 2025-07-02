@@ -18,7 +18,7 @@ bool fzn_global_cardinality_low_up(
   return true;
 }
 
-bool fzn_global_cardinality_low_up(
+bool fzn_global_cardinality_low_up_reif(
     FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
     std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
@@ -58,10 +58,10 @@ bool fzn_global_cardinality_low_up(FznInvariantGraph& graph,
         std::move(cover), std::move(low), std::move(up));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 4, fznparser::BoolArg, true)
-  return fzn_global_cardinality_low_up(
+  return fzn_global_cardinality_low_up_reif(
       graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::move(cover), std::move(low), std::move(up),
-      std::get<fznparser::BoolArg>(constraint.arguments().at(3)));
+      std::get<fznparser::BoolArg>(constraint.arguments().at(4)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

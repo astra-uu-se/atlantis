@@ -15,6 +15,7 @@ GlobalCardinalityLowUp::GlobalCardinalityLowUp(
       _shortage(NULL_TIMESTAMP, 0),
       _excess(NULL_TIMESTAMP, 0),
       _offset(0) {
+  assert(!cover.empty());
   assert(lowerBounds.size() == upperBounds.size() &&
          lowerBounds.size() == cover.size());
 

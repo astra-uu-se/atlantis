@@ -5,6 +5,7 @@
 #include <variant>
 #include <vector>
 
+#include "atlantis/sortedUniqueVector.hpp"
 #include "atlantis/types.hpp"
 
 namespace atlantis {
@@ -87,11 +88,37 @@ class Domain {
   [[nodiscard]] virtual bool contains(Int value) const noexcept = 0;
 
   /**
+   * @return true if the domain contains the interval lb..ub, else false.
+   */
+  [[nodiscard]] virtual bool contains(Int lb, Int ub) const noexcept = 0;
+
+  /**
+   * @return true if the domain contains all the values in the vector, else
+   * false.
+   */
+  [[nodiscard]] virtual bool contains(
+      const SortedUniqueVector&) const noexcept = 0;
+
+  /**
    * @return true if the domain is an interval, else false.
    */
   [[nodiscard]] virtual bool isInterval() const noexcept = 0;
 
   virtual void fix(Int) = 0;
+
+  [[nodiscard]] virtual bool isDisjoint(Int lb, Int ub) const = 0;
+
+  [[nodiscard]] virtual bool isDisjoint(const SortedUniqueVector&) const = 0;
+
+  [[nodiscard]] virtual bool isContained(Int lb, Int ub) const = 0;
+
+  [[nodiscard]] virtual bool isContained(const SortedUniqueVector&) const = 0;
+
+  [[nodiscard]] virtual bool isEqual(Int lb, Int ub) const = 0;
+
+  [[nodiscard]] virtual bool operator==(const SortedUniqueVector&) const = 0;
+
+  [[nodiscard]] virtual bool operator!=(const SortedUniqueVector&) const = 0;
 
   [[nodiscard]] virtual Int at(size_t) const = 0;
 
@@ -102,11 +129,11 @@ class Domain {
   [[nodiscard]] virtual Iterator end() const = 0;
 
   /**
-   * @return if the domain is not a superset of lb..ub,
-   * then returns the relative complement of lb..ub in domain,
-   * otherwise an empty vector is returned.
+   * @return if the domain is a superset of lb..ub,
+   * then returns an empty vector,
+   * otherwise returns the intersection of the domain and lb..ub.
    */
-  [[nodiscard]] virtual std::vector<DomainEntry> relativeComplementIfIntersects(
+  [[nodiscard]] virtual std::vector<DomainEntry> createDomainEntries(
       Int lb, Int ub) const = 0;
 };
 
@@ -123,13 +150,18 @@ class IntervalDomain : public Domain {
   [[nodiscard]] size_t size() const noexcept override;
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
+  [[nodiscard]] bool contains(Int lb, Int ub) const noexcept override;
+  [[nodiscard]] bool contains(
+      const SortedUniqueVector&) const noexcept override;
+  [[nodiscard]] bool contains(const IntervalDomain&) const noexcept;
+  [[nodiscard]] bool contains(const SetDomain&) const noexcept;
   [[nodiscard]] bool isInterval() const noexcept override;
   [[nodiscard]] Iterator begin() const override;
   [[nodiscard]] Iterator end() const override;
   [[nodiscard]] Int at(size_t) const override;
   [[nodiscard]] Int operator[](size_t) const override;
 
-  [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
+  [[nodiscard]] std::vector<DomainEntry> createDomainEntries(
       Int lb, Int ub) const override;
 
   void setLowerBound(Int lb);
@@ -140,16 +172,32 @@ class IntervalDomain : public Domain {
 
   void intersect(Int lb, Int ub);
 
+  [[nodiscard]] bool isDisjoint(Int lb, Int ub) const override;
+  [[nodiscard]] bool isDisjoint(const SortedUniqueVector&) const override;
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;
   [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
 
-  bool operator==(const IntervalDomain&) const;
+  [[nodiscard]] bool isContained(Int lb, Int ub) const override;
+  [[nodiscard]] bool isContained(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool isContained(const SetDomain&) const;
+  [[nodiscard]] bool isContained(const IntervalDomain&) const;
 
-  bool operator!=(const IntervalDomain&) const;
+  [[nodiscard]] bool isEqual(Int lb, Int ub) const override;
+  [[nodiscard]] bool operator==(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator==(const IntervalDomain&) const;
+  [[nodiscard]] bool operator==(const SetDomain&) const;
+
+  [[nodiscard]] bool operator!=(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator!=(const IntervalDomain&) const;
+  [[nodiscard]] bool operator!=(const SetDomain&) const;
 };
 
 class SetDomain : public Domain {
   std::vector<Int> _values;
+  void intersect(const std::vector<Int>&);
+  [[nodiscard]] bool contains(const std::vector<Int>&) const noexcept;
+  [[nodiscard]] bool isDisjoint(const std::vector<Int>&) const;
+  void remove(const std::vector<Int>&);
 
  public:
   explicit SetDomain(std::vector<Int>&&);
@@ -163,17 +211,25 @@ class SetDomain : public Domain {
   [[nodiscard]] size_t size() const noexcept override;
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
+  [[nodiscard]] bool contains(Int lb, Int ub) const noexcept override;
+  [[nodiscard]] bool contains(
+      const SortedUniqueVector&) const noexcept override;
+  [[nodiscard]] bool contains(const IntervalDomain&) const noexcept;
+  [[nodiscard]] bool contains(const SetDomain&) const noexcept;
   [[nodiscard]] bool isInterval() const noexcept override;
   [[nodiscard]] Iterator begin() const override;
   [[nodiscard]] Iterator end() const override;
   [[nodiscard]] Int at(size_t) const override;
   [[nodiscard]] Int operator[](size_t) const override;
 
-  [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
+  [[nodiscard]] std::vector<DomainEntry> createDomainEntries(
       Int lb, Int ub) const override;
 
   void remove(Int value);
-  void remove(const std::vector<Int>& values);
+  void remove(Int lb, Int ub);
+  void remove(const SortedUniqueVector&);
+  void remove(const IntervalDomain&);
+  void remove(const SetDomain&);
 
   /**
    * @brief removes all values that are strictly less than the given value.
@@ -194,20 +250,35 @@ class SetDomain : public Domain {
    * @brief removes all values in the domain, except the values in the given
    * vector.
    */
-  void intersect(const std::vector<Int>&);
+  void intersect(const SortedUniqueVector&);
+  void intersect(const SetDomain&);
 
+  [[nodiscard]] bool isDisjoint(Int lb, Int ub) const override;
+  [[nodiscard]] bool isDisjoint(const SortedUniqueVector&) const override;
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;
   [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
 
+  [[nodiscard]] bool isContained(Int lb, Int ub) const override;
+  [[nodiscard]] bool isContained(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool isContained(const SetDomain&) const;
+  [[nodiscard]] bool isContained(const IntervalDomain&) const;
+
   void fix(Int value) override;
 
-  bool operator==(const SetDomain&) const;
+  [[nodiscard]] bool isEqual(Int lb, Int ub) const override;
+  [[nodiscard]] bool operator==(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator==(const IntervalDomain&) const;
+  [[nodiscard]] bool operator==(const SetDomain&) const;
 
-  bool operator!=(const SetDomain&) const;
+  [[nodiscard]] bool operator!=(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator!=(const IntervalDomain&) const;
+  [[nodiscard]] bool operator!=(const SetDomain&) const;
 };
 
 class SearchDomain : public Domain {
   std::variant<IntervalDomain, SetDomain> _domain;
+  void removeAllValuesExcept(const std::vector<Int>&);
+  void remove(const std::vector<Int>&);
 
  public:
   explicit SearchDomain(std::vector<Int>&&);
@@ -224,16 +295,20 @@ class SearchDomain : public Domain {
   [[nodiscard]] size_t size() const noexcept override;
   [[nodiscard]] bool isFixed() const noexcept override;
   [[nodiscard]] bool contains(Int) const noexcept override;
+  [[nodiscard]] bool contains(Int lb, Int ub) const noexcept override;
+  [[nodiscard]] bool contains(
+      const SortedUniqueVector&) const noexcept override;
+  [[nodiscard]] bool contains(const IntervalDomain&) const noexcept;
+  [[nodiscard]] bool contains(const SetDomain&) const noexcept;
+  [[nodiscard]] bool contains(const SearchDomain&) const noexcept;
   [[nodiscard]] bool isInterval() const noexcept override;
   [[nodiscard]] Iterator begin() const override;
   [[nodiscard]] Iterator end() const override;
   [[nodiscard]] Int at(size_t) const override;
   [[nodiscard]] Int operator[](size_t) const override;
 
-  [[nodiscard]] std::vector<DomainEntry> relativeComplementIfIntersects(
+  [[nodiscard]] std::vector<DomainEntry> createDomainEntries(
       Int lb, Int ub) const override;
-
-  void remove(Int value);
 
   /**
    * @brief removes all values that are strictly less than the given value.
@@ -249,32 +324,56 @@ class SearchDomain : public Domain {
    */
   void removeAbove(Int newUpperBound);
 
+  void remove(Int value);
+  /**
+   * Removes all values in the given interval from the domain.
+   * @param lb the lower bound of the interval
+   * @param ub the upper bound of the interval
+   */
+  void remove(Int lb, Int ub);
   /**
    * @brief removes all values in the given vector from the domain.
    *
-   * @param values the values to remove from the domain.
+   * @param vals the values to remove from the domain.
    */
-  void remove(const std::vector<Int>& values);
+  void remove(const SortedUniqueVector& vals);
+  void remove(const IntervalDomain&);
+  void remove(const SetDomain&);
+  void remove(const SearchDomain&);
 
   /**
    * @brief removes all values in the domain, except the values in the given
    * vector.
    */
-  void intersect(const std::vector<Int>&);
+  void removeAllValuesExcept(const SortedUniqueVector&);
+  void removeAllValuesExcept(Int lb, Int ub);
+  void removeAllValuesExcept(const SetDomain& other);
+  void removeAllValuesExcept(const SearchDomain& other);
 
-  void intersect(Int lb, Int ub);
-
-  void intersect(const SearchDomain& other);
-
+  [[nodiscard]] bool isDisjoint(Int lb, Int ub) const override;
+  [[nodiscard]] bool isDisjoint(const SortedUniqueVector&) const override;
   [[nodiscard]] bool isDisjoint(const SetDomain&) const;
   [[nodiscard]] bool isDisjoint(const IntervalDomain&) const;
   [[nodiscard]] bool isDisjoint(const SearchDomain&) const;
 
+  [[nodiscard]] bool isContained(Int lb, Int ub) const override;
+  [[nodiscard]] bool isContained(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool isContained(const SetDomain&) const;
+  [[nodiscard]] bool isContained(const IntervalDomain&) const;
+  [[nodiscard]] bool isContained(const SearchDomain&) const;
+
   void fix(Int value) override;
 
-  bool operator==(const SearchDomain&) const;
+  [[nodiscard]] bool isEqual(Int lb, Int ub) const override;
+  [[nodiscard]] bool operator==(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator==(const IntervalDomain&) const;
+  [[nodiscard]] bool operator==(const SetDomain&) const;
+  [[nodiscard]] bool operator==(const SearchDomain&) const;
 
-  bool operator!=(const SearchDomain&) const;
+  [[nodiscard]] bool operator!=(const SortedUniqueVector&) const override;
+  [[nodiscard]] bool operator!=(const IntervalDomain&) const;
+  [[nodiscard]] bool operator!=(const SetDomain&) const;
+  [[nodiscard]] bool operator!=(const SearchDomain&) const;
 };
 
 }  // namespace atlantis

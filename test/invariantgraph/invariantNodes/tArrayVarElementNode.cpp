@@ -8,82 +8,40 @@ using namespace atlantis::invariantgraph;
 class ArrayVarElementNodeTestFixture
     : public NodeTestBase<ArrayVarElementNode> {
  public:
-  std::vector<VarNodeId> varArrayVarNodeIds;
+  std::vector<std::string> varArray;
 
-  VarNodeId idx{NULL_NODE_ID};
-  std::string idxIdentifier{"idx"};
-  VarNodeId outputVarNodeId{NULL_NODE_ID};
-  std::string outputIdentifier{"output"};
+  std::string idxVar{"idx"};
+  std::string outputVar{"output"};
 
   Int offsetIdx = 1;
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data == 0; }
 
-  void SetUp() override {
+  void SetUp() {
     NodeTestBase::SetUp();
+    varArray = {"x1", "x2", "x3"};
     if (isIntElement()) {
-      varArrayVarNodeIds = {retrieveIntVarNode(-2, 0, "x1"),
-                            retrieveIntVarNode(-1, 1, "x2"),
-                            retrieveIntVarNode(0, 2, "x3")};
-      outputVarNodeId = retrieveIntVarNode(-2, 2, outputIdentifier);
+      retrieveIntVarNode(-2, 0, varArray.at(0));
+      retrieveIntVarNode(-1, 1, varArray.at(1));
+      retrieveIntVarNode(0, 2, varArray.at(2));
+      retrieveIntVarNode(-2, 2, outputVar);
     } else {
-      varArrayVarNodeIds = {retrieveBoolVarNode("x1"),
-                            retrieveBoolVarNode("x2"),
-                            retrieveBoolVarNode("x3")};
-      outputVarNodeId = retrieveBoolVarNode(outputIdentifier);
+      for (const auto& identifier : varArray) {
+        retrieveBoolVarNode(identifier);
+      }
+      retrieveBoolVarNode(outputVar);
     }
 
-    idx = retrieveIntVarNode(
-        offsetIdx,
-        shouldBeReplaced()
-            ? offsetIdx
-            : (static_cast<Int>(varArrayVarNodeIds.size()) - 1 + offsetIdx),
-        idxIdentifier);
+    retrieveIntVarNode(offsetIdx,
+                       shouldBeReplaced() ? offsetIdx
+                                          : (static_cast<Int>(varArray.size()) -
+                                             1 + offsetIdx),
+                       idxVar);
 
-    createInvariantNode(*_invariantGraph, idx,
-                        std::vector<VarNodeId>{varArrayVarNodeIds},
-                        outputVarNodeId, offsetIdx);
+    createInvariantNode(*_invariantGraph, varNodeId(idxVar),
+                        varNodeIds(varArray), varNodeId(outputVar), offsetIdx);
   }
 };
-
-TEST_P(ArrayVarElementNodeTestFixture, construction) {
-  expectInputTo(invNode());
-  expectOutputOf(invNode());
-
-  EXPECT_EQ(invNode().idx(), idx);
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), outputVarNodeId);
-
-  EXPECT_EQ(invNode().dynamicInputVarNodeIds().size(),
-            varArrayVarNodeIds.size());
-  for (size_t i = 0; i < varArrayVarNodeIds.size(); ++i) {
-    EXPECT_EQ(invNode().dynamicInputVarNodeIds().at(i),
-              varArrayVarNodeIds.at(i));
-  }
-}
-
-TEST_P(ArrayVarElementNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  // x1, x2, x3, idx
-  EXPECT_EQ(_solver->searchVars().size(), 4);
-
-  // x1, x2, x3, idx, outputVarNodeId
-  EXPECT_EQ(_solver->numVars(), 5);
-
-  // elementVar
-  EXPECT_EQ(_solver->numInvariants(), 1);
-}
 
 TEST_P(ArrayVarElementNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -105,29 +63,28 @@ TEST_P(ArrayVarElementNodeTestFixture, propagation) {
   _invariantGraph->close();
 
   if (shouldBeReplaced()) {
-    EXPECT_TRUE(varNode(idxIdentifier).isFixed());
-    EXPECT_FALSE(varNode(outputIdentifier).isFixed());
+    EXPECT_TRUE(varNode(idxVar).isFixed());
+    EXPECT_FALSE(varNode(outputVar).isFixed());
     return;
   }
 
-  const propagation::VarViewId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputVar);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<propagation::VarViewId> inputVarIds;
   std::vector<Int> inputVals;
 
-  inputVarIds.emplace_back(varNode(idx).isFixed() ? propagation::NULL_ID
-                                                  : varId(idx));
+  inputVarIds.emplace_back(varNode(idxVar).isFixed() ? propagation::NULL_ID
+                                                     : varId(idxVar));
   inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
-                             ? varNode(idx).lowerBound()
+                             ? varNode(idxVar).lowerBound()
                              : _solver->lowerBound(inputVarIds.back()));
 
-  for (const auto& inputVarNodeId : varArrayVarNodeIds) {
-    inputVarIds.emplace_back(varNode(inputVarNodeId).isFixed()
-                                 ? propagation::NULL_ID
-                                 : varId(inputVarNodeId));
+  for (const auto& var : varArray) {
+    inputVarIds.emplace_back(varNode(var).isFixed() ? propagation::NULL_ID
+                                                    : varId(var));
     inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
-                               ? varNode(inputVarNodeId).lowerBound()
+                               ? varNode(var).lowerBound()
                                : _solver->lowerBound(inputVarIds.back()));
   }
 

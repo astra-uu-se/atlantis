@@ -14,7 +14,7 @@ class CircuitImplicitNodeTestFixture
   VarNodeId c{NULL_NODE_ID};
   VarNodeId d{NULL_NODE_ID};
 
-  void SetUp() override {
+  void SetUp() {
     NodeTestBase::SetUp();
     a = retrieveIntVarNode(1, 4, "a");
     b = retrieveIntVarNode(1, 4, "b");

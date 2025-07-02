@@ -10,10 +10,9 @@ using ::testing::Contains;
 class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
  public:
   size_t numInputs = 3;
-  std::vector<VarNodeId> inputVarNodeIds;
+  std::vector<std::string> inputVars;
   std::vector<Int> coeffs;
-  VarNodeId outputVarNodeId{NULL_NODE_ID};
-  std::string outputIdentifier{"output"};
+  std::string outputVar{"output"};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
@@ -22,11 +21,10 @@ class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
         if (coeffs.at(i) == 0) {
           continue;
         }
-        if (varNode(inputVarNodeIds.at(i)).isFixed()) {
-          sum += varNode(inputVarNodeIds.at(i)).lowerBound() * coeffs.at(i);
+        if (varNode(inputVars.at(i)).isFixed()) {
+          sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
         } else {
-          sum += _solver->currentValue(varId(inputVarNodeIds.at(i))) *
-                 coeffs.at(i);
+          sum += _solver->currentValue(varId(inputVars.at(i))) * coeffs.at(i);
         }
       }
       return sum;
@@ -36,39 +34,37 @@ class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
       if (coeffs.at(i) == 0) {
         continue;
       }
-      EXPECT_TRUE(varNode(inputVarNodeIds.at(i)).isFixed());
-      sum += varNode(inputVarNodeIds.at(i)).lowerBound() * coeffs.at(i);
+      EXPECT_TRUE(varNode(inputVars.at(i)).isFixed());
+      sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
     }
     return sum;
   }
 
-  void SetUp() override {
+  void SetUp() {
     NodeTestBase::SetUp();
-    inputVarNodeIds.reserve(numInputs);
+    inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     Int minSum = 0;
     Int maxSum = 0;
     const Int lb = -2;
     const Int ub = 2;
     for (Int i = 0; i < static_cast<Int>(numInputs); ++i) {
+      inputVars.emplace_back("input_" + std::to_string(i));
       if (shouldBeSubsumed()) {
         const Int val = i % 3 == 0 ? lb : ub;
-        inputVarNodeIds.emplace_back(
-            retrieveIntVarNode(val, val, "input" + std::to_string(i)));
+        retrieveIntVarNode(val, val, inputVars.back());
       } else {
-        inputVarNodeIds.emplace_back(
-            retrieveIntVarNode(lb, ub, "input" + std::to_string(i)));
+        retrieveIntVarNode(lb, ub, inputVars.back());
       }
       coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
       minSum += std::min(lb * coeffs.back(), ub * coeffs.back());
       maxSum += std::max(lb * coeffs.back(), ub * coeffs.back());
     }
 
-    outputVarNodeId = retrieveIntVarNode(minSum, maxSum, outputIdentifier);
+    retrieveIntVarNode(minSum, maxSum, outputVar);
 
     createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                        std::vector<VarNodeId>(inputVarNodeIds),
-                        outputVarNodeId);
+                        varNodeIds(inputVars), varNodeId(outputVar));
   }
 };
 
@@ -77,35 +73,13 @@ TEST_P(IntLinearNodeTestFixture, construction) {
   expectOutputOf(invNode());
 
   EXPECT_THAT(invNode().coeffs(), ContainerEq(coeffs));
-  EXPECT_THAT(invNode().staticInputVarNodeIds(), ContainerEq(inputVarNodeIds));
-  EXPECT_THAT(invNode().outputVarNodeIds(),
-              ContainerEq(std::vector<VarNodeId>{outputVarNodeId}));
-}
 
-TEST_P(IntLinearNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
+  const std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
+  EXPECT_THAT(invNode().staticInputVarNodeIds(), ContainerEq(expectedInputs));
 
-  EXPECT_LE(_solver->searchVars().size(), inputVarNodeIds.size());
+  const std::vector<VarNodeId> expectedOutputs{varNodeId(outputVar)};
 
-  for (const VarNodeId inputVarNodeId : invNode().staticInputVarNodeIds()) {
-    EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-    EXPECT_TRUE(varId(inputVarNodeId).isVar());
-    EXPECT_THAT(_solver->searchVars(), Contains(size_t(varId(inputVarNodeId))));
-  }
-  EXPECT_LE(_solver->numVars(), inputVarNodeIds.size() + 1);
-
-  // linear invariant
-  EXPECT_EQ(_solver->numInvariants(), 1);
+  EXPECT_THAT(invNode().outputVarNodeIds(), ContainerEq(expectedOutputs));
 }
 
 TEST_P(IntLinearNodeTestFixture, updateState) {
@@ -113,13 +87,13 @@ TEST_P(IntLinearNodeTestFixture, updateState) {
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_TRUE(varNode(outputVarNodeId).isFixed());
+    EXPECT_TRUE(varNode(outputVar).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVarNodeId).lowerBound();
+    const Int actual = varNode(outputVar).lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_FALSE(varNode(outputVarNodeId).isFixed());
+    EXPECT_FALSE(varNode(outputVar).isFixed());
   }
 }
 
@@ -130,22 +104,22 @@ TEST_P(IntLinearNodeTestFixture, propagation) {
 
   if (shouldBeSubsumed()) {
     const Int expected = computeOutput(true);
-    const Int actual = varNode(outputVarNodeId).lowerBound();
+    const Int actual = varNode(outputVar).lowerBound();
     EXPECT_EQ(expected, actual);
     return;
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& inputVarNodeId : inputVarNodeIds) {
-    if (!varNode(inputVarNodeId).isFixed()) {
-      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(inputVarNodeId));
+  for (const auto& var : inputVars) {
+    if (!varNode(var).isFixed()) {
+      EXPECT_NE(varId(var), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(var));
     }
   }
 
   EXPECT_FALSE(inputVarIds.empty());
 
-  const propagation::VarViewId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputVar);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);

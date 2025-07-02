@@ -6,18 +6,19 @@ namespace atlantis::invariantgraph {
 
 class ArrayElement2dNode : public InvariantNode {
   std::vector<std::vector<Int>> _parMatrix;
-  Int _offset1;
-  Int _offset2;
+  Int _rowOffset;
+  Int _colOffset;
   bool _isIntMatrix;
 
  public:
-  ArrayElement2dNode(InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+  ArrayElement2dNode(InvariantGraph& graph, VarNodeId rowIdx, VarNodeId colIdx,
                      std::vector<std::vector<Int>>&& parMatrix,
-                     VarNodeId output, Int offset1, Int offset2);
+                     VarNodeId output, Int rowOffset, Int colOffset,
+                     bool isIntMatrix = true);
 
-  ArrayElement2dNode(InvariantGraph& graph, VarNodeId idx1, VarNodeId idx2,
+  ArrayElement2dNode(InvariantGraph& graph, VarNodeId rowIdx, VarNodeId colIdx,
                      std::vector<std::vector<bool>>&& parMatrix,
-                     VarNodeId output, Int offset1, Int offset2);
+                     VarNodeId output, Int rowOffset, Int colOffset);
 
   void init(InvariantNodeId) override;
 
@@ -31,11 +32,11 @@ class ArrayElement2dNode : public InvariantNode {
 
   void registerNode() override;
 
-  [[nodiscard]] VarNodeId idx1() const noexcept {
+  [[nodiscard]] VarNodeId rowIdx() const noexcept {
     return staticInputVarNodeIds().front();
   }
 
-  [[nodiscard]] VarNodeId idx2() const noexcept {
+  [[nodiscard]] VarNodeId colIdx() const noexcept {
     return staticInputVarNodeIds().back();
   }
 

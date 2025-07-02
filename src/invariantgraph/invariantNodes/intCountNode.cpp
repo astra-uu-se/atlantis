@@ -14,9 +14,10 @@
 namespace atlantis::invariantgraph {
 
 IntCountNode::IntCountNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           Int needle, VarNodeId count)
+                           Int needle, VarNodeId count, Int offset)
     : InvariantNode(graph, std::vector<VarNodeId>{count}, std::move(vars)),
-      _needle(needle) {}
+      _needle(needle),
+      _offset(offset) {}
 
 const std::vector<VarNodeId>& IntCountNode::haystack() const {
   return staticInputVarNodeIds();
@@ -48,16 +49,27 @@ void IntCountNode::updateState() {
     removeStaticInputVarNode(input);
   }
   auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
-  // const Int lb = _offset;
-  // const Int ub = _offset + static_cast<Int>(staticInputVarNodeIds().size());
-  // outputNode.removeValuesBelow(lb);
-  // outputNode.removeValuesAbove(ub);
-  // if (outputNode.isFixed()) {
-  //  for (const auto& input : staticInputVarNodeIds()) {
-  //    invariantGraph().varNode(input).removeValue(_needle);
-  //  }
-  //}
-  if (staticInputVarNodeIds().empty() || outputNode.isFixed()) {
+  const Int ub = _offset + static_cast<Int>(staticInputVarNodeIds().size());
+  outputNode.removeValuesBelow(_offset);
+  outputNode.removeValuesAbove(ub);
+  if (outputNode.isFixed()) {
+    if (outputNode.lowerBound() == _offset) {
+      for (const auto& input : staticInputVarNodeIds()) {
+        invariantGraph().varNode(input).removeValue(_needle);
+      }
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+    if (outputNode.lowerBound() == ub) {
+      for (const auto& input : staticInputVarNodeIds()) {
+        invariantGraph().varNode(input).fixToValue(_needle);
+      }
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+  }
+
+  if (staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }

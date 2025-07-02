@@ -11,28 +11,25 @@ class IntLinEqImplicitNodeTestFixture
     : public NodeTestBase<IntLinEqImplicitNode> {
  public:
   Int numVars = 4;
-  std::vector<VarNodeId> inputVarNodeIds;
-  std::vector<std::string> inputIdentifiers;
+  std::vector<std::string> inputVars;
+
   std::vector<Int> coeffs;
   Int bound = -7;
 
   void SetUp() override {
     NodeTestBase::SetUp();
     for (Int i = 0; i < numVars; ++i) {
-      inputIdentifiers.emplace_back("input_" + std::to_string(i));
-      inputVarNodeIds.emplace_back(
-          retrieveIntVarNode(-10, 10, inputIdentifiers.back()));
-      coeffs.emplace_back(i % 2 == 0 ? 1 : -1);
+      inputVars.emplace_back("input_" + std::to_string(i));
+      retrieveIntVarNode(-10, 10, inputVars.back());
     }
 
     createImplicitConstraintNode(*_invariantGraph, std::vector<Int>{coeffs},
-                                 std::vector<VarNodeId>{inputVarNodeIds},
-                                 bound);
+                                 varNodeIds(inputVars), bound);
   }
 };
 
 TEST_P(IntLinEqImplicitNodeTestFixture, construction) {
-  EXPECT_EQ(invNode().outputVarNodeIds(), inputVarNodeIds);
+  EXPECT_EQ(invNode().outputVarNodeIds(), varNodeIds(inputVars));
 }
 
 TEST_P(IntLinEqImplicitNodeTestFixture, application) {

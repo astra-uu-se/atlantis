@@ -40,17 +40,19 @@ void AllDifferentUniformNeighborhood::initialize(RandomProvider& random,
   for (Int i = 0; i < static_cast<Int>(_vars.size()); ++i) {
     // Retrieve a free variable at index valIndex:
     const auto valIndex = static_cast<size_t>(
-        random.intInRange(0, static_cast<Int>(_freeVals.size()) - 1 - i));
+        random.intInRange(0, static_cast<Int>(_freeVals.size()) - 1));
 
     // Assign variable _vars[i] the retrieved value:
     assignment.set(_vars[i].solverId(), _freeVals[valIndex]);
 
     // the value assigned to _vars[i] is no longer free:
-    std::swap(_freeVals[static_cast<Int>(_freeVals.size()) - 1 - i],
+    std::swap(_freeVals[static_cast<Int>(_freeVals.size()) - 1],
               _freeVals[valIndex]);
+    // Remove assigned value:
+    _freeVals.pop_back();
   }
 
-  _freeVals.resize(_vars.front().domain()->size() - _vars.size());
+  assert(_freeVals.size() == _vars.front().domain()->size() - _vars.size());
 
   assert(std::ranges::all_of(
       _freeVals.begin(), _freeVals.end(), [&](const Int val) {

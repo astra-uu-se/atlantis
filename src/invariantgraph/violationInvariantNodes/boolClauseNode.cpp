@@ -37,6 +37,21 @@ void BoolClauseNode::init(InvariantNodeId id) {
 
 void BoolClauseNode::updateState() {
   ViolationInvariantNode::updateState();
+  if (!isReified() && !shouldHold()) {
+    for (size_t i = 0; i < _numAs; ++i) {
+      invariantGraph()
+          .varNode(staticInputVarNodeIds().at(i))
+          .fixToValue(bool{false});
+    }
+    for (size_t i = _numAs; i < staticInputVarNodeIds().size(); ++i) {
+      invariantGraph()
+          .varNode(staticInputVarNodeIds().at(i))
+          .fixToValue(bool{true});
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+
   for (size_t i = 0; i < _numAs; ++i) {
     for (size_t j = _numAs; j < staticInputVarNodeIds().size(); ++j) {
       if (staticInputVarNodeIds().at(i) == staticInputVarNodeIds().at(j)) {

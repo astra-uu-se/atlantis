@@ -10,7 +10,7 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-std::string to_string(const std::type_info& t, bool isVar) {
+std::string arg_type_to_string(const std::type_info& t, bool isVar) {
   // Arg:
   if (t == typeid(fznparser::BoolArg) ||
       t == typeid(std::shared_ptr<fznparser::BoolArg>) ||
@@ -103,6 +103,47 @@ std::string to_string(const std::type_info& t, bool isVar) {
   if (t == typeid(fznparser::FloatSet) ||
       t == typeid(std::shared_ptr<fznparser::FloatSet>)) {
     return "set of float";
+  }
+  return "[unknown type]";
+}
+
+std::string arg_type_to_string(const fznparser::Arg& arg) {
+  if (std::holds_alternative<fznparser::BoolArg>(arg)) {
+    return !arg.isParameter() ? "{var bool, bool}" : "bool";
+  }
+  if (std::holds_alternative<fznparser::IntArg>(arg)) {
+    return !arg.isParameter() ? "{var int, int}" : "int";
+  }
+  if (std::holds_alternative<fznparser::FloatArg>(arg)) {
+    return !arg.isParameter() ? "{var float, float}" : "float";
+  }
+  if (std::holds_alternative<fznparser::IntSetArg>(arg)) {
+    return !arg.isParameter() ? "{var set of int, set of int}" : "set of int";
+  }
+  if (std::holds_alternative<fznparser::FloatSet>(arg)) {
+    return "set of float";
+  }
+  if (std::holds_alternative<std::shared_ptr<fznparser::BoolVarArray>>(arg)) {
+    return !std::get<std::shared_ptr<fznparser::BoolVarArray>>(arg)
+                   ->isParArray()
+               ? "array[int] of var bool"
+               : "array[int] of bool";
+  }
+  if (std::holds_alternative<std::shared_ptr<fznparser::IntVarArray>>(arg)) {
+    return !std::get<std::shared_ptr<fznparser::IntVarArray>>(arg)->isParArray()
+               ? "array[int] of var int"
+               : "array[int] of int";
+  }
+  if (std::holds_alternative<std::shared_ptr<fznparser::FloatVarArray>>(arg)) {
+    return !std::get<std::shared_ptr<fznparser::FloatVarArray>>(arg)
+                   ->isParArray()
+               ? "array[int] of var float"
+               : "array[int] of float";
+  }
+  if (std::holds_alternative<std::shared_ptr<fznparser::SetVarArray>>(arg)) {
+    return !std::get<std::shared_ptr<fznparser::SetVarArray>>(arg)->isParArray()
+               ? "array[int] of set of var int"
+               : "array[int] of set of int";
   }
   return "[unknown type]";
 }

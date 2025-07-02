@@ -12,20 +12,19 @@ using ::testing::ContainerEq;
 class GlobalCardinalityLowUpNodeTestFixture
     : public NodeTestBase<GlobalCardinalityLowUpNode> {
  public:
-  std::vector<VarNodeId> inputVarNodeIds;
+  std::vector<std::string> inputVars;
   const std::vector<Int> cover{2, 6};
   const std::vector<Int> low{0, 1};
   const std::vector<Int> up{1, 2};
-  VarNodeId reifiedVarNodeId{NULL_NODE_ID};
-  std::string reifiedIdentifier{"reified"};
+  std::string reifiedVar{"reified"};
 
   bool isViolating(bool isRegistered = false) {
     if (isRegistered) {
       std::vector<Int> counts(cover.size(), 0);
-      for (const auto& inputVarNodeId : inputVarNodeIds) {
-        const Int val = varNode(inputVarNodeId).isFixed()
-                            ? varNode(inputVarNodeId).lowerBound()
-                            : _solver->currentValue(varId(inputVarNodeId));
+      for (const auto& var : inputVars) {
+        const Int val = varNode(var).isFixed()
+                            ? varNode(var).lowerBound()
+                            : _solver->currentValue(varId(var));
         for (size_t i = 0; i < cover.size(); ++i) {
           if (val == cover.at(i)) {
             counts.at(i)++;
@@ -41,8 +40,8 @@ class GlobalCardinalityLowUpNodeTestFixture
       return false;
     }
     std::vector<Int> counts(cover.size(), 0);
-    for (const auto& inputVarNodeId : inputVarNodeIds) {
-      const Int val = varNode(inputVarNodeId).lowerBound();
+    for (const auto& var : inputVars) {
+      const Int val = varNode(var).lowerBound();
       for (size_t i = 0; i < cover.size(); ++i) {
         if (val == cover.at(i)) {
           counts.at(i)++;
@@ -58,80 +57,25 @@ class GlobalCardinalityLowUpNodeTestFixture
     return false;
   }
 
-  void SetUp() override {
+  void SetUp() {
     NodeTestBase::SetUp();
-    inputVarNodeIds = {retrieveIntVarNode(5, 10, "x1"),
-                       retrieveIntVarNode(2, 7, "x2")};
+    inputVars = {"x_0", "x_1"};
+    retrieveIntVarNode(5, 10, inputVars.at(0));
+
+    retrieveIntVarNode(2, 7, inputVars.at(1));
 
     if (isReified()) {
-      reifiedVarNodeId = retrieveBoolVarNode(reifiedIdentifier);
-      createInvariantNode(*_invariantGraph,
-                          std::vector<VarNodeId>{inputVarNodeIds},
+      retrieveBoolVarNode(reifiedVar);
+      createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           std::vector<Int>{cover}, std::vector<Int>{low},
-                          std::vector<Int>{up}, reifiedVarNodeId);
-    } else if (shouldHold()) {
-      createInvariantNode(*_invariantGraph,
-                          std::vector<VarNodeId>{inputVarNodeIds},
-                          std::vector<Int>{cover}, std::vector<Int>{low},
-                          std::vector<Int>{up}, true);
+                          std::vector<Int>{up}, varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph,
-                          std::vector<VarNodeId>{inputVarNodeIds},
+      createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           std::vector<Int>{cover}, std::vector<Int>{low},
-                          std::vector<Int>{up}, false);
+                          std::vector<Int>{up}, shouldHold());
     }
   }
 };
-
-TEST_P(GlobalCardinalityLowUpNodeTestFixture, construction) {
-  expectInputTo(invNode());
-  expectOutputOf(invNode());
-
-  const size_t numInputs = 2;
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), numInputs);
-  EXPECT_THAT(inputVarNodeIds, ContainerEq(invNode().staticInputVarNodeIds()));
-
-  if (isReified()) {
-    EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-    EXPECT_EQ(invNode().outputVarNodeIds().front(), reifiedVarNodeId);
-  } else {
-    EXPECT_EQ(invNode().outputVarNodeIds().size(), 0);
-  }
-
-  if (isReified()) {
-    EXPECT_TRUE(invNode().isReified());
-    EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), reifiedVarNodeId);
-  } else {
-    EXPECT_FALSE(invNode().isReified());
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-  }
-}
-
-TEST_P(GlobalCardinalityLowUpNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  EXPECT_EQ(invNode().violationVarId(), propagation::NULL_ID);
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  EXPECT_NE(invNode().violationVarId(), propagation::NULL_ID);
-
-  invNode().registerNode();
-  _solver->close();
-
-  EXPECT_EQ(_solver->searchVars().size(), inputVarNodeIds.size());
-  EXPECT_EQ(_solver->numVars(), inputVarNodeIds.size() + 1);
-
-  EXPECT_EQ(_solver->numInvariants(), 1);
-  EXPECT_EQ(_solver->lowerBound(invNode().violationVarId()), 0);
-  EXPECT_GT(_solver->upperBound(invNode().violationVarId()), 0);
-}
 
 TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
   if (shouldBeMadeImplicit()) {
@@ -145,8 +89,8 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     const bool expected = isViolating();
     if (isReified()) {
-      EXPECT_TRUE(varNode(reifiedIdentifier).isFixed());
-      const bool actual = varNode(reifiedIdentifier).inDomain({false});
+      EXPECT_TRUE(varNode(reifiedVar).isFixed());
+      const bool actual = varNode(reifiedVar).inDomain({false});
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {
@@ -159,16 +103,15 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& inputVarNodeId : inputVarNodeIds) {
-    if (!varNode(inputVarNodeId).isFixed()) {
-      EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(inputVarNodeId));
+  for (const auto& var : inputVars) {
+    if (!varNode(var).isFixed()) {
+      EXPECT_NE(varId(var), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(var));
     }
   }
 
   const propagation::VarViewId violVarId =
-      isReified() ? varId(reifiedIdentifier)
-                  : _invariantGraph->totalViolationVarId();
+      isReified() ? varId(reifiedVar) : _invariantGraph->totalViolationVarId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 

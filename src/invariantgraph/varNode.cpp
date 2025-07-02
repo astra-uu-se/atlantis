@@ -10,7 +10,9 @@
 #include "atlantis/propagation/views/inIntervalConst.hpp"
 #include "atlantis/propagation/views/inSparseDomain.hpp"
 #include "atlantis/propagation/views/lessEqualConst.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/search/searchVariable.hpp"
+#include "atlantis/sortedUniqueVector.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
@@ -85,6 +87,32 @@ propagation::VarViewId VarNode::postDomainConstraint(
   const Int solverLb = solver.lowerBound(varId());
   const Int solverUb = solver.upperBound(varId());
 
+  if (!isIntVar()) {
+    const bool holdsTrue = solverLb <= 0 && 0 <= solverUb;
+    const bool holdsFalse = solverUb >= 1;
+    if (!isFixed()) {
+      return propagation::VarViewId{propagation::NULL_ID};
+    }
+    if ((inDomain(bool{true}) && !holdsTrue) ||
+        (inDomain(bool{false}) && !holdsFalse)) {
+      throw InconsistencyException(
+          "VarNode::postDomainConstraint: Solver domain and invariant graph "
+          "domain do not overlap");
+    }
+    if ((inDomain(bool{true}) && !holdsFalse) ||
+        (inDomain(bool{false}) && !holdsTrue)) {
+      return propagation::VarViewId{propagation::NULL_ID};
+    }
+    if (inDomain(bool{true})) {
+      _domainViolationId =
+          solver.makeIntView<propagation::EqualConst>(solver, varId(), 0);
+    } else {
+      _domainViolationId =
+          solver.makeIntView<propagation::NotEqualConst>(solver, varId(), 0);
+    }
+    return _domainViolationId;
+  }
+
   if (_domainType == DomainType::DOM_FIXED || _domain->isFixed()) {
     if (lowerBound() < solverLb || solverUb < lowerBound()) {
       throw std::runtime_error("Solver var domain range is " +
@@ -137,7 +165,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
           std::to_string(lowerBound()) + ".." + std::to_string(upperBound()));
     }
     if (lowerBound() < solverLb || solverUb < upperBound()) {
-      solver.makeIntView<propagation::InIntervalConst>(
+      _domainViolationId = solver.makeIntView<propagation::InIntervalConst>(
           solver, varId(), lowerBound(), upperBound());
     }
     return _domainViolationId;
@@ -145,7 +173,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
   assert(_domainType == DomainType::DOM_DOMAIN);
 
   std::vector<DomainEntry> domain =
-      _domain->relativeComplementIfIntersects(solverLb, solverUb);
+      _domain->createDomainEntries(solverLb, solverUb);
 
   if (domain.empty()) {
     // The node domain contains the solver domain:
@@ -205,68 +233,99 @@ bool VarNode::inDomain(bool val) const {
   return val ? lowerBound() == 0 : upperBound() > 0;
 }
 
-void VarNode::removeValue(Int val) {
+void VarNode::removeValue(Int val, bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValue(Int) called on BoolVar");
   }
+  const size_t prevSize = _domain->size();
   _domain->remove(val);
+  if (tightenDomainState && prevSize != _domain->size()) {
+    tightenDomainType(isFixed()            ? DomainType::DOM_FIXED
+                      : val < lowerBound() ? DomainType::DOM_LOWER_BOUND
+                      : val > upperBound() ? DomainType::DOM_UPPER_BOUND
+                                           : DomainType::DOM_DOMAIN);
+  }
 }
 
-void VarNode::removeValuesBelow(Int newLowerBound) {
+void VarNode::removeValuesBelow(Int newLowerBound, bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesBelow(Int) called on BoolVar");
   }
-  return _domain->removeBelow(newLowerBound);
+  const size_t prevSize = _domain->size();
+  _domain->removeBelow(newLowerBound);
+  if (tightenDomainState && prevSize != _domain->size()) {
+    tightenDomainType(DomainType::DOM_LOWER_BOUND);
+  }
 }
 
-void VarNode::removeValuesAbove(Int newUpperBound) {
+void VarNode::removeValuesAbove(Int newUpperBound, bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesAbove(Int) called on BoolVar");
   }
-  return _domain->removeAbove(newUpperBound);
+  const size_t prevSize = _domain->size();
+  _domain->removeAbove(newUpperBound);
+  if (tightenDomainState && prevSize != _domain->size()) {
+    tightenDomainType(DomainType::DOM_LOWER_BOUND);
+  }
 }
 
-void VarNode::removeValues(const std::vector<Int>& values) {
+void VarNode::removeValues(const SortedUniqueVector& values,
+                           bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  if (!values.empty()) {
-    return _domain->remove(values);
+  if ((*values).empty()) {
+    return;
+  }
+  if ((*values).size() == 1) {
+    return removeValue((*values).front(), tightenDomainState);
+  }
+  const size_t prevSize = _domain->size();
+  _domain->remove(values);
+  if (tightenDomainState && prevSize != _domain->size()) {
+    tightenDomainType(DomainType::DOM_DOMAIN);
   }
 }
 
-void VarNode::removeAllValuesExcept(const std::vector<Int>& values) {
+void VarNode::removeAllValuesExcept(const SortedUniqueVector& values,
+                                    bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  _domain->intersect(values);
+  if ((*values).size() == 1) {
+    return fixToValue((*values).front(), tightenDomainState);
+  }
+  const size_t prevSize = _domain->size();
+  _domain->removeAllValuesExcept(values);
+  if (tightenDomainState && prevSize != _domain->size()) {
+    tightenDomainType(DomainType::DOM_DOMAIN);
+  }
 }
 
-void VarNode::fixToValue(Int val) {
+void VarNode::fixToValue(Int val, bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error("fixToValue(Int) called on BoolVar");
   }
   _domain->fix(val);
+  if (tightenDomainState) {
+    tightenDomainType(DomainType::DOM_FIXED);
+  }
 }
 
-void VarNode::removeValue(bool val) {
-  if (isIntVar()) {
-    throw std::runtime_error("removeValue(bool) called on IntVar");
-  }
-  _domain->fix(val ? 0 : 1);
-}
+void VarNode::removeValue(bool val) { return fixToValue(!val); }
 
 void VarNode::fixToValue(bool val) {
   if (isIntVar()) {
     throw std::runtime_error("fixToValue(bool) called on IntVar");
   }
   _domain->fix(val ? 0 : 1);
+  tightenDomainType(DomainType::DOM_FIXED);
 }
 
 std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) const {
-  return _domain->relativeComplementIfIntersects(lb, ub);
+  return _domain->createDomainEntries(lb, ub);
 }
 
 std::pair<Int, Int> VarNode::bounds() const { return _domain->bounds(); }

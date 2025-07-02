@@ -6,7 +6,7 @@
 
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/array_int_element.hpp"
-#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
 
@@ -19,73 +19,100 @@ using namespace atlantis::invariantgraph::fzn;
 
 class array_int_elementTest : public FznTestBase {
  public:
-  std::string idxIdentifier{};
-  std::string outputIdentifier{};
-  std::vector<Int> inputVals;
-  Int offsetIdx = 1;
+  std::vector<VarNodeId> inputVarNodeIds{};
+  std::string idx{"idx"};
+  Int offset{1};
+  std::string output{"output"};
+  std::vector<Int> parameters{};
 
-  Int numInputs = 4;
+  void generate() override {
+    const Int size = *rc::gen::inRange(1, 10);
+    const bool useOffset = *rc::gen::arbitrary<bool>();
 
-  void SetUp() override {
-    FznTestBase::SetUp();
-    constraintIdentifier = "array_int_element_offset";
+    constraintIdentifier =
+        useOffset ? "array_int_element_offset" : "array_int_element";
 
-    idxIdentifier = "idx";
-    _model->addVar(std::make_shared<IntVar>(offsetIdx, numInputs + offsetIdx,
-                                            idxIdentifier));
-    outputIdentifier = "output";
-    _model->addVar(std::make_shared<IntVar>(
-        -2, 2, outputIdentifier,
-        std::vector<Annotation>{Annotation("is_defined_var")}));
+    const Int lb =
+        std::vector<Int>{-1024, -1, 0, 1, 1024}.at(*rc::gen::inRange(0, 5));
+    addIntArg(lb, size + lb - 1, idx);
 
-    std::vector<Arg> args;
-    args.reserve(3);
-    args.emplace_back(
-        std::get<std::shared_ptr<IntVar>>(_model->var(idxIdentifier)));
+    parameters = *rc::gen::container<std::vector<Int>>(
+        size, rc::gen::inRange<Int>(-1, 2));
+    addArg(parameters);
 
-    inputVals.reserve(numInputs);
-    auto inputsArg = std::make_shared<IntVarArray>("inputs");
-    for (Int i = 0; i < numInputs; ++i) {
-      inputVals.emplace_back(i - 2);
-      inputsArg->append(inputVals.back());
+    addIntArg(std::ranges::min(parameters), std::ranges::max(parameters),
+              output);
+
+    offset = lowerBound(idx);
+    if (useOffset) {
+      addArg(offset);
     }
-    args.emplace_back(inputsArg);
+    generateConstraint();
+  }
 
-    args.emplace_back(
-        std::get<std::shared_ptr<IntVar>>(_model->var(outputIdentifier)));
-    args.emplace_back(IntArg(offsetIdx));
+  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+    const Int idxVal = intVal(idx, committedValue);
+    const Int expected = parameters.at(idxVal - offset);
+    const Int actual = intVal(output, committedValue);
 
-    _model->addConstraint(Constraint(constraintIdentifier, std::move(args)));
+    if (isFixed(output)) {
+      const bool isSolution = violation(committedValue) == 0;
+      return isSolution ? expected == actual : expected != actual;
+    }
+    return expected == actual;
+  }
+
+  [[nodiscard]] bool neverSatisfied() const override {
+    if (!isFixed(idx) && !isFixed(output)) {
+      const auto& idxNode = varNodeConst(idx);
+      const auto& outputNode = varNodeConst(output);
+      return std::none_of(idxNode.constDomain()->begin(),
+                          idxNode.constDomain()->end(), [&](const Int val) {
+                            return outputNode.constDomain()->contains(
+                                parameters.at(val - offset));
+                          });
+    }
+    if (!isFixed(idx)) {
+      const auto& idxNode = varNodeConst(idx);
+      return std::none_of(idxNode.constDomain()->begin(),
+                          idxNode.constDomain()->end(), [&](const Int val) {
+                            return parameters.at(val - offset) ==
+                                   intVal(output);
+                          });
+    }
+    if (!isFixed(output)) {
+      return !varNodeConst(output).constDomain()->contains(
+          parameters.at(intVal(idx) - offset));
+    }
+    return parameters.at(intVal(idx) - offset) != intVal(output);
+  }
+
+  [[nodiscard]] bool alwaysSatisfied() const override {
+    if (!isFixed(output)) {
+      return false;
+    }
+    if (!isFixed(idx)) {
+      const auto& idxNode = varNodeConst(idx);
+      return std::all_of(idxNode.constDomain()->begin(),
+                         idxNode.constDomain()->end(), [&](const Int val) {
+                           return parameters.at(val - offset) == intVal(output);
+                         });
+    }
+    return parameters.at(intVal(idx) - offset) != intVal(output);
+  }
+
+  [[nodiscard]] bool canMove() const override {
+    return varId(idx) != propagation::NULL_ID;
+  }
+
+  void move(bool committedValue) override { changeValue(idx, committedValue); }
+
+  void query() override {
+    _solver->query(totalViolationVarId() != propagation::NULL_ID
+                       ? totalViolationVarId()
+                       : varId(output));
   }
 };
 
-TEST_F(array_int_elementTest, construction) {
-  EXPECT_EQ(_model->constraints().size(), 1);
-  EXPECT_TRUE(
-      array_int_element(*_invariantGraph, _model->constraints().front()));
-  EXPECT_NE(_invariantGraph->varNodeId(idxIdentifier), NULL_NODE_ID);
-  EXPECT_NE(_invariantGraph->varNodeId(outputIdentifier), NULL_NODE_ID);
-}
-
-TEST_F(array_int_elementTest, propagation) {
-  array_int_element(*_invariantGraph, _model->constraints().front());
-  _invariantGraph->construct();
-  _invariantGraph->close();
-
-  for (Int i = 0; i < numInputs; ++i) {
-    _solver->beginMove();
-    setValue(idxIdentifier, i + offsetIdx);
-    _solver->endMove();
-
-    _solver->beginProbe();
-    _solver->query(varId(outputIdentifier));
-    _solver->endProbe();
-
-    const Int actual = currentValue(outputIdentifier);
-    const Int expected = inputVals.at(i);
-
-    EXPECT_EQ(actual, expected);
-  }
-}
-
+RC_GTEST_FIXTURE_PROP(array_int_elementTest, RapidCheck, ()) { rapidCheck(); }
 }  // namespace atlantis::testing

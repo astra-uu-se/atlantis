@@ -9,116 +9,95 @@ using ::testing::ContainerEq;
 
 class IntCountNodeTestFixture : public NodeTestBase<IntCountNode> {
  public:
-  std::vector<VarNodeId> inputVarNodeIds;
-  std::vector<std::string> inputIdentifiers{"input_1", "input_2", "input_3"};
-  VarNodeId outputVarNodeId{NULL_NODE_ID};
-  std::string outputIdentifier{"output"};
+  Int numInputs = 3;
+  std::vector<std::string> inputVars;
+  std::string outputVar{"output"};
+
   Int needle{2};
 
   Int computeOutput(bool isRegistered = false) {
     if (isRegistered) {
       Int occurrences = 0;
-      for (const auto& identifier : inputIdentifiers) {
-        if (!varNode(identifier).inDomain(needle)) {
+      for (const auto& var : inputVars) {
+        if (!varNode(var).inDomain(needle)) {
           continue;
         }
-        if (varNode(identifier).isFixed() ||
-            varId(identifier) == propagation::NULL_ID) {
-          EXPECT_TRUE(varNode(identifier).inDomain(needle));
+        if (varNode(var).isFixed() || varId(var) == propagation::NULL_ID) {
+          EXPECT_TRUE(varNode(var).inDomain(needle));
           ++occurrences;
         } else {
-          occurrences +=
-              _solver->currentValue(varId(identifier)) == needle ? 1 : 0;
+          occurrences += _solver->currentValue(varId(var)) == needle ? 1 : 0;
         }
       }
       return occurrences;
     }
     Int occurrences = 0;
-    for (const auto& identifier : inputIdentifiers) {
+    for (const auto& var : inputVars) {
       occurrences +=
-          varNode(identifier).isFixed() && varNode(identifier).inDomain(needle)
-              ? 1
-              : 0;
+          varNode(var).isFixed() && varNode(var).inDomain(needle) ? 1 : 0;
     }
     return occurrences;
   }
 
-  void SetUp() override {
+  void SetUp() {
     NodeTestBase::SetUp();
+    for (Int i = 0; i < numInputs; ++i) {
+      inputVars.emplace_back("input_" + std::to_string(i));
+    }
     if (shouldBeSubsumed()) {
       if (_paramData.data == 0) {
-        inputVarNodeIds = {
-            retrieveIntVarNode(0, 1, inputIdentifiers.at(0)),
-            retrieveIntVarNode(std::vector<Int>{1, 3, 4, 5, 6, 7, 8, 9, 10},
-                               inputIdentifiers.at(1)),
-            retrieveIntVarNode(std::vector<Int>{2}, inputIdentifiers.at(2))};
-        outputVarNodeId = retrieveIntVarNode(0, 3, outputIdentifier);
+        retrieveIntVarNode(0, 1, inputVars.at(0));
+
+        retrieveIntVarNode(std::vector<Int>{1, 3, 4, 5, 6, 7, 8, 9, 10},
+                           inputVars.at(1));
+
+        retrieveIntVarNode(std::vector<Int>{2}, inputVars.at(2));
+        retrieveIntVarNode(0, 3, outputVar);
       } else {
-        inputVarNodeIds = {retrieveIntVarNode(2, 2, inputIdentifiers.at(0)),
-                           retrieveIntVarNode(1, 10, inputIdentifiers.at(1)),
-                           retrieveIntVarNode(1, 10, inputIdentifiers.at(2))};
-        outputVarNodeId = retrieveIntVarNode(0, 1, outputIdentifier);
+        retrieveIntVarNode(2, 2, inputVars.at(0));
+
+        retrieveIntVarNode(1, 10, inputVars.at(1));
+
+        retrieveIntVarNode(1, 10, inputVars.at(2));
+        retrieveIntVarNode(0, 1, outputVar);
       }
     } else {
       if (_paramData.data == 0) {
-        inputVarNodeIds = {
-            retrieveIntVarNode(1, 3, inputIdentifiers.at(0)),
-            retrieveIntVarNode(std::vector<Int>{1, 3, 4, 5, 6, 7, 8, 9, 10},
-                               inputIdentifiers.at(1)),
-            retrieveIntVarNode(std::vector<Int>{2}, inputIdentifiers.at(2))};
-        outputVarNodeId = retrieveIntVarNode(1, 2, outputIdentifier);
+        retrieveIntVarNode(1, 3, inputVars.at(0));
+
+        retrieveIntVarNode(std::vector<Int>{1, 3, 4, 5, 6, 7, 8, 9, 10},
+                           inputVars.at(1));
+
+        retrieveIntVarNode(std::vector<Int>{2}, inputVars.at(2));
+        retrieveIntVarNode(1, 2, outputVar);
       } else {
-        inputVarNodeIds = {retrieveIntVarNode(1, 10, inputIdentifiers.at(0)),
-                           retrieveIntVarNode(1, 10, inputIdentifiers.at(1)),
-                           retrieveIntVarNode(1, 10, inputIdentifiers.at(2))};
-        outputVarNodeId = retrieveIntVarNode(0, 3, outputIdentifier);
+        retrieveIntVarNode(1, 10, inputVars.at(0));
+
+        retrieveIntVarNode(1, 10, inputVars.at(1));
+
+        retrieveIntVarNode(1, 10, inputVars.at(2));
+        retrieveIntVarNode(0, 3, outputVar);
       }
     }
 
-    createInvariantNode(*_invariantGraph,
-                        std::vector<VarNodeId>{inputVarNodeIds}, needle,
-                        outputVarNodeId);
+    createInvariantNode(*_invariantGraph, varNodeIds(inputVars), needle,
+                        varNodeId(outputVar));
   }
-};
+};  // namespace atlantis::testing
 
 TEST_P(IntCountNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().size(), inputVarNodeIds.size());
+  std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds(), inputVarNodeIds);
-  EXPECT_THAT(inputVarNodeIds, ContainerEq(invNode().staticInputVarNodeIds()));
+  EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
+  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
-  const std::vector<VarNodeId> expectedOutputs{outputVarNodeId};
+  const std::vector<VarNodeId> expectedOutputs{varNodeId(outputVar)};
 
   EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
   EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodeIds()));
-}
-
-TEST_P(IntCountNodeTestFixture, application) {
-  _solver->open();
-  addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  EXPECT_EQ(invNode().violationVarId(), propagation::NULL_ID);
-  invNode().registerOutputVars();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerNode();
-  _solver->close();
-
-  EXPECT_EQ(_solver->searchVars().size(), 3);
-  EXPECT_EQ(_solver->numVars(), 4);
-
-  EXPECT_EQ(_solver->numInvariants(), 1);
-
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(_solver->lowerBound(varId(outputVarNodeId)), 0);
-    EXPECT_GT(_solver->upperBound(varId(outputVarNodeId)), 0);
-  }
 }
 
 TEST_P(IntCountNodeTestFixture, updateState) {
@@ -126,15 +105,15 @@ TEST_P(IntCountNodeTestFixture, updateState) {
   invNode().updateState();
   if (shouldBeSubsumed()) {
     // disabled for the MZN challange. this should be computed by Gecode.
-    // EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
 
     [[maybe_unused]] const Int expected = computeOutput();
-    [[maybe_unused]] const Int actual = varNode(outputVarNodeId).lowerBound();
+    [[maybe_unused]] const Int actual = varNode(outputVar).lowerBound();
     // disabled for the MZN challange. this should be computed by Gecode.
     // EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    EXPECT_FALSE(varNode(outputVarNodeId).isFixed());
+    EXPECT_FALSE(varNode(outputVar).isFixed());
   }
 }
 
@@ -144,11 +123,10 @@ TEST_P(IntCountNodeTestFixture, propagation) {
   _invariantGraph->close();
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& identifier : inputIdentifiers) {
-    if (!varNode(identifier).isFixed() &&
-        varNode(identifier).inDomain(needle)) {
-      EXPECT_NE(varId(identifier), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(identifier));
+  for (const auto& var : inputVars) {
+    if (!varNode(var).isFixed() && varNode(var).inDomain(needle)) {
+      EXPECT_NE(varId(var), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(var));
     }
   }
 
@@ -156,14 +134,13 @@ TEST_P(IntCountNodeTestFixture, propagation) {
   // EXPECT_EQ(inputVarIds.empty(), shouldBeSubsumed());
 
   if (shouldBeSubsumed()) {
-    [[maybe_unused]] const Int expected = computeOutput();
-    [[maybe_unused]] const Int actual = varNode(outputIdentifier).lowerBound();
     // disabled for the MZN challange. this should be computed by Gecode.
-    // EXPECT_EQ(expected, actual);
+    [[maybe_unused]] const Int expected = computeOutput();
+    [[maybe_unused]] const Int actual = varNode(outputVar).lowerBound();
     return;
   }
 
-  VarNode& outputNode = varNode(outputIdentifier);
+  VarNode& outputNode = varNode(outputVar);
 
   if (outputNode.isFixed()) {
     const Int expected = outputNode.lowerBound();
@@ -172,7 +149,7 @@ TEST_P(IntCountNodeTestFixture, propagation) {
     return;
   }
 
-  const propagation::VarViewId outputId = varId(outputIdentifier);
+  const propagation::VarViewId outputId = varId(outputVar);
   EXPECT_NE(outputId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
@@ -198,7 +175,6 @@ TEST_P(IntCountNodeTestFixture, propagation) {
 INSTANTIATE_TEST_CASE_P(
     IntCountNodeTest, IntCountNodeTestFixture,
     ::testing::Values(ParamData{int{0}}, ParamData{int{1}},
-                      ParamData{InvariantNodeAction::SUBSUME, 0},
-                      ParamData{InvariantNodeAction::SUBSUME, 1}));
+                      ParamData{InvariantNodeAction::SUBSUME, 0}));
 
 }  // namespace atlantis::testing

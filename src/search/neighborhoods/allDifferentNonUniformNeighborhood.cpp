@@ -64,6 +64,11 @@ static bool bipartiteMatching(
 
 void AllDifferentNonUniformNeighborhood::initialize(RandomProvider& random,
                                                     Assignment& assignment) {
+  assert(std::ranges::all_of(_vars, [&](const SearchVar& var) {
+    return std::ranges::any_of(assignment.searchVars(), [&](const auto sVar) {
+      return var.solverId() == sVar;
+    });
+  }));
   std::vector<std::vector<size_t>> forwardArcs(_vars.size());
   std::ranges::fill(_valueIndexToVarIndex.begin(), _valueIndexToVarIndex.end(),
                     _vars.size());

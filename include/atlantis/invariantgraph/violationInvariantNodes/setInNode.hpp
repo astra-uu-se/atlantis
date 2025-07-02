@@ -1,10 +1,12 @@
 #pragma once
 
+#include <atlantis/sortedUniqueVector.hpp>
+
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
 
 namespace atlantis::invariantgraph {
 class SetInNode : public ViolationInvariantNode {
-  std::vector<Int> _values;
+  SortedUniqueVector _values;
   propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
@@ -16,11 +18,13 @@ class SetInNode : public ViolationInvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void updateState() override;
+
   void registerOutputVars() override;
 
   void registerNode() override;
 
-  [[nodiscard]] const std::vector<Int>& values() { return _values; }
+  [[nodiscard]] const std::vector<Int>& values() const { return *_values; }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

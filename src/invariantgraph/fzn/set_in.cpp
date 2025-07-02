@@ -11,7 +11,10 @@ namespace atlantis::invariantgraph::fzn {
 
 bool set_in(FznInvariantGraph& graph, const fznparser::IntArg& var,
             const fznparser::IntSet& set) {
-  if (set.isInterval()) {
+  if (set.size() == 0) {
+    graph.addInvariantNode(std::make_shared<SetInNode>(
+        graph, graph.retrieveVarNode(var), std::vector<Int>{}, true));
+  } else if (set.isInterval()) {
     graph.addInvariantNode(std::make_shared<InIntervalNode>(
         graph, graph.retrieveVarNode(var), set.lowerBound(), set.upperBound(),
         true));
@@ -23,9 +26,14 @@ bool set_in(FznInvariantGraph& graph, const fznparser::IntArg& var,
   return true;
 }
 
-bool set_in(FznInvariantGraph& graph, const fznparser::IntArg& var,
-            const fznparser::IntSet& set, const fznparser::BoolArg& reified) {
-  if (set.isInterval()) {
+bool set_in_reif(FznInvariantGraph& graph, const fznparser::IntArg& var,
+                 const fznparser::IntSet& set,
+                 const fznparser::BoolArg& reified) {
+  if (set.size() == 0) {
+    graph.addInvariantNode(std::make_shared<SetInNode>(
+        graph, graph.retrieveVarNode(var), std::vector<Int>{},
+        graph.retrieveVarNode(reified)));
+  } else if (set.isInterval()) {
     graph.addInvariantNode(std::make_shared<InIntervalNode>(
         graph, graph.retrieveVarNode(var), set.lowerBound(), set.upperBound(),
         graph.retrieveVarNode(reified)));
@@ -54,11 +62,11 @@ bool set_in(FznInvariantGraph& graph, const fznparser::Constraint& constraint) {
                       .toParameter());
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
-  return set_in(graph,
-                std::get<fznparser::IntArg>(constraint.arguments().at(0)),
-                std::get<fznparser::IntSetArg>(constraint.arguments().at(1))
-                    .toParameter(),
-                std::get<fznparser::BoolArg>(constraint.arguments().at(2)));
+  return set_in_reif(
+      graph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
+      std::get<fznparser::IntSetArg>(constraint.arguments().at(1))
+          .toParameter(),
+      std::get<fznparser::BoolArg>(constraint.arguments().at(2)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

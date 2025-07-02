@@ -15,15 +15,14 @@ using ::testing::ContainerEq;
 class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
  public:
   Int numInputs = 4;
-  std::vector<VarNodeId> inputVarNodeIds;
-  std::vector<std::string> inputIdentifiers;
+  std::vector<std::string> inputVars;
 
   bool isViolating(bool) {
     std::vector<Int> values(numInputs, -1);
-    for (size_t i = 0; i < inputIdentifiers.size(); i++) {
-      values.at(i) = varNode(inputIdentifiers.at(i)).isFixed()
-                         ? varNode(inputIdentifiers.at(i)).lowerBound()
-                         : _solver->currentValue(varId(inputIdentifiers.at(i)));
+    for (size_t i = 0; i < inputVars.size(); i++) {
+      values.at(i) = varNode(inputVars.at(i)).isFixed()
+                         ? varNode(inputVars.at(i)).lowerBound()
+                         : _solver->currentValue(varId(inputVars.at(i)));
     }
     std::vector<bool> visited(numInputs, false);
     Int curNode = 1;
@@ -35,10 +34,10 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
                                [](bool v) { return !v; });
   }
 
-  void SetUp() override {
+  void SetUp() {
     NodeTestBase::SetUp();
-
     for (Int i = 0; i < numInputs; ++i) {
+      inputVars.emplace_back("input_" + std::to_string(i));
       std::vector<Int> domain;
       domain.reserve(numInputs - 1);
       for (Int j = 0; j < numInputs; ++j) {
@@ -46,17 +45,14 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
           domain.emplace_back(j + 1);
         }
       }
-      inputIdentifiers.emplace_back("input_" + std::to_string(i));
-      inputVarNodeIds.emplace_back(
-          retrieveIntVarNode(std::move(domain), inputIdentifiers.back()));
+      retrieveIntVarNode(std::move(domain), inputVars.back());
     }
     if (shouldBeReplaced()) {
-      for (const auto& inputVarNodeId : inputVarNodeIds) {
-        _invariantGraph->root().addSearchVarNode(inputVarNodeId);
+      for (const auto& var : inputVars) {
+        _invariantGraph->root().addSearchVarNode(varNodeId(var));
       }
     }
-    createInvariantNode(*_invariantGraph,
-                        std::vector<VarNodeId>{inputVarNodeIds}, 1);
+    createInvariantNode(*_invariantGraph, varNodeIds(inputVars), 1);
   }
 };
 
@@ -73,7 +69,8 @@ TEST_P(CircuitNodeTestFixture, makeImplicit) {
 }
 
 TEST_P(CircuitNodeTestFixture, propagation) {
-  // Currently, we don't allow probes/moves that result in undeterminable
+  // Currently, we don't allow probes/moves that result in
+  // undeterminable
   // dynamic cycles. When the invariant graph is topologically sorted, then an
   // exception should be thrown, and the corresponding probe/move should be
   // ignored/skipped.
@@ -85,14 +82,14 @@ TEST_P(CircuitNodeTestFixture, propagation) {
   _invariantGraph->construct();
   for (Int i = 0; i < numInputs; i++) {
     const Int val = 1 + ((i + 1) % numInputs);
-    _solver->setValue(varId(inputIdentifiers.at(i)), val);
+    _solver->setValue(varId(inputVars.at(i)), val);
   }
   _invariantGraph->close();
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& inputVarNodeId : inputVarNodeIds) {
-    EXPECT_NE(varId(inputVarNodeId), propagation::NULL_ID);
-    inputVarIds.emplace_back(varId(inputVarNodeId));
+  for (const auto& var : inputVars) {
+    EXPECT_NE(varId(var), propagation::NULL_ID);
+    inputVarIds.emplace_back(varId(var));
   }
 
   const propagation::VarViewId violVarId =

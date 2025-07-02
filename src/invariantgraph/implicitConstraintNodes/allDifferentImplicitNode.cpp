@@ -4,6 +4,7 @@
 #include <limits>
 
 #include "../parseHelper.hpp"
+#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/variables/committableInt.hpp"
@@ -32,20 +33,28 @@ AllDifferentImplicitNode::createNeighborhood() {
   if (outputVarNodeIds().size() <= 1) {
     return nullptr;
   }
-  bool hasSameDomain = true;
   assert(!outputVarNodeIds().empty());
+  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return invariantGraphConst().varNodeConst(vId).definingNodes().size() ==
+               1 &&
+           invariantGraphConst().varNodeConst(vId).outputOf() == id();
+  }));
 
-  const auto domain = invariantGraphConst()
-                          .varNodeConst(outputVarNodeIds().front())
-                          .constDomain();
+  const auto& domain = invariantGraphConst()
+                           .varNodeConst(outputVarNodeIds().front())
+                           .constDomain();
 
-  for (size_t i = 1; i < outputVarNodeIds().size(); ++i) {
-    if ((*invariantGraphConst()
-              .varNodeConst(outputVarNodeIds().at(i))
-              .constDomain()) != (*domain)) {
-      hasSameDomain = false;
-      break;
-    }
+  const bool hasSameDomain = std::all_of(
+      outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return (*invariantGraphConst().varNodeConst(vId).constDomain()) ==
+               (*domain);
+      });
+
+  if (hasSameDomain && domain->size() < outputVarNodeIds().size()) {
+    throw InconsistencyException(
+        "fzn_all_different: she domain is smaller than the number of "
+        "variables");
   }
 
   std::vector<search::SearchVar> searchVars;
@@ -65,15 +74,15 @@ AllDifferentImplicitNode::createNeighborhood() {
   }
   Int domainLb = std::numeric_limits<Int>::max();
   Int domainUb = std::numeric_limits<Int>::min();
-  for (const auto& nId : outputVarNodeIds()) {
-    auto& varNode = invariantGraph().varNode(nId);
-    searchVars.emplace_back(varNode.varId(), varNode.domain());
-    domainLb = std::min<Int>(domainLb, varNode.constDomain()->lowerBound());
-    domainUb = std::max<Int>(domainUb, varNode.constDomain()->upperBound());
+  for (const auto& vId : outputVarNodeIds()) {
+    const auto& varNode = invariantGraphConst().varNodeConst(vId);
+    searchVars.emplace_back(varNode.varId(), varNode.constDomain());
+    domainLb = std::min<Int>(domainLb, varNode.lowerBound());
+    domainUb = std::max<Int>(domainUb, varNode.upperBound());
   }
   return std::make_shared<
       search::neighborhoods::AllDifferentNonUniformNeighborhood>(
-      std::move(std::move(searchVars)), domainLb, domainUb);
+      std::move(searchVars), domainLb, domainUb);
 }
 
 std::string AllDifferentImplicitNode::dotLangIdentifier() const {

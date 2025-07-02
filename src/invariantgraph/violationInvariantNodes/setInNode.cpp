@@ -1,5 +1,6 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/setInNode.hpp"
 
+#include <boost/xpressive/detail/core/access.hpp>
 #include <utility>
 
 #include "../parseHelper.hpp"
@@ -9,6 +10,7 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/inDomain.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -33,14 +35,47 @@ void SetInNode::init(InvariantNodeId id) {
       }));
 }
 
+void SetInNode::updateState() {
+  ViolationInvariantNode::updateState();
+  if ((*_values).empty()) {
+    if (isReified()) {
+      fixReified(false);
+    } else if (shouldHold()) {
+      throw InconsistencyException("SetInNode::updateState: empty set");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  auto& vNode = invariantGraph().varNode(staticInputVarNodeIds().front());
+  if (!isReified()) {
+    if (shouldHold()) {
+      vNode.removeAllValuesExcept(_values);
+    } else {
+      vNode.removeValues(_values);
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (vNode.constDomain()->isDisjoint(_values)) {
+    fixReified(false);
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (vNode.constDomain()->isContained(_values)) {
+    fixReified(true);
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+}
+
 void SetInNode::registerOutputVars() {
   if (violationVarId() == propagation::NULL_ID) {
     const propagation::VarViewId input =
         invariantGraph().varId(staticInputVarNodeIds().front());
     std::vector<DomainEntry> domainEntries;
-    domainEntries.reserve(_values.size());
+    domainEntries.reserve((*_values).size());
     std::ranges::transform(
-        _values.begin(), _values.end(), std::back_inserter(domainEntries),
+        *_values, std::back_inserter(domainEntries),
         [](const auto& value) { return DomainEntry(value, value); });
 
     if (!shouldHold()) {

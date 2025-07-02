@@ -19,15 +19,18 @@ class GlobalCardinalityClosedNode : public ViolationInvariantNode {
                                        std::vector<VarNodeId>&& counts,
                                        bool shouldHold = true);
 
+  void updateState() override;
+
+  [[nodiscard]] bool canBeReplaced() const override;
+
+  bool replace() override;
+
   void init(InvariantNodeId) override;
 
   void registerOutputVars() override;
 
   void registerNode() override;
 
-  [[nodiscard]] bool canBeReplaced() const override;
-
-  bool replace() override;
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 

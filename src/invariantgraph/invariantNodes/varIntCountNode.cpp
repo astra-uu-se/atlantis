@@ -9,6 +9,7 @@
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/count.hpp"
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -39,6 +40,30 @@ std::vector<VarNodeId> VarIntCountNode::haystack() const {
 
 VarNodeId VarIntCountNode::needle() const {
   return staticInputVarNodeIds().back();
+}
+
+void VarIntCountNode::updateState() {
+  std::vector<size_t> indicesToRemove;
+  indicesToRemove.reserve(staticInputVarNodeIds().size() - 1);
+  const VarNode& needleNode = invariantGraphConst().varNodeConst(needle());
+  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 2; i >= 0;
+       --i) {
+    const auto& vNode =
+        invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
+    if (vNode.constDomain()->isDisjoint(*needleNode.constDomain())) {
+      indicesToRemove.emplace_back(i);
+    }
+  }
+  for (const size_t index : indicesToRemove) {
+    removeStaticInputAtIndex(index);
+  }
+  auto& outputNode = invariantGraph().varNode(outputVarNodeIds().back());
+  const Int ub = static_cast<Int>(staticInputVarNodeIds().size()) - 1;
+  outputNode.removeValuesBelow(0);
+  outputNode.removeValuesAbove(ub);
+  if (staticInputVarNodeIds().size() == 1) {
+    setState(InvariantNodeState::SUBSUMED);
+  }
 }
 
 bool VarIntCountNode::canBeReplaced() const {

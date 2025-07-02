@@ -9,6 +9,9 @@
 #include "atlantis/propagation/types.hpp"
 
 namespace atlantis {
+class SortedUniqueVector;
+}
+namespace atlantis {
 class SearchDomain;  // forward declaration
 }
 
@@ -61,23 +64,24 @@ class VarNode {
   [[nodiscard]] bool inDomain(Int) const;
   [[nodiscard]] bool inDomain(bool) const;
 
-  void setIsViolationVar(bool isViolVar);
-
-  void removeValue(Int);
-
-  void fixToValue(Int);
-
-  void removeValuesBelow(Int);
-
-  void removeValuesAbove(Int);
-
-  void removeValues(const std::vector<Int>&);
-
-  void removeAllValuesExcept(const std::vector<Int>&);
-
   void removeValue(bool);
 
   void fixToValue(bool);
+
+  void setIsViolationVar(bool isViolVar);
+
+  void removeValue(Int, bool tightenDomainState = true);
+
+  void fixToValue(Int, bool tightenDomainState = true);
+
+  void removeValuesBelow(Int, bool tightenDomainState = true);
+
+  void removeValuesAbove(Int, bool tightenDomainState = true);
+
+  void removeValues(const SortedUniqueVector&, bool tightenDomainState = true);
+
+  void removeAllValuesExcept(const SortedUniqueVector&,
+                             bool tightenDomainState = true);
 
   DomainType domainType() const noexcept;
 

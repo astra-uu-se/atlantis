@@ -2,21 +2,23 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <rapidcheck/gen/Numeric.h>
 #include <rapidcheck/gtest.h>
 
 #include <fznparser/constraint.hpp>
 #include <fznparser/model.hpp>
 #include <fznparser/variables.hpp>
+#include <random>
 #include <string>
 #include <vector>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solver.hpp"
+#include "atlantis/search/assignment.hpp"
+#include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
+#include "atlantis/search/randomProvider.hpp"
 
 namespace atlantis::testing {
-
 using namespace fznparser;
 using namespace atlantis::invariantgraph;
 
@@ -27,216 +29,243 @@ enum struct BoolArgState : unsigned char {
   FIXED_TRUE = 3,
   VAR = 4
 };
-
 enum struct IntArgState : unsigned char { PAR = 0, FIXED = 1, VAR = 2 };
+
+inline std::ostream& operator<<(std::ostream& os, BoolArgState state) {
+  switch (state) {
+    case BoolArgState::PAR_FALSE:
+      return os << "BoolArgState::PAR_FALSE";
+    case BoolArgState::PAR_TRUE:
+      return os << "BoolArgState::PAR_TRUE";
+    case BoolArgState::FIXED_FALSE:
+      return os << "BoolArgState::FIXED_FALSE";
+    case BoolArgState::FIXED_TRUE:
+      return os << "BoolArgState::FIXED_TRUE";
+    case BoolArgState::VAR:
+    default:
+      return os << "BoolArgState::VAR";
+  }
+}
+
+inline std::ostream& operator<<(std::ostream& os, IntArgState state) {
+  switch (state) {
+    case IntArgState::PAR:
+      return os << "IntArgState::PAR";
+    case IntArgState::FIXED:
+      return os << "IntArgState::FIXED";
+    case IntArgState::VAR:
+    default:
+      return os << "IntArgState::VAR";
+  }
+}
+
+}  // namespace atlantis::testing
+
+namespace rc {
+using namespace atlantis::testing;
+template <>
+struct Arbitrary<BoolArgState> {
+  static Gen<BoolArgState> arbitrary() {
+    return gen::element<BoolArgState>(
+        BoolArgState::PAR_FALSE, BoolArgState::PAR_TRUE,
+        BoolArgState::FIXED_FALSE, BoolArgState::FIXED_TRUE, BoolArgState::VAR);
+  }
+};
+template <>
+struct Arbitrary<IntArgState> {
+  static Gen<IntArgState> arbitrary() {
+    return gen::element<IntArgState>(IntArgState::PAR, IntArgState::FIXED,
+                                     IntArgState::VAR);
+  }
+};
+}  // namespace rc
+
+namespace atlantis::testing {
+
+std::string to_string(bool v);
 
 class FznTestBase : public ::testing::Test {
  public:
   std::shared_ptr<Model> _model;
   std::shared_ptr<FznInvariantGraph> _invariantGraph;
   std::shared_ptr<propagation::Solver> _solver;
+  std::shared_ptr<search::neighborhoods::NeighborhoodCombinator> _neighborhood;
+  std::shared_ptr<search::Assignment> _assignment;
+  std::shared_ptr<search::RandomProvider> _randomProvider;
   std::string constraintIdentifier;
+  std::vector<Annotation> annotations{};
+  std::vector<Arg> args;
+  std::mt19937 gen;
+  std::default_random_engine rng;
+  std::uniform_int_distribution<unsigned char> binaryDist;
+  std::unordered_map<std::string, Int> intPars;
+  std::unordered_map<std::string, bool> boolPars;
+  std::unordered_map<std::string, std::vector<Int>> intSetPars;
 
-  void SetUp() override {
-    _model = std::make_shared<Model>();
-    _solver = std::make_shared<propagation::Solver>();
-    _invariantGraph = std::make_shared<FznInvariantGraph>(*_solver, true);
-  }
+  const Int defaultLb = -3;
+  const Int defaultUb = 3;
 
-  [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const {
-    return _invariantGraph->varNodeId(identifier);
-  }
+  void SetUp() override;
+
+  void generateConstraint();
+
+  virtual void generate() = 0;
+  [[nodiscard]] virtual bool isSatisfied(bool committedValue) const = 0;
+  [[nodiscard]] virtual bool alwaysSatisfied() const { return false; };
+  [[nodiscard]] virtual bool neverSatisfied() const { return false; };
+  virtual bool canMove() const = 0;
+  virtual void move(bool committedValue) = 0;
+  virtual void query() = 0;
+
+  [[nodiscard]] VarNode& varNode(const std::string& identifier);
+
+  [[nodiscard]] const VarNode& varNodeConst(
+      const std::string& identifier) const;
+
+  [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const;
 
   [[nodiscard]] propagation::VarViewId varId(
-      const std::string& identifier) const {
-    return _invariantGraph->varId(identifier);
-  }
+      const std::string& identifier) const;
 
-  void setValue(const std::string& identifier, Int val) const {
-    _solver->setValue(varId(identifier), val);
-  }
+  void setValue(const std::string& identifier, Int val) const;
 
-  [[nodiscard]] Int currentValue(const std::string& identifier) const {
-    return _solver->currentValue(varId(identifier));
-  }
+  [[nodiscard]] Int currentValue(const std::string& identifier) const;
 
-  [[nodiscard]] propagation::VarViewId totalViolationVarId() const {
-    return _invariantGraph->totalViolationVarId();
-  }
+  [[nodiscard]] Int lowerBound(const std::string& identifier) const;
 
-  [[nodiscard]] Int violation() const {
-    return _solver->currentValue(totalViolationVarId());
-  }
+  [[nodiscard]] Int upperBound(const std::string& identifier) const;
 
-  [[nodiscard]] std::vector<propagation::VarViewId> getVarIds(
-      const std::vector<std::string>& varIdentifiers) const {
-    std::vector<propagation::VarViewId> varIds;
-    varIds.reserve(varIdentifiers.size());
-    for (const std::string& identifier : varIdentifiers) {
-      EXPECT_TRUE(_invariantGraph->containsVarNode(identifier));
-      const VarNode& vNode = _invariantGraph->varNode(identifier);
-      const propagation::VarViewId vId = vNode.varId();
-      if (!vNode.isFixed() && vId != propagation::NULL_ID) {
-        varIds.emplace_back(vId);
-      }
-    }
-    return varIds;
-  }
+  [[nodiscard]] bool isFixed(const std::string& identifier) const;
 
-  [[nodiscard]] std::vector<Int> makeInputVals(
-      const std::vector<propagation::VarViewId>& varIds) const {
-    std::vector<Int> inputVals;
-    inputVals.reserve(varIds.size());
-    for (const propagation::VarViewId& vId : varIds) {
-      EXPECT_NE(vId, propagation::NULL_ID);
-      inputVals.emplace_back(_solver->lowerBound(vId));
-    }
-    return inputVals;
-  }
+  [[nodiscard]] bool boolVal(const std::string& identifier,
+                             bool committedValue = false) const;
 
-  Int increaseNextVal(const std::vector<propagation::VarViewId>& varIds,
-                      std::vector<Int>& inputVals) const {
-    EXPECT_EQ(varIds.size(), inputVals.size());
-    for (Int i = static_cast<Int>(inputVals.size() - 1); i >= 0; --i) {
-      if (varIds.at(i) == propagation::NULL_ID) {
-        continue;
-      }
-      if (inputVals.at(i) < _solver->upperBound(varIds.at(i))) {
-        ++inputVals.at(i);
-        return i;
-      }
-      inputVals.at(i) = _solver->lowerBound(varIds.at(i));
-    }
-    return -1;
-  }
+  [[nodiscard]] bool inDomain(const std::string& identifier, bool val) const;
 
-  void setVarVals(const std::vector<propagation::VarViewId>& varIds,
-                  const std::vector<Int>& vals) const {
-    EXPECT_EQ(varIds.size(), vals.size());
-    for (size_t i = 0; i < varIds.size(); ++i) {
-      if (varIds.at(i) != propagation::NULL_ID) {
-        _solver->setValue(varIds.at(i), vals.at(i));
-      }
-    }
-  }
+  [[nodiscard]] bool isFixedTo(const std::string& identifier, bool val) const;
 
-  static IntArgState genIntArgState() {
-    return static_cast<IntArgState>(*rc::gen::inRange<unsigned char>(0, 2));
-  }
+  [[nodiscard]] bool isFixedTo(const std::string& identifier, Int val) const;
 
-  [[nodiscard]] std::shared_ptr<IntVar> genIntVar(
-      Int lb, Int ub, const std::string& identifier = "i") const {
-    return std::get<std::shared_ptr<IntVar>>(
-        _model->addVar(std::make_shared<IntVar>(lb, ub, identifier)));
-  }
+  [[nodiscard]] Int intVal(const std::string& identifier,
+                           bool committedValue = false) const;
 
-  [[nodiscard]] IntArg genIntArg(IntArgState state, Int lb, Int ub,
-                                 const std::string& identifier = "i") const {
-    switch (state) {
-      case IntArgState::PAR:
-        return IntArg{*rc::gen::inRange<Int>(lb, ub + 1)};
-      case IntArgState::FIXED: {
-        const Int val = *rc::gen::inRange<Int>(lb, ub + 1);
-        return IntArg{genIntVar(val, val, identifier)};
-      }
-      case IntArgState::VAR:
-        return IntArg{genIntVar(lb, ub, identifier)};
-      default:
-        throw std::invalid_argument("Invalid IntArgState");
-    }
-  }
+  [[nodiscard]] bool inDomain(const std::string& identifier, Int val) const;
 
-  [[nodiscard]] IntArg genIntArg(Int lb, Int ub,
-                                 const std::string& identifier = "b") const {
-    return genIntArg(genIntArgState(), lb, ub, identifier);
-  }
+  [[nodiscard]] const std::vector<Int>& intSetVal(
+      const std::string& identifier) const;
 
-  [[nodiscard]] std::shared_ptr<IntVarArray> genIntVarArray(
-      size_t numVars, Int lb, Int ub, const std::string& identifier = "i_arr",
-      const std::string& varPrefix = "i_") const {
-    auto vars = std::make_shared<IntVarArray>(identifier);
-    std::vector<unsigned char> argStates =
-        *rc::gen::container<std::vector<unsigned char>>(
-            numVars, rc::gen::inRange<unsigned char>(0, 3));
-    for (size_t i = 0; i < numVars; ++i) {
-      const auto state = static_cast<IntArgState>(argStates.at(i));
-      switch (state) {
-        case IntArgState::PAR:
-          vars->append(*rc::gen::inRange<Int>(lb, ub + 1));
-          break;
-        case IntArgState::FIXED: {
-          const Int val = *rc::gen::inRange<Int>(lb, ub + 1);
-          vars->append(genIntVar(val, val, varPrefix + std::to_string(i)));
-          break;
-        }
-        case IntArgState::VAR:
-          vars->append(genIntVar(lb, ub, varPrefix + std::to_string(i)));
-          break;
-        default:
-          throw std::invalid_argument("Invalid IntArgState");
-      }
-    }
-    return vars;
-  }
+  [[nodiscard]] propagation::VarViewId totalViolationVarId() const;
 
-  static BoolArgState genBoolArgState() {
-    return static_cast<BoolArgState>(*rc::gen::inRange<unsigned char>(0, 5));
-  }
+  [[nodiscard]] Int violation(bool committedValue) const;
 
-  [[nodiscard]] std::shared_ptr<BoolVar> genBoolVar(
-      BoolArgState state, const std::string& identifier = "b") const {
-    switch (state) {
-      case BoolArgState::FIXED_FALSE:
-        return std::get<std::shared_ptr<BoolVar>>(
-            _model->addVar(std::make_shared<BoolVar>(false, identifier)));
-      case BoolArgState::FIXED_TRUE:
-        return std::get<std::shared_ptr<BoolVar>>(
-            _model->addVar(std::make_shared<BoolVar>(true, identifier)));
-      case BoolArgState::VAR:
-        return std::get<std::shared_ptr<BoolVar>>(
-            _model->addVar(std::make_shared<BoolVar>(identifier)));
-      default:
-        throw std::invalid_argument("Invalid BoolArgState");
-    }
-  }
+  std::shared_ptr<IntVar> genIntVar(Int lb, Int ub,
+                                    const std::string& identifier = "i");
 
-  [[nodiscard]] BoolArg genBoolArg(BoolArgState state,
-                                   const std::string& identifier = "b") const {
-    switch (state) {
-      case BoolArgState::PAR_FALSE:
-        return BoolArg{false};
-      case BoolArgState::PAR_TRUE:
-        return BoolArg{true};
-      default:
-        return genBoolVar(state, identifier);
-    }
-  }
+  std::shared_ptr<IntVar> genIntVar(const std::vector<Int>& dom,
+                                    const std::string& identifier = "i");
 
-  [[nodiscard]] BoolArg genBoolArg(const std::string& identifier = "b") const {
-    return genBoolArg(genBoolArgState(), identifier);
-  }
+  std::shared_ptr<IntVar> genIntVar(const std::string& identifier = "i");
 
-  [[nodiscard]] std::shared_ptr<BoolVarArray> genBoolVarArray(
-      size_t numVars, const std::string& identifier = "b_arr",
-      const std::string& varPrefix = "b_") const {
-    std::vector<unsigned char> argStates =
-        *rc::gen::container<std::vector<unsigned char>>(
-            numVars, rc::gen::inRange<unsigned char>(0, 5));
-    auto vars = std::make_shared<BoolVarArray>(identifier);
-    for (size_t i = 0; i < numVars; ++i) {
-      const auto state = static_cast<BoolArgState>(argStates.at(i));
-      switch (state) {
-        case BoolArgState::PAR_FALSE:
-        case BoolArgState::PAR_TRUE:
-          vars->append(state == BoolArgState::PAR_TRUE);
-          break;
-        default:
-          vars->append(genBoolVar(state, varPrefix + std::to_string(i)));
-          break;
-      }
-    }
-    return vars;
-  }
+  std::shared_ptr<IntVar> genIntVar(IntArgState state,
+                                    const std::string& identifier = "i");
+
+  std::shared_ptr<IntVar> genIntVar(IntArgState state, Int lb, Int ub,
+                                    const std::string& identifier = "i");
+
+  void addBoolPar(const std::string& identifier, bool val);
+
+  void addIntPar(const std::string& identifier, Int val);
+
+  void addIntSetPar(const std::string& identifier, std::vector<Int>&& val);
+
+  IntArg addIntArg(IntArgState state, Int lb, Int ub,
+                   const std::string& identifier = "i");
+
+  IntArg addIntArg(IntArgState state, const std::vector<Int>& dom,
+                   const std::string& identifier = "i");
+
+  IntArg addIntArg(IntArgState state, const std::string& identifier = "i");
+
+  IntArg addIntArg(Int lb, Int ub, const std::string& identifier = "i");
+
+  IntArg addIntArg(const std::string& identifier = "i");
+
+  [[nodiscard]] std::shared_ptr<IntVarArray> genIntParArray(
+      size_t arraySize, Int lb, Int ub,
+      const std::string& identifier = "i_arr");
+
+  std::shared_ptr<IntVarArray> genIntVarArray(
+      size_t arraySize, Int lb, Int ub, const std::string& identifier = "i_arr",
+      const std::string& varPrefix = "i_");
+
+  std::shared_ptr<IntVarArray> genIntVarArray(
+      size_t arraySize, const std::string& identifier = "i_arr",
+      const std::string& varPrefix = "i_");
+
+  std::shared_ptr<IntVarArray> genIntParArray(
+      size_t arraySize, const std::string& identifier = "i_arr");
+
+  std::shared_ptr<BoolVar> genBoolVar(BoolArgState state,
+                                      const std::string& identifier = "b");
+  std::vector<Int> genDomain(size_t size) const;
+
+  std::vector<Int> genDomain(IntArgState state) const;
+  std::vector<Int> genDomain() const;
+
+  BoolArg addBoolArg(BoolArgState state, const std::string& identifier = "b");
+
+  BoolArg addBoolArg(const std::string& identifier = "b");
+
+  std::shared_ptr<BoolVarArray> genBoolParArray(
+      size_t arraySize, const std::string& identifier = "b_arr");
+
+  std::shared_ptr<BoolVarArray> addBoolVarArray(
+      size_t arraySize, const std::string& identifier = "b_arr",
+      const std::string& varPrefix = "b_");
+
+  std::shared_ptr<BoolVarArray> addBoolVarArray(
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "b_arr");
+
+  std::shared_ptr<IntVarArray> addIntVarArray(
+      const std::vector<IntArgState>& argStates,
+      const std::vector<std::pair<Int, Int>>& domains,
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "i_arr");
+
+  std::shared_ptr<IntVarArray> addIntVarArray(
+      const std::vector<IntArgState>& argStates,
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "i_arr");
+
+  std::shared_ptr<IntVarArray> addIntVarArray(
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "i_arr");
+
+  std::shared_ptr<IntVarArray> addIntVarArray(
+      size_t arraySize, const std::string& identifier = "i_arr",
+      const std::string& varPrefix = "i_");
+
+  Arg addArg(Int val);
+
+  Arg addArg(const std::vector<Int>& parameters,
+             const std::string& identifier = "i_par_arr");
+
+  Arg addArg(const std::vector<bool>& parameters,
+             const std::string& identifier = "b_par_arr");
+
+  Arg addIntSetArg(Int lb, Int ub, const std::string& identifier = "i_set");
+
+  Arg addIntSetArg(const std::vector<Int>& elements,
+                   const std::string& identifier = "i_set");
+
+  Arg addIntSetArg(const std::string& identifier = "i_set");
+
+  bool randBool();
+
+  void changeValue(const std::string& identifier, bool committedValue);
+
+  void rapidCheck(bool reachesFixpoint = true);
 };
 
 }  // namespace atlantis::testing
