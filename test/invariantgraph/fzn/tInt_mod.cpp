@@ -68,10 +68,12 @@ class int_modTest : public FznTestBase {
         (upperBound(remainder) < 0 && lowerBound(numerator) > 0)) {
       return true;
     }
-    if (lowerBound(remainder) > 0 && upperBound(numerator) < lowerBound(remainder)) {
+    if (lowerBound(remainder) > 0 &&
+        upperBound(numerator) < lowerBound(remainder)) {
       return true;
     }
-    if (lowerBound(remainder) < 0 && lowerBound(numerator) > upperBound(remainder)) {
+    if (lowerBound(remainder) < 0 &&
+        lowerBound(numerator) > upperBound(remainder)) {
       return true;
     }
 

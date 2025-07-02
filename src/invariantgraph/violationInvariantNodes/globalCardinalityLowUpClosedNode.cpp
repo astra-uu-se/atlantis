@@ -73,7 +73,8 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
   const SortedUniqueVector coveredVals(std::vector<Int>{_cover});
   if (shouldHold()) {
     for (const auto vId : staticInputVarNodeIds()) {
-      invariantGraph().varNode(vId).domain()->removeAllValuesExcept(coveredVals);
+      invariantGraph().varNode(vId).domain()->removeAllValuesExcept(
+          coveredVals);
     }
   }
 }

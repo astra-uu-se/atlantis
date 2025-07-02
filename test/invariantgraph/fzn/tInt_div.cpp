@@ -61,8 +61,10 @@ class int_divTest : public FznTestBase {
       if (isFixed(numerator)) {
         const Int nLb = std::min(-intVal(numerator), intVal(numerator));
         const Int nUb = std::max(-intVal(numerator), intVal(numerator));
-        const Int dLb = std::min(lowerBound(denominator), -upperBound(denominator));
-        const Int dUb = std::min(-lowerBound(denominator), upperBound(denominator));
+        const Int dLb =
+            std::min(lowerBound(denominator), -upperBound(denominator));
+        const Int dUb =
+            std::min(-lowerBound(denominator), upperBound(denominator));
         if (nLb < dUb || dLb < nUb) {
           return true;
         }
@@ -91,8 +93,10 @@ class int_divTest : public FznTestBase {
     if (isFixedTo(quotient, Int{0})) {
       const Int nLb = std::min(lowerBound(numerator), -upperBound(numerator));
       const Int nUb = std::max(-lowerBound(numerator), upperBound(numerator));
-      const Int dLb = std::min(lowerBound(denominator), -upperBound(denominator));
-      const Int dUb = std::max(-lowerBound(denominator), upperBound(denominator));
+      const Int dLb =
+          std::min(lowerBound(denominator), -upperBound(denominator));
+      const Int dUb =
+          std::max(-lowerBound(denominator), upperBound(denominator));
 
       if (dUb <= nLb || nUb <= dLb) {
         return true;
@@ -107,10 +111,8 @@ class int_divTest : public FznTestBase {
       RC_ASSERT(qVal != Int{0});
       const Int dLb = lowerBound(denominator);
       const Int dUb = upperBound(denominator);
-      const auto vals = std::array{div_floor(nVal, qVal),
-        div_ceil(nVal, qVal),
-        div_floor(nVal, qVal),
-        div_ceil(nVal, qVal)};
+      const auto vals = std::array{div_floor(nVal, qVal), div_ceil(nVal, qVal),
+                                   div_floor(nVal, qVal), div_ceil(nVal, qVal)};
       const Int expectedLb = std::ranges::min(vals);
       const Int expectedUb = std::ranges::max(vals);
       if (expectedUb < dLb || dUb < expectedLb) {
@@ -140,24 +142,23 @@ class int_divTest : public FznTestBase {
         expectedUb = std::max(expectedUb, prod);
       }
 
-      if (expectedUb < lowerBound(numerator) || upperBound(numerator) < expectedLb) {
+      if (expectedUb < lowerBound(numerator) ||
+          upperBound(numerator) < expectedLb) {
         return true;
       }
-
     }
     const Int nLb = lowerBound(numerator);
     const Int nUb = upperBound(numerator);
     const Int dLb = lowerBound(denominator);
     const Int dUb = upperBound(denominator);
-    const auto arr =
-          std::array{std::pair{nLb, dLb},
-                     std::pair{nLb, dUb},
-                     std::pair{nLb, dLb < 0 && 0 < dUb ? -1 : dLb},
-                     std::pair{nLb, dLb < 0 && 0 < dUb ? 1 : dLb},
-                     std::pair{nUb, dLb},
-                     std::pair{nUb, dUb},
-                     std::pair{nUb, dLb < 0 && 0 < dUb ? -1 : dLb},
-                     std::pair{nUb, dLb < 0 && 0 < dUb ? 1 : dLb}};
+    const auto arr = std::array{std::pair{nLb, dLb},
+                                std::pair{nLb, dUb},
+                                std::pair{nLb, dLb < 0 && 0 < dUb ? -1 : dLb},
+                                std::pair{nLb, dLb < 0 && 0 < dUb ? 1 : dLb},
+                                std::pair{nUb, dLb},
+                                std::pair{nUb, dUb},
+                                std::pair{nUb, dLb < 0 && 0 < dUb ? -1 : dLb},
+                                std::pair{nUb, dLb < 0 && 0 < dUb ? 1 : dLb}};
     Int expectedLb = std::numeric_limits<Int>::max();
     Int expectedUb = std::numeric_limits<Int>::min();
     for (const auto& [n, d] : arr) {

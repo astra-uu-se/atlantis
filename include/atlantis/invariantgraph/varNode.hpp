@@ -80,7 +80,8 @@ class VarNode {
 
   void removeValues(const SortedUniqueVector&, bool tightenDomainState = true);
 
-  void removeAllValuesExcept(const SortedUniqueVector&, bool tightenDomainState = true);
+  void removeAllValuesExcept(const SortedUniqueVector&,
+                             bool tightenDomainState = true);
 
   DomainType domainType() const noexcept;
 

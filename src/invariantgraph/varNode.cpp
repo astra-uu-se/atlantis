@@ -269,7 +269,8 @@ void VarNode::removeValuesAbove(Int newUpperBound, bool tightenDomainState) {
   }
 }
 
-void VarNode::removeValues(const SortedUniqueVector& values, bool tightenDomainState) {
+void VarNode::removeValues(const SortedUniqueVector& values,
+                           bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
@@ -287,7 +288,8 @@ void VarNode::removeValues(const SortedUniqueVector& values, bool tightenDomainS
   }
 }
 
-void VarNode::removeAllValuesExcept(const SortedUniqueVector& values, bool tightenDomainState) {
+void VarNode::removeAllValuesExcept(const SortedUniqueVector& values,
+                                    bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
@@ -312,9 +314,7 @@ void VarNode::fixToValue(Int val, bool tightenDomainState) {
   }
 }
 
-void VarNode::removeValue(bool val) {
-  return fixToValue(!val);
-}
+void VarNode::removeValue(bool val) { return fixToValue(!val); }
 
 void VarNode::fixToValue(bool val) {
   if (isIntVar()) {

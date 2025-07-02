@@ -120,6 +120,11 @@ static std::vector<VarNodeId> findStaticCycle(
     while (!stack.empty()) {
       const VarNodeId outputId = stack.back();
       stack.pop_back();
+      if (outputId >= componentOfVar.size()) {
+        // This var has been when breaking a cycle and cannot be in another
+        // cycle.
+        continue;
+      }
       discoverTime[outputId] = discoverTime[orig];
       assert(graph.varNodeConst(outputId).definingNodes().size() <= 1);
       if (graph.varNodeConst(outputId).definingNodes().empty()) {
@@ -129,7 +134,10 @@ static std::vector<VarNodeId> findStaticCycle(
       assert(defInv != NULL_NODE_ID);
       const auto& invNode = graph.invariantNodeConst(defInv);
       for (const VarNodeId inputId : invNode.staticInputVarNodeIds()) {
-        if (componentOfVar[inputId] != componentIndex) {
+        if (inputId >= componentOfVar.size() ||
+            componentOfVar[inputId] != componentIndex) {
+          // This var either: (i) was added when breaking a cycle or (ii) is not
+          // in the current component.
           continue;
         }
         parent[inputId] = outputId;
@@ -171,6 +179,11 @@ static std::vector<VarNodeId> findDynamicCycle(
     while (!stack.empty()) {
       const VarNodeId outputId = stack.back();
       stack.pop_back();
+      if (outputId >= componentOfVar.size()) {
+        // This var has been when breaking a cycle and cannot be in another
+        // cycle.
+        continue;
+      }
       discoverTime[outputId] = discoverTime[orig];
       assert(graph.varNodeConst(outputId).definingNodes().size() <= 1);
       if (graph.varNodeConst(outputId).definingNodes().empty()) {
@@ -183,7 +196,10 @@ static std::vector<VarNodeId> findDynamicCycle(
         for (const VarNodeId inputId : i == 0
                                            ? invNode.staticInputVarNodeIds()
                                            : invNode.dynamicInputVarNodeIds()) {
-          if (componentOfVar[inputId] != componentIndex) {
+          if (inputId >= componentOfVar.size() ||
+              componentOfVar[inputId] != componentIndex) {
+            // This var either: (i) was added when breaking a cycle or (ii) is
+            // not in the current component.
             continue;
           }
           parent[inputId] = outputId;

@@ -30,7 +30,6 @@ class int_timesTest : public FznTestBase {
     const bool isSolution = violation(committedValue) == 0;
 
     if (!isFixed(product)) {
-
       RC_ASSERT(expected);
       return expected;
     }
@@ -73,7 +72,8 @@ class int_timesTest : public FznTestBase {
     }
     if (isFixed(a) && isFixed(b)) {
       const Int productVal = intVal(a) * intVal(b);
-      if (productVal < lowerBound(product) || upperBound(product) < productVal) {
+      if (productVal < lowerBound(product) ||
+          upperBound(product) < productVal) {
         return true;
       }
     } else if ((isFixed(a) || isFixed(b)) && isFixed(product)) {

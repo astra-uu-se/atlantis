@@ -943,7 +943,7 @@ void SearchDomain::removeAllValuesExcept(const SearchDomain& other) {
   }
   assert(std::holds_alternative<IntervalDomain>(other._domain));
   removeAllValuesExcept(std::get<IntervalDomain>(other._domain).lowerBound(),
-            std::get<IntervalDomain>(other._domain).upperBound());
+                        std::get<IntervalDomain>(other._domain).upperBound());
 }
 
 bool SearchDomain::isDisjoint(Int lb, Int ub) const {

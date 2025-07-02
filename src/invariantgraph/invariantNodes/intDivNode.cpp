@@ -35,7 +35,8 @@ bool IntDivNode::updateNumerator() {
   const auto& dNode = invariantGraphConst().varNodeConst(denominator());
   const auto& qNode = invariantGraphConst().varNodeConst(quotient());
 
-  if (qNode.isFixed() && qNode.lowerBound() == 0 && !nNode.isFixed() && dNode.isFixed()) {
+  if (qNode.isFixed() && qNode.lowerBound() == 0 && !nNode.isFixed() &&
+      dNode.isFixed()) {
     assert(dNode.isFixed());
     const Int dVal = dNode.lowerBound();
 
@@ -47,18 +48,14 @@ bool IntDivNode::updateNumerator() {
     return pLb != nNode.lowerBound() || pUb != nNode.upperBound();
   }
 
-
   // numerator
   const Int qLb = qNode.lowerBound();
   const Int qUb = qNode.upperBound();
   const Int dLb = dNode.lowerBound();
   const Int dUb = dNode.upperBound();
 
-  const auto arr =
-      std::array{std::pair{qLb, dLb},
-                 std::pair{qLb, dUb},
-                 std::pair{qUb, dLb},
-                 std::pair{qUb, dUb}};
+  const auto arr = std::array{std::pair{qLb, dLb}, std::pair{qLb, dUb},
+                              std::pair{qUb, dLb}, std::pair{qUb, dUb}};
 
   Int newLb = std::numeric_limits<Int>::max();
   Int newUb = std::numeric_limits<Int>::min();
@@ -83,7 +80,8 @@ bool IntDivNode::updateNumerator() {
     assert(prod != 0);
     const Int remainder = std::abs(d) - 1;
     Int sum;
-    if (__builtin_saddl_overflow(prod, prod > 0 ? remainder : -remainder, &sum)) {
+    if (__builtin_saddl_overflow(prod, prod > 0 ? remainder : -remainder,
+                                 &sum)) {
       if (nIsPos) {
         sum = std::numeric_limits<Int>::max();
       } else {
@@ -108,7 +106,8 @@ bool IntDivNode::updateDenominator() {
   auto& dNode = invariantGraph().varNode(denominator());
   const auto& qNode = invariantGraphConst().varNodeConst(quotient());
 
-  if (qNode.isFixed() && qNode.lowerBound() == 0 && !dNode.isFixed() && nNode.isFixed()) {
+  if (qNode.isFixed() && qNode.lowerBound() == 0 && !dNode.isFixed() &&
+      nNode.isFixed()) {
     const Int nVal = nNode.lowerBound();
     if (nVal == 0) {
       return false;
@@ -128,25 +127,27 @@ bool IntDivNode::updateDenominator() {
 
   const Int nLb = nNode.lowerBound();
   const Int nUb = nNode.upperBound();
-  const Int qLb = qNode.lowerBound() != 0 ? qNode.lowerBound() : qNode.constDomain()->at(qNode.constDomain()->at(1));
-  const Int qUb = qNode.upperBound() != 0 ? qNode.upperBound() : qNode.constDomain()->at(qNode.constDomain()->size() - 2);
-  const auto arr = std::array{
-    std::pair{nLb, qLb},
-    std::pair{nLb, qUb},
-    std::pair{nUb, qLb},
-    std::pair{nUb, qUb}};
+  const Int qLb = qNode.lowerBound() != 0
+                      ? qNode.lowerBound()
+                      : qNode.constDomain()->at(qNode.constDomain()->at(1));
+  const Int qUb =
+      qNode.upperBound() != 0
+          ? qNode.upperBound()
+          : qNode.constDomain()->at(qNode.constDomain()->size() - 2);
+  const auto arr = std::array{std::pair{nLb, qLb}, std::pair{nLb, qUb},
+                              std::pair{nUb, qLb}, std::pair{nUb, qUb}};
   Int newLb = std::numeric_limits<Int>::max();
   Int newUb = std::numeric_limits<Int>::min();
   for (const auto& [n, q] : arr) {
     if (n % q == 0) {
-      newLb = std::ranges::min(
-      std::array{newLb, div_floor(n, q), div_ceil(n, q)});
-      newUb = std::ranges::max(
-          std::array{newUb, div_floor(n, q), div_ceil(n, q)});
+      newLb =
+          std::ranges::min(std::array{newLb, div_floor(n, q), div_ceil(n, q)});
+      newUb =
+          std::ranges::max(std::array{newUb, div_floor(n, q), div_ceil(n, q)});
     } else {
       const Int offset = std::abs(q) - 1;
       newLb = std::ranges::min(
-      std::array{newLb, div_floor(n, q) - offset, div_ceil(n, q) - offset});
+          std::array{newLb, div_floor(n, q) - offset, div_ceil(n, q) - offset});
       newUb = std::ranges::max(
           std::array{newUb, div_floor(n, q) - offset, div_ceil(n, q) - offset});
     }
@@ -170,15 +171,15 @@ bool IntDivNode::updateQuotient() {
   qNode.removeValuesAbove(std::max(-nNode.lowerBound(), nNode.upperBound()));
 
   assert(!dNode.inDomain(Int{0}));
-  const auto arr =
-      std::array{std::pair{nNode.lowerBound(), dNode.lowerBound()},
-                 std::pair{nNode.lowerBound(), dNode.upperBound()},
-                 std::pair{nNode.lowerBound(), dOverlapsZero ? -1 : dNode.lowerBound()},
-                 std::pair{nNode.lowerBound(), dOverlapsZero ? 1 : dNode.lowerBound()},
-                 std::pair{nNode.upperBound(), dNode.lowerBound()},
-                 std::pair{nNode.upperBound(), dNode.upperBound()},
-                 std::pair{nNode.upperBound(), dOverlapsZero ? -1 : dNode.lowerBound()},
-                 std::pair{nNode.upperBound(), dOverlapsZero ? 1 : dNode.lowerBound()}};
+  const auto arr = std::array{
+      std::pair{nNode.lowerBound(), dNode.lowerBound()},
+      std::pair{nNode.lowerBound(), dNode.upperBound()},
+      std::pair{nNode.lowerBound(), dOverlapsZero ? -1 : dNode.lowerBound()},
+      std::pair{nNode.lowerBound(), dOverlapsZero ? 1 : dNode.lowerBound()},
+      std::pair{nNode.upperBound(), dNode.lowerBound()},
+      std::pair{nNode.upperBound(), dNode.upperBound()},
+      std::pair{nNode.upperBound(), dOverlapsZero ? -1 : dNode.lowerBound()},
+      std::pair{nNode.upperBound(), dOverlapsZero ? 1 : dNode.lowerBound()}};
   Int newLb = std::numeric_limits<Int>::max();
   Int newUb = std::numeric_limits<Int>::min();
   for (const auto& [n, d] : arr) {
@@ -186,7 +187,6 @@ bool IntDivNode::updateQuotient() {
     const Int q = n / d;
     newLb = std::min(newLb, q);
     newUb = std::max(newUb, q);
-
   }
   const Int pLb = qNode.lowerBound();
   const Int pUb = qNode.upperBound();
@@ -202,7 +202,7 @@ void IntDivNode::updateState() {
   dNode.removeValue(Int{0});
 
   auto onStack = std::array{true, true, true};
-  std::vector<size_t> stack{0,1,2};
+  std::vector<size_t> stack{0, 1, 2};
 
   while (!stack.empty()) {
     const size_t index = stack.back();
@@ -253,7 +253,10 @@ void IntDivNode::updateState() {
     const Int dVal = dNode.lowerBound();
     const Int qVal = qNode.lowerBound();
     if (nVal / dVal != qVal) {
-      throw InconsistencyException("IntDivNode::update: " + std::to_string(nVal) + " / " + std::to_string(dVal) + " != " + std::to_string(qVal) + " (" + std::to_string(nVal / qVal) + ")");
+      throw InconsistencyException(
+          "IntDivNode::update: " + std::to_string(nVal) + " / " +
+          std::to_string(dVal) + " != " + std::to_string(qVal) + " (" +
+          std::to_string(nVal / qVal) + ")");
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
