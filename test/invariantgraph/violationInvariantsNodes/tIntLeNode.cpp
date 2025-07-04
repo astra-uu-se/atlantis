@@ -53,7 +53,7 @@ TEST_P(IntLeNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
   invNode().updateState();
   if (shouldBeSubsumed()) {
-    // TODO: disabled for the MZN challange. This should be computed by Gecode.
+    // TODO: disabled for the MZN challenge. This should be computed by Gecode.
     /*
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
@@ -92,7 +92,7 @@ TEST_P(IntLeNodeTestFixture, propagation) {
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();
-    // TODO: disabled for the MZN challange. This should be computed by Gecode
+    // TODO: disabled for the MZN challenge. This should be computed by Gecode
     /*
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedVar).isFixed());
@@ -103,7 +103,7 @@ TEST_P(IntLeNodeTestFixture, propagation) {
     if (shouldHold()) {
       EXPECT_FALSE(expected);
     }
-    // TODO: disabled for the MZN challange. This should be computed by Gecode
+    // TODO: disabled for the MZN challenge. This should be computed by Gecode
     /*
     if (shouldFail()) {
       EXPECT_TRUE(expected);

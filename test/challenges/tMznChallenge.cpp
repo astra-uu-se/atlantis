@@ -38,7 +38,7 @@ void logModelName(const std::string& modelPath, bool skipping, size_t index,
             << std::endl;
 }
 
-static void testChallange(const std::string& fznFilePath) {
+static void testChallenge(const std::string& fznFilePath) {
   std::filesystem::path modelFilePath(fznFilePath);
   logging::Logger logger(stdout, logging::Level::LVL_DEBUG);
   FznBackend backend(logger, std::move(modelFilePath));
@@ -48,7 +48,7 @@ static void testChallange(const std::string& fznFilePath) {
   statistics.display(std::cerr);
 }
 
-class MznChallange : public ::testing::Test {
+class MznChallenge : public ::testing::Test {
  public:
   bool onlySmallestModel{true};
 
@@ -169,47 +169,47 @@ class MznChallange : public ::testing::Test {
   }
 };
 
-TEST_F(MznChallange, passing) {
+TEST_F(MznChallenge, passing) {
   for (size_t i = 0; i < passingFznModels.size(); ++i) {
     if (passingFznModels.at(i) < startDir) {
       logModelName(passingFznModels.at(i), true, i, passingFznModels.size());
     } else {
       logModelName(passingFznModels.at(i), false, i, passingFznModels.size());
-      testChallange(passingFznModels.at(i));
+      testChallenge(passingFznModels.at(i));
     }
   }
 }
 
-TEST_F(MznChallange, malloc) {
+TEST_F(MznChallenge, malloc) {
   for (size_t i = 0; i < mallocFznModels.size(); ++i) {
     logModelName(mallocFznModels.at(i), false, i, mallocFznModels.size());
-    testChallange(mallocFznModels.at(i));
+    testChallenge(mallocFznModels.at(i));
   }
 }
-TEST_F(MznChallange, timeout) {
+TEST_F(MznChallenge, timeout) {
   for (size_t i = 0; i < timeout.size(); ++i) {
     logModelName(timeoutFznModels.at(i), false, i, timeoutFznModels.size());
-    testChallange(timeoutFznModels.at(i));
+    testChallenge(timeoutFznModels.at(i));
   }
 }
-TEST_F(MznChallange, unbrokenCycle) {
+TEST_F(MznChallenge, unbrokenCycle) {
   for (size_t i = 0; i < unbrokenCycleFznModels.size(); ++i) {
     logModelName(unbrokenCycleFznModels.at(i), false, i,
                  unbrokenCycleFznModels.size());
-    testChallange(unbrokenCycleFznModels.at(i));
+    testChallenge(unbrokenCycleFznModels.at(i));
   }
 }
-TEST_F(MznChallange, unsatAllEqual) {
+TEST_F(MznChallenge, unsatAllEqual) {
   for (size_t i = 0; i < unsatAllEqualFznModels.size(); ++i) {
     logModelName(unsatAllEqualFznModels.at(i), false, i,
                  unsatAllEqualFznModels.size());
-    testChallange(unsatAllEqualFznModels.at(i));
+    testChallenge(unsatAllEqualFznModels.at(i));
   }
 }
-TEST_F(MznChallange, failing) {
+TEST_F(MznChallenge, failing) {
   for (size_t i = 0; i < failingFznModels.size(); ++i) {
     logModelName(failingFznModels.at(i), false, i, failingFznModels.size());
-    testChallange(failingFznModels.at(i));
+    testChallenge(failingFznModels.at(i));
   }
 }
 

@@ -61,12 +61,12 @@ TEST_P(IntTimesNodeTestFixture, updateState) {
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    // TODO: disabled for the MZN challange. This should be computed by Gecode.
+    // TODO: disabled for the MZN challenge. This should be computed by Gecode.
     /*
     EXPECT_TRUE(varNode(outputVar).isFixed());
     Int expected = computeOutput();
     const Int actual = varNode(outputVar).lowerBound();
-    TODO: disabled for the MZN challange. This should be computed by Gecode.
+    TODO: disabled for the MZN challenge. This should be computed by Gecode.
     EXPECT_EQ(expected, actual);
     */
   } else {
@@ -95,7 +95,7 @@ TEST_P(IntTimesNodeTestFixture, propagation) {
   _invariantGraph->close();
 
   if (shouldBeSubsumed()) {
-    // TODO: disabled for the MZN challange. This should be computed by Gecode.
+    // TODO: disabled for the MZN challenge. This should be computed by Gecode.
     /*
     VarNode& outputNode = varNode(outputVar);
     EXPECT_TRUE(outputNode.isFixed());
