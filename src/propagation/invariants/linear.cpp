@@ -52,20 +52,24 @@ void Linear::updateBounds(bool widenOnly) {
     Int prod2;
     const Int varLb = _solver.lowerBound(_varArray[i]);
     if (__builtin_smull_overflow(_coeffs[i], varLb, &prod1)) {
-      prod1 = (_coeffs[1] < 0) == (varLb < 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
+      prod1 = (_coeffs[1] < 0) == (varLb < 0) ? std::numeric_limits<Int>::max()
+                                              : std::numeric_limits<Int>::min();
     }
     const Int varUb = _solver.upperBound(_varArray[i]);
     if (__builtin_smull_overflow(_coeffs[i], varUb, &prod2)) {
-      prod2 = (_coeffs[1] < 0) == (varUb < 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
+      prod2 = (_coeffs[1] < 0) == (varUb < 0) ? std::numeric_limits<Int>::max()
+                                              : std::numeric_limits<Int>::min();
     }
     Int sum;
     if (__builtin_saddl_overflow(sumLb, std::min(prod1, prod2), &sum)) {
-      sumLb = sumLb < 0 ? std::numeric_limits<Int>::min() : std::numeric_limits<Int>::max();
+      sumLb = sumLb < 0 ? std::numeric_limits<Int>::min()
+                        : std::numeric_limits<Int>::max();
     } else {
       sumLb = sum;
     }
     if (__builtin_saddl_overflow(sumUb, std::max(prod1, prod2), &sum)) {
-      sumUb = sumUb < 0 ? std::numeric_limits<Int>::min() : std::numeric_limits<Int>::max();
+      sumUb = sumUb < 0 ? std::numeric_limits<Int>::min()
+                        : std::numeric_limits<Int>::max();
     } else {
       sumUb = sum;
     }

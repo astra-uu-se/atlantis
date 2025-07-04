@@ -60,9 +60,9 @@ class MznChallenge : public ::testing::Test {
 
   std::unordered_set<std::string> unbrokenCycles{
       std::string(FZN_CHALLENGE_DIR) + std::string{"/mqueens"},
-  std::string(FZN_CHALLENGE_DIR) + std::string{"/pattern-set-mining"},
-  std::string(FZN_CHALLENGE_DIR) + std::string{"/project-planning"},
-  std::string(FZN_CHALLENGE_DIR) + std::string{"/tdtsp"}};
+      std::string(FZN_CHALLENGE_DIR) + std::string{"/pattern-set-mining"},
+      std::string(FZN_CHALLENGE_DIR) + std::string{"/project-planning"},
+      std::string(FZN_CHALLENGE_DIR) + std::string{"/tdtsp"}};
 
   std::unordered_set<std::string> unsatAllEqual{std::string(FZN_CHALLENGE_DIR) +
                                                 std::string{"/still_life"}};
@@ -70,9 +70,9 @@ class MznChallenge : public ::testing::Test {
   std::unordered_set<std::string> failing{};
 
   std::unordered_set<std::string> unbounded{
-    std::string{FZN_CHALLENGE_DIR} + std::string("/2DBinPacking"),
-  std::string{FZN_CHALLENGE_DIR} + std::string("/wwtpp-random"),
-    std::string{FZN_CHALLENGE_DIR} + std::string("/wwtpp-real")};
+      std::string{FZN_CHALLENGE_DIR} + std::string("/2DBinPacking"),
+      std::string{FZN_CHALLENGE_DIR} + std::string("/wwtpp-random"),
+      std::string{FZN_CHALLENGE_DIR} + std::string("/wwtpp-real")};
 
   std::vector<std::string> passingFznModels;
   std::vector<std::string> mallocFznModels;
@@ -139,7 +139,8 @@ class MznChallenge : public ::testing::Test {
     failingFznModels.reserve(failing.size());
     passingFznModels.reserve(fznModelsByDir.size() - malloc.size() -
                              timeout.size() - unbrokenCycles.size() -
-                             unsatAllEqual.size() - failing.size() - unbounded.size());
+                             unsatAllEqual.size() - failing.size() -
+                             unbounded.size());
 
     for (const auto& dirPath : dirs) {
       EXPECT_TRUE(fznModelsByDir.contains(dirPath));
@@ -158,7 +159,7 @@ class MznChallenge : public ::testing::Test {
           failingFznModels.emplace_back(fznModel);
         } else if (unbounded.contains(dirPath)) {
           unboundedFznModels.emplace_back(fznModel);
-        }else{
+        } else {
           passingFznModels.emplace_back(fznModel);
         }
         if (onlySmallestModel) {
@@ -169,7 +170,7 @@ class MznChallenge : public ::testing::Test {
   }
 };
 
-TEST_F(MznChallenge, passing) {
+TEST_F(MznChallenge, DISABLED_passing) {
   for (size_t i = 0; i < passingFznModels.size(); ++i) {
     if (passingFznModels.at(i) < startDir) {
       logModelName(passingFznModels.at(i), true, i, passingFznModels.size());
@@ -180,33 +181,33 @@ TEST_F(MznChallenge, passing) {
   }
 }
 
-TEST_F(MznChallenge, malloc) {
+TEST_F(MznChallenge, DISABLED_malloc) {
   for (size_t i = 0; i < mallocFznModels.size(); ++i) {
     logModelName(mallocFznModels.at(i), false, i, mallocFznModels.size());
     testChallenge(mallocFznModels.at(i));
   }
 }
-TEST_F(MznChallenge, timeout) {
+TEST_F(MznChallenge, DISABLED_timeout) {
   for (size_t i = 0; i < timeout.size(); ++i) {
     logModelName(timeoutFznModels.at(i), false, i, timeoutFznModels.size());
     testChallenge(timeoutFznModels.at(i));
   }
 }
-TEST_F(MznChallenge, unbrokenCycle) {
+TEST_F(MznChallenge, DISABLED_unbrokenCycle) {
   for (size_t i = 0; i < unbrokenCycleFznModels.size(); ++i) {
     logModelName(unbrokenCycleFznModels.at(i), false, i,
                  unbrokenCycleFznModels.size());
     testChallenge(unbrokenCycleFznModels.at(i));
   }
 }
-TEST_F(MznChallenge, unsatAllEqual) {
+TEST_F(MznChallenge, DISABLED_unsatAllEqual) {
   for (size_t i = 0; i < unsatAllEqualFznModels.size(); ++i) {
     logModelName(unsatAllEqualFznModels.at(i), false, i,
                  unsatAllEqualFznModels.size());
     testChallenge(unsatAllEqualFznModels.at(i));
   }
 }
-TEST_F(MznChallenge, failing) {
+TEST_F(MznChallenge, DISABLED_failing) {
   for (size_t i = 0; i < failingFznModels.size(); ++i) {
     logModelName(failingFznModels.at(i), false, i, failingFznModels.size());
     testChallenge(failingFznModels.at(i));

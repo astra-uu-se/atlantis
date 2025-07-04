@@ -17,11 +17,12 @@ bool bool_clause(FznInvariantGraph& graph,
 }
 
 bool bool_clause_reif(FznInvariantGraph& graph,
-                 const std::shared_ptr<fznparser::BoolVarArray>& as,
-                 const std::shared_ptr<fznparser::BoolVarArray>& bs,
-                 const fznparser::BoolArg& reified) {
+                      const std::shared_ptr<fznparser::BoolVarArray>& as,
+                      const std::shared_ptr<fznparser::BoolVarArray>& bs,
+                      const fznparser::BoolArg& reified) {
   graph.addInvariantNode(std::make_shared<BoolClauseNode>(
-      graph, graph.retrieveVarNodes(as), graph.retrieveVarNodes(bs), graph.retrieveVarNode(reified)));
+      graph, graph.retrieveVarNodes(as), graph.retrieveVarNodes(bs),
+      graph.retrieveVarNode(reified)));
 
   return true;
 }
@@ -37,14 +38,15 @@ bool bool_clause(FznInvariantGraph& graph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true)
   if (!isReified) {
     return bool_clause(
-      graph, getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0)),
-      getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)));
+        graph,
+        getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0)),
+        getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)));
   }
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
   return bool_clause_reif(
       graph, getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0)),
       getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)),
-        get<fznparser::BoolArg>(constraint.arguments().at(2)));
+      get<fznparser::BoolArg>(constraint.arguments().at(2)));
 }
 
 }  // namespace atlantis::invariantgraph::fzn

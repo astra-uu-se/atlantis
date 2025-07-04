@@ -77,22 +77,28 @@ void IntLinEqNode::updateState() {
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
     Int prod1;
     Int prod2;
-    const Int varLb = invariantGraph().varNode(staticInputVarNodeIds().at(i)).lowerBound();
+    const Int varLb =
+        invariantGraph().varNode(staticInputVarNodeIds().at(i)).lowerBound();
     if (__builtin_smull_overflow(_coeffs[i], varLb, &prod1)) {
-      prod1 = (_coeffs[1] < 0) == (varLb < 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
+      prod1 = (_coeffs[1] < 0) == (varLb < 0) ? std::numeric_limits<Int>::max()
+                                              : std::numeric_limits<Int>::min();
     }
-    const Int varUb = invariantGraph().varNode(staticInputVarNodeIds().at(i)).upperBound();
+    const Int varUb =
+        invariantGraph().varNode(staticInputVarNodeIds().at(i)).upperBound();
     if (__builtin_smull_overflow(_coeffs[i], varUb, &prod2)) {
-      prod2 = (_coeffs[1] < 0) == (varUb < 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
+      prod2 = (_coeffs[1] < 0) == (varUb < 0) ? std::numeric_limits<Int>::max()
+                                              : std::numeric_limits<Int>::min();
     }
     Int sum;
     if (__builtin_saddl_overflow(lb, std::min(prod1, prod2), &sum)) {
-      lb = lb < 0 ? std::numeric_limits<Int>::min() : std::numeric_limits<Int>::max();
+      lb = lb < 0 ? std::numeric_limits<Int>::min()
+                  : std::numeric_limits<Int>::max();
     } else {
       lb = sum;
     }
     if (__builtin_saddl_overflow(ub, std::max(prod1, prod2), &sum)) {
-      ub = ub < 0 ? std::numeric_limits<Int>::min() : std::numeric_limits<Int>::max();
+      ub = ub < 0 ? std::numeric_limits<Int>::min()
+                  : std::numeric_limits<Int>::max();
     } else {
       ub = sum;
     }
