@@ -125,6 +125,9 @@ class MznChallenge : public ::testing::Test {
     }
 
     EXPECT_EQ(dirs.size(), fznModelsByDir.size());
+    EXPECT_GE(fznModelsByDir.size(),
+              malloc.size() + timeout.size() + unbrokenCycles.size() +
+                  unsatAllEqual.size() + failing.size() + unbounded.size());
 
     std::ranges::sort(dirs.begin(), dirs.end());
 
@@ -137,6 +140,7 @@ class MznChallenge : public ::testing::Test {
     unsatAllEqualFznModels.reserve(unsatAllEqual.size());
     unboundedFznModels.reserve(unbounded.size());
     failingFznModels.reserve(failing.size());
+
     passingFznModels.reserve(fznModelsByDir.size() - malloc.size() -
                              timeout.size() - unbrokenCycles.size() -
                              unsatAllEqual.size() - failing.size() -
