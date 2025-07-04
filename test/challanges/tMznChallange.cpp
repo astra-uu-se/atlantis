@@ -54,22 +54,25 @@ class MznChallange : public ::testing::Test {
 
   std::string startDir = std::string(FZN_CHALLENGE_DIR) + std::string{""};
 
-  std::unordered_set<std::string> malloc{
-      std::string(FZN_CHALLENGE_DIR) + std::string{"/elitserien"},
-      std::string(FZN_CHALLENGE_DIR) + std::string{"/traveling-tppv"}};
+  std::unordered_set<std::string> malloc{};
 
-  std::unordered_set<std::string> timeout{
-      std::string(FZN_CHALLENGE_DIR) + std::string{"/is"},
-      std::string(FZN_CHALLENGE_DIR) + std::string{"/smelt"},
-      std::string(FZN_CHALLENGE_DIR) + std::string{"/tdtsp"}};
+  std::unordered_set<std::string> timeout{};
 
   std::unordered_set<std::string> unbrokenCycles{
-      std::string(FZN_CHALLENGE_DIR) + std::string{"/mqueens"}};
+      std::string(FZN_CHALLENGE_DIR) + std::string{"/mqueens"},
+  std::string(FZN_CHALLENGE_DIR) + std::string{"/pattern-set-mining"},
+  std::string(FZN_CHALLENGE_DIR) + std::string{"/project-planning"},
+  std::string(FZN_CHALLENGE_DIR) + std::string{"/tdtsp"}};
 
   std::unordered_set<std::string> unsatAllEqual{std::string(FZN_CHALLENGE_DIR) +
                                                 std::string{"/still_life"}};
 
   std::unordered_set<std::string> failing{};
+
+  std::unordered_set<std::string> unbounded{
+    std::string{FZN_CHALLENGE_DIR} + std::string("/2DBinPacking"),
+  std::string{FZN_CHALLENGE_DIR} + std::string("/wwtpp-random"),
+    std::string{FZN_CHALLENGE_DIR} + std::string("/wwtpp-real")};
 
   std::vector<std::string> passingFznModels;
   std::vector<std::string> mallocFznModels;
@@ -77,6 +80,7 @@ class MznChallange : public ::testing::Test {
   std::vector<std::string> unbrokenCycleFznModels;
   std::vector<std::string> unsatAllEqualFznModels;
   std::vector<std::string> failingFznModels;
+  std::vector<std::string> unboundedFznModels;
 
   void SetUp() override {
     std::stack<std::string> stack;
@@ -131,10 +135,11 @@ class MznChallange : public ::testing::Test {
     timeoutFznModels.reserve(timeout.size());
     unbrokenCycleFznModels.reserve(unbrokenCycles.size());
     unsatAllEqualFznModels.reserve(unsatAllEqual.size());
+    unboundedFznModels.reserve(unbounded.size());
     failingFznModels.reserve(failing.size());
     passingFznModels.reserve(fznModelsByDir.size() - malloc.size() -
                              timeout.size() - unbrokenCycles.size() -
-                             unsatAllEqual.size() - failing.size());
+                             unsatAllEqual.size() - failing.size() - unbounded.size());
 
     for (const auto& dirPath : dirs) {
       EXPECT_TRUE(fznModelsByDir.contains(dirPath));
@@ -151,7 +156,9 @@ class MznChallange : public ::testing::Test {
           unsatAllEqualFznModels.emplace_back(fznModel);
         } else if (failing.contains(dirPath)) {
           failingFznModels.emplace_back(fznModel);
-        } else {
+        } else if (unbounded.contains(dirPath)) {
+          unboundedFznModels.emplace_back(fznModel);
+        }else{
           passingFznModels.emplace_back(fznModel);
         }
         if (onlySmallestModel) {
@@ -162,7 +169,7 @@ class MznChallange : public ::testing::Test {
   }
 };
 
-TEST_F(MznChallange, DISABLED_passing) {
+TEST_F(MznChallange, passing) {
   for (size_t i = 0; i < passingFznModels.size(); ++i) {
     if (passingFznModels.at(i) < startDir) {
       logModelName(passingFznModels.at(i), true, i, passingFznModels.size());
@@ -173,33 +180,33 @@ TEST_F(MznChallange, DISABLED_passing) {
   }
 }
 
-TEST_F(MznChallange, DISABLED_malloc) {
-  for (size_t i = 0; i < failingFznModels.size(); ++i) {
+TEST_F(MznChallange, malloc) {
+  for (size_t i = 0; i < mallocFznModels.size(); ++i) {
     logModelName(mallocFznModels.at(i), false, i, mallocFznModels.size());
     testChallange(mallocFznModels.at(i));
   }
 }
-TEST_F(MznChallange, DISABLED_timeout) {
-  for (size_t i = 0; i < failingFznModels.size(); ++i) {
+TEST_F(MznChallange, timeout) {
+  for (size_t i = 0; i < timeout.size(); ++i) {
     logModelName(timeoutFznModels.at(i), false, i, timeoutFznModels.size());
     testChallange(timeoutFznModels.at(i));
   }
 }
-TEST_F(MznChallange, DISABLED_unbrokenCycle) {
-  for (size_t i = 0; i < failingFznModels.size(); ++i) {
+TEST_F(MznChallange, unbrokenCycle) {
+  for (size_t i = 0; i < unbrokenCycleFznModels.size(); ++i) {
     logModelName(unbrokenCycleFznModels.at(i), false, i,
                  unbrokenCycleFznModels.size());
     testChallange(unbrokenCycleFznModels.at(i));
   }
 }
-TEST_F(MznChallange, DISABLED_unsatAllEqual) {
-  for (size_t i = 0; i < failingFznModels.size(); ++i) {
+TEST_F(MznChallange, unsatAllEqual) {
+  for (size_t i = 0; i < unsatAllEqualFznModels.size(); ++i) {
     logModelName(unsatAllEqualFznModels.at(i), false, i,
                  unsatAllEqualFznModels.size());
     testChallange(unsatAllEqualFznModels.at(i));
   }
 }
-TEST_F(MznChallange, DISABLED_failing) {
+TEST_F(MznChallange, failing) {
   for (size_t i = 0; i < failingFznModels.size(); ++i) {
     logModelName(failingFznModels.at(i), false, i, failingFznModels.size());
     testChallange(failingFznModels.at(i));

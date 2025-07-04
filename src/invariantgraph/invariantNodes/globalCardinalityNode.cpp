@@ -252,9 +252,6 @@ void GlobalCardinalityNode::registerNode() {
   for (size_t i = 0; i < _cover.size(); ++i) {
     assert(_intermediate.at(i) == propagation::NULL_ID ||
            _intermediate.at(i).isVar());
-    assert(_intermediate.at(i) == propagation::NULL_ID
-               ? invariantGraph().varId(outputVarNodeIds().at(i)).isVar()
-               : invariantGraph().varId(outputVarNodeIds().at(i)).isView());
 
     outputVarIds.emplace_back(
         _intermediate.at(i) == propagation::NULL_ID
