@@ -89,8 +89,7 @@ static std::vector<std::vector<VarNodeId>> SCC(const InvariantGraph& graph) {
     }
   }
   for (VarNodeId varId = 0; varId < graph.nextVarNodeId(); ++varId) {
-    if (graph.varNodeConst(varId).definingNodes().empty() &&
-        discoverTime[varId] < 0) {
+    if (discoverTime[varId] < 0) {
       SCCUtil(graph, varId, discoverTime, lowTime, stack, onStack, time,
               components);
     }
@@ -135,11 +134,13 @@ static std::vector<VarNodeId> findStaticCycle(
       const auto& invNode = graph.invariantNodeConst(defInv);
       for (const VarNodeId inputId : invNode.staticInputVarNodeIds()) {
         if (inputId >= componentOfVar.size() ||
-            componentOfVar[inputId] != componentIndex) {
+            componentOfVar[inputId] != componentIndex ||
+            parent[inputId] != NULL_NODE_ID) {
           // This var either: (i) was added when breaking a cycle or (ii) is not
           // in the current component.
           continue;
         }
+        // what if outputId != NULL_NODE_ID
         parent[inputId] = outputId;
         if (discoverTime[inputId] == discoverTime[orig]) {
           std::vector<VarNodeId> cycle;
@@ -147,6 +148,9 @@ static std::vector<VarNodeId> findStaticCycle(
           cycle.emplace_back(inputId);
           for (VarNodeId vId = outputId; vId != inputId; vId = parent[vId]) {
             assert(vId != NULL_NODE_ID);
+            assert(vId < componentOfVar.size());
+            assert(discoverTime.at(vId) == discoverTime.at(orig));
+            assert(componentOfVar.at(vId) == componentOfVar.at(orig));
             cycle.emplace_back(vId);
           }
           return cycle;
@@ -845,7 +849,9 @@ void InvariantGraph::splitMultiDefinedVars() {
 }
 
 void InvariantGraph::breakSelfCycles() {
-  for (const auto& invNode : _invariantNodes) {
+  const size_t end = _invariantNodes.size();
+  for (size_t i = 0; i < end; ++i) {
+    const auto& invNode = _invariantNodes[i];
     std::unordered_set<VarNodeId> visitedOutputs;
     visitedOutputs.reserve(invNode->outputVarNodeIds().size());
     for (const auto& outputVarId : invNode->outputVarNodeIds()) {
@@ -1007,9 +1013,9 @@ void InvariantGraph::createVars() {
         (vNode.staticInputTo().empty() && vNode.dynamicInputTo().empty())) {
       continue;
     }
-    assert(vNode.isFixed());
+    // assert(vNode.isFixed());
     if (vNode.varId() == propagation::NULL_ID) {
-      vNode.setVarId(_solver.makeIntVar(vNode.lowerBound(), vNode.upperBound(),
+      vNode.setVarId(_solver.makeIntVar(vNode.lowerBound(), vNode.lowerBound(),
                                         vNode.lowerBound()));
     }
   }

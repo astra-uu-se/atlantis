@@ -63,14 +63,14 @@ TEST_P(IntLtNodeTestFixture, propagation) {
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();
     if (isReified()) {
-      // TODO: disabled for the MZN challange. This should be computed by
+      // TODO: disabled for the MZN challenge. This should be computed by
       // Gecode.
       // EXPECT_TRUE(varNode(reifiedVar).isFixed());
       const bool actual = varNode(reifiedVar).inDomain({false});
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {
-      // TODO: disabled for the MZN challange. This should be computed by
+      // TODO: disabled for the MZN challenge. This should be computed by
       // Gecode.
       // EXPECT_FALSE(expected);
     }

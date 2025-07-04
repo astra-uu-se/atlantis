@@ -1,5 +1,6 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/intLinEqNode.hpp"
 
+#include <limits>
 #include <utility>
 
 #include "../parseHelper.hpp"
@@ -74,14 +75,33 @@ void IntLinEqNode::updateState() {
   Int lb = 0;
   Int ub = 0;
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    const Int v1 =
-        _coeffs.at(i) *
+    Int prod1;
+    Int prod2;
+    const Int varLb =
         invariantGraph().varNode(staticInputVarNodeIds().at(i)).lowerBound();
-    const Int v2 =
-        _coeffs.at(i) *
+    if (__builtin_smull_overflow(_coeffs[i], varLb, &prod1)) {
+      prod1 = (_coeffs[1] < 0) == (varLb < 0) ? std::numeric_limits<Int>::max()
+                                              : std::numeric_limits<Int>::min();
+    }
+    const Int varUb =
         invariantGraph().varNode(staticInputVarNodeIds().at(i)).upperBound();
-    lb += std::min(v1, v2);
-    ub += std::max(v1, v2);
+    if (__builtin_smull_overflow(_coeffs[i], varUb, &prod2)) {
+      prod2 = (_coeffs[1] < 0) == (varUb < 0) ? std::numeric_limits<Int>::max()
+                                              : std::numeric_limits<Int>::min();
+    }
+    Int sum;
+    if (__builtin_saddl_overflow(lb, std::min(prod1, prod2), &sum)) {
+      lb = lb < 0 ? std::numeric_limits<Int>::min()
+                  : std::numeric_limits<Int>::max();
+    } else {
+      lb = sum;
+    }
+    if (__builtin_saddl_overflow(ub, std::max(prod1, prod2), &sum)) {
+      ub = ub < 0 ? std::numeric_limits<Int>::min()
+                  : std::numeric_limits<Int>::max();
+    } else {
+      ub = sum;
+    }
   }
 
   if (lb == ub && lb == _bound) {

@@ -65,11 +65,11 @@ TEST_P(ArrayIntMinimumNodeTestFixture, updateState) {
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
-    // TODO: disabled for the MZN challange. This should be computed by Gecode.
+    // TODO: disabled for the MZN challenge. This should be computed by Gecode.
     // EXPECT_TRUE(_invariantGraph->varNode(outputVarNodeId).isFixed());
     [[maybe_unused]] const Int expected = computeOutput();
     [[maybe_unused]] const Int actual = varNode(outputVar).upperBound();
-    // TODO: disabled for the MZN challange. This should be computed by Gecode.
+    // TODO: disabled for the MZN challenge. This should be computed by Gecode.
     // EXPECT_EQ(expected, actual);
   } else {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
