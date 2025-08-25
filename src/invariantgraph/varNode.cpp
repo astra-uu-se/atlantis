@@ -17,21 +17,46 @@
 
 namespace atlantis::invariantgraph {
 
-VarNode::VarNode(VarNodeId varNodeId, bool isIntVar, DomainType domainType)
+std::string toString(VarNodeId varNodeId) {
+  return "ATLANTIS_INTRODUCED_" + std::to_string(varNodeId);
+}
+
+VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId, bool isIntVar,
+                 const std::shared_ptr<SearchDomain>& domain,
+                 DomainType domainType)
     : _varNodeId(varNodeId),
       _isIntVar(isIntVar),
       _domainType(domainType),
-      _domain(std::make_shared<SearchDomain>(0, 1)) {
+      _domain(domain),
+      _identifier(identifier)
+{}
+
+VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId, bool isIntVar, DomainType domainType)
+    : _varNodeId(varNodeId),
+      _isIntVar(isIntVar),
+      _domainType(domainType),
+      _domain(std::make_shared<SearchDomain>(0, 1)),
+      _identifier(identifier) {
+  assert(!isIntVar);
+}
+
+VarNode::VarNode(VarNodeId varNodeId, bool isIntVar, DomainType domainType)
+: _varNodeId(varNodeId),
+  _isIntVar(isIntVar),
+  _domainType(domainType),
+  _domain(std::make_shared<SearchDomain>(0, 1)),
+  _identifier(std::nullopt) {
   assert(!isIntVar);
 }
 
 VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
                  const std::shared_ptr<SearchDomain>& domain,
                  DomainType domainType)
-    : _varNodeId(varNodeId),
-      _isIntVar(isIntVar),
-      _domainType(domainType),
-      _domain(domain) {}
+: _varNodeId(varNodeId),
+  _isIntVar(isIntVar),
+  _domainType(domainType),
+  _domain(domain),
+  _identifier(std::nullopt) {}
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 

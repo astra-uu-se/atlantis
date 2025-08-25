@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/fznBackend.hpp"
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/searchStatistics.hpp"
@@ -59,12 +60,9 @@ class MznChallenge : public ::testing::Test {
   std::unordered_set<std::string> timeout{};
 
   std::unordered_set<std::string> unbrokenCycles{
-      std::string(FZN_CHALLENGE_DIR) + std::string{"/mqueens"},
-      std::string(FZN_CHALLENGE_DIR) + std::string{"/pattern-set-mining"},
-      std::string(FZN_CHALLENGE_DIR) + std::string{"/project-planning"},
-      std::string(FZN_CHALLENGE_DIR) + std::string{"/tdtsp"}};
+      std::string(FZN_CHALLENGE_DIR) + std::string{"/project-planning"}};
 
-  std::unordered_set<std::string> unsatAllEqual{std::string(FZN_CHALLENGE_DIR) +
+  std::unordered_set<std::string> expectedUnsat{std::string(FZN_CHALLENGE_DIR) +
                                                 std::string{"/still_life"}};
 
   std::unordered_set<std::string> failing{};
@@ -78,7 +76,7 @@ class MznChallenge : public ::testing::Test {
   std::vector<std::string> mallocFznModels;
   std::vector<std::string> timeoutFznModels;
   std::vector<std::string> unbrokenCycleFznModels;
-  std::vector<std::string> unsatAllEqualFznModels;
+  std::vector<std::string> expectedUnsatFznModels;
   std::vector<std::string> failingFznModels;
   std::vector<std::string> unboundedFznModels;
 
@@ -127,7 +125,7 @@ class MznChallenge : public ::testing::Test {
     EXPECT_EQ(dirs.size(), fznModelsByDir.size());
     EXPECT_GE(fznModelsByDir.size(),
               malloc.size() + timeout.size() + unbrokenCycles.size() +
-                  unsatAllEqual.size() + failing.size() + unbounded.size());
+                  expectedUnsat.size() + failing.size() + unbounded.size());
 
     std::ranges::sort(dirs.begin(), dirs.end());
 
@@ -137,13 +135,13 @@ class MznChallenge : public ::testing::Test {
     mallocFznModels.reserve(malloc.size());
     timeoutFznModels.reserve(timeout.size());
     unbrokenCycleFznModels.reserve(unbrokenCycles.size());
-    unsatAllEqualFznModels.reserve(unsatAllEqual.size());
+    expectedUnsatFznModels.reserve(expectedUnsat.size());
     unboundedFznModels.reserve(unbounded.size());
     failingFznModels.reserve(failing.size());
 
     passingFznModels.reserve(fznModelsByDir.size() - malloc.size() -
                              timeout.size() - unbrokenCycles.size() -
-                             unsatAllEqual.size() - failing.size() -
+                             expectedUnsat.size() - failing.size() -
                              unbounded.size());
 
     for (const auto& dirPath : dirs) {
@@ -157,8 +155,8 @@ class MznChallenge : public ::testing::Test {
           timeoutFznModels.emplace_back(fznModel);
         } else if (unbrokenCycles.contains(dirPath)) {
           unbrokenCycleFznModels.emplace_back(fznModel);
-        } else if (unsatAllEqual.contains(dirPath)) {
-          unsatAllEqualFznModels.emplace_back(fznModel);
+        } else if (expectedUnsat.contains(dirPath)) {
+          expectedUnsatFznModels.emplace_back(fznModel);
         } else if (failing.contains(dirPath)) {
           failingFznModels.emplace_back(fznModel);
         } else if (unbounded.contains(dirPath)) {
@@ -204,11 +202,11 @@ TEST_F(MznChallenge, DISABLED_unbrokenCycle) {
     testChallenge(unbrokenCycleFznModels.at(i));
   }
 }
-TEST_F(MznChallenge, DISABLED_unsatAllEqual) {
-  for (size_t i = 0; i < unsatAllEqualFznModels.size(); ++i) {
-    logModelName(unsatAllEqualFznModels.at(i), false, i,
-                 unsatAllEqualFznModels.size());
-    testChallenge(unsatAllEqualFznModels.at(i));
+TEST_F(MznChallenge, DISABLED_expectedUnsat) {
+  for (size_t i = 0; i < expectedUnsatFznModels.size(); ++i) {
+    logModelName(expectedUnsatFznModels.at(i), false, i,
+                 expectedUnsatFznModels.size());
+    EXPECT_THROW(testChallenge(expectedUnsatFznModels.at(i)), InconsistencyException);
   }
 }
 TEST_F(MznChallenge, DISABLED_failing) {

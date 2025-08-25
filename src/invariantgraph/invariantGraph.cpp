@@ -46,7 +46,7 @@ static void SCCUtil(const InvariantGraph& graph, VarNodeId inputId,
                   components);
           lowTime[inputId] = std::min(lowTime[outputId], lowTime[inputId]);
         } else if (onStack[outputId]) {
-          lowTime[inputId] = std::min(lowTime[outputId], discoverTime[inputId]);
+          lowTime[inputId] = std::min(discoverTime[outputId], lowTime[inputId]);
         }
       }
     }
@@ -100,12 +100,13 @@ static std::vector<std::vector<VarNodeId>> SCC(const InvariantGraph& graph) {
   return components;
 }
 
-static std::vector<VarNodeId> findStaticCycle(
+static std::vector<VarNodeId> findCycle(
     const InvariantGraph& graph, const std::vector<VarNodeId>& component,
-    const size_t componentIndex, const std::vector<size_t>& componentOfVar) {
+    const size_t componentIndex, const std::vector<size_t>& componentOfVar,
+    bool findDynCycles) {
   std::vector<VarNodeId> stack;
   std::vector<Int> discoverTime(componentOfVar.size(), -1);
-  std::vector<VarNodeId> parent(componentOfVar.size(), NULL_NODE_ID);
+  std::vector<VarNodeId> outputOf(componentOfVar.size(), NULL_NODE_ID);
   stack.reserve(component.size());
   Int time = 0;
   for (const VarNodeId orig : component) {
@@ -120,7 +121,7 @@ static std::vector<VarNodeId> findStaticCycle(
       const VarNodeId outputId = stack.back();
       stack.pop_back();
       if (outputId >= componentOfVar.size()) {
-        // This var has been when breaking a cycle and cannot be in another
+        // This var has been added when breaking a cycle and cannot be in another
         // cycle.
         continue;
       }
@@ -132,87 +133,24 @@ static std::vector<VarNodeId> findStaticCycle(
       const auto defInv = *graph.varNodeConst(outputId).definingNodes().begin();
       assert(defInv != NULL_NODE_ID);
       const auto& invNode = graph.invariantNodeConst(defInv);
-      for (const VarNodeId inputId : invNode.staticInputVarNodeIds()) {
-        if (inputId >= componentOfVar.size() ||
-            componentOfVar[inputId] != componentIndex ||
-            parent[inputId] != NULL_NODE_ID) {
-          // This var either: (i) was added when breaking a cycle or (ii) is not
-          // in the current component.
-          continue;
-        }
-        // what if outputId != NULL_NODE_ID
-        parent[inputId] = outputId;
-        if (discoverTime[inputId] == discoverTime[orig]) {
-          std::vector<VarNodeId> cycle;
-          cycle.reserve(component.size());
-          cycle.emplace_back(inputId);
-          for (VarNodeId vId = outputId; vId != inputId; vId = parent[vId]) {
-            assert(vId != NULL_NODE_ID);
-            assert(vId < componentOfVar.size());
-            assert(discoverTime.at(vId) == discoverTime.at(orig));
-            assert(componentOfVar.at(vId) == componentOfVar.at(orig));
-            cycle.emplace_back(vId);
-          }
-          return cycle;
-        }
-        if (discoverTime[inputId] < 0) {
-          stack.emplace_back(inputId);
-        }
-      }
-    }
-  }
-  return {};
-}
-
-static std::vector<VarNodeId> findDynamicCycle(
-    const InvariantGraph& graph, const std::vector<VarNodeId>& component,
-    const size_t componentIndex, const std::vector<size_t>& componentOfVar) {
-  std::vector<VarNodeId> stack;
-  std::vector<Int> discoverTime(componentOfVar.size(), -1);
-  std::vector<VarNodeId> parent(componentOfVar.size(), NULL_NODE_ID);
-  stack.reserve(component.size());
-  Int time = 0;
-  for (const VarNodeId orig : component) {
-    if (discoverTime[orig] < 0) {
-      continue;
-    }
-    discoverTime[orig] = time;
-    ++time;
-    stack.emplace_back(orig);
-
-    while (!stack.empty()) {
-      const VarNodeId outputId = stack.back();
-      stack.pop_back();
-      if (outputId >= componentOfVar.size()) {
-        // This var has been when breaking a cycle and cannot be in another
-        // cycle.
-        continue;
-      }
-      discoverTime[outputId] = discoverTime[orig];
-      assert(graph.varNodeConst(outputId).definingNodes().size() <= 1);
-      if (graph.varNodeConst(outputId).definingNodes().empty()) {
-        continue;
-      }
-      const auto defInv = *graph.varNodeConst(outputId).definingNodes().begin();
-      assert(defInv != NULL_NODE_ID);
-      const auto& invNode = graph.invariantNodeConst(defInv);
-      for (size_t i = 0; i < 2; ++i) {
-        for (const VarNodeId inputId : i == 0
-                                           ? invNode.staticInputVarNodeIds()
-                                           : invNode.dynamicInputVarNodeIds()) {
+      for (unsigned int i = 0; i < (findDynCycles ? 2 : 1); ++i) {
+        for (const VarNodeId inputId : (i == 0 ? invNode.staticInputVarNodeIds() : invNode.dynamicInputVarNodeIds())) {
           if (inputId >= componentOfVar.size() ||
               componentOfVar[inputId] != componentIndex) {
-            // This var either: (i) was added when breaking a cycle or (ii) is
-            // not in the current component.
+            // This var either: (i) was added when breaking a cycle or (ii) is not
+            // in the current component.
             continue;
           }
-          parent[inputId] = outputId;
+          // what if outputId != NULL_NODE_ID
+          outputOf[inputId] = outputId;
           if (discoverTime[inputId] == discoverTime[orig]) {
             std::vector<VarNodeId> cycle;
             cycle.reserve(component.size());
             cycle.emplace_back(inputId);
-            for (VarNodeId vId = outputId; vId != inputId; vId = parent[vId]) {
-              assert(vId != NULL_NODE_ID);
+            for (VarNodeId vId = outputId; vId != inputId && vId != NULL_NODE_ID; vId = outputOf[vId]) {
+              assert(vId < componentOfVar.size());
+              assert(discoverTime.at(vId) == discoverTime.at(orig));
+              assert(componentOfVar.at(vId) == componentOfVar.at(orig));
               cycle.emplace_back(vId);
             }
             return cycle;
@@ -225,6 +163,18 @@ static std::vector<VarNodeId> findDynamicCycle(
     }
   }
   return {};
+}
+
+static std::vector<VarNodeId> findStaticCycle(
+    const InvariantGraph& graph, const std::vector<VarNodeId>& component,
+    const size_t componentIndex, const std::vector<size_t>& componentOfVar) {
+  return findCycle(graph, component, componentIndex, componentOfVar, false);
+}
+
+static std::vector<VarNodeId> findDynamicCycle(
+    const InvariantGraph& graph, const std::vector<VarNodeId>& component,
+    const size_t componentIndex, const std::vector<size_t>& componentOfVar) {
+  return findCycle(graph, component, componentIndex, componentOfVar, true);
 }
 
 static std::pair<VarNodeId, InvariantNodeId> findPivotInCycle(
@@ -323,7 +273,7 @@ VarNodeId InvariantGraph::retrieveBoolVarNode(bool b) {
 VarNodeId InvariantGraph::retrieveBoolVarNode(const std::string& identifier,
                                               DomainType domainType) {
   if (!containsVarNode(identifier)) {
-    const VarNodeId nId = retrieveBoolVarNode(domainType);
+    const VarNodeId nId = _varNodes.emplace_back(identifier, nextVarNodeId(), false, domainType).varNodeId();
     _namedVarNodeIndices.emplace(identifier, nId);
     return nId;
   }
@@ -432,7 +382,11 @@ VarNodeId InvariantGraph::retrieveIntVarNode(
     }
     return node.varNodeId();
   }
-  const VarNodeId nId = retrieveIntVarNode(domain, domainType);
+
+  VarNodeId nId = domain->isFixed() ?
+    retrieveIntVarNode(domain->lowerBound())
+      : _varNodes.emplace_back(identifier, nextVarNodeId(), true, domain, domainType)
+      .varNodeId();
 
   assert(!containsVarNode(identifier));
   _namedVarNodeIndices.emplace(identifier, nId);
@@ -962,8 +916,8 @@ void createVarsUtil(
   }
   onStack.emplace(invNodeId);
   for (const VarNodeId inputId : invNode.staticInputVarNodeIds()) {
-    for (const InvariantNodeId defInv :
-         graph.varNodeConst(inputId).definingNodes()) {
+    const auto inputVar = graph.varNodeConst(inputId);
+    for (const InvariantNodeId defInv : inputVar.definingNodes()) {
       assert(!onStack.contains(defInv));
       if (!visitedInvNodes.contains(defInv)) {
         createVarsUtil(graph, defInv, visitedInvNodes, onStack);
