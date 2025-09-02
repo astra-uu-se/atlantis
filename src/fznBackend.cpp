@@ -1,6 +1,7 @@
 #include "atlantis/fznBackend.hpp"
 
 #include <fznparser/parser.hpp>
+#include <thread>
 #include <utility>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
@@ -136,9 +137,10 @@ static ObjectiveDirection getObjectiveDirection(
   }
 }
 
-search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
-  fznparser::ProblemType problemType = _model.solveType().problemType();
-
+search::SearchStatistics FznBackend::solveThread(
+    logging::Logger& logger, uint_fast32_t threadId,
+    ObjectiveDirection objectiveDirection, fznparser::ProblemType problemType,
+    std::shared_ptr<search::AnnealingSchedule> schedule) {
   propagation::Solver solver;
 
   // TODO: we should improve the initialisation in order to avoid the need for
@@ -146,9 +148,11 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   invariantgraph::FznInvariantGraph invariantGraph(solver, true);
   logger.timedProcedure("building invariant graph",
                         [&] { invariantGraph.build(_model); });
-
   invariantGraph.construct();
-  if (_dotFilePath.has_value()) {
+
+  // We only want this to happen once
+  // Either before the parallelization or only on 1 thread
+  if (threadId == 0 && _dotFilePath.has_value()) {
     std::ofstream dotFile;
     dotFile.open(*_dotFilePath);
     if (dotFile) {
@@ -156,10 +160,11 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
     }
     dotFile.close();
   }
-  auto neighborhood = invariantGraph.neighborhood();
 
+  auto neighborhood = invariantGraph.neighborhood();
   neighborhood.printNeighborhood(logger);
 
+  // Might be changed to shared later
   search::Objective searchObjective(solver, problemType);
 
   auto violation = searchObjective.registerNode(
@@ -167,45 +172,76 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
 
   invariantGraph.close();
 
+  // TODO: extract to shared -- requires the original invariantGraph
   const Int objectiveOptimalValue =
-      _model.isSatisfactionProblem()
-          ? 0
-          : (_model.isMinimisationProblem()
-                 ? invariantGraph.objectiveVarNode().lowerBound()
-                 : invariantGraph.objectiveVarNode().upperBound());
+      _model.isSatisfactionProblem() ? 0
+      : _model.isMinimisationProblem()
+          ? invariantGraph.objectiveVarNode().lowerBound()
+          : invariantGraph.objectiveVarNode().upperBound();
 
-  const auto objectiveDirection = getObjectiveDirection(problemType);
-
+  // Simple object creation -- can be individual due to separate inputs.
   search::Assignment assignment(solver, neighborhood, violation,
                                 invariantGraph.objectiveVarId(),
                                 objectiveDirection, objectiveOptimalValue);
 
+  // This can possibly be extracted, or restricted to one thread
   if (neighborhood.coveredVars().empty()) {
     _onSolution(invariantGraph, assignment);
     _onFinish(true);
     return search::SearchStatistics{};
   }
 
-  logger.debug("Using seed {}.", _seed);
-  search::RandomProvider random(_seed);
+  logger.debug("Using seed {}.", _seed + threadId);
+  search::RandomProvider random(_seed + threadId);
 
   search::SearchProcedure search(random, assignment, neighborhood,
                                  searchObjective);
 
+  search::Annealer annealer(random, *schedule, assignment);
+
+  // TODO: extract to shared -- requires fixing invariantGraph
   auto onSolution = [&](const search::Assignment& a) {
     _onSolution(invariantGraph, a);
   };
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
-
   search::SearchController searchController(_model.isSatisfactionProblem(),
                                             std::move(onSolution),
                                             std::move(onFinish), _timelimit);
 
-  auto schedule = _annealingScheduleFactory.create();
-  search::Annealer annealer(random, *schedule, assignment);
-
   return logger.timedFunction<search::SearchStatistics>(
       "search", [&] { return search.run(searchController, annealer, logger); });
+}
+
+search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
+  // Shared data
+  fznparser::ProblemType problemType = _model.solveType().problemType();
+  const auto objectiveDirection = getObjectiveDirection(problemType);
+  auto schedule = _annealingScheduleFactory.create();
+
+  // TODO: Clean this up
+  // This is just a hard-coded parallelization in two threads, with no
+  // communication.
+
+  search::SearchStatistics result;
+  search::SearchStatistics result2;
+
+  std::thread runSearch([&logger, &objectiveDirection, &problemType, &schedule,
+                         &result, this] {
+    result = solveThread(logger, 0, objectiveDirection, problemType, schedule);
+    result.display(std::cout);
+    std::cout << "\n\nThread 1 done!\n\n";
+  });
+
+  std::thread runSearch2([&logger, &objectiveDirection, &problemType, &schedule,
+                          &result2, this] {
+    result2 = solveThread(logger, 1, objectiveDirection, problemType, schedule);
+    result2.display(std::cout);
+    std::cout << "\n\nThread 2 done!\n\n";
+  });
+
+  runSearch.join();
+  runSearch2.join();
+  return result;
 }
 
 }  // namespace atlantis

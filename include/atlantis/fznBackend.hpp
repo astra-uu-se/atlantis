@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
+#include "types.hpp"
 
 namespace atlantis {
 
@@ -46,6 +47,12 @@ class FznBackend {
   FznBackend(logging::Logger& logger, std::filesystem::path&& modelFile);
 
   search::SearchStatistics solve(logging::Logger& logger);
+
+  search::SearchStatistics solveThread(
+      logging::Logger& logger, uint_fast32_t threadId,
+      ObjectiveDirection objective_direction,
+      fznparser::ProblemType problemType,
+      std::shared_ptr<search::AnnealingSchedule> schedule);
 
   void setTimelimit(std::optional<std::chrono::milliseconds> timeLimit) {
     _timelimit = timeLimit;
