@@ -4,7 +4,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PROJECT_NAME atlantis)
 project(${PROJECT_NAME} VERSION 0.1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 include(GNUInstallDirs)
@@ -19,9 +19,9 @@ CPMAddPackage(
 
 # Check if microsoft visual code. I have no idea if this works
 if(MSVC)
-  add_compile_options(/std:c++20 /permissive /W4 /w14640)
+  add_compile_options(/std:c++23 /permissive /W4 /w14640)
 else()
-  add_compile_options(-std=c++20 -Wall -Wextra -Wnon-virtual-dtor -pedantic -static)
+  add_compile_options(-std=c++23 -Wall -Wextra -Wnon-virtual-dtor -pedantic -static)
 endif()
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -109,18 +109,18 @@ include(FetchContent)
 FetchContent_Declare(
   fznparser
   GIT_REPOSITORY https://github.com/astra-uu-se/fznparser
-  GIT_TAG v1.1.1
+  GIT_TAG v1.2.0
 )
 FetchContent_Declare(
   cxxopts
   GIT_REPOSITORY https://github.com/jarro2783/cxxopts
-  GIT_TAG v3.2.0
+  GIT_TAG v3.3.1
 )
 
 FetchContent_Declare(
   fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt
-  GIT_TAG 11.0.2
+  GIT_TAG 11.2.0
 )
 
 FetchContent_MakeAvailable(cxxopts fznparser fmt)
@@ -166,7 +166,7 @@ if(BUILD_TESTS OR BUILD_BENCHMARKS)
   FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.15.2
+    GIT_TAG v1.17.0
   )
 
   # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -188,8 +188,8 @@ if(BUILD_TESTS)
   set(RC_ENABLE_RTTI ON CACHE BOOL "Rapidcheck RTTI Support" FORCE)
 
   FetchContent_Declare(rapidcheck
-    GIT_REPOSITORY https://github.com/emil-e/rapidcheck.git
-    GIT_TAG ff6af6fc683159deb51c543b065eba14dfcf329b
+    GIT_REPOSITORY https://github.com/astra-uu-se/rapidcheck
+    GIT_TAG g++-23
   )
 
   FetchContent_MakeAvailable(googletest rapidcheck)
@@ -231,7 +231,7 @@ if(BUILD_BENCHMARKS)
   set(BENCHMARK_ENABLE_TESTING off) # to suppress benchmark internal tests
   FetchContent_Declare(googlebenchmark
     GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG v1.9.1)
+    GIT_TAG v1.9.4)
 
   FetchContent_MakeAvailable(googletest googlebenchmark)
 

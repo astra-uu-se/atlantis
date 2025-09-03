@@ -1,5 +1,5 @@
-C_COMPILER=$(shell which gcc-13)
-CXX_COMPILER=$(shell which g++-13)
+C_COMPILER=$(shell which gcc-14)
+CXX_COMPILER=$(shell which g++-14)
 export CMAKE_OPTIONS+= ${ENV_CMAKE_OPTIONS} -DCMAKE_C_COMPILER=${C_COMPILER} -DCMAKE_CXX_COMPILER=${CXX_COMPILER}
 MKFILE_PATH=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BUILD_DIR=${MKFILE_PATH}build
