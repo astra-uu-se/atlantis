@@ -48,7 +48,7 @@ class FznBackend {
 
   search::SearchStatistics solve(logging::Logger& logger);
 
-  search::SearchStatistics solveThread(
+  std::pair<search::SearchStatistics, search::Assignment> solveThread(
       logging::Logger& logger, uint_fast32_t threadId,
       ObjectiveDirection objective_direction,
       fznparser::ProblemType problemType,

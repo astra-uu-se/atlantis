@@ -137,7 +137,7 @@ static ObjectiveDirection getObjectiveDirection(
   }
 }
 
-search::SearchStatistics FznBackend::solveThread(
+std::pair<search::SearchStatistics, search::Assignment> FznBackend::solveThread(
     logging::Logger& logger, uint_fast32_t threadId,
     ObjectiveDirection objectiveDirection, fznparser::ProblemType problemType,
     std::shared_ptr<search::AnnealingSchedule> schedule) {
@@ -188,7 +188,7 @@ search::SearchStatistics FznBackend::solveThread(
   if (neighborhood.coveredVars().empty()) {
     _onSolution(invariantGraph, assignment);
     _onFinish(true);
-    return search::SearchStatistics{};
+    return {search::SearchStatistics{}, assignment};
   }
 
   logger.debug("Using seed {}.", _seed + threadId);
@@ -208,8 +208,10 @@ search::SearchStatistics FznBackend::solveThread(
                                             std::move(onSolution),
                                             std::move(onFinish), _timelimit);
 
-  return logger.timedFunction<search::SearchStatistics>(
+  auto stats = logger.timedFunction<search::SearchStatistics>(
       "search", [&] { return search.run(searchController, annealer, logger); });
+
+  return {std::move(stats), assignment};
 }
 
 search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
@@ -219,28 +221,37 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   auto schedule = _annealingScheduleFactory.create();
 
   // TODO: Clean this up
-  // This is just a hard-coded parallelization in two threads, with no
-  // communication.
+  // The threads currently have no communication, so both just run a search
+  // independently.
 
-  search::SearchStatistics result;
-  search::SearchStatistics result2;
+  const int threadCount = 2;  // TODO: change this to be an argument
+  std::vector<std::thread> threads;
+  std::array<std::unique_ptr<search::SearchStatistics>, threadCount> statistics;
+  std::array<std::unique_ptr<search::Assignment>, threadCount> assignments;
 
-  std::thread runSearch([&logger, &objectiveDirection, &problemType, &schedule,
-                         &result, this] {
-    result = solveThread(logger, 0, objectiveDirection, problemType, schedule);
-    result.display(std::cout);
-    std::cout << "\n\nThread 1 done!\n\n";
-  });
+  for (int threadId = 0; threadId < threadCount; threadId++) {
+    threads.emplace_back([&logger, &objectiveDirection, &problemType, &schedule,
+                          &statistics, &assignments, threadId, this] {
+      // TODO: Extract this
+      auto [stats, assignment] = solveThread(
+          logger, threadId, objectiveDirection, problemType, schedule);
+      statistics[threadId] =
+          std::make_unique<search::SearchStatistics>(std::move(stats));
+      assignments[threadId] =
+          std::make_unique<search::Assignment>(std::move(assignment));
 
-  std::thread runSearch2([&logger, &objectiveDirection, &problemType, &schedule,
-                          &result2, this] {
-    result2 = solveThread(logger, 1, objectiveDirection, problemType, schedule);
-    result2.display(std::cout);
-    std::cout << "\n\nThread 2 done!\n\n";
-  });
+      stats.display(std::cerr);
+      std::cerr << "\n\nThread " << threadId << " done!\n\n";
+    });
+  }
 
-  runSearch.join();
-  runSearch2.join();
+  for (auto& thread : threads) {
+    thread.join();
+  }
+
+  // TODO: choose best result
+
+  auto result = std::move(*statistics[0]);
   return result;
 }
 

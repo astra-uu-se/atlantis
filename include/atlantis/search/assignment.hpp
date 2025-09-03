@@ -66,6 +66,8 @@ class Assignment {
   [[nodiscard]] virtual Timestamp currentTimestamp() const;
 
   [[nodiscard]] virtual ObjectiveDirection objectiveDirection() const;
+
+  [[nodiscard]] virtual Cost currentCost() const;
 };
 
 }  // namespace atlantis::search
