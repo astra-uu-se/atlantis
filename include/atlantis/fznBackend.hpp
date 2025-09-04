@@ -24,6 +24,9 @@ class SearchStatistics;
 
 class FznBackend {
  public:
+  static void displaySolution(
+      const invariantgraph::FznInvariantGraph& invariantGraph,
+      const search::Assignment& assignment);
   static void onSolutionDefault(const invariantgraph::FznInvariantGraph&,
                                 const search::Assignment&);
   static void onFinishDefault(bool);

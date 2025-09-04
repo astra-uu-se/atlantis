@@ -111,7 +111,7 @@ ObjectiveDirection Assignment::objectiveDirection() const {
   return _objectiveDirection;
 }
 
-Cost Assignment::currentCost() const {
+Cost Assignment::getCost() const {
   return {
       _violation == propagation::NULL_ID ? 0 : _solver.currentValue(_violation),
       _objective == propagation::NULL_ID ? 0 : _solver.currentValue(_objective),

@@ -89,10 +89,9 @@ void printIntVarArray(const search::Assignment& assignment,
   std::cout << "]);\n";
 }
 
-void FznBackend::onSolutionDefault(
+void FznBackend::displaySolution(
     const invariantgraph::FznInvariantGraph& invariantGraph,
     const search::Assignment& assignment) {
-  // TODO: extract to display function.
   for (const auto& outputVar : invariantGraph.outputBoolVars()) {
     printBoolVar(assignment, outputVar);
   }
@@ -107,6 +106,12 @@ void FznBackend::onSolutionDefault(
   }
 
   std::cout << "----------\n";
+}
+
+void FznBackend::onSolutionDefault(
+    const invariantgraph::FznInvariantGraph& invariantGraph,
+    const search::Assignment& assignment) {
+  displaySolution(invariantGraph, assignment);
 }
 
 void FznBackend::onFinishDefault(bool hadSol) {
@@ -232,21 +237,18 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   std::vector<std::thread> threads;
   std::vector<std::pair<std::unique_ptr<search::SearchStatistics>,
                         std::unique_ptr<search::Assignment>>>
-      results;
+      results(_threadCount);
   std::cerr << "Thread count is " << _threadCount << "\n";
 
   for (std::uint_fast32_t threadId = 0; threadId < _threadCount; threadId++) {
     threads.emplace_back([&logger, &objectiveDirection, &problemType, &schedule,
                           &results, threadId, this] {
-      // TODO: Extract this
       auto [stats, assignment] = solveThread(
           logger, threadId, objectiveDirection, problemType, schedule);
-      results.push_back(
-          {std::make_unique<search::SearchStatistics>(std::move(stats)),
-           std::make_unique<search::Assignment>(std::move(assignment))});
 
-      stats.display(std::cerr);
-      std::cerr << "\n\nThread " << threadId << " done!\n\n";
+      results[threadId] = {
+          std::make_unique<search::SearchStatistics>(std::move(stats)),
+          std::make_unique<search::Assignment>(std::move(assignment))};
     });
   }
 
@@ -254,9 +256,20 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
     thread.join();
   }
 
-  // TODO: choose best result
+  uint_fast32_t bestResultIndex = 0;
+  search::Cost bestCost = results[0].second->getCost();
+  for (uint_fast32_t i = 0; i < _threadCount; i++) {
+    search::Cost cost = results[i].second->getCost();
 
-  auto result = std::move(*results[0].first);
+    if (cost.isBetterThan(bestCost)) {
+      bestResultIndex = i;
+      bestCost = results[bestResultIndex].second->getCost();
+    }
+  }
+
+  std::cerr << "Thread " << bestResultIndex << " is best with "
+            << bestCost.toString() << " (" << bestCost.evaluate(1, 1) << ")\n";
+  auto result = std::move(*results[bestResultIndex].first);
   return result;
 }
 

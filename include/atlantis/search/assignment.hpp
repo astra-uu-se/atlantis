@@ -67,7 +67,7 @@ class Assignment {
 
   [[nodiscard]] virtual ObjectiveDirection objectiveDirection() const;
 
-  [[nodiscard]] virtual Cost currentCost() const;
+  [[nodiscard]] virtual Cost getCost() const;
 };
 
 }  // namespace atlantis::search

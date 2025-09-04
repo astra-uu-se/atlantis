@@ -32,6 +32,8 @@ class Cost {
   [[nodiscard]] Int evaluate(UInt violationWeight,
                              UInt objectiveWeight) const noexcept;
 
+  [[nodiscard]] bool isBetterThan(const Cost &other) const;
+
   [[nodiscard]] std::string toString() const;
 
   void set(Int violationDegree, Int objective) {
