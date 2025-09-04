@@ -49,7 +49,12 @@ int main(int argc, char* argv[]) {
         "dot-file", "A file path where a dot file format of the invariant graph is to be saved.",
         cxxopts::value<std::filesystem::path>()
       )
-      ("help", "Print help");
+      (
+        "threads",
+        "The number of threads to use for the search",
+        cxxopts::value<std::uint_fast32_t>()->default_value("1")
+      )
+    ("help", "Print help");
 
     options.add_options("Positional")
       (
@@ -73,7 +78,17 @@ int main(int argc, char* argv[]) {
 
     auto modelFilePath = result["modelFile"].as<std::filesystem::path>();
 
-    atlantis::FznBackend backend(logger, std::move(modelFilePath));
+    // TODO: this needs to be tested
+    std::uint_fast32_t threadCount = 1;
+    if (result.count("threads") == 1) {
+      threadCount = result["threads"].as<uint_fast32_t>();
+      if (threadCount < 1) {
+        std::cout << "Error: Invalid thread count" << std::endl;
+        return 0;
+      }
+    }
+
+    atlantis::FznBackend backend(logger, std::move(modelFilePath), threadCount);
 
     if (long givenSeed; (givenSeed = result["seed"].as<long>()) >= 0) {
       backend.setRandomSeed(static_cast<std::uint_fast32_t>(givenSeed));

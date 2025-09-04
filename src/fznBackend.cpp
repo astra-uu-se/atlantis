@@ -92,6 +92,7 @@ void printIntVarArray(const search::Assignment& assignment,
 void FznBackend::onSolutionDefault(
     const invariantgraph::FznInvariantGraph& invariantGraph,
     const search::Assignment& assignment) {
+  // TODO: extract to display function.
   for (const auto& outputVar : invariantGraph.outputBoolVars()) {
     printBoolVar(assignment, outputVar);
   }
@@ -115,14 +116,18 @@ void FznBackend::onFinishDefault(bool hadSol) {
 }
 
 FznBackend::FznBackend(logging::Logger& logger,
-                       std::filesystem::path&& modelFile)
-    : FznBackend(
-          logger.timedFunction<fznparser::Model>("parsing FlatZinc", [&] {
-            auto m = fznparser::parseFznFile(modelFile);
-            logger.debug("Found {:d} variable(s)", m.vars().size());
-            logger.debug("Found {:d} constraint(s)", m.constraints().size());
-            return m;
-          })) {}
+                       std::filesystem::path&& modelFile,
+                       const uint_fast32_t threadCount)
+    : FznBackend(logger.timedFunction<fznparser::Model>(
+                     "parsing FlatZinc",
+                     [&] {
+                       auto m = fznparser::parseFznFile(modelFile);
+                       logger.debug("Found {:d} variable(s)", m.vars().size());
+                       logger.debug("Found {:d} constraint(s)",
+                                    m.constraints().size());
+                       return m;
+                     }),
+                 threadCount) {}
 
 static ObjectiveDirection getObjectiveDirection(
     fznparser::ProblemType problemType) {
@@ -224,21 +229,21 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   // The threads currently have no communication, so both just run a search
   // independently.
 
-  const int threadCount = 2;  // TODO: change this to be an argument
   std::vector<std::thread> threads;
-  std::array<std::unique_ptr<search::SearchStatistics>, threadCount> statistics;
-  std::array<std::unique_ptr<search::Assignment>, threadCount> assignments;
+  std::vector<std::pair<std::unique_ptr<search::SearchStatistics>,
+                        std::unique_ptr<search::Assignment>>>
+      results;
+  std::cerr << "Thread count is " << _threadCount << "\n";
 
-  for (int threadId = 0; threadId < threadCount; threadId++) {
+  for (std::uint_fast32_t threadId = 0; threadId < _threadCount; threadId++) {
     threads.emplace_back([&logger, &objectiveDirection, &problemType, &schedule,
-                          &statistics, &assignments, threadId, this] {
+                          &results, threadId, this] {
       // TODO: Extract this
       auto [stats, assignment] = solveThread(
           logger, threadId, objectiveDirection, problemType, schedule);
-      statistics[threadId] =
-          std::make_unique<search::SearchStatistics>(std::move(stats));
-      assignments[threadId] =
-          std::make_unique<search::Assignment>(std::move(assignment));
+      results.push_back(
+          {std::make_unique<search::SearchStatistics>(std::move(stats)),
+           std::make_unique<search::Assignment>(std::move(assignment))});
 
       stats.display(std::cerr);
       std::cerr << "\n\nThread " << threadId << " done!\n\n";
@@ -251,7 +256,7 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
 
   // TODO: choose best result
 
-  auto result = std::move(*statistics[0]);
+  auto result = std::move(*results[0].first);
   return result;
 }
 

@@ -34,6 +34,7 @@ class FznBackend {
   std::optional<std::chrono::milliseconds> _timelimit;
   std::uint_fast32_t _seed;
   std::optional<std::filesystem::path> _dotFilePath{};
+  const std::uint_fast32_t _threadCount;
 
   std::function<void(const invariantgraph::FznInvariantGraph&,
                      const search::Assignment&)>
@@ -41,10 +42,14 @@ class FznBackend {
   std::function<void(bool)> _onFinish = onFinishDefault;
 
  public:
-  explicit FznBackend(fznparser::Model&& model)
-      : _model(std::move(model)), _seed(std::time(nullptr)) {}
+  explicit FznBackend(fznparser::Model&& model,
+                      const std::uint_fast32_t threadCount)
+      : _model(std::move(model)),
+        _seed(std::time(nullptr)),
+        _threadCount(threadCount) {}
 
-  FznBackend(logging::Logger& logger, std::filesystem::path&& modelFile);
+  FznBackend(logging::Logger& logger, std::filesystem::path&& modelFile,
+             std::uint_fast32_t threadCount = 1);
 
   search::SearchStatistics solve(logging::Logger& logger);
 
