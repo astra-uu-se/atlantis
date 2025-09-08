@@ -1,6 +1,7 @@
 #include "atlantis/search/searchController.hpp"
 
 #include "atlantis/search/assignment.hpp"
+#include "atlantis/search/searchStatistics.hpp"
 
 namespace atlantis::search {
 
@@ -19,9 +20,10 @@ bool SearchController::shouldRun(const Assignment& assignment) {
   return true;
 }
 
-void SearchController::onSolution(const Assignment& assignment) {
+void SearchController::onSolution(const Assignment& assignment,
+                                  std::unordered_map<std::string_view, std::string> statistics) {
   _foundSolution = true;
-  _onSolution(assignment);
+  _onSolution(assignment, statistics);
 }
 
 void SearchController::onFinish() const { _onFinish(_foundSolution); }

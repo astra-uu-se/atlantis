@@ -97,6 +97,10 @@ class SolverBase {
 
   void commitInvariant(InvariantId);
 
+  [[nodiscard]] std::vector<Int> currentValues() const {
+    return _store.currentValues();
+  }
+
   //--------------------- Registration ---------------------
   /**
    * Register an invariant in the solver and return its pointer.

@@ -39,7 +39,11 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
                           [&] { _assignment.initialize(_random); });
 
     if (_assignment.satisfiesConstraints()) {
-      controller.onSolution(_assignment);
+      std::unordered_map<std::string_view, std::string> statisticsMap =
+      {{rounds->name(), rounds->value()},
+       {initialisations->name(), initialisations->value()},
+       {moves->name(), moves->value()}};
+      controller.onSolution(_assignment, statisticsMap);
       _objective.tighten();
     }
 
@@ -54,7 +58,11 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
             _assignment.commitLastProbe();
             moves->increment();
             if (_assignment.satisfiesConstraints()) {
-              controller.onSolution(_assignment);
+              std::unordered_map<std::string_view, std::string> statisticsMap =
+                  {{rounds->name(), rounds->value()},
+                   {initialisations->name(), initialisations->value()},
+                   {moves->name(), moves->value()}};
+              controller.onSolution(_assignment, statisticsMap);
               _objective.tighten();
             }
           }

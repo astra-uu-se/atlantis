@@ -58,6 +58,8 @@ class Store {
   [[nodiscard]] size_t numInvariants() const;
 
   [[nodiscard]] VarId dynamicInputVar(Timestamp, InvariantId) const noexcept;
+
+  [[nodiscard]] std::vector<Int> currentValues() const;
 };
 
 }  // namespace atlantis::propagation

@@ -27,8 +27,9 @@ class FznBackend {
   static void displaySolution(
       const invariantgraph::FznInvariantGraph& invariantGraph,
       const search::Assignment& assignment);
-  static void onSolutionDefault(const invariantgraph::FznInvariantGraph&,
-                                const search::Assignment&);
+  static void onSolutionDefault(
+      const invariantgraph::FznInvariantGraph&, const search::Assignment&,
+      std::unordered_map<std::string_view, std::string>);
   static void onFinishDefault(bool);
 
  private:
@@ -40,7 +41,8 @@ class FznBackend {
   const std::uint_fast32_t _threadCount;
 
   std::function<void(const invariantgraph::FznInvariantGraph&,
-                     const search::Assignment&)>
+                     const search::Assignment&,
+                     std::unordered_map<std::string_view, std::string>)>
       _onSolution = onSolutionDefault;
   std::function<void(bool)> _onFinish = onFinishDefault;
 
@@ -73,8 +75,9 @@ class FznBackend {
   void setRandomSeed(std::uint_fast32_t seed) { _seed = seed; }
 
   void setOnSolution(
-      const std::function<void(const invariantgraph::FznInvariantGraph&,
-                               const search::Assignment&)>& onSolution) {
+      const std::function<void(
+          const invariantgraph::FznInvariantGraph&, const search::Assignment&,
+          std::unordered_map<std::string_view, std::string>)>& onSolution) {
     _onSolution = onSolution;
   }
 

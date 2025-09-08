@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/search/cost.hpp"
 #include "atlantis/search/randomProvider.hpp"
@@ -44,6 +45,10 @@ class Assignment {
    * Get the current value of a variable in the assignment.
    */
   [[nodiscard]] virtual Int currentValue(propagation::VarViewId) const;
+
+  [[nodiscard]] std::vector<Int> currentValues() const {
+    return _solver.currentValues();
+  }
 
   /**
    * Get the committed of a variable in the assignment.

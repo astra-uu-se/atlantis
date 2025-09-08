@@ -12,6 +12,7 @@
 #include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/randomProvider.hpp"
+#include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
 #include "atlantis/search/searchProcedure.hpp"
 #include "atlantis/search/searchVariable.hpp"
@@ -110,7 +111,10 @@ void FznBackend::displaySolution(
 
 void FznBackend::onSolutionDefault(
     const invariantgraph::FznInvariantGraph& invariantGraph,
-    const search::Assignment& assignment) {
+    const search::Assignment& assignment,
+    std::unordered_map<std::string_view, std::string> statistics) {
+  // TODO: this saved assignment is not used for anything.
+  search::SavedAssignment savedAssignment = { assignment, statistics };
   displaySolution(invariantGraph, assignment);
 }
 
@@ -196,7 +200,8 @@ std::pair<search::SearchStatistics, search::Assignment> FznBackend::solveThread(
 
   // This can possibly be extracted, or restricted to one thread
   if (neighborhood.coveredVars().empty()) {
-    _onSolution(invariantGraph, assignment);
+    std::unordered_map<std::string_view, std::string> statisticsMap = {};
+    _onSolution(invariantGraph, assignment, statisticsMap);
     _onFinish(true);
     return {search::SearchStatistics{}, assignment};
   }
@@ -210,8 +215,9 @@ std::pair<search::SearchStatistics, search::Assignment> FznBackend::solveThread(
   search::Annealer annealer(random, *schedule, assignment);
 
   // TODO: extract to shared -- requires fixing invariantGraph
-  auto onSolution = [&](const search::Assignment& a) {
-    _onSolution(invariantGraph, a);
+  auto onSolution = [&](const search::Assignment& a,
+          const std::unordered_map<std::string_view, std::string>& s) {
+    _onSolution(invariantGraph, a, s);
   };
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
   search::SearchController searchController(_model.isSatisfactionProblem(),
