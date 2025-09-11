@@ -16,6 +16,7 @@ class Statistic {
   }
   [[nodiscard]] virtual std::string_view name() const noexcept = 0;
   [[nodiscard]] virtual std::string value() const noexcept = 0;
+  [[nodiscard]] virtual std::unique_ptr<Statistic> clone() const = 0;
 };
 
 class CounterStatistic : public Statistic {
@@ -31,6 +32,12 @@ class CounterStatistic : public Statistic {
   }
   [[nodiscard]] std::string value() const noexcept override {
     return std::to_string(_count);
+  }
+
+  [[nodiscard]] std::unique_ptr<Statistic> clone() const override {
+    auto cloned = std::make_unique<CounterStatistic>(_name);
+    cloned->_count = _count;
+    return cloned;
   }
 };
 

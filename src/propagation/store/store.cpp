@@ -82,8 +82,10 @@ VarId Store::dynamicInputVar(Timestamp ts,
 }
 
 std::vector<Int> Store::currentValues() const {
+  // TODO: double check that this correctly handles the IDs, so that nothing
+  // gets mixed up
   std::vector<Int> values;
-  for (IntVar var : _intVars) {
+  for (const IntVar& var : _intVars) {
     values.push_back(var.committedValue());
   }
 

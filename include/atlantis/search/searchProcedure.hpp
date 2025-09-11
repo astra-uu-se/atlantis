@@ -2,6 +2,7 @@
 
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/searchStatistics.hpp"
+#include "savedAssignment.hpp"
 
 namespace atlantis::logging {
 class Logger;
@@ -28,6 +29,7 @@ class SearchProcedure {
   Assignment& _assignment;
   neighborhoods::Neighborhood& _neighborhood;
   Objective _objective;
+  std::optional<SavedAssignment> _solution;
 
  public:
   SearchProcedure(RandomProvider& random, Assignment& assignment,
@@ -38,8 +40,8 @@ class SearchProcedure {
         _neighborhood(neighborhood),
         _objective(objective) {}
 
-  SearchStatistics run(SearchController& controller, Annealer& annealer,
-                       logging::Logger& logger);
+  int run(SearchController& controller, Annealer& annealer,
+          logging::Logger& logger);
 };
 
 }  // namespace atlantis::search

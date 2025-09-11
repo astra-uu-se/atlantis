@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
+#include "search/savedAssignment.hpp"
 #include "types.hpp"
 
 namespace atlantis {
@@ -27,9 +28,8 @@ class FznBackend {
   static void displaySolution(
       const invariantgraph::FznInvariantGraph& invariantGraph,
       const search::Assignment& assignment);
-  static void onSolutionDefault(
-      const invariantgraph::FznInvariantGraph&, const search::Assignment&,
-      std::unordered_map<std::string_view, std::string>);
+  static search::SavedAssignment onSolutionDefault(
+      const invariantgraph::FznInvariantGraph&, const search::Assignment&);
   static void onFinishDefault(bool);
 
  private:
@@ -40,9 +40,8 @@ class FznBackend {
   std::optional<std::filesystem::path> _dotFilePath{};
   const std::uint_fast32_t _threadCount;
 
-  std::function<void(const invariantgraph::FznInvariantGraph&,
-                     const search::Assignment&,
-                     std::unordered_map<std::string_view, std::string>)>
+  std::function<search::SavedAssignment(
+      const invariantgraph::FznInvariantGraph&, const search::Assignment&)>
       _onSolution = onSolutionDefault;
   std::function<void(bool)> _onFinish = onFinishDefault;
 
@@ -56,13 +55,12 @@ class FznBackend {
   FznBackend(logging::Logger& logger, std::filesystem::path&& modelFile,
              std::uint_fast32_t threadCount = 1);
 
-  search::SearchStatistics solve(logging::Logger& logger);
+  void solve(logging::Logger& logger);
 
-  std::pair<search::SearchStatistics, search::Assignment> solveThread(
-      logging::Logger& logger, uint_fast32_t threadId,
-      ObjectiveDirection objective_direction,
-      fznparser::ProblemType problemType,
-      std::shared_ptr<search::AnnealingSchedule> schedule);
+  void solveThread(logging::Logger& logger, uint_fast32_t threadId,
+                   ObjectiveDirection objective_direction,
+                   fznparser::ProblemType problemType,
+                   std::shared_ptr<search::AnnealingSchedule> schedule);
 
   void setTimelimit(std::optional<std::chrono::milliseconds> timeLimit) {
     _timelimit = timeLimit;
@@ -74,15 +72,14 @@ class FznBackend {
 
   void setRandomSeed(std::uint_fast32_t seed) { _seed = seed; }
 
-  void setOnSolution(
-      const std::function<void(
-          const invariantgraph::FznInvariantGraph&, const search::Assignment&,
-          std::unordered_map<std::string_view, std::string>)>& onSolution) {
+  void setOnSolution(const std::function<search::SavedAssignment(
+                         const invariantgraph::FznInvariantGraph&,
+                         const search::Assignment&)>& onSolution) {
     _onSolution = onSolution;
   }
 
   void setDotFilePath(std::filesystem::path&& path) {
-    _dotFilePath = std::optional<std::filesystem::path>(std::move(path));
+    _dotFilePath = std::optional(std::move(path));
   }
 
   void setOnFinish(const std::function<void(bool)>& onFinish) {

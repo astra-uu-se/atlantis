@@ -24,9 +24,7 @@ static void testModelFile(const char* modelFile,
     backend.setRandomSeed(seed.value());
   }
   backend.setTimelimit(std::chrono::seconds(2));
-  const auto statistics = backend.solve(logger);
-  // Don't log to std::cout, since that would interfere with MiniZinc.
-  statistics.display(std::cerr);
+  backend.solve(logger);
 }
 
 }  // namespace atlantis::testing

@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "atlantis/types.hpp"
+#include "savedAssignment.hpp"
 #include "searchStatistics.hpp"
 
 namespace atlantis::search {
@@ -12,7 +13,7 @@ namespace atlantis::search {
 class Assignment;
 
 class SearchController {
-  std::function<void(const Assignment&, std::unordered_map<std::string_view, std::string>)> _onSolution;
+  std::function<SavedAssignment(const Assignment&)> _onSolution;
   std::function<void(bool)> _onFinish;
   std::optional<std::chrono::milliseconds> _timeout;
 
@@ -25,7 +26,7 @@ class SearchController {
   template <typename Rep, typename Period>
   SearchController(
       bool isSatisfactionProblem,
-      std::function<void(const Assignment&, std::unordered_map<std::string_view, std::string>)>&& onSolution,
+      std::function<SavedAssignment(const Assignment&)>&& onSolution,
       std::function<void(bool)>&& onFinish,
       std::optional<std::chrono::duration<Rep, Period>> timeout = {})
       : _onSolution(std::move(onSolution)),
@@ -39,7 +40,7 @@ class SearchController {
         _isSatisfactionProblem(isSatisfactionProblem) {}
 
   bool shouldRun(const Assignment&);
-  void onSolution(const Assignment&, std::unordered_map<std::string_view, std::string>);
+  SavedAssignment onSolution(const Assignment&);
   void onFinish() const;
 };
 

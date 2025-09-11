@@ -6,6 +6,7 @@
 #include "atlantis/search/annealer.hpp"
 #include "atlantis/search/annealing/types.hpp"
 #include "atlantis/search/assignment.hpp"
+#include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
 
 namespace atlantis::search {
@@ -25,9 +26,19 @@ static void logRoundStatistics(logging::Logger& logger,
   logger.trace("Temperature: {:.3f}", statistics.temperature);
 }
 
-SearchStatistics SearchProcedure::run(SearchController& controller,
-                                      Annealer& annealer,
-                                      logging::Logger& logger) {
+SearchStatistics makeStats(const Statistic& rounds,
+                           const Statistic& initialisations,
+                           const Statistic& moves) {
+  std::vector<std::unique_ptr<Statistic>> statistics;
+  statistics.push_back(rounds.clone());
+  statistics.push_back(initialisations.clone());
+  statistics.push_back(moves.clone());
+  SearchStatistics stats = SearchStatistics(std::move(statistics));
+  return stats;
+}
+
+int SearchProcedure::run(SearchController& controller, Annealer& annealer,
+                         logging::Logger& logger) {
   auto rounds = std::make_unique<CounterStatistic>("Rounds");
   auto initialisations = std::make_unique<CounterStatistic>("Initialisations");
   auto moves = std::make_unique<CounterStatistic>("Moves");
@@ -39,11 +50,11 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
                           [&] { _assignment.initialize(_random); });
 
     if (_assignment.satisfiesConstraints()) {
-      std::unordered_map<std::string_view, std::string> statisticsMap =
-      {{rounds->name(), rounds->value()},
-       {initialisations->name(), initialisations->value()},
-       {moves->name(), moves->value()}};
-      controller.onSolution(_assignment, statisticsMap);
+      auto q = initialisations->clone();
+      auto r = moves->clone();
+      _solution = controller.onSolution(_assignment);
+      // _solution = controller.onSolution(
+      //     _assignment, makeStats(*rounds, *initialisations, *moves));
       _objective.tighten();
     }
 
@@ -58,11 +69,9 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
             _assignment.commitLastProbe();
             moves->increment();
             if (_assignment.satisfiesConstraints()) {
-              std::unordered_map<std::string_view, std::string> statisticsMap =
-                  {{rounds->name(), rounds->value()},
-                   {initialisations->name(), initialisations->value()},
-                   {moves->name(), moves->value()}};
-              controller.onSolution(_assignment, statisticsMap);
+              _solution = controller.onSolution(_assignment);
+              // _solution = controller.onSolution(
+              //     _assignment, makeStats(*rounds, *initialisations, *moves));
               _objective.tighten();
             }
           }
@@ -78,14 +87,9 @@ SearchStatistics SearchProcedure::run(SearchController& controller,
     }
   } while (controller.shouldRun(_assignment));
 
-  std::vector<std::unique_ptr<Statistic>> statistics;
-  statistics.push_back(std::move(rounds));
-  statistics.push_back(std::move(initialisations));
-  statistics.push_back(std::move(moves));
-
   controller.onFinish();
 
-  return SearchStatistics{std::move(statistics)};
+  return 1;
 }
 
 }  // namespace atlantis::search

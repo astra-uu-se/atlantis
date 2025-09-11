@@ -109,13 +109,13 @@ void FznBackend::displaySolution(
   std::cout << "----------\n";
 }
 
-void FznBackend::onSolutionDefault(
+search::SavedAssignment FznBackend::onSolutionDefault(
     const invariantgraph::FznInvariantGraph& invariantGraph,
-    const search::Assignment& assignment,
-    std::unordered_map<std::string_view, std::string> statistics) {
+    const search::Assignment& assignment) {
   // TODO: this saved assignment is not used for anything.
-  search::SavedAssignment savedAssignment = { assignment, statistics };
   displaySolution(invariantGraph, assignment);
+  search::SavedAssignment savedAssignment = search::SavedAssignment(assignment);
+  return savedAssignment;
 }
 
 void FznBackend::onFinishDefault(bool hadSol) {
@@ -151,7 +151,7 @@ static ObjectiveDirection getObjectiveDirection(
   }
 }
 
-std::pair<search::SearchStatistics, search::Assignment> FznBackend::solveThread(
+void FznBackend::solveThread(
     logging::Logger& logger, uint_fast32_t threadId,
     ObjectiveDirection objectiveDirection, fznparser::ProblemType problemType,
     std::shared_ptr<search::AnnealingSchedule> schedule) {
@@ -193,17 +193,18 @@ std::pair<search::SearchStatistics, search::Assignment> FznBackend::solveThread(
           ? invariantGraph.objectiveVarNode().lowerBound()
           : invariantGraph.objectiveVarNode().upperBound();
 
-  // Simple object creation -- can be individual due to separate inputs.
   search::Assignment assignment(solver, neighborhood, violation,
                                 invariantGraph.objectiveVarId(),
                                 objectiveDirection, objectiveOptimalValue);
 
   // This can possibly be extracted, or restricted to one thread
+  // TODO: this case isn't handled properly
   if (neighborhood.coveredVars().empty()) {
-    std::unordered_map<std::string_view, std::string> statisticsMap = {};
-    _onSolution(invariantGraph, assignment, statisticsMap);
+    // NOTE: this may be the source of the SavedAssignment stats issue
+    search::SearchStatistics statistics;
+    search::SavedAssignment savedAssignment =
+        _onSolution(invariantGraph, assignment);
     _onFinish(true);
-    return {search::SearchStatistics{}, assignment};
   }
 
   logger.debug("Using seed {}.", _seed + threadId);
@@ -215,22 +216,21 @@ std::pair<search::SearchStatistics, search::Assignment> FznBackend::solveThread(
   search::Annealer annealer(random, *schedule, assignment);
 
   // TODO: extract to shared -- requires fixing invariantGraph
-  auto onSolution = [&](const search::Assignment& a,
-          const std::unordered_map<std::string_view, std::string>& s) {
-    _onSolution(invariantGraph, a, s);
+  auto onSolution = [&](const search::Assignment& a) {
+    return _onSolution(invariantGraph, a);
   };
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
   search::SearchController searchController(_model.isSatisfactionProblem(),
                                             std::move(onSolution),
                                             std::move(onFinish), _timelimit);
 
-  auto stats = logger.timedFunction<search::SearchStatistics>(
+  logger.timedFunction<int>(
       "search", [&] { return search.run(searchController, annealer, logger); });
 
-  return {std::move(stats), assignment};
+  return;
 }
 
-search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
+void FznBackend::solve(logging::Logger& logger) {
   // Shared data
   fznparser::ProblemType problemType = _model.solveType().problemType();
   const auto objectiveDirection = getObjectiveDirection(problemType);
@@ -241,42 +241,18 @@ search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
   // independently.
 
   std::vector<std::thread> threads;
-  std::vector<std::pair<std::unique_ptr<search::SearchStatistics>,
-                        std::unique_ptr<search::Assignment>>>
-      results(_threadCount);
   std::cerr << "Thread count is " << _threadCount << "\n";
 
   for (std::uint_fast32_t threadId = 0; threadId < _threadCount; threadId++) {
     threads.emplace_back([&logger, &objectiveDirection, &problemType, &schedule,
-                          &results, threadId, this] {
-      auto [stats, assignment] = solveThread(
-          logger, threadId, objectiveDirection, problemType, schedule);
-
-      results[threadId] = {
-          std::make_unique<search::SearchStatistics>(std::move(stats)),
-          std::make_unique<search::Assignment>(std::move(assignment))};
+                          threadId, this] {
+      solveThread(logger, threadId, objectiveDirection, problemType, schedule);
     });
   }
 
   for (auto& thread : threads) {
     thread.join();
   }
-
-  uint_fast32_t bestResultIndex = 0;
-  search::Cost bestCost = results[0].second->getCost();
-  for (uint_fast32_t i = 0; i < _threadCount; i++) {
-    search::Cost cost = results[i].second->getCost();
-
-    if (cost.isBetterThan(bestCost)) {
-      bestResultIndex = i;
-      bestCost = results[bestResultIndex].second->getCost();
-    }
-  }
-
-  std::cerr << "Thread " << bestResultIndex << " is best with "
-            << bestCost.toString() << " (" << bestCost.evaluate(1, 1) << ")\n";
-  auto result = std::move(*results[bestResultIndex].first);
-  return result;
 }
 
 }  // namespace atlantis
