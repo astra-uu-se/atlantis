@@ -26,6 +26,7 @@ static void logRoundStatistics(logging::Logger& logger,
   logger.trace("Temperature: {:.3f}", statistics.temperature);
 }
 
+// TODO: either use or remove this function
 SearchStatistics makeStats(const Statistic& rounds,
                            const Statistic& initialisations,
                            const Statistic& moves) {
@@ -53,8 +54,6 @@ int SearchProcedure::run(SearchController& controller, Annealer& annealer,
       auto q = initialisations->clone();
       auto r = moves->clone();
       _solution = controller.onSolution(_assignment);
-      // _solution = controller.onSolution(
-      //     _assignment, makeStats(*rounds, *initialisations, *moves));
       _objective.tighten();
     }
 
@@ -70,8 +69,6 @@ int SearchProcedure::run(SearchController& controller, Annealer& annealer,
             moves->increment();
             if (_assignment.satisfiesConstraints()) {
               _solution = controller.onSolution(_assignment);
-              // _solution = controller.onSolution(
-              //     _assignment, makeStats(*rounds, *initialisations, *moves));
               _objective.tighten();
             }
           }

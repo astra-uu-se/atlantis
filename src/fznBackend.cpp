@@ -226,8 +226,6 @@ void FznBackend::solveThread(
 
   logger.timedFunction<int>(
       "search", [&] { return search.run(searchController, annealer, logger); });
-
-  return;
 }
 
 void FznBackend::solve(logging::Logger& logger) {
