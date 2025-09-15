@@ -16,6 +16,7 @@
 #include "atlantis/search/searchController.hpp"
 #include "atlantis/search/searchProcedure.hpp"
 #include "atlantis/search/searchVariable.hpp"
+#include "atlantis/search/threadController.hpp"
 #include "atlantis/utils/fznOutput.hpp"
 
 namespace atlantis {
@@ -111,10 +112,19 @@ void FznBackend::displaySolution(
 
 search::SavedAssignment FznBackend::onSolutionDefault(
     const invariantgraph::FznInvariantGraph& invariantGraph,
-    const search::Assignment& assignment) {
-  // TODO: this saved assignment is not used for anything.
-  displaySolution(invariantGraph, assignment);
+    const search::Assignment& assignment, search::ThreadController& controller,
+    Int threadId) {
+  // TODO: this saved assignment is only used to pass a cost.
+  // This should either be used more or replaced by a search::Cost.
   search::SavedAssignment savedAssignment = search::SavedAssignment(assignment);
+  search::Cost bestCost =
+      controller.trySolution(threadId, savedAssignment.getCost());
+
+  if (bestCost.getObjective() == assignment.getCost().getObjective()) {
+    displaySolution(invariantGraph, assignment);
+  }
+
+  savedAssignment.setCost(bestCost);
   return savedAssignment;
 }
 
@@ -154,7 +164,8 @@ static ObjectiveDirection getObjectiveDirection(
 void FznBackend::solveThread(
     logging::Logger& logger, uint_fast32_t threadId,
     ObjectiveDirection objectiveDirection, fznparser::ProblemType problemType,
-    std::shared_ptr<search::AnnealingSchedule> schedule) {
+    std::shared_ptr<search::AnnealingSchedule> schedule,
+    search::ThreadController& controller) {
   propagation::Solver solver;
 
   // TODO: we should improve the initialisation in order to avoid the need for
@@ -203,7 +214,7 @@ void FznBackend::solveThread(
     // NOTE: this may be the source of the SavedAssignment stats issue
     search::SearchStatistics statistics;
     search::SavedAssignment savedAssignment =
-        _onSolution(invariantGraph, assignment);
+        _onSolution(invariantGraph, assignment, controller, threadId);
     _onFinish(true);
   }
 
@@ -217,7 +228,7 @@ void FznBackend::solveThread(
 
   // TODO: extract to shared -- requires fixing invariantGraph
   auto onSolution = [&](const search::Assignment& a) {
-    return _onSolution(invariantGraph, a);
+    return _onSolution(invariantGraph, a, controller, threadId);
   };
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
   search::SearchController searchController(_model.isSatisfactionProblem(),
@@ -234,22 +245,29 @@ void FznBackend::solve(logging::Logger& logger) {
   const auto objectiveDirection = getObjectiveDirection(problemType);
   auto schedule = _annealingScheduleFactory.create();
 
-  // TODO: Clean this up
-  // The threads currently have no communication, so both just run a search
-  // independently.
+  // This handles communication between threads
+  search::ThreadController controller = search::ThreadController();
 
   std::vector<std::thread> threads;
   std::cerr << "Thread count is " << _threadCount << "\n";
 
   for (std::uint_fast32_t threadId = 0; threadId < _threadCount; threadId++) {
     threads.emplace_back([&logger, &objectiveDirection, &problemType, &schedule,
-                          threadId, this] {
-      solveThread(logger, threadId, objectiveDirection, problemType, schedule);
+                          threadId, &controller, this] {
+      solveThread(logger, threadId, objectiveDirection, problemType, schedule,
+                  controller);
     });
   }
 
   for (auto& thread : threads) {
     thread.join();
+  }
+
+  if (controller.getBestThreadId() >= 0) {
+    std::cerr << "Best result is " << controller.getCost().toString()
+              << " from thread " << controller.getBestThreadId() << std::endl;
+  } else {
+    std::cerr << "No solution found!" << std::endl;
   }
 }
 

@@ -51,8 +51,6 @@ int SearchProcedure::run(SearchController& controller, Annealer& annealer,
                           [&] { _assignment.initialize(_random); });
 
     if (_assignment.satisfiesConstraints()) {
-      auto q = initialisations->clone();
-      auto r = moves->clone();
       _solution = controller.onSolution(_assignment);
       _objective.tighten();
     }
@@ -69,7 +67,8 @@ int SearchProcedure::run(SearchController& controller, Annealer& annealer,
             moves->increment();
             if (_assignment.satisfiesConstraints()) {
               _solution = controller.onSolution(_assignment);
-              _objective.tighten();
+              _objective.tighten(_solution->getCost());
+              // _objective.tighten();
             }
           }
         }

@@ -4,6 +4,7 @@
 #include <fznparser/solveType.hpp>
 
 #include "atlantis/propagation/solver.hpp"
+#include "cost.hpp"
 
 namespace atlantis::search {
 
@@ -23,6 +24,10 @@ class Objective {
       propagation::VarViewId objectiveVarId);
 
   void tighten();
+
+  // A clone of the above function that uses a supplied cost.
+  // This assumes the violation is 0.
+  void tighten(const Cost& cost);
 
   [[nodiscard]] propagation::VarViewId bound() const noexcept;
 };

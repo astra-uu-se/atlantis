@@ -36,6 +36,10 @@ class Cost {
 
   [[nodiscard]] std::string toString() const;
 
+  [[nodiscard]] Int getObjective() const { return _objective; }
+
+  [[nodiscard]] Int getViolation() const { return _violationDegree; }
+
   void set(Int violationDegree, Int objective) {
     _violationDegree = violationDegree;
     _objective = objective;

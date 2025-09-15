@@ -74,6 +74,26 @@ void Objective::tighten() {
   _solver.endCommit();
 }
 
+void Objective::tighten(const Cost& cost) {
+  if (_bound == propagation::NULL_ID) {
+    return;
+  }
+
+  const Int newBound =
+      _problemType == fznparser::ProblemType::SATISFY
+          ? _solver.committedValue(_bound)
+          : (cost.getObjective() +
+             (_problemType == fznparser::ProblemType::MINIMIZE ? -1 : 1));
+
+  _solver.beginMove();
+  _solver.setValue(_bound, newBound);
+  _solver.endMove();
+
+  _solver.beginCommit();
+  _solver.query(_violation);
+  _solver.endCommit();
+}
+
 propagation::VarViewId Objective::bound() const noexcept { return _bound; }
 
 }  // namespace atlantis::search

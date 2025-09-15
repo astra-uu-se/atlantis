@@ -6,6 +6,7 @@
 
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 #include "search/savedAssignment.hpp"
+#include "search/threadController.hpp"
 #include "types.hpp"
 
 namespace atlantis {
@@ -29,7 +30,8 @@ class FznBackend {
       const invariantgraph::FznInvariantGraph& invariantGraph,
       const search::Assignment& assignment);
   static search::SavedAssignment onSolutionDefault(
-      const invariantgraph::FznInvariantGraph&, const search::Assignment&);
+      const invariantgraph::FznInvariantGraph&, const search::Assignment&,
+      search::ThreadController& controller, Int threadId);
   static void onFinishDefault(bool);
 
  private:
@@ -41,7 +43,9 @@ class FznBackend {
   const std::uint_fast32_t _threadCount;
 
   std::function<search::SavedAssignment(
-      const invariantgraph::FznInvariantGraph&, const search::Assignment&)>
+      const invariantgraph::FznInvariantGraph& invariantGraph,
+      const search::Assignment& assignment,
+      search::ThreadController& controller, Int threadId)>
       _onSolution = onSolutionDefault;
   std::function<void(bool)> _onFinish = onFinishDefault;
 
@@ -60,7 +64,8 @@ class FznBackend {
   void solveThread(logging::Logger& logger, uint_fast32_t threadId,
                    ObjectiveDirection objective_direction,
                    fznparser::ProblemType problemType,
-                   std::shared_ptr<search::AnnealingSchedule> schedule);
+                   std::shared_ptr<search::AnnealingSchedule> schedule,
+                   search::ThreadController& controller);
 
   void setTimelimit(std::optional<std::chrono::milliseconds> timeLimit) {
     _timelimit = timeLimit;
@@ -72,9 +77,10 @@ class FznBackend {
 
   void setRandomSeed(std::uint_fast32_t seed) { _seed = seed; }
 
-  void setOnSolution(const std::function<search::SavedAssignment(
-                         const invariantgraph::FznInvariantGraph&,
-                         const search::Assignment&)>& onSolution) {
+  void setOnSolution(
+      const std::function<search::SavedAssignment(
+          const invariantgraph::FznInvariantGraph&, const search::Assignment&,
+          search::ThreadController&, Int)>& onSolution) {
     _onSolution = onSolution;
   }
 

@@ -15,6 +15,8 @@ class SavedAssignment {
   explicit SavedAssignment(const Assignment &assignment);
 
   [[nodiscard]] Cost getCost() const { return _cost; }
+
+  void setCost(const Cost &cost) { _cost = cost; }
 };
 
 }  // namespace atlantis::search
