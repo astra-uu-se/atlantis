@@ -116,12 +116,15 @@ search::SavedAssignment FznBackend::onSolutionDefault(
     Int threadId) {
   // TODO: this saved assignment is only used to pass a cost.
   // This should either be used more or replaced by a search::Cost.
-  search::SavedAssignment savedAssignment = search::SavedAssignment(assignment);
-  search::Cost bestCost =
+  auto savedAssignment = search::SavedAssignment(assignment);
+  const search::Cost bestCost =
       controller.trySolution(threadId, savedAssignment.getCost());
 
   if (bestCost.getObjective() == assignment.getCost().getObjective()) {
-    displaySolution(invariantGraph, assignment);
+    if (controller.shouldPrint(threadId)) {
+      displaySolution(invariantGraph, assignment);
+      controller.hasPrinted();
+    }
   }
 
   savedAssignment.setCost(bestCost);

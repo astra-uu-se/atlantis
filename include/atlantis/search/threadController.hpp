@@ -11,10 +11,9 @@ class ThreadController {
   std::optional<Cost> _bestCost;
   Int _bestThread;
   mutable std::mutex _lock;
-  Int _counter;
+  mutable std::mutex _printLock;
 
-  void lock(Int threadId) const;
-  void unlock(Int threadId) const;
+  Int _counter;  // This is just for tracking purposes
 
  public:
   ThreadController();
@@ -25,6 +24,10 @@ class ThreadController {
   [[nodiscard]] Int getBestThreadId() const { return _bestThread; }
 
   [[nodiscard]] Cost getCost() const { return _bestCost.value(); }
+
+  [[nodiscard]] bool shouldPrint(Int threadId) const;
+
+  void hasPrinted() const;
 };
 
 }  // namespace atlantis::search

@@ -7,20 +7,8 @@ namespace atlantis::search {
 ThreadController::ThreadController()
     : _hasSolution(false), _bestThread(-1), _counter(-1) {}
 
-void ThreadController::lock(Int threadId) const {
-  // std::cerr << "Thread " << threadId << " wants the lock" << std::endl;
-  _lock.lock();
-  // std::cerr << "Thread " << threadId << " has taken the lock" << std::endl;
-}
-
-void ThreadController::unlock(Int threadId) const {
-  _lock.unlock();
-  // std::cerr << "Thread " << threadId << " has released the lock." <<
-  // std::endl;
-}
-
-Cost ThreadController::trySolution(Int threadId, Cost cost) {
-  lock(threadId);
+Cost ThreadController::trySolution(const Int threadId, Cost cost) {
+  std::lock_guard lock(_lock);
 
   _counter++;
 
@@ -31,7 +19,6 @@ Cost ThreadController::trySolution(Int threadId, Cost cost) {
     std::cerr << _counter << ": Thread " << threadId
               << " has found the first solution with cost " << cost.toString()
               << "." << std::endl;
-    unlock(threadId);
     return _bestCost.value();
   }
 
@@ -45,8 +32,17 @@ Cost ThreadController::trySolution(Int threadId, Cost cost) {
     _bestThread = threadId;
   }
 
-  unlock(threadId);
   return _bestCost.value();
 }
+
+bool ThreadController::shouldPrint(const Int threadId) const {
+  std::lock_guard lock(_lock);
+
+  const bool print = _hasSolution && _bestThread == threadId;
+  if (print) _printLock.lock();
+  return print;
+}
+
+void ThreadController::hasPrinted() const { _printLock.unlock(); }
 
 }  // namespace atlantis::search
