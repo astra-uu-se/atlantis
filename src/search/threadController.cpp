@@ -4,9 +4,6 @@
 
 namespace atlantis::search {
 
-ThreadController::ThreadController()
-    : _hasSolution(false), _bestThread(-1), _counter(-1) {}
-
 Cost ThreadController::trySolution(const Int threadId, Cost cost) {
   std::lock_guard lock(_lock);
 

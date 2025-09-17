@@ -16,7 +16,8 @@ class ThreadController {
   Int _counter;  // This is just for tracking purposes
 
  public:
-  ThreadController();
+  explicit ThreadController()
+      : _hasSolution(false), _bestThread(-1), _counter(-1) {}
 
   // Returns the Cost of the best solution across all threads.
   Cost trySolution(Int threadId, Cost cost);

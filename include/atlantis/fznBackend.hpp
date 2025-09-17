@@ -35,7 +35,7 @@ class FznBackend {
   static void onFinishDefault(bool);
 
  private:
-  fznparser::Model _model;
+  std::shared_ptr<fznparser::Model> _model;
   search::AnnealingScheduleFactory _annealingScheduleFactory;
   std::optional<std::chrono::milliseconds> _timelimit;
   std::uint_fast32_t _seed;
@@ -52,7 +52,7 @@ class FznBackend {
  public:
   explicit FznBackend(fznparser::Model&& model,
                       const std::uint_fast32_t threadCount)
-      : _model(std::move(model)),
+      : _model(std::make_shared<fznparser::Model>(std::move(model))),
         _seed(std::time(nullptr)),
         _threadCount(threadCount) {}
 
@@ -60,12 +60,6 @@ class FznBackend {
              std::uint_fast32_t threadCount = 1);
 
   void solve(logging::Logger& logger);
-
-  void solveThread(logging::Logger& logger, uint_fast32_t threadId,
-                   ObjectiveDirection objective_direction,
-                   fznparser::ProblemType problemType,
-                   std::shared_ptr<search::AnnealingSchedule> schedule,
-                   search::ThreadController& controller);
 
   void setTimelimit(std::optional<std::chrono::milliseconds> timeLimit) {
     _timelimit = timeLimit;

@@ -9,14 +9,11 @@
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealer.hpp"
 #include "atlantis/search/assignment.hpp"
-#include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
 #include "atlantis/search/objective.hpp"
-#include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
-#include "atlantis/search/searchProcedure.hpp"
-#include "atlantis/search/searchVariable.hpp"
 #include "atlantis/search/threadController.hpp"
+#include "atlantis/solverThread.hpp"
 #include "atlantis/utils/fznOutput.hpp"
 
 namespace atlantis {
@@ -164,92 +161,13 @@ static ObjectiveDirection getObjectiveDirection(
   }
 }
 
-void FznBackend::solveThread(
-    logging::Logger& logger, uint_fast32_t threadId,
-    ObjectiveDirection objectiveDirection, fznparser::ProblemType problemType,
-    std::shared_ptr<search::AnnealingSchedule> schedule,
-    search::ThreadController& controller) {
-  propagation::Solver solver;
-
-  // TODO: we should improve the initialisation in order to avoid the need for
-  // breaking the dynamic cycles
-  invariantgraph::FznInvariantGraph invariantGraph(solver, true);
-  logger.timedProcedure("building invariant graph",
-                        [&] { invariantGraph.build(_model); });
-  invariantGraph.construct();
-
-  // We only want this to happen once
-  // Either before the parallelization or only on 1 thread
-  if (threadId == 0 && _dotFilePath.has_value()) {
-    std::ofstream dotFile;
-    dotFile.open(*_dotFilePath);
-    if (dotFile) {
-      invariantGraph.writeDotFile(dotFile);
-    }
-    dotFile.close();
-  }
-
-  auto neighborhood = invariantGraph.neighborhood();
-  neighborhood.printNeighborhood(logger);
-
-  // Might be changed to shared later
-  search::Objective searchObjective(solver, problemType);
-
-  auto violation = searchObjective.registerNode(
-      invariantGraph.totalViolationVarId(), invariantGraph.objectiveVarId());
-
-  invariantGraph.close();
-
-  // TODO: extract to shared -- requires the original invariantGraph
-  const Int objectiveOptimalValue =
-      _model.isSatisfactionProblem() ? 0
-      : _model.isMinimisationProblem()
-          ? invariantGraph.objectiveVarNode().lowerBound()
-          : invariantGraph.objectiveVarNode().upperBound();
-
-  search::Assignment assignment(solver, neighborhood, violation,
-                                invariantGraph.objectiveVarId(),
-                                objectiveDirection, objectiveOptimalValue);
-
-  // This can possibly be extracted, or restricted to one thread
-  // TODO: this case isn't handled properly
-  if (neighborhood.coveredVars().empty()) {
-    // NOTE: this may be the source of the SavedAssignment stats issue
-    search::SearchStatistics statistics;
-    search::SavedAssignment savedAssignment =
-        _onSolution(invariantGraph, assignment, controller, threadId);
-    _onFinish(true);
-  }
-
-  logger.debug("Using seed {}.", _seed + threadId);
-  search::RandomProvider random(_seed + threadId);
-
-  search::SearchProcedure search(random, assignment, neighborhood,
-                                 searchObjective);
-
-  search::Annealer annealer(random, *schedule, assignment);
-
-  // TODO: extract to shared -- requires fixing invariantGraph
-  auto onSolution = [&](const search::Assignment& a) {
-    return _onSolution(invariantGraph, a, controller, threadId);
-  };
-  auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
-  search::SearchController searchController(_model.isSatisfactionProblem(),
-                                            std::move(onSolution),
-                                            std::move(onFinish), _timelimit);
-
-  logger.timedFunction<int>(
-      "search", [&] { return search.run(searchController, annealer, logger); });
-}
-
 void FznBackend::solve(logging::Logger& logger) {
   // Shared data
-  fznparser::ProblemType problemType = _model.solveType().problemType();
+  fznparser::ProblemType problemType = _model->solveType().problemType();
   const auto objectiveDirection = getObjectiveDirection(problemType);
   auto schedule = _annealingScheduleFactory.create();
 
-  // This handles communication between threads
-  search::ThreadController controller = search::ThreadController();
+  auto controller = std::make_shared<search::ThreadController>();
 
   std::vector<std::thread> threads;
   std::cerr << "Thread count is " << _threadCount << "\n";
@@ -257,8 +175,11 @@ void FznBackend::solve(logging::Logger& logger) {
   for (std::uint_fast32_t threadId = 0; threadId < _threadCount; threadId++) {
     threads.emplace_back([&logger, &objectiveDirection, &problemType, &schedule,
                           threadId, &controller, this] {
-      solveThread(logger, threadId, objectiveDirection, problemType, schedule,
-                  controller);
+      auto thread = SolverThread(
+          objectiveDirection, problemType, schedule, threadId, controller,
+          _model, _seed + threadId, _dotFilePath, _timelimit, _onSolution, _onFinish);
+      _dotFilePath.reset();  // InvariantGraph will only be saved once
+      thread.solve(logger);
     });
   }
 
@@ -266,9 +187,9 @@ void FznBackend::solve(logging::Logger& logger) {
     thread.join();
   }
 
-  if (controller.getBestThreadId() >= 0) {
-    std::cerr << "Best result is " << controller.getCost().toString()
-              << " from thread " << controller.getBestThreadId() << std::endl;
+  if (controller->getBestThreadId() >= 0) {
+    std::cerr << "Best result is " << controller->getCost().toString()
+              << " from thread " << controller->getBestThreadId() << std::endl;
   } else {
     std::cerr << "No solution found!" << std::endl;
   }
