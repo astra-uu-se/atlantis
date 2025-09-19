@@ -28,7 +28,7 @@ jobs:
           sudo apt-get install gcc-14 g++-14 python3; \
           sudo apt-get update -qq;
 
-      - name: Set Benchmarks Flag
+      - name: Set Benchmark Flag
         uses: haya14busa/action-cond@v1
         id: buildBenchmarksFlag
         with:
@@ -37,11 +37,13 @@ jobs:
           if_false: "OFF"
 
       - name: Create build Folder
+        id: buildFolder
         working-directory: ${{github.workspace}}
         shell: bash
         run: mkdir -p build
 
       - name: Build
+        id: build
         working-directory: ${{github.workspace}}/build
         env:
           CMAKE_FLAGS: >
@@ -52,13 +54,21 @@ jobs:
         run: cmake $CMAKE_FLAGS ..; make -j 8
 
       - name: Test
+        id: test
         working-directory: ${{github.workspace}}/build
         shell: bash
         # Execute tests defined by the CMake configuration.
-        run: ctest
+        run: ctest --output-on-failure
+
+      - name: Output Test Errors
+        if: failure() && steps.test.outcome == 'failure'
+        working-directory: ${{github.workspace}}/Testing/Temporary
+        shell: bash
+        run: cat LastTest.log
 
       - name: Slack
-        if: always()
+        id: slack
+        if: '!cancelled()'
         uses: act10ns/slack@v1
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BUILD }}
@@ -68,6 +78,7 @@ jobs:
           channel: "#build"
 
       - name: Run Benchmarks
+        id: benchmarks
         if: ${{ steps.buildBenchmarksFlag.outputs.value == 'ON' }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH }}
