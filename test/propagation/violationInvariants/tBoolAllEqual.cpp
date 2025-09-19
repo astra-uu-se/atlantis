@@ -244,14 +244,14 @@ RC_GTEST_FIXTURE_PROP(BoolAllEqualTest, rapidcheck, ()) {
   }
 }
 
-class MockAllDifferent : public BoolAllEqual {
+class MockBoolAllEqual : public BoolAllEqual {
  public:
   bool registered = false;
   void registerVars() override {
     registered = true;
     BoolAllEqual::registerVars();
   }
-  explicit MockAllDifferent(SolverBase& solver, VarViewId outputVar,
+  explicit MockBoolAllEqual(SolverBase& solver, VarViewId outputVar,
                             std::vector<VarViewId>&& t_vars)
       : BoolAllEqual(solver, outputVar, std::move(t_vars)) {
     EXPECT_TRUE(outputVar.isVar());
@@ -289,12 +289,12 @@ TEST_F(BoolAllEqualTest, SolverIntegration) {
     std::vector<VarViewId> args;
     constexpr Int numArgs = 10;
     for (Int value = 0; value < numArgs; ++value) {
-      args.emplace_back(_solver->makeIntVar(0, -100, 100));
+      args.emplace_back(_solver->makeIntVar(0, 0, 1));
     }
     const VarViewId viol = _solver->makeIntVar(0, 0, numArgs);
     const VarViewId modifiedVarId = args.front();
-    testNotifications<MockAllDifferent>(
-        &_solver->makeViolationInvariant<MockAllDifferent>(*_solver, viol,
+    testNotifications<MockBoolAllEqual>(
+        &_solver->makeViolationInvariant<MockBoolAllEqual>(*_solver, viol,
                                                            std::move(args)),
         {propMode, markingMode, numArgs + 1, modifiedVarId, 1, viol});
   }
