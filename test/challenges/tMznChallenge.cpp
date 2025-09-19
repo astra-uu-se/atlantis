@@ -206,7 +206,8 @@ TEST_F(MznChallenge, DISABLED_expectedUnsat) {
   for (size_t i = 0; i < expectedUnsatFznModels.size(); ++i) {
     logModelName(expectedUnsatFznModels.at(i), false, i,
                  expectedUnsatFznModels.size());
-    EXPECT_THROW(testChallenge(expectedUnsatFznModels.at(i)), InconsistencyException);
+    EXPECT_THROW(testChallenge(expectedUnsatFznModels.at(i)),
+                 InconsistencyException);
   }
 }
 TEST_F(MznChallenge, DISABLED_failing) {

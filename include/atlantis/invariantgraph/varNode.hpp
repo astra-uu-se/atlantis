@@ -43,12 +43,10 @@ class VarNode {
                    const std::shared_ptr<SearchDomain>& domain,
                    DomainType = DomainType::DOM_DOMAIN);
 
-  explicit VarNode(const std::string& identifier,
-                    VarNodeId, bool isIntVar,
+  explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
                    DomainType = DomainType::DOM_RANGE);
 
-  explicit VarNode(const std::string& identifier,
-  VarNodeId, bool isIntVar,
+  explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
                    const std::shared_ptr<SearchDomain>& domain,
                    DomainType = DomainType::DOM_DOMAIN);
 

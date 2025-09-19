@@ -121,8 +121,8 @@ static std::vector<VarNodeId> findCycle(
       const VarNodeId outputId = stack.back();
       stack.pop_back();
       if (outputId >= componentOfVar.size()) {
-        // This var has been added when breaking a cycle and cannot be in another
-        // cycle.
+        // This var has been added when breaking a cycle and cannot be in
+        // another cycle.
         continue;
       }
       discoverTime[outputId] = discoverTime[orig];
@@ -134,11 +134,13 @@ static std::vector<VarNodeId> findCycle(
       assert(defInv != NULL_NODE_ID);
       const auto& invNode = graph.invariantNodeConst(defInv);
       for (unsigned int i = 0; i < (findDynCycles ? 2 : 1); ++i) {
-        for (const VarNodeId inputId : (i == 0 ? invNode.staticInputVarNodeIds() : invNode.dynamicInputVarNodeIds())) {
+        for (const VarNodeId inputId :
+             (i == 0 ? invNode.staticInputVarNodeIds()
+                     : invNode.dynamicInputVarNodeIds())) {
           if (inputId >= componentOfVar.size() ||
               componentOfVar[inputId] != componentIndex) {
-            // This var either: (i) was added when breaking a cycle or (ii) is not
-            // in the current component.
+            // This var either: (i) was added when breaking a cycle or (ii) is
+            // not in the current component.
             continue;
           }
           // what if outputId != NULL_NODE_ID
@@ -147,7 +149,8 @@ static std::vector<VarNodeId> findCycle(
             std::vector<VarNodeId> cycle;
             cycle.reserve(component.size());
             cycle.emplace_back(inputId);
-            for (VarNodeId vId = outputId; vId != inputId && vId != NULL_NODE_ID; vId = outputOf[vId]) {
+            for (VarNodeId vId = outputId;
+                 vId != inputId && vId != NULL_NODE_ID; vId = outputOf[vId]) {
               assert(vId < componentOfVar.size());
               assert(discoverTime.at(vId) == discoverTime.at(orig));
               assert(componentOfVar.at(vId) == componentOfVar.at(orig));
@@ -273,7 +276,9 @@ VarNodeId InvariantGraph::retrieveBoolVarNode(bool b) {
 VarNodeId InvariantGraph::retrieveBoolVarNode(const std::string& identifier,
                                               DomainType domainType) {
   if (!containsVarNode(identifier)) {
-    const VarNodeId nId = _varNodes.emplace_back(identifier, nextVarNodeId(), false, domainType).varNodeId();
+    const VarNodeId nId =
+        _varNodes.emplace_back(identifier, nextVarNodeId(), false, domainType)
+            .varNodeId();
     _namedVarNodeIndices.emplace(identifier, nId);
     return nId;
   }
@@ -383,10 +388,12 @@ VarNodeId InvariantGraph::retrieveIntVarNode(
     return node.varNodeId();
   }
 
-  VarNodeId nId = domain->isFixed() ?
-    retrieveIntVarNode(domain->lowerBound())
-      : _varNodes.emplace_back(identifier, nextVarNodeId(), true, domain, domainType)
-      .varNodeId();
+  VarNodeId nId = domain->isFixed()
+                      ? retrieveIntVarNode(domain->lowerBound())
+                      : _varNodes
+                            .emplace_back(identifier, nextVarNodeId(), true,
+                                          domain, domainType)
+                            .varNodeId();
 
   assert(!containsVarNode(identifier));
   _namedVarNodeIndices.emplace(identifier, nId);
