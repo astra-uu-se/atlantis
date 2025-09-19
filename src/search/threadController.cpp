@@ -4,7 +4,8 @@
 
 namespace atlantis::search {
 
-Cost ThreadController::trySolution(const Int threadId, Cost cost) {
+SavedAssignment ThreadController::trySolution(const Int threadId,
+                                              const SavedAssignment& solution) {
   std::lock_guard lock(_lock);
 
   _counter++;
@@ -12,24 +13,26 @@ Cost ThreadController::trySolution(const Int threadId, Cost cost) {
   if (!_hasSolution) {
     _hasSolution = true;
     _bestThread = threadId;
-    _bestCost = cost;
+    _bestCost = solution.getCost();
+    _solution = solution;
     std::cerr << _counter << ": Thread " << threadId
-              << " has found the first solution with cost " << cost.toString()
-              << "." << std::endl;
-    return _bestCost.value();
+              << " has found the first solution with cost "
+              << solution.getCost().toString() << "." << std::endl;
+    return _solution.value();
   }
 
   std::cerr << _counter << ": Thread " << threadId
-            << " has found new solution with cost " << cost.toString()
-            << ". Previous best has cost " << _bestCost->toString() << "."
-            << std::endl;
+            << " has found new solution with cost "
+            << solution.getCost().toString() << ". Previous best has cost "
+            << _bestCost->toString() << "." << std::endl;
 
-  if (cost.isBetterThan(_bestCost.value())) {
-    _bestCost = cost;
+  if (solution.getCost().isBetterThan(_bestCost.value())) {
     _bestThread = threadId;
+    _bestCost = solution.getCost();
+    _solution = solution;
   }
 
-  return _bestCost.value();
+  return _solution.value();
 }
 
 bool ThreadController::shouldPrint(const Int threadId) const {

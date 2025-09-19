@@ -2,6 +2,7 @@
 
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
+#include "atlantis/search/savedAssignment.hpp"
 
 namespace atlantis::search {
 
@@ -116,6 +117,10 @@ Cost Assignment::getCost() const {
       _violation == propagation::NULL_ID ? 0 : _solver.currentValue(_violation),
       _objective == propagation::NULL_ID ? 0 : _solver.currentValue(_objective),
       _objectiveDirection};
+}
+
+void Assignment::setAssignment(SavedAssignment saved) const {
+  _solver.updateValues(saved.getValues());
 }
 
 }  // namespace atlantis::search

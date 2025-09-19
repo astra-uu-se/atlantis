@@ -101,6 +101,12 @@ class SolverBase {
     return _store.currentValues();
   }
 
+  void updateValues(std::vector<Int>  values) {
+    for (size_t i = 0; i < values.size(); i++) {
+      updateValue(i, values[i]);
+    }
+  }
+
   //--------------------- Registration ---------------------
   /**
    * Register an invariant in the solver and return its pointer.

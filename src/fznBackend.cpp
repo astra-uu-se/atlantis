@@ -110,21 +110,17 @@ void FznBackend::displaySolution(
 search::SavedAssignment FznBackend::onSolutionDefault(
     const invariantgraph::FznInvariantGraph& invariantGraph,
     const search::Assignment& assignment, search::ThreadController& controller,
-    Int threadId) {
-  // TODO: this saved assignment is only used to pass a cost.
-  // This should either be used more or replaced by a search::Cost.
+    const Int threadId) {
   auto savedAssignment = search::SavedAssignment(assignment);
-  const search::Cost bestCost =
-      controller.trySolution(threadId, savedAssignment.getCost());
+  savedAssignment = controller.trySolution(threadId, savedAssignment);
 
-  if (bestCost.getObjective() == assignment.getCost().getObjective()) {
-    if (controller.shouldPrint(threadId)) {
-      displaySolution(invariantGraph, assignment);
-      controller.hasPrinted();
-    }
+  if (savedAssignment.getCost().getObjective() ==
+          assignment.getCost().getObjective() &&
+      controller.shouldPrint(threadId)) {
+    displaySolution(invariantGraph, assignment);
+    controller.hasPrinted();
   }
 
-  savedAssignment.setCost(bestCost);
   return savedAssignment;
 }
 
@@ -175,9 +171,10 @@ void FznBackend::solve(logging::Logger& logger) {
   for (std::uint_fast32_t threadId = 0; threadId < _threadCount; threadId++) {
     threads.emplace_back([&logger, &objectiveDirection, &problemType, &schedule,
                           threadId, &controller, this] {
-      auto thread = SolverThread(
-          objectiveDirection, problemType, schedule, threadId, controller,
-          _model, _seed + threadId, _dotFilePath, _timelimit, _onSolution, _onFinish);
+      auto thread =
+          SolverThread(objectiveDirection, problemType, schedule, threadId,
+                       controller, _model, _seed + threadId, _dotFilePath,
+                       _timelimit, _onSolution, _onFinish);
       _dotFilePath.reset();  // InvariantGraph will only be saved once
       thread.solve(logger);
     });

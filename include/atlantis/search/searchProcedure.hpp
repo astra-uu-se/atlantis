@@ -31,6 +31,8 @@ class SearchProcedure {
   Objective _objective;
   std::optional<SavedAssignment> _solution;
 
+  void onSolution(SearchController& controller);
+
  public:
   SearchProcedure(RandomProvider& random, Assignment& assignment,
                   neighborhoods::Neighborhood& neighborhood,

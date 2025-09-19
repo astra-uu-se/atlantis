@@ -12,6 +12,7 @@ class Solver;
 }
 
 namespace atlantis::search {
+class SavedAssignment;
 
 namespace neighborhoods {
 class Neighborhood;
@@ -51,7 +52,7 @@ class Assignment {
   }
 
   /**
-   * Get the committed of a variable in the assignment.
+   * Get the committed value of a variable in the assignment.
    */
   [[nodiscard]] virtual Int committedValue(propagation::VarViewId) const;
 
@@ -72,7 +73,9 @@ class Assignment {
 
   [[nodiscard]] virtual ObjectiveDirection objectiveDirection() const;
 
-  [[nodiscard]] virtual Cost getCost() const;
+  [[nodiscard]] Cost getCost() const;
+
+  void setAssignment(SavedAssignment saved) const;
 };
 
 }  // namespace atlantis::search

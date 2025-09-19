@@ -38,6 +38,12 @@ SearchStatistics makeStats(const Statistic& rounds,
   return stats;
 }
 
+void SearchProcedure::onSolution(SearchController& controller) {
+  _solution = controller.onSolution(_assignment);
+  _objective.tighten(_solution->getCost());
+  _assignment.setAssignment(_solution.value());
+}
+
 int SearchProcedure::run(SearchController& controller, Annealer& annealer,
                          logging::Logger& logger) {
   auto rounds = std::make_unique<CounterStatistic>("Rounds");
@@ -50,10 +56,7 @@ int SearchProcedure::run(SearchController& controller, Annealer& annealer,
     logger.timedProcedure(logging::Level::LVL_TRACE, "initialize assignment",
                           [&] { _assignment.initialize(_random); });
 
-    if (_assignment.satisfiesConstraints()) {
-      _solution = controller.onSolution(_assignment);
-      _objective.tighten();
-    }
+    if (_assignment.satisfiesConstraints()) onSolution(controller);
 
     annealer.start();
 
@@ -65,11 +68,7 @@ int SearchProcedure::run(SearchController& controller, Annealer& annealer,
           if (annealer.acceptMove(cost)) {
             _assignment.commitLastProbe();
             moves->increment();
-            if (_assignment.satisfiesConstraints()) {
-              _solution = controller.onSolution(_assignment);
-              _objective.tighten(_solution->getCost());
-              // _objective.tighten();
-            }
+            if (_assignment.satisfiesConstraints()) onSolution(controller);
           }
         }
 
