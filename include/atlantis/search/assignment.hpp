@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_map>
 #include <vector>
 
 #include "atlantis/propagation/solver.hpp"
@@ -34,44 +35,42 @@ class Assignment {
                       ObjectiveDirection objectiveDirection,
                       Int objectiveOptimalValue);
 
-  virtual ~Assignment() = default;
+  ~Assignment() = default;
 
-  virtual Cost initialize(RandomProvider&);
+  Cost initialize(RandomProvider&);
 
-  virtual Cost performProbe(RandomProvider&);
+  Cost performProbe(RandomProvider&);
 
-  virtual void commitLastProbe();
+  void commitLastProbe();
 
   /**
    * Get the current value of a variable in the assignment.
    */
-  [[nodiscard]] virtual Int currentValue(propagation::VarViewId) const;
+  [[nodiscard]] Int currentValue(propagation::VarViewId) const;
 
-  [[nodiscard]] std::vector<Int> currentValues() const {
-    return _solver.currentValues();
-  }
+  [[nodiscard]] std::unordered_map<propagation::VarId, Int> currentValues() const;
 
   /**
    * Get the committed value of a variable in the assignment.
    */
-  [[nodiscard]] virtual Int committedValue(propagation::VarViewId) const;
+  [[nodiscard]] Int committedValue(propagation::VarViewId) const;
 
   /**
    * @return True if the current assignment satisfies all the constraints, false
    * otherwise.
    */
-  [[nodiscard]] virtual bool satisfiesConstraints() const;
+  [[nodiscard]] bool satisfiesConstraints() const;
 
-  [[nodiscard]] virtual bool objectiveIsOptimal() const;
+  [[nodiscard]] bool objectiveIsOptimal() const;
 
-  virtual void set(propagation::VarId searchVarId, Int val);
+  void set(propagation::VarId searchVarId, Int val);
 
-  [[nodiscard]] virtual const std::vector<propagation::VarId>& searchVars()
+  [[nodiscard]] const std::vector<propagation::VarId>& searchVars()
       const;
 
-  [[nodiscard]] virtual Timestamp currentTimestamp() const;
+  [[nodiscard]] Timestamp currentTimestamp() const;
 
-  [[nodiscard]] virtual ObjectiveDirection objectiveDirection() const;
+  [[nodiscard]] ObjectiveDirection objectiveDirection() const;
 
   [[nodiscard]] Cost getCost() const;
 

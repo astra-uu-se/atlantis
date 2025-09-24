@@ -77,7 +77,7 @@ void SolverThread::solve(logging::Logger& logger) {
   search::RandomProvider random(_seed);
   search::Annealer annealer(random, *_schedule, assignment);
   search::SearchProcedure search(random, assignment, neighborhood,
-                                 searchObjective);
+                                 searchObjective, _searchType);
 
   // TODO: extract to shared -- requires fixing invariantGraph
   auto onSolution = [&](const search::Assignment& a) {

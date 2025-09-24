@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include "atlantis/propagation/types.hpp"
@@ -58,8 +59,6 @@ class Store {
   [[nodiscard]] size_t numInvariants() const;
 
   [[nodiscard]] VarId dynamicInputVar(Timestamp, InvariantId) const noexcept;
-
-  [[nodiscard]] std::vector<Int> currentValues() const;
 };
 
 }  // namespace atlantis::propagation

@@ -8,6 +8,7 @@
 #include "atlantis/search/objective.hpp"
 #include "search/annealing/annealingSchedule.hpp"
 #include "search/savedAssignment.hpp"
+#include "search/searchProcedure.hpp"
 #include "search/threadController.hpp"
 #include "types.hpp"
 
@@ -19,6 +20,7 @@ class SolverThread {
   std::shared_ptr<search::AnnealingSchedule> _schedule;
   Int _threadId;
   std::shared_ptr<search::ThreadController> _controller;
+  search::SearchType _searchType;
 
   // Necessary objects
   std::shared_ptr<fznparser::Model> _model;
@@ -43,6 +45,7 @@ class SolverThread {
       const std::shared_ptr<search::AnnealingSchedule>& schedule,
       const Int threadId,
       const std::shared_ptr<search::ThreadController>& controller,
+      const search::SearchType searchType,
       const std::shared_ptr<fznparser::Model>& model,
       const std::uint_fast32_t seed,
       std::optional<std::filesystem::path> dotFilePath,
@@ -57,6 +60,7 @@ class SolverThread {
         _schedule(schedule),
         _threadId(threadId),
         _controller(controller),
+        _searchType(searchType),
         _model(std::move(model)),
         _seed(seed),
         _dotFilePath(std::move(dotFilePath)),

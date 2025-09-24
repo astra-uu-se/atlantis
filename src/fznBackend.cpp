@@ -132,7 +132,8 @@ void FznBackend::onFinishDefault(bool hadSol) {
 
 FznBackend::FznBackend(logging::Logger& logger,
                        std::filesystem::path&& modelFile,
-                       const uint_fast32_t threadCount)
+                       const uint_fast32_t threadCount,
+                       search::SearchType searchType)
     : FznBackend(logger.timedFunction<fznparser::Model>(
                      "parsing FlatZinc",
                      [&] {
@@ -142,7 +143,7 @@ FznBackend::FznBackend(logging::Logger& logger,
                                     m.constraints().size());
                        return m;
                      }),
-                 threadCount) {}
+                 threadCount, searchType) {}
 
 static ObjectiveDirection getObjectiveDirection(
     fznparser::ProblemType problemType) {
@@ -168,13 +169,13 @@ void FznBackend::solve(logging::Logger& logger) {
   std::vector<std::thread> threads;
   std::cerr << "Thread count is " << _threadCount << "\n";
 
-  for (std::uint_fast32_t threadId = 0; threadId < _threadCount; threadId++) {
+  for (Int threadId = 0; threadId < _threadCount; threadId++) {
     threads.emplace_back([&logger, &objectiveDirection, &problemType, &schedule,
                           threadId, &controller, this] {
       auto thread =
           SolverThread(objectiveDirection, problemType, schedule, threadId,
-                       controller, _model, _seed + threadId, _dotFilePath,
-                       _timelimit, _onSolution, _onFinish);
+                       controller, _searchType, _model, _seed + threadId,
+                       _dotFilePath, _timelimit, _onSolution, _onFinish);
       _dotFilePath.reset();  // InvariantGraph will only be saved once
       thread.solve(logger);
     });

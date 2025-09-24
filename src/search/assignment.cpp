@@ -82,6 +82,15 @@ Int Assignment::currentValue(propagation::VarViewId var) const {
   return _solver.currentValue(var);
 }
 
+std::unordered_map<propagation::VarId, Int> Assignment::currentValues() const {
+  std::unordered_map<propagation::VarId, Int> saved;
+  for (auto var : searchVars()) {
+    saved[var] = currentValue(var);
+  }
+
+  return saved;
+}
+
 Int Assignment::committedValue(propagation::VarViewId var) const {
   return _solver.committedValue(var);
 }
@@ -120,7 +129,14 @@ Cost Assignment::getCost() const {
 }
 
 void Assignment::setAssignment(SavedAssignment saved) const {
+  _solver.beginMove();
   _solver.updateValues(saved.getValues());
+  _solver.endMove();
+
+  _solver.beginCommit();
+  _solver.query(_violation);
+  _solver.query(_objective);
+  _solver.endCommit();
 }
 
 }  // namespace atlantis::search
