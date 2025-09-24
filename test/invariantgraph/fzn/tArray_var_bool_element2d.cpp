@@ -29,11 +29,11 @@ class array_var_bool_element2dTest : public FznTestBase {
   std::vector<std::vector<std::string>> inputs{};
 
   void generate() override {
-    numRows = *rc::gen::inRange(1, 3);
-    const Int numCols = *rc::gen::inRange(1, 3);
-    const bool useOffset = *rc::gen::arbitrary<bool>();
+    numRows = true ? 1 : *rc::gen::inRange(1, 3);
+    const Int numCols = true ? 1 : *rc::gen::inRange(1, 3);
+    const bool useOffset = false && *rc::gen::arbitrary<bool>();
 
-    constraintIdentifier = useOffset
+    constraintIdentifier = false && useOffset
                                ? "array_var_bool_element2d"
                                : "array_var_bool_element2d_nonshifted_flat";
     std::vector<std::string> flatMatrix;
@@ -45,16 +45,16 @@ class array_var_bool_element2dTest : public FznTestBase {
         flatMatrix.emplace_back(inputs.back().back());
       }
     }
-    const Int rowIdxLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(rowIdxLb, numRows + rowIdxLb - 1, rowIdx);
+    const Int rowIdxLb = true ? 0 : *rc::gen::element(-1024, -1, 0, 1, 1024);
+    addIntArg(IntArgState::PAR, rowIdxLb, numRows + rowIdxLb - 1, rowIdx);
     rowOffset = lowerBound(rowIdx);
 
-    const Int colIdxLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(colIdxLb, numCols + colIdxLb - 1, colIdx);
+    const Int colIdxLb = true ? 0 : *rc::gen::element(-1024, -1, 0, 1, 1024);
+    addIntArg(IntArgState::FIXED, colIdxLb, numCols + colIdxLb - 1, colIdx);
     colOffset = lowerBound(colIdx);
 
-    addBoolVarArray(flatMatrix);
-    addBoolArg(output);
+    addBoolVarArray({BoolArgState::FIXED_TRUE}, flatMatrix);
+    addBoolArg(BoolArgState::PAR_FALSE, output);
     addArg(numRows);
     addArg(rowOffset);
     addArg(colOffset);

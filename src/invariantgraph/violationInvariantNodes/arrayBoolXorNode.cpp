@@ -181,56 +181,56 @@ bool ArrayBoolXorNode::replace() {
   return true;
 }
 
-void ArrayBoolXorNode::registerOutputVars() {
+void ArrayBoolXorNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() > 1 &&
-      violationVarId() == propagation::NULL_ID) {
+      violationVarId(mapping) == propagation::NULL_ID) {
     if (staticInputVarNodeIds().size() == 2) {
       assert(isReified() || shouldHold());
-      registerViolation();
+      registerViolation(solver, mapping);
       return;
     }
-    _intermediate = solver().makeIntVar(0, 0, 0);
+    mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
     if (shouldHold()) {
-      setViolationVarId(solver().makeIntView<propagation::EqualConst>(
-          solver(), _intermediate, 1));
+      setViolationVarId(solver.makeIntView<propagation::EqualConst>(
+          solver, mapping.intermediateId(id()), 1), mapping);
     } else {
       assert(!isReified() && staticInputVarNodeIds().size() > 2);
-      setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
-          solver(), _intermediate, 1));
+      setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
+          solver, mapping.intermediateId(id()), 1), mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
+        return mapping.solverId(vId) !=
                propagation::NULL_ID;
       }));
 }
 
-void ArrayBoolXorNode::registerNode() {
+void ArrayBoolXorNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
-  assert(violationVarId() != propagation::NULL_ID);
+  assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(staticInputVarNodeIds().size() == 2 ||
-         _intermediate != propagation::NULL_ID);
-  assert(staticInputVarNodeIds().size() == 2 ? violationVarId().isVar()
-                                             : _intermediate.isVar());
+         mapping.intermediateId(id()) != propagation::NULL_ID);
+  assert(staticInputVarNodeIds().size() == 2 ? violationVarId(mapping).isVar()
+                                             : mapping.intermediateId(id()).isVar());
 
   std::vector<propagation::VarViewId> inputNodeIds;
   std::ranges::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(inputNodeIds),
-      [&](const auto& node) { return invariantGraph().varId(node); });
+      [&](const auto& node) { return mapping.solverId(node); });
   if (staticInputVarNodeIds().size() == 2) {
     assert(isReified() || shouldHold());
-    assert(_intermediate == propagation::NULL_ID);
-    solver().makeInvariant<propagation::BoolXor>(
-        solver(), violationVarId(), inputNodeIds.front(), inputNodeIds.back());
+    assert(mapping.intermediateId(id()) == propagation::NULL_ID);
+    solver.makeInvariant<propagation::BoolXor>(
+        solver, violationVarId(mapping), inputNodeIds.front(), inputNodeIds.back());
     return;
   }
 
-  solver().makeInvariant<propagation::BoolLinear>(solver(), _intermediate,
+  solver.makeInvariant<propagation::BoolLinear>(solver, mapping.intermediateId(id()),
                                                   std::move(inputNodeIds));
 }
 

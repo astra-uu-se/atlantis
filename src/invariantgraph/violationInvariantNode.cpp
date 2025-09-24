@@ -98,11 +98,11 @@ void ViolationInvariantNode::updateReified() {
   InvariantNode::updateState();
 }
 
-propagation::VarViewId ViolationInvariantNode::violationVarId() const {
+propagation::VarViewId ViolationInvariantNode::violationVarId(const SolverMapping& mapping) const {
   if (isReified()) {
-    return invariantGraphConst().varId(outputVarNodeIds().front());
+    return mapping.solverId(outputVarNodeIds().front());
   }
-  return _violationVarId;
+  return mapping.violationId(id());
 }
 
 VarNodeId ViolationInvariantNode::reifiedViolationNodeId() const {
@@ -112,23 +112,35 @@ VarNodeId ViolationInvariantNode::reifiedViolationNodeId() const {
 void ViolationInvariantNode::updateState() { updateReified(); }
 
 propagation::VarViewId ViolationInvariantNode::setViolationVarId(
-    propagation::VarViewId varId) {
-  assert(violationVarId() == propagation::NULL_ID);
+    propagation::VarViewId varId, SolverMapping& mapping) const {
   if (isReified()) {
-    invariantGraph().varNode(outputVarNodeIds().front()).setVarId(varId);
-  } else {
-    _violationVarId = varId;
+    if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+      mapping.setSolverId(outputVarNodeIds().front(), varId);
+    }
+    return mapping.solverId(outputVarNodeIds().front());
   }
-  return violationVarId();
+  if (mapping.violationId(id()) == propagation::NULL_ID) {
+    mapping.setViolationId(id(), varId);
+  }
+  return mapping.violationId(id());
 }
 
 propagation::VarViewId ViolationInvariantNode::registerViolation(
-    Int initialValue) {
-  if (violationVarId() == propagation::NULL_ID) {
-    return setViolationVarId(
-        solver().makeIntVar(initialValue, initialValue, initialValue));
+    Int initialValue, propagation::SolverBase& solver, SolverMapping& mapping) const {
+  if (isReified()) {
+    if (mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID) {
+      return mapping.solverId(outputVarNodeIds().front());
+    }
+  } else if (mapping.violationId(id()) != propagation::NULL_ID) {
+    return mapping.violationId(id());
   }
-  return violationVarId();
+  return setViolationVarId(
+        solver.makeIntVar(initialValue, initialValue, initialValue), mapping);
+}
+
+propagation::VarViewId ViolationInvariantNode::registerViolation(
+    propagation::SolverBase& solver, SolverMapping& mapping) const {
+  return registerViolation(0, solver, mapping);
 }
 
 }  // namespace atlantis::invariantgraph

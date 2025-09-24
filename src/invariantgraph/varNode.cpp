@@ -1,5 +1,6 @@
 #include "atlantis/invariantgraph/varNode.hpp"
 
+#include <atlantis/invariantgraph/solverMapping.hpp>
 #include <cassert>
 #include <fznparser/variables.hpp>
 
@@ -60,13 +61,6 @@ VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
-propagation::VarViewId VarNode::varId() const { return _varId; }
-
-void VarNode::setVarId(propagation::VarViewId varId) {
-  assert(_varId == propagation::NULL_ID);
-  _varId = varId;
-}
-
 std::shared_ptr<const SearchDomain> VarNode::constDomain() const noexcept {
   return _domain;
 }
@@ -92,9 +86,9 @@ void VarNode::setIsViolationVar(bool isViolVar) {
 }
 
 propagation::VarViewId VarNode::postDomainConstraint(
-    propagation::SolverBase& solver) {
-  if (_domainViolationId != propagation::NULL_ID) {
-    return _domainViolationId;
+    propagation::SolverBase& solver, SolverMapping& mapping) const  {
+  if (mapping.domainViolationId(varNodeId()) != propagation::NULL_ID) {
+    return mapping.domainViolationId(varNodeId());
   }
   if (_domainType == DomainType::DOM_NONE ||
       ((staticInputTo().empty() || dynamicInputTo().empty()) &&
@@ -105,12 +99,12 @@ propagation::VarViewId VarNode::postDomainConstraint(
     throw std::runtime_error("Domain type is fixed but domain is not fixed");
   }
 
-  if (varId() == propagation::NULL_ID) {
+  if (mapping.solverId(varNodeId()) == propagation::NULL_ID) {
     throw std::runtime_error("VarNode has no varId");
   }
 
-  const Int solverLb = solver.lowerBound(varId());
-  const Int solverUb = solver.upperBound(varId());
+  const Int solverLb = solver.lowerBound(mapping.solverId(varNodeId()));
+  const Int solverUb = solver.upperBound(mapping.solverId(varNodeId()));
 
   if (!isIntVar()) {
     const bool holdsTrue = solverLb <= 0 && 0 <= solverUb;
@@ -129,13 +123,13 @@ propagation::VarViewId VarNode::postDomainConstraint(
       return propagation::VarViewId{propagation::NULL_ID};
     }
     if (inDomain(bool{true})) {
-      _domainViolationId =
-          solver.makeIntView<propagation::EqualConst>(solver, varId(), 0);
+      mapping.setDomainViolationId(varNodeId(),
+          solver.makeIntView<propagation::EqualConst>(solver, mapping.solverId(varNodeId()), 0));
     } else {
-      _domainViolationId =
-          solver.makeIntView<propagation::NotEqualConst>(solver, varId(), 0);
+      mapping.setDomainViolationId(varNodeId(),
+          solver.makeIntView<propagation::NotEqualConst>(solver, mapping.solverId(varNodeId()), 0));
     }
-    return _domainViolationId;
+    return mapping.domainViolationId(varNodeId());
   }
 
   if (_domainType == DomainType::DOM_FIXED || _domain->isFixed()) {
@@ -147,10 +141,10 @@ propagation::VarViewId VarNode::postDomainConstraint(
                                std::to_string(lowerBound()));
     }
     if (solverLb != solverUb) {
-      _domainViolationId = solver.makeIntView<propagation::EqualConst>(
-          solver, varId(), lowerBound());
+      mapping.setDomainViolationId(varNodeId(), solver.makeIntView<propagation::EqualConst>(
+          solver, mapping.solverId(varNodeId()), lowerBound()));
     }
-    return _domainViolationId;
+    return mapping.domainViolationId(varNodeId());
   }
 
   if (_domainType == DomainType::DOM_LOWER_BOUND) {
@@ -161,10 +155,10 @@ propagation::VarViewId VarNode::postDomainConstraint(
           std::to_string(lowerBound()));
     }
     if (solverLb < lowerBound()) {
-      _domainViolationId = solver.makeIntView<propagation::GreaterEqualConst>(
-          solver, varId(), lowerBound());
+      mapping.setDomainViolationId(varNodeId(), solver.makeIntView<propagation::GreaterEqualConst>(
+          solver, mapping.solverId(varNodeId()), lowerBound()));
     }
-    return _domainViolationId;
+    return mapping.domainViolationId(varNodeId());
   }
 
   if (_domainType == DomainType::DOM_UPPER_BOUND) {
@@ -175,10 +169,10 @@ propagation::VarViewId VarNode::postDomainConstraint(
           std::to_string(upperBound()));
     }
     if (solverUb > upperBound()) {
-      _domainViolationId = solver.makeIntView<propagation::LessEqualConst>(
-          solver, varId(), upperBound());
+      mapping.setDomainViolationId(varNodeId(), solver.makeIntView<propagation::LessEqualConst>(
+          solver, mapping.solverId(varNodeId()), upperBound()));
     }
-    return _domainViolationId;
+    return mapping.domainViolationId(varNodeId());
   }
 
   if (_domainType == DomainType::DOM_RANGE) {
@@ -190,10 +184,10 @@ propagation::VarViewId VarNode::postDomainConstraint(
           std::to_string(lowerBound()) + ".." + std::to_string(upperBound()));
     }
     if (lowerBound() < solverLb || solverUb < upperBound()) {
-      _domainViolationId = solver.makeIntView<propagation::InIntervalConst>(
-          solver, varId(), lowerBound(), upperBound());
+      mapping.setDomainViolationId(varNodeId(), solver.makeIntView<propagation::InIntervalConst>(
+          solver, mapping.solverId(varNodeId()), lowerBound(), upperBound()));
     }
-    return _domainViolationId;
+    return mapping.domainViolationId(varNodeId());
   }
   assert(_domainType == DomainType::DOM_DOMAIN);
 
@@ -203,7 +197,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
   if (domain.empty()) {
     // The node domain contains the solver domain:
     assert(lowerBound() <= solverLb && solverUb <= upperBound());
-    return _domainViolationId;
+    return mapping.domainViolationId(varNodeId());
   }
 
   const size_t interval =
@@ -211,13 +205,13 @@ propagation::VarViewId VarNode::postDomainConstraint(
 
   // domain.size() - 1 = number of "holes" in the domain:
   if (domain.size() > 2 && interval < 1000) {
-    _domainViolationId = solver.makeIntView<propagation::InSparseDomain>(
-        solver, this->varId(), std::move(domain));
+    mapping.setDomainViolationId(varNodeId(), solver.makeIntView<propagation::InSparseDomain>(
+        solver, mapping.solverId(varNodeId()), std::move(domain)));
   } else {
-    _domainViolationId = solver.makeIntView<propagation::InDomain>(
-        solver, this->varId(), std::move(domain));
+    mapping.setDomainViolationId(varNodeId(), solver.makeIntView<propagation::InDomain>(
+        solver, mapping.solverId(varNodeId()), std::move(domain)));
   }
-  return _domainViolationId;
+  return mapping.domainViolationId(varNodeId());
 }
 
 Int VarNode::lowerBound() const { return _domain->lowerBound(); }

@@ -42,23 +42,23 @@ void IntScalarNode::updateState() {
   }
 }
 
-void IntScalarNode::registerOutputVars() {
-  if (invariantGraph().varId(outputVarNodeIds().front()) ==
+void IntScalarNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+  if (mapping.solverId(outputVarNodeIds().front()) ==
       propagation::NULL_ID) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .setVarId(solver().makeIntView<propagation::ScalarView>(
-            solver(), invariantGraph().varId(input()), _factor, _offset));
+    mapping.setSolverId(
+        outputVarNodeIds().front(),
+        solver.makeIntView<propagation::ScalarView>(
+            solver, mapping.solverId(input()), _factor, _offset));
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
+        return mapping.solverId(vId) !=
                propagation::NULL_ID;
       }));
 }
 
-void IntScalarNode::registerNode() {}
+void IntScalarNode::registerNode(propagation::SolverBase&, SolverMapping&) const {}
 
 std::ostream& IntScalarNode::dotLangEntry(std::ostream& o) const { return o; }
 

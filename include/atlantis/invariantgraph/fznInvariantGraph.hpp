@@ -21,8 +21,7 @@ class FznInvariantGraph : public InvariantGraph {
   std::vector<InvariantGraphOutputVarArray> _outputIntVarArrays;
 
  public:
-  explicit FznInvariantGraph(propagation::SolverBase& solver,
-                             bool breakDynamicCycles = false);
+  explicit FznInvariantGraph(bool breakDynamicCycles = false);
 
   VarNodeId retrieveVarNode(const fznparser::BoolVar&);
   VarNodeId retrieveVarNode(const std::shared_ptr<const fznparser::BoolVar>&);
@@ -38,11 +37,11 @@ class FznInvariantGraph : public InvariantGraph {
   std::vector<VarNodeId> retrieveVarNodes(
       const std::shared_ptr<fznparser::IntVarArray>&);
 
-  [[nodiscard]] std::vector<FznOutputVar> outputBoolVars() const noexcept;
-  [[nodiscard]] std::vector<FznOutputVar> outputIntVars() const noexcept;
-  [[nodiscard]] std::vector<FznOutputVarArray> outputBoolVarArrays()
+  [[nodiscard]] std::vector<FznOutputVar> outputBoolVars(const SolverMapping&) const noexcept;
+  [[nodiscard]] std::vector<FznOutputVar> outputIntVars(const SolverMapping&) const noexcept;
+  [[nodiscard]] std::vector<FznOutputVarArray> outputBoolVarArrays(const SolverMapping&)
       const noexcept;
-  [[nodiscard]] std::vector<FznOutputVarArray> outputIntVarArrays()
+  [[nodiscard]] std::vector<FznOutputVarArray> outputIntVarArrays(const SolverMapping&)
       const noexcept;
 
   void build(const fznparser::Model&);

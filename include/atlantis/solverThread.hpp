@@ -29,8 +29,9 @@ class SolverThread {
   std::optional<std::chrono::milliseconds> _timelimit;
 
   std::function<search::SavedAssignment(
-      const invariantgraph::FznInvariantGraph& invariantGraph,
-      const search::Assignment& assignment,
+      const invariantgraph::FznInvariantGraph&,
+      const invariantgraph::SolverMapping&,
+      const search::Assignment&,
       search::ThreadController& controller, Int threadId)>
       _onSolution;
 
@@ -48,9 +49,10 @@ class SolverThread {
       std::optional<std::filesystem::path> dotFilePath,
       const std::optional<std::chrono::milliseconds> timeLimit,
       const std::function<search::SavedAssignment(
-          const invariantgraph::FznInvariantGraph& invariantGraph,
-          const search::Assignment& assignment,
-          search::ThreadController& controller, Int threadId)>& onSolution,
+          const invariantgraph::FznInvariantGraph&,
+          const invariantgraph::SolverMapping&,
+          const search::Assignment&,
+          search::ThreadController&, Int threadId)>& onSolution,
       const std::function<void(bool)>& onFinish)
       : _objectiveDirection(objectiveDirection),
         _problemType(problemType),
@@ -66,7 +68,8 @@ class SolverThread {
 
   void saveInvariantGraph(
       const invariantgraph::FznInvariantGraph& invariantGraph) const;
-  void solve(logging::Logger& logger);
+
+  void solve(const invariantgraph::FznInvariantGraph& graph, logging::Logger& logger);
 };
 
 }  // namespace atlantis

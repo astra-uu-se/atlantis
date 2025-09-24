@@ -125,17 +125,15 @@ TEST_P(IntAllEqualNodeTestFixture, construction) {
 
 TEST_P(IntAllEqualNodeTestFixture, application) {
   _solver->open();
+  _solverMapping = std::make_shared<SolverMapping>();
   addInputVarsToSolver();
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  EXPECT_EQ(invNode().violationVarId(), propagation::NULL_ID);
-  invNode().registerOutputVars();
+  EXPECT_EQ(invNode().violationVarId(*_solverMapping), propagation::NULL_ID);
+  invNode().registerOutputVars(*_solver, *_solverMapping);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  EXPECT_NE(invNode().violationVarId(), propagation::NULL_ID);
-  invNode().registerNode();
+  EXPECT_NE(invNode().violationVarId(*_solverMapping), propagation::NULL_ID);
+  invNode().registerNode(*_solver, *_solverMapping);
   _solver->close();
 
   for (const auto& identifier : inputVars) {
@@ -144,7 +142,7 @@ TEST_P(IntAllEqualNodeTestFixture, application) {
                 ::testing::Contains(size_t(varId(identifier))));
   }
 
-  EXPECT_GE(_solver->numVars(), size_t(invNode().violationVarId()));
+  EXPECT_GE(_solver->numVars(), size_t(invNode().violationVarId(*_solverMapping)));
 
   EXPECT_EQ(_solver->numInvariants(), 1);
 }
@@ -172,9 +170,8 @@ TEST_P(IntAllEqualNodeTestFixture, propagation) {
   if (shouldBeMadeImplicit()) {
     return;
   }
-  propagation::Solver solver;
-  _invariantGraph->construct();
   _invariantGraph->close();
+  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();
@@ -209,7 +206,7 @@ TEST_P(IntAllEqualNodeTestFixture, propagation) {
   }
 
   const propagation::VarViewId violVarId =
-      isReified() ? varId(reifiedVar) : _invariantGraph->totalViolationVarId();
+      isReified() ? varId(reifiedVar) : _solverMapping->totalViolationId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 

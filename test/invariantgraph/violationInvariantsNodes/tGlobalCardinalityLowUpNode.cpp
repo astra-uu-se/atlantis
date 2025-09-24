@@ -81,9 +81,8 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
   if (shouldBeMadeImplicit()) {
     return;
   }
-  propagation::Solver solver;
-  _invariantGraph->construct();
   _invariantGraph->close();
+  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -111,7 +110,7 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
   }
 
   const propagation::VarViewId violVarId =
-      isReified() ? varId(reifiedVar) : _invariantGraph->totalViolationVarId();
+      isReified() ? varId(reifiedVar) : _solverMapping->totalViolationId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 

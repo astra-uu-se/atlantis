@@ -20,7 +20,7 @@ class Neighborhood;
 
 class Assignment {
   propagation::Solver& _solver;
-  neighborhoods::Neighborhood& _neighborhood;
+  std::shared_ptr<neighborhoods::Neighborhood> _neighborhood;
   propagation::VarViewId _violation{propagation::NULL_ID};
   propagation::VarViewId _objective{propagation::NULL_ID};
   ObjectiveDirection _objectiveDirection;
@@ -28,7 +28,7 @@ class Assignment {
 
  public:
   explicit Assignment(propagation::Solver& solver,
-                      neighborhoods::Neighborhood& neighborhood,
+                      std::shared_ptr<neighborhoods::Neighborhood> neighborhood,
                       propagation::VarViewId violation,
                       propagation::VarViewId objective,
                       ObjectiveDirection objectiveDirection,

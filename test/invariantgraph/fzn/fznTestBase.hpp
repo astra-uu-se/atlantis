@@ -88,8 +88,8 @@ class FznTestBase : public ::testing::Test {
  public:
   std::shared_ptr<Model> _model;
   std::shared_ptr<FznInvariantGraph> _invariantGraph;
+  std::shared_ptr<SolverMapping> _solverMapping;
   std::shared_ptr<propagation::Solver> _solver;
-  std::shared_ptr<search::neighborhoods::NeighborhoodCombinator> _neighborhood;
   std::shared_ptr<search::Assignment> _assignment;
   std::shared_ptr<search::RandomProvider> _randomProvider;
   std::string constraintIdentifier;
@@ -110,6 +110,7 @@ class FznTestBase : public ::testing::Test {
   void generateConstraint();
 
   virtual void generate() = 0;
+  void closeInvariantGraph();
   [[nodiscard]] virtual bool isSatisfied(bool committedValue) const = 0;
   [[nodiscard]] virtual bool alwaysSatisfied() const { return false; };
   [[nodiscard]] virtual bool neverSatisfied() const { return false; };
@@ -222,6 +223,11 @@ class FznTestBase : public ::testing::Test {
   std::shared_ptr<BoolVarArray> addBoolVarArray(
       size_t arraySize, const std::string& identifier = "b_arr",
       const std::string& varPrefix = "b_");
+
+  std::shared_ptr<BoolVarArray> addBoolVarArray(
+    const std::vector<BoolArgState>& argStates,
+        const std::vector<std::string>& identifiers,
+        const std::string& identifier = "b_arr");
 
   std::shared_ptr<BoolVarArray> addBoolVarArray(
       const std::vector<std::string>& identifiers,

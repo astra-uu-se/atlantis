@@ -84,20 +84,20 @@ bool VarIntCountNode::replace() {
   return true;
 }
 
-void VarIntCountNode::registerOutputVars() {
-  makeSolverVar(outputVarNodeIds().front());
+void VarIntCountNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+  makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
+        return mapping.solverId(vId) !=
                propagation::NULL_ID;
       }));
 }
 
-void VarIntCountNode::registerNode() {
-  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
+void VarIntCountNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+  assert(mapping.solverId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
-  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
+  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
 
   std::vector<VarNodeId> h = haystack();
   std::vector<propagation::VarViewId> solverVars;
@@ -105,11 +105,11 @@ void VarIntCountNode::registerNode() {
 
   std::ranges::transform(
       h, std::back_inserter(solverVars),
-      [&](const VarNodeId node) { return invariantGraph().varId(node); });
+      [&](const VarNodeId node) { return mapping.solverId(node); });
 
-  solver().makeInvariant<propagation::Count>(
-      solver(), invariantGraph().varId(outputVarNodeIds().front()),
-      invariantGraph().varId(needle()), std::move(solverVars));
+  solver.makeInvariant<propagation::Count>(
+      solver, mapping.solverId(outputVarNodeIds().front()),
+      mapping.solverId(needle()), std::move(solverVars));
 }
 
 std::string VarIntCountNode::dotLangIdentifier() const {

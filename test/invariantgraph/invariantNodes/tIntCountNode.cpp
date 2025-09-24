@@ -118,9 +118,8 @@ TEST_P(IntCountNodeTestFixture, updateState) {
 }
 
 TEST_P(IntCountNodeTestFixture, propagation) {
-  propagation::Solver solver;
-  _invariantGraph->construct();
   _invariantGraph->close();
+  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& var : inputVars) {

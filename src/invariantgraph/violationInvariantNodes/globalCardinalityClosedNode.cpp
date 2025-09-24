@@ -52,7 +52,7 @@ void GlobalCardinalityClosedNode::init(InvariantNodeId id) {
       }));
 }
 
-void GlobalCardinalityClosedNode::registerOutputVars() {
+void GlobalCardinalityClosedNode::registerOutputVars(propagation::SolverBase&, SolverMapping&) const {
   throw std::runtime_error("Not implemented");
 }
 
@@ -150,7 +150,7 @@ bool GlobalCardinalityClosedNode::replace() {
   return true;
 }
 
-void GlobalCardinalityClosedNode::registerNode() {
+void GlobalCardinalityClosedNode::registerNode(propagation::SolverBase&, SolverMapping&) const {
   throw std::runtime_error("Not implemented");
 }
 

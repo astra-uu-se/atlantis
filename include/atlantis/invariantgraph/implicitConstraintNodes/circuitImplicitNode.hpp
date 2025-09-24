@@ -17,9 +17,11 @@ class CircuitImplicitNode : public ImplicitConstraintNode {
 
   void init(InvariantNodeId) override;
 
+  void updateDomainTypes() override;
+
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override;
+
  protected:
-  std::shared_ptr<search::neighborhoods::Neighborhood> createNeighborhood()
-      override;
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 

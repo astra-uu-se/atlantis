@@ -7,6 +7,7 @@
 
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
+#include "solverMapping.hpp"
 
 namespace atlantis {
 class SortedUniqueVector;
@@ -26,8 +27,6 @@ class VarNode {
   bool _isIntVar;
   DomainType _domainType{DomainType::DOM_DOMAIN};
   std::shared_ptr<SearchDomain> _domain;
-  propagation::VarViewId _varId{propagation::NULL_ID};
-  propagation::VarViewId _domainViolationId{propagation::NULL_ID};
 
   std::vector<InvariantNodeId> _staticInputTo;
   std::vector<InvariantNodeId> _dynamicInputTo;
@@ -53,10 +52,6 @@ class VarNode {
                    DomainType = DomainType::DOM_DOMAIN);
 
   VarNodeId varNodeId() const noexcept;
-
-  [[nodiscard]] propagation::VarViewId varId() const;
-
-  void setVarId(propagation::VarViewId varId);
 
   [[nodiscard]] std::shared_ptr<const SearchDomain> constDomain()
       const noexcept;
@@ -102,7 +97,7 @@ class VarNode {
   [[nodiscard]] std::vector<DomainEntry> constrainedDomain(Int lb,
                                                            Int ub) const;
 
-  propagation::VarViewId postDomainConstraint(propagation::SolverBase&);
+  propagation::VarViewId postDomainConstraint(propagation::SolverBase&, SolverMapping&) const;
 
   [[nodiscard]] std::pair<Int, Int> bounds() const;
 

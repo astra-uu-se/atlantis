@@ -35,14 +35,12 @@ TEST_P(CircuitImplicitNodeTestFixture, construction) {
 
 TEST_P(CircuitImplicitNodeTestFixture, application) {
   _solver->open();
-  for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_EQ(varId(outputVarNodeId), propagation::NULL_ID);
-  }
-  invNode().registerOutputVars();
+  _solverMapping = std::make_shared<SolverMapping>();
+  invNode().registerOutputVars(*_solver, *_solverMapping);
   for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  invNode().registerNode();
+  invNode().registerNode(*_solver, *_solverMapping);
   _solver->close();
 
   // a, b, c and d
@@ -53,7 +51,7 @@ TEST_P(CircuitImplicitNodeTestFixture, application) {
 
   EXPECT_EQ(_solver->numInvariants(), 0);
 
-  const auto neighborhood = invNode().neighborhood();
+  const auto neighborhood = _solverMapping->neighborhood(_invNodeId);
 
   EXPECT_TRUE(dynamic_cast<search::neighborhoods::CircuitNeighborhood*>(
       neighborhood.get()));

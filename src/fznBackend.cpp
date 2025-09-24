@@ -89,18 +89,19 @@ void printIntVarArray(const search::Assignment& assignment,
 }
 
 void FznBackend::displaySolution(
-    const invariantgraph::FznInvariantGraph& invariantGraph,
+  const invariantgraph::FznInvariantGraph& invariantGraph,
+    const invariantgraph::SolverMapping& mapping,
     const search::Assignment& assignment) {
-  for (const auto& outputVar : invariantGraph.outputBoolVars()) {
+  for (const auto& outputVar : invariantGraph.outputBoolVars(mapping)) {
     printBoolVar(assignment, outputVar);
   }
-  for (const auto& outputVar : invariantGraph.outputIntVars()) {
+  for (const auto& outputVar : invariantGraph.outputIntVars(mapping)) {
     printIntVar(assignment, outputVar);
   }
-  for (const auto& outputVarArray : invariantGraph.outputBoolVarArrays()) {
+  for (const auto& outputVarArray : invariantGraph.outputBoolVarArrays(mapping)) {
     printBoolVarArray(assignment, outputVarArray);
   }
-  for (const auto& outputVarArray : invariantGraph.outputIntVarArrays()) {
+  for (const auto& outputVarArray : invariantGraph.outputIntVarArrays(mapping)) {
     printIntVarArray(assignment, outputVarArray);
   }
 
@@ -109,6 +110,7 @@ void FznBackend::displaySolution(
 
 search::SavedAssignment FznBackend::onSolutionDefault(
     const invariantgraph::FznInvariantGraph& invariantGraph,
+    const invariantgraph::SolverMapping& mapping,
     const search::Assignment& assignment, search::ThreadController& controller,
     const Int threadId) {
   auto savedAssignment = search::SavedAssignment(assignment);
@@ -117,7 +119,7 @@ search::SavedAssignment FznBackend::onSolutionDefault(
   if (savedAssignment.getCost().getObjective() ==
           assignment.getCost().getObjective() &&
       controller.shouldPrint(threadId)) {
-    displaySolution(invariantGraph, assignment);
+    displaySolution(invariantGraph, mapping, assignment);
     controller.hasPrinted();
   }
 
@@ -168,15 +170,22 @@ void FznBackend::solve(logging::Logger& logger) {
   std::vector<std::thread> threads;
   std::cerr << "Thread count is " << _threadCount << "\n";
 
+  invariantgraph::FznInvariantGraph invariantGraph(true);
+  invariantGraph.open();
+  logger.timedProcedure("building invariant graph",
+                        [&] { invariantGraph.build(*_model); });
+  invariantGraph.close();
+
+
   for (std::uint_fast32_t threadId = 0; threadId < _threadCount; threadId++) {
-    threads.emplace_back([&logger, &objectiveDirection, &problemType, &schedule,
+    threads.emplace_back([&invariantGraph, &logger, &objectiveDirection, &problemType, &schedule,
                           threadId, &controller, this] {
       auto thread =
           SolverThread(objectiveDirection, problemType, schedule, threadId,
                        controller, _model, _seed + threadId, _dotFilePath,
                        _timelimit, _onSolution, _onFinish);
       _dotFilePath.reset();  // InvariantGraph will only be saved once
-      thread.solve(logger);
+      thread.solve(invariantGraph, logger);
     });
   }
 

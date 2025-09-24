@@ -8,7 +8,7 @@ namespace atlantis::invariantgraph {
 
 class IntAllEqualNode : public ViolationInvariantNode {
   bool _breaksCycle{false};
-  propagation::VarViewId _intermediate{propagation::NULL_ID};
+
   std::optional<Int> _boundVal;
 
  public:
@@ -32,9 +32,9 @@ class IntAllEqualNode : public ViolationInvariantNode {
 
   bool replace() override;
 
-  void registerOutputVars() override;
+  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
 
-  void registerNode() override;
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override;
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 }  // namespace atlantis::invariantgraph

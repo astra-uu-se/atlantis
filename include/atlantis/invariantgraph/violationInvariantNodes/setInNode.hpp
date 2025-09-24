@@ -7,7 +7,7 @@
 namespace atlantis::invariantgraph {
 class SetInNode : public ViolationInvariantNode {
   SortedUniqueVector _values;
-  propagation::VarViewId _intermediate{propagation::NULL_ID};
+
 
  public:
   explicit SetInNode(InvariantGraph& graph, VarNodeId input,
@@ -20,9 +20,9 @@ class SetInNode : public ViolationInvariantNode {
 
   void updateState() override;
 
-  void registerOutputVars() override;
+  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
 
-  void registerNode() override;
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   [[nodiscard]] const std::vector<Int>& values() const { return *_values; }
 

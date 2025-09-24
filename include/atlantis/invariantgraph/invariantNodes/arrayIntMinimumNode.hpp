@@ -16,7 +16,7 @@ class ArrayIntMinimumNode : public InvariantNode {
 
   void init(InvariantNodeId) override;
 
-  void registerOutputVars() override;
+  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
 
   void updateState() override;
 
@@ -24,7 +24,7 @@ class ArrayIntMinimumNode : public InvariantNode {
 
   [[nodiscard]] bool replace() override;
 
-  void registerNode() override;
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

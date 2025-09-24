@@ -81,25 +81,22 @@ bool ArrayIntMinimumNode::replace() {
   return true;
 }
 
-void ArrayIntMinimumNode::registerOutputVars() {
+void ArrayIntMinimumNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() == 1) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .setVarId(solver().makeIntView<propagation::IntMinView>(
-            solver(), invariantGraph().varId(staticInputVarNodeIds().front()),
+    mapping.setSolverId(outputVarNodeIds().front(), solver.makeIntView<propagation::IntMinView>(
+            solver, mapping.solverId(staticInputVarNodeIds().front()),
             _ub));
   } else if (!staticInputVarNodeIds().empty()) {
-    makeSolverVar(outputVarNodeIds().front());
+    makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void ArrayIntMinimumNode::registerNode() {
+void ArrayIntMinimumNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
@@ -108,13 +105,13 @@ void ArrayIntMinimumNode::registerNode() {
   std::ranges::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars),
-      [&](const auto& node) { return invariantGraph().varId(node); });
+      [&](const auto& node) { return mapping.solverId(node); });
 
-  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
+  assert(mapping.solverId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
-  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
-  solver().makeInvariant<propagation::Min>(
-      solver(), invariantGraph().varId(outputVarNodeIds().front()),
+  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
+  solver.makeInvariant<propagation::Min>(
+      solver, mapping.solverId(outputVarNodeIds().front()),
       std::move(solverVars));
 }
 

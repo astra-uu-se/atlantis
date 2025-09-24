@@ -79,9 +79,8 @@ TEST_P(ArrayVarElement2dNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
-  propagation::Solver solver;
-  _invariantGraph->construct();
   _invariantGraph->close();
+  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   const propagation::VarViewId outputId = varId(outputVar);
   EXPECT_NE(outputId, propagation::NULL_ID);

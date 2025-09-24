@@ -54,7 +54,7 @@ class AssignmentTest : public ::testing::Test {
 };
 
 TEST_F(AssignmentTest, search_vars_are_identified) {
-  const Assignment assignment(*_solver, *_neighborhood, violation, a,
+  const Assignment assignment(*_solver, _neighborhood, violation, a,
                               ObjectiveDirection::MINIMIZE,
                               _solver->lowerBound(a));
 
@@ -63,7 +63,7 @@ TEST_F(AssignmentTest, search_vars_are_identified) {
 }
 
 TEST_F(AssignmentTest, assign_sets_values) {
-  Assignment assignment(*_solver, *_neighborhood, violation, a,
+  Assignment assignment(*_solver, _neighborhood, violation, a,
                         ObjectiveDirection::MINIMIZE, _solver->lowerBound(a));
 
   assignment.set(a, 1);
@@ -74,7 +74,7 @@ TEST_F(AssignmentTest, assign_sets_values) {
 }
 
 TEST_F(AssignmentTest, satisfies_constraints) {
-  Assignment assignment(*_solver, *_neighborhood, violation, a,
+  Assignment assignment(*_solver, _neighborhood, violation, a,
                         ObjectiveDirection::MINIMIZE, _solver->lowerBound(a));
 
   EXPECT_FALSE(assignment.satisfiesConstraints());
@@ -95,7 +95,7 @@ TEST_F(AssignmentTest, initialize) {
 
   RandomProvider random{123456};
 
-  Assignment assignment(*_solver, *_neighborhood, violation, a,
+  Assignment assignment(*_solver, _neighborhood, violation, a,
                         ObjectiveDirection::MINIMIZE, _solver->lowerBound(a));
 
   EXPECT_CALL(*_neighborhood, coveredVars()).WillRepeatedly(ReturnRef(vars));

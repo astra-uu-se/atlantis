@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
+#include "invariantgraph/solverMapping.hpp"
 #include "search/savedAssignment.hpp"
 #include "search/threadController.hpp"
 #include "types.hpp"
@@ -26,11 +27,10 @@ class SearchStatistics;
 
 class FznBackend {
  public:
-  static void displaySolution(
-      const invariantgraph::FznInvariantGraph& invariantGraph,
-      const search::Assignment& assignment);
+  static void displaySolution(const invariantgraph::FznInvariantGraph&, const invariantgraph::SolverMapping&,
+      const search::Assignment&);
   static search::SavedAssignment onSolutionDefault(
-      const invariantgraph::FznInvariantGraph&, const search::Assignment&,
+      const invariantgraph::FznInvariantGraph&, const invariantgraph::SolverMapping&, const search::Assignment&,
       search::ThreadController& controller, Int threadId);
   static void onFinishDefault(bool);
 
@@ -43,9 +43,10 @@ class FznBackend {
   const std::uint_fast32_t _threadCount;
 
   std::function<search::SavedAssignment(
-      const invariantgraph::FznInvariantGraph& invariantGraph,
+      const invariantgraph::FznInvariantGraph&,
+      const invariantgraph::SolverMapping&,
       const search::Assignment& assignment,
-      search::ThreadController& controller, Int threadId)>
+      search::ThreadController&, Int threadId)>
       _onSolution = onSolutionDefault;
   std::function<void(bool)> _onFinish = onFinishDefault;
 
@@ -73,7 +74,8 @@ class FznBackend {
 
   void setOnSolution(
       const std::function<search::SavedAssignment(
-          const invariantgraph::FznInvariantGraph&, const search::Assignment&,
+          const invariantgraph::FznInvariantGraph&,
+          const invariantgraph::SolverMapping&, const search::Assignment&,
           search::ThreadController&, Int)>& onSolution) {
     _onSolution = onSolution;
   }

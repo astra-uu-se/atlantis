@@ -126,58 +126,56 @@ bool IntLinearNode::makeImplicit() {
   return true;
 }
 
-void IntLinearNode::registerOutputVars() {
+void IntLinearNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() == 1) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .setVarId(solver().makeIntView<propagation::ScalarView>(
-            solver(), invariantGraph().varId(staticInputVarNodeIds().front()),
+    mapping.setSolverId(outputVarNodeIds().front(),
+        solver.makeIntView<propagation::ScalarView>(
+            solver, mapping.solverId(staticInputVarNodeIds().front()),
             _coeffs.front(), _offset));
     return;
   }
   if (!staticInputVarNodeIds().empty()) {
     if (_offset == 0) {
-      makeSolverVar(outputVarNodeIds().front());
-      assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
-    } else if (_intermediate == propagation::NULL_ID) {
-      _intermediate = solver().makeIntVar(0, 0, 0);
-      invariantGraph()
-          .varNode(outputVarNodeIds().front())
-          .setVarId(solver().makeIntView<propagation::IntOffsetView>(
-              solver(), _intermediate, _offset));
+      makeSolverVar(outputVarNodeIds().front(), solver, mapping);
+      assert(mapping.solverId(outputVarNodeIds().front()).isVar());
+    } else if (mapping.intermediateId(id()) == propagation::NULL_ID) {
+      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+      mapping
+          .setSolverId(outputVarNodeIds().front(),
+          solver.makeIntView<propagation::IntOffsetView>(
+              solver, mapping.intermediateId(id()), _offset));
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void IntLinearNode::registerNode() {
+void IntLinearNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
-  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
+  assert(mapping.solverId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
-  assert(_intermediate == propagation::NULL_ID
-             ? invariantGraph().varId(outputVarNodeIds().front()).isVar()
-             : invariantGraph().varId(outputVarNodeIds().front()).isView());
-  assert(_intermediate == propagation::NULL_ID || _intermediate.isVar());
+  assert(mapping.intermediateId(id()) == propagation::NULL_ID
+             ? mapping.solverId(outputVarNodeIds().front()).isVar()
+             : mapping.solverId(outputVarNodeIds().front()).isView());
+  assert(mapping.intermediateId(id()) == propagation::NULL_ID || mapping.intermediateId(id()).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   std::ranges::transform(
       staticInputVarNodeIds(), std::back_inserter(solverVars),
       [&](const VarNodeId varNodeId) {
-        assert(invariantGraph().varId(varNodeId) != propagation::NULL_ID);
-        return invariantGraph().varId(varNodeId);
+        assert(mapping.solverId(varNodeId) != propagation::NULL_ID);
+        return mapping.solverId(varNodeId);
       });
-  solver().makeInvariant<propagation::Linear>(
-      solver(),
-      _intermediate == propagation::NULL_ID
-          ? invariantGraph().varId(outputVarNodeIds().front())
-          : _intermediate,
+  solver.makeInvariant<propagation::Linear>(
+      solver,
+      mapping.intermediateId(id()) == propagation::NULL_ID
+          ? mapping.solverId(outputVarNodeIds().front())
+          : mapping.intermediateId(id()),
       std::vector<Int>(_coeffs), std::move(solverVars));
 }
 

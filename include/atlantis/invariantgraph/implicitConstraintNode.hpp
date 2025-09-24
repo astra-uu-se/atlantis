@@ -15,22 +15,16 @@ namespace atlantis::invariantgraph {
  * propagation solver.
  */
 class ImplicitConstraintNode : public InvariantNode {
-  std::shared_ptr<search::neighborhoods::Neighborhood> _neighborhood{nullptr};
 
  public:
   explicit ImplicitConstraintNode(InvariantGraph&, std::vector<VarNodeId>&&);
 
   void init(InvariantNodeId) override;
 
-  void registerOutputVars() override;
+  virtual void updateDomainTypes() {};
 
-  void registerNode() override;
+  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] std::shared_ptr<search::neighborhoods::Neighborhood>
-  neighborhood();
-
- protected:
-  [[nodiscard]] virtual std::shared_ptr<search::neighborhoods::Neighborhood>
-  createNeighborhood() = 0;
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override = 0;
 };
 }  // namespace atlantis::invariantgraph

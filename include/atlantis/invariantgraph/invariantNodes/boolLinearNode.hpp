@@ -6,7 +6,6 @@ namespace atlantis::invariantgraph {
 class BoolLinearNode : public InvariantNode {
   std::vector<Int> _coeffs;
   Int _offset{0};
-  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
   BoolLinearNode(InvariantGraph& graph,
@@ -18,9 +17,9 @@ class BoolLinearNode : public InvariantNode {
 
   void updateState() override;
 
-  void registerOutputVars() override;
+  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
 
-  void registerNode() override;
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 

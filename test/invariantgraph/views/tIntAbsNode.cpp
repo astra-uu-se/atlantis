@@ -69,9 +69,8 @@ TEST_P(IntAbsNodeTestFixture, propagation) {
   if (shouldBeSubsumed()) {
     return;
   }
-  propagation::Solver solver;
-  _invariantGraph->construct();
   _invariantGraph->close();
+  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeReplaced()) {
     EXPECT_FALSE(varNode(outputVar).isFixed());

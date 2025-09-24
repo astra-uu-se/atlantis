@@ -27,7 +27,7 @@ class Neighborhood;
 class SearchProcedure {
   RandomProvider& _random;
   Assignment& _assignment;
-  neighborhoods::Neighborhood& _neighborhood;
+  std::shared_ptr<neighborhoods::Neighborhood> _neighborhood;
   Objective _objective;
   std::optional<SavedAssignment> _solution;
 
@@ -35,7 +35,7 @@ class SearchProcedure {
 
  public:
   SearchProcedure(RandomProvider& random, Assignment& assignment,
-                  neighborhoods::Neighborhood& neighborhood,
+                  std::shared_ptr<neighborhoods::Neighborhood> neighborhood,
                   const Objective& objective)
       : _random(random),
         _assignment(assignment),

@@ -105,9 +105,8 @@ TEST_P(BoolLtNodeTestFixture, propagation) {
   if (shouldBeMadeImplicit()) {
     return;
   }
-  propagation::Solver solver;
-  _invariantGraph->construct();
   _invariantGraph->close();
+  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeReplaced() && varId(reifiedVar) == propagation::NULL_ID) {
     EXPECT_TRUE(isReified());
@@ -141,7 +140,7 @@ TEST_P(BoolLtNodeTestFixture, propagation) {
   }
 
   const propagation::VarViewId violVarId =
-      isReified() ? varId(reifiedVar) : _invariantGraph->totalViolationVarId();
+      isReified() ? varId(reifiedVar) : _solverMapping->totalViolationId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 

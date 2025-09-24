@@ -30,28 +30,22 @@ void SolverThread::saveInvariantGraph(
   }
   dotFile.close();
 }
-void SolverThread::solve(logging::Logger& logger) {
+void SolverThread::solve(const invariantgraph::FznInvariantGraph& invariantGraph, logging::Logger& logger) {
   propagation::Solver solver;
 
+  solver.open();
   // TODO: we should improve the initialisation in order to avoid the need for
   // breaking the dynamic cycles
-  invariantgraph::FznInvariantGraph invariantGraph(solver, true);
-  logger.timedProcedure("building invariant graph",
-                        [&] { invariantGraph.build(*_model); });
-  invariantGraph.construct();
+  invariantgraph::SolverMapping mapping = invariantGraph.construct(solver);
 
-  if (_dotFilePath.has_value()) saveInvariantGraph(invariantGraph);
-
-  auto neighborhood = invariantGraph.neighborhood();
-  neighborhood.printNeighborhood(logger);
+  auto neighborhood = mapping.globalNeighborhood();
 
   // Might be changed to shared later
   search::Objective searchObjective(solver, _problemType);
 
   auto violation = searchObjective.registerNode(
-      invariantGraph.totalViolationVarId(), invariantGraph.objectiveVarId());
-
-  invariantGraph.close();
+      mapping.totalViolationId(), mapping.objectiveId());
+  solver.close();
 
   // TODO: extract to shared -- requires the original invariantGraph
   const Int objectiveOptimalValue =
@@ -61,14 +55,14 @@ void SolverThread::solve(logging::Logger& logger) {
           : invariantGraph.objectiveVarNode().upperBound();
 
   search::Assignment assignment(solver, neighborhood, violation,
-                                invariantGraph.objectiveVarId(),
+                                mapping.objectiveId(),
                                 _objectiveDirection, objectiveOptimalValue);
 
   // This can possibly be extracted, or restricted to one thread
   // TODO: this case may not be handled properly
-  if (neighborhood.coveredVars().empty()) {
+  if (neighborhood->coveredVars().empty()) {
     search::SavedAssignment savedAssignment =
-        _onSolution(invariantGraph, assignment, *_controller, _threadId);
+        _onSolution(invariantGraph, mapping, assignment, *_controller, _threadId);
     _onFinish(true);
   }
 
@@ -81,7 +75,7 @@ void SolverThread::solve(logging::Logger& logger) {
 
   // TODO: extract to shared -- requires fixing invariantGraph
   auto onSolution = [&](const search::Assignment& a) {
-    return _onSolution(invariantGraph, a, *_controller, _threadId);
+    return _onSolution(invariantGraph, mapping, a, *_controller, _threadId);
   };
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
   search::SearchController searchController(_model->isSatisfactionProblem(),

@@ -127,11 +127,11 @@ bool GlobalCardinalityLowUpClosedNode::replace() {
   return true;
 }
 
-void GlobalCardinalityLowUpClosedNode::registerOutputVars() {
+void GlobalCardinalityLowUpClosedNode::registerOutputVars(propagation::SolverBase&, SolverMapping&) const {
   throw std::runtime_error("Not implemented");
 }
 
-void GlobalCardinalityLowUpClosedNode::registerNode() {
+void GlobalCardinalityLowUpClosedNode::registerNode(propagation::SolverBase&, SolverMapping&) const {
   throw std::runtime_error("Not implemented");
 }
 

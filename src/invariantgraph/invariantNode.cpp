@@ -30,14 +30,6 @@ const InvariantGraph& InvariantNode::invariantGraphConst() const {
   return _invariantGraph;
 }
 
-propagation::SolverBase& InvariantNode::solver() {
-  return _invariantGraph.solver();
-}
-
-const propagation::SolverBase& InvariantNode::solverConst() const {
-  return _invariantGraph.solverConst();
-}
-
 InvariantNodeId InvariantNode::id() const { return _id; }
 
 bool InvariantNode::isReified() const { return false; }
@@ -82,7 +74,7 @@ void InvariantNode::init(InvariantNodeId id) {
   _state = InvariantNodeState::ACTIVE;
 }
 
-propagation::VarViewId InvariantNode::violationVarId() const {
+propagation::VarViewId InvariantNode::violationVarId(const SolverMapping&) const {
   return propagation::NULL_ID;
 }
 
@@ -283,19 +275,19 @@ InvariantNode::splitOutputVarNodes() {
 }
 
 propagation::VarViewId InvariantNode::makeSolverVar(VarNodeId varNodeId,
-                                                    Int initialValue) {
-  auto& varNode = _invariantGraph.varNode(varNodeId);
-  if (varNode.varId() == propagation::NULL_ID) {
-    varNode.setVarId(solver().makeIntVar(
+                                                    Int initialValue, propagation::SolverBase& solver, SolverMapping& mapping) const {
+  const auto& varNode = _invariantGraph.varNodeConst(varNodeId);
+  if (mapping.solverId(varNodeId) == propagation::NULL_ID) {
+    mapping.setSolverId(varNodeId,solver.makeIntVar(
         std::max(varNode.lowerBound(),
                  std::min(varNode.upperBound(), initialValue)),
         varNode.lowerBound(), varNode.upperBound()));
   }
-  return varNode.varId();
+  return mapping.solverId(varNodeId);
 }
 
-propagation::VarViewId InvariantNode::makeSolverVar(VarNodeId varNodeId) {
-  return makeSolverVar(varNodeId, 0);
+propagation::VarViewId InvariantNode::makeSolverVar(VarNodeId varNodeId, propagation::SolverBase& solver, SolverMapping& mapping) const {
+  return makeSolverVar(varNodeId, 0, solver, mapping);
 }
 
 void InvariantNode::markOutputTo(VarNodeId varNodeId, bool registerHere) {

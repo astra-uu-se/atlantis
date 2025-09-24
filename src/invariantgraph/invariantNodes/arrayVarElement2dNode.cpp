@@ -130,12 +130,12 @@ void ArrayVarElement2dNode::updateState() {
   assert(index == static_cast<Int>(_numRows * numCols()));
 }
 
-void ArrayVarElement2dNode::registerOutputVars() {
-  makeSolverVar(outputVarNodeIds().front());
+void ArrayVarElement2dNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+  makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
+        return mapping.solverId(vId) !=
                propagation::NULL_ID;
       }));
 }
@@ -222,23 +222,23 @@ bool ArrayVarElement2dNode::replace() {
   return true;
 }
 
-void ArrayVarElement2dNode::registerNode() {
+void ArrayVarElement2dNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
   std::vector<std::vector<propagation::VarViewId>> varMatrix(
       _numRows, std::vector<propagation::VarViewId>{});
   for (size_t r = 0; r < _numRows; ++r) {
     varMatrix.at(r).reserve(numCols());
     for (size_t c = 0; c < numCols(); ++c) {
-      varMatrix.at(r).emplace_back(invariantGraph().varId(at(
+      varMatrix.at(r).emplace_back(mapping.solverId(at(
           static_cast<Int>(r) + _rowOffset, static_cast<Int>(c) + _colOffset)));
     }
   }
 
-  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
+  assert(mapping.solverId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
-  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
-  solver().makeInvariant<propagation::Element2dVar>(
-      solver(), invariantGraph().varId(outputVarNodeIds().front()),
-      invariantGraph().varId(rowIdx()), invariantGraph().varId(colIdx()),
+  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
+  solver.makeInvariant<propagation::Element2dVar>(
+      solver, mapping.solverId(outputVarNodeIds().front()),
+      mapping.solverId(rowIdx()), mapping.solverId(colIdx()),
       std::move(varMatrix), _rowOffset, _colOffset);
 }
 

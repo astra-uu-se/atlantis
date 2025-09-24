@@ -41,23 +41,23 @@ void BoolNotNode::updateState() {
   }
 }
 
-void BoolNotNode::registerOutputVars() {
-  if (invariantGraph().varId(outputVarNodeIds().front()) ==
+void BoolNotNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+  if (mapping.solverId(outputVarNodeIds().front()) ==
       propagation::NULL_ID) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .setVarId(solver().makeIntView<propagation::Bool2IntView>(
-            solver(), invariantGraph().varId(input())));
+    mapping.setSolverId(
+        outputVarNodeIds().front(),
+        solver.makeIntView<propagation::Bool2IntView>(
+            solver, mapping.solverId(input())));
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
+        return mapping.solverId(vId) !=
                propagation::NULL_ID;
       }));
 }
 
-void BoolNotNode::registerNode() {}
+void BoolNotNode::registerNode(propagation::SolverBase&, SolverMapping&) const {}
 
 std::string BoolNotNode::dotLangIdentifier() const { return "bool_not"; }
 

@@ -83,9 +83,8 @@ TEST_P(BoolLinearNodeTestFixture, updateState) {
 }
 
 TEST_P(BoolLinearNodeTestFixture, propagation) {
-  propagation::Solver solver;
-  _invariantGraph->construct();
   _invariantGraph->close();
+  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     const Int expected = computeOutput(true);

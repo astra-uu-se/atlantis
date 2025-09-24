@@ -71,9 +71,8 @@ class BoolLinLeNodeTestFixture : public NodeTestBase<BoolLinLeNode> {
 };
 
 TEST_P(BoolLinLeNodeTestFixture, propagation) {
-  propagation::Solver solver;
-  _invariantGraph->construct();
   _invariantGraph->close();
+  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();
@@ -102,7 +101,7 @@ TEST_P(BoolLinLeNodeTestFixture, propagation) {
   EXPECT_FALSE(inputVarIds.empty());
 
   const propagation::VarViewId violVarId =
-      isReified() ? varId(reifiedVar) : _invariantGraph->totalViolationVarId();
+      isReified() ? varId(reifiedVar) : _solverMapping->totalViolationId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 

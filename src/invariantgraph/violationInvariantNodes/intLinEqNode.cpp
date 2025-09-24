@@ -124,42 +124,42 @@ void IntLinEqNode::updateState() {
   }
 }
 
-void IntLinEqNode::registerOutputVars() {
-  if (violationVarId() == propagation::NULL_ID) {
-    _intermediate = solver().makeIntVar(0, 0, 0);
+void IntLinEqNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+  if (violationVarId(mapping) == propagation::NULL_ID) {
+    mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
     if (shouldHold()) {
-      setViolationVarId(solver().makeIntView<propagation::EqualConst>(
-          solver(), _intermediate, _bound));
+      setViolationVarId(solver.makeIntView<propagation::EqualConst>(
+          solver, mapping.intermediateId(id()), _bound), mapping);
     } else {
       assert(!isReified());
-      setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
-          solver(), _intermediate, _bound));
+      setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
+          solver, mapping.intermediateId(id()), _bound), mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
+        return mapping.solverId(vId) !=
                propagation::NULL_ID;
       }));
 }
 
-void IntLinEqNode::registerNode() {
-  assert(violationVarId() != propagation::NULL_ID);
-  assert(violationVarId().isView());
+void IntLinEqNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+  assert(violationVarId(mapping) != propagation::NULL_ID);
+  assert(violationVarId(mapping).isView());
 
-  assert(_intermediate != propagation::NULL_ID);
-  assert(_intermediate.isVar());
+  assert(mapping.intermediateId(id()) != propagation::NULL_ID);
+  assert(mapping.intermediateId(id()).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars), [&](const VarNodeId varNodeId) {
-        assert(invariantGraph().varId(varNodeId) != propagation::NULL_ID);
-        return invariantGraphConst().varId(varNodeId);
+        assert(mapping.solverId(varNodeId) != propagation::NULL_ID);
+        return mapping.solverId(varNodeId);
       });
-  solver().makeInvariant<propagation::Linear>(solver(), _intermediate,
+  solver.makeInvariant<propagation::Linear>(solver, mapping.intermediateId(id()),
                                               std::vector<Int>(_coeffs),
                                               std::move(solverVars));
 }

@@ -30,32 +30,32 @@ void BoolOrNode::init(InvariantNodeId id) {
       }));
 }
 
-void BoolOrNode::registerOutputVars() {
-  if (violationVarId() == propagation::NULL_ID) {
+void BoolOrNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+  if (violationVarId(mapping) == propagation::NULL_ID) {
     if (shouldHold()) {
-      registerViolation();
+      registerViolation(solver, mapping);
     } else {
       assert(!isReified());
-      _intermediate = solver().makeIntVar(0, 0, 0);
-      setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
-          solver(), _intermediate, 0));
+      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+      setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
+          solver, mapping.intermediateId(id()), 0), mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
+        return mapping.solverId(vId) !=
                propagation::NULL_ID;
       }));
 }
 
-void BoolOrNode::registerNode() {
-  assert(violationVarId() != propagation::NULL_ID);
-  assert(violationVarId().isVar());
+void BoolOrNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+  assert(violationVarId(mapping) != propagation::NULL_ID);
+  assert(violationVarId(mapping).isVar());
 
-  solver().makeInvariant<propagation::BoolOr>(solver(), violationVarId(),
-                                              invariantGraph().varId(a()),
-                                              invariantGraph().varId(b()));
+  solver.makeInvariant<propagation::BoolOr>(solver, violationVarId(mapping),
+                                              mapping.solverId(a()),
+                                              mapping.solverId(b()));
 }
 
 std::string BoolOrNode::dotLangIdentifier() const { return "bool_or"; }

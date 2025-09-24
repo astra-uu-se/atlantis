@@ -129,29 +129,28 @@ bool ArrayVarElementNode::replace() {
   return true;
 }
 
-void ArrayVarElementNode::registerOutputVars() {
-  makeSolverVar(outputVarNodeIds().front(), _offset);
+void ArrayVarElementNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+  makeSolverVar(outputVarNodeIds().front(), _offset, solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void ArrayVarElementNode::registerNode() {
+void ArrayVarElementNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
   std::vector<propagation::VarViewId> varVector;
   std::ranges::transform(
       dynamicInputVarNodeIds(), std::back_inserter(varVector),
-      [&](auto node) { return invariantGraph().varId(node); });
+      [&](auto nId) { return mapping.solverId(nId); });
 
-  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
+  assert(mapping.solverId(outputVarNodeIds().front()) !=
          propagation::NULL_ID);
-  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
+  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
 
-  solver().makeInvariant<propagation::ElementVar>(
-      solver(), invariantGraph().varId(outputVarNodeIds().front()),
-      invariantGraph().varId(idx()), std::move(varVector), _offset);
+  solver.makeInvariant<propagation::ElementVar>(
+      solver, mapping.solverId(outputVarNodeIds().front()),
+      mapping.solverId(idx()), std::move(varVector), _offset);
 }
 
 std::string ArrayVarElementNode::dotLangIdentifier() const {
