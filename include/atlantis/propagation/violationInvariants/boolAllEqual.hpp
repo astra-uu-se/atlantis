@@ -10,7 +10,6 @@ class BoolAllEqual : public ViolationInvariant {
  protected:
   std::vector<VarViewId> _vars;
   CommittableInt _numTrue;
-  std::vector<CommittableInt> _varNotified;
 
  public:
   explicit BoolAllEqual(SolverBase&, VarId violationId,

@@ -1,11 +1,21 @@
 ### docker build --ssh default -t atlantis:latest . ###
 
 # Build Atlantis in an isolated stage.
-FROM minizinc/mznc2024:latest AS builder
+FROM minizinc/mznc2025:latest AS builder
 
 # Install compiler toolchain
 RUN apt-get update -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake git
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    curl \
+    locales \
+    locales-all
+
+ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US.UTF-8
 
 # Clone the Atlantis git repository.
 RUN ssh-keyscan github.com > /etc/ssh/ssh_known_hosts
@@ -15,7 +25,7 @@ RUN --mount=type=ssh \
 # Change directory to /src.
 WORKDIR /src
 
-# Build Chuffed and install it into /install.
+# Build Atlantis and install it into /install.
 RUN --mount=type=ssh \
     mkdir /install && mkdir -p build && cd build && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/install .. && \
@@ -23,7 +33,7 @@ RUN --mount=type=ssh \
     cmake --build . --config Release --target install
 
 # Create our final image using this base.
-FROM minizinc/mznc2024:latest
+FROM minizinc/mznc2025:latest
 
 # Copy the Atlantis installation to /atlantis in the final image.
 COPY --from=builder /install /atlantis

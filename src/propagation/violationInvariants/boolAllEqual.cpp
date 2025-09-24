@@ -13,12 +13,7 @@ BoolAllEqual::BoolAllEqual(SolverBase& solver, VarId violationId,
                            std::vector<VarViewId>&& vars)
     : ViolationInvariant(solver, violationId),
       _vars(std::move(vars)),
-      _numTrue(NULL_TIMESTAMP, 0) {
-  _varNotified.reserve(_vars.size());
-  for (size_t i = 0; i < _vars.size(); ++i) {
-    _varNotified.emplace_back(NULL_TIMESTAMP, 0);
-  }
-}
+      _numTrue(NULL_TIMESTAMP, 0) {}
 
 BoolAllEqual::BoolAllEqual(SolverBase& solver, VarViewId violationId,
                            std::vector<VarViewId>&& vars)
@@ -57,8 +52,7 @@ void BoolAllEqual::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _vars.size());
   const bool newValue = _solver.value(ts, _vars[id]) == 0;
   const bool committedValue = _solver.committedValue(_vars[id]) == 0;
-  assert(_varNotified[id].value(ts) == 0);
-  _varNotified[id].setValue(ts, 1);
+
   if (newValue == committedValue) {
     return;
   }

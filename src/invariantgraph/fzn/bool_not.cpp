@@ -29,12 +29,15 @@ bool bool_not(FznInvariantGraph& graph,
   const auto& bNeg = std::get<fznparser::BoolArg>(constraint.arguments().at(1));
 
   if (constraint.definedVar().has_value() &&
-    std::holds_alternative<std::shared_ptr<fznparser::BoolVar>>(constraint.definedVar().value()) &&
-    std::get<std::shared_ptr<fznparser::BoolVar>>(constraint.definedVar().value()) == std::get<std::shared_ptr<const fznparser::BoolVar>>(b) ) {
-      return bool_not(graph, bNeg, b);
+      std::holds_alternative<std::shared_ptr<fznparser::BoolVar>>(
+          constraint.definedVar().value()) &&
+      std::get<std::shared_ptr<fznparser::BoolVar>>(
+          constraint.definedVar().value()) ==
+          std::get<std::shared_ptr<const fznparser::BoolVar>>(b)) {
+    return bool_not(graph, bNeg, b);
   }
 
-  return bool_not(graph,b, bNeg);
+  return bool_not(graph, b, bNeg);
 }
 
 }  // namespace atlantis::invariantgraph::fzn
