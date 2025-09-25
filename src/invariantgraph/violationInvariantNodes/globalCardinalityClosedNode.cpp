@@ -12,7 +12,6 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/setInNode.hpp"
 #include "atlantis/utils/domains.hpp"
-#include "fznparser/except.hpp"
 
 namespace atlantis::invariantgraph {
 

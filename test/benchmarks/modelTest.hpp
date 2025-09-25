@@ -8,6 +8,7 @@
 #include <string>
 
 #include "atlantis/fznBackend.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/searchStatistics.hpp"
 

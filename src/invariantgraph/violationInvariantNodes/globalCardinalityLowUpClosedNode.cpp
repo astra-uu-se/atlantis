@@ -9,7 +9,6 @@
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityLowUpNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/setInNode.hpp"
 #include "atlantis/utils/domains.hpp"
 

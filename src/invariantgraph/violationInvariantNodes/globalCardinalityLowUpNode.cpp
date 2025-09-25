@@ -101,6 +101,14 @@ void GlobalCardinalityLowUpNode::propagate() {
   while (!stack.empty()) {
     const size_t coverIndex = stack.top();
     stack.pop();
+    if (_low[coverIndex] > static_cast<Int>(supportedInputs[coverIndex].size())) {
+      if (!isReified() && shouldHold()) {
+        throw InconsistencyException("GlobalCardinalityLowUpNode::updateState:");
+      }
+      fixReified(false);
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
     if (_low[coverIndex] ==
         static_cast<Int>(supportedInputs[coverIndex].size())) {
       for (const size_t inputIndex : supportedInputs[coverIndex]) {
@@ -212,6 +220,10 @@ void GlobalCardinalityLowUpNode::updateState() {
 
   verifyCover();
   propagate();
+
+  if (state() == InvariantNodeState::SUBSUMED) {
+    return;
+  }
 
   if (_cover.empty()) {
     setState(InvariantNodeState::SUBSUMED);
