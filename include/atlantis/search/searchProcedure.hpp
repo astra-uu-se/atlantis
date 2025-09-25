@@ -18,6 +18,8 @@ namespace neighborhoods {
 class Neighborhood;
 }
 
+enum class SearchType : unsigned char { PARALLEL, BESTCOST, BEAMSEARCH };
+
 /**
  * Search procedure based on chapter 12 of:
  *
@@ -30,6 +32,7 @@ class SearchProcedure {
   std::shared_ptr<neighborhoods::Neighborhood> _neighborhood;
   Objective _objective;
   std::optional<SavedAssignment> _solution;
+  const SearchType _searchType;
 
   void onSolution(SearchController& controller);
 
@@ -40,7 +43,8 @@ class SearchProcedure {
       : _random(random),
         _assignment(assignment),
         _neighborhood(neighborhood),
-        _objective(objective) {}
+        _objective(objective),
+        _searchType(searchType) {}
 
   int run(SearchController& controller, Annealer& annealer,
           logging::Logger& logger);

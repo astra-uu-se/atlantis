@@ -8,6 +8,7 @@
 #include "invariantgraph/fznInvariantGraph.hpp"
 #include "invariantgraph/solverMapping.hpp"
 #include "search/savedAssignment.hpp"
+#include "search/searchProcedure.hpp"
 #include "search/threadController.hpp"
 #include "types.hpp"
 #include "utils/fznOutput.hpp"
@@ -46,6 +47,7 @@ class FznBackend {
   std::uint_fast32_t _seed;
   std::optional<std::filesystem::path> _dotFilePath{};
   const std::uint_fast32_t _threadCount;
+  search::SearchType _searchType;
 
   std::function<search::SavedAssignment(
       const search::Assignment&,
@@ -60,10 +62,12 @@ class FznBackend {
       : _invariantGraph(std::make_shared<invariantgraph::FznInvariantGraph>(true)),
         _model(std::make_shared<fznparser::Model>(std::move(model))),
         _seed(std::time(nullptr)),
-        _threadCount(threadCount) {}
+        _threadCount(threadCount),
+        _searchType(searchType) {}
 
   FznBackend(logging::Logger& logger, std::filesystem::path&& modelFile,
-             std::uint_fast32_t threadCount = 1);
+             std::uint_fast32_t threadCount = 1,
+             search::SearchType searchType = search::SearchType::BEAMSEARCH);
 
   void solve(logging::Logger& logger);
 

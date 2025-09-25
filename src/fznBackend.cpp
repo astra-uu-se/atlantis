@@ -49,7 +49,8 @@ void FznBackend::onFinishDefault(bool hadSol) {
 
 FznBackend::FznBackend(logging::Logger& logger,
                        std::filesystem::path&& modelFile,
-                       const uint_fast32_t threadCount)
+                       const uint_fast32_t threadCount,
+                       search::SearchType searchType)
     : FznBackend(logger.timedFunction<fznparser::Model>(
                      "parsing FlatZinc",
                      [&] {
@@ -59,7 +60,7 @@ FznBackend::FznBackend(logging::Logger& logger,
                                     m.constraints().size());
                        return m;
                      }),
-                 threadCount) {}
+                 threadCount, searchType) {}
 
 void FznBackend::solve(logging::Logger& logger) {
   // Shared data

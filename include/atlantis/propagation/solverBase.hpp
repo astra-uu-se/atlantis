@@ -28,7 +28,7 @@ class SolverBase {
 
   void updateValue(Timestamp, VarId, Int val);
 
-  void updateValue(VarId id, Int val) {
+  [[gnu::always_inline]] void updateValue(VarId id, Int val) {
     updateValue(_currentTimestamp, id, val);
   }
 
@@ -97,15 +97,7 @@ class SolverBase {
 
   void commitInvariant(InvariantId);
 
-  [[nodiscard]] std::vector<Int> currentValues() const {
-    return _store.currentValues();
-  }
-
-  void updateValues(std::vector<Int>  values) {
-    for (size_t i = 0; i < values.size(); i++) {
-      updateValue(i, values[i]);
-    }
-  }
+  void updateValues(const std::unordered_map<VarId, Int>&  values);
 
   //--------------------- Registration ---------------------
   /**

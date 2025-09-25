@@ -81,15 +81,4 @@ VarId Store::dynamicInputVar(Timestamp ts,
   return sourceId(_invariants.at(invariantId)->dynamicInputVar(ts));
 }
 
-std::vector<Int> Store::currentValues() const {
-  // TODO: double check that this correctly handles the IDs, so that nothing
-  // gets mixed up
-  std::vector<Int> values;
-  for (const IntVar& var : _intVars) {
-    values.push_back(var.committedValue());
-  }
-
-  return values;
-}
-
 }  // namespace atlantis::propagation

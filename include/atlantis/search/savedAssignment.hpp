@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "assignment.hpp"
 #include "atlantis/types.hpp"
 #include "cost.hpp"
@@ -20,7 +22,7 @@ class SavedAssignment {
     }
   }
 
-  [[nodiscard]] Cost getCost() const { return _cost; }
+  [[gnu::always_inline]] [[nodiscard]] Cost getCost() const { return _cost; }
 
   [[nodiscard]] const std::vector<Int>& getOutputValues() const { return _outputValues; }
 

@@ -8,6 +8,7 @@
 #include "atlantis/search/objective.hpp"
 #include "search/annealing/annealingSchedule.hpp"
 #include "search/savedAssignment.hpp"
+#include "search/searchProcedure.hpp"
 #include "search/threadController.hpp"
 #include "types.hpp"
 
@@ -19,6 +20,7 @@ class SolverThread {
   std::shared_ptr<search::AnnealingSchedule> _schedule;
   size_t _threadId;
   std::shared_ptr<search::ThreadController> _controller;
+  search::SearchType _searchType;
 
   // Optional arguments
   std::uint_fast32_t _seed;

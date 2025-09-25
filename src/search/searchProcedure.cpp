@@ -40,8 +40,13 @@ SearchStatistics makeStats(const Statistic& rounds,
 
 void SearchProcedure::onSolution(SearchController& controller) {
   _solution = controller.onSolution(_assignment);
-  _objective.tighten(_solution->getCost());
-  _assignment.setAssignment(_solution.value());
+  if (_searchType == SearchType::PARALLEL) {
+    _objective.tighten();
+  } else {
+    _objective.tighten(_solution->getCost());
+    if (_searchType == SearchType::BEAMSEARCH)
+      _assignment.setAssignment(_solution.value());
+  }
 }
 
 int SearchProcedure::run(SearchController& controller, Annealer& annealer,
