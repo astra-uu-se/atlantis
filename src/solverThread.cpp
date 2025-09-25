@@ -20,13 +20,26 @@
 
 namespace atlantis {
 
-void SolverThread::solve(std::shared_ptr<const invariantgraph::FznInvariantGraph> invariantGraph, logging::Logger& logger) {
-  propagation::Solver solver;
+static ObjectiveDirection getObjectiveDirection(
+    fznparser::ProblemType problemType) {
+  switch (problemType) {
+    case fznparser::ProblemType::MINIMIZE:
+      return ObjectiveDirection::MINIMIZE;
+    case fznparser::ProblemType::MAXIMIZE:
+      return ObjectiveDirection::MAXIMIZE;
+    case fznparser::ProblemType::SATISFY:
+      default:
+        return ObjectiveDirection::NONE;
+  }
+}
 
+void SolverThread::solve(logging::Logger& logger) {
+  propagation::Solver solver;
   solver.open();
   // TODO: we should improve the initialisation in order to avoid the need for
   // breaking the dynamic cycles
-  invariantgraph::SolverMapping mapping = invariantGraph->construct(solver);
+  invariantgraph::SolverMapping mapping = _invariantGraph->construct(solver);
+  FznOutput fznOutput = _invariantGraph->generateFznOutput(mapping);
 
   // Might be changed to shared later
   search::Objective searchObjective(solver, _problemType);
@@ -35,12 +48,14 @@ void SolverThread::solve(std::shared_ptr<const invariantgraph::FznInvariantGraph
       mapping.totalViolationId(), mapping.objectiveId());
   solver.close();
 
+  const auto _objectiveDirection = getObjectiveDirection(_problemType);
+
   // TODO: extract to shared -- requires the original invariantGraph
   const Int objectiveOptimalValue =
       _objectiveDirection == ObjectiveDirection::NONE ? 0
       : _objectiveDirection == ObjectiveDirection::MINIMIZE
-          ? invariantGraph->objectiveVarNode().lowerBound()
-          : invariantGraph->objectiveVarNode().upperBound();
+          ? _invariantGraph->objectiveVarNode().lowerBound()
+          : _invariantGraph->objectiveVarNode().upperBound();
 
   search::Assignment assignment(solver, mapping.globalNeighborhood(), violationId,
                                 mapping.objectiveId(),
@@ -50,7 +65,7 @@ void SolverThread::solve(std::shared_ptr<const invariantgraph::FznInvariantGraph
   // TODO: this case may not be handled properly
   if (mapping.globalNeighborhood()->coveredVars().empty()) {
     search::SavedAssignment savedAssignment =
-        _onSolution(mapping, assignment, *_controller, _threadId);
+        _onSolution(assignment, fznOutput, *_controller, _threadId);
     _onFinish(true);
   }
 
@@ -63,7 +78,7 @@ void SolverThread::solve(std::shared_ptr<const invariantgraph::FznInvariantGraph
 
   // TODO: extract to shared -- requires fixing invariantGraph
   auto onSolution = [&](const search::Assignment& a) {
-    return _onSolution(mapping, a, *_controller, _threadId);
+    return _onSolution(a, fznOutput, *_controller, _threadId);
   };
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
   search::SearchController searchController(_objectiveDirection == ObjectiveDirection::NONE,

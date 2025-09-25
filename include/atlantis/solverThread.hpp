@@ -14,7 +14,7 @@
 namespace atlantis {
 
 class SolverThread {
-  ObjectiveDirection _objectiveDirection;
+  std::shared_ptr<const invariantgraph::FznInvariantGraph>& _invariantGraph;
   fznparser::ProblemType _problemType;
   std::shared_ptr<search::AnnealingSchedule> _schedule;
   size_t _threadId;
@@ -25,16 +25,16 @@ class SolverThread {
   std::optional<std::chrono::milliseconds> _timelimit;
 
   std::function<search::SavedAssignment(
-      const invariantgraph::SolverMapping&,
       const search::Assignment&,
-      search::ThreadController& controller, Int threadId)>
+      const FznOutput&,
+      search::ThreadController&, Int threadId)>
       _onSolution;
 
   std::function<void(bool)> _onFinish;
 
  public:
   explicit SolverThread(
-      const ObjectiveDirection objectiveDirection,
+      std::shared_ptr<const invariantgraph::FznInvariantGraph>&& invariantGraph,
       const fznparser::ProblemType problemType,
       const std::shared_ptr<search::AnnealingSchedule>& schedule,
       const size_t threadId,
@@ -42,11 +42,11 @@ class SolverThread {
       const std::uint_fast32_t seed,
       const std::optional<std::chrono::milliseconds> timeLimit,
       const std::function<search::SavedAssignment(
-          const invariantgraph::SolverMapping&,
           const search::Assignment&,
+          const FznOutput&,
           search::ThreadController&, Int threadId)>& onSolution,
       const std::function<void(bool)>& onFinish)
-      : _objectiveDirection(objectiveDirection),
+      : _invariantGraph(invariantGraph),
         _problemType(problemType),
         _schedule(schedule),
         _threadId(threadId),
@@ -56,7 +56,7 @@ class SolverThread {
         _onSolution(onSolution),
         _onFinish(onFinish) {}
 
-  void solve(std::shared_ptr<const invariantgraph::FznInvariantGraph> graph, logging::Logger& logger);
+  void solve(logging::Logger& logger);
 };
 
 }  // namespace atlantis

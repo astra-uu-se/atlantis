@@ -278,8 +278,8 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays(const Solv
   return outputVarArrays;
 }
 
-std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays(const SolverMapping& mapping)
-    const noexcept {
+std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays(
+    const SolverMapping& mapping) const noexcept {
   std::vector<FznOutputVarArray> outputVarArrays;
   outputVarArrays.reserve(_outputIntVarArrays.size());
   for (const InvariantGraphOutputVarArray& outputArray : _outputIntVarArrays) {
@@ -297,6 +297,9 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays(const Solve
     }
   }
   return outputVarArrays;
+}
+FznOutput FznInvariantGraph::generateFznOutput(const SolverMapping& mapping) const {
+  return {outputBoolVars(mapping), outputIntVars(mapping), outputBoolVarArrays(mapping), outputIntVarArrays(mapping)};
 }
 
 void FznInvariantGraph::createNodes(const fznparser::Model& model) {

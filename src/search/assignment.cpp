@@ -122,7 +122,7 @@ Cost Assignment::getCost() const {
 }
 
 void Assignment::setAssignment(SavedAssignment saved) const {
-  _solver.updateValues(saved.getValues());
+  _solver.updateValues(saved.getOutputValues());
 }
 
 }  // namespace atlantis::search

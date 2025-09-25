@@ -10,6 +10,7 @@
 #include "search/savedAssignment.hpp"
 #include "search/threadController.hpp"
 #include "types.hpp"
+#include "utils/fznOutput.hpp"
 
 namespace atlantis {
 
@@ -28,16 +29,18 @@ class SearchStatistics;
 
 class FznBackend {
  public:
-  void displaySolution(const invariantgraph::SolverMapping&,
-      const search::Assignment&) const;
+  static void displaySolution(const search::SavedAssignment&, const FznOutput&);
+
   static void onFinishDefault(bool);
-  search::SavedAssignment onSolutionDefault(const invariantgraph::SolverMapping&,
-    const search::Assignment&, search::ThreadController&,
-    const Int threadId) const;
+
+  static search::SavedAssignment onSolutionDefault(const search::Assignment&,
+    const FznOutput&, search::ThreadController&,
+    Int threadId);
 
  private:
   std::shared_ptr<invariantgraph::FznInvariantGraph> _invariantGraph;
   std::shared_ptr<fznparser::Model> _model;
+  std::shared_ptr<FznOutput> _fznOutput;
   search::AnnealingScheduleFactory _annealingScheduleFactory;
   std::optional<std::chrono::milliseconds> _timelimit;
   std::uint_fast32_t _seed;
@@ -45,10 +48,10 @@ class FznBackend {
   const std::uint_fast32_t _threadCount;
 
   std::function<search::SavedAssignment(
-      const invariantgraph::SolverMapping&,
       const search::Assignment&,
+      const FznOutput,
       search::ThreadController&, Int threadId)>
-      _onSolution;
+      _onSolution = onSolutionDefault;
   std::function<void(bool)> _onFinish = onFinishDefault;
 
  public:
@@ -57,10 +60,7 @@ class FznBackend {
       : _invariantGraph(std::make_shared<invariantgraph::FznInvariantGraph>(true)),
         _model(std::make_shared<fznparser::Model>(std::move(model))),
         _seed(std::time(nullptr)),
-        _threadCount(threadCount),
-        _onSolution([this](const invariantgraph::SolverMapping& mapping, const search::Assignment& assignment, search::ThreadController& controller, Int threadId) {
-          return onSolutionDefault(mapping, assignment, controller, threadId);
-        }){}
+        _threadCount(threadCount) {}
 
   FznBackend(logging::Logger& logger, std::filesystem::path&& modelFile,
              std::uint_fast32_t threadCount = 1);
@@ -79,7 +79,7 @@ class FznBackend {
 
   void setOnSolution(
       const std::function<search::SavedAssignment(
-          const invariantgraph::SolverMapping&, const search::Assignment&,
+          const search::Assignment&, const FznOutput&,
           search::ThreadController&, Int)>& onSolution) {
     _onSolution = onSolution;
   }

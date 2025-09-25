@@ -8,16 +8,21 @@ namespace atlantis::search {
 
 class SavedAssignment {
   Cost _cost;
-  std::vector<Int> _values;
+  std::vector<Int> _outputValues;
 
  public:
-  explicit SavedAssignment(const Assignment &assignment)
+  explicit SavedAssignment(const Assignment &assignment,
+    const std::vector<propagation::VarViewId>& outputVars)
   : _cost(assignment.getCost()),
-    _values(assignment.currentValues()) {}
+    _outputValues(outputVars.size()) {
+    for (std::size_t i = 0; i < outputVars.size(); ++i) {
+      _outputValues[i] = assignment.committedValue(outputVars[i]);
+    }
+  }
 
   [[nodiscard]] Cost getCost() const { return _cost; }
 
-  [[nodiscard]] std::vector<Int> getValues() { return _values; }
+  [[nodiscard]] const std::vector<Int>& getOutputValues() const { return _outputValues; }
 
   void setCost(const Cost &cost) { _cost = cost; }
 };

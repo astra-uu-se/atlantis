@@ -4,8 +4,9 @@
 #include <fznparser/model.hpp>
 #include <fznparser/variables.hpp>
 
-#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/utils/fznOutput.hpp"
 
 namespace atlantis {
 struct FznOutputVar;
@@ -44,6 +45,7 @@ class FznInvariantGraph : public InvariantGraph {
       const noexcept;
   [[nodiscard]] std::vector<FznOutputVarArray> outputIntVarArrays(const SolverMapping&)
       const noexcept;
+  [[nodiscard]] FznOutput generateFznOutput(const SolverMapping&) const;
 
   void build(const fznparser::Model&);
 
