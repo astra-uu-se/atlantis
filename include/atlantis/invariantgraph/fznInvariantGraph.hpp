@@ -4,6 +4,7 @@
 #include <fznparser/model.hpp>
 #include <fznparser/variables.hpp>
 
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 
 namespace atlantis {

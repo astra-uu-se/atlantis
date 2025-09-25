@@ -9,15 +9,12 @@
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "implicitConstraintNode.hpp"
 #include "atlantis/invariantgraph/solverMapping.hpp"
 
 namespace atlantis {
 class SearchDomain;
-}
-
-namespace atlantis::propagation {
-class SolverBase;
 }
 
 namespace atlantis::search::neighborhoods {

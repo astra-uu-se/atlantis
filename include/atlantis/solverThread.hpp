@@ -17,19 +17,14 @@ class SolverThread {
   ObjectiveDirection _objectiveDirection;
   fznparser::ProblemType _problemType;
   std::shared_ptr<search::AnnealingSchedule> _schedule;
-  Int _threadId;
+  size_t _threadId;
   std::shared_ptr<search::ThreadController> _controller;
-
-  // Necessary objects
-  std::shared_ptr<fznparser::Model> _model;
 
   // Optional arguments
   std::uint_fast32_t _seed;
-  std::optional<std::filesystem::path> _dotFilePath{};
   std::optional<std::chrono::milliseconds> _timelimit;
 
   std::function<search::SavedAssignment(
-      const invariantgraph::FznInvariantGraph&,
       const invariantgraph::SolverMapping&,
       const search::Assignment&,
       search::ThreadController& controller, Int threadId)>
@@ -42,14 +37,11 @@ class SolverThread {
       const ObjectiveDirection objectiveDirection,
       const fznparser::ProblemType problemType,
       const std::shared_ptr<search::AnnealingSchedule>& schedule,
-      const Int threadId,
+      const size_t threadId,
       const std::shared_ptr<search::ThreadController>& controller,
-      const std::shared_ptr<fznparser::Model>& model,
       const std::uint_fast32_t seed,
-      std::optional<std::filesystem::path> dotFilePath,
       const std::optional<std::chrono::milliseconds> timeLimit,
       const std::function<search::SavedAssignment(
-          const invariantgraph::FznInvariantGraph&,
           const invariantgraph::SolverMapping&,
           const search::Assignment&,
           search::ThreadController&, Int threadId)>& onSolution,
@@ -59,17 +51,12 @@ class SolverThread {
         _schedule(schedule),
         _threadId(threadId),
         _controller(controller),
-        _model(std::move(model)),
         _seed(seed),
-        _dotFilePath(std::move(dotFilePath)),
         _timelimit(timeLimit),
         _onSolution(onSolution),
         _onFinish(onFinish) {}
 
-  void saveInvariantGraph(
-      const invariantgraph::FznInvariantGraph& invariantGraph) const;
-
-  void solve(const invariantgraph::FznInvariantGraph& graph, logging::Logger& logger);
+  void solve(std::shared_ptr<const invariantgraph::FznInvariantGraph> graph, logging::Logger& logger);
 };
 
 }  // namespace atlantis

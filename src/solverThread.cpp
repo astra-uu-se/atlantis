@@ -16,53 +16,41 @@
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
 #include "atlantis/search/searchProcedure.hpp"
-#include "atlantis/search/searchStatistics.hpp"
 #include "atlantis/types.hpp"
 
 namespace atlantis {
 
-void SolverThread::saveInvariantGraph(
-    const invariantgraph::FznInvariantGraph& invariantGraph) const {
-  std::ofstream dotFile;
-  dotFile.open(*_dotFilePath);
-  if (dotFile) {
-    invariantGraph.writeDotFile(dotFile);
-  }
-  dotFile.close();
-}
-void SolverThread::solve(const invariantgraph::FznInvariantGraph& invariantGraph, logging::Logger& logger) {
+void SolverThread::solve(std::shared_ptr<const invariantgraph::FznInvariantGraph> invariantGraph, logging::Logger& logger) {
   propagation::Solver solver;
 
   solver.open();
   // TODO: we should improve the initialisation in order to avoid the need for
   // breaking the dynamic cycles
-  invariantgraph::SolverMapping mapping = invariantGraph.construct(solver);
-
-  auto neighborhood = mapping.globalNeighborhood();
+  invariantgraph::SolverMapping mapping = invariantGraph->construct(solver);
 
   // Might be changed to shared later
   search::Objective searchObjective(solver, _problemType);
 
-  auto violation = searchObjective.registerNode(
+  const auto violationId = searchObjective.registerNode(
       mapping.totalViolationId(), mapping.objectiveId());
   solver.close();
 
   // TODO: extract to shared -- requires the original invariantGraph
   const Int objectiveOptimalValue =
-      _model->isSatisfactionProblem() ? 0
-      : _model->isMinimisationProblem()
-          ? invariantGraph.objectiveVarNode().lowerBound()
-          : invariantGraph.objectiveVarNode().upperBound();
+      _objectiveDirection == ObjectiveDirection::NONE ? 0
+      : _objectiveDirection == ObjectiveDirection::MINIMIZE
+          ? invariantGraph->objectiveVarNode().lowerBound()
+          : invariantGraph->objectiveVarNode().upperBound();
 
-  search::Assignment assignment(solver, neighborhood, violation,
+  search::Assignment assignment(solver, mapping.globalNeighborhood(), violationId,
                                 mapping.objectiveId(),
                                 _objectiveDirection, objectiveOptimalValue);
 
   // This can possibly be extracted, or restricted to one thread
   // TODO: this case may not be handled properly
-  if (neighborhood->coveredVars().empty()) {
+  if (mapping.globalNeighborhood()->coveredVars().empty()) {
     search::SavedAssignment savedAssignment =
-        _onSolution(invariantGraph, mapping, assignment, *_controller, _threadId);
+        _onSolution(mapping, assignment, *_controller, _threadId);
     _onFinish(true);
   }
 
@@ -70,15 +58,15 @@ void SolverThread::solve(const invariantgraph::FznInvariantGraph& invariantGraph
   logger.debug("Thread {} Using seed {}.", _threadId, _seed);
   search::RandomProvider random(_seed);
   search::Annealer annealer(random, *_schedule, assignment);
-  search::SearchProcedure search(random, assignment, neighborhood,
+  search::SearchProcedure search(random, assignment, mapping.globalNeighborhood(),
                                  searchObjective);
 
   // TODO: extract to shared -- requires fixing invariantGraph
   auto onSolution = [&](const search::Assignment& a) {
-    return _onSolution(invariantGraph, mapping, a, *_controller, _threadId);
+    return _onSolution(mapping, a, *_controller, _threadId);
   };
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
-  search::SearchController searchController(_model->isSatisfactionProblem(),
+  search::SearchController searchController(_objectiveDirection == ObjectiveDirection::NONE,
                                             std::move(onSolution),
                                             std::move(onFinish), _timelimit);
 
