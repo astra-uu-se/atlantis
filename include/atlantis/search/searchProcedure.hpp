@@ -39,8 +39,7 @@ class SearchProcedure {
  public:
   SearchProcedure(RandomProvider& random, Assignment& assignment,
                   std::shared_ptr<neighborhoods::Neighborhood> neighborhood,
-                  const Objective& objective,
-                  SearchType searchType)
+                  const Objective& objective, SearchType searchType)
       : _random(random),
         _assignment(assignment),
         _neighborhood(neighborhood),

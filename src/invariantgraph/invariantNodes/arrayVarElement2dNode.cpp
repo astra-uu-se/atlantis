@@ -130,13 +130,13 @@ void ArrayVarElement2dNode::updateState() {
   assert(index == static_cast<Int>(_numRows * numCols()));
 }
 
-void ArrayVarElement2dNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayVarElement2dNode::registerOutputVars(propagation::SolverBase& solver,
+                                               SolverMapping& mapping) const {
   makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
@@ -222,7 +222,8 @@ bool ArrayVarElement2dNode::replace() {
   return true;
 }
 
-void ArrayVarElement2dNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayVarElement2dNode::registerNode(propagation::SolverBase& solver,
+                                         SolverMapping& mapping) const {
   std::vector<std::vector<propagation::VarViewId>> varMatrix(
       _numRows, std::vector<propagation::VarViewId>{});
   for (size_t r = 0; r < _numRows; ++r) {
@@ -233,8 +234,7 @@ void ArrayVarElement2dNode::registerNode(propagation::SolverBase& solver, Solver
     }
   }
 
-  assert(mapping.solverId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
   assert(mapping.solverId(outputVarNodeIds().front()).isVar());
   solver.makeInvariant<propagation::Element2dVar>(
       solver, mapping.solverId(outputVarNodeIds().front()),

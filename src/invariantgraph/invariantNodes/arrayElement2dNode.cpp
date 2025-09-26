@@ -182,24 +182,24 @@ bool ArrayElement2dNode::replace() {
   return true;
 }
 
-void ArrayElement2dNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayElement2dNode::registerOutputVars(propagation::SolverBase& solver,
+                                            SolverMapping& mapping) const {
   if (!staticInputVarNodeIds().empty()) {
     makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void ArrayElement2dNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayElement2dNode::registerNode(propagation::SolverBase& solver,
+                                      SolverMapping& mapping) const {
   if (staticInputVarNodeIds().empty()) {
     return;
   }
-  assert(mapping.solverId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
   assert(mapping.solverId(outputVarNodeIds().front()).isVar());
 
   solver.makeInvariant<propagation::Element2dConst>(

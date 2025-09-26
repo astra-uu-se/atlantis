@@ -68,7 +68,8 @@ void SetInNode::updateState() {
   }
 }
 
-void SetInNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void SetInNode::registerOutputVars(propagation::SolverBase& solver,
+                                   SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
     const propagation::VarViewId input =
         mapping.solverId(staticInputVarNodeIds().front());
@@ -80,20 +81,22 @@ void SetInNode::registerOutputVars(propagation::SolverBase& solver, SolverMappin
 
     if (!shouldHold()) {
       assert(!isReified());
-      mapping.setIntermediateId(id(), solver.makeIntView<propagation::InDomain>(
-          solver, input, std::move(domainEntries)));
+      mapping.setIntermediateId(id(),
+                                solver.makeIntView<propagation::InDomain>(
+                                    solver, input, std::move(domainEntries)));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-          solver, mapping.intermediateId(id()), 0), mapping);
+                            solver, mapping.intermediateId(id()), 0),
+                        mapping);
     } else {
       setViolationVarId(solver.makeIntView<propagation::InDomain>(
-          solver, input, std::move(domainEntries)), mapping);
+                            solver, input, std::move(domainEntries)),
+                        mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 

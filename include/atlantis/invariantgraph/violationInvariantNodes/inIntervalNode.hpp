@@ -6,7 +6,6 @@ namespace atlantis::invariantgraph {
 class InIntervalNode : public ViolationInvariantNode {
   Int _lb, _ub;
 
-
  public:
   explicit InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
                           Int ub, VarNodeId r);
@@ -18,7 +17,8 @@ class InIntervalNode : public ViolationInvariantNode {
 
   void updateState() override;
 
-  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
   [[nodiscard]] std::string dotLangIdentifier() const override;

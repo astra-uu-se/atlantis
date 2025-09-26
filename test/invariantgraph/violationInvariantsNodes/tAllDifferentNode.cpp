@@ -103,13 +103,17 @@ TEST_P(AllDifferentNodeTestFixture, application) {
   EXPECT_EQ(_solverMapping->violationId(_invNodeId), propagation::NULL_ID);
   if (invNode().isReified()) {
     EXPECT_EQ(invNode().outputVarNodeIds().size(), size_t{1});
-    EXPECT_EQ(_solverMapping->solverId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
+    EXPECT_EQ(_solverMapping->solverId(invNode().outputVarNodeIds().front()),
+              propagation::NULL_ID);
   }
   invNode().registerOutputVars(*_solver, *_solverMapping);
   for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
-  const propagation::VarViewId violationId = invNode().isReified() ? _solverMapping->solverId(invNode().outputVarNodeIds().front()) : _solverMapping->violationId(_invNodeId);
+  const propagation::VarViewId violationId =
+      invNode().isReified()
+          ? _solverMapping->solverId(invNode().outputVarNodeIds().front())
+          : _solverMapping->violationId(_invNodeId);
   EXPECT_NE(violationId, propagation::NULL_ID);
   invNode().registerNode(*_solver, *_solverMapping);
   _solver->close();
@@ -146,8 +150,8 @@ TEST_P(AllDifferentNodeTestFixture, propagation) {
     return;
   }
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
-
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating(true);

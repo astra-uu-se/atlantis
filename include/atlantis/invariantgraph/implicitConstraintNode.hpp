@@ -15,7 +15,6 @@ namespace atlantis::invariantgraph {
  * propagation solver.
  */
 class ImplicitConstraintNode : public InvariantNode {
-
  public:
   explicit ImplicitConstraintNode(InvariantGraph&, std::vector<VarNodeId>&&);
 
@@ -23,8 +22,10 @@ class ImplicitConstraintNode : public InvariantNode {
 
   virtual void updateDomainTypes() {};
 
-  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
-  void registerNode(propagation::SolverBase&, SolverMapping&) const override = 0;
+  void registerNode(propagation::SolverBase&,
+                    SolverMapping&) const override = 0;
 };
 }  // namespace atlantis::invariantgraph

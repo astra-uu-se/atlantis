@@ -113,7 +113,8 @@ TEST_P(ArrayBoolAndNodeTestFixture, propagation) {
     return;
   }
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeReplaced() && isReified()) {
     EXPECT_EQ(varId(reifiedVar), propagation::NULL_ID);

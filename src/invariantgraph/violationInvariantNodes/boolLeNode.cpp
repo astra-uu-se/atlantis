@@ -116,17 +116,18 @@ bool BoolLeNode::replace() {
   return true;
 }
 
-void BoolLeNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void BoolLeNode::registerOutputVars(propagation::SolverBase& solver,
+                                    SolverMapping& mapping) const {
   registerViolation(solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void BoolLeNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void BoolLeNode::registerNode(propagation::SolverBase& solver,
+                              SolverMapping& mapping) const {
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(mapping.solverId(a()) != propagation::NULL_ID);
   assert(mapping.solverId(b()) != propagation::NULL_ID);

@@ -77,25 +77,24 @@ bool IntModNode::replace() {
   return true;
 }
 
-void IntModNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void IntModNode::registerOutputVars(propagation::SolverBase& solver,
+                                    SolverMapping& mapping) const {
   makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void IntModNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
-  assert(mapping.solverId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+void IntModNode::registerNode(propagation::SolverBase& solver,
+                              SolverMapping& mapping) const {
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
   assert(mapping.solverId(outputVarNodeIds().front()).isVar());
 
   solver.makeInvariant<propagation::Mod>(
       solver, mapping.solverId(outputVarNodeIds().front()),
-      mapping.solverId(numerator()),
-      mapping.solverId(denominator()));
+      mapping.solverId(numerator()), mapping.solverId(denominator()));
 }
 
 VarNodeId IntModNode::numerator() const {

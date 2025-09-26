@@ -8,7 +8,6 @@ class BoolLinEqNode : public ViolationInvariantNode {
   std::vector<Int> _coeffs;
   Int _bound;
 
-
  public:
   BoolLinEqNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                 std::vector<VarNodeId>&& vars, Int bound,
@@ -21,7 +20,8 @@ class BoolLinEqNode : public ViolationInvariantNode {
 
   void updateState() override;
 
-  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 

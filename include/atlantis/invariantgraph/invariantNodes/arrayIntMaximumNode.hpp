@@ -16,7 +16,8 @@ class ArrayIntMaximumNode : public InvariantNode {
 
   void init(InvariantNodeId) override;
 
-  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
   void updateState() override;
 

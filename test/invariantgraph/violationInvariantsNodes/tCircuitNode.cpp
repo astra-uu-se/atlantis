@@ -83,8 +83,8 @@ TEST_P(CircuitNodeTestFixture, propagation) {
     _solver->setValue(varId(inputVars.at(i)), val);
   }
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
-
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   std::vector<propagation::VarViewId> inputVarIds;
   for (const auto& var : inputVars) {
@@ -92,8 +92,7 @@ TEST_P(CircuitNodeTestFixture, propagation) {
     inputVarIds.emplace_back(varId(var));
   }
 
-  const propagation::VarViewId violVarId =
-      _solverMapping->totalViolationId();
+  const propagation::VarViewId violVarId = _solverMapping->totalViolationId();
   EXPECT_NE(violVarId, propagation::NULL_ID);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);

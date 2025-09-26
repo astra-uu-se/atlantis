@@ -97,7 +97,8 @@ TEST_P(ArrayElementNodeTestFixture, updateState) {
 
 TEST_P(ArrayElementNodeTestFixture, propagation) {
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   VarNode& outputNode = varNode(outputVar);
   if (outputNode.isFixed()) {

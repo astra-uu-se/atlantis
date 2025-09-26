@@ -102,7 +102,8 @@ TEST_P(BoolLeNodeTestFixture, propagation) {
     return;
   }
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeReplaced() && varId(reifiedVar) == propagation::NULL_ID) {
     EXPECT_TRUE(isReified());

@@ -1,10 +1,10 @@
 #pragma once
+#include <memory>
 #include <vector>
 
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
-#include <memory>
 
 namespace atlantis::invariantgraph {
 
@@ -65,7 +65,8 @@ class SolverMapping {
 
   void setViolationId(InvariantNodeId id, propagation::VarViewId solverId);
 
-  [[nodiscard]] propagation::VarViewId intermediateId(InvariantNodeId id, size_t index) const;
+  [[nodiscard]] propagation::VarViewId intermediateId(InvariantNodeId id,
+                                                      size_t index) const;
 
   [[nodiscard]] propagation::VarViewId intermediateId(InvariantNodeId id) const;
 
@@ -83,7 +84,8 @@ class SolverMapping {
   void setGlobalNeighborhood(
       const std::shared_ptr<search::neighborhoods::Neighborhood>&);
 
-  bool setNeighborhood(InvariantNodeId id,
+  bool setNeighborhood(
+      InvariantNodeId id,
       const std::shared_ptr<search::neighborhoods::Neighborhood>&);
 
   [[nodiscard]] Int objectiveOptimalValue() const;

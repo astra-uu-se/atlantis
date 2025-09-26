@@ -192,7 +192,8 @@ bool GlobalCardinalityNode::replace() {
   return true;
 }
 
-void GlobalCardinalityNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void GlobalCardinalityNode::registerOutputVars(propagation::SolverBase& solver,
+                                               SolverMapping& mapping) const {
   for (size_t i = 0; i < _cover.size(); ++i) {
     const bool isDuplicate = std::ranges::any_of(
         outputVarNodeIds().begin(),
@@ -204,9 +205,8 @@ void GlobalCardinalityNode::registerOutputVars(propagation::SolverBase& solver, 
         invariantGraphConst().varNodeConst(outputVarNodeIds().at(i)).isFixed());
 
     if (isDuplicate) {
-      assert(mapping
-                 .solverId(outputVarNodeIds().at(i))
-                  != propagation::NULL_ID);
+      assert(mapping.solverId(outputVarNodeIds().at(i)) !=
+             propagation::NULL_ID);
       mapping.setIntermediateId(id(), i, solver.makeIntVar(0, 0, 0));
       solver.makeIntView<propagation::EqualConst>(
           solver, mapping.intermediateId(id(), i),
@@ -215,12 +215,15 @@ void GlobalCardinalityNode::registerOutputVars(propagation::SolverBase& solver, 
                   .lowerBound() -
               _countOffsets[i]);
     } else if (_countOffsets[i] == 0) {
-      assert(mapping.solverId(outputVarNodeIds().at(i)) == propagation::NULL_ID);
+      assert(mapping.solverId(outputVarNodeIds().at(i)) ==
+             propagation::NULL_ID);
       makeSolverVar(outputVarNodeIds().at(i), solver, mapping);
     } else {
-      assert(mapping.solverId(outputVarNodeIds().at(i)) == propagation::NULL_ID);
+      assert(mapping.solverId(outputVarNodeIds().at(i)) ==
+             propagation::NULL_ID);
       mapping.setIntermediateId(id(), i, solver.makeIntVar(0, 0, 0));
-      mapping.setSolverId(outputVarNodeIds().at(i),
+      mapping.setSolverId(
+          outputVarNodeIds().at(i),
           solver.makeIntView<propagation::IntOffsetView>(
               solver, mapping.intermediateId(id(), i), _countOffsets[i]));
     }
@@ -228,16 +231,16 @@ void GlobalCardinalityNode::registerOutputVars(propagation::SolverBase& solver, 
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void GlobalCardinalityNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void GlobalCardinalityNode::registerNode(propagation::SolverBase& solver,
+                                         SolverMapping& mapping) const {
   std::vector<propagation::VarViewId> inputVarIds;
-  std::ranges::transform(
-      staticInputVarNodeIds(), std::back_inserter(inputVarIds),
-      [&](const auto& id) { return mapping.solverId(id); });
+  std::ranges::transform(staticInputVarNodeIds(),
+                         std::back_inserter(inputVarIds),
+                         [&](const auto& id) { return mapping.solverId(id); });
 
   std::vector<propagation::VarViewId> outputVarIds;
   outputVarIds.reserve(outputVarNodeIds().size());
@@ -245,10 +248,10 @@ void GlobalCardinalityNode::registerNode(propagation::SolverBase& solver, Solver
     assert(mapping.intermediateId(id(), i) == propagation::NULL_ID ||
            mapping.intermediateId(id(), i).isVar());
 
-    outputVarIds.emplace_back(
-        mapping.intermediateId(id(), i) == propagation::NULL_ID
-            ? mapping.solverId(outputVarNodeIds().at(i))
-            : mapping.intermediateId(id(), i));
+    outputVarIds.emplace_back(mapping.intermediateId(id(), i) ==
+                                      propagation::NULL_ID
+                                  ? mapping.solverId(outputVarNodeIds().at(i))
+                                  : mapping.intermediateId(id(), i));
   }
 
   solver.makeInvariant<propagation::GlobalCardinalityOpen>(

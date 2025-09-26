@@ -25,7 +25,8 @@ class UnitInvariantNode : public InvariantNode {
                              std::vector<VarNodeId>&& defVarNodes)
       : InvariantNode(graph, std::move(defVarNodes)) {}
 
-  void registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const override {
+  void registerOutputVars(propagation::SolverBase& solver,
+                          SolverMapping& mapping) const override {
     for (const auto& varNodeId : outputVarNodeIds()) {
       makeSolverVar(varNodeId, solver, mapping);
     }
@@ -190,11 +191,15 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
 
   [[nodiscard]] propagation::VarViewId varId(
       const std::string& identifier) const {
-    return _solverMapping == nullptr ? propagation::NULL_ID : _solverMapping->solverId(_invariantGraph->varNodeId(identifier));
+    return _solverMapping == nullptr
+               ? propagation::NULL_ID
+               : _solverMapping->solverId(
+                     _invariantGraph->varNodeId(identifier));
   }
 
   [[nodiscard]] propagation::VarViewId varId(VarNodeId varNodeId) const {
-    return _solverMapping == nullptr ? propagation::NULL_ID : _solverMapping->solverId(varNodeId);
+    return _solverMapping == nullptr ? propagation::NULL_ID
+                                     : _solverMapping->solverId(varNodeId);
   }
 
   [[nodiscard]] std::vector<propagation::VarViewId> varIds(
@@ -266,7 +271,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
 
   [[nodiscard]] propagation::VarViewId solverVarId(
       const VarNodeId varNodeId) const {
-    return _solverMapping == nullptr ? propagation::NULL_ID : _solverMapping->solverId(varNodeId);
+    return _solverMapping == nullptr ? propagation::NULL_ID
+                                     : _solverMapping->solverId(varNodeId);
   }
 
   void expectInputsRegistered(const InvariantNode& invNode) {

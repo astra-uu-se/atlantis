@@ -181,7 +181,8 @@ bool ArrayBoolXorNode::replace() {
   return true;
 }
 
-void ArrayBoolXorNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayBoolXorNode::registerOutputVars(propagation::SolverBase& solver,
+                                          SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() > 1 &&
       violationVarId(mapping) == propagation::NULL_ID) {
     if (staticInputVarNodeIds().size() == 2) {
@@ -192,30 +193,33 @@ void ArrayBoolXorNode::registerOutputVars(propagation::SolverBase& solver, Solve
     mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
     if (shouldHold()) {
       setViolationVarId(solver.makeIntView<propagation::EqualConst>(
-          solver, mapping.intermediateId(id()), 1), mapping);
+                            solver, mapping.intermediateId(id()), 1),
+                        mapping);
     } else {
       assert(!isReified() && staticInputVarNodeIds().size() > 2);
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-          solver, mapping.intermediateId(id()), 1), mapping);
+                            solver, mapping.intermediateId(id()), 1),
+                        mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void ArrayBoolXorNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayBoolXorNode::registerNode(propagation::SolverBase& solver,
+                                    SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(staticInputVarNodeIds().size() == 2 ||
          mapping.intermediateId(id()) != propagation::NULL_ID);
-  assert(staticInputVarNodeIds().size() == 2 ? violationVarId(mapping).isVar()
-                                             : mapping.intermediateId(id()).isVar());
+  assert(staticInputVarNodeIds().size() == 2
+             ? violationVarId(mapping).isVar()
+             : mapping.intermediateId(id()).isVar());
 
   std::vector<propagation::VarViewId> inputNodeIds;
   std::ranges::transform(
@@ -225,13 +229,14 @@ void ArrayBoolXorNode::registerNode(propagation::SolverBase& solver, SolverMappi
   if (staticInputVarNodeIds().size() == 2) {
     assert(isReified() || shouldHold());
     assert(mapping.intermediateId(id()) == propagation::NULL_ID);
-    solver.makeInvariant<propagation::BoolXor>(
-        solver, violationVarId(mapping), inputNodeIds.front(), inputNodeIds.back());
+    solver.makeInvariant<propagation::BoolXor>(solver, violationVarId(mapping),
+                                               inputNodeIds.front(),
+                                               inputNodeIds.back());
     return;
   }
 
-  solver.makeInvariant<propagation::BoolLinear>(solver, mapping.intermediateId(id()),
-                                                  std::move(inputNodeIds));
+  solver.makeInvariant<propagation::BoolLinear>(
+      solver, mapping.intermediateId(id()), std::move(inputNodeIds));
 }
 
 std::string ArrayBoolXorNode::dotLangIdentifier() const {

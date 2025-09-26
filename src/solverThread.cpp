@@ -43,9 +43,9 @@ void SolverThread::solve(logging::Logger& logger) {
 
   // TODO: extract to shared -- requires the original invariantGraph
 
-  search::Assignment assignment(solver, mapping.globalNeighborhood(), violationId,
-                                mapping.objectiveId(),
-                                mapping.objectiveDirection(), mapping.objectiveOptimalValue());
+  search::Assignment assignment(
+      solver, mapping.globalNeighborhood(), violationId, mapping.objectiveId(),
+      mapping.objectiveDirection(), mapping.objectiveOptimalValue());
 
   // This can possibly be extracted, or restricted to one thread
   // TODO: this case may not be handled properly
@@ -59,8 +59,9 @@ void SolverThread::solve(logging::Logger& logger) {
   logger.debug("Thread {} Using seed {}.", _threadId, _seed);
   search::RandomProvider random(_seed);
   search::Annealer annealer(random, *_schedule, assignment);
-  search::SearchProcedure search(random, assignment, mapping.globalNeighborhood(),
-                                 searchObjective, _searchType);
+  search::SearchProcedure search(random, assignment,
+                                 mapping.globalNeighborhood(), searchObjective,
+                                 _searchType);
 
   // TODO: extract to shared -- requires fixing invariantGraph
   auto onSolution = [&](const search::Assignment& a) {
@@ -69,9 +70,9 @@ void SolverThread::solve(logging::Logger& logger) {
     return savedAssignment;
   };
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
-  search::SearchController searchController(mapping.objectiveDirection() == ObjectiveDirection::NONE,
-                                            std::move(onSolution),
-                                            std::move(onFinish), _timelimit);
+  search::SearchController searchController(
+      mapping.objectiveDirection() == ObjectiveDirection::NONE,
+      std::move(onSolution), std::move(onFinish), _timelimit);
 
   logger.timedFunction<int>(
       "search", [&] { return search.run(searchController, annealer, logger); });

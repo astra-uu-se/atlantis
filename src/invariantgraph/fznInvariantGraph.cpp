@@ -110,7 +110,10 @@ void FznInvariantGraph::build(const fznparser::Model& model) {
       }
     }
     assert(model.solveType().problemType() != fznparser::ProblemType::SATISFY);
-    _objectiveDirection = model.solveType().problemType() == fznparser::ProblemType::MINIMIZE ? ObjectiveDirection::MINIMIZE : ObjectiveDirection::MAXIMIZE;
+    _objectiveDirection =
+        model.solveType().problemType() == fznparser::ProblemType::MINIMIZE
+            ? ObjectiveDirection::MINIMIZE
+            : ObjectiveDirection::MAXIMIZE;
   } else {
     _objectiveDirection = ObjectiveDirection::NONE;
   }
@@ -238,7 +241,9 @@ std::vector<FznOutputVar> FznInvariantGraph::outputBoolVars() const noexcept {
   outputVars.reserve(_outputBoolVars.size());
   for (const auto& [identifier, nId] : _outputBoolVars) {
     const VarNode node = varNodeConst(nId);
-    if (node.isFixed() || (node.staticInputTo().empty() && node.dynamicInputTo().empty() && node.definingNodes().empty())) {
+    if (node.isFixed() ||
+        (node.staticInputTo().empty() && node.dynamicInputTo().empty() &&
+         node.definingNodes().empty())) {
       outputVars.emplace_back(identifier, node.lowerBound());
     } else {
       outputVars.emplace_back(identifier, nId);
@@ -252,7 +257,9 @@ std::vector<FznOutputVar> FznInvariantGraph::outputIntVars() const noexcept {
   outputVars.reserve(_outputIntVars.size());
   for (const auto& [identifier, nId] : _outputIntVars) {
     const VarNode node = varNodeConst(nId);
-    if (node.isFixed() || (node.staticInputTo().empty() && node.dynamicInputTo().empty() && node.definingNodes().empty())) {
+    if (node.isFixed() ||
+        (node.staticInputTo().empty() && node.dynamicInputTo().empty() &&
+         node.definingNodes().empty())) {
       outputVars.emplace_back(identifier, node.lowerBound());
     } else {
       outputVars.emplace_back(identifier, nId);
@@ -272,7 +279,9 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays()
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
-      if (node.isFixed() || (node.staticInputTo().empty() && node.dynamicInputTo().empty() && node.definingNodes().empty())) {
+      if (node.isFixed() ||
+          (node.staticInputTo().empty() && node.dynamicInputTo().empty() &&
+           node.definingNodes().empty())) {
         fznArray.vars.emplace_back(node.lowerBound());
       } else {
         fznArray.vars.emplace_back(nId);
@@ -282,7 +291,8 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays()
   return outputVarArrays;
 }
 
-std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays() const noexcept {
+std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays()
+    const noexcept {
   std::vector<FznOutputVarArray> outputVarArrays;
   outputVarArrays.reserve(_outputIntVarArrays.size());
   for (const InvariantGraphOutputVarArray& outputArray : _outputIntVarArrays) {
@@ -292,7 +302,9 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays() const noe
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
-      if (node.isFixed() || (node.staticInputTo().empty() && node.dynamicInputTo().empty() && node.definingNodes().empty())) {
+      if (node.isFixed() ||
+          (node.staticInputTo().empty() && node.dynamicInputTo().empty() &&
+           node.definingNodes().empty())) {
         fznArray.vars.emplace_back(node.lowerBound());
       } else {
         fznArray.vars.emplace_back(nId);
@@ -302,7 +314,8 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays() const noe
   return outputVarArrays;
 }
 FznOutput FznInvariantGraph::generateFznOutput() const {
-  return {outputBoolVars(), outputIntVars(), outputBoolVarArrays(), outputIntVarArrays()};
+  return {outputBoolVars(), outputIntVars(), outputBoolVarArrays(),
+          outputIntVarArrays()};
 }
 
 void FznInvariantGraph::createNodes(const fznparser::Model& model) {

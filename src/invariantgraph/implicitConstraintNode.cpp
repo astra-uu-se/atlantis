@@ -13,7 +13,8 @@ ImplicitConstraintNode::ImplicitConstraintNode(
     InvariantGraph& graph, std::vector<VarNodeId>&& outputVarNodeIds)
     : InvariantNode(graph, std::move(outputVarNodeIds)) {}
 
-void ImplicitConstraintNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ImplicitConstraintNode::registerOutputVars(propagation::SolverBase& solver,
+                                                SolverMapping& mapping) const {
   for (const auto& varNodeId : outputVarNodeIds()) {
     const auto& varNode = invariantGraphConst().varNodeConst(varNodeId);
     if (mapping.solverId(varNodeId) == propagation::NULL_ID) {

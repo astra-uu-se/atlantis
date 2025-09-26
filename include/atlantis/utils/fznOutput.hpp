@@ -33,9 +33,12 @@ class FznOutput {
   std::vector<FznOutputVarArray> _boolVarArrays;
   std::vector<FznOutputVarArray> _intVarArrays;
 
-public:
+ public:
   FznOutput() = default;
-  FznOutput(std::vector<FznOutputVar>&& boolVars,std::vector<FznOutputVar>&& intVars,std::vector<FznOutputVarArray>&& boolVarArrays,std::vector<FznOutputVarArray>&& intVarArrays);
+  FznOutput(std::vector<FznOutputVar>&& boolVars,
+            std::vector<FznOutputVar>&& intVars,
+            std::vector<FznOutputVarArray>&& boolVarArrays,
+            std::vector<FznOutputVarArray>&& intVarArrays);
 
   void appendBoolVar(FznOutputVar&&);
   void appendIntVar(FznOutputVar&&);

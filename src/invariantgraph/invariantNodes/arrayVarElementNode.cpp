@@ -129,7 +129,8 @@ bool ArrayVarElementNode::replace() {
   return true;
 }
 
-void ArrayVarElementNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayVarElementNode::registerOutputVars(propagation::SolverBase& solver,
+                                             SolverMapping& mapping) const {
   makeSolverVar(outputVarNodeIds().front(), _offset, solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
@@ -138,14 +139,14 @@ void ArrayVarElementNode::registerOutputVars(propagation::SolverBase& solver, So
       }));
 }
 
-void ArrayVarElementNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayVarElementNode::registerNode(propagation::SolverBase& solver,
+                                       SolverMapping& mapping) const {
   std::vector<propagation::VarViewId> varVector;
-  std::ranges::transform(
-      dynamicInputVarNodeIds(), std::back_inserter(varVector),
-      [&](auto nId) { return mapping.solverId(nId); });
+  std::ranges::transform(dynamicInputVarNodeIds(),
+                         std::back_inserter(varVector),
+                         [&](auto nId) { return mapping.solverId(nId); });
 
-  assert(mapping.solverId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
   assert(mapping.solverId(outputVarNodeIds().front()).isVar());
 
   solver.makeInvariant<propagation::ElementVar>(

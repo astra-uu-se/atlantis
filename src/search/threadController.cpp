@@ -5,7 +5,7 @@
 namespace atlantis::search {
 
 bool ThreadController::trySolution(const Int threadId,
-                                              const SavedAssignment& solution) {
+                                   const SavedAssignment& solution) {
   std::lock_guard lock(_lock);
 
   _counter++;

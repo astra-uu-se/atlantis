@@ -41,7 +41,8 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
 TEST_P(IntModNodeTestFixture, propagation) {
   propagation::Solver solver;
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     const Int expected = computeOutput(true);

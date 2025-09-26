@@ -7,11 +7,11 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/propagation/types.hpp"
-#include "atlantis/propagation/solverBase.hpp"
-#include "implicitConstraintNode.hpp"
 #include "atlantis/invariantgraph/solverMapping.hpp"
+#include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "implicitConstraintNode.hpp"
 
 namespace atlantis {
 class SearchDomain;
@@ -43,11 +43,13 @@ class InvariantGraph {
   void breakSelfCycles();
 
   void createVars(propagation::SolverBase&, SolverMapping&) const;
-  void createImplicitConstraints(propagation::SolverBase&, SolverMapping&) const;
+  void createImplicitConstraints(propagation::SolverBase&,
+                                 SolverMapping&) const;
   void createInvariants(propagation::SolverBase&, SolverMapping&) const;
   void createNeighborhood(propagation::SolverBase&, SolverMapping&) const;
 
-  propagation::VarViewId createViolations(propagation::SolverBase&, SolverMapping&) const;
+  propagation::VarViewId createViolations(propagation::SolverBase&,
+                                          SolverMapping&) const;
   void sanity(bool);
 
  protected:
@@ -162,7 +164,7 @@ class InvariantGraph {
 
   void open();
 
-  [[nodiscard]] bool isOpen() const {return _isOpen;};
+  [[nodiscard]] bool isOpen() const { return _isOpen; };
 
   void close();
 

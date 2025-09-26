@@ -64,9 +64,8 @@ void AllDifferentImplicitNode::updateDomainTypes() {
   }
 }
 
-
-void
-AllDifferentImplicitNode::registerNode(propagation::SolverBase&, SolverMapping& mapping) const {
+void AllDifferentImplicitNode::registerNode(propagation::SolverBase&,
+                                            SolverMapping& mapping) const {
   assert(!mapping.hasNeighborhood(id()));
 
   if (outputVarNodeIds().size() <= 1) {
@@ -106,9 +105,10 @@ AllDifferentImplicitNode::registerNode(propagation::SolverBase&, SolverMapping& 
       assert(mapping.solverId(nId) != propagation::NULL_ID);
       searchVars.emplace_back(mapping.solverId(nId), varNode.constDomain());
     }
-    mapping.setNeighborhood(id(), std::make_shared<
-        search::neighborhoods::AllDifferentUniformNeighborhood>(
-        std::move(searchVars)));
+    mapping.setNeighborhood(
+        id(), std::make_shared<
+                  search::neighborhoods::AllDifferentUniformNeighborhood>(
+                  std::move(searchVars)));
     return;
   }
   Int domainLb = std::numeric_limits<Int>::max();
@@ -119,9 +119,10 @@ AllDifferentImplicitNode::registerNode(propagation::SolverBase&, SolverMapping& 
     domainLb = std::min<Int>(domainLb, varNode.lowerBound());
     domainUb = std::max<Int>(domainUb, varNode.upperBound());
   }
-  mapping.setNeighborhood(id(), std::make_shared<
-      search::neighborhoods::AllDifferentNonUniformNeighborhood>(
-      std::move(searchVars), domainLb, domainUb));
+  mapping.setNeighborhood(
+      id(), std::make_shared<
+                search::neighborhoods::AllDifferentNonUniformNeighborhood>(
+                std::move(searchVars), domainLb, domainUb));
 }
 
 std::string AllDifferentImplicitNode::dotLangIdentifier() const {

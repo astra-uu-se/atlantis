@@ -101,7 +101,8 @@ TEST_P(IntLinNeNodeTestFixture, updateState) {
 
 TEST_P(IntLinNeNodeTestFixture, propagation) {
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();

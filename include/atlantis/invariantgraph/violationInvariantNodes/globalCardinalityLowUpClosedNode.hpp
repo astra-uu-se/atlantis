@@ -9,7 +9,6 @@ class GlobalCardinalityLowUpClosedNode : public ViolationInvariantNode {
   std::vector<Int> _low;
   std::vector<Int> _up;
 
-
  public:
   explicit GlobalCardinalityLowUpClosedNode(InvariantGraph& graph,
                                             std::vector<VarNodeId>&& x,
@@ -27,7 +26,8 @@ class GlobalCardinalityLowUpClosedNode : public ViolationInvariantNode {
   void init(InvariantNodeId) override;
   void updateState();
 
-  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 

@@ -64,7 +64,8 @@ TEST_P(IntDivNodeTestFixture, replace) {
 
 TEST_P(IntDivNodeTestFixture, propagation) {
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeReplaced()) {
     EXPECT_EQ(varNode(outputVar).varNodeId(),

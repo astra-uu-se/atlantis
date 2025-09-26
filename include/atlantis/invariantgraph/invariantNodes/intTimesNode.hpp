@@ -7,7 +7,6 @@ namespace atlantis::invariantgraph {
 class IntTimesNode : public InvariantNode {
   Int _scalar{1};
 
-
  public:
   IntTimesNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                VarNodeId output);
@@ -20,7 +19,8 @@ class IntTimesNode : public InvariantNode {
 
   bool replace() override;
 
-  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
   [[nodiscard]] std::string dotLangIdentifier() const override;

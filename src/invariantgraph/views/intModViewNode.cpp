@@ -52,23 +52,22 @@ void IntModViewNode::updateState() {
   remainder.removeValuesAbove(ub);
 }
 
-void IntModViewNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
-  if (mapping.solverId(outputVarNodeIds().front()) ==
-      propagation::NULL_ID) {
-    mapping.setSolverId(
-        outputVarNodeIds().front(),
-        solver.makeIntView<propagation::ModView>(
-            solver, mapping.solverId(input()), _denominator));
+void IntModViewNode::registerOutputVars(propagation::SolverBase& solver,
+                                        SolverMapping& mapping) const {
+  if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+    mapping.setSolverId(outputVarNodeIds().front(),
+                        solver.makeIntView<propagation::ModView>(
+                            solver, mapping.solverId(input()), _denominator));
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void IntModViewNode::registerNode(propagation::SolverBase&, SolverMapping&) const {}
+void IntModViewNode::registerNode(propagation::SolverBase&,
+                                  SolverMapping&) const {}
 
 std::string IntModViewNode::dotLangIdentifier() const {
   return "% " + std::to_string(_denominator);

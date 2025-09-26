@@ -35,7 +35,7 @@ class FznBackend {
   static void onFinishDefault(bool);
 
   void onSolutionDefault(const search::SavedAssignment&,
-    search::ThreadController&, Int threadId) const;
+                         search::ThreadController&, Int threadId) const;
 
  private:
   std::shared_ptr<invariantgraph::FznInvariantGraph> _invariantGraph;
@@ -48,16 +48,15 @@ class FznBackend {
   search::SearchType _searchType;
   std::unique_ptr<FznOutput> _fznOutput{nullptr};
 
-  std::function<void(
-      const search::SavedAssignment&,
-      search::ThreadController&, Int threadId)>
+  std::function<void(const search::SavedAssignment&, search::ThreadController&,
+                     Int threadId)>
       _onSolution;
   std::function<void(bool)> _onFinish = onFinishDefault;
 
  public:
-  explicit FznBackend(fznparser::Model&& model,
-                      const std::uint_fast32_t threadCount,
-                      search::SearchType searchType = search::SearchType::BEAMSEARCH);
+  explicit FznBackend(
+      fznparser::Model&& model, const std::uint_fast32_t threadCount,
+      search::SearchType searchType = search::SearchType::BEAMSEARCH);
 
   FznBackend(logging::Logger& logger, std::filesystem::path&& modelFile,
              std::uint_fast32_t threadCount = 1,
@@ -76,9 +75,8 @@ class FznBackend {
   void setRandomSeed(std::uint_fast32_t seed) { _seed = seed; }
 
   void setOnSolution(
-      const std::function<void(
-          const search::SavedAssignment&,
-          search::ThreadController&, Int)>& onSolution) {
+      const std::function<void(const search::SavedAssignment&,
+                               search::ThreadController&, Int)>& onSolution) {
     _onSolution = onSolution;
   }
 

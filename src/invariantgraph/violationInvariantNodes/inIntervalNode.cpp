@@ -63,30 +63,35 @@ void InIntervalNode::updateState() {
   }
 }
 
-void InIntervalNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void InIntervalNode::registerOutputVars(propagation::SolverBase& solver,
+                                        SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
     if (shouldHold()) {
-      setViolationVarId(solver.makeIntView<propagation::InIntervalConst>(
-          solver, mapping.solverId(staticInputVarNodeIds().front()),
-          _lb, _ub), mapping);
+      setViolationVarId(
+          solver.makeIntView<propagation::InIntervalConst>(
+              solver, mapping.solverId(staticInputVarNodeIds().front()), _lb,
+              _ub),
+          mapping);
     } else {
       assert(!isReified());
-      mapping.setIntermediateId(id(), solver.makeIntView<propagation::InIntervalConst>(
-          solver, mapping.solverId(staticInputVarNodeIds().front()),
-          _lb, _ub));
+      mapping.setIntermediateId(
+          id(), solver.makeIntView<propagation::InIntervalConst>(
+                    solver, mapping.solverId(staticInputVarNodeIds().front()),
+                    _lb, _ub));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-          solver, mapping.intermediateId(id()), 0), mapping);
+                            solver, mapping.intermediateId(id()), 0),
+                        mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void InIntervalNode::registerNode(propagation::SolverBase&, SolverMapping&) const {}
+void InIntervalNode::registerNode(propagation::SolverBase&,
+                                  SolverMapping&) const {}
 
 std::string InIntervalNode::dotLangIdentifier() const { return "in_interval"; }
 

@@ -99,7 +99,8 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
   }
 
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     [[maybe_unused]] const Int expected = computeOutput(true);

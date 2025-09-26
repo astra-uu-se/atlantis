@@ -32,13 +32,13 @@ void IntLeNode::init(InvariantNodeId id) {
       }));
 }
 
-void IntLeNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void IntLeNode::registerOutputVars(propagation::SolverBase& solver,
+                                   SolverMapping& mapping) const {
   registerViolation(solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
@@ -94,7 +94,8 @@ void IntLeNode::updateState() {
   }
 }
 
-void IntLeNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void IntLeNode::registerNode(propagation::SolverBase& solver,
+                             SolverMapping& mapping) const {
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(violationVarId(mapping).isVar());
 

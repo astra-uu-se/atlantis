@@ -97,7 +97,7 @@ class SolverBase {
 
   void commitInvariant(InvariantId);
 
-  void updateSearchValues(const std::vector<std::pair<VarId, Int>>&  values);
+  void updateSearchValues(const std::vector<std::pair<VarId, Int>>& values);
 
   //--------------------- Registration ---------------------
   /**

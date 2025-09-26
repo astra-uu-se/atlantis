@@ -98,7 +98,8 @@ void ViolationInvariantNode::updateReified() {
   InvariantNode::updateState();
 }
 
-propagation::VarViewId ViolationInvariantNode::violationVarId(const SolverMapping& mapping) const {
+propagation::VarViewId ViolationInvariantNode::violationVarId(
+    const SolverMapping& mapping) const {
   if (isReified()) {
     return mapping.solverId(outputVarNodeIds().front());
   }
@@ -126,7 +127,8 @@ propagation::VarViewId ViolationInvariantNode::setViolationVarId(
 }
 
 propagation::VarViewId ViolationInvariantNode::registerViolation(
-    Int initialValue, propagation::SolverBase& solver, SolverMapping& mapping) const {
+    Int initialValue, propagation::SolverBase& solver,
+    SolverMapping& mapping) const {
   if (isReified()) {
     if (mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID) {
       return mapping.solverId(outputVarNodeIds().front());
@@ -135,7 +137,7 @@ propagation::VarViewId ViolationInvariantNode::registerViolation(
     return mapping.violationId(id());
   }
   return setViolationVarId(
-        solver.makeIntVar(initialValue, initialValue, initialValue), mapping);
+      solver.makeIntVar(initialValue, initialValue, initialValue), mapping);
 }
 
 propagation::VarViewId ViolationInvariantNode::registerViolation(

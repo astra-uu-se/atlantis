@@ -6,12 +6,11 @@
 
 namespace atlantis::search {
 
-Assignment::Assignment(propagation::Solver& solver,
-                       std::shared_ptr<neighborhoods::Neighborhood> neighborhood,
-                       propagation::VarViewId violation,
-                       propagation::VarViewId objective,
-                       ObjectiveDirection objectiveDirection,
-                       Int objectiveOptimalValue)
+Assignment::Assignment(
+    propagation::Solver& solver,
+    std::shared_ptr<neighborhoods::Neighborhood> neighborhood,
+    propagation::VarViewId violation, propagation::VarViewId objective,
+    ObjectiveDirection objectiveDirection, Int objectiveOptimalValue)
     : _solver(solver),
       _neighborhood(neighborhood),
       _violation(violation),

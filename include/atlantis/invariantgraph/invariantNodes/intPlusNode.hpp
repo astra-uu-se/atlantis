@@ -7,7 +7,6 @@ namespace atlantis::invariantgraph {
 class IntPlusNode : public InvariantNode {
   Int _offset{0};
 
-
  public:
   IntPlusNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
               VarNodeId output);
@@ -16,7 +15,8 @@ class IntPlusNode : public InvariantNode {
 
   void updateState() override;
 
-  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 

@@ -42,9 +42,9 @@ void IntScalarNode::updateState() {
   }
 }
 
-void IntScalarNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
-  if (mapping.solverId(outputVarNodeIds().front()) ==
-      propagation::NULL_ID) {
+void IntScalarNode::registerOutputVars(propagation::SolverBase& solver,
+                                       SolverMapping& mapping) const {
+  if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
     mapping.setSolverId(
         outputVarNodeIds().front(),
         solver.makeIntView<propagation::ScalarView>(
@@ -53,12 +53,12 @@ void IntScalarNode::registerOutputVars(propagation::SolverBase& solver, SolverMa
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void IntScalarNode::registerNode(propagation::SolverBase&, SolverMapping&) const {}
+void IntScalarNode::registerNode(propagation::SolverBase&,
+                                 SolverMapping&) const {}
 
 std::ostream& IntScalarNode::dotLangEntry(std::ostream& o) const { return o; }
 

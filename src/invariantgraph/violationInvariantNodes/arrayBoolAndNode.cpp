@@ -108,7 +108,8 @@ bool ArrayBoolAndNode::replace() {
   return true;
 }
 
-void ArrayBoolAndNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayBoolAndNode::registerOutputVars(propagation::SolverBase& solver,
+                                          SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() > 1 &&
       violationVarId(mapping) == propagation::NULL_ID) {
     if (shouldHold()) {
@@ -117,24 +118,26 @@ void ArrayBoolAndNode::registerOutputVars(propagation::SolverBase& solver, Solve
       assert(!isReified());
       mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-          solver, mapping.intermediateId(id()), 0), mapping);
+                            solver, mapping.intermediateId(id()), 0),
+                        mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void ArrayBoolAndNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayBoolAndNode::registerNode(propagation::SolverBase& solver,
+                                    SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(shouldHold() || mapping.intermediateId(id()) != propagation::NULL_ID);
-  assert(shouldHold() ? violationVarId(mapping).isVar() : mapping.intermediateId(id()).isVar());
+  assert(shouldHold() ? violationVarId(mapping).isVar()
+                      : mapping.intermediateId(id()).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
@@ -144,11 +147,13 @@ void ArrayBoolAndNode::registerNode(propagation::SolverBase& solver, SolverMappi
       [&](const auto& node) { return mapping.solverId(node); });
   if (solverVars.size() == 2) {
     solver.makeInvariant<propagation::BoolAnd>(
-        solver, !shouldHold() ? mapping.intermediateId(id()) : violationVarId(mapping),
+        solver,
+        !shouldHold() ? mapping.intermediateId(id()) : violationVarId(mapping),
         solverVars.front(), solverVars.back());
   } else {
     solver.makeInvariant<propagation::Max>(
-        solver, !shouldHold() ? mapping.intermediateId(id()) : violationVarId(mapping),
+        solver,
+        !shouldHold() ? mapping.intermediateId(id()) : violationVarId(mapping),
         std::move(solverVars));
   }
 }

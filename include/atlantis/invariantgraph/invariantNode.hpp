@@ -64,7 +64,8 @@ class InvariantNode {
    * applicable if the current node is a violation invariant. If this node does
    * not define a violation variable, this method returns propagation::NULL_ID.
    */
-  [[nodiscard]] virtual propagation::VarViewId violationVarId(const SolverMapping&) const;
+  [[nodiscard]] virtual propagation::VarViewId violationVarId(
+      const SolverMapping&) const;
 
   /**
    * @return The variable nodes defined by this node.
@@ -109,9 +110,13 @@ class InvariantNode {
   [[nodiscard]] std::vector<std::pair<VarNodeId, VarNodeId>>
   splitOutputVarNodes();
 
-  propagation::VarViewId makeSolverVar(VarNodeId varNodeId, propagation::SolverBase&, SolverMapping&) const;
+  propagation::VarViewId makeSolverVar(VarNodeId varNodeId,
+                                       propagation::SolverBase&,
+                                       SolverMapping&) const;
 
-  propagation::VarViewId makeSolverVar(VarNodeId varNodeId, Int initialValue, propagation::SolverBase&, SolverMapping&) const;
+  propagation::VarViewId makeSolverVar(VarNodeId varNodeId, Int initialValue,
+                                       propagation::SolverBase&,
+                                       SolverMapping&) const;
 
   void markOutputTo(VarNodeId varNodeId, bool registerHere);
 
@@ -119,7 +124,8 @@ class InvariantNode {
 
   void markDynamicInputTo(VarNodeId varNodeId, bool registerHere);
 
-  virtual void registerOutputVars(propagation::SolverBase&, SolverMapping&) const = 0;
+  virtual void registerOutputVars(propagation::SolverBase&,
+                                  SolverMapping&) const = 0;
 
   virtual void registerNode(propagation::SolverBase&, SolverMapping&) const = 0;
 

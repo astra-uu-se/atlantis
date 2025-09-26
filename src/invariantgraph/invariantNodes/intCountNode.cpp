@@ -76,9 +76,11 @@ void IntCountNode::updateState() {
 
 Int IntCountNode::needle() const { return _needle; }
 
-void IntCountNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void IntCountNode::registerOutputVars(propagation::SolverBase& solver,
+                                      SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() == 1) {
-    mapping.setSolverId(outputVarNodeIds().front(),
+    mapping.setSolverId(
+        outputVarNodeIds().front(),
         solver.makeIntView<propagation::IfThenElseConst>(
             solver, mapping.solverId(staticInputVarNodeIds().front()),
             _offset + 1, _offset, needle()));
@@ -87,30 +89,29 @@ void IntCountNode::registerOutputVars(propagation::SolverBase& solver, SolverMap
       makeSolverVar(outputVarNodeIds().front(), solver, mapping);
     } else if (mapping.intermediateId(id()) == propagation::NULL_ID) {
       mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
-      mapping.setSolverId(
-          outputVarNodeIds().front(),
-          solver.makeIntView<propagation::IntOffsetView>(
-              solver, mapping.intermediateId(id()), _offset));
+      mapping.setSolverId(outputVarNodeIds().front(),
+                          solver.makeIntView<propagation::IntOffsetView>(
+                              solver, mapping.intermediateId(id()), _offset));
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void IntCountNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void IntCountNode::registerNode(propagation::SolverBase& solver,
+                                SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
-  assert(mapping.solverId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
   assert(mapping.intermediateId(id()) == propagation::NULL_ID
              ? mapping.solverId(outputVarNodeIds().front()).isVar()
              : mapping.solverId(outputVarNodeIds().front()).isView());
-  assert(mapping.intermediateId(id()) == propagation::NULL_ID || mapping.intermediateId(id()).isVar());
+  assert(mapping.intermediateId(id()) == propagation::NULL_ID ||
+         mapping.intermediateId(id()).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());

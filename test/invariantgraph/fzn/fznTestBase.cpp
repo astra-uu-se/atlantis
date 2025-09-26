@@ -42,9 +42,9 @@ void FznTestBase::closeInvariantGraph() {
   _invariantGraph->open();
   _invariantGraph->close();
   _solver = std::make_shared<propagation::Solver>();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 }
-
 
 VarNode& FznTestBase::varNode(const std::string& identifier) {
   RC_LOG() << "varNode(\"" << identifier << "\")" << std::endl;
@@ -64,8 +64,10 @@ VarNodeId FznTestBase::varNodeId(const std::string& identifier) const {
 }
 
 propagation::VarViewId FznTestBase::varId(const std::string& identifier) const {
-  return _invariantGraph->containsVarNode(identifier) && _solverMapping != nullptr ?
-    _solverMapping->solverId(_invariantGraph->varNodeId(identifier)) : propagation::NULL_ID;
+  return _invariantGraph->containsVarNode(identifier) &&
+                 _solverMapping != nullptr
+             ? _solverMapping->solverId(_invariantGraph->varNodeId(identifier))
+             : propagation::NULL_ID;
 }
 
 void FznTestBase::setValue(const std::string& identifier, Int val) const {
@@ -144,9 +146,12 @@ bool FznTestBase::boolVal(const std::string& identifier,
   if (_invariantGraph->containsVarNode(identifier)) {
     const auto& vNode = varNodeConst(identifier);
     RC_ASSERT(!vNode.isIntVar());
-    if (_solverMapping != nullptr && _solverMapping->solverId(vNode.varNodeId()) != propagation::NULL_ID) {
-      ret = (committedValue ? _solver->committedValue(_solverMapping->solverId(vNode.varNodeId()))
-                             : _solver->currentValue(_solverMapping->solverId(vNode.varNodeId()))) == 0;
+    if (_solverMapping != nullptr &&
+        _solverMapping->solverId(vNode.varNodeId()) != propagation::NULL_ID) {
+      ret = (committedValue ? _solver->committedValue(
+                                  _solverMapping->solverId(vNode.varNodeId()))
+                            : _solver->currentValue(_solverMapping->solverId(
+                                  vNode.varNodeId()))) == 0;
     } else if (vNode.constDomain()->size() > 0) {
       RC_ASSERT(vNode.isFixed());
       ret = vNode.inDomain(bool{true});
@@ -155,11 +160,13 @@ bool FznTestBase::boolVal(const std::string& identifier,
     ret = boolPars.at(identifier);
   }
   if (ret.has_value()) {
-    RC_LOG() << "boolVal(\"" << identifier << "\", committedValue=" << to_string(committedValue)
-           << ") = " << to_string(*ret) << std::endl;
+    RC_LOG() << "boolVal(\"" << identifier
+             << "\", committedValue=" << to_string(committedValue)
+             << ") = " << to_string(*ret) << std::endl;
     return *ret;
   }
-  RC_LOG() << "boolVal(\"" << identifier << "\", committedValue=" << to_string(committedValue)
+  RC_LOG() << "boolVal(\"" << identifier
+           << "\", committedValue=" << to_string(committedValue)
            << ") unhandled argument type" << std::endl;
   RC_FAIL();
 }
@@ -195,9 +202,12 @@ Int FznTestBase::intVal(const std::string& identifier,
   if (_invariantGraph->containsVarNode(identifier)) {
     const auto& vNode = varNodeConst(identifier);
     RC_ASSERT(vNode.isIntVar());
-    if (_solverMapping != nullptr && _solverMapping->solverId(vNode.varNodeId()) != propagation::NULL_ID) {
-      ret = committedValue ? _solver->committedValue(_solverMapping->solverId(vNode.varNodeId()))
-                            : _solver->currentValue(_solverMapping->solverId(vNode.varNodeId()));
+    if (_solverMapping != nullptr &&
+        _solverMapping->solverId(vNode.varNodeId()) != propagation::NULL_ID) {
+      ret = committedValue ? _solver->committedValue(
+                                 _solverMapping->solverId(vNode.varNodeId()))
+                           : _solver->currentValue(
+                                 _solverMapping->solverId(vNode.varNodeId()));
     } else {
       RC_ASSERT(vNode.isFixed());
       ret = vNode.lowerBound();
@@ -206,11 +216,13 @@ Int FznTestBase::intVal(const std::string& identifier,
     ret = intPars.at(identifier);
   }
   if (ret.has_value()) {
-    RC_LOG() << "intVal(\"" << identifier << "\", committedValue=" << to_string(committedValue)
-           << ") = " << *ret << std::endl;
+    RC_LOG() << "intVal(\"" << identifier
+             << "\", committedValue=" << to_string(committedValue)
+             << ") = " << *ret << std::endl;
     return *ret;
   }
-  RC_LOG() << "intVal(\"" << identifier << "\", committedValue=" << to_string(committedValue)
+  RC_LOG() << "intVal(\"" << identifier
+           << "\", committedValue=" << to_string(committedValue)
            << ") unhandled argument type" << std::endl;
   RC_FAIL();
 }
@@ -240,7 +252,8 @@ const std::vector<Int>& FznTestBase::intSetVal(
 }
 
 propagation::VarViewId FznTestBase::totalViolationVarId() const {
-  return _solverMapping == nullptr ? propagation::NULL_ID : _solverMapping->totalViolationId();
+  return _solverMapping == nullptr ? propagation::NULL_ID
+                                   : _solverMapping->totalViolationId();
 }
 Int FznTestBase::violation(bool committedValue) const {
   if (totalViolationVarId() == propagation::NULL_ID) {
@@ -577,7 +590,7 @@ std::shared_ptr<BoolVarArray> FznTestBase::addBoolVarArray(
         break;
       default:
         vars->append(genBoolVar(argStates.at(i), identifiers.at(i)));
-      break;
+        break;
     }
   }
   args.emplace_back(vars);
@@ -728,8 +741,9 @@ void FznTestBase::rapidCheck(bool reachesFixpoint) {
     RC_ASSERT(_solverMapping != nullptr);
     RC_ASSERT(_solverMapping->globalNeighborhood() != nullptr);
     _assignment = std::make_shared<search::Assignment>(
-        *_solver, _solverMapping->globalNeighborhood(), _solverMapping->totalViolationId(),
-        _solverMapping->objectiveId(), ObjectiveDirection::NONE, 0);
+        *_solver, _solverMapping->globalNeighborhood(),
+        _solverMapping->totalViolationId(), _solverMapping->objectiveId(),
+        ObjectiveDirection::NONE, 0);
     _randomProvider = std::make_shared<search::RandomProvider>(1234);
     _assignment->initialize(*_randomProvider);
   } catch (const InconsistencyException&) {
@@ -773,7 +787,8 @@ void FznTestBase::rapidCheck(bool reachesFixpoint) {
         for (size_t i = 0;
              i < _invariantGraph->implicitConstraintNodes().size(); ++i) {
           RC_ASSERT(_solverMapping != nullptr);
-          auto neighborhood = _solverMapping->neighborhood(InvariantNodeId(i, true));
+          auto neighborhood =
+              _solverMapping->neighborhood(InvariantNodeId(i, true));
           if (dynamic_cast<search::neighborhoods::NeighborhoodCombinator*>(
                   neighborhood.get()) != nullptr) {
             continue;

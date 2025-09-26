@@ -72,7 +72,8 @@ class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinEqNode> {
 
 TEST_P(BoolLinEqNodeTestFixture, propagation) {
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();

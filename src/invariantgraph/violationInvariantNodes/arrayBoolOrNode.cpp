@@ -110,7 +110,8 @@ bool ArrayBoolOrNode::replace() {
   return true;
 }
 
-void ArrayBoolOrNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayBoolOrNode::registerOutputVars(propagation::SolverBase& solver,
+                                         SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() > 1 && shouldHold() &&
       violationVarId(mapping) == propagation::NULL_ID) {
     registerViolation(solver, mapping);
@@ -118,12 +119,12 @@ void ArrayBoolOrNode::registerOutputVars(propagation::SolverBase& solver, Solver
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void ArrayBoolOrNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayBoolOrNode::registerNode(propagation::SolverBase& solver,
+                                   SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1 || (!isReified() && !shouldHold())) {
     return;
   }
@@ -142,7 +143,7 @@ void ArrayBoolOrNode::registerNode(propagation::SolverBase& solver, SolverMappin
         solver, violationVarId(mapping), solverVars.front(), solverVars.back());
   } else {
     solver.makeInvariant<propagation::Min>(solver, violationVarId(mapping),
-                                             std::move(solverVars), Int{0});
+                                           std::move(solverVars), Int{0});
   }
 }
 

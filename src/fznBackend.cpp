@@ -23,10 +23,9 @@ void FznBackend::displaySolution(
   std::cout << "----------\n";
 }
 
-void FznBackend::onSolutionDefault(
-    const search::SavedAssignment& assignment,
-    search::ThreadController& controller,
-    Int threadId) const {
+void FznBackend::onSolutionDefault(const search::SavedAssignment& assignment,
+                                   search::ThreadController& controller,
+                                   Int threadId) const {
   const bool savedSolution = controller.trySolution(threadId, assignment);
 
   if (savedSolution && controller.shouldPrint(threadId)) {
@@ -50,9 +49,10 @@ FznBackend::FznBackend(fznparser::Model&& model,
       _seed(std::time(nullptr)),
       _threadCount(threadCount),
       _searchType(searchType),
-_onSolution([&](const search::SavedAssignment& assignment, search::ThreadController& controller, Int threadId) {
-  onSolutionDefault(assignment, controller, threadId);
-}){}
+      _onSolution([&](const search::SavedAssignment& assignment,
+                      search::ThreadController& controller, Int threadId) {
+        onSolutionDefault(assignment, controller, threadId);
+      }) {}
 
 FznBackend::FznBackend(logging::Logger& logger,
                        std::filesystem::path&& modelFile,
@@ -83,15 +83,16 @@ void FznBackend::solve(logging::Logger& logger) {
   logger.timedProcedure("building invariant graph",
                         [&] { _invariantGraph->build(*_model); });
   _invariantGraph->close();
-  _fznOutput = std::make_unique<FznOutput>(_invariantGraph->generateFznOutput());
+  _fznOutput =
+      std::make_unique<FznOutput>(_invariantGraph->generateFznOutput());
 
   for (size_t threadId = 0; threadId < _threadCount; threadId++) {
-    threads.emplace_back([&logger, &problemType, &schedule,
-                          threadId, &controller, this] {
+    threads.emplace_back([&logger, &problemType, &schedule, threadId,
+                          &controller, this] {
       auto thread =
-          SolverThread(_invariantGraph, _fznOutput->varNodeIds(), problemType, schedule, threadId,
-                       controller, _searchType,  _seed + threadId,
-                       _timelimit, _onSolution, _onFinish);
+          SolverThread(_invariantGraph, _fznOutput->varNodeIds(), problemType,
+                       schedule, threadId, controller, _searchType,
+                       _seed + threadId, _timelimit, _onSolution, _onFinish);
       thread.solve(logger);
     });
   }

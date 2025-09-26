@@ -126,9 +126,11 @@ bool IntLinearNode::makeImplicit() {
   return true;
 }
 
-void IntLinearNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void IntLinearNode::registerOutputVars(propagation::SolverBase& solver,
+                                       SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() == 1) {
-    mapping.setSolverId(outputVarNodeIds().front(),
+    mapping.setSolverId(
+        outputVarNodeIds().front(),
         solver.makeIntView<propagation::ScalarView>(
             solver, mapping.solverId(staticInputVarNodeIds().front()),
             _coeffs.front(), _offset));
@@ -140,10 +142,9 @@ void IntLinearNode::registerOutputVars(propagation::SolverBase& solver, SolverMa
       assert(mapping.solverId(outputVarNodeIds().front()).isVar());
     } else if (mapping.intermediateId(id()) == propagation::NULL_ID) {
       mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
-      mapping
-          .setSolverId(outputVarNodeIds().front(),
-          solver.makeIntView<propagation::IntOffsetView>(
-              solver, mapping.intermediateId(id()), _offset));
+      mapping.setSolverId(outputVarNodeIds().front(),
+                          solver.makeIntView<propagation::IntOffsetView>(
+                              solver, mapping.intermediateId(id()), _offset));
     }
   }
   assert(std::ranges::all_of(
@@ -153,16 +154,17 @@ void IntLinearNode::registerOutputVars(propagation::SolverBase& solver, SolverMa
       }));
 }
 
-void IntLinearNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void IntLinearNode::registerNode(propagation::SolverBase& solver,
+                                 SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
-  assert(mapping.solverId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
   assert(mapping.intermediateId(id()) == propagation::NULL_ID
              ? mapping.solverId(outputVarNodeIds().front()).isVar()
              : mapping.solverId(outputVarNodeIds().front()).isView());
-  assert(mapping.intermediateId(id()) == propagation::NULL_ID || mapping.intermediateId(id()).isVar());
+  assert(mapping.intermediateId(id()) == propagation::NULL_ID ||
+         mapping.intermediateId(id()).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   std::ranges::transform(

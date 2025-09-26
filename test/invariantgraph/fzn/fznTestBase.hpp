@@ -225,9 +225,9 @@ class FznTestBase : public ::testing::Test {
       const std::string& varPrefix = "b_");
 
   std::shared_ptr<BoolVarArray> addBoolVarArray(
-    const std::vector<BoolArgState>& argStates,
-        const std::vector<std::string>& identifiers,
-        const std::string& identifier = "b_arr");
+      const std::vector<BoolArgState>& argStates,
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "b_arr");
 
   std::shared_ptr<BoolVarArray> addBoolVarArray(
       const std::vector<std::string>& identifiers,

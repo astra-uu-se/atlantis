@@ -48,7 +48,8 @@ class Assignment {
    */
   [[nodiscard]] Int currentValue(propagation::VarViewId) const;
 
-  [[nodiscard]] std::unordered_map<propagation::VarId, Int> currentValues() const;
+  [[nodiscard]] std::unordered_map<propagation::VarId, Int> currentValues()
+      const;
 
   /**
    * Get the committed value of a variable in the assignment.
@@ -65,8 +66,7 @@ class Assignment {
 
   void set(propagation::VarId searchVarId, Int val);
 
-  [[nodiscard]] const std::vector<propagation::VarId>& searchVars()
-      const;
+  [[nodiscard]] const std::vector<propagation::VarId>& searchVars() const;
 
   [[nodiscard]] Timestamp currentTimestamp() const;
 

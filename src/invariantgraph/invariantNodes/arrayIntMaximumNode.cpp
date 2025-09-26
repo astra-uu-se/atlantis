@@ -81,12 +81,13 @@ bool ArrayIntMaximumNode::replace() {
   return true;
 }
 
-void ArrayIntMaximumNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayIntMaximumNode::registerOutputVars(propagation::SolverBase& solver,
+                                             SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() == 1) {
-    mapping.setSolverId(outputVarNodeIds().front(),
+    mapping.setSolverId(
+        outputVarNodeIds().front(),
         solver.makeIntView<propagation::IntMaxView>(
-            solver, mapping.solverId(staticInputVarNodeIds().front()),
-            _lb));
+            solver, mapping.solverId(staticInputVarNodeIds().front()), _lb));
   } else if (!staticInputVarNodeIds().empty()) {
     makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }
@@ -97,7 +98,8 @@ void ArrayIntMaximumNode::registerOutputVars(propagation::SolverBase& solver, So
       }));
 }
 
-void ArrayIntMaximumNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void ArrayIntMaximumNode::registerNode(propagation::SolverBase& solver,
+                                       SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
@@ -108,8 +110,7 @@ void ArrayIntMaximumNode::registerNode(propagation::SolverBase& solver, SolverMa
       std::back_inserter(solverVars),
       [&](const auto& node) { return mapping.solverId(node); });
 
-  assert(mapping.solverId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
   assert(mapping.solverId(outputVarNodeIds().front()).isVar());
   solver.makeInvariant<propagation::Max>(
       solver, mapping.solverId(outputVarNodeIds().front()),

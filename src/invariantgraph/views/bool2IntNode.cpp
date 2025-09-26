@@ -56,23 +56,22 @@ void Bool2IntNode::updateState() {
   }
 }
 
-void Bool2IntNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
-  if (mapping.solverId(outputVarNodeIds().front()) ==
-      propagation::NULL_ID) {
-    mapping.setSolverId(
-        outputVarNodeIds().front(),
-        solver.makeIntView<propagation::Bool2IntView>(
-            solver, mapping.solverId(input())));
+void Bool2IntNode::registerOutputVars(propagation::SolverBase& solver,
+                                      SolverMapping& mapping) const {
+  if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+    mapping.setSolverId(outputVarNodeIds().front(),
+                        solver.makeIntView<propagation::Bool2IntView>(
+                            solver, mapping.solverId(input())));
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void Bool2IntNode::registerNode(propagation::SolverBase&, SolverMapping&) const {}
+void Bool2IntNode::registerNode(propagation::SolverBase&,
+                                SolverMapping&) const {}
 
 std::string Bool2IntNode::dotLangIdentifier() const { return "bool2int"; }
 

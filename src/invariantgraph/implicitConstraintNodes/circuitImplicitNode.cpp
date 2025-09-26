@@ -28,45 +28,45 @@ void CircuitImplicitNode::init(InvariantNodeId id) {
 }
 
 void CircuitImplicitNode::updateDomainTypes() {
-    std::vector<Int> freeIndices;
-    freeIndices.reserve(outputVarNodeIds().size());
-    for (const auto& nId : outputVarNodeIds()) {
-      const auto& varNode = invariantGraphConst().varNodeConst(nId);
-      if (varNode.isFixed()) {
-        freeIndices.emplace_back(varNode.constDomain()->lowerBound());
-      }
-    }
-
-    for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
-      const auto vId = outputVarNodeIds().at(i);
-      auto& varNode = invariantGraph().varNode(vId);
-      assert(vId != propagation::NULL_ID);
-
-      if (varNode.constDomain()->isFixed()) {
-        varNode.setDomainType(DomainType::DOM_NONE);
-        continue;
-      }
-
-      bool enforceDomain = false;
-      for (Int val = 0; val <= static_cast<Int>(outputVarNodeIds().size());
-           ++val) {
-        if (val == (static_cast<Int>(i) - 1) ||
-            std::ranges::any_of(freeIndices.begin(), freeIndices.end(),
-                                [&](const Int& index) { return index == val; })) {
-          continue;
-                                }
-        if (!varNode.constDomain()->contains(val)) {
-          enforceDomain = true;
-          break;
-        }
-      }
-      varNode.setDomainType(enforceDomain ? DomainType::DOM_DOMAIN
-                                          : DomainType::DOM_NONE);
+  std::vector<Int> freeIndices;
+  freeIndices.reserve(outputVarNodeIds().size());
+  for (const auto& nId : outputVarNodeIds()) {
+    const auto& varNode = invariantGraphConst().varNodeConst(nId);
+    if (varNode.isFixed()) {
+      freeIndices.emplace_back(varNode.constDomain()->lowerBound());
     }
   }
 
-void
-CircuitImplicitNode::registerNode(propagation::SolverBase&, SolverMapping& mapping) const {
+  for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
+    const auto vId = outputVarNodeIds().at(i);
+    auto& varNode = invariantGraph().varNode(vId);
+    assert(vId != propagation::NULL_ID);
+
+    if (varNode.constDomain()->isFixed()) {
+      varNode.setDomainType(DomainType::DOM_NONE);
+      continue;
+    }
+
+    bool enforceDomain = false;
+    for (Int val = 0; val <= static_cast<Int>(outputVarNodeIds().size());
+         ++val) {
+      if (val == (static_cast<Int>(i) - 1) ||
+          std::ranges::any_of(freeIndices.begin(), freeIndices.end(),
+                              [&](const Int& index) { return index == val; })) {
+        continue;
+      }
+      if (!varNode.constDomain()->contains(val)) {
+        enforceDomain = true;
+        break;
+      }
+    }
+    varNode.setDomainType(enforceDomain ? DomainType::DOM_DOMAIN
+                                        : DomainType::DOM_NONE);
+  }
+}
+
+void CircuitImplicitNode::registerNode(propagation::SolverBase&,
+                                       SolverMapping& mapping) const {
   assert(!mapping.hasNeighborhood(id()));
 
   std::vector<search::SearchVar> searchVars;
@@ -85,8 +85,9 @@ CircuitImplicitNode::registerNode(propagation::SolverBase&, SolverMapping& mappi
     assert(vId != propagation::NULL_ID);
     searchVars.emplace_back(mapping.solverId(vId), varNode.constDomain());
   }
-  mapping.setNeighborhood(id(), std::make_shared<search::neighborhoods::CircuitNeighborhood>(
-      std::move(searchVars), _offset));
+  mapping.setNeighborhood(
+      id(), std::make_shared<search::neighborhoods::CircuitNeighborhood>(
+                std::move(searchVars), _offset));
 }
 
 std::string CircuitImplicitNode::dotLangIdentifier() const { return "circuit"; }

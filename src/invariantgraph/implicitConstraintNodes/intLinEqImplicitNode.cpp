@@ -36,9 +36,8 @@ void IntLinEqImplicitNode::updateDomainTypes() {
   }
 }
 
-
-void
-IntLinEqImplicitNode::registerNode(propagation::SolverBase&, SolverMapping& mapping) const {
+void IntLinEqImplicitNode::registerNode(propagation::SolverBase&,
+                                        SolverMapping& mapping) const {
   assert(!mapping.hasNeighborhood(id()));
   if (outputVarNodeIds().size() <= 1) {
     return;
@@ -53,8 +52,9 @@ IntLinEqImplicitNode::registerNode(propagation::SolverBase&, SolverMapping& mapp
     searchVars.emplace_back(mapping.solverId(nId), varNode.constDomain());
   }
 
-  mapping.setNeighborhood(id(), std::make_shared<search::neighborhoods::IntLinEqNeighborhood>(
-      std::vector<Int>{_coeffs}, std::move(searchVars), _offset));
+  mapping.setNeighborhood(
+      id(), std::make_shared<search::neighborhoods::IntLinEqNeighborhood>(
+                std::vector<Int>{_coeffs}, std::move(searchVars), _offset));
 }
 
 std::string IntLinEqImplicitNode::dotLangIdentifier() const {

@@ -682,7 +682,8 @@ InvariantNodeId InvariantGraph::addImplicitConstraintNode(
   return implNode->id();
 }
 
-void InvariantGraph::createNeighborhood(SolverBase& solver, SolverMapping& mapping) const {
+void InvariantGraph::createNeighborhood(SolverBase& solver,
+                                        SolverMapping& mapping) const {
   if (mapping.hasGlobalNeighborhood()) {
     return;
   }
@@ -695,13 +696,16 @@ void InvariantGraph::createNeighborhood(SolverBase& solver, SolverMapping& mappi
       implicitConstraint->registerNode(solver, mapping);
     }
     if (mapping.hasNeighborhood(implicitConstraint->id())) {
-      neighborhoods.emplace_back(mapping.neighborhood(implicitConstraint->id()));
+      neighborhoods.emplace_back(
+          mapping.neighborhood(implicitConstraint->id()));
     }
   }
   if (neighborhoods.size() == 1) {
     mapping.setGlobalNeighborhood(neighborhoods.front());
   } else {
-    mapping.setGlobalNeighborhood(std::make_shared<search::neighborhoods::NeighborhoodCombinator>(std::move(neighborhoods)));
+    mapping.setGlobalNeighborhood(
+        std::make_shared<search::neighborhoods::NeighborhoodCombinator>(
+            std::move(neighborhoods)));
   }
 }
 
@@ -909,19 +913,20 @@ void createVarsUtil(
     for (const InvariantNodeId defInv : inputVar.definingNodes()) {
       assert(!onStack.contains(defInv));
       if (!visitedInvNodes.contains(defInv)) {
-        createVarsUtil(graph, defInv, visitedInvNodes, onStack, solver, mapping);
+        createVarsUtil(graph, defInv, visitedInvNodes, onStack, solver,
+                       mapping);
       }
     }
   }
-  assert(std::ranges::none_of(invNode.staticInputVarNodeIds(),
-                              [&](const VarNodeId inputId) {
-                                return inputId == NULL_NODE_ID;
-                              }));
+  assert(std::ranges::none_of(
+      invNode.staticInputVarNodeIds(),
+      [&](const VarNodeId inputId) { return inputId == NULL_NODE_ID; }));
   invNode.registerOutputVars(solver, mapping);
   onStack.erase(invNodeId);
 }
 
-void InvariantGraph::createVars(SolverBase& solver, SolverMapping& mapping) const {
+void InvariantGraph::createVars(SolverBase& solver,
+                                SolverMapping& mapping) const {
   // create a _solver var for each fixed boolean:
   for (const auto& varNodeId : _boolVarNodeIndices) {
     const VarNode& vNode = varNodeConst(varNodeId);
@@ -932,7 +937,8 @@ void InvariantGraph::createVars(SolverBase& solver, SolverMapping& mapping) cons
     if (mapping.solverId(vNode.varNodeId()) == propagation::NULL_ID) {
       assert(vNode.constantValue().has_value());
       const Int constant = *vNode.constantValue();
-      mapping.setSolverId(vNode.varNodeId(), solver.makeIntVar(constant, constant, constant));
+      mapping.setSolverId(vNode.varNodeId(),
+                          solver.makeIntVar(constant, constant, constant));
     }
   }
 
@@ -946,7 +952,8 @@ void InvariantGraph::createVars(SolverBase& solver, SolverMapping& mapping) cons
     if (mapping.solverId(vNode.varNodeId()) == propagation::NULL_ID) {
       assert(vNode.constantValue().has_value() &&
              vNode.constantValue().value() == constant);
-      mapping.setSolverId(vNode.varNodeId(), solver.makeIntVar(constant, constant, constant));
+      mapping.setSolverId(vNode.varNodeId(),
+                          solver.makeIntVar(constant, constant, constant));
     }
   }
 
@@ -958,8 +965,10 @@ void InvariantGraph::createVars(SolverBase& solver, SolverMapping& mapping) cons
     }
     // assert(vNode.isFixed());
     if (mapping.solverId(vNode.varNodeId()) == propagation::NULL_ID) {
-      mapping.setSolverId(vNode.varNodeId(),solver.makeIntVar(vNode.lowerBound(), vNode.lowerBound(),
-                                        vNode.lowerBound()));
+      mapping.setSolverId(
+          vNode.varNodeId(),
+          solver.makeIntVar(vNode.lowerBound(), vNode.lowerBound(),
+                            vNode.lowerBound()));
     }
   }
 
@@ -971,18 +980,21 @@ void InvariantGraph::createVars(SolverBase& solver, SolverMapping& mapping) cons
 
   for (const auto& implNode : _implicitConstraintNodes) {
     if (implNode->state() == InvariantNodeState::ACTIVE) {
-      createVarsUtil(*this, implNode->id(), visitedInvNodes, onStack, solver, mapping);
+      createVarsUtil(*this, implNode->id(), visitedInvNodes, onStack, solver,
+                     mapping);
     }
   }
 
   for (const auto& invNode : _invariantNodes) {
     if (invNode->state() == InvariantNodeState::ACTIVE) {
-      createVarsUtil(*this, invNode->id(), visitedInvNodes, onStack, solver, mapping);
+      createVarsUtil(*this, invNode->id(), visitedInvNodes, onStack, solver,
+                     mapping);
     }
   }
 }
 
-void InvariantGraph::createImplicitConstraints(SolverBase& solver, SolverMapping& mapping) const {
+void InvariantGraph::createImplicitConstraints(SolverBase& solver,
+                                               SolverMapping& mapping) const {
   for (const auto& implicitConstraintNode : _implicitConstraintNodes) {
     if (implicitConstraintNode->state() == InvariantNodeState::ACTIVE) {
       assert(std::ranges::all_of(
@@ -996,7 +1008,8 @@ void InvariantGraph::createImplicitConstraints(SolverBase& solver, SolverMapping
   }
 }
 
-void InvariantGraph::createInvariants(SolverBase& solver, SolverMapping& mapping) const {
+void InvariantGraph::createInvariants(SolverBase& solver,
+                                      SolverMapping& mapping) const {
   for (const auto& invariantNode : _invariantNodes) {
     if (invariantNode->state() == InvariantNodeState::ACTIVE) {
       assert(std::ranges::all_of(
@@ -1009,7 +1022,8 @@ void InvariantGraph::createInvariants(SolverBase& solver, SolverMapping& mapping
   }
 }
 
-propagation::VarViewId InvariantGraph::createViolations(SolverBase& solver, SolverMapping& mapping) const {
+propagation::VarViewId InvariantGraph::createViolations(
+    SolverBase& solver, SolverMapping& mapping) const {
   std::vector<propagation::VarViewId> violations;
   for (const auto& definingNode : _invariantNodes) {
     if (definingNode->state() == InvariantNodeState::ACTIVE &&
@@ -1036,7 +1050,7 @@ propagation::VarViewId InvariantGraph::createViolations(SolverBase& solver, Solv
   }
   const propagation::VarViewId totalViolation = solver.makeIntVar(0, 0, 0);
   solver.makeInvariant<propagation::Linear>(solver, totalViolation,
-                                             std::move(violations));
+                                            std::move(violations));
   return totalViolation;
 }
 
@@ -1077,10 +1091,10 @@ SolverMapping InvariantGraph::construct(SolverBase& solver) const {
   assert(mapping.objectiveId() != propagation::NULL_ID);
 
   mapping.setObjectiveOptimalValue(
-     _objectiveDirection == ObjectiveDirection::NONE ? 0
-     : _objectiveDirection == ObjectiveDirection::MINIMIZE
-         ? objectiveVarNode().lowerBound()
-         : objectiveVarNode().upperBound());
+      _objectiveDirection == ObjectiveDirection::NONE ? 0
+      : _objectiveDirection == ObjectiveDirection::MINIMIZE
+          ? objectiveVarNode().lowerBound()
+          : objectiveVarNode().upperBound());
 
   mapping.setObjectiveDirection(_objectiveDirection);
 
@@ -1090,10 +1104,7 @@ SolverMapping InvariantGraph::construct(SolverBase& solver) const {
   return mapping;
 }
 
-void InvariantGraph::open() {
-  _isOpen = true;
-}
-
+void InvariantGraph::open() { _isOpen = true; }
 
 void InvariantGraph::close() {
   if (!isOpen()) {

@@ -63,22 +63,21 @@ bool IntPlusNode::replace() {
   return true;
 }
 
-void IntPlusNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void IntPlusNode::registerOutputVars(propagation::SolverBase& solver,
+                                     SolverMapping& mapping) const {
   if (!staticInputVarNodeIds().empty()) {
     if (_offset != 0) {
       if (staticInputVarNodeIds().size() == 1) {
         mapping.setSolverId(
             outputVarNodeIds().front(),
             solver.makeIntView<propagation::IntOffsetView>(
-                solver,
-                mapping.solverId(staticInputVarNodeIds().front()),
+                solver, mapping.solverId(staticInputVarNodeIds().front()),
                 _offset));
       } else {
         mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
-        mapping.setSolverId(
-            outputVarNodeIds().front(),
-            solver.makeIntView<propagation::IntOffsetView>(
-                solver, mapping.intermediateId(id()), _offset));
+        mapping.setSolverId(outputVarNodeIds().front(),
+                            solver.makeIntView<propagation::IntOffsetView>(
+                                solver, mapping.intermediateId(id()), _offset));
       }
     } else {
       makeSolverVar(outputVarNodeIds().front(), solver, mapping);
@@ -87,17 +86,16 @@ void IntPlusNode::registerOutputVars(propagation::SolverBase& solver, SolverMapp
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void IntPlusNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void IntPlusNode::registerNode(propagation::SolverBase& solver,
+                               SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
-  assert(mapping.solverId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
   assert(mapping.solverId(outputVarNodeIds().front()).isVar());
 
   solver.makeInvariant<propagation::Plus>(

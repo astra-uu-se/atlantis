@@ -95,7 +95,8 @@ class VarNode {
   [[nodiscard]] std::vector<DomainEntry> constrainedDomain(Int lb,
                                                            Int ub) const;
 
-  propagation::VarViewId postDomainConstraint(propagation::SolverBase&, SolverMapping&) const;
+  propagation::VarViewId postDomainConstraint(propagation::SolverBase&,
+                                              SolverMapping&) const;
 
   [[nodiscard]] std::pair<Int, Int> bounds() const;
 

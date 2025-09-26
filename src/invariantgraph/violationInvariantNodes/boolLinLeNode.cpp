@@ -102,27 +102,30 @@ void BoolLinLeNode::updateState() {
   }
 }
 
-void BoolLinLeNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void BoolLinLeNode::registerOutputVars(propagation::SolverBase& solver,
+                                       SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
     mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
     if (shouldHold()) {
       setViolationVarId(solver.makeIntView<propagation::LessEqualConst>(
-          solver, mapping.intermediateId(id()), _bound), mapping);
+                            solver, mapping.intermediateId(id()), _bound),
+                        mapping);
     } else {
       assert(!isReified());
       setViolationVarId(solver.makeIntView<propagation::GreaterEqualConst>(
-          solver, mapping.intermediateId(id()), _bound + 1), mapping);
+                            solver, mapping.intermediateId(id()), _bound + 1),
+                        mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void BoolLinLeNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void BoolLinLeNode::registerNode(propagation::SolverBase& solver,
+                                 SolverMapping& mapping) const {
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(violationVarId(mapping).isView());
 
@@ -136,9 +139,9 @@ void BoolLinLeNode::registerNode(propagation::SolverBase& solver, SolverMapping&
         assert(mapping.solverId(varNodeId) != propagation::NULL_ID);
         return mapping.solverId(varNodeId);
       });
-  solver.makeInvariant<propagation::BoolLinear>(solver, mapping.intermediateId(id()),
-                                                  std::vector<Int>(_coeffs),
-                                                  std::move(solverVars));
+  solver.makeInvariant<propagation::BoolLinear>(
+      solver, mapping.intermediateId(id()), std::vector<Int>(_coeffs),
+      std::move(solverVars));
 }
 
 const std::vector<Int>& BoolLinLeNode::coeffs() const { return _coeffs; }

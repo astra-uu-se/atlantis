@@ -91,7 +91,8 @@ TEST_P(IntTimesNodeTestFixture, replace) {
 
 TEST_P(IntTimesNodeTestFixture, propagation) {
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     // TODO: disabled for the MZN challenge. This should be computed by Gecode.

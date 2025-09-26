@@ -54,7 +54,8 @@ TEST_P(IntModViewNodeTestFixture, propagation) {
     return;
   }
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   const propagation::VarViewId inputId = varId(inputVar);
   EXPECT_NE(inputId, propagation::NULL_ID);

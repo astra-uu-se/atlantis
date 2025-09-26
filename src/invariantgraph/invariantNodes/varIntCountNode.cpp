@@ -84,19 +84,19 @@ bool VarIntCountNode::replace() {
   return true;
 }
 
-void VarIntCountNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void VarIntCountNode::registerOutputVars(propagation::SolverBase& solver,
+                                         SolverMapping& mapping) const {
   makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void VarIntCountNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
-  assert(mapping.solverId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
+void VarIntCountNode::registerNode(propagation::SolverBase& solver,
+                                   SolverMapping& mapping) const {
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
   assert(mapping.solverId(outputVarNodeIds().front()).isVar());
 
   std::vector<VarNodeId> h = haystack();

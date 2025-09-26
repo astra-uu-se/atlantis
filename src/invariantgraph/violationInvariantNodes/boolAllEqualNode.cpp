@@ -211,7 +211,8 @@ bool BoolAllEqualNode::replace() {
   return true;
 }
 
-void BoolAllEqualNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void BoolAllEqualNode::registerOutputVars(propagation::SolverBase& solver,
+                                          SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
     if (shouldHold() || staticInputVarNodeIds().size() == 2) {
       registerViolation(solver, mapping);
@@ -220,18 +221,19 @@ void BoolAllEqualNode::registerOutputVars(propagation::SolverBase& solver, Solve
       assert(!isReified());
       mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-          solver, mapping.intermediateId(id()), 0), mapping);
+                            solver, mapping.intermediateId(id()), 0),
+                        mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void BoolAllEqualNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void BoolAllEqualNode::registerNode(propagation::SolverBase& solver,
+                                    SolverMapping& mapping) const {
   if (staticInputVarNodeIds().empty()) {
     return;
   }
@@ -239,30 +241,36 @@ void BoolAllEqualNode::registerNode(propagation::SolverBase& solver, SolverMappi
 
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
-  std::ranges::transform(
-      staticInputVarNodeIds(), std::back_inserter(solverVars),
-      [&](const auto& id) { return mapping.solverId(id); });
+  std::ranges::transform(staticInputVarNodeIds(),
+                         std::back_inserter(solverVars),
+                         [&](const auto& id) { return mapping.solverId(id); });
 
   if (solverVars.size() == 2) {
     assert(mapping.intermediateId(id()) == propagation::NULL_ID);
     assert(violationVarId(mapping).isVar());
     if (shouldHold()) {
       solver.makeViolationInvariant<propagation::BoolEqual>(
-          solver, violationVarId(mapping), solverVars.front(), solverVars.back());
+          solver, violationVarId(mapping), solverVars.front(),
+          solverVars.back());
 
     } else {
       solver.makeInvariant<propagation::BoolXor>(
-          solver, violationVarId(mapping), solverVars.front(), solverVars.back());
+          solver, violationVarId(mapping), solverVars.front(),
+          solverVars.back());
     }
     return;
   }
 
-  assert(shouldHold() != (mapping.intermediateId(id()) != propagation::NULL_ID));
-  assert(shouldHold() ? violationVarId(mapping).isVar() : violationVarId(mapping).isView());
+  assert(shouldHold() !=
+         (mapping.intermediateId(id()) != propagation::NULL_ID));
+  assert(shouldHold() ? violationVarId(mapping).isVar()
+                      : violationVarId(mapping).isView());
 
   solver.makeViolationInvariant<propagation::BoolAllEqual>(
       solver,
-      mapping.intermediateId(id()) == propagation::NULL_ID ? violationVarId(mapping) : mapping.intermediateId(id()),
+      mapping.intermediateId(id()) == propagation::NULL_ID
+          ? violationVarId(mapping)
+          : mapping.intermediateId(id()),
       std::move(solverVars));
 }
 

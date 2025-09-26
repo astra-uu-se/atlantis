@@ -96,7 +96,8 @@ TEST_P(VarIntCountNodeTestFixture, replace) {
 
 TEST_P(VarIntCountNodeTestFixture, propagation) {
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeReplaced()) {
     EXPECT_TRUE(varNode(needleVar).isFixed());

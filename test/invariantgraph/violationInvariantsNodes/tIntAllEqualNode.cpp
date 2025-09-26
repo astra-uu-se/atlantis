@@ -142,7 +142,8 @@ TEST_P(IntAllEqualNodeTestFixture, application) {
                 ::testing::Contains(size_t(varId(identifier))));
   }
 
-  EXPECT_GE(_solver->numVars(), size_t(invNode().violationVarId(*_solverMapping)));
+  EXPECT_GE(_solver->numVars(),
+            size_t(invNode().violationVarId(*_solverMapping)));
 
   EXPECT_EQ(_solver->numInvariants(), 1);
 }
@@ -171,7 +172,8 @@ TEST_P(IntAllEqualNodeTestFixture, propagation) {
     return;
   }
   _invariantGraph->close();
-  _solverMapping = std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();

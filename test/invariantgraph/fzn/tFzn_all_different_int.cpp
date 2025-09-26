@@ -220,8 +220,7 @@ class fzn_all_different_intTest : public FznTestBase {
     }
 
     for (const InvariantNodeId implId : implicitConstraints) {
-      auto implNode =
-          _solverMapping->neighborhood(implId);
+      auto implNode = _solverMapping->neighborhood(implId);
       RC_ASSERT(implNode != nullptr);
       implNode->randomMove(*_randomProvider, *_assignment);
     }

@@ -88,19 +88,17 @@ bool IntAbsNode::replace() {
   return true;
 }
 
-void IntAbsNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
-  if (mapping.solverId(outputVarNodeIds().front()) ==
-      propagation::NULL_ID) {
-    mapping.setSolverId(
-        outputVarNodeIds().front(),
-        solver.makeIntView<propagation::IntAbsView>(
-            solver, mapping.solverId(input())));
+void IntAbsNode::registerOutputVars(propagation::SolverBase& solver,
+                                    SolverMapping& mapping) const {
+  if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+    mapping.setSolverId(outputVarNodeIds().front(),
+                        solver.makeIntView<propagation::IntAbsView>(
+                            solver, mapping.solverId(input())));
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 

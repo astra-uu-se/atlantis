@@ -166,7 +166,8 @@ bool CircuitNode::replace() {
   return true;
 }
 
-void CircuitNode::registerOutputVars(propagation::SolverBase&, SolverMapping&) const {
+void CircuitNode::registerOutputVars(propagation::SolverBase&,
+                                     SolverMapping&) const {
   throw std::runtime_error("CircuitNode::registerOutputVars not implemented");
 }
 

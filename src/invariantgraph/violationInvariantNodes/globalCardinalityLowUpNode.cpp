@@ -101,9 +101,11 @@ void GlobalCardinalityLowUpNode::propagate() {
   while (!stack.empty()) {
     const size_t coverIndex = stack.top();
     stack.pop();
-    if (_low[coverIndex] > static_cast<Int>(supportedInputs[coverIndex].size())) {
+    if (_low[coverIndex] >
+        static_cast<Int>(supportedInputs[coverIndex].size())) {
       if (!isReified() && shouldHold()) {
-        throw InconsistencyException("GlobalCardinalityLowUpNode::updateState:");
+        throw InconsistencyException(
+            "GlobalCardinalityLowUpNode::updateState:");
       }
       fixReified(false);
       setState(InvariantNodeState::SUBSUMED);
@@ -230,13 +232,16 @@ void GlobalCardinalityLowUpNode::updateState() {
   }
 }
 
-void GlobalCardinalityLowUpNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void GlobalCardinalityLowUpNode::registerOutputVars(
+    propagation::SolverBase& solver, SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
     if (!shouldHold()) {
-      mapping.setIntermediateId(id(), solver.makeIntVar(
-          0, 0, static_cast<Int>(staticInputVarNodeIds().size())));
+      mapping.setIntermediateId(
+          id(), solver.makeIntVar(
+                    0, 0, static_cast<Int>(staticInputVarNodeIds().size())));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-          solver, mapping.intermediateId(id()), 0), mapping);
+                            solver, mapping.intermediateId(id()), 0),
+                        mapping);
     } else {
       registerViolation(solver, mapping);
     }
@@ -244,21 +249,22 @@ void GlobalCardinalityLowUpNode::registerOutputVars(propagation::SolverBase& sol
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void GlobalCardinalityLowUpNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void GlobalCardinalityLowUpNode::registerNode(propagation::SolverBase& solver,
+                                              SolverMapping& mapping) const {
   std::vector<propagation::VarViewId> inputVarIds;
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(shouldHold() || mapping.intermediateId(id()) != propagation::NULL_ID);
-  assert(shouldHold() ? violationVarId(mapping).isVar() : mapping.intermediateId(id()).isVar());
+  assert(shouldHold() ? violationVarId(mapping).isVar()
+                      : mapping.intermediateId(id()).isVar());
 
-  std::ranges::transform(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      std::back_inserter(inputVarIds),
-      [&](const auto& id) { return mapping.solverId(id); });
+  std::ranges::transform(staticInputVarNodeIds().begin(),
+                         staticInputVarNodeIds().end(),
+                         std::back_inserter(inputVarIds),
+                         [&](const auto& id) { return mapping.solverId(id); });
 
   if (shouldHold()) {
     solver.makeInvariant<propagation::GlobalCardinalityLowUp>(

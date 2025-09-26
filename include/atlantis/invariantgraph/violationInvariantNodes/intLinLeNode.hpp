@@ -8,7 +8,6 @@ class IntLinLeNode : public ViolationInvariantNode {
   std::vector<Int> _coeffs;
   Int _bound;
 
-
  public:
   IntLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                std::vector<VarNodeId>&& vars, Int bound,
@@ -21,7 +20,8 @@ class IntLinLeNode : public ViolationInvariantNode {
 
   void updateState() override;
 
-  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 

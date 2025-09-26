@@ -7,7 +7,6 @@ class BoolAllEqualNode : public ViolationInvariantNode {
   bool _breaksCycle{false};
   unsigned char _dom{2};
 
-
   [[nodiscard]] bool isFixed() const;
   [[nodiscard]] bool inDomain(bool) const;
   [[nodiscard]] bool holdsTrue() const;
@@ -37,7 +36,8 @@ class BoolAllEqualNode : public ViolationInvariantNode {
 
   bool replace() override;
 
-  void registerOutputVars(propagation::SolverBase&, SolverMapping&) const override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
   [[nodiscard]] std::string dotLangIdentifier() const override;

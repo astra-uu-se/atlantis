@@ -13,15 +13,14 @@ InvariantGraphRoot::InvariantGraphRoot(InvariantGraph& graph,
                                        std::vector<VarNodeId>&& vars)
     : ImplicitConstraintNode(graph, std::move(vars)) {}
 
-
 void InvariantGraphRoot::updateDomainTypes() {
   for (const auto& nId : outputVarNodeIds()) {
     invariantGraph().varNode(nId).setDomainType(DomainType::DOM_NONE);
   }
 }
 
-
-void InvariantGraphRoot::registerNode(propagation::SolverBase&, SolverMapping& mapping) const {
+void InvariantGraphRoot::registerNode(propagation::SolverBase&,
+                                      SolverMapping& mapping) const {
   assert(!mapping.hasNeighborhood(id()));
 
   std::vector<search::SearchVar> searchVars;
@@ -33,8 +32,9 @@ void InvariantGraphRoot::registerNode(propagation::SolverBase&, SolverMapping& m
     searchVars.emplace_back(mapping.solverId(nId), node.constDomain());
   }
 
-  mapping.setNeighborhood(id(), std::make_shared<search::neighborhoods::RandomNeighborhood>(
-      std::move(searchVars)));
+  mapping.setNeighborhood(
+      id(), std::make_shared<search::neighborhoods::RandomNeighborhood>(
+                std::move(searchVars)));
 }
 
 void InvariantGraphRoot::addSearchVarNode(VarNodeId vId) {

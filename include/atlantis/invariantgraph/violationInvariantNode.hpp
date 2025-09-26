@@ -25,12 +25,15 @@ class ViolationInvariantNode : public InvariantNode {
                                   bool shouldHold);
 
  protected:
+  propagation::VarViewId setViolationVarId(propagation::VarViewId,
+                                           SolverMapping&) const;
 
-  propagation::VarViewId setViolationVarId(propagation::VarViewId, SolverMapping&) const;
+  propagation::VarViewId registerViolation(Int initialValue,
+                                           propagation::SolverBase&,
+                                           SolverMapping&) const;
 
-  propagation::VarViewId registerViolation(Int initialValue, propagation::SolverBase&, SolverMapping&) const;
-
-  propagation::VarViewId registerViolation(propagation::SolverBase&, SolverMapping&) const;
+  propagation::VarViewId registerViolation(propagation::SolverBase&,
+                                           SolverMapping&) const;
 
   [[nodiscard]] bool shouldHold() const noexcept;
 
@@ -59,7 +62,8 @@ class ViolationInvariantNode : public InvariantNode {
 
   [[nodiscard]] bool isReified() const override;
 
-  [[nodiscard]] propagation::VarViewId violationVarId(const SolverMapping&) const override;
+  [[nodiscard]] propagation::VarViewId violationVarId(
+      const SolverMapping&) const override;
 
   [[nodiscard]] VarNodeId reifiedViolationNodeId() const;
 

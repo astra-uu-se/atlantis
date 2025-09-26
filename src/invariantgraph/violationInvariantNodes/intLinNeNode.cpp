@@ -106,27 +106,30 @@ void IntLinNeNode::updateState() {
   }
 }
 
-void IntLinNeNode::registerOutputVars(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void IntLinNeNode::registerOutputVars(propagation::SolverBase& solver,
+                                      SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
     mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
     if (shouldHold()) {
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-          solver, mapping.intermediateId(id()), _bound), mapping);
+                            solver, mapping.intermediateId(id()), _bound),
+                        mapping);
     } else {
       assert(!isReified());
       setViolationVarId(solver.makeIntView<propagation::EqualConst>(
-          solver, mapping.intermediateId(id()), _bound), mapping);
+                            solver, mapping.intermediateId(id()), _bound),
+                        mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return mapping.solverId(vId) !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void IntLinNeNode::registerNode(propagation::SolverBase& solver, SolverMapping& mapping) const {
+void IntLinNeNode::registerNode(propagation::SolverBase& solver,
+                                SolverMapping& mapping) const {
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(violationVarId(mapping).isView());
 
@@ -140,9 +143,9 @@ void IntLinNeNode::registerNode(propagation::SolverBase& solver, SolverMapping& 
         assert(mapping.solverId(varNodeId) != propagation::NULL_ID);
         return mapping.solverId(varNodeId);
       });
-  solver.makeInvariant<propagation::Linear>(solver, mapping.intermediateId(id()),
-                                              std::vector<Int>(_coeffs),
-                                              std::move(solverVars));
+  solver.makeInvariant<propagation::Linear>(
+      solver, mapping.intermediateId(id()), std::vector<Int>(_coeffs),
+      std::move(solverVars));
 }
 
 const std::vector<Int>& IntLinNeNode::coeffs() const { return _coeffs; }
