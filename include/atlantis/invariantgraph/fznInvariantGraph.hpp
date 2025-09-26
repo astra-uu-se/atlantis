@@ -39,13 +39,13 @@ class FznInvariantGraph : public InvariantGraph {
   std::vector<VarNodeId> retrieveVarNodes(
       const std::shared_ptr<fznparser::IntVarArray>&);
 
-  [[nodiscard]] std::vector<FznOutputVar> outputBoolVars(const SolverMapping&) const noexcept;
-  [[nodiscard]] std::vector<FznOutputVar> outputIntVars(const SolverMapping&) const noexcept;
-  [[nodiscard]] std::vector<FznOutputVarArray> outputBoolVarArrays(const SolverMapping&)
+  [[nodiscard]] std::vector<FznOutputVar> outputBoolVars() const noexcept;
+  [[nodiscard]] std::vector<FznOutputVar> outputIntVars() const noexcept;
+  [[nodiscard]] std::vector<FznOutputVarArray> outputBoolVarArrays()
       const noexcept;
-  [[nodiscard]] std::vector<FznOutputVarArray> outputIntVarArrays(const SolverMapping&)
+  [[nodiscard]] std::vector<FznOutputVarArray> outputIntVarArrays()
       const noexcept;
-  [[nodiscard]] FznOutput generateFznOutput(const SolverMapping&) const;
+  [[nodiscard]] FznOutput generateFznOutput() const;
 
   void build(const fznparser::Model&);
 

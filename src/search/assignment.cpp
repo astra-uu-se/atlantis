@@ -130,9 +130,9 @@ Cost Assignment::getCost() const {
       _objectiveDirection};
 }
 
-void Assignment::setAssignment(SavedAssignment saved) const {
+void Assignment::setAssignment(const SavedAssignment& saved) const {
   _solver.beginMove();
-  _solver.updateValues(saved.getValues());
+  _solver.updateSearchValues(saved.getSearchValues());
   _solver.endMove();
 
   _solver.beginCommit();

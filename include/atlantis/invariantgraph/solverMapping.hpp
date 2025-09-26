@@ -20,6 +20,8 @@ class SolverMapping {
   std::vector<propagation::VarViewId> _violationIds{};
   propagation::VarViewId _totalViolationId{propagation::NULL_ID};
   propagation::VarViewId _objectiveId{propagation::NULL_ID};
+  Int _objectiveOptimalValue{0};
+  ObjectiveDirection _objectiveDirection{ObjectiveDirection::NONE};
 
   [[nodiscard]] propagation::VarViewId invariantIntermediateId(
       size_t id, size_t index) const;
@@ -83,6 +85,14 @@ class SolverMapping {
 
   bool setNeighborhood(InvariantNodeId id,
       const std::shared_ptr<search::neighborhoods::Neighborhood>&);
+
+  [[nodiscard]] Int objectiveOptimalValue() const;
+
+  void setObjectiveOptimalValue(Int value);
+
+  [[nodiscard]] ObjectiveDirection objectiveDirection() const;
+
+  void setObjectiveDirection(ObjectiveDirection);
 };
 
 }  // namespace atlantis::invariantgraph

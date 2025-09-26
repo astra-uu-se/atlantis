@@ -30,40 +30,34 @@ class SearchStatistics;
 
 class FznBackend {
  public:
-  static void displaySolution(const search::SavedAssignment&, const FznOutput&);
+  void displaySolution(const search::SavedAssignment&) const;
 
   static void onFinishDefault(bool);
 
-  static search::SavedAssignment onSolutionDefault(const search::Assignment&,
-    const FznOutput&, search::ThreadController&,
-    Int threadId);
+  void onSolutionDefault(const search::SavedAssignment&,
+    search::ThreadController&, Int threadId) const;
 
  private:
   std::shared_ptr<invariantgraph::FznInvariantGraph> _invariantGraph;
   std::shared_ptr<fznparser::Model> _model;
-  std::shared_ptr<FznOutput> _fznOutput;
   search::AnnealingScheduleFactory _annealingScheduleFactory;
   std::optional<std::chrono::milliseconds> _timelimit;
   std::uint_fast32_t _seed;
   std::optional<std::filesystem::path> _dotFilePath{};
   const std::uint_fast32_t _threadCount;
   search::SearchType _searchType;
+  std::unique_ptr<FznOutput> _fznOutput{nullptr};
 
-  std::function<search::SavedAssignment(
-      const search::Assignment&,
-      const FznOutput,
+  std::function<void(
+      const search::SavedAssignment&,
       search::ThreadController&, Int threadId)>
-      _onSolution = onSolutionDefault;
+      _onSolution;
   std::function<void(bool)> _onFinish = onFinishDefault;
 
  public:
   explicit FznBackend(fznparser::Model&& model,
-                      const std::uint_fast32_t threadCount)
-      : _invariantGraph(std::make_shared<invariantgraph::FznInvariantGraph>(true)),
-        _model(std::make_shared<fznparser::Model>(std::move(model))),
-        _seed(std::time(nullptr)),
-        _threadCount(threadCount),
-        _searchType(searchType) {}
+                      const std::uint_fast32_t threadCount,
+                      search::SearchType searchType = search::SearchType::BEAMSEARCH);
 
   FznBackend(logging::Logger& logger, std::filesystem::path&& modelFile,
              std::uint_fast32_t threadCount = 1,
@@ -82,8 +76,8 @@ class FznBackend {
   void setRandomSeed(std::uint_fast32_t seed) { _seed = seed; }
 
   void setOnSolution(
-      const std::function<search::SavedAssignment(
-          const search::Assignment&, const FznOutput&,
+      const std::function<void(
+          const search::SavedAssignment&,
           search::ThreadController&, Int)>& onSolution) {
     _onSolution = onSolution;
   }

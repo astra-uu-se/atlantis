@@ -9,7 +9,7 @@
 namespace atlantis::search {
 
 Objective::Objective(propagation::Solver& solver,
-                     fznparser::ProblemType problemType)
+                     ObjectiveDirection problemType)
     : _solver(solver), _problemType(problemType) {}
 
 propagation::VarViewId Objective::registerNode(
@@ -17,11 +17,11 @@ propagation::VarViewId Objective::registerNode(
     propagation::VarViewId objectiveVarId) {
   assert(_solver.isOpen());
   _objective = objectiveVarId;
-  if (_problemType == fznparser::ProblemType::SATISFY) {
+  if (_problemType == ObjectiveDirection::NONE) {
     return totalViolationVarId;
   }
 
-  const Int initialBound = _problemType == fznparser::ProblemType::MINIMIZE
+  const Int initialBound = _problemType == ObjectiveDirection::MINIMIZE
                                ? _solver.upperBound(objectiveVarId)
                                : _solver.lowerBound(objectiveVarId);
 
@@ -31,11 +31,11 @@ propagation::VarViewId Objective::registerNode(
   const auto boundViolation = static_cast<propagation::VarId>(
       _solver.makeIntVar(0, 0, std::numeric_limits<Int>::max()));
 
-  if (_problemType == fznparser::ProblemType::MINIMIZE) {
+  if (_problemType == ObjectiveDirection::MINIMIZE) {
     _solver.makeViolationInvariant<propagation::LessEqual>(
         _solver, boundViolation, objectiveVarId, _bound);
   } else {
-    assert(_problemType == fznparser::ProblemType::MAXIMIZE);
+    assert(_problemType == ObjectiveDirection::MAXIMIZE);
     _solver.makeViolationInvariant<propagation::LessEqual>(
         _solver, boundViolation, _bound, objectiveVarId);
   }
@@ -60,10 +60,10 @@ void Objective::tighten() {
   }
 
   const Int newBound =
-      _problemType == fznparser::ProblemType::SATISFY
+      _problemType == ObjectiveDirection::NONE
           ? _solver.committedValue(_bound)
           : (_solver.committedValue(_objective) +
-             (_problemType == fznparser::ProblemType::MINIMIZE ? -1 : 1));
+             (_problemType == ObjectiveDirection::MINIMIZE ? -1 : 1));
 
   _solver.beginMove();
   _solver.setValue(_bound, newBound);
@@ -80,10 +80,10 @@ void Objective::tighten(const Cost& cost) {
   }
 
   const Int newBound =
-      _problemType == fznparser::ProblemType::SATISFY
+      _problemType == ObjectiveDirection::NONE
           ? _solver.committedValue(_bound)
           : (cost.getObjective() +
-             (_problemType == fznparser::ProblemType::MINIMIZE ? -1 : 1));
+             (_problemType == ObjectiveDirection::MINIMIZE ? -1 : 1));
 
   _solver.beginMove();
   _solver.setValue(_bound, newBound);

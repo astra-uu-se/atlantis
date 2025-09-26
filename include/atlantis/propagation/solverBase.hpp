@@ -97,7 +97,7 @@ class SolverBase {
 
   void commitInvariant(InvariantId);
 
-  void updateValues(const std::unordered_map<VarId, Int>&  values);
+  void updateSearchValues(const std::vector<std::pair<VarId, Int>>&  values);
 
   //--------------------- Registration ---------------------
   /**

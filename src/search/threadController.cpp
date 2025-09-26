@@ -4,7 +4,7 @@
 
 namespace atlantis::search {
 
-SavedAssignment ThreadController::trySolution(const Int threadId,
+bool ThreadController::trySolution(const Int threadId,
                                               const SavedAssignment& solution) {
   std::lock_guard lock(_lock);
 
@@ -18,7 +18,7 @@ SavedAssignment ThreadController::trySolution(const Int threadId,
     std::cerr << _counter << ": Thread " << threadId
               << " has found the first solution with cost "
               << solution.getCost().toString() << "." << std::endl;
-    return _solution.value();
+    return true;
   }
 
   std::cerr << _counter << ": Thread " << threadId
@@ -30,9 +30,10 @@ SavedAssignment ThreadController::trySolution(const Int threadId,
     _bestThread = threadId;
     _bestCost = solution.getCost();
     _solution = solution;
+    return true;
   }
 
-  return _solution.value();
+  return false;
 }
 
 bool ThreadController::shouldPrint(const Int threadId) const {

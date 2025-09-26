@@ -1075,6 +1075,15 @@ SolverMapping InvariantGraph::construct(SolverBase& solver) const {
   }
   assert(mapping.totalViolationId() != propagation::NULL_ID);
   assert(mapping.objectiveId() != propagation::NULL_ID);
+
+  mapping.setObjectiveOptimalValue(
+     _objectiveDirection == ObjectiveDirection::NONE ? 0
+     : _objectiveDirection == ObjectiveDirection::MINIMIZE
+         ? objectiveVarNode().lowerBound()
+         : objectiveVarNode().upperBound());
+
+  mapping.setObjectiveDirection(_objectiveDirection);
+
   if (wasClosed) {
     solver.close();
   }

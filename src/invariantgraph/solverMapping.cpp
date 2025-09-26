@@ -189,5 +189,18 @@ bool SolverMapping::setNeighborhood(
   _neighborhoods[size_t(id)] = neighborhood;
   return true;
 }
-
+Int SolverMapping::objectiveOptimalValue() const {
+  return _objectiveOptimalValue;
 }
+
+void SolverMapping::setObjectiveOptimalValue(Int value) {
+  _objectiveOptimalValue = value;
+}
+ObjectiveDirection SolverMapping::objectiveDirection() const {
+  return _objectiveDirection;
+}
+void SolverMapping::setObjectiveDirection(ObjectiveDirection direction) {
+  _objectiveDirection = direction;
+}
+
+}  // namespace atlantis::invariantgraph

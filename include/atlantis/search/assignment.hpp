@@ -74,7 +74,7 @@ class Assignment {
 
   [[nodiscard]] Cost getCost() const;
 
-  void setAssignment(SavedAssignment saved) const;
+  void setAssignment(const SavedAssignment& saved) const;
 };
 
 }  // namespace atlantis::search

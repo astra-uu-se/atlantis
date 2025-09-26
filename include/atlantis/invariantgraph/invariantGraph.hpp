@@ -52,6 +52,7 @@ class InvariantGraph {
 
  protected:
   VarNodeId _objectiveVarNodeId;
+  ObjectiveDirection _objectiveDirection{ObjectiveDirection::NONE};
 
  public:
   explicit InvariantGraph(bool breakDynamicCycles = false);

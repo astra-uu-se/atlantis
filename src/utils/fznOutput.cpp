@@ -11,16 +11,16 @@ _intVars(intVars),
 _boolVarArrays(boolVarArrays),
 _intVarArrays(intVarArrays) {}
 
-void FznOutput::addSolverId(const FznOutputVar& var, std::vector<propagation::VarViewId>& solverIds) {
-  if (std::holds_alternative<propagation::VarViewId>(var.var)) {
-    solverIds.emplace_back(std::get<propagation::VarViewId>(var.var));
+void addVarNodeId(const FznOutputVar& var, std::vector<invariantgraph::VarNodeId>& ids) {
+  if (std::holds_alternative<invariantgraph::VarNodeId>(var.var)) {
+    ids.emplace_back(std::get<invariantgraph::VarNodeId>(var.var));
   }
 }
 
-void FznOutput::addSolverIds(const FznOutputVarArray& arr, std::vector<propagation::VarViewId>& solverIds) {
+void addVarNodeId(const FznOutputVarArray& arr, std::vector<invariantgraph::VarNodeId>& ids) {
   for (const auto& var : arr.vars) {
-    if (std::holds_alternative<propagation::VarViewId>(var)) {
-      solverIds.emplace_back(std::get<propagation::VarViewId>(var));
+    if (std::holds_alternative<invariantgraph::VarNodeId>(var)) {
+      ids.emplace_back(std::get<invariantgraph::VarNodeId>(var));
     }
   }
 }
@@ -42,25 +42,25 @@ void FznOutput::appendIntVarArray(FznOutputVarArray&& arr) {
   _intVarArrays.emplace_back(std::move(arr));
 }
 
-std::vector<propagation::VarViewId>
-FznOutput::getSolverIds() const {
-  std::vector<propagation::VarViewId> solverIds;
+std::vector<invariantgraph::VarNodeId>
+FznOutput::varNodeIds() const {
+  std::vector<invariantgraph::VarNodeId> ids;
   for (const auto& var : _boolVars) {
-    addSolverId(var, solverIds);
+    addVarNodeId(var, ids);
   }
   for (const auto& arr : _boolVarArrays) {
-    addSolverIds(arr, solverIds);
+    addVarNodeId(arr, ids);
   }
   for (const auto& var : _intVars) {
-    addSolverId(var, solverIds);
+    addVarNodeId(var, ids);
   }
   for (const auto& arr : _intVarArrays) {
-    addSolverIds(arr, solverIds);
+    addVarNodeId(arr, ids);
   }
-  return solverIds;
+  return ids;
 }
 
-std::string toIntString(const std::variant<propagation::VarViewId, Int>& var,
+std::string toIntString(const std::variant<invariantgraph::VarNodeId, Int>& var,
   std::vector<Int>::const_iterator& valIter) {
   return std::to_string(
       std::holds_alternative<Int>(var)
@@ -68,7 +68,7 @@ std::string toIntString(const std::variant<propagation::VarViewId, Int>& var,
           : *(valIter++));
 }
 
-std::string toBoolString(const std::variant<propagation::VarViewId, Int>& var,
+std::string toBoolString(const std::variant<invariantgraph::VarNodeId, Int>& var,
   std::vector<Int>::const_iterator& valIter) {
   return ((std::holds_alternative<Int>(var)
                ? std::get<Int>(var)

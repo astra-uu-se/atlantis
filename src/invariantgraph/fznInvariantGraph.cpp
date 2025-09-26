@@ -109,6 +109,10 @@ void FznInvariantGraph::build(const fznparser::Model& model) {
         throw FznException("Objective variable is not a BoolVar or IntVar");
       }
     }
+    assert(model.solveType().problemType() != fznparser::ProblemType::SATISFY);
+    _objectiveDirection = model.solveType().problemType() == fznparser::ProblemType::MINIMIZE ? ObjectiveDirection::MINIMIZE : ObjectiveDirection::MAXIMIZE;
+  } else {
+    _objectiveDirection = ObjectiveDirection::NONE;
   }
 }
 
@@ -229,35 +233,35 @@ std::vector<VarNodeId> FznInvariantGraph::retrieveVarNodes(
   return varNodeIds;
 }
 
-std::vector<FznOutputVar> FznInvariantGraph::outputBoolVars(const SolverMapping& mapping) const noexcept {
+std::vector<FznOutputVar> FznInvariantGraph::outputBoolVars() const noexcept {
   std::vector<FznOutputVar> outputVars;
   outputVars.reserve(_outputBoolVars.size());
   for (const auto& [identifier, nId] : _outputBoolVars) {
     const VarNode node = varNodeConst(nId);
-    if (node.isFixed() || mapping.solverId(nId) == propagation::NULL_ID) {
+    if (node.isFixed() || (node.staticInputTo().empty() && node.dynamicInputTo().empty() && node.definingNodes().empty())) {
       outputVars.emplace_back(identifier, node.lowerBound());
     } else {
-      outputVars.emplace_back(identifier, mapping.solverId(nId));
+      outputVars.emplace_back(identifier, nId);
     }
   }
   return outputVars;
 }
 
-std::vector<FznOutputVar> FznInvariantGraph::outputIntVars(const SolverMapping& mapping) const noexcept {
+std::vector<FznOutputVar> FznInvariantGraph::outputIntVars() const noexcept {
   std::vector<FznOutputVar> outputVars;
   outputVars.reserve(_outputIntVars.size());
   for (const auto& [identifier, nId] : _outputIntVars) {
     const VarNode node = varNodeConst(nId);
-    if (node.isFixed() || mapping.solverId(nId) == propagation::NULL_ID) {
+    if (node.isFixed() || (node.staticInputTo().empty() && node.dynamicInputTo().empty() && node.definingNodes().empty())) {
       outputVars.emplace_back(identifier, node.lowerBound());
     } else {
-      outputVars.emplace_back(identifier, mapping.solverId(nId));
+      outputVars.emplace_back(identifier, nId);
     }
   }
   return outputVars;
 }
 
-std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays(const SolverMapping& mapping)
+std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays()
     const noexcept {
   std::vector<FznOutputVarArray> outputVarArrays;
   outputVarArrays.reserve(_outputBoolVarArrays.size());
@@ -268,18 +272,17 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays(const Solv
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
-      if (node.isFixed() || mapping.solverId(nId) == propagation::NULL_ID) {
+      if (node.isFixed() || (node.staticInputTo().empty() && node.dynamicInputTo().empty() && node.definingNodes().empty())) {
         fznArray.vars.emplace_back(node.lowerBound());
       } else {
-        fznArray.vars.emplace_back(mapping.solverId(nId));
+        fznArray.vars.emplace_back(nId);
       }
     }
   }
   return outputVarArrays;
 }
 
-std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays(
-    const SolverMapping& mapping) const noexcept {
+std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays() const noexcept {
   std::vector<FznOutputVarArray> outputVarArrays;
   outputVarArrays.reserve(_outputIntVarArrays.size());
   for (const InvariantGraphOutputVarArray& outputArray : _outputIntVarArrays) {
@@ -289,17 +292,17 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays(
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
-      if (node.isFixed() || mapping.solverId(nId) == propagation::NULL_ID) {
+      if (node.isFixed() || (node.staticInputTo().empty() && node.dynamicInputTo().empty() && node.definingNodes().empty())) {
         fznArray.vars.emplace_back(node.lowerBound());
       } else {
-        fznArray.vars.emplace_back(mapping.solverId(nId));
+        fznArray.vars.emplace_back(nId);
       }
     }
   }
   return outputVarArrays;
 }
-FznOutput FznInvariantGraph::generateFznOutput(const SolverMapping& mapping) const {
-  return {outputBoolVars(mapping), outputIntVars(mapping), outputBoolVarArrays(mapping), outputIntVarArrays(mapping)};
+FznOutput FznInvariantGraph::generateFznOutput() const {
+  return {outputBoolVars(), outputIntVars(), outputBoolVarArrays(), outputIntVarArrays()};
 }
 
 void FznInvariantGraph::createNodes(const fznparser::Model& model) {

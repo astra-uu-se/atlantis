@@ -6,7 +6,7 @@ SolverBase::SolverBase()
     : _currentTimestamp(NULL_TIMESTAMP + 1), _isOpen(false) {}
 
 //--------------------- Variable ---------------------
-void SolverBase::updateValues(const std::unordered_map<VarId, Int>&  values) {
+void SolverBase::updateSearchValues(const std::vector<std::pair<VarId, Int>>&  values) {
   for (auto& [varId, value] : values) {
     updateValue(varId, value);
   }
