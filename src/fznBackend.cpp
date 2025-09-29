@@ -23,12 +23,13 @@ void FznBackend::displaySolution(
   std::cout << "----------\n";
 }
 
+// TODO: This function should eventually be emptied.
 void FznBackend::onSolutionDefault(const search::SavedAssignment& assignment,
-                                   search::ThreadController& controller,
-                                   Int threadId) const {
-  const bool savedSolution = controller.trySolution(threadId, assignment);
-
-  if (savedSolution && controller.shouldPrint(threadId)) {
+                                   const search::ThreadController& controller,
+                                   const Int threadId) const {
+  // TODO: Move this to be called by the main thread
+  if (controller.getBestThreadId() == threadId &&
+      controller.shouldPrint(threadId)) {
     displaySolution(assignment);
     controller.hasPrinted();
   }

@@ -20,7 +20,7 @@ class SolverThread {
   fznparser::ProblemType _problemType;
   std::shared_ptr<search::AnnealingSchedule> _schedule;
   size_t _threadId;
-  std::shared_ptr<search::ThreadController> _controller;
+  std::shared_ptr<search::ThreadController> _threadController;
   search::SearchType _searchType;
 
   // Optional arguments
@@ -52,7 +52,7 @@ class SolverThread {
         _problemType(problemType),
         _schedule(schedule),
         _threadId(threadId),
-        _controller(controller),
+        _threadController(controller),
         _searchType(searchType),
         _seed(seed),
         _timelimit(timeLimit),
@@ -60,6 +60,11 @@ class SolverThread {
         _onFinish(onFinish) {}
 
   void solve(logging::Logger& logger);
+
+  [[gnu::always_inline]] [[nodiscard]] std::vector<invariantgraph::VarNodeId>
+  getOutputVarNodeIds() {
+    return _outputVarNodeIds;
+  }
 };
 
 }  // namespace atlantis

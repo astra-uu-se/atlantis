@@ -24,13 +24,11 @@ class ThreadController {
   // Returns the Cost of the best solution across all threads.
   bool trySolution(Int threadId, const SavedAssignment& solution);
 
-  [[nodiscard]] Int getBestThreadId() const { return _bestThread; }
+  [[nodiscard]] Int getBestThreadId() const;
 
-  [[nodiscard]] Cost getCost() const { return _bestCost.value(); }
+  [[nodiscard]] Cost getCost() const;
 
-  [[nodiscard]] SavedAssignment getSolution() const {
-    return _solution.value();
-  }
+  [[nodiscard]] SavedAssignment getSolution() const;
 
   [[nodiscard]] bool shouldPrint(Int threadId) const;
 

@@ -1,6 +1,7 @@
 #include "atlantis/search/searchProcedure.hpp"
 
 #include <chrono>
+#include <iostream>
 
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealer.hpp"
@@ -38,18 +39,36 @@ SearchStatistics makeStats(const Statistic& rounds,
   return stats;
 }
 
-void SearchProcedure::onSolution(SearchController& controller) {
-  _solution = controller.onSolution(_assignment);
+SavedAssignment SearchProcedure::saveAssignment() const {
+  return SavedAssignment(_assignment, _outputVarIds);
+}
+
+void SearchProcedure::tightenSearch() {
   if (_searchType == SearchType::PARALLEL) {
     _objective.tighten();
   } else {
-    _objective.tighten(_solution->getCost());
+    _objective.tighten(_savedAssignment->getCost());
     if (_searchType == SearchType::BEAMSEARCH)
-      _assignment.setAssignment(_solution.value());
+      _assignment.setAssignment(_savedAssignment.value());
   }
 }
 
-int SearchProcedure::run(SearchController& controller, Annealer& annealer,
+// TODO: Add communication to non-satisfying cases
+void SearchProcedure::onImprovement(SearchController& searchController) {
+  _savedAssignment = saveAssignment();
+
+  // Communicate
+  bool isBest =
+      _threadController->trySolution(_threadId, _savedAssignment.value());
+  if (!isBest) _savedAssignment = _threadController->getSolution();
+
+  if (_assignment.satisfiesConstraints())
+    searchController.onSolution(_savedAssignment.value());
+
+  tightenSearch();
+}
+
+int SearchProcedure::run(SearchController& searchController, Annealer& annealer,
                          logging::Logger& logger) {
   auto rounds = std::make_unique<CounterStatistic>("Rounds");
   auto initialisations = std::make_unique<CounterStatistic>("Initialisations");
@@ -61,19 +80,22 @@ int SearchProcedure::run(SearchController& controller, Annealer& annealer,
     logger.timedProcedure(logging::Level::LVL_TRACE, "initialize assignment",
                           [&] { _assignment.initialize(_random); });
 
-    if (_assignment.satisfiesConstraints()) onSolution(controller);
+    // TODO: handle this case: this should call some separate version
+    if (_assignment.satisfiesConstraints()) onImprovement(searchController);
 
     annealer.start();
 
-    while (controller.shouldRun(_assignment) && !annealer.isFinished()) {
+    while (searchController.shouldRun(_assignment) && !annealer.isFinished()) {
       logger.timedProcedure(logging::Level::LVL_TRACE, "round", [&] {
-        while (controller.shouldRun(_assignment) && annealer.shouldRunRound()) {
+        while (searchController.shouldRun(_assignment) &&
+               annealer.shouldRunRound()) {
           const auto cost = _assignment.performProbe(_random);
 
           if (annealer.acceptMove(cost)) {
             _assignment.commitLastProbe();
             moves->increment();
-            if (_assignment.satisfiesConstraints()) onSolution(controller);
+            if (_assignment.satisfiesConstraints())
+              onImprovement(searchController);
           }
         }
 
@@ -85,9 +107,9 @@ int SearchProcedure::run(SearchController& controller, Annealer& annealer,
         rounds->increment();
       });
     }
-  } while (controller.shouldRun(_assignment));
+  } while (searchController.shouldRun(_assignment));
 
-  controller.onFinish();
+  searchController.onFinish();
 
   return 1;
 }

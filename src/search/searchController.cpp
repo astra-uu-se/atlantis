@@ -22,9 +22,9 @@ bool SearchController::shouldRun(const Assignment& assignment) {
   return true;
 }
 
-SavedAssignment SearchController::onSolution(const Assignment& assignment) {
+void SearchController::onSolution(const SavedAssignment& assignment) {
   _foundSolution = true;
-  return _onSolution(assignment);
+  _onSolution(assignment);
 }
 
 void SearchController::onFinish() const { _onFinish(_foundSolution); }

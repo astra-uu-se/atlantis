@@ -46,4 +46,20 @@ bool ThreadController::shouldPrint(const Int threadId) const {
 
 void ThreadController::hasPrinted() const { _printLock.unlock(); }
 
+Int ThreadController::getBestThreadId() const {
+  // TODO: make this atomic instead of locking
+  std::lock_guard lock(_lock);
+  return _bestThread;
+}
+
+Cost ThreadController::getCost() const {
+  std::lock_guard lock(_lock);
+  return _bestCost.value();
+}
+
+SavedAssignment ThreadController::getSolution() const {
+  std::lock_guard lock(_lock);
+  return _solution.value();
+}
+
 }  // namespace atlantis::search

@@ -35,7 +35,7 @@ class FznBackend {
   static void onFinishDefault(bool);
 
   void onSolutionDefault(const search::SavedAssignment&,
-                         search::ThreadController&, Int threadId) const;
+                         const search::ThreadController&, Int threadId) const;
 
  private:
   std::shared_ptr<invariantgraph::FznInvariantGraph> _invariantGraph;

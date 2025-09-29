@@ -41,17 +41,15 @@ void SolverThread::solve(logging::Logger& logger) {
     outputVarIds.emplace_back(mapping.solverId(oId));
   }
 
-  // TODO: extract to shared -- requires the original invariantGraph
-
   search::Assignment assignment(
       solver, mapping.globalNeighborhood(), violationId, mapping.objectiveId(),
       mapping.objectiveDirection(), mapping.objectiveOptimalValue());
 
-  // This can possibly be extracted, or restricted to one thread
+  // TODO: This can possibly be extracted, or restricted to one thread
   // TODO: this case may not be handled properly
   if (mapping.globalNeighborhood()->coveredVars().empty()) {
     search::SavedAssignment savedAssignment(assignment, outputVarIds);
-    _onSolution(savedAssignment, *_controller, _threadId);
+    _onSolution(savedAssignment, *_threadController, _threadId);
     _onFinish(true);
   }
 
@@ -59,15 +57,12 @@ void SolverThread::solve(logging::Logger& logger) {
   logger.debug("Thread {} Using seed {}.", _threadId, _seed);
   search::RandomProvider random(_seed);
   search::Annealer annealer(random, *_schedule, assignment);
-  search::SearchProcedure search(random, assignment,
-                                 mapping.globalNeighborhood(), searchObjective,
-                                 _searchType);
+  search::SearchProcedure search(
+      random, assignment, mapping.globalNeighborhood(), searchObjective,
+      _searchType, _threadController, outputVarIds, _threadId);
 
-  // TODO: extract to shared -- requires fixing invariantGraph
-  auto onSolution = [&](const search::Assignment& a) {
-    const search::SavedAssignment savedAssignment(a, outputVarIds);
-    _onSolution(savedAssignment, *_controller, _threadId);
-    return savedAssignment;
+  auto onSolution = [&](const search::SavedAssignment& savedAssignment) {
+    _onSolution(savedAssignment, *_threadController, _threadId);
   };
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
   search::SearchController searchController(
