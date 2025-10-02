@@ -55,14 +55,25 @@ void SearchProcedure::tightenSearch() {
 
 // TODO: Add communication to non-satisfying cases
 void SearchProcedure::onImprovement(SearchController& searchController) {
+  // Prevent over-communication before an initial 0-violation solution
+  // has been found
+  if (!_hasSolution && _savedAssignment.has_value() &&
+      _savedAssignment->getCost().isBetterThan(_assignment.getCost())) {
+    return;
+  }
+
   _savedAssignment = saveAssignment();
 
-  // Communicate
   bool isBest =
       _threadController->trySolution(_threadId, _savedAssignment.value());
   if (!isBest) _savedAssignment = _threadController->getSolution();
 
-  if (_assignment.satisfiesConstraints())
+  if (!_hasSolution && _savedAssignment->getCost().getViolation() == 0)
+    _hasSolution = true;
+
+  // onSolution is only called if the new solution is better than ALL previous
+  // solutions
+  if (isBest && _assignment.satisfiesConstraints())
     searchController.onSolution(_savedAssignment.value());
 
   tightenSearch();
@@ -94,7 +105,7 @@ int SearchProcedure::run(SearchController& searchController, Annealer& annealer,
           if (annealer.acceptMove(cost)) {
             _assignment.commitLastProbe();
             moves->increment();
-            if (_assignment.satisfiesConstraints())
+            if (!_hasSolution || _assignment.satisfiesConstraints())
               onImprovement(searchController);
           }
         }

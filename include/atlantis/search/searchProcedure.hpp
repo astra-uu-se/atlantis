@@ -33,6 +33,7 @@ class SearchProcedure {
   std::shared_ptr<neighborhoods::Neighborhood> _neighborhood;
   Objective _objective;
   std::optional<SavedAssignment> _savedAssignment;
+  bool _hasSolution = false;
   const SearchType _searchType;
 
   // TODO: these things should ideally be abstracted from the search itself.
