@@ -34,6 +34,8 @@ class Cost {
 
   [[nodiscard]] bool isBetterThan(const Cost &other) const;
 
+  [[nodiscard]] bool isStrictlyBetterThan(const Cost &other) const;
+
   [[nodiscard]] std::string toString() const;
 
   [[nodiscard]] Int getObjective() const { return _objective; }

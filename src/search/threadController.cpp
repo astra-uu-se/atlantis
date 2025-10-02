@@ -27,9 +27,11 @@ bool ThreadController::trySolution(const Int threadId,
             << _bestCost->toString() << "." << std::endl;
 
   if (solution.getCost().isBetterThan(_bestCost.value())) {
-    _bestThread = threadId;
-    _bestCost = solution.getCost();
-    _solution = solution;
+    if (solution.getCost().isStrictlyBetterThan(_bestCost.value())) {
+      _bestThread = threadId;
+      _bestCost = solution.getCost();
+      _solution = solution;
+    }
     return true;
   }
 
