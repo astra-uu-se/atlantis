@@ -6,8 +6,6 @@
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealer.hpp"
-#include "atlantis/search/assignment.hpp"
-#include "atlantis/search/objective.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
 #include "atlantis/search/threadController.hpp"
@@ -23,22 +21,15 @@ void FznBackend::displaySolution(
   std::cout << "----------\n";
 }
 
-// TODO: This function should eventually be emptied.
-void FznBackend::onSolutionDefault(const search::SavedAssignment& assignment,
-                                   const search::ThreadController& controller,
-                                   const Int threadId) const {
-  // TODO: Move this to be called by the main thread
-  if (controller.getBestThreadId() == threadId &&
-      controller.shouldPrint(threadId)) {
-    displaySolution(assignment);
-    controller.hasPrinted();
-  }
+void FznBackend::onSolutionDefault(
+    [[maybe_unused]] const search::SavedAssignment& assignment,
+    [[maybe_unused]] const search::ThreadController& controller,
+    [[maybe_unused]] const Int threadId) const {
+  // This currently does nothing.
 }
 
-void FznBackend::onFinishDefault(bool hadSol) {
-  if (!hadSol) {
-    std::cout << "=====UNKNOWN=====\n";
-  }
+void FznBackend::onFinishDefault([[maybe_unused]] bool hadSol) {
+  // This currently does nothing.
 }
 
 FznBackend::FznBackend(fznparser::Model&& model,
@@ -75,7 +66,9 @@ void FznBackend::solve(logging::Logger& logger) {
   fznparser::ProblemType problemType = _model->solveType().problemType();
   auto schedule = _annealingScheduleFactory.create();
 
-  auto controller = std::make_shared<search::ThreadController>();
+  // TODO: refactor everywhere to use the shared pointer
+  auto threadController =
+      std::make_shared<search::ThreadController>(_threadCount);
 
   std::vector<std::thread> threads;
   std::cerr << "Thread count is " << _threadCount << "\n";
@@ -89,22 +82,43 @@ void FznBackend::solve(logging::Logger& logger) {
 
   for (size_t threadId = 0; threadId < _threadCount; threadId++) {
     threads.emplace_back([&logger, &problemType, &schedule, threadId,
-                          &controller, this] {
+                          &threadController, this] {
       auto thread =
           SolverThread(_invariantGraph, _fznOutput->varNodeIds(), problemType,
-                       schedule, threadId, controller, _searchType,
+                       schedule, threadId, threadController, _searchType,
                        _seed + threadId, _timelimit, _onSolution, _onFinish);
       thread.solve(logger);
     });
+  }
+
+  // This should run until all the threads finish
+  while (threadController->getNumFinishedThreads() < _threadCount) {
+    threadController->awaitChanges();
+    std::cout << "Printing solution" << std::endl;
+    if (threadController->hasSolution() &&
+        threadController->hasNoViolations() &&
+        !threadController->hasPrintedFinal()) {
+      search::SavedAssignment assignment = threadController->getSolution();
+      displaySolution(assignment);
+      threadController->solutionPrinted();
+    }
+    std::cout << "Restarting print-loop!" << std::endl;
+  }
+
+  std::cout << "Exiting!" << std::endl;
+
+  if (!threadController->hasSolution()) {
+    std::cout << "=====UNKNOWN=====\n";
   }
 
   for (auto& thread : threads) {
     thread.join();
   }
 
-  if (controller->getBestThreadId() >= 0) {
-    std::cerr << "Best result is " << controller->getCost().toString()
-              << " from thread " << controller->getBestThreadId() << std::endl;
+  if (threadController->getBestThreadId() >= 0) {
+    std::cerr << "Best result is " << threadController->getCost().toString()
+              << " from thread " << threadController->getBestThreadId()
+              << std::endl;
   } else {
     std::cerr << "No solution found!" << std::endl;
   }

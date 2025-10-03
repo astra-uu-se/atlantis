@@ -6,6 +6,7 @@
 
 #include "atlantis/types.hpp"
 #include "savedAssignment.hpp"
+#include "threadController.hpp"
 
 namespace atlantis::search {
 
@@ -21,13 +22,16 @@ class SearchController {
   bool _started{false};
   Int _foundSolution{false};
 
+  ThreadController& _threadController;
+
  public:
   template <typename Rep, typename Period>
   explicit SearchController(
       const bool isSatisfactionProblem,
       std::function<void(const SavedAssignment&)>&& onSolution,
       std::function<void(bool)>&& onFinish,
-      std::optional<std::chrono::duration<Rep, Period>> timeout)
+      std::optional<std::chrono::duration<Rep, Period>> timeout,
+      ThreadController& threadController)
       : _onSolution(std::move(onSolution)),
         _onFinish(std::move(onFinish)),
         _timeout(
@@ -36,7 +40,8 @@ class SearchController {
                       std::chrono::duration_cast<std::chrono::milliseconds>(
                           *timeout))
                 : std::nullopt),
-        _isSatisfactionProblem(isSatisfactionProblem) {}
+        _isSatisfactionProblem(isSatisfactionProblem),
+        _threadController(threadController) {}
 
   bool shouldRun(const Assignment&);
   void onSolution(const SavedAssignment&);

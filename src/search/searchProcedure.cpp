@@ -53,8 +53,7 @@ void SearchProcedure::tightenSearch() {
   }
 }
 
-// TODO: Add communication to non-satisfying cases
-void SearchProcedure::onImprovement(SearchController& searchController) {
+void SearchProcedure::onAccepted(SearchController& searchController) {
   // Prevent over-communication before an initial 0-violation solution
   // has been found
   if (!_hasSolution && _savedAssignment.has_value() &&
@@ -92,7 +91,7 @@ int SearchProcedure::run(SearchController& searchController, Annealer& annealer,
                           [&] { _assignment.initialize(_random); });
 
     // TODO: handle this case: this should call some separate version
-    if (_assignment.satisfiesConstraints()) onImprovement(searchController);
+    if (_assignment.satisfiesConstraints()) onAccepted(searchController);
 
     annealer.start();
 
@@ -106,7 +105,7 @@ int SearchProcedure::run(SearchController& searchController, Annealer& annealer,
             _assignment.commitLastProbe();
             moves->increment();
             if (!_hasSolution || _assignment.satisfiesConstraints())
-              onImprovement(searchController);
+              onAccepted(searchController);
           }
         }
 

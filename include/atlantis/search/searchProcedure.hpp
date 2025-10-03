@@ -45,7 +45,7 @@ class SearchProcedure {
 
   void tightenSearch();
 
-  void onImprovement(SearchController& searchController);
+  void onAccepted(SearchController& searchController);
 
  public:
   SearchProcedure(

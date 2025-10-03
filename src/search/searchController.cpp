@@ -8,8 +8,9 @@
 namespace atlantis::search {
 
 bool SearchController::shouldRun(const Assignment& assignment) {
-  if (_foundSolution &&
-      (_isSatisfactionProblem || assignment.objectiveIsOptimal())) {
+  if ((_foundSolution &&
+       (_isSatisfactionProblem || assignment.objectiveIsOptimal())) ||
+      (_isSatisfactionProblem && _threadController.hasNoViolations())) {
     return false;
   }
 

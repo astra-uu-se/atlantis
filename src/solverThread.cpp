@@ -5,7 +5,6 @@
 #include <utility>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/annealer.hpp"
@@ -67,10 +66,13 @@ void SolverThread::solve(logging::Logger& logger) {
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
   search::SearchController searchController(
       mapping.objectiveDirection() == ObjectiveDirection::NONE,
-      std::move(onSolution), std::move(onFinish), _timelimit);
+      std::move(onSolution), std::move(onFinish), _timelimit,
+      *_threadController);
 
   logger.timedFunction<int>(
       "search", [&] { return search.run(searchController, annealer, logger); });
+
+  _threadController->threadIsDone();
 }
 
 }  // namespace atlantis
