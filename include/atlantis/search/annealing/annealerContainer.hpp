@@ -11,7 +11,7 @@ namespace atlantis::search {
 class AnnealerContainer {
  public:
   static std::unique_ptr<AnnealingSchedule> sequence(
-      std::vector<std::unique_ptr<AnnealingSchedule>> &&schedules);
+      std::vector<std::unique_ptr<AnnealingSchedule>>&& schedules);
 
   static std::unique_ptr<AnnealingSchedule> loop(
       std::unique_ptr<AnnealingSchedule>&& schedule, UInt numberOfIterations);

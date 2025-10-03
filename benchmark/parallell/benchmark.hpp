@@ -14,7 +14,7 @@ inline search::SearchType intToSearchType(Int state) {
       return search::SearchType::PARALLEL;
     case 0:
     default:
-    return search::SearchType::BESTCOST;
+      return search::SearchType::BESTCOST;
   }
 }
 

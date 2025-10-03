@@ -10,9 +10,8 @@
 
 #include "atlantis/fznBackend.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "benchmark.hpp"
 #include "atlantis/logging/logger.hpp"
-
+#include "benchmark.hpp"
 
 namespace atlantis::benchmark {
 
@@ -33,8 +32,8 @@ class ParTSP : public ::benchmark::Fixture {
     stop = std::make_shared<bool>(false);
 
     std::filesystem::path modelFilePath(modelPath.c_str());
-    backend = std::make_shared<FznBackend>(logger, std::move(modelFilePath), numThreads,
-                       searchType);
+    backend = std::make_shared<FznBackend>(logger, std::move(modelFilePath),
+                                           numThreads, searchType);
     backend->setShouldStop(stop);
   }
 
@@ -42,21 +41,22 @@ class ParTSP : public ::benchmark::Fixture {
     backend = nullptr;
     stop = nullptr;
   }
-
 };
 
 BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
   size_t numSolutions{0};
   Int bestObjective{0};
   double totalObjective{0.0};
-  backend->setOnSolution([&numSolutions,&bestObjective,&totalObjective](const search::SavedAssignment& solution, search::ThreadController&, Int) {
+  backend->setOnSolution([&numSolutions, &bestObjective, &totalObjective](
+                             const search::SavedAssignment& solution,
+                             search::ThreadController&, Int) {
     ++numSolutions;
     bestObjective = solution.getCost().getObjective();
     totalObjective += static_cast<double>(bestObjective);
   });
-  backend->setOnFinish([](bool){});
-  backend->solve(logger);
+  backend->setOnFinish([](bool) {});
   *stop = false;
+  backend->solve(logger);
   for ([[maybe_unused]] const auto& _ : st) {
     ;
   }
@@ -66,7 +66,8 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
   st.counters["solutions_per_second"] = ::benchmark::Counter(
       static_cast<double>(numSolutions), ::benchmark::Counter::kIsRate);
   st.counters["objective_best"] = static_cast<double>(bestObjective);
-  st.counters["objective_average"] = totalObjective / static_cast<double>(numSolutions);
+  st.counters["objective_average"] =
+      totalObjective / static_cast<double>(numSolutions);
 }
 
 BENCHMARK_REGISTER_F(ParTSP, run)
@@ -74,4 +75,4 @@ BENCHMARK_REGISTER_F(ParTSP, run)
     ->Unit(::benchmark::kMillisecond)
     ->Apply(defaultArguments);
 
-}
+}  // namespace atlantis::benchmark

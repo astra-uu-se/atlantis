@@ -14,7 +14,8 @@ std::unique_ptr<AnnealingSchedule> AnnealerContainer::sequence(
 
 std::unique_ptr<AnnealingSchedule> AnnealerContainer::heating(
     double heatingRate, double minimumUphillAcceptanceRatio) {
-  return std::make_unique<GeometricHeatingSchedule>(heatingRate, minimumUphillAcceptanceRatio);
+  return std::make_unique<GeometricHeatingSchedule>(
+      heatingRate, minimumUphillAcceptanceRatio);
 }
 
 std::unique_ptr<AnnealingSchedule> AnnealerContainer::cooling(

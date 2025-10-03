@@ -115,8 +115,9 @@ void FznBackend::solve(logging::Logger& logger) {
                           &threadController, this] {
       auto thread =
           SolverThread(_invariantGraph, _fznOutput->varNodeIds(), problemType,
-                       _annealingScheduleFactory.create(), threadId, _threadController, _searchType,
-                       _seed + threadId, _timelimit, _shouldStop, _onSolution, _onFinish);
+                       _annealingScheduleFactory.create(), threadId,
+                       _threadController, _searchType, _seed + threadId,
+                       _timelimit, _shouldStop, _onSolution, _onFinish);
       thread.solve(logger);
     });
   }
@@ -132,11 +133,12 @@ void FznBackend::join(logging::Logger& logger) {
   }
 
   if (_threadController->getBestThreadId() >= 0) {
-    logger.info("Best result is {} from thread {}", _threadController->getCost().toString(), _threadController->getBestThreadId());
+    logger.info("Best result is {} from thread {}",
+                _threadController->getCost().toString(),
+                _threadController->getBestThreadId());
   } else {
-    std::cerr << "No solution found!" << std::endl;
+    logger.info("No solution found!");
   }
 }
-
 
 }  // namespace atlantis
