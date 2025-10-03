@@ -8,7 +8,8 @@
 
 namespace atlantis::search {
 
-Annealer::Annealer(RandomProvider& random, std::unique_ptr<AnnealingSchedule>&& schedule,
+Annealer::Annealer(RandomProvider& random,
+                   std::unique_ptr<AnnealingSchedule>&& schedule,
                    const Assignment& assignment)
     : _random(random),
       _schedule(std::move(schedule)),

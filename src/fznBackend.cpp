@@ -130,11 +130,12 @@ void FznBackend::join(logging::Logger& logger) {
   }
 
   if (_threadController->getBestThreadId() >= 0) {
-    logger.info("Best result is {} from thread {}", _threadController->getCost().toString(), _threadController->getBestThreadId());
+    logger.info("Best result is {} from thread {}",
+                _threadController->getCost().toString(),
+                _threadController->getBestThreadId());
   } else {
     logger.info("No solution found!");
   }
 }
-
 
 }  // namespace atlantis

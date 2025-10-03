@@ -63,7 +63,6 @@ class SolverThread {
         _onFinish(onFinish) {
     assert(_schedule != nullptr);
     assert(typeid(*_schedule) != typeid(search::AnnealingSchedule));
-
   }
 
   void solve(logging::Logger& logger);
