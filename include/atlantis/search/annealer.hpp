@@ -32,8 +32,7 @@ class Annealer {
   UInt _objectiveWeight{1};
 
  public:
-  Annealer(RandomProvider&, std::unique_ptr<AnnealingSchedule>&&,
-           const Assignment&);
+  Annealer(RandomProvider&, std::unique_ptr<AnnealingSchedule>&&, const Assignment&);
 
   virtual ~Annealer() = default;
 
