@@ -18,7 +18,7 @@ namespace atlantis::benchmark {
 
 class ParTSP : public ::benchmark::Fixture {
  public:
-  const std::string modelPath{std::string(FZN_DIR) + "/tsp.fzn"};
+  const std::string modelPath{std::string(FZN_DIR) + "/tsp_201.fzn"};
   std::shared_ptr<FznBackend> backend{nullptr};
   std::shared_ptr<bool> stop{nullptr};
 
