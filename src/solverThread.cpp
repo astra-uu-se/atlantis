@@ -55,7 +55,9 @@ void SolverThread::solve(logging::Logger& logger) {
   // Initialize thread-dependent stuff
   logger.debug("Thread {} Using seed {}.", _threadId, _seed);
   search::RandomProvider random(_seed);
-  search::Annealer annealer(random, *_schedule, assignment);
+  assert(_schedule != nullptr);
+  assert(typeid(*_schedule) != typeid(search::AnnealingSchedule));
+
   search::SearchProcedure search(
       random, assignment, mapping.globalNeighborhood(), searchObjective,
       _searchType, _threadController, outputVarIds, _threadId);
@@ -66,9 +68,11 @@ void SolverThread::solve(logging::Logger& logger) {
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
   search::SearchController searchController(
       mapping.objectiveDirection() == ObjectiveDirection::NONE,
-      std::move(onSolution), std::move(onFinish), _timelimit,
+      std::move(onSolution), std::move(onFinish), _timelimit, _shouldStop);
       *_threadController);
 
+  search::Annealer annealer(random, std::move(_schedule), assignment);
+  _schedule = nullptr;
   logger.timedFunction<int>(
       "search", [&] { return search.run(searchController, annealer, logger); });
 

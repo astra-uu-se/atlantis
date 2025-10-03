@@ -94,14 +94,14 @@ FznBackend::FznBackend(logging::Logger& logger,
 void FznBackend::solve(logging::Logger& logger) {
   // Shared data
   fznparser::ProblemType problemType = _model->solveType().problemType();
-  auto schedule = _annealingScheduleFactory.create();
+  _threadController = std::make_shared<search::ThreadController>();
 
   // TODO: refactor everywhere to use the shared pointer
   auto threadController =
       std::make_shared<search::ThreadController>(_threadCount);
-
-  std::vector<std::thread> threads;
-  std::cerr << "Thread count is " << _threadCount << "\n";
+  assert(_threads.empty());
+  _threads.reserve(_threadCount);
+  logger.info("Thread count is {}", _threadCount);
 
   _invariantGraph->open();
   logger.timedProcedure("building invariant graph",
@@ -115,26 +115,28 @@ void FznBackend::solve(logging::Logger& logger) {
                           &threadController, this] {
       auto thread =
           SolverThread(_invariantGraph, _fznOutput->varNodeIds(), problemType,
-                       schedule, threadId, threadController, _searchType,
-                       _seed + threadId, _timelimit, _onSolution, _onFinish);
+                       _annealingScheduleFactory.create(), threadId, _threadController, _searchType,
+                       _seed + threadId, _timelimit, _shouldStop, _onSolution, _onFinish);
       thread.solve(logger);
     });
   }
+}
 
-  // This only returns after all threads are done.
   handleSolverIO(threadController);
-
-  for (auto& thread : threads) {
+void FznBackend::join(logging::Logger& logger) {
+  if (_threads.empty()) {
+    return;
+  }
+  for (auto& thread : _threads) {
     thread.join();
   }
 
-  if (threadController->getBestThreadId() >= 0) {
-    std::cerr << "Best result is " << threadController->getCost().toString()
-              << " from thread " << threadController->getBestThreadId()
-              << std::endl;
+  if (_threadController->getBestThreadId() >= 0) {
+    logger.info("Best result is {} from thread {}", _threadController->getCost().toString(), _threadController->getBestThreadId());
   } else {
     std::cerr << "No solution found!" << std::endl;
   }
 }
+
 
 }  // namespace atlantis

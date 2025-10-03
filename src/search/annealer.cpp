@@ -8,10 +8,10 @@
 
 namespace atlantis::search {
 
-Annealer::Annealer(RandomProvider& random, AnnealingSchedule& schedule,
+Annealer::Annealer(RandomProvider& random, std::unique_ptr<AnnealingSchedule>&& schedule,
                    const Assignment& assignment)
     : _random(random),
-      _schedule(schedule),
+      _schedule(std::move(schedule)),
       _cost(
           std::numeric_limits<Int>::max(),
           assignment.objectiveDirection() == ObjectiveDirection::MINIMIZE
@@ -23,13 +23,15 @@ Annealer::Annealer(RandomProvider& random, AnnealingSchedule& schedule,
       _statistics(INITIAL_TEMPERATURE),
       _requiredMovesPerRound{static_cast<UInt>(
           static_cast<double>(128 * assignment.searchVars().size()) /
-          std::log2(assignment.searchVars().size()))} {}
+          std::log2(assignment.searchVars().size()))} {
+  assert(typeid(_schedule) != typeid(AnnealingSchedule));
+}
 
-bool Annealer::isFinished() const { return _schedule.frozen(); }
+bool Annealer::isFinished() const { return _schedule->frozen(); }
 
 void Annealer::nextRound() {
-  _schedule.nextRound(_statistics);
-  _statistics.nextRound(_schedule.temperature());
+  _schedule->nextRound(_statistics);
+  _statistics.nextRound(_schedule->temperature());
   _attemptedMovesPerRound = 0;
 }
 
@@ -65,7 +67,7 @@ bool Annealer::accept(Int moveCost) {
   }
   _statistics.uphillAttemptedMoves++;
 
-  if (std::exp(static_cast<double>(-delta) / _schedule.temperature()) >=
+  if (std::exp(static_cast<double>(-delta) / _schedule->temperature()) >=
       _random.floatInRange(0.0f, 1.0f)) {
     _statistics.uphillAcceptedMoves++;
     _statistics.acceptedMoves++;
@@ -79,7 +81,7 @@ Int Annealer::evaluate(const Cost& cost) const {
 }
 
 void Annealer::start() {
-  _schedule.start(INITIAL_TEMPERATURE);
+  _schedule->start(INITIAL_TEMPERATURE);
   _violationWeight = 1;
   _objectiveWeight = 0;
 }

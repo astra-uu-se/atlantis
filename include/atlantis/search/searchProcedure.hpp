@@ -64,8 +64,7 @@ class SearchProcedure {
         _outputVarIds(outputVarIds),
         _threadId(threadId) {}
 
-  int run(SearchController& controller, Annealer& annealer,
-          logging::Logger& logger);
+  int run(SearchController&, Annealer&, logging::Logger&);
 };
 
 }  // namespace atlantis::search

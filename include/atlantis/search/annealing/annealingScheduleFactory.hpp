@@ -24,7 +24,7 @@ class AnnealingScheduleCreationError : public std::exception {
 class AnnealingScheduleFactory {
   std::optional<std::filesystem::path> _scheduleDefinition;
 
-  [[nodiscard]] static inline std::shared_ptr<AnnealingSchedule>
+  [[nodiscard]] static inline std::unique_ptr<AnnealingSchedule>
   defaultAnnealingSchedule();
 
  public:
@@ -41,7 +41,7 @@ class AnnealingScheduleFactory {
    * @throws AnnealingScheduleCreationError If no schedule can be created from
    * the given definition file.
    */
-  [[nodiscard]] std::shared_ptr<AnnealingSchedule> create() const;
+  [[nodiscard]] std::unique_ptr<AnnealingSchedule> create() const;
 };
 
 }  // namespace atlantis::search

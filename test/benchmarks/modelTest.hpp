@@ -27,6 +27,7 @@ static void testModelFile(const char* modelFile,
   }
   backend.setTimelimit(std::chrono::seconds(2));
   backend.solve(logger);
+  backend.join();
 }
 
 }  // namespace atlantis::testing

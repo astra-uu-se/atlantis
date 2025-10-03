@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "atlantis/search/annealing/types.hpp"
 #include "atlantis/search/cost.hpp"
@@ -17,7 +19,7 @@ class RandomProvider;
  */
 class Annealer {
   RandomProvider& _random;
-  AnnealingSchedule& _schedule;
+  std::unique_ptr<AnnealingSchedule> _schedule;
   Cost _cost;
   RoundStatistics _statistics;
   UInt _requiredMovesPerRound;
@@ -30,7 +32,7 @@ class Annealer {
   UInt _objectiveWeight{1};
 
  public:
-  Annealer(RandomProvider&, AnnealingSchedule&, const Assignment&);
+  Annealer(RandomProvider&, std::unique_ptr<AnnealingSchedule>&&, const Assignment&);
 
   virtual ~Annealer() = default;
 

@@ -111,6 +111,7 @@ int main(int argc, char* argv[]) {
     }
 
     const auto statistics = backend.solve(logger);
+    backend.join();
 
     // Don't log to std::cout, since that would interfere with MiniZinc.
     statistics.display(std::cerr);

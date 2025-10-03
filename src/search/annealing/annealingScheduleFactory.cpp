@@ -30,10 +30,10 @@ static std::string readFileToString(const std::filesystem::path& path) {
   return stringStream.str();
 }
 
-static std::shared_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
+static std::unique_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
                                                         const json& value);
 
-static std::shared_ptr<AnnealingSchedule> parseHeatingSchedule(
+static std::unique_ptr<AnnealingSchedule> parseHeatingSchedule(
     const json& value) {
   if (!value.is_object() || !value.contains("heatingRate") ||
       !value.contains("minimumUphillAcceptanceRatio") ||
@@ -50,7 +50,7 @@ static std::shared_ptr<AnnealingSchedule> parseHeatingSchedule(
       value["minimumUphillAcceptanceRatio"].get<double>());
 }
 
-static std::shared_ptr<AnnealingSchedule> parseCoolingSchedule(
+static std::unique_ptr<AnnealingSchedule> parseCoolingSchedule(
     const json& value) {
   if (!value.is_object() || !value.contains("coolingRate") ||
       !value.contains("successiveFutileRoundsThreshold") ||
@@ -67,7 +67,7 @@ static std::shared_ptr<AnnealingSchedule> parseCoolingSchedule(
       value["successiveFutileRoundsThreshold"].get<UInt>());
 }
 
-static std::shared_ptr<AnnealingSchedule> parseScheduleSequence(
+static std::unique_ptr<AnnealingSchedule> parseScheduleSequence(
     const json& value) {
   if (!value.is_object() || value.empty()) {
     throw AnnealingScheduleCreationError(
@@ -75,15 +75,15 @@ static std::shared_ptr<AnnealingSchedule> parseScheduleSequence(
         "least one schedule as a member.");
   }
 
-  std::vector<std::shared_ptr<AnnealingSchedule>> schedules;
+  std::vector<std::unique_ptr<AnnealingSchedule>> schedules;
   for (auto memberIt = value.begin(); memberIt != value.end(); ++memberIt) {
-    schedules.push_back(parseSchedule(memberIt.key(), memberIt.value()));
+    schedules.emplace_back(parseSchedule(memberIt.key(), memberIt.value()));
   }
 
   return AnnealerContainer::sequence(std::move(schedules));
 }
 
-static std::shared_ptr<AnnealingSchedule> parseScheduleLoop(const json& value) {
+static std::unique_ptr<AnnealingSchedule> parseScheduleLoop(const json& value) {
   if (!value.is_object() || !value.contains("maximumConsecutiveFutileRounds") ||
       !value.contains("inner") ||
       !value["maximumConsecutiveFutileRounds"].is_number_unsigned() ||
@@ -100,7 +100,7 @@ static std::shared_ptr<AnnealingSchedule> parseScheduleLoop(const json& value) {
   return AnnealerContainer::loop(std::move(schedule), iterationCount);
 }
 
-static std::shared_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
+static std::unique_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
                                                         const json& value) {
   if (name == "heating") {
     return parseHeatingSchedule(value);
@@ -118,17 +118,17 @@ static std::shared_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
       std::string("Unknown schedule key: ").append(name));
 }
 
-std::shared_ptr<AnnealingSchedule>
+std::unique_ptr<AnnealingSchedule>
 AnnealingScheduleFactory::defaultAnnealingSchedule() {
-  return AnnealerContainer::loop(
-      AnnealerContainer::sequence(
-          std::vector<std::shared_ptr<AnnealingSchedule>>{
-              AnnealerContainer::heating(1.2, 0.75),
-              AnnealerContainer::cooling(0.99, 4)}),
-      5);
+  std::vector<std::unique_ptr<AnnealingSchedule>> vec;
+  vec.reserve(2);
+  vec.push_back(AnnealerContainer::heating(1.2, 0.75));
+  vec.push_back(AnnealerContainer::cooling(0.99, 4));
+  auto seq = AnnealerContainer::sequence(std::move(vec));
+  return AnnealerContainer::loop(std::move(seq), 5);
 }
 
-std::shared_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {
+std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {
   if (!_scheduleDefinition) {
     return defaultAnnealingSchedule();
   }

@@ -13,7 +13,9 @@ bool SearchController::shouldRun(const Assignment& assignment) {
       (_isSatisfactionProblem && _threadController.hasNoViolations())) {
     return false;
   }
-
+  if (_shouldStop != nullptr && *_shouldStop) {
+    return false;
+  }
   if (_started && _timeout.has_value()) {
     return std::chrono::steady_clock::now() - _startTime <= *_timeout;
   }

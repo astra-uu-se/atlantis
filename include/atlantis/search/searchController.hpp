@@ -16,6 +16,7 @@ class SearchController {
   std::function<void(const SavedAssignment&)> _onSolution;
   std::function<void(bool)> _onFinish;
   std::optional<std::chrono::milliseconds> _timeout;
+  std::shared_ptr<const bool> _shouldStop;
 
   std::chrono::steady_clock::time_point _startTime;
   const bool _isSatisfactionProblem;
@@ -31,6 +32,7 @@ class SearchController {
       std::function<void(const SavedAssignment&)>&& onSolution,
       std::function<void(bool)>&& onFinish,
       std::optional<std::chrono::duration<Rep, Period>> timeout,
+      std::shared_ptr<const bool>& shouldStop)
       ThreadController& threadController)
       : _onSolution(std::move(onSolution)),
         _onFinish(std::move(onFinish)),
@@ -40,6 +42,7 @@ class SearchController {
                       std::chrono::duration_cast<std::chrono::milliseconds>(
                           *timeout))
                 : std::nullopt),
+        _shouldStop(shouldStop),
         _isSatisfactionProblem(isSatisfactionProblem),
         _threadController(threadController) {}
 
