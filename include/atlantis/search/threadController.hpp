@@ -1,5 +1,6 @@
 #pragma once
 #include <atomic>
+#include <iostream>
 #include <mutex>
 #include <optional>
 
@@ -15,9 +16,8 @@ class ThreadController {
   size_t _threadCount;
   std::atomic<bool> _hasSolution = false;
   std::atomic<bool> _hasNoViolations = false;
-  std::atomic<bool> _hasPrinted = true;
-  std::atomic<bool> _hasPrintedFinal =
-      true;  // Solution to ensure the final solution is printed exactly once.
+  std::atomic<bool> _checkPrint = true;
+  std::atomic<size_t> _solutionNumber = 0;
   std::atomic<size_t> _numFinishedThreads = 0;
   std::optional<Cost> _bestCost;
   std::optional<SavedAssignment> _solution;
@@ -42,6 +42,9 @@ class ThreadController {
 
   [[nodiscard]] SavedAssignment getSolution() const;
 
+  [[nodiscard]] std::optional<std::pair<size_t, SavedAssignment>>
+  getNewerSolution(size_t solutionNumber) const;
+
   [[gnu::always_inline]] [[nodiscard]] bool hasSolution() const {
     return _hasSolution.load();
   }
@@ -54,19 +57,15 @@ class ThreadController {
     return _numFinishedThreads.load();
   }
 
-  [[gnu::always_inline]] [[nodiscard]] bool hasPrintedFinal() const {
-    return _hasPrintedFinal.load();
+  [[gnu::always_inline]] [[nodiscard]] size_t getSolutionNumber() const {
+    return _solutionNumber.load();
   }
 
   void threadIsDone();
 
-  // Wait for _hasPrinted to notify and NOT equal true
-  [[gnu::always_inline]] void awaitChanges() const { _hasPrinted.wait(true); }
+  [[gnu::always_inline]] void awaitChanges() const { _checkPrint.wait(true); }
 
-  [[gnu::always_inline]] void solutionPrinted() {
-    _hasPrinted.operator=(true);
-    _hasPrintedFinal.operator=(true);
-  }
+  [[gnu::always_inline]] void solutionPrinted() { _checkPrint.operator=(true); }
 };
 
 }  // namespace atlantis::search

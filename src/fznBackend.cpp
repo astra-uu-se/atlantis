@@ -32,6 +32,36 @@ void FznBackend::onFinishDefault([[maybe_unused]] bool hadSol) {
   // This currently does nothing.
 }
 
+void FznBackend::handleSolverIO(
+    const std::shared_ptr<search::ThreadController>& threadController) const {
+  size_t mostRecentSolution = 0;
+
+  while (threadController->getNumFinishedThreads() < _threadCount) {
+    threadController->awaitChanges();
+
+    auto result = threadController->getNewerSolution(mostRecentSolution);
+    if (!result.has_value()) continue;
+
+    mostRecentSolution = result.value().first;
+    displaySolution(result.value().second);
+    threadController->solutionPrinted();
+  }
+
+  // Ensure the final solution is printed
+  // When this runs all search threads have terminated.
+  if (mostRecentSolution < threadController->getSolutionNumber()) {
+    std::cout << "printing final solution! (previously printed "
+              << mostRecentSolution << ", final is "
+              << threadController->getSolutionNumber() << ")." << std::endl;
+    search::SavedAssignment assignment = threadController->getSolution();
+    displaySolution(assignment);
+  }
+
+  if (!threadController->hasSolution()) {
+    std::cout << "=====UNKNOWN=====\n";
+  }
+}
+
 FznBackend::FznBackend(fznparser::Model&& model,
                        const std::uint_fast32_t threadCount,
                        search::SearchType searchType)
@@ -91,25 +121,8 @@ void FznBackend::solve(logging::Logger& logger) {
     });
   }
 
-  // This should run until all the threads finish
-  while (threadController->getNumFinishedThreads() < _threadCount) {
-    threadController->awaitChanges();
-    std::cout << "Printing solution" << std::endl;
-    if (threadController->hasSolution() &&
-        threadController->hasNoViolations() &&
-        !threadController->hasPrintedFinal()) {
-      search::SavedAssignment assignment = threadController->getSolution();
-      displaySolution(assignment);
-      threadController->solutionPrinted();
-    }
-    std::cout << "Restarting print-loop!" << std::endl;
-  }
-
-  std::cout << "Exiting!" << std::endl;
-
-  if (!threadController->hasSolution()) {
-    std::cout << "=====UNKNOWN=====\n";
-  }
+  // This only returns after all threads are done.
+  handleSolverIO(threadController);
 
   for (auto& thread : threads) {
     thread.join();

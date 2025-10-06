@@ -53,6 +53,9 @@ class FznBackend {
       _onSolution;
   std::function<void(bool)> _onFinish = onFinishDefault;
 
+  void handleSolverIO(
+      const std::shared_ptr<search::ThreadController>& threadController) const;
+
  public:
   explicit FznBackend(
       fznparser::Model&& model, const std::uint_fast32_t threadCount,
