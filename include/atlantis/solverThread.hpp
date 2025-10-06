@@ -6,7 +6,7 @@
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/objective.hpp"
-#include "search/annealing/annealingSchedule.hpp"
+#include "search/annealing/annealingScheduleFactory.hpp"
 #include "search/savedAssignment.hpp"
 #include "search/searchProcedure.hpp"
 #include "search/threadController.hpp"
@@ -17,8 +17,8 @@ namespace atlantis {
 class SolverThread {
   std::shared_ptr<const invariantgraph::FznInvariantGraph> _invariantGraph;
   std::vector<invariantgraph::VarNodeId> _outputVarNodeIds;
+  const search::AnnealingScheduleFactory& _annealingScheduleFactory;
   fznparser::ProblemType _problemType;
-  std::unique_ptr<search::AnnealingSchedule> _schedule;
   size_t _threadId;
   std::shared_ptr<search::ThreadController> _threadController;
   search::SearchType _searchType;
@@ -38,9 +38,8 @@ class SolverThread {
   explicit SolverThread(
       const std::shared_ptr<invariantgraph::FznInvariantGraph>& invariantGraph,
       std::vector<invariantgraph::VarNodeId>&& outputVarNodeIds,
-      const fznparser::ProblemType problemType,
-      std::unique_ptr<search::AnnealingSchedule>&& schedule,
-      const size_t threadId,
+      const search::AnnealingScheduleFactory& annealingScheduleFactory,
+      const fznparser::ProblemType problemType, const size_t threadId,
       const std::shared_ptr<search::ThreadController>& controller,
       const search::SearchType& searchType, const std::uint_fast32_t seed,
       const std::optional<std::chrono::milliseconds> timeLimit,
@@ -51,8 +50,8 @@ class SolverThread {
       const std::function<void(bool)>& onFinish)
       : _invariantGraph(invariantGraph),
         _outputVarNodeIds(std::move(outputVarNodeIds)),
+        _annealingScheduleFactory(annealingScheduleFactory),
         _problemType(problemType),
-        _schedule(std::move(schedule)),
         _threadId(threadId),
         _threadController(controller),
         _searchType(searchType),
@@ -60,12 +59,13 @@ class SolverThread {
         _timelimit(timeLimit),
         _shouldStop(shouldStop),
         _onSolution(onSolution),
-        _onFinish(onFinish) {
-    assert(_schedule != nullptr);
-    assert(typeid(*_schedule) != typeid(search::AnnealingSchedule));
-  }
+        _onFinish(onFinish) {}
 
   void solve(logging::Logger& logger);
+
+  [[nodiscard]] std::unique_ptr<search::MetaHeuristic> createMetaHeuristic(
+      logging::Logger&, search::RandomProvider&,
+      const search::Assignment&) const;
 
   [[gnu::always_inline]] [[nodiscard]] std::vector<invariantgraph::VarNodeId>
   getOutputVarNodeIds() {

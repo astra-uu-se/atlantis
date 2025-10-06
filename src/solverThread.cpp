@@ -7,8 +7,10 @@
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/propagation/solver.hpp"
-#include "atlantis/search/annealer.hpp"
+#include "atlantis/search/annealing/annealer.hpp"
+#include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 #include "atlantis/search/assignment.hpp"
+#include "atlantis/search/metaheuristic.hpp"
 #include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/randomProvider.hpp"
@@ -18,6 +20,14 @@
 #include "atlantis/types.hpp"
 
 namespace atlantis {
+
+std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
+    logging::Logger& logger, search::RandomProvider& randomProvider,
+    const search::Assignment& assignment) const {
+  return std::make_unique<search::Annealer>(
+      randomProvider, std::move(_annealingScheduleFactory.create()), assignment,
+      logger);
+}
 
 void SolverThread::solve(logging::Logger& logger) {
   // Create the propagation solver
@@ -47,19 +57,18 @@ void SolverThread::solve(logging::Logger& logger) {
   // TODO: This can possibly be extracted, or restricted to one thread
   // TODO: this case may not be handled properly
   if (mapping.globalNeighborhood()->coveredVars().empty()) {
-    search::SavedAssignment savedAssignment(assignment, outputVarIds);
-    _onSolution(savedAssignment, *_threadController, _threadId);
+    _onSolution(search::SavedAssignment(assignment, outputVarIds),
+                *_threadController, _threadId);
     _onFinish(true);
+    return;
   }
 
   // Initialize thread-dependent stuff
   logger.debug("Thread {} Using seed {}.", _threadId, _seed);
-  search::RandomProvider random(_seed);
-  assert(_schedule != nullptr);
-  assert(typeid(*_schedule) != typeid(search::AnnealingSchedule));
 
+  search::RandomProvider randomProvider(_seed);
   search::SearchProcedure search(
-      random, assignment, mapping.globalNeighborhood(), searchObjective,
+      randomProvider, assignment, mapping.globalNeighborhood(), searchObjective,
       _searchType, _threadController, outputVarIds, _threadId);
 
   auto onSolution = [&](const search::SavedAssignment& savedAssignment) {
@@ -71,11 +80,12 @@ void SolverThread::solve(logging::Logger& logger) {
       std::move(onSolution), std::move(onFinish), _timelimit, _shouldStop,
       _threadController);
 
-  search::Annealer annealer(random, std::move(_schedule), assignment);
-  _schedule = nullptr;
-  logger.timedFunction<int>(
-      "search", [&] { return search.run(searchController, annealer, logger); });
-
+  logger.timedFunction<int>("search", [&] {
+    return search.run(
+        searchController,
+        std::move(createMetaHeuristic(logger, randomProvider, assignment)),
+        logger);
+  });
   _threadController->threadIsDone();
 }
 

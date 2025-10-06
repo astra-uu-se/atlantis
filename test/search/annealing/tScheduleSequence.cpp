@@ -22,7 +22,7 @@ class DummyAnnealingSchedule : public AnnealingSchedule {
 
 class ScheduleSequenceTest : public ::testing::Test {
  protected:
-  std::shared_ptr<AnnealingSchedule> schedule;
+  std::unique_ptr<AnnealingSchedule> schedule;
 
   ScheduleSequence& sequence() {
     EXPECT_NE(schedule, nullptr);

@@ -11,21 +11,6 @@
 
 namespace atlantis::search {
 
-static void logRoundStatistics(logging::Logger& logger,
-                               const RoundStatistics& statistics) {
-  logger.trace("Accepted over attempted moves: {:d} / {:d} = {:.3f}",
-               statistics.acceptedMoves, statistics.attemptedMoves,
-               statistics.moveAcceptanceRatio());
-  logger.trace("Accepted over attempted uphill moves: {:d} / {:d} = {:.3f}",
-               statistics.uphillAcceptedMoves, statistics.uphillAttemptedMoves,
-               statistics.uphillAcceptanceRatio());
-  logger.trace("Improving move ratio: {:.3f}", statistics.improvingMoveRatio());
-  logger.trace("Lowest cost this round: {:d}", statistics.bestCostOfThisRound);
-  logger.trace("Lowest cost previous round: {:d}",
-               statistics.bestCostOfPreviousRound);
-  logger.trace("Temperature: {:.3f}", statistics.temperature);
-}
-
 // TODO: either use or remove this function
 SearchStatistics makeStats(const Statistic& rounds,
                            const Statistic& initialisations,
@@ -77,26 +62,22 @@ void SearchProcedure::onAccepted(SearchController& searchController) {
   tightenSearch();
 }
 
-int SearchProcedure::run(SearchController& searchController, Annealer& annealer,
+Int SearchProcedure::run(SearchController& searchController,
+                         std::unique_ptr<MetaHeuristic>&& metaHeuristic,
                          logging::Logger& logger) {
-  auto rounds = std::make_unique<CounterStatistic>("Rounds");
-  auto initialisations = std::make_unique<CounterStatistic>("Initialisations");
-  auto moves = std::make_unique<CounterStatistic>("Moves");
-
   do {
-    initialisations->increment();
-
     logger.timedProcedure(logging::Level::LVL_TRACE, "initialize assignment",
                           [&] { _assignment.initialize(_random); });
 
     // TODO: handle this case: this should call some separate version
     if (_assignment.satisfiesConstraints()) onAccepted(searchController);
 
-    metaHeuristic.start();
+    metaHeuristic->start();
 
-    while (controller.shouldRun(_assignment) && !metaHeuristic.isFinished()) {
+    while (searchController.shouldRun(_assignment) &&
+           !metaHeuristic->isFinished()) {
       const auto cost = _assignment.performProbe(_random);
-      if (metaHeuristic.acceptMove(cost)) {
+      if (metaHeuristic->acceptMove(cost)) {
         _assignment.commitLastProbe();
         moves->increment();
             if (!_hasSolution || _assignment.satisfiesConstraints())

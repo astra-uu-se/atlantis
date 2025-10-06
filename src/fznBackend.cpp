@@ -112,11 +112,10 @@ void FznBackend::solve(logging::Logger& logger) {
 
   for (size_t threadId = 0; threadId < _threadCount; threadId++) {
     _threads.emplace_back([&logger, &problemType, threadId, this] {
-      auto thread =
-          SolverThread(_invariantGraph, _fznOutput->varNodeIds(), problemType,
-                       _annealingScheduleFactory.create(), threadId,
-                       _threadController, _searchType, _seed + threadId,
-                       _timelimit, _shouldStop, _onSolution, _onFinish);
+      auto thread = SolverThread(
+          _invariantGraph, _fznOutput->varNodeIds(), _annealingScheduleFactory,
+          problemType, threadId, _threadController, _searchType,
+          _seed + threadId, _timelimit, _shouldStop, _onSolution, _onFinish);
       thread.solve(logger);
     });
   }

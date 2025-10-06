@@ -21,7 +21,7 @@ class RandomProvider;
  */
 class Annealer : public MetaHeuristic {
   RandomProvider& _random;
-  AnnealingSchedule& _schedule;
+  std::unique_ptr<AnnealingSchedule> _schedule;
   Cost _cost;
   RoundStatistics _statistics;
   UInt _requiredMovesPerRound;
@@ -35,8 +35,8 @@ class Annealer : public MetaHeuristic {
   UInt _objectiveWeight{1};
 
  public:
-  Annealer(RandomProvider&, AnnealingSchedule&, const Assignment&,
-           logging::Logger&);
+  Annealer(RandomProvider&, std::unique_ptr<AnnealingSchedule>&&,
+           const Assignment&, logging::Logger&);
 
   virtual ~Annealer() = default;
 

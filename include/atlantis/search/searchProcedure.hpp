@@ -64,7 +64,8 @@ class SearchProcedure {
         _outputVarIds(outputVarIds),
         _threadId(threadId) {}
 
-  SearchStatistics run(SearchController&, MetaHeuristic&, logging::Logger&);
+  Int run(SearchController&, std::unique_ptr<MetaHeuristic>&&,
+          logging::Logger&);
 };
 
 }  // namespace atlantis::search
