@@ -5,7 +5,9 @@
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/logging/logger.hpp"
-#include "atlantis/search/annealer.hpp"
+#include "atlantis/search/annealing/annealer.hpp"
+#include "atlantis/search/assignment.hpp"
+#include "atlantis/search/objective.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
 #include "atlantis/search/threadController.hpp"

@@ -4,10 +4,9 @@
 #include <iostream>
 
 #include "atlantis/logging/logger.hpp"
-#include "atlantis/search/annealer.hpp"
 #include "atlantis/search/annealing/types.hpp"
 #include "atlantis/search/assignment.hpp"
-#include "atlantis/search/savedAssignment.hpp"
+#include "atlantis/search/metaheuristic.hpp"
 #include "atlantis/search/searchController.hpp"
 
 namespace atlantis::search {
@@ -93,29 +92,17 @@ int SearchProcedure::run(SearchController& searchController, Annealer& annealer,
     // TODO: handle this case: this should call some separate version
     if (_assignment.satisfiesConstraints()) onAccepted(searchController);
 
-    annealer.start();
+    metaHeuristic.start();
 
-    while (searchController.shouldRun(_assignment) && !annealer.isFinished()) {
-      logger.timedProcedure(logging::Level::LVL_TRACE, "round", [&] {
-        while (searchController.shouldRun(_assignment) &&
-               annealer.shouldRunRound()) {
-          const auto cost = _assignment.performProbe(_random);
-
-          if (annealer.acceptMove(cost)) {
-            _assignment.commitLastProbe();
-            moves->increment();
+    while (controller.shouldRun(_assignment) && !metaHeuristic.isFinished()) {
+      const auto cost = _assignment.performProbe(_random);
+      if (metaHeuristic.acceptMove(cost)) {
+        _assignment.commitLastProbe();
+        moves->increment();
             if (!_hasSolution || _assignment.satisfiesConstraints())
               onAccepted(searchController);
-          }
         }
-
-        logger.indentedProcedure(
-            logging::Level::LVL_TRACE, "Round statistics", [&] {
-              logRoundStatistics(logger, annealer.currentRoundStatistics());
-            });
-        annealer.nextRound();
-        rounds->increment();
-      });
+      }
     }
   } while (searchController.shouldRun(_assignment));
 

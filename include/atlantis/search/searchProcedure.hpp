@@ -11,7 +11,7 @@ class Logger;
 
 namespace atlantis::search {
 
-class Annealer;
+class MetaHeuristic;
 class RandomProvider;
 class Assignment;
 class SearchController;
@@ -64,7 +64,7 @@ class SearchProcedure {
         _outputVarIds(outputVarIds),
         _threadId(threadId) {}
 
-  int run(SearchController&, Annealer&, logging::Logger&);
+  SearchStatistics run(SearchController&, MetaHeuristic&, logging::Logger&);
 };
 
 }  // namespace atlantis::search

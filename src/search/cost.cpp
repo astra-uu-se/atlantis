@@ -1,11 +1,25 @@
 #include "atlantis/search/cost.hpp"
 
+#include <limits>
+
+#include "atlantis/search/assignment.hpp"
+
 namespace atlantis::search {
 
 Cost::Cost(Int violationDegree, Int objective, ObjectiveDirection direction)
     : _violationDegree(violationDegree),
       _objective(objective),
       _objectiveWeightSign(static_cast<int>(direction)) {}
+
+Cost::Cost(const Assignment& assignment)
+    : Cost(
+          std::numeric_limits<Int>::max(),
+          assignment.objectiveDirection() == ObjectiveDirection::MINIMIZE
+              ? std::numeric_limits<Int>::max()
+              : (assignment.objectiveDirection() == ObjectiveDirection::MAXIMIZE
+                     ? std::numeric_limits<Int>::min()
+                     : 0),
+          assignment.objectiveDirection()) {}
 
 Int Cost::evaluate(UInt violationWeight, UInt objectiveWeight) const noexcept {
   return static_cast<Int>(violationWeight) * _violationDegree +
