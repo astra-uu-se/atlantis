@@ -79,9 +79,8 @@ Int SearchProcedure::run(SearchController& searchController,
       const auto cost = _assignment.performProbe(_random);
       if (metaHeuristic->acceptMove(cost)) {
         _assignment.commitLastProbe();
-        moves->increment();
-            if (!_hasSolution || _assignment.satisfiesConstraints())
-              onAccepted(searchController);
+        if (!_hasSolution || _assignment.satisfiesConstraints()) {
+          onAccepted(searchController);
         }
       }
     }

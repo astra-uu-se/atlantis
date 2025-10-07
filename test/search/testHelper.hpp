@@ -16,9 +16,8 @@ using namespace atlantis::search::neighborhoods;
 
 class AlwaysAcceptingMetaHeuristic : public MetaHeuristic {
  public:
-  AlwaysAcceptingAnnealer(RandomProvider& random, std::unique_ptr<AnnealingSchedule>&& schedule,
-                          const Assignment& assignment)
-      : Annealer(random, std::move(schedule), assignment) {}
+  AlwaysAcceptingMetaHeuristic()
+      : MetaHeuristic() {}
 
   void start() override {}
   [[nodiscard]] bool acceptMove(const Cost&) override { return true; }
