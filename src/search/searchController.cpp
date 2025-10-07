@@ -8,12 +8,14 @@
 namespace atlantis::search {
 
 bool SearchController::shouldRun(const Assignment& assignment) {
-  if ((_foundSolution &&
-       (_isSatisfactionProblem || assignment.objectiveIsOptimal())) ||
-      (_isSatisfactionProblem && _threadController.hasNoViolations())) {
+  if (_shouldStop != nullptr && *_shouldStop) {
     return false;
   }
-
+  if ((_foundSolution &&
+       (_isSatisfactionProblem || assignment.objectiveIsOptimal())) ||
+      (_isSatisfactionProblem && _threadController->hasNoViolations())) {
+    return false;
+  }
   if (_started && _timeout.has_value()) {
     return std::chrono::steady_clock::now() - _startTime <= *_timeout;
   }

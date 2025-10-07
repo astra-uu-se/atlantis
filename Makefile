@@ -38,12 +38,12 @@ define compile_mzn_dzn
 	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 		${MZN_MODEL_DIR}/$(1).mzn \
 		${MZN_MODEL_DIR}/$(2).dzn \
-		--fzn ${FZN_MODEL_DIR}/$(1).fzn \
+		--fzn ${FZN_MODEL_DIR}/$(3).fzn \
 		--no-output-ozn
 	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c --use-gecode \
 		${MZN_MODEL_DIR}/$(1).mzn \
 		${MZN_MODEL_DIR}/$(2).dzn \
-		--fzn ${FZN_MODEL_DIR}/$(1)_gecode.fzn \
+		--fzn ${FZN_MODEL_DIR}/$(3)_gecode.fzn \
 		--no-output-ozn
 endef
 
@@ -140,9 +140,10 @@ fzn:
 	@$(call compile_mzn,comp_domain_ann)
 	@$(call compile_mzn,simple_minimize)
 	@$(call compile_mzn,all_different_minimize)
-	@$(call compile_mzn_dzn,car_sequencing,car_sequencing)
-	@$(call compile_mzn_dzn,tsp_alldiff,tsp_17)
-	@$(call compile_mzn_dzn,tsp,tsp_17)
+	@$(call compile_mzn_dzn,car_sequencing,car_sequencing,car_sequencing)
+	@$(call compile_mzn_dzn,tsp_alldiff,tsp_17,tsp_alldiff)
+	@$(call compile_mzn_dzn,tsp,tsp_17,tsp)
+	@$(call compile_mzn_dzn,tsp,tsp_201,tsp_201)
 	@$(call compile_mzn_param,magic_square,n=3)
 	@$(call compile_mzn_param,n_queens,n=16)
 

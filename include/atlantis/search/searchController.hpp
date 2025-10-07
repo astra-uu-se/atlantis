@@ -16,13 +16,14 @@ class SearchController {
   std::function<void(const SavedAssignment&)> _onSolution;
   std::function<void(bool)> _onFinish;
   std::optional<std::chrono::milliseconds> _timeout;
+  std::shared_ptr<const bool> _shouldStop;
 
   std::chrono::steady_clock::time_point _startTime;
   const bool _isSatisfactionProblem;
   bool _started{false};
   Int _foundSolution{false};
 
-  ThreadController& _threadController;
+  std::shared_ptr<ThreadController> _threadController;
 
  public:
   template <typename Rep, typename Period>
@@ -31,7 +32,8 @@ class SearchController {
       std::function<void(const SavedAssignment&)>&& onSolution,
       std::function<void(bool)>&& onFinish,
       std::optional<std::chrono::duration<Rep, Period>> timeout,
-      ThreadController& threadController)
+      std::shared_ptr<const bool>& shouldStop,
+      const std::shared_ptr<ThreadController>& threadController)
       : _onSolution(std::move(onSolution)),
         _onFinish(std::move(onFinish)),
         _timeout(
@@ -40,6 +42,7 @@ class SearchController {
                       std::chrono::duration_cast<std::chrono::milliseconds>(
                           *timeout))
                 : std::nullopt),
+        _shouldStop(shouldStop),
         _isSatisfactionProblem(isSatisfactionProblem),
         _threadController(threadController) {}
 

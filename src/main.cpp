@@ -110,10 +110,9 @@ int main(int argc, char* argv[]) {
       backend.setDotFilePath(std::move(dotFilePath));
     }
 
-    const auto statistics = backend.solve(logger);
+    backend.solve(logger);
+    backend.join(logger);
 
-    // Don't log to std::cout, since that would interfere with MiniZinc.
-    statistics.display(std::cerr);
   } catch (const cxxopts::exceptions::exception& e) {
     std::cerr << "Error: " << e.what() << std::endl;
   } catch (const std::invalid_argument& e) {

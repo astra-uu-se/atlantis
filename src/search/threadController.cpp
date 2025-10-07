@@ -32,33 +32,14 @@ bool ThreadController::trySolution(const Int threadId,
   if (!_hasSolution) {
     setBestSolution(threadId, solution);
     _hasSolution.operator=(true);
-    std::cerr << _counter << ": Thread " << threadId
-              << " has found the first solution with cost "
-              << solution.getCost().toString() << "." << std::endl;
     return true;
   }
 
-  if (solution.getCost().isBetterThan(_bestCost.value())) {
-    if (solution.getCost().isStrictlyBetterThan(_bestCost.value())) {
-      std::cerr << _counter << ": Thread " << threadId
-                << " has found improving solution with cost "
-                << solution.getCost().toString() << ". Previous best has cost "
-                << _bestCost->toString() << "." << std::endl;
-      setBestSolution(threadId, solution);
-    } else {
-      std::cerr << _counter << ": Thread " << threadId
-                << " has found new solution with cost "
-                << solution.getCost().toString() << ". Previous best has cost "
-                << _bestCost->toString() << "." << std::endl;
-    }
+  if (solution.getCost().isBetterThan(_bestCost.value()) &&
+      solution.getCost().isStrictlyBetterThan(_bestCost.value())) {
+    setBestSolution(threadId, solution);
     return true;
   }
-
-  std::cerr << _counter << ": Thread " << threadId
-            << " has found new solution with cost "
-            << solution.getCost().toString() << ". Previous best has cost "
-            << _bestCost->toString() << "." << std::endl;
-
   return false;
 }
 
