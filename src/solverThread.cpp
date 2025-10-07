@@ -22,16 +22,20 @@
 
 namespace atlantis {
 
-SolverThread::SolverThread(FznBackend& backend, size_t threadId) :
-SolverThread(backend.invariantGraph(), backend.outputVarNodeIds(), backend.problemType(), backend.annealingScheduleFactory(), threadId, backend.threadController(), backend.searchType(), backend.seed(), backend.timelimit(), backend.shouldStop(), backend.onSolution(), backend.onFinish()) {
-
-}
+SolverThread::SolverThread(FznBackend& backend, size_t threadId)
+    : SolverThread(backend.invariantGraph(), backend.outputVarNodeIds(),
+                   backend.problemType(), backend.annealingScheduleFactory(),
+                   threadId, backend.threadController(), backend.searchType(),
+                   backend.seed(), backend.timelimit(), backend.shouldStop(),
+                   backend.onSolution(), backend.onFinish()) {}
 
 SolverThread::SolverThread(
-    const std::shared_ptr<const invariantgraph::FznInvariantGraph>& invariantGraph,
+    const std::shared_ptr<const invariantgraph::FznInvariantGraph>&
+        invariantGraph,
     std::vector<invariantgraph::VarNodeId>&& outputVarNodeIds,
     fznparser::ProblemType problemType,
-    const std::shared_ptr<const search::AnnealingScheduleFactory>& annealingScheduleFactory,
+    const std::shared_ptr<const search::AnnealingScheduleFactory>&
+        annealingScheduleFactory,
     const size_t threadId,
     const std::shared_ptr<search::ThreadController>& controller,
     search::SearchType searchType, const std::uint_fast32_t seed,
@@ -52,15 +56,14 @@ SolverThread::SolverThread(
       _timelimit(timeLimit),
       _shouldStop(shouldStop),
       _onSolution(onSolution),
-      _onFinish(onFinish) {
-}
+      _onFinish(onFinish) {}
 
 std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
     logging::Logger& logger, search::RandomProvider& randomProvider,
     const search::Assignment& assignment) const {
   return std::make_unique<search::Annealer>(
-      randomProvider, std::move(_annealingScheduleFactory->create()), assignment,
-      logger);
+      randomProvider, std::move(_annealingScheduleFactory->create()),
+      assignment, logger);
 }
 
 void SolverThread::solve(logging::Logger& logger) {

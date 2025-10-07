@@ -81,15 +81,18 @@ class FznBackend {
     _shouldStop = shouldStop;
   }
 
-  [[nodiscard]] std::shared_ptr<const search::AnnealingScheduleFactory> annealingScheduleFactory() const {
+  [[nodiscard]] std::shared_ptr<const search::AnnealingScheduleFactory>
+  annealingScheduleFactory() const {
     return _annealingScheduleFactory;
   }
 
-  [[nodiscard]] std::shared_ptr<const invariantgraph::FznInvariantGraph> invariantGraph() const {
+  [[nodiscard]] std::shared_ptr<const invariantgraph::FznInvariantGraph>
+  invariantGraph() const {
     return _invariantGraph;
   }
 
-  [[nodiscard]] std::vector<invariantgraph::VarNodeId> outputVarNodeIds() const {
+  [[nodiscard]] std::vector<invariantgraph::VarNodeId> outputVarNodeIds()
+      const {
     return _fznOutput->varNodeIds();
   }
 
@@ -101,9 +104,7 @@ class FznBackend {
     return _threadController;
   }
 
-  [[nodiscard]] search::SearchType searchType() const {
-    return _searchType;
-  }
+  [[nodiscard]] search::SearchType searchType() const { return _searchType; }
 
   [[nodiscard]] std::uint_fast32_t seed() const { return _seed; }
 
@@ -115,18 +116,18 @@ class FznBackend {
     return _shouldStop;
   }
 
-  [[nodiscard]] const std::function<void(const search::SavedAssignment&, search::ThreadController&,
-                     Int threadId)>&
-      onSolution() const {
+  [[nodiscard]] const std::function<void(
+      const search::SavedAssignment&, search::ThreadController&, Int threadId)>&
+  onSolution() const {
     return _onSolution;
   }
 
-  [[nodiscard]] const std::function<void(bool)>&
-      onFinish() const {
+  [[nodiscard]] const std::function<void(bool)>& onFinish() const {
     return _onFinish;
   };
 
-  void setAnnealingScheduleFactory(const std::shared_ptr<search::AnnealingScheduleFactory>& factory) {
+  void setAnnealingScheduleFactory(
+      const std::shared_ptr<search::AnnealingScheduleFactory>& factory) {
     _annealingScheduleFactory = factory;
   }
 

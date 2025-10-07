@@ -70,7 +70,8 @@ FznBackend::FznBackend(fznparser::Model&& model,
     : _invariantGraph(
           std::make_shared<invariantgraph::FznInvariantGraph>(true)),
       _model(std::make_shared<fznparser::Model>(std::move(model))),
-      _annealingScheduleFactory(std::make_shared<search::AnnealingScheduleFactory>()),
+      _annealingScheduleFactory(
+          std::make_shared<search::AnnealingScheduleFactory>()),
       _seed(std::time(nullptr)),
       _threadCount(threadCount),
       _searchType(searchType),

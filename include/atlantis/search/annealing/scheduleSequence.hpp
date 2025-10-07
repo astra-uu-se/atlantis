@@ -28,7 +28,9 @@ class ScheduleSequence : public AnnealingSchedule {
   double temperature() override;
   bool frozen() override;
   [[nodiscard]] size_t size() const { return _schedules.size(); }
-  [[nodiscard]] AnnealingSchedule& at(size_t index) { return *(_schedules.at(index)); }
+  [[nodiscard]] AnnealingSchedule& at(size_t index) {
+    return *(_schedules.at(index));
+  }
 };
 
 }  // namespace atlantis::search

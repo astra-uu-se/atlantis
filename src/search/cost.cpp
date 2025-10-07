@@ -11,7 +11,7 @@ Cost::Cost(Int violationDegree, Int objective, ObjectiveDirection direction)
       _objective(objective),
       _objectiveWeightSign(static_cast<int>(direction)) {}
 
-Cost::Cost(const Assignment& assignment)
+Cost::Cost(const Assignment &assignment)
     : Cost(
           std::numeric_limits<Int>::max(),
           assignment.objectiveDirection() == ObjectiveDirection::MINIMIZE

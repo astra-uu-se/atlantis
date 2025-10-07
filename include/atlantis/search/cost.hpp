@@ -16,7 +16,7 @@ class Cost {
  public:
   Cost(Int violationDegree, Int objective, ObjectiveDirection direction);
 
-  Cost(const Assignment&);
+  Cost(const Assignment &);
 
   /**
    * @return True if this cost has no violated constraints.

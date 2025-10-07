@@ -18,7 +18,8 @@ class FznBackend;
 class SolverThread {
   std::shared_ptr<const invariantgraph::FznInvariantGraph> _invariantGraph;
   std::vector<invariantgraph::VarNodeId> _outputVarNodeIds;
-  std::shared_ptr<const search::AnnealingScheduleFactory> _annealingScheduleFactory;
+  std::shared_ptr<const search::AnnealingScheduleFactory>
+      _annealingScheduleFactory;
   fznparser::ProblemType _problemType;
   size_t _threadId;
   std::shared_ptr<search::ThreadController> _threadController;
@@ -38,10 +39,12 @@ class SolverThread {
  public:
   explicit SolverThread(FznBackend&, size_t threadId);
   explicit SolverThread(
-      const std::shared_ptr<const invariantgraph::FznInvariantGraph>& invariantGraph,
+      const std::shared_ptr<const invariantgraph::FznInvariantGraph>&
+          invariantGraph,
       std::vector<invariantgraph::VarNodeId>&& outputVarNodeIds,
       fznparser::ProblemType problemType,
-      const std::shared_ptr<const search::AnnealingScheduleFactory>& annealingFactorySchedule,
+      const std::shared_ptr<const search::AnnealingScheduleFactory>&
+          annealingFactorySchedule,
       size_t threadId,
       const std::shared_ptr<search::ThreadController>& controller,
       search::SearchType searchType, std::uint_fast32_t seed,

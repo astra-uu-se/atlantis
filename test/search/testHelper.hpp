@@ -16,8 +16,7 @@ using namespace atlantis::search::neighborhoods;
 
 class AlwaysAcceptingMetaHeuristic : public MetaHeuristic {
  public:
-  AlwaysAcceptingMetaHeuristic()
-      : MetaHeuristic() {}
+  AlwaysAcceptingMetaHeuristic() : MetaHeuristic() {}
 
   void start() override {}
   [[nodiscard]] bool acceptMove(const Cost&) override { return true; }
