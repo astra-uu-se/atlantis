@@ -68,8 +68,8 @@ void SolverThread::solve(logging::Logger& logger) {
   auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
   search::SearchController searchController(
       mapping.objectiveDirection() == ObjectiveDirection::NONE,
-      std::move(onSolution), std::move(onFinish), _timelimit, _shouldStop);
-      *_threadController);
+      std::move(onSolution), std::move(onFinish), _timelimit, _shouldStop,
+      _threadController);
 
   search::Annealer annealer(random, std::move(_schedule), assignment);
   _schedule = nullptr;

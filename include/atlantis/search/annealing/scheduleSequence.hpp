@@ -14,8 +14,8 @@ class ScheduleSequence : public AnnealingSchedule {
 
  private:
   ScheduleList _schedules;
-
   size_t _currentSchedule{0};
+  AnnealingSchedule& currentSchedule();
 
  public:
   explicit ScheduleSequence(ScheduleList schedules)
@@ -27,9 +27,8 @@ class ScheduleSequence : public AnnealingSchedule {
   void nextRound(const RoundStatistics& statistics) override;
   double temperature() override;
   bool frozen() override;
-
- private:
-  AnnealingSchedule& currentSchedule();
+  [[nodiscard]] size_t size() const { return _schedules.size(); }
+  [[nodiscard]] AnnealingSchedule& at(size_t index) { return *(_schedules.at(index)); }
 };
 
 }  // namespace atlantis::search

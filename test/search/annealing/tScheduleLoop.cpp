@@ -28,7 +28,7 @@ class ScheduleLoopTest : public ::testing::Test {
 TEST_F(ScheduleLoopTest, nested_schedule_is_active) {
   const auto temperature = 1.0;
 
-  auto dummySchedule = std::make_shared<DummyAnnealingSchedule>();
+  auto dummySchedule = std::make_unique<DummyAnnealingSchedule>();
 
   EXPECT_CALL(*dummySchedule, temperature()).WillOnce(Return(temperature));
 
@@ -44,7 +44,7 @@ TEST_F(ScheduleLoopTest,
        first_freeze_restarts_the_schedule_with_the_old_temperature) {
   const auto restartTemp = 10.0;
 
-  auto dummySchedule = std::make_shared<DummyAnnealingSchedule>();
+  auto dummySchedule = std::make_unique<DummyAnnealingSchedule>();
 
   EXPECT_CALL(*dummySchedule, frozen()).WillOnce(Return(true));
   EXPECT_CALL(*dummySchedule, temperature())
@@ -60,7 +60,7 @@ TEST_F(ScheduleLoopTest,
 }
 
 TEST_F(ScheduleLoopTest, frozen_if_consecutive_rounds_do_not_improve) {
-  auto dummySchedule = std::make_shared<DummyAnnealingSchedule>();
+  auto dummySchedule = std::make_unique<DummyAnnealingSchedule>();
 
   EXPECT_CALL(*dummySchedule, frozen())
       .WillOnce(Return(true))
@@ -78,7 +78,7 @@ TEST_F(ScheduleLoopTest, frozen_if_consecutive_rounds_do_not_improve) {
 
 TEST_F(ScheduleLoopTest,
        not_frozen_if_futile_rounds_are_broken_up_by_improving_rounds) {
-  auto dummySchedule = std::make_shared<DummyAnnealingSchedule>();
+  auto dummySchedule = std::make_unique<DummyAnnealingSchedule>();
 
   EXPECT_CALL(*dummySchedule, frozen())
       .WillOnce(Return(false))

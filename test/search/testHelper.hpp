@@ -16,9 +16,9 @@ using namespace atlantis::search::neighborhoods;
 
 class AlwaysAcceptingAnnealer : public Annealer {
  public:
-  AlwaysAcceptingAnnealer(RandomProvider& random, AnnealingSchedule& schedule,
+  AlwaysAcceptingAnnealer(RandomProvider& random, std::unique_ptr<AnnealingSchedule>&& schedule,
                           const Assignment& assignment)
-      : Annealer(random, schedule, assignment) {}
+      : Annealer(random, std::move(schedule), assignment) {}
 
  protected:
   [[nodiscard]] bool accept(Int) override { return true; }

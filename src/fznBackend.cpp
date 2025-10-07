@@ -94,11 +94,9 @@ FznBackend::FznBackend(logging::Logger& logger,
 void FznBackend::solve(logging::Logger& logger) {
   // Shared data
   fznparser::ProblemType problemType = _model->solveType().problemType();
-  _threadController = std::make_shared<search::ThreadController>();
+  _threadController = std::make_shared<search::ThreadController>(_threadCount);
 
   // TODO: refactor everywhere to use the shared pointer
-  auto threadController =
-      std::make_shared<search::ThreadController>(_threadCount);
   assert(_threads.empty());
   _threads.reserve(_threadCount);
   logger.info("Thread count is {}", _threadCount);
@@ -111,8 +109,7 @@ void FznBackend::solve(logging::Logger& logger) {
       std::make_unique<FznOutput>(_invariantGraph->generateFznOutput());
 
   for (size_t threadId = 0; threadId < _threadCount; threadId++) {
-    threads.emplace_back([&logger, &problemType, &schedule, threadId,
-                          &threadController, this] {
+    _threads.emplace_back([&logger, &problemType, threadId, this] {
       auto thread =
           SolverThread(_invariantGraph, _fznOutput->varNodeIds(), problemType,
                        _annealingScheduleFactory.create(), threadId,
@@ -121,9 +118,9 @@ void FznBackend::solve(logging::Logger& logger) {
       thread.solve(logger);
     });
   }
+  handleSolverIO(_threadController);
 }
 
-  handleSolverIO(threadController);
 void FznBackend::join(logging::Logger& logger) {
   if (_threads.empty()) {
     return;

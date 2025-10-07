@@ -35,8 +35,7 @@ bool ThreadController::trySolution(const Int threadId,
     return true;
   }
 
-  if (solution.getCost().isBetterThan(_bestCost.value())) {
-    if (solution.getCost().isStrictlyBetterThan(_bestCost.value())) {
+  if (solution.getCost().isBetterThan(_bestCost.value()) && solution.getCost().isStrictlyBetterThan(_bestCost.value())) {
       setBestSolution(threadId, solution);
     return true;
   }

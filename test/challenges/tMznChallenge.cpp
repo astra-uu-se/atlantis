@@ -45,7 +45,7 @@ static void testChallenge(const std::string& fznFilePath) {
   FznBackend backend(logger, std::move(modelFilePath));
   backend.setTimelimit(std::chrono::milliseconds(1000));
   backend.solve(logger);
-  backend.join();
+  backend.join(logger);
 }
 
 class MznChallenge : public ::testing::Test {
