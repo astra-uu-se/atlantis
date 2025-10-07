@@ -42,7 +42,7 @@ class FznBackend {
  private:
   std::shared_ptr<invariantgraph::FznInvariantGraph> _invariantGraph;
   std::shared_ptr<fznparser::Model> _model;
-  search::AnnealingScheduleFactory _annealingScheduleFactory;
+  std::shared_ptr<search::AnnealingScheduleFactory> _annealingScheduleFactory;
   std::optional<std::chrono::milliseconds> _timelimit;
   std::uint_fast32_t _seed;
   std::optional<std::filesystem::path> _dotFilePath{};
@@ -81,7 +81,52 @@ class FznBackend {
     _shouldStop = shouldStop;
   }
 
-  void setAnnealingScheduleFactory(search::AnnealingScheduleFactory&& factory) {
+  [[nodiscard]] std::shared_ptr<const search::AnnealingScheduleFactory> annealingScheduleFactory() const {
+    return _annealingScheduleFactory;
+  }
+
+  [[nodiscard]] std::shared_ptr<const invariantgraph::FznInvariantGraph> invariantGraph() const {
+    return _invariantGraph;
+  }
+
+  [[nodiscard]] std::vector<invariantgraph::VarNodeId> outputVarNodeIds() const {
+    return _fznOutput->varNodeIds();
+  }
+
+  [[nodiscard]] fznparser::ProblemType problemType() const {
+    return _model->solveType().problemType();
+  }
+
+  [[nodiscard]] std::shared_ptr<search::ThreadController> threadController() {
+    return _threadController;
+  }
+
+  [[nodiscard]] search::SearchType searchType() const {
+    return _searchType;
+  }
+
+  [[nodiscard]] std::uint_fast32_t seed() const { return _seed; }
+
+  [[nodiscard]] std::optional<std::chrono::milliseconds> timelimit() const {
+    return _timelimit;
+  }
+
+  [[nodiscard]] std::shared_ptr<const bool> shouldStop() const {
+    return _shouldStop;
+  }
+
+  [[nodiscard]] const std::function<void(const search::SavedAssignment&, search::ThreadController&,
+                     Int threadId)>&
+      onSolution() const {
+    return _onSolution;
+  }
+
+  [[nodiscard]] const std::function<void(bool)>&
+      onFinish() const {
+    return _onFinish;
+  };
+
+  void setAnnealingScheduleFactory(const std::shared_ptr<search::AnnealingScheduleFactory>& factory) {
     _annealingScheduleFactory = factory;
   }
 

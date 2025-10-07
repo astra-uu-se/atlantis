@@ -13,11 +13,12 @@
 #include "types.hpp"
 
 namespace atlantis {
+class FznBackend;
 
 class SolverThread {
   std::shared_ptr<const invariantgraph::FznInvariantGraph> _invariantGraph;
   std::vector<invariantgraph::VarNodeId> _outputVarNodeIds;
-  const search::AnnealingScheduleFactory& _annealingScheduleFactory;
+  std::shared_ptr<const search::AnnealingScheduleFactory> _annealingScheduleFactory;
   fznparser::ProblemType _problemType;
   size_t _threadId;
   std::shared_ptr<search::ThreadController> _threadController;
@@ -35,31 +36,21 @@ class SolverThread {
   std::function<void(bool)> _onFinish;
 
  public:
+  explicit SolverThread(FznBackend&, size_t threadId);
   explicit SolverThread(
-      const std::shared_ptr<invariantgraph::FznInvariantGraph>& invariantGraph,
+      const std::shared_ptr<const invariantgraph::FznInvariantGraph>& invariantGraph,
       std::vector<invariantgraph::VarNodeId>&& outputVarNodeIds,
-      const search::AnnealingScheduleFactory& annealingScheduleFactory,
-      const fznparser::ProblemType problemType, const size_t threadId,
+      fznparser::ProblemType problemType,
+      const std::shared_ptr<const search::AnnealingScheduleFactory>& annealingFactorySchedule,
+      size_t threadId,
       const std::shared_ptr<search::ThreadController>& controller,
-      const search::SearchType& searchType, const std::uint_fast32_t seed,
-      const std::optional<std::chrono::milliseconds> timeLimit,
-      std::shared_ptr<const bool>& shouldStop,
+      search::SearchType searchType, std::uint_fast32_t seed,
+      std::optional<std::chrono::milliseconds> timeLimit,
+      const std::shared_ptr<const bool>& shouldStop,
       const std::function<void(const search::SavedAssignment&,
                                search::ThreadController&, Int threadId)>&
           onSolution,
-      const std::function<void(bool)>& onFinish)
-      : _invariantGraph(invariantGraph),
-        _outputVarNodeIds(std::move(outputVarNodeIds)),
-        _annealingScheduleFactory(annealingScheduleFactory),
-        _problemType(problemType),
-        _threadId(threadId),
-        _threadController(controller),
-        _searchType(searchType),
-        _seed(seed),
-        _timelimit(timeLimit),
-        _shouldStop(shouldStop),
-        _onSolution(onSolution),
-        _onFinish(onFinish) {}
+      const std::function<void(bool)>& onFinish);
 
   void solve(logging::Logger& logger);
 

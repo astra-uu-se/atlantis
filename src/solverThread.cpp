@@ -4,6 +4,7 @@
 #include <fznparser/parser.hpp>
 #include <utility>
 
+#include "atlantis/fznBackend.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/propagation/solver.hpp"
@@ -21,11 +22,44 @@
 
 namespace atlantis {
 
+SolverThread::SolverThread(FznBackend& backend, size_t threadId) :
+SolverThread(backend.invariantGraph(), backend.outputVarNodeIds(), backend.problemType(), backend.annealingScheduleFactory(), threadId, backend.threadController(), backend.searchType(), backend.seed(), backend.timelimit(), backend.shouldStop(), backend.onSolution(), backend.onFinish()) {
+
+}
+
+SolverThread::SolverThread(
+    const std::shared_ptr<const invariantgraph::FznInvariantGraph>& invariantGraph,
+    std::vector<invariantgraph::VarNodeId>&& outputVarNodeIds,
+    fznparser::ProblemType problemType,
+    const std::shared_ptr<const search::AnnealingScheduleFactory>& annealingScheduleFactory,
+    const size_t threadId,
+    const std::shared_ptr<search::ThreadController>& controller,
+    search::SearchType searchType, const std::uint_fast32_t seed,
+    const std::optional<std::chrono::milliseconds> timeLimit,
+    const std::shared_ptr<const bool>& shouldStop,
+    const std::function<void(const search::SavedAssignment&,
+                             search::ThreadController&, Int threadId)>&
+        onSolution,
+    const std::function<void(bool)>& onFinish)
+    : _invariantGraph(invariantGraph),
+      _outputVarNodeIds(std::move(outputVarNodeIds)),
+      _annealingScheduleFactory(annealingScheduleFactory),
+      _problemType(problemType),
+      _threadId(threadId),
+      _threadController(controller),
+      _searchType(searchType),
+      _seed(seed),
+      _timelimit(timeLimit),
+      _shouldStop(shouldStop),
+      _onSolution(onSolution),
+      _onFinish(onFinish) {
+}
+
 std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
     logging::Logger& logger, search::RandomProvider& randomProvider,
     const search::Assignment& assignment) const {
   return std::make_unique<search::Annealer>(
-      randomProvider, std::move(_annealingScheduleFactory.create()), assignment,
+      randomProvider, std::move(_annealingScheduleFactory->create()), assignment,
       logger);
 }
 
