@@ -53,7 +53,7 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
   });
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimit);
-  for (const auto& [[maybe_unused]] _ : st) {
+  for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);
     backend->join(logger);
   }
