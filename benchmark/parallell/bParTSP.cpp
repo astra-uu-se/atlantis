@@ -19,27 +19,25 @@ class ParTSP : public ::benchmark::Fixture {
  public:
   const std::string modelPath{std::string(FZN_DIR) + "/tsp_201.fzn"};
   std::shared_ptr<FznBackend> backend{nullptr};
-  std::shared_ptr<bool> stop{nullptr};
 
+  std::chrono::milliseconds timelimit{0};
   Int numThreads{0};
   search::SearchType searchType{search::SearchType::BESTCOST};
 
   logging::Logger logger{stdout, logging::Level::LVL_ERROR};
 
   void SetUp(const ::benchmark::State& state) override {
-    numThreads = state.range(0);
-    searchType = intToSearchType(state.range(1));
-    stop = std::make_shared<bool>(false);
+    timelimit = std::chrono::milliseconds(state.range(0));
+    numThreads = state.range(1);
+    searchType = intToSearchType(state.range(2));
 
     std::filesystem::path modelFilePath(modelPath.c_str());
     backend = std::make_shared<FznBackend>(logger, std::move(modelFilePath),
                                            numThreads, searchType);
-    backend->setShouldStop(stop);
   }
 
   void TearDown(const ::benchmark::State&) override {
     backend = nullptr;
-    stop = nullptr;
   }
 };
 
@@ -48,20 +46,17 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
   Int bestObjective{0};
   double totalObjective{0.0};
   backend->setOnSolution([&numSolutions, &bestObjective, &totalObjective](
-                             const search::SavedAssignment& solution,
-                             search::ThreadController&, Int) {
+                             const search::SavedAssignment& solution) {
     ++numSolutions;
     bestObjective = solution.getCost().getObjective();
     totalObjective += static_cast<double>(bestObjective);
   });
   backend->setOnFinish([](bool) {});
-  *stop = false;
-  backend->solve(logger);
-  for ([[maybe_unused]] const auto& _ : st) {
-    ;
+  backend->setTimelimit(timelimit);
+  for (const auto& [[maybe_unused]] _ : st) {
+    backend->solve(logger);
+    backend->join(logger);
   }
-  *stop = true;
-  backend->join(logger);
   st.counters["solutions"] = static_cast<double>(numSolutions);
   st.counters["solutions_per_second"] = ::benchmark::Counter(
       static_cast<double>(numSolutions), ::benchmark::Counter::kIsRate);
@@ -71,8 +66,8 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
 }
 
 BENCHMARK_REGISTER_F(ParTSP, run)
-    ->MinTime(5)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(defaultArguments);
+    ->Apply(defaultArguments)
+    ->Iterations(1);
 
 }  // namespace atlantis::benchmark

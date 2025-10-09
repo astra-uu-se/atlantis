@@ -16,52 +16,43 @@
 
 namespace atlantis {
 
-void FznBackend::displaySolution(
-    const search::SavedAssignment& assignment) const {
+void FznBackend::onSolutionDefault(const search::SavedAssignment& assignment) const {
   _fznOutput->displaySolution(std::cout, assignment.getOutputValues());
-
-  std::cout << "----------\n";
+  std::cout << "----------" << std::endl;
 }
 
-void FznBackend::onSolutionDefault(
-    [[maybe_unused]] const search::SavedAssignment& assignment,
-    [[maybe_unused]] const search::ThreadController& controller,
-    [[maybe_unused]] const Int threadId) const {
-  // This currently does nothing.
+void FznBackend::onFinishDefault(bool hadSol) {
+  if (!hadSol) {
+    std::cout << "=====UNKNOWN=====\n";
+  }
 }
 
-void FznBackend::onFinishDefault([[maybe_unused]] bool hadSol) {
-  // This currently does nothing.
-}
-
-void FznBackend::handleSolverIO(
+void FznBackend::handleSolverNotifications(
     const std::shared_ptr<search::ThreadController>& threadController) const {
-  size_t mostRecentSolution = 0;
+  size_t solutionId = 0;
 
-  while (threadController->getNumFinishedThreads() < _threadCount) {
+  while (threadController->numFinishedThreads() < _threadCount) {
     threadController->awaitChanges();
 
-    auto result = threadController->getNewerSolution(mostRecentSolution);
-    if (!result.has_value()) continue;
+    auto result = threadController->loadSolution(solutionId);
+    if (!result.has_value()) {
+      continue;
+    }
 
-    mostRecentSolution = result.value().first;
-    displaySolution(result.value().second);
-    threadController->solutionPrinted();
+    solutionId = result.value().first;
+    _onSolution(result.value().second);
   }
 
   // Ensure the final solution is printed
   // When this runs all search threads have terminated.
-  if (mostRecentSolution < threadController->getSolutionNumber()) {
+  if (solutionId < threadController->solutionId()) {
     std::cout << "printing final solution! (previously printed "
-              << mostRecentSolution << ", final is "
-              << threadController->getSolutionNumber() << ")." << std::endl;
-    search::SavedAssignment assignment = threadController->getSolution();
-    displaySolution(assignment);
+              << solutionId << ", final is "
+              << threadController->solutionId() << ")." << std::endl;
+    _onSolution(threadController->solution());
   }
 
-  if (!threadController->hasSolution()) {
-    std::cout << "=====UNKNOWN=====\n";
-  }
+  _onFinish(threadController->hasSolution());
 }
 
 FznBackend::FznBackend(fznparser::Model&& model,
@@ -75,9 +66,8 @@ FznBackend::FznBackend(fznparser::Model&& model,
       _seed(std::time(nullptr)),
       _threadCount(threadCount),
       _searchType(searchType),
-      _onSolution([&](const search::SavedAssignment& assignment,
-                      search::ThreadController& controller, Int threadId) {
-        onSolutionDefault(assignment, controller, threadId);
+      _onSolution([&](const search::SavedAssignment& assignment) {
+        onSolutionDefault(assignment);
       }) {}
 
 FznBackend::FznBackend(logging::Logger& logger,
@@ -117,7 +107,7 @@ void FznBackend::solve(logging::Logger& logger) {
       thread.solve(logger);
     });
   }
-  handleSolverIO(_threadController);
+  handleSolverNotifications(_threadController);
 }
 
 void FznBackend::join(logging::Logger& logger) {
@@ -128,10 +118,10 @@ void FznBackend::join(logging::Logger& logger) {
     thread.join();
   }
 
-  if (_threadController->getBestThreadId() >= 0) {
+  if (_threadController->bestThreadId() >= 0) {
     logger.info("Best result is {} from thread {}",
-                _threadController->getCost().toString(),
-                _threadController->getBestThreadId());
+                _threadController->cost().toString(),
+                _threadController->bestThreadId());
   } else {
     logger.info("No solution found!");
   }

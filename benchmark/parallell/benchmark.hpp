@@ -19,13 +19,15 @@ inline search::SearchType intToSearchType(Int state) {
 }
 
 inline void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
-  for (Int numThreads = 2; numThreads <= 16; numThreads *= 2) {
-    for (Int searchType = 0; searchType <= 2; ++searchType) {
-      benchmark->Args({numThreads, searchType});
-    }
+  for (const Int timelimit : std::array{5000, 30000, 60000, 180000}) {
+    for (Int numThreads = 2; numThreads <= 16; numThreads *= 2) {
+      for (Int searchType = 0; searchType <= 2; ++searchType) {
+        benchmark->Args({timelimit, numThreads, searchType});
+      }
 #ifndef NDEBUG
-    return;
+      return;
 #endif
+    }
   }
 }
 

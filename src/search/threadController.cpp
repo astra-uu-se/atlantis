@@ -12,26 +12,26 @@ void ThreadController::setBestSolution(const Int threadId,
 
   if (!_hasNoViolations) {
     if (_bestCost->getViolation() == 0) {
-      _hasNoViolations.operator=(true);
+      _hasNoViolations = true;
     } else {
       return;
     }
   }
 
-  _solutionNumber.operator++();
-  _checkPrint.operator=(false);
-  _checkPrint.notify_one();
+  ++_curSolutionId;
+  _curSolutionNotified = false;
+  _curSolutionNotified.notify_one();
 }
 
 bool ThreadController::trySolution(const Int threadId,
                                    const SavedAssignment& solution) {
   std::lock_guard lock(_lock);
 
-  _counter++;
+  ++_counter;
 
   if (!_hasSolution) {
     setBestSolution(threadId, solution);
-    _hasSolution.operator=(true);
+    _hasSolution = true;
     return true;
   }
 
@@ -49,35 +49,37 @@ bool ThreadController::trySolution(const Int threadId,
 // be atomic to avoid needing the lock. Such an implementation would make
 // submitting a solution slightly less effective though, which is why it isn't
 // used now.
-Int ThreadController::getBestThreadId() const {
+Int ThreadController::bestThreadId() const {
   std::lock_guard lock(_lock);
   return _bestThread;
 }
 
-Cost ThreadController::getCost() const {
+Cost ThreadController::cost() const {
   std::lock_guard lock(_lock);
   return _bestCost.value();
 }
 
-SavedAssignment ThreadController::getSolution() const {
+SavedAssignment ThreadController::solution() const {
   std::lock_guard lock(_lock);
   return _solution.value();
 }
 
 std::optional<std::pair<size_t, SavedAssignment>>
-ThreadController::getNewerSolution(size_t solutionNumber) const {
+ThreadController::loadSolution(size_t solutionId) const {
   std::lock_guard lock(_lock);
-  if (solutionNumber >= _solutionNumber || !_solution.has_value()) return {};
-  return std::make_pair(_solutionNumber.load(), _solution.value());
+  if (solutionId >= _curSolutionId || !_solution.has_value()) {
+    return {};
+  }
+  return std::make_pair(_curSolutionId.load(), _solution.value());
 }
 
 void ThreadController::threadIsDone() {
-  _numFinishedThreads.operator++();
+  ++_numFinishedThreads;
 
   // This tells the main thread the search is done;
   if (_numFinishedThreads == _threadCount) {
-    _checkPrint.operator=(false);
-    _checkPrint.notify_one();
+    _curSolutionNotified = false;
+    _curSolutionNotified.notify_one();
   }
 }
 

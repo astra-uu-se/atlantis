@@ -25,11 +25,4 @@ bool SearchController::shouldRun(const Assignment& assignment) {
   return true;
 }
 
-void SearchController::onSolution(const SavedAssignment& assignment) {
-  _foundSolution = true;
-  _onSolution(assignment);
-}
-
-void SearchController::onFinish() const { _onFinish(_foundSolution); }
-
 }  // namespace atlantis::search

@@ -26,8 +26,7 @@ SolverThread::SolverThread(FznBackend& backend, size_t threadId)
     : SolverThread(backend.invariantGraph(), backend.outputVarNodeIds(),
                    backend.problemType(), backend.annealingScheduleFactory(),
                    threadId, backend.threadController(), backend.searchType(),
-                   backend.seed(), backend.timelimit(), backend.shouldStop(),
-                   backend.onSolution(), backend.onFinish()) {}
+                   backend.seed(), backend.timelimit(), backend.shouldStop()) {}
 
 SolverThread::SolverThread(
     const std::shared_ptr<const invariantgraph::FznInvariantGraph>&
@@ -40,11 +39,7 @@ SolverThread::SolverThread(
     const std::shared_ptr<search::ThreadController>& controller,
     search::SearchType searchType, const std::uint_fast32_t seed,
     const std::optional<std::chrono::milliseconds> timeLimit,
-    const std::shared_ptr<const bool>& shouldStop,
-    const std::function<void(const search::SavedAssignment&,
-                             search::ThreadController&, Int threadId)>&
-        onSolution,
-    const std::function<void(bool)>& onFinish)
+    const std::shared_ptr<const bool>& shouldStop)
     : _invariantGraph(invariantGraph),
       _outputVarNodeIds(std::move(outputVarNodeIds)),
       _annealingScheduleFactory(annealingScheduleFactory),
@@ -54,9 +49,7 @@ SolverThread::SolverThread(
       _searchType(searchType),
       _seed(seed),
       _timelimit(timeLimit),
-      _shouldStop(shouldStop),
-      _onSolution(onSolution),
-      _onFinish(onFinish) {}
+      _shouldStop(shouldStop) {}
 
 std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
     logging::Logger& logger, search::RandomProvider& randomProvider,
@@ -94,9 +87,7 @@ void SolverThread::solve(logging::Logger& logger) {
   // TODO: This can possibly be extracted, or restricted to one thread
   // TODO: this case may not be handled properly
   if (mapping.globalNeighborhood()->coveredVars().empty()) {
-    _onSolution(search::SavedAssignment(assignment, outputVarIds),
-                *_threadController, _threadId);
-    _onFinish(true);
+    _threadController->trySolution(_threadId, search::SavedAssignment(assignment, outputVarIds));
     return;
   }
 
@@ -108,13 +99,9 @@ void SolverThread::solve(logging::Logger& logger) {
       randomProvider, assignment, mapping.globalNeighborhood(), searchObjective,
       _searchType, _threadController, outputVarIds, _threadId);
 
-  auto onSolution = [&](const search::SavedAssignment& savedAssignment) {
-    _onSolution(savedAssignment, *_threadController, _threadId);
-  };
-  auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
   search::SearchController searchController(
       mapping.objectiveDirection() == ObjectiveDirection::NONE,
-      std::move(onSolution), std::move(onFinish), _timelimit, _shouldStop,
+      _timelimit, _shouldStop,
       _threadController);
 
   logger.timedFunction<int>("search", [&] {

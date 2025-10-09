@@ -16,8 +16,8 @@ class ThreadController {
   size_t _threadCount;
   std::atomic<bool> _hasSolution = false;
   std::atomic<bool> _hasNoViolations = false;
-  std::atomic<bool> _checkPrint = true;
-  std::atomic<size_t> _solutionNumber = 0;
+  std::atomic<bool> _curSolutionNotified = true;
+  std::atomic<size_t> _curSolutionId = 0;
   std::atomic<size_t> _numFinishedThreads = 0;
   std::optional<Cost> _bestCost;
   std::optional<SavedAssignment> _solution;
@@ -36,14 +36,14 @@ class ThreadController {
   // Returns true iff the new solution is >= the best saved solution.
   bool trySolution(Int threadId, const SavedAssignment& solution);
 
-  [[nodiscard]] Int getBestThreadId() const;
+  [[nodiscard]] Int bestThreadId() const;
 
-  [[nodiscard]] Cost getCost() const;
+  [[nodiscard]] Cost cost() const;
 
-  [[nodiscard]] SavedAssignment getSolution() const;
+  [[nodiscard]] SavedAssignment solution() const;
 
   [[nodiscard]] std::optional<std::pair<size_t, SavedAssignment>>
-  getNewerSolution(size_t solutionNumber) const;
+  loadSolution(size_t solutionId) const;
 
   [[gnu::always_inline]] [[nodiscard]] bool hasSolution() const {
     return _hasSolution.load();
@@ -53,19 +53,19 @@ class ThreadController {
     return _hasNoViolations.load();
   }
 
-  [[gnu::always_inline]] [[nodiscard]] size_t getNumFinishedThreads() const {
+  [[gnu::always_inline]] [[nodiscard]] size_t numFinishedThreads() const {
     return _numFinishedThreads.load();
   }
 
-  [[gnu::always_inline]] [[nodiscard]] size_t getSolutionNumber() const {
-    return _solutionNumber.load();
+  [[gnu::always_inline]] [[nodiscard]] size_t solutionId() const {
+    return _curSolutionId.load();
   }
 
   void threadIsDone();
 
-  [[gnu::always_inline]] void awaitChanges() const { _checkPrint.wait(true); }
+  [[gnu::always_inline]] void awaitChanges() const { _curSolutionNotified.wait(true); }
 
-  [[gnu::always_inline]] void solutionPrinted() { _checkPrint.operator=(true); }
+  [[gnu::always_inline]] void markCurSolutionNotified() { _curSolutionNotified = true; }
 };
 
 }  // namespace atlantis::search

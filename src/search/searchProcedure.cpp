@@ -37,7 +37,7 @@ void SearchProcedure::tightenSearch() {
   }
 }
 
-void SearchProcedure::onAccepted(SearchController& searchController) {
+void SearchProcedure::onAccepted() {
   // Prevent over-communication before an initial 0-violation solution
   // has been found
   if (!_hasSolution && _savedAssignment.has_value() &&
@@ -49,15 +49,13 @@ void SearchProcedure::onAccepted(SearchController& searchController) {
 
   bool isBest =
       _threadController->trySolution(_threadId, _savedAssignment.value());
-  if (!isBest) _savedAssignment = _threadController->getSolution();
+  if (!isBest) {
+    _savedAssignment = _threadController->solution();
+  }
 
-  if (!_hasSolution && _savedAssignment->getCost().getViolation() == 0)
+  if (!_hasSolution && _savedAssignment->getCost().getViolation() == 0) {
     _hasSolution = true;
-
-  // onSolution is only called if the new solution is better than ALL previous
-  // solutions
-  if (isBest && _assignment.satisfiesConstraints())
-    searchController.onSolution(_savedAssignment.value());
+  }
 
   tightenSearch();
 }
@@ -70,7 +68,7 @@ Int SearchProcedure::run(SearchController& searchController,
                           [&] { _assignment.initialize(_random); });
 
     // TODO: handle this case: this should call some separate version
-    if (_assignment.satisfiesConstraints()) onAccepted(searchController);
+    if (_assignment.satisfiesConstraints()) onAccepted();
 
     metaHeuristic->start();
 
@@ -80,13 +78,11 @@ Int SearchProcedure::run(SearchController& searchController,
       if (metaHeuristic->acceptMove(cost)) {
         _assignment.commitLastProbe();
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
-          onAccepted(searchController);
+          onAccepted();
         }
       }
     }
   } while (searchController.shouldRun(_assignment));
-
-  searchController.onFinish();
 
   return 1;
 }

@@ -30,12 +30,6 @@ class SolverThread {
   std::optional<std::chrono::milliseconds> _timelimit;
   std::shared_ptr<const bool> _shouldStop;
 
-  std::function<void(const search::SavedAssignment&, search::ThreadController&,
-                     Int threadId)>
-      _onSolution;
-
-  std::function<void(bool)> _onFinish;
-
  public:
   explicit SolverThread(FznBackend&, size_t threadId);
   explicit SolverThread(
@@ -49,11 +43,7 @@ class SolverThread {
       const std::shared_ptr<search::ThreadController>& controller,
       search::SearchType searchType, std::uint_fast32_t seed,
       std::optional<std::chrono::milliseconds> timeLimit,
-      const std::shared_ptr<const bool>& shouldStop,
-      const std::function<void(const search::SavedAssignment&,
-                               search::ThreadController&, Int threadId)>&
-          onSolution,
-      const std::function<void(bool)>& onFinish);
+      const std::shared_ptr<const bool>& shouldStop);
 
   void solve(logging::Logger& logger);
 
