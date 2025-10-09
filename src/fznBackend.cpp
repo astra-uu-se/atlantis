@@ -22,8 +22,8 @@ void FznBackend::onSolutionDefault(
   std::cout << "----------" << std::endl;
 }
 
-void FznBackend::onFinishDefault(bool hadSol) {
-  if (!hadSol) {
+void FznBackend::onFinishDefault(const bool hasSatisfyingSolution) {
+  if (!hasSatisfyingSolution) {
     std::cout << "=====UNKNOWN=====\n";
   }
 }
@@ -53,7 +53,8 @@ void FznBackend::handleSolverNotifications(
     _onSolution(threadController->solution());
   }
 
-  _onFinish(threadController->hasSolution());
+  _onFinish(threadController->hasSolution() &&
+            threadController->hasNoViolations());
 }
 
 FznBackend::FznBackend(fznparser::Model&& model,

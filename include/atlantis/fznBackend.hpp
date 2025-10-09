@@ -32,7 +32,7 @@ class SearchStatistics;
 
 class FznBackend {
  public:
-  static void onFinishDefault(bool);
+  static void onFinishDefault(bool hasSatisfyingSolution);
 
   void onSolutionDefault(const search::SavedAssignment&) const;
 
