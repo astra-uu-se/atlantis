@@ -29,6 +29,7 @@ class ScheduleLoop : public AnnealingSchedule {
   void nextRound(const RoundStatistics& statistics) override;
   double temperature() override;
   bool frozen() override;
+  [[nodiscard]] AnnealingSchedule& inner() { return *_schedule; }
 };
 
 }  // namespace atlantis::search

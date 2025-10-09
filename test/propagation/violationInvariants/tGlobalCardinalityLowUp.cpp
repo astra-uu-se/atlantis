@@ -353,24 +353,12 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityLowUpTest, RapidCheck, ()) {
 
   RC_ASSERT(coverLb + coverRange == coverUb);
 
-  std::cerr << "numInputVars: " << numInputVars
-            << "\ninputVarLb: " << inputVarLb << "\ninputVarUb: " << inputVarUb
-            << "\ncoverLb: " << coverLb << "; coverUb: " << coverUb;
-
   std::vector<Int> cover(coverRange + 1);
   std::iota(cover.begin(), cover.end(), coverLb);
   RC_ASSERT(cover.front() == coverLb);
   RC_ASSERT(cover.back() == coverUb);
   std::ranges::shuffle(cover.begin(), cover.end(), rng);
   cover.resize(*rc::gen::inRange<size_t>(size_t{1}, cover.size() + 1));
-
-  std::cerr << "\ncover: {";
-  for (const auto& [c, p] : coverSet) {
-    std::cerr << "<c: " << c << "; l: " << p.first << "; u: " << p.second
-              << ">, ";
-  }
-
-  std::cerr << "}\n";
 
   generate();
 
