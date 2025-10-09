@@ -162,6 +162,8 @@ if (BUILD_TESTS)
 endif()
 
 if(BUILD_TESTS OR BUILD_BENCHMARKS)
+  add_compile_definitions(FZN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fzn-models")
+
   # Google Test is required for testing and benchmarking
   FetchContent_Declare(
     googletest
@@ -174,7 +176,6 @@ if(BUILD_TESTS OR BUILD_BENCHMARKS)
 endif()
 
 if(BUILD_TESTS)
-  add_compile_definitions(FZN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fzn-models")
   add_compile_definitions(FZN_CHALLENGE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fzn-challanges")
 
   # ###############################
