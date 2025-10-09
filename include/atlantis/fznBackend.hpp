@@ -48,8 +48,7 @@ class FznBackend {
   std::unique_ptr<FznOutput> _fznOutput{nullptr};
   std::shared_ptr<const bool> _shouldStop{nullptr};
 
-  std::function<void(const search::SavedAssignment&)>
-      _onSolution;
+  std::function<void(const search::SavedAssignment&)> _onSolution;
   std::function<void(bool)> _onFinish = onFinishDefault;
   std::vector<std::thread> _threads{};
   std::shared_ptr<search::ThreadController> _threadController{nullptr};

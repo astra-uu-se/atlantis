@@ -87,7 +87,8 @@ void SolverThread::solve(logging::Logger& logger) {
   // TODO: This can possibly be extracted, or restricted to one thread
   // TODO: this case may not be handled properly
   if (mapping.globalNeighborhood()->coveredVars().empty()) {
-    _threadController->trySolution(_threadId, search::SavedAssignment(assignment, outputVarIds));
+    _threadController->trySolution(
+        _threadId, search::SavedAssignment(assignment, outputVarIds));
     return;
   }
 
@@ -100,9 +101,8 @@ void SolverThread::solve(logging::Logger& logger) {
       _searchType, _threadController, outputVarIds, _threadId);
 
   search::SearchController searchController(
-      mapping.objectiveDirection() == ObjectiveDirection::NONE,
-      _timelimit, _shouldStop,
-      _threadController);
+      mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,
+      _shouldStop, _threadController);
 
   logger.timedFunction<int>("search", [&] {
     return search.run(

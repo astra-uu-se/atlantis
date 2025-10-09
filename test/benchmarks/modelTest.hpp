@@ -27,9 +27,8 @@ static void testModelFile(const char* modelFile,
   }
   backend.setTimelimit(std::chrono::seconds(2));
   std::optional<search::SavedAssignment> solution{};
-  backend.setOnSolution([&solution](const search::SavedAssignment sol) {
-    solution = sol;
-  });
+  backend.setOnSolution(
+      [&solution](const search::SavedAssignment sol) { solution = sol; });
   backend.setOnFinish([&](bool hasSolution) {
     EXPECT_EQ(hasSolution, solution.has_value());
     if (hasSolution) {

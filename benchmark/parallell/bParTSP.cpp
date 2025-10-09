@@ -36,9 +36,7 @@ class ParTSP : public ::benchmark::Fixture {
                                            numThreads, searchType);
   }
 
-  void TearDown(const ::benchmark::State&) override {
-    backend = nullptr;
-  }
+  void TearDown(const ::benchmark::State&) override { backend = nullptr; }
 };
 
 BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {

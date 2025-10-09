@@ -16,7 +16,8 @@
 
 namespace atlantis {
 
-void FznBackend::onSolutionDefault(const search::SavedAssignment& assignment) const {
+void FznBackend::onSolutionDefault(
+    const search::SavedAssignment& assignment) const {
   _fznOutput->displaySolution(std::cout, assignment.getOutputValues());
   std::cout << "----------" << std::endl;
 }
@@ -46,9 +47,9 @@ void FznBackend::handleSolverNotifications(
   // Ensure the final solution is printed
   // When this runs all search threads have terminated.
   if (solutionId < threadController->solutionId()) {
-    std::cout << "printing final solution! (previously printed "
-              << solutionId << ", final is "
-              << threadController->solutionId() << ")." << std::endl;
+    std::cout << "printing final solution! (previously printed " << solutionId
+              << ", final is " << threadController->solutionId() << ")."
+              << std::endl;
     _onSolution(threadController->solution());
   }
 

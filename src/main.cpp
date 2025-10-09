@@ -100,7 +100,8 @@ int main(int argc, char* argv[]) {
     }
 
     if (result.count("annealing-schedule") == 1) {
-      backend.setAnnealingScheduleFactory(std::make_shared<atlantis::search::AnnealingScheduleFactory>(
+      backend.setAnnealingScheduleFactory(
+          std::make_shared<atlantis::search::AnnealingScheduleFactory>(
               result["annealing-schedule"].as<std::filesystem::path>()));
     }
 

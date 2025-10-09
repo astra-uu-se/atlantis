@@ -42,8 +42,8 @@ class ThreadController {
 
   [[nodiscard]] SavedAssignment solution() const;
 
-  [[nodiscard]] std::optional<std::pair<size_t, SavedAssignment>>
-  loadSolution(size_t solutionId) const;
+  [[nodiscard]] std::optional<std::pair<size_t, SavedAssignment>> loadSolution(
+      size_t solutionId) const;
 
   [[gnu::always_inline]] [[nodiscard]] bool hasSolution() const {
     return _hasSolution.load();
@@ -63,9 +63,13 @@ class ThreadController {
 
   void threadIsDone();
 
-  [[gnu::always_inline]] void awaitChanges() const { _curSolutionNotified.wait(true); }
+  [[gnu::always_inline]] void awaitChanges() const {
+    _curSolutionNotified.wait(true);
+  }
 
-  [[gnu::always_inline]] void markCurSolutionNotified() { _curSolutionNotified = true; }
+  [[gnu::always_inline]] void markCurSolutionNotified() {
+    _curSolutionNotified = true;
+  }
 };
 
 }  // namespace atlantis::search
