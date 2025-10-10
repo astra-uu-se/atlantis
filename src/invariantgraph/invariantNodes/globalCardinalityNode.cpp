@@ -51,7 +51,9 @@ void GlobalCardinalityNode::updateState() {
   // that are defined multiple times:
   std::vector<std::pair<VarNodeId, VarNodeId>> replacedOutputs =
       splitOutputVarNodes();
-  for (const auto& [oldVarNodeId, newVarNodeId] : replacedOutputs) {
+  while (!replacedOutputs.empty()) {
+    const auto [oldVarNodeId, newVarNodeId] = replacedOutputs.front();
+    assert(oldVarNodeId != newVarNodeId);
     assert(invariantGraph()
                .varNodeConst(oldVarNodeId)
                .definingNodes()
@@ -60,8 +62,24 @@ void GlobalCardinalityNode::updateState() {
                .varNodeConst(newVarNodeId)
                .definingNodes()
                .contains(id()));
-    invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
-        invariantGraph(), oldVarNodeId, newVarNodeId, true, true));
+    std::vector<VarNodeId> duplicates;
+    duplicates.reserve(2 * replacedOutputs.size());
+    duplicates.emplace_back(oldVarNodeId);
+    duplicates.emplace_back(newVarNodeId);
+    for (size_t i = replacedOutputs.size() - 1; i > 0; i--) {
+      if (replacedOutputs[i].first != oldVarNodeId) {
+        continue;
+      }
+      duplicates.emplace_back(replacedOutputs[i].second);
+      std::swap(replacedOutputs[i], replacedOutputs.back());
+      replacedOutputs.pop_back();
+    }
+    std::swap(replacedOutputs.front(), replacedOutputs.back());
+    replacedOutputs.pop_back();
+    if (!invariantGraphConst().varNodeConst(oldVarNodeId).isFixed()) {
+      invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
+          invariantGraph(), std::move(duplicates), true, true));
+    }
   }
   for (Int i = 0; i < static_cast<Int>(_cover.size()); i++) {
     for (Int j = static_cast<Int>(_cover.size()) - 1; j > i; --j) {
@@ -197,27 +215,12 @@ bool GlobalCardinalityNode::replace() {
 
 void GlobalCardinalityNode::registerOutputVars() {
   for (size_t i = 0; i < _cover.size(); ++i) {
-    const bool isDuplicate = std::ranges::any_of(
+    assert(std::ranges::none_of(
         outputVarNodeIds().begin(),
         outputVarNodeIds().begin() + static_cast<Int>(i),
-        [&](const VarNodeId vId) { return vId == outputVarNodeIds().at(i); });
+        [&](const VarNodeId vId) { return vId == outputVarNodeIds().at(i); }));
 
-    assert(
-        !isDuplicate ||
-        invariantGraphConst().varNodeConst(outputVarNodeIds().at(i)).isFixed());
-
-    if (isDuplicate) {
-      assert(invariantGraphConst()
-                 .varNodeConst(outputVarNodeIds().at(i))
-                 .varId() != propagation::NULL_ID);
-      _intermediate.at(i) = solver().makeIntVar(0, 0, 0);
-      solver().makeIntView<propagation::EqualConst>(
-          solver(), _intermediate.at(i),
-          invariantGraphConst()
-                  .varNodeConst(outputVarNodeIds().at(i))
-                  .lowerBound() -
-              _countOffsets[i]);
-    } else if (_countOffsets[i] == 0) {
+    if (_countOffsets[i] == 0) {
       assert(invariantGraphConst()
                  .varNodeConst(outputVarNodeIds().at(i))
                  .varId() == propagation::NULL_ID);
