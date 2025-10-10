@@ -25,7 +25,6 @@ class Annealer : public MetaHeuristic {
   Cost _cost;
   RoundStatistics _statistics;
   UInt _requiredMovesPerRound;
-  logging::Logger& _logger;
 
   UInt _attemptedMovesPerRound{0};
 
@@ -36,9 +35,9 @@ class Annealer : public MetaHeuristic {
 
  public:
   Annealer(RandomProvider&, std::unique_ptr<AnnealingSchedule>&&,
-           const Assignment&, logging::Logger&);
+           const Assignment&);
 
-  virtual ~Annealer() = default;
+  ~Annealer() override = default;
 
   void start() override;
 
@@ -57,7 +56,7 @@ class Annealer : public MetaHeuristic {
 
   [[nodiscard]] Int evaluate(const Cost& cost) const;
 
-  void logRoundStatistics();
+  void logRoundStatistics(logging::Logger&);
 };
 
 }  // namespace atlantis::search

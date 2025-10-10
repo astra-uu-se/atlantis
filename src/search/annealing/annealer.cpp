@@ -15,13 +15,12 @@ static UInt reqMovesPerRound(size_t numSearchVars) {
 
 Annealer::Annealer(RandomProvider& random,
                    std::unique_ptr<AnnealingSchedule>&& schedule,
-                   const Assignment& assignment, logging::Logger& logger)
+                   const Assignment& assignment)
     : _random(random),
       _schedule(std::move(schedule)),
       _cost(assignment),
       _statistics(INITIAL_TEMPERATURE),
-      _requiredMovesPerRound(reqMovesPerRound(assignment.searchVars().size())),
-      _logger(logger) {}
+      _requiredMovesPerRound(reqMovesPerRound(assignment.searchVars().size())) {}
 
 bool Annealer::isFinished() const { return _schedule->frozen(); }
 
@@ -41,27 +40,26 @@ bool Annealer::acceptMove(const Cost& cost) {
   const bool ret = accept(evaluate(cost));
 
   if (!shouldRunRound()) {
-    logRoundStatistics();
     nextRound();
   }
   return ret;
 }
 
-void Annealer::logRoundStatistics() {
-  _logger.trace("Accepted over attempted moves: {:d} / {:d} = {:.3f}",
+void Annealer::logRoundStatistics(logging::Logger& logger) {
+  logger.trace("Accepted over attempted moves: {:d} / {:d} = {:.3f}",
                 _statistics.acceptedMoves, _statistics.attemptedMoves,
                 _statistics.moveAcceptanceRatio());
-  _logger.trace("Accepted over attempted uphill moves: {:d} / {:d} = {:.3f}",
+  logger.trace("Accepted over attempted uphill moves: {:d} / {:d} = {:.3f}",
                 _statistics.uphillAcceptedMoves,
                 _statistics.uphillAttemptedMoves,
                 _statistics.uphillAcceptanceRatio());
-  _logger.trace("Improving move ratio: {:.3f}",
+  logger.trace("Improving move ratio: {:.3f}",
                 _statistics.improvingMoveRatio());
-  _logger.trace("Lowest cost this round: {:d}",
+  logger.trace("Lowest cost this round: {:d}",
                 _statistics.bestCostOfThisRound);
-  _logger.trace("Lowest cost previous round: {:d}",
+  logger.trace("Lowest cost previous round: {:d}",
                 _statistics.bestCostOfPreviousRound);
-  _logger.trace("Temperature: {:.3f}", _statistics.temperature);
+  logger.trace("Temperature: {:.3f}", _statistics.temperature);
 }
 
 bool Annealer::accept(Int moveCost) {

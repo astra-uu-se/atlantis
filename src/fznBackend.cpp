@@ -104,9 +104,9 @@ void FznBackend::solve(logging::Logger& logger) {
       std::make_unique<FznOutput>(_invariantGraph->generateFznOutput());
 
   for (size_t threadId = 0; threadId < _threadCount; threadId++) {
-    _threads.emplace_back([&logger, threadId, this] {
+    _threads.emplace_back([this, threadId] {
       auto thread = SolverThread(*this, threadId);
-      thread.solve(logger);
+      thread.solve();
     });
   }
   handleSolverNotifications(_threadController);

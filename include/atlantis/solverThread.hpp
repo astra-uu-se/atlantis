@@ -45,10 +45,9 @@ class SolverThread {
       std::optional<std::chrono::milliseconds> timeLimit,
       const std::shared_ptr<const bool>& shouldStop);
 
-  void solve(logging::Logger& logger);
+  void solve();
 
-  [[nodiscard]] std::unique_ptr<search::MetaHeuristic> createMetaHeuristic(
-      logging::Logger&, search::RandomProvider&,
+  [[nodiscard]] std::unique_ptr<search::MetaHeuristic> createMetaHeuristic(search::RandomProvider&,
       const search::Assignment&) const;
 
   [[gnu::always_inline]] [[nodiscard]] std::vector<invariantgraph::VarNodeId>
