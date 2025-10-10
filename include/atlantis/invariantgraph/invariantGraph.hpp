@@ -88,6 +88,8 @@ class InvariantGraph {
 
   virtual VarNodeId retrieveBoolVarNode(bool);
 
+  virtual VarNodeId retrieveBoolVarNode(bool, bool forceNewVar);
+
   virtual VarNodeId retrieveBoolVarNode(bool, const std::string&);
 
   virtual VarNodeId retrieveBoolVarNode(const std::shared_ptr<SearchDomain>&,
@@ -101,6 +103,8 @@ class InvariantGraph {
   virtual VarNodeId retrieveIntVarNode(const std::string&);
 
   virtual VarNodeId retrieveIntVarNode(Int);
+
+  virtual VarNodeId retrieveIntVarNode(Int, bool forceNewVar);
 
   virtual VarNodeId retrieveIntVarNode(Int, const std::string&);
 
