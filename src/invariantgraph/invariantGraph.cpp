@@ -267,6 +267,18 @@ VarNodeId InvariantGraph::retrieveBoolVarNode(bool b) {
   return _boolVarNodeIndices.at(b ? 1 : 0);
 }
 
+VarNodeId InvariantGraph::retrieveBoolVarNode(bool value, bool forceNew) {
+  if (!forceNew) {
+    return retrieveBoolVarNode(value);
+  }
+  return _varNodes
+      .emplace_back(
+          nextVarNodeId(), false,
+          std::make_shared<SearchDomain>(std::vector<Int>{value ? 0 : 1}),
+          DomainType::DOM_FIXED)
+      .varNodeId();
+}
+
 VarNodeId InvariantGraph::retrieveBoolVarNode(const std::string& identifier,
                                               DomainType domainType) {
   if (!containsVarNode(identifier)) {
@@ -334,6 +346,22 @@ VarNodeId InvariantGraph::retrieveIntVarNode(Int value) {
                                 " is not fixed to " + std::to_string(value));
   }
   return _intVarNodeIndices.at(value);
+}
+
+VarNodeId InvariantGraph::retrieveIntVarNode(Int value, bool forceNew) {
+  if (!forceNew) {
+    retrieveIntVarNode(value);
+  }
+  const VarNodeId nodeId =
+      _varNodes
+          .emplace_back(nextVarNodeId(), true,
+                        std::make_shared<SearchDomain>(std::vector<Int>{value}),
+                        DomainType::DOM_FIXED)
+          .varNodeId();
+  if (!containsVarNode(value)) {
+    _intVarNodeIndices.emplace(value, nodeId);
+  }
+  return nodeId;
 }
 
 VarNodeId InvariantGraph::retrieveIntVarNode(const std::string& identifier) {
@@ -727,7 +755,7 @@ void InvariantGraph::populateRootNode() {
 }
 
 void InvariantGraph::splitMultiDefinedVars() {
-  // DO NOT empace to _varNodes while doing this kind of iteration!
+  // DO NOT emplace to _varNodes while doing this kind of iteration!
 
   size_t newSize = 0;
   for (const auto& vNode : _varNodes) {

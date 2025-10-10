@@ -255,21 +255,27 @@ InvariantNode::splitOutputVarNodes() {
   std::vector<std::pair<VarNodeId, VarNodeId>> replaced;
   replaced.reserve(_outputVarNodeIds.size());
   for (size_t i = 0; i < _outputVarNodeIds.size(); ++i) {
-    VarNode& iNode = _invariantGraph.varNode(_outputVarNodeIds[i]);
-    if (iNode.isFixed()) {
-      continue;
-    }
+    VarNode& varNode = _invariantGraph.varNode(_outputVarNodeIds[i]);
     for (size_t j = i + 1; j < _outputVarNodeIds.size(); ++j) {
-      const VarNode& jNode = _invariantGraph.varNodeConst(_outputVarNodeIds[j]);
-      if (jNode.isFixed()) {
+      if (_outputVarNodeIds[i] != _outputVarNodeIds[j]) {
         continue;
       }
-      if (_outputVarNodeIds[i] == _outputVarNodeIds[j]) {
+      if (varNode.isFixed()) {
+        if (varNode.isIntVar()) {
+          _outputVarNodeIds[j] =
+              _invariantGraph.retrieveIntVarNode(varNode.lowerBound(), true);
+        } else {
+          _outputVarNodeIds[j] = _invariantGraph.retrieveBoolVarNode(
+              varNode.inDomain(bool{true}), true);
+        }
+      } else if (varNode.isIntVar()) {
         _outputVarNodeIds[j] = _invariantGraph.retrieveIntVarNode(
-            iNode.domain(), iNode.domainType());
-        _invariantGraph.varNode(_outputVarNodeIds[j]).markOutputTo(_id);
-        replaced.emplace_back(_outputVarNodeIds[i], _outputVarNodeIds[j]);
+            varNode.domain(), varNode.domainType());
+      } else {
+        _outputVarNodeIds[j] = _invariantGraph.retrieveBoolVarNode();
       }
+      _invariantGraph.varNode(_outputVarNodeIds[j]).markOutputTo(_id);
+      replaced.emplace_back(_outputVarNodeIds[i], _outputVarNodeIds[j]);
     }
   }
   return replaced;

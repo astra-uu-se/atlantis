@@ -126,8 +126,8 @@ void GlobalCardinalityOpen::notifyCurrentInputChanged(Timestamp timestamp) {
 void GlobalCardinalityOpen::commit(Timestamp timestamp) {
   Invariant::commit(timestamp);
 
-  for (CommittableInt& CommittableInt : _counts) {
-    CommittableInt.commitIf(timestamp);
+  for (CommittableInt& count : _counts) {
+    count.commitIf(timestamp);
   }
 }
 }  // namespace atlantis::propagation
