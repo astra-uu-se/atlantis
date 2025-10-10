@@ -20,7 +20,8 @@ Annealer::Annealer(RandomProvider& random,
       _schedule(std::move(schedule)),
       _cost(assignment),
       _statistics(INITIAL_TEMPERATURE),
-      _requiredMovesPerRound(reqMovesPerRound(assignment.searchVars().size())) {}
+      _requiredMovesPerRound(reqMovesPerRound(assignment.searchVars().size())) {
+}
 
 bool Annealer::isFinished() const { return _schedule->frozen(); }
 
@@ -47,18 +48,17 @@ bool Annealer::acceptMove(const Cost& cost) {
 
 void Annealer::logRoundStatistics(logging::Logger& logger) {
   logger.trace("Accepted over attempted moves: {:d} / {:d} = {:.3f}",
-                _statistics.acceptedMoves, _statistics.attemptedMoves,
-                _statistics.moveAcceptanceRatio());
+               _statistics.acceptedMoves, _statistics.attemptedMoves,
+               _statistics.moveAcceptanceRatio());
   logger.trace("Accepted over attempted uphill moves: {:d} / {:d} = {:.3f}",
-                _statistics.uphillAcceptedMoves,
-                _statistics.uphillAttemptedMoves,
-                _statistics.uphillAcceptanceRatio());
+               _statistics.uphillAcceptedMoves,
+               _statistics.uphillAttemptedMoves,
+               _statistics.uphillAcceptanceRatio());
   logger.trace("Improving move ratio: {:.3f}",
-                _statistics.improvingMoveRatio());
-  logger.trace("Lowest cost this round: {:d}",
-                _statistics.bestCostOfThisRound);
+               _statistics.improvingMoveRatio());
+  logger.trace("Lowest cost this round: {:d}", _statistics.bestCostOfThisRound);
   logger.trace("Lowest cost previous round: {:d}",
-                _statistics.bestCostOfPreviousRound);
+               _statistics.bestCostOfPreviousRound);
   logger.trace("Temperature: {:.3f}", _statistics.temperature);
 }
 

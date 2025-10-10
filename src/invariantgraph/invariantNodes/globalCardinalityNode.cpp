@@ -219,10 +219,9 @@ void GlobalCardinalityNode::registerOutputVars(propagation::SolverBase& solver,
         [&](const VarNodeId vId) { return vId == outputVarNodeIds().at(i); }));
 
     if (_countOffsets[i] == 0) {
-      assert(invariantGraphConst()
-                 .varNodeConst(outputVarNodeIds().at(i))
-                 .varId() == propagation::NULL_ID);
-      makeSolverVar(outputVarNodeIds().at(i));
+      assert(mapping.solverId(outputVarNodeIds().at(i)) ==
+             propagation::NULL_ID);
+      makeSolverVar(outputVarNodeIds().at(i), solver, mapping);
     } else {
       assert(mapping.solverId(outputVarNodeIds().at(i)) ==
              propagation::NULL_ID);
