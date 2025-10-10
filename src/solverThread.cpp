@@ -51,15 +51,14 @@ SolverThread::SolverThread(
       _timelimit(timeLimit),
       _shouldStop(shouldStop) {}
 
-std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
-    logging::Logger& logger, search::RandomProvider& randomProvider,
+std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(search::RandomProvider& randomProvider,
     const search::Assignment& assignment) const {
   return std::make_unique<search::Annealer>(
       randomProvider, std::move(_annealingScheduleFactory->create()),
-      assignment, logger);
+      assignment);
 }
 
-void SolverThread::solve(logging::Logger& logger) {
+void SolverThread::solve() {
   // Create the propagation solver
   propagation::Solver solver;
   solver.open();
@@ -92,9 +91,6 @@ void SolverThread::solve(logging::Logger& logger) {
     return;
   }
 
-  // Initialize thread-dependent stuff
-  logger.debug("Thread {} Using seed {}.", _threadId, _seed);
-
   search::RandomProvider randomProvider(_seed);
   search::SearchProcedure search(
       randomProvider, assignment, mapping.globalNeighborhood(), searchObjective,
@@ -104,12 +100,8 @@ void SolverThread::solve(logging::Logger& logger) {
       mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,
       _shouldStop, _threadController);
 
-  logger.timedFunction<int>("search", [&] {
-    return search.run(
-        searchController,
-        std::move(createMetaHeuristic(logger, randomProvider, assignment)),
-        logger);
-  });
+  search.run(searchController, std::move(createMetaHeuristic(
+                                   randomProvider, assignment)));
   _threadController->threadIsDone();
 }
 

@@ -61,11 +61,9 @@ void SearchProcedure::onAccepted() {
 }
 
 Int SearchProcedure::run(SearchController& searchController,
-                         std::unique_ptr<MetaHeuristic>&& metaHeuristic,
-                         logging::Logger& logger) {
+                         std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
   do {
-    logger.timedProcedure(logging::Level::LVL_TRACE, "initialize assignment",
-                          [&] { _assignment.initialize(_random); });
+    _assignment.initialize(_random);
 
     // TODO: handle this case: this should call some separate version
     if (_assignment.satisfiesConstraints()) onAccepted();
