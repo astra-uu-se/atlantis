@@ -13,6 +13,7 @@ BENCHMARK_FILTER_SYNTH="^(ElementVarTree|LinearTree|TSP|TSPTWAllDiff)\/[A-Za-z]"
 BENCHMARK_FILTER_PAR="^Par"
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 
+DZN_DIR=${MKFILE_PATH}dzn
 MZN_MODEL_DIR=${MKFILE_PATH}mzn-models
 FZN_MODEL_DIR=${MKFILE_PATH}fzn-models
 MZN_PATH=~/minizinc/MiniZincIDE-build1187512964-bundle-linux-x86_64/bin/minizinc
@@ -134,7 +135,7 @@ benchmark-synth: build-benchmarks
 	python3 ${MKFILE_PATH}plot-formatter.py -v --input=${$@_JSON_FILE} --file-suffix=${$@_TIMESTAMP} --output-dir=${BENCHMARK_PLOT_DIR}
 
 .PHONY: benchmark-par
-benchmark-par: build-benchmarks
+benchmark-par: build-benchmarks fzn-benchmark
 	mkdir -p ${BENCHMARK_JSON_DIR}
 	mkdir -p ${BENCHMARK_PLOT_DIR}
 	$(eval $@_TIMESTAMP := $(shell date +"%Y-%m-%d-%H-%M-%S-%3N"))
@@ -158,6 +159,30 @@ fzn:
 	@$(call compile_mzn_dzn,tsp,tsp_201,tsp_201)
 	@$(call compile_mzn_param,magic_square,n=3)
 	@$(call compile_mzn_param,n_queens,n=16)
+
+.PHONY: fzn-benchmark
+fzn-benchmark:
+	mkdir -p ${FZN_MODEL_DIR}/tsp
+	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/*), \
+		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+			${MZN_MODEL_DIR}/tsp.mzn \
+			${dzn_file} \
+			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
+			--no-output-ozn;)
+	mkdir -p ${FZN_MODEL_DIR}/n_queens
+	$(foreach queens, 8 16 24 32 48 64 128 192 256 512 768 1024, \
+		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+			${MZN_MODEL_DIR}/n_queens.mzn \
+			-D n=${queens} \
+			--fzn ${FZN_MODEL_DIR}/n_queens/${queens}.fzn \
+			--no-output-ozn;)
+	mkdir -p ${FZN_MODEL_DIR}/knapsack
+	$(foreach dzn_file, $(wildcard ${DZN_DIR}/knapsack/*), \
+		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+			${MZN_MODEL_DIR}/knap.mzn \
+			${dzn_file} \
+			--fzn ${FZN_MODEL_DIR}/knapsack/$$(basename ${dzn_file} .dzn).fzn \
+			--no-output-ozn;)
 
 .PHONY: clang-format
 clang-format:
