@@ -15,11 +15,10 @@
 
 namespace atlantis::benchmark {
 
-class ParTSP : public ::benchmark::Fixture {
+class ParKnapsack : public ::benchmark::Fixture {
  public:
   static std::vector<std::string> instances;
 
-  const std::string modelPath{std::string(FZN_DIR) + "/tsp_201.fzn"};
   std::shared_ptr<FznBackend> backend{nullptr};
 
   long instance{-1};
@@ -30,7 +29,7 @@ class ParTSP : public ::benchmark::Fixture {
   logging::Logger logger{stdout, logging::Level::LVL_ERROR};
 
   static void populateInstances() {
-    instances = createInstances(std::string(FZN_DIR) + "/tsp");
+    instances = createInstances(std::string(FZN_DIR) + "/knapsack");
   }
 
   static size_t size() {
@@ -53,9 +52,9 @@ class ParTSP : public ::benchmark::Fixture {
   void TearDown(const ::benchmark::State&) override { backend = nullptr; }
 };
 
-std::vector<std::string> ParTSP::instances;
+std::vector<std::string> ParKnapsack::instances;
 
-BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
+BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
   st.SetLabel(instances.at(instance));
   size_t numSolutions{0};
   Int bestObjective{0};
@@ -80,9 +79,9 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
       totalObjective / static_cast<double>(numSolutions);
 }
 
-BENCHMARK_REGISTER_F(ParTSP, run)
+BENCHMARK_REGISTER_F(ParKnapsack, run)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(defaultArguments<ParTSP>)
+    ->Apply(defaultArguments<ParKnapsack>)
     ->Iterations(1);
 
 }  // namespace atlantis::benchmark

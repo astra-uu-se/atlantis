@@ -17,21 +17,34 @@ namespace atlantis::benchmark {
 
 class ParTSP : public ::benchmark::Fixture {
  public:
-  const std::string modelPath{std::string(FZN_DIR) + "/tsp_201.fzn"};
+  static std::vector<std::string> instances;
+
   std::shared_ptr<FznBackend> backend{nullptr};
 
+  long instance{-1};
   std::chrono::milliseconds timelimit{0};
-  Int numThreads{0};
+  long numThreads{0};
   search::SearchType searchType{search::SearchType::BESTCOST};
 
   logging::Logger logger{stdout, logging::Level::LVL_ERROR};
 
-  void SetUp(const ::benchmark::State& state) override {
-    timelimit = std::chrono::milliseconds(state.range(0));
-    numThreads = state.range(1);
-    searchType = intToSearchType(state.range(2));
+  static void populateInstances() {
+    instances = createInstances(std::string(FZN_DIR) + "/tsp");
+  }
 
-    std::filesystem::path modelFilePath(modelPath.c_str());
+  static size_t size() {
+    return instances.size();
+  }
+
+  void SetUp(const ::benchmark::State& state) override {
+    instance = state.range(0);
+    timelimit = std::chrono::milliseconds(state.range(1));
+    numThreads = state.range(2);
+    searchType = intToSearchType(state.range(3));
+
+    assert(0 <= instance && instance < static_cast<long>(instances.size()));
+
+    std::filesystem::path modelFilePath(instances.at(instance).c_str());
     backend = std::make_shared<FznBackend>(logger, std::move(modelFilePath),
                                            numThreads, searchType);
   }
@@ -39,7 +52,10 @@ class ParTSP : public ::benchmark::Fixture {
   void TearDown(const ::benchmark::State&) override { backend = nullptr; }
 };
 
+std::vector<std::string> ParTSP::instances;
+
 BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
+  st.SetLabel(instances.at(instance));
   size_t numSolutions{0};
   Int bestObjective{0};
   double totalObjective{0.0};
@@ -65,7 +81,7 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
 
 BENCHMARK_REGISTER_F(ParTSP, run)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(defaultArguments)
+    ->Apply(defaultArguments<ParTSP>)
     ->Iterations(1);
 
 }  // namespace atlantis::benchmark

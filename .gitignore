@@ -64,3 +64,7 @@ atlantis
 /fzn-challanges/*
 
 /dot_graphs/*
+
+/fzn-models/tsp/*
+/fzn-models/knapsack/*
+/fzn-models/n_queens/*

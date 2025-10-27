@@ -15,11 +15,10 @@
 
 namespace atlantis::benchmark {
 
-class ParTSP : public ::benchmark::Fixture {
+class ParNQueens : public ::benchmark::Fixture {
  public:
   static std::vector<std::string> instances;
 
-  const std::string modelPath{std::string(FZN_DIR) + "/tsp_201.fzn"};
   std::shared_ptr<FznBackend> backend{nullptr};
 
   long instance{-1};
@@ -30,7 +29,7 @@ class ParTSP : public ::benchmark::Fixture {
   logging::Logger logger{stdout, logging::Level::LVL_ERROR};
 
   static void populateInstances() {
-    instances = createInstances(std::string(FZN_DIR) + "/tsp");
+    instances = createInstances(std::string(FZN_DIR) + "/n_queens");
   }
 
   static size_t size() {
@@ -53,18 +52,15 @@ class ParTSP : public ::benchmark::Fixture {
   void TearDown(const ::benchmark::State&) override { backend = nullptr; }
 };
 
-std::vector<std::string> ParTSP::instances;
+std::vector<std::string> ParNQueens::instances;
 
-BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
+BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   st.SetLabel(instances.at(instance));
-  size_t numSolutions{0};
-  Int bestObjective{0};
+  size_t solved{0};
   double totalObjective{0.0};
-  backend->setOnSolution([&numSolutions, &bestObjective, &totalObjective](
+  backend->setOnSolution([&solved](
                              const search::SavedAssignment& solution) {
-    ++numSolutions;
-    bestObjective = solution.getCost().getObjective();
-    totalObjective += static_cast<double>(bestObjective);
+    solved = 1;
   });
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimit);
@@ -72,17 +68,12 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
     backend->solve(logger);
     backend->join(logger);
   }
-  st.counters["solutions"] = static_cast<double>(numSolutions);
-  st.counters["solutions_per_second"] = ::benchmark::Counter(
-      static_cast<double>(numSolutions), ::benchmark::Counter::kIsRate);
-  st.counters["objective_best"] = static_cast<double>(bestObjective);
-  st.counters["objective_average"] =
-      totalObjective / static_cast<double>(numSolutions);
+  st.counters["solved"] = static_cast<double>(solved);
 }
 
-BENCHMARK_REGISTER_F(ParTSP, run)
+BENCHMARK_REGISTER_F(ParNQueens, run)
     ->Unit(::benchmark::kMillisecond)
-    ->Apply(defaultArguments<ParTSP>)
+    ->Apply(defaultArguments<ParNQueens>)
     ->Iterations(1);
 
 }  // namespace atlantis::benchmark
