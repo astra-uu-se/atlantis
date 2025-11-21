@@ -22,22 +22,28 @@ template <class F>
 inline void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
   F::populateInstances();
   for (size_t instance = 0; instance < F::size(); ++instance) {
-    for (const Int timelimit : std::array{5000, 30000, 60000, 180000}) {
-      for (Int numThreads = 1; numThreads <= 32; numThreads *= 2) {
-        for (Int searchType = 0; searchType <= 2; ++searchType) {
-          benchmark->Args({static_cast<long>(instance), timelimit, numThreads, searchType});
-          if (numThreads == 1) {
-            break;
-          }
+    for (Int numThreads = 1; numThreads <= 16; numThreads *= 2) {
+      for (Int searchType = 0; searchType <= 2; ++searchType) {
+        benchmark->Args({static_cast<long>(instance), numThreads, searchType});
+        if (numThreads == 1) {
+          break;
         }
-#ifndef NDEBUG
-        if (numThreads >= 2) {
-          return;
-        }
-#endif
       }
+#ifndef NDEBUG
+      if (numThreads >= 2) {
+        return;
+      }
+#endif
     }
   }
+}
+
+inline std::vector<std::chrono::milliseconds> defaultTimelimits() {
+#ifndef NDEBUG
+  return {std::chrono::milliseconds(1000), std::chrono::milliseconds(2000)};
+#else
+  return {std::chrono::milliseconds(5000), std::chrono::milliseconds(30000), std::chrono::milliseconds(60000), std::chrono::milliseconds(180000)};
+#endif
 }
 
 inline std::vector<std::string> createInstances(const std::string& relDir) {

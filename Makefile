@@ -7,10 +7,10 @@ BUILD_DIR=${MKFILE_PATH}build
 CMAKE=$(shell which cmake)
 
 BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
-NUM_BENCHMARK_REPETITIONS=5
+NUM_BENCHMARK_REPETITIONS=3
 BENCHMARK_FILTER="^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|NQueens|TSPTW|VesselLoading)\/[A-Za-z]"
 BENCHMARK_FILTER_SYNTH="^(ElementVarTree|LinearTree|TSP|TSPTWAllDiff)\/[A-Za-z]"
-BENCHMARK_FILTER_PAR="^Par"
+BENCHMARK_FILTER_PAR="^Par(TSP|NQueens)"
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 
 DZN_DIR=${MKFILE_PATH}dzn
@@ -163,7 +163,7 @@ fzn:
 .PHONY: fzn-benchmark
 fzn-benchmark:
 	mkdir -p ${FZN_MODEL_DIR}/tsp
-	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/*), \
+	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/*001.*), \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/tsp.mzn \
 			${dzn_file} \

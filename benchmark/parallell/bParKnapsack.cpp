@@ -1,5 +1,6 @@
 #include <benchmark/benchmark.h>
 
+#include <boost/chrono/system_clocks.hpp>
 #include <chrono>
 #include <filesystem>
 #include <iostream>
@@ -18,13 +19,13 @@ namespace atlantis::benchmark {
 class ParKnapsack : public ::benchmark::Fixture {
  public:
   static std::vector<std::string> instances;
-
   std::shared_ptr<FznBackend> backend{nullptr};
 
   long instance{-1};
-  std::chrono::milliseconds timelimit{0};
   long numThreads{0};
   search::SearchType searchType{search::SearchType::BESTCOST};
+
+  std::vector<std::chrono::milliseconds> timelimits;
 
   logging::Logger logger{stdout, logging::Level::LVL_ERROR};
 
@@ -38,9 +39,10 @@ class ParKnapsack : public ::benchmark::Fixture {
 
   void SetUp(const ::benchmark::State& state) override {
     instance = state.range(0);
-    timelimit = std::chrono::milliseconds(state.range(1));
-    numThreads = state.range(2);
-    searchType = intToSearchType(state.range(3));
+    numThreads = state.range(1);
+    searchType = intToSearchType(state.range(2));
+
+    timelimits = defaultTimelimits();
 
     assert(0 <= instance && instance < static_cast<long>(instances.size()));
 
@@ -56,27 +58,43 @@ std::vector<std::string> ParKnapsack::instances;
 
 BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
   st.SetLabel(instances.at(instance));
-  size_t numSolutions{0};
-  Int bestObjective{0};
-  double totalObjective{0.0};
-  backend->setOnSolution([&numSolutions, &bestObjective, &totalObjective](
-                             const search::SavedAssignment& solution) {
-    ++numSolutions;
-    bestObjective = solution.getCost().getObjective();
-    totalObjective += static_cast<double>(bestObjective);
-  });
+  std::vector<size_t> numSolutions(timelimits.size(), 0);
+  std::vector<size_t> bestObjective(timelimits.size(), 0);
+  std::vector<double> totalObjective(timelimits.size(), 0.0);
   backend->setOnFinish([](bool) {});
-  backend->setTimelimit(timelimit);
+  backend->setTimelimit(timelimits.back());
+
+  std::vector<std::chrono::time_point<std::chrono::steady_clock>> deadlines;
+  deadlines.reserve(timelimits.size());
+  for (const auto& tl : timelimits) {
+    deadlines.emplace_back(std::chrono::steady_clock::now() + tl);
+  }
+
+  backend->setOnSolution([&](
+                             const search::SavedAssignment& solution) {
+    for (size_t i = 0; i < timelimits.size(); i++) {
+      if (deadlines[i] < std::chrono::steady_clock::now()) {
+        continue;
+      }
+      ++numSolutions[i];
+      bestObjective[i] = solution.getCost().getObjective();
+      totalObjective[i] += static_cast<double>(bestObjective[i]);
+    }
+  });
+
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);
     backend->join(logger);
   }
-  st.counters["solutions"] = static_cast<double>(numSolutions);
-  st.counters["solutions_per_second"] = ::benchmark::Counter(
-      static_cast<double>(numSolutions), ::benchmark::Counter::kIsRate);
-  st.counters["objective_best"] = static_cast<double>(bestObjective);
-  st.counters["objective_average"] =
-      totalObjective / static_cast<double>(numSolutions);
+  for (size_t i = 0; i < timelimits.size(); i++) {
+    const std::string prefix = std::to_string(timelimits[i].count());
+    st.counters[prefix + "/solutions"] = static_cast<double>(numSolutions[i]);
+    st.counters[prefix + "/solutions_per_second"] = ::benchmark::Counter(
+        static_cast<double>(numSolutions[i]), ::benchmark::Counter::kIsRate);
+    st.counters[prefix + "/objective_best"] = static_cast<double>(bestObjective[i]);
+    st.counters[prefix + "/objective_average"] =
+        totalObjective[i] / static_cast<double>(numSolutions[i]);
+  }
 }
 
 BENCHMARK_REGISTER_F(ParKnapsack, run)
