@@ -12,9 +12,10 @@ class VarIntCountNode : public InvariantNode {
 
   void init(InvariantNodeId) override;
 
-  void registerOutputVars() override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
-  void registerNode() override;
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   void updateState() override;
 

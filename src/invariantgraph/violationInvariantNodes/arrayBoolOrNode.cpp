@@ -110,39 +110,40 @@ bool ArrayBoolOrNode::replace() {
   return true;
 }
 
-void ArrayBoolOrNode::registerOutputVars() {
+void ArrayBoolOrNode::registerOutputVars(propagation::SolverBase& solver,
+                                         SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() > 1 && shouldHold() &&
-      violationVarId() == propagation::NULL_ID) {
-    registerViolation();
+      violationVarId(mapping) == propagation::NULL_ID) {
+    registerViolation(solver, mapping);
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void ArrayBoolOrNode::registerNode() {
+void ArrayBoolOrNode::registerNode(propagation::SolverBase& solver,
+                                   SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1 || (!isReified() && !shouldHold())) {
     return;
   }
-  assert(violationVarId() != propagation::NULL_ID);
+  assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(shouldHold());
-  assert(violationVarId().isVar());
+  assert(violationVarId(mapping).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   std::ranges::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars),
-      [&](const auto& node) { return invariantGraph().varId(node); });
+      [&](const auto& node) { return mapping.solverId(node); });
 
   if (solverVars.size() == 2) {
-    solver().makeInvariant<propagation::BoolOr>(
-        solver(), violationVarId(), solverVars.front(), solverVars.back());
+    solver.makeInvariant<propagation::BoolOr>(
+        solver, violationVarId(mapping), solverVars.front(), solverVars.back());
   } else {
-    solver().makeInvariant<propagation::Min>(solver(), violationVarId(),
-                                             std::move(solverVars), Int{0});
+    solver.makeInvariant<propagation::Min>(solver, violationVarId(mapping),
+                                           std::move(solverVars), Int{0});
   }
 }
 

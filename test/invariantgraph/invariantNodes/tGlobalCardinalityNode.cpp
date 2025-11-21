@@ -102,9 +102,9 @@ TEST_P(GlobalCardinalityNodeTestFixture, replace) {
 }
 
 TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
-  propagation::Solver solver;
-  _invariantGraph->construct();
   _invariantGraph->close();
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   for (size_t i = 0; i < cover.size(); ++i) {
     if (varNode(outputVars.at(i)).isFixed()) {

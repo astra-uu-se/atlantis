@@ -1,211 +1,132 @@
 #include "atlantis/fznBackend.hpp"
 
 #include <fznparser/parser.hpp>
-#include <utility>
+#include <thread>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/logging/logger.hpp"
-#include "atlantis/search/annealer.hpp"
+#include "atlantis/search/annealing/annealer.hpp"
 #include "atlantis/search/assignment.hpp"
-#include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
 #include "atlantis/search/objective.hpp"
-#include "atlantis/search/randomProvider.hpp"
+#include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
-#include "atlantis/search/searchProcedure.hpp"
-#include "atlantis/search/searchVariable.hpp"
+#include "atlantis/search/threadController.hpp"
+#include "atlantis/solverThread.hpp"
 #include "atlantis/utils/fznOutput.hpp"
 
 namespace atlantis {
 
-std::string toIntString(const search::Assignment& assignment,
-                        const std::variant<propagation::VarViewId, Int>& var) {
-  return std::to_string(
-      std::holds_alternative<Int>(var)
-          ? std::get<Int>(var)
-          : assignment.committedValue(std::get<propagation::VarViewId>(var)));
-}
-
-std::string toBoolString(const search::Assignment& assignment,
-                         const std::variant<propagation::VarViewId, Int>& var) {
-  return ((std::holds_alternative<Int>(var)
-               ? std::get<Int>(var)
-               : assignment.committedValue(
-                     std::get<propagation::VarViewId>(var))) == 0)
-             ? "true"
-             : "false";
-}
-
-void printBoolVar(const search::Assignment& assignment,
-                  const FznOutputVar& outputVar) {
-  std::cout << outputVar.identifier << " = "
-            << toBoolString(assignment, outputVar.var) << ";\n";
-}
-
-void printIntVar(const search::Assignment& assignment,
-                 const FznOutputVar& outputVar) {
-  std::cout << outputVar.identifier << " = "
-            << toIntString(assignment, outputVar.var) << ";\n";
-}
-
-std::string arrayVarPrefix(const std::vector<Int>& indexSetSizes) {
-  std::string s = " = array" + std::to_string(indexSetSizes.size()) + "d(";
-
-  for (const Int size : indexSetSizes) {
-    s += "1.." + std::to_string(size) + ", ";
-  }
-
-  return s;
-}
-
-void printBoolVarArray(const search::Assignment& assignment,
-                       const FznOutputVarArray& varArray) {
-  std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
-            << '[';
-
-  for (size_t i = 0; i < varArray.vars.size(); ++i) {
-    if (i != 0) {
-      std::cout << ", ";
-    }
-    std::cout << toBoolString(assignment, varArray.vars[i]);
-  }
-
-  std::cout << "]);\n";
-}
-
-void printIntVarArray(const search::Assignment& assignment,
-                      const FznOutputVarArray& varArray) {
-  std::cout << varArray.identifier << arrayVarPrefix(varArray.indexSetSizes)
-            << '[';
-
-  for (size_t i = 0; i < varArray.vars.size(); ++i) {
-    if (i != 0) {
-      std::cout << ", ";
-    }
-    std::cout << toIntString(assignment, varArray.vars[i]);
-  }
-
-  std::cout << "]);\n";
-}
-
 void FznBackend::onSolutionDefault(
-    const invariantgraph::FznInvariantGraph& invariantGraph,
-    const search::Assignment& assignment) {
-  for (const auto& outputVar : invariantGraph.outputBoolVars()) {
-    printBoolVar(assignment, outputVar);
-  }
-  for (const auto& outputVar : invariantGraph.outputIntVars()) {
-    printIntVar(assignment, outputVar);
-  }
-  for (const auto& outputVarArray : invariantGraph.outputBoolVarArrays()) {
-    printBoolVarArray(assignment, outputVarArray);
-  }
-  for (const auto& outputVarArray : invariantGraph.outputIntVarArrays()) {
-    printIntVarArray(assignment, outputVarArray);
-  }
-
-  std::cout << "----------\n";
+    const search::SavedAssignment& assignment) const {
+  _fznOutput->displaySolution(std::cout, assignment.getOutputValues());
+  std::cout << "----------" << std::endl;
 }
 
-void FznBackend::onFinishDefault(bool hadSol) {
-  if (!hadSol) {
+void FznBackend::onFinishDefault(const bool hasSatisfyingSolution) {
+  if (!hasSatisfyingSolution) {
     std::cout << "=====UNKNOWN=====\n";
   }
 }
 
-FznBackend::FznBackend(logging::Logger& logger,
-                       std::filesystem::path&& modelFile)
-    : FznBackend(
-          logger.timedFunction<fznparser::Model>("parsing FlatZinc", [&] {
-            auto m = fznparser::parseFznFile(modelFile);
-            logger.debug("Found {:d} variable(s)", m.vars().size());
-            logger.debug("Found {:d} constraint(s)", m.constraints().size());
-            return m;
-          })) {}
+void FznBackend::handleSolverNotifications(
+    const std::shared_ptr<search::ThreadController>& threadController) const {
+  size_t solutionId = 0;
 
-static ObjectiveDirection getObjectiveDirection(
-    fznparser::ProblemType problemType) {
-  switch (problemType) {
-    case fznparser::ProblemType::MINIMIZE:
-      return ObjectiveDirection::MINIMIZE;
-    case fznparser::ProblemType::MAXIMIZE:
-      return ObjectiveDirection::MAXIMIZE;
-    case fznparser::ProblemType::SATISFY:
-    default:
-      return ObjectiveDirection::NONE;
+  while (threadController->numFinishedThreads() < _threadCount) {
+    threadController->awaitChanges();
+
+    auto result = threadController->loadSolution(solutionId);
+    if (!result.has_value()) {
+      continue;
+    }
+
+    solutionId = result.value().first;
+    _onSolution(result.value().second);
   }
+
+  // Ensure the final solution is printed
+  // When this runs all search threads have terminated.
+  if (solutionId < threadController->solutionId()) {
+    std::cout << "printing final solution! (previously printed " << solutionId
+              << ", final is " << threadController->solutionId() << ")."
+              << std::endl;
+    _onSolution(threadController->solution());
+  }
+
+  _onFinish(threadController->hasSolution() &&
+            threadController->hasNoViolations());
 }
 
-search::SearchStatistics FznBackend::solve(logging::Logger& logger) {
-  fznparser::ProblemType problemType = _model.solveType().problemType();
+FznBackend::FznBackend(fznparser::Model&& model,
+                       const std::uint_fast32_t threadCount,
+                       search::SearchType searchType)
+    : _invariantGraph(
+          std::make_shared<invariantgraph::FznInvariantGraph>(true)),
+      _model(std::make_shared<fznparser::Model>(std::move(model))),
+      _annealingScheduleFactory(
+          std::make_shared<search::AnnealingScheduleFactory>()),
+      _seed(std::time(nullptr)),
+      _threadCount(threadCount),
+      _searchType(searchType),
+      _onSolution([&](const search::SavedAssignment& assignment) {
+        onSolutionDefault(assignment);
+      }) {}
 
-  propagation::Solver solver;
+FznBackend::FznBackend(logging::Logger& logger,
+                       std::filesystem::path&& modelFile,
+                       const uint_fast32_t threadCount,
+                       search::SearchType searchType)
+    : FznBackend(logger.timedFunction<fznparser::Model>(
+                     "parsing FlatZinc",
+                     [&] {
+                       auto m = fznparser::parseFznFile(modelFile);
+                       logger.debug("Found {:d} variable(s)", m.vars().size());
+                       logger.debug("Found {:d} constraint(s)",
+                                    m.constraints().size());
+                       return m;
+                     }),
+                 threadCount, searchType) {}
 
-  // TODO: we should improve the initialisation in order to avoid the need for
-  // breaking the dynamic cycles
-  invariantgraph::FznInvariantGraph invariantGraph(solver, true);
+void FznBackend::solve(logging::Logger& logger) {
+  // Shared data
+  _threadController = std::make_shared<search::ThreadController>(_threadCount);
+
+  // TODO: refactor everywhere to use the shared pointer
+  assert(_threads.empty());
+  _threads.reserve(_threadCount);
+  logger.info("Thread count is {}", _threadCount);
+
+  _invariantGraph->open();
   logger.timedProcedure("building invariant graph",
-                        [&] { invariantGraph.build(_model); });
+                        [&] { _invariantGraph->build(*_model); });
+  _invariantGraph->close();
+  _fznOutput =
+      std::make_unique<FznOutput>(_invariantGraph->generateFznOutput());
 
-  invariantGraph.construct();
-  if (_dotFilePath.has_value()) {
-    std::ofstream dotFile;
-    dotFile.open(*_dotFilePath);
-    if (dotFile) {
-      invariantGraph.writeDotFile(dotFile);
-    }
-    dotFile.close();
+  for (size_t threadId = 0; threadId < _threadCount; threadId++) {
+    _threads.emplace_back([this, threadId] {
+      auto thread = SolverThread(*this, threadId);
+      thread.solve();
+    });
   }
-  auto neighborhood = invariantGraph.neighborhood();
+  handleSolverNotifications(_threadController);
+}
 
-  neighborhood.printNeighborhood(logger);
-
-  search::Objective searchObjective(solver, problemType);
-
-  auto violation = searchObjective.registerNode(
-      invariantGraph.totalViolationVarId(), invariantGraph.objectiveVarId());
-
-  invariantGraph.close();
-
-  const Int objectiveOptimalValue =
-      _model.isSatisfactionProblem()
-          ? 0
-          : (_model.isMinimisationProblem()
-                 ? invariantGraph.objectiveVarNode().lowerBound()
-                 : invariantGraph.objectiveVarNode().upperBound());
-
-  const auto objectiveDirection = getObjectiveDirection(problemType);
-
-  search::Assignment assignment(solver, neighborhood, violation,
-                                invariantGraph.objectiveVarId(),
-                                objectiveDirection, objectiveOptimalValue);
-
-  if (neighborhood.coveredVars().empty()) {
-    _onSolution(invariantGraph, assignment);
-    _onFinish(true);
-    return search::SearchStatistics{};
+void FznBackend::join(logging::Logger& logger) {
+  if (_threads.empty()) {
+    return;
+  }
+  for (auto& thread : _threads) {
+    thread.join();
   }
 
-  logger.debug("Using seed {}.", _seed);
-  search::RandomProvider random(_seed);
-
-  search::SearchProcedure search(random, assignment, neighborhood,
-                                 searchObjective);
-
-  auto onSolution = [&](const search::Assignment& a) {
-    _onSolution(invariantGraph, a);
-  };
-  auto onFinish = [&](const bool hadSol) { _onFinish(hadSol); };
-
-  search::SearchController searchController(_model.isSatisfactionProblem(),
-                                            std::move(onSolution),
-                                            std::move(onFinish), _timelimit);
-
-  auto schedule = _annealingScheduleFactory.create();
-  search::Annealer annealer(random, *schedule, assignment);
-
-  return logger.timedFunction<search::SearchStatistics>(
-      "search", [&] { return search.run(searchController, annealer, logger); });
+  if (_threadController->bestThreadId() >= 0) {
+    logger.info("Best result is {} from thread {}",
+                _threadController->cost().toString(),
+                _threadController->bestThreadId());
+  } else {
+    logger.info("No solution found!");
+  }
 }
 
 }  // namespace atlantis

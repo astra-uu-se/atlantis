@@ -26,24 +26,24 @@ void IntPowNode::init(InvariantNodeId id) {
       }));
 }
 
-void IntPowNode::registerOutputVars() {
-  makeSolverVar(outputVarNodeIds().front());
+void IntPowNode::registerOutputVars(propagation::SolverBase& solver,
+                                    SolverMapping& mapping) const {
+  makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void IntPowNode::registerNode() {
-  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
-  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
+void IntPowNode::registerNode(propagation::SolverBase& solver,
+                              SolverMapping& mapping) const {
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
 
-  solver().makeInvariant<propagation::Pow>(
-      solver(), invariantGraph().varId(outputVarNodeIds().front()),
-      invariantGraph().varId(base()), invariantGraph().varId(exponent()));
+  solver.makeInvariant<propagation::Pow>(
+      solver, mapping.solverId(outputVarNodeIds().front()),
+      mapping.solverId(base()), mapping.solverId(exponent()));
 }
 
 VarNodeId IntPowNode::base() const { return staticInputVarNodeIds().front(); }

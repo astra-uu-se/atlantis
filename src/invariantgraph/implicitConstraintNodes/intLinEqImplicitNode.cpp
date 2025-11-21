@@ -26,24 +26,35 @@ void IntLinEqImplicitNode::init(InvariantNodeId id) {
       }));
 }
 
-std::shared_ptr<search::neighborhoods::Neighborhood>
-IntLinEqImplicitNode::createNeighborhood() {
+void IntLinEqImplicitNode::updateDomainTypes() {
   if (outputVarNodeIds().size() <= 1) {
-    return nullptr;
+    return;
+  }
+
+  for (const auto& nId : outputVarNodeIds()) {
+    invariantGraph().varNode(nId).setDomainType(DomainType::DOM_DOMAIN);
+  }
+}
+
+void IntLinEqImplicitNode::registerNode(propagation::SolverBase&,
+                                        SolverMapping& mapping) const {
+  assert(!mapping.hasNeighborhood(id()));
+  if (outputVarNodeIds().size() <= 1) {
+    return;
   }
 
   std::vector<search::SearchVar> searchVars;
   searchVars.reserve(outputVarNodeIds().size());
 
   for (const auto& nId : outputVarNodeIds()) {
-    auto& varNode = invariantGraph().varNode(nId);
-    assert(varNode.varId() != propagation::NULL_ID);
-    searchVars.emplace_back(varNode.varId(), varNode.domain());
-    varNode.setDomainType(DomainType::DOM_DOMAIN);
+    auto& varNode = invariantGraphConst().varNodeConst(nId);
+    assert(mapping.solverId(nId) != propagation::NULL_ID);
+    searchVars.emplace_back(mapping.solverId(nId), varNode.constDomain());
   }
 
-  return std::make_shared<search::neighborhoods::IntLinEqNeighborhood>(
-      std::vector<Int>{_coeffs}, std::move(searchVars), _offset);
+  mapping.setNeighborhood(
+      id(), std::make_shared<search::neighborhoods::IntLinEqNeighborhood>(
+                std::vector<Int>{_coeffs}, std::move(searchVars), _offset));
 }
 
 std::string IntLinEqImplicitNode::dotLangIdentifier() const {

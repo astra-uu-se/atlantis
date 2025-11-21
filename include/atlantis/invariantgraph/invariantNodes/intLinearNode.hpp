@@ -7,7 +7,6 @@ namespace atlantis::invariantgraph {
 class IntLinearNode : public InvariantNode {
   std::vector<Int> _coeffs;
   Int _offset;
-  propagation::VarViewId _intermediate{propagation::NULL_ID};
 
  public:
   IntLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
@@ -22,9 +21,10 @@ class IntLinearNode : public InvariantNode {
 
   [[nodiscard]] bool makeImplicit() override;
 
-  void registerOutputVars() override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
-  void registerNode() override;
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   [[nodiscard]] const std::vector<Int>& coeffs() const;
 

@@ -18,9 +18,10 @@ class IntModNode : public InvariantNode {
 
   [[nodiscard]] bool replace() override;
 
-  void registerOutputVars() override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
-  void registerNode() override;
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   [[nodiscard]] VarNodeId numerator() const;
   [[nodiscard]] VarNodeId denominator() const;

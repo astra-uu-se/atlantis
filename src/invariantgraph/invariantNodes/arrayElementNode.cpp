@@ -91,25 +91,24 @@ void ArrayElementNode::updateState() {
   }
 }
 
-void ArrayElementNode::registerOutputVars() {
-  if (invariantGraph().varId(outputVarNodeIds().front()) ==
-      propagation::NULL_ID) {
-    assert(invariantGraph().varId(idx()) != propagation::NULL_ID);
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .setVarId(solver().makeIntView<propagation::ElementConst>(
-            solver(), invariantGraph().varId(idx()),
-            std::vector<Int>(_parVector), _offset));
+void ArrayElementNode::registerOutputVars(propagation::SolverBase& solver,
+                                          SolverMapping& mapping) const {
+  if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+    assert(mapping.solverId(idx()) != propagation::NULL_ID);
+    mapping.setSolverId(outputVarNodeIds().front(),
+                        solver.makeIntView<propagation::ElementConst>(
+                            solver, mapping.solverId(idx()),
+                            std::vector<Int>(_parVector), _offset));
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void ArrayElementNode::registerNode() {}
+void ArrayElementNode::registerNode(propagation::SolverBase&,
+                                    SolverMapping&) const {}
 
 std::string ArrayElementNode::dotLangIdentifier() const { return "element"; }
 

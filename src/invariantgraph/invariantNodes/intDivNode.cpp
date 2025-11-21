@@ -356,24 +356,24 @@ bool IntDivNode::replace() {
   return true;
 }
 
-void IntDivNode::registerOutputVars() {
-  makeSolverVar(quotient());
+void IntDivNode::registerOutputVars(propagation::SolverBase& solver,
+                                    SolverMapping& mapping) const {
+  makeSolverVar(quotient(), solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void IntDivNode::registerNode() {
-  assert(invariantGraph().varId(quotient()) != propagation::NULL_ID);
-  assert(invariantGraph().varId(quotient()).isVar());
+void IntDivNode::registerNode(propagation::SolverBase& solver,
+                              SolverMapping& mapping) const {
+  assert(mapping.solverId(quotient()) != propagation::NULL_ID);
+  assert(mapping.solverId(quotient()).isVar());
 
-  solver().makeInvariant<propagation::IntDiv>(
-      solver(), invariantGraph().varId(quotient()),
-      invariantGraph().varId(numerator()),
-      invariantGraph().varId(denominator()));
+  solver.makeInvariant<propagation::IntDiv>(
+      solver, mapping.solverId(quotient()), mapping.solverId(numerator()),
+      mapping.solverId(denominator()));
 }
 
 VarNodeId IntDivNode::numerator() const noexcept {

@@ -129,8 +129,9 @@ TEST_P(ArrayElement2dNodeTestFixture, replace) {
 }
 
 TEST_P(ArrayElement2dNodeTestFixture, propagation) {
-  _invariantGraph->construct();
   _invariantGraph->close();
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   VarNode outputNode = varNode(outputVar);
 

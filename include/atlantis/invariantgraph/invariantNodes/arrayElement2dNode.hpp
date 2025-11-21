@@ -28,9 +28,10 @@ class ArrayElement2dNode : public InvariantNode {
 
   [[nodiscard]] bool replace() override;
 
-  void registerOutputVars() override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
-  void registerNode() override;
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   [[nodiscard]] VarNodeId rowIdx() const noexcept {
     return staticInputVarNodeIds().front();

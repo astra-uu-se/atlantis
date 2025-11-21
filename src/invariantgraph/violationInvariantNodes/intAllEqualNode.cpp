@@ -179,52 +179,62 @@ bool IntAllEqualNode::replace() {
   return true;
 }
 
-void IntAllEqualNode::registerOutputVars() {
+void IntAllEqualNode::registerOutputVars(propagation::SolverBase& solver,
+                                         SolverMapping& mapping) const {
   assert(!staticInputVarNodeIds().empty());
-  if (violationVarId() == propagation::NULL_ID) {
+  if (violationVarId(mapping) == propagation::NULL_ID) {
     if (_boundVal.has_value()) {
       if (staticInputVarNodeIds().size() == 1) {
         assert(isReified());
-        assert(invariantGraphConst().varId(staticInputVarNodeIds().front()) !=
+        assert(mapping.solverId(staticInputVarNodeIds().front()) !=
                propagation::NULL_ID);
-        setViolationVarId(solver().makeIntView<propagation::EqualConst>(
-            solver(),
-            invariantGraphConst().varId(staticInputVarNodeIds().front()),
-            _boundVal.value()));
-      } else if (_intermediate == propagation::NULL_ID) {
-        _intermediate = solver().makeIntVar(0, 0, 0);
+        setViolationVarId(
+            solver.makeIntView<propagation::EqualConst>(
+                solver, mapping.solverId(staticInputVarNodeIds().front()),
+                _boundVal.value()),
+            mapping);
+      } else if (mapping.intermediateId(id()) == propagation::NULL_ID) {
+        mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
         if (shouldHold()) {
-          setViolationVarId(solver().makeIntView<propagation::EqualConst>(
-              solver(), _intermediate, staticInputVarNodeIds().size()));
+          setViolationVarId(solver.makeIntView<propagation::EqualConst>(
+                                solver, mapping.intermediateId(id()),
+                                staticInputVarNodeIds().size()),
+                            mapping);
         } else {
-          setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
-              solver(), _intermediate, staticInputVarNodeIds().size()));
+          setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
+                                solver, mapping.intermediateId(id()),
+                                staticInputVarNodeIds().size()),
+                            mapping);
         }
       }
     } else if (staticInputVarNodeIds().size() == 2) {
-      registerViolation();
-    } else if (_intermediate == propagation::NULL_ID) {
-      _intermediate = solver().makeIntVar(0, 0, 0);
+      registerViolation(solver, mapping);
+    } else if (mapping.intermediateId(id()) == propagation::NULL_ID) {
+      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
       if (shouldHold()) {
-        setViolationVarId(solver().makeIntView<propagation::EqualConst>(
-            solver(), _intermediate, staticInputVarNodeIds().size() - 1));
+        setViolationVarId(solver.makeIntView<propagation::EqualConst>(
+                              solver, mapping.intermediateId(id()),
+                              staticInputVarNodeIds().size() - 1),
+                          mapping);
       } else {
         assert(!isReified());
-        setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
-            solver(), _intermediate, staticInputVarNodeIds().size() - 1));
+        setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
+                              solver, mapping.intermediateId(id()),
+                              staticInputVarNodeIds().size() - 1),
+                          mapping);
       }
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void IntAllEqualNode::registerNode() {
-  assert(violationVarId() != propagation::NULL_ID);
+void IntAllEqualNode::registerNode(propagation::SolverBase& solver,
+                                   SolverMapping& mapping) const {
+  assert(violationVarId(mapping) != propagation::NULL_ID);
 
   if (_boundVal.has_value() && staticInputVarNodeIds().size() <= 1) {
     return;
@@ -234,36 +244,39 @@ void IntAllEqualNode::registerNode() {
 
   std::vector<propagation::VarViewId> inputVarIds;
   inputVarIds.reserve(staticInputVarNodeIds().size());
-  std::ranges::transform(
-      staticInputVarNodeIds(), std::back_inserter(inputVarIds),
-      [&](const auto& id) { return invariantGraph().varId(id); });
+  std::ranges::transform(staticInputVarNodeIds(),
+                         std::back_inserter(inputVarIds),
+                         [&](const auto& id) { return mapping.solverId(id); });
 
   if (_boundVal.has_value()) {
-    assert(_intermediate != propagation::NULL_ID);
-    assert(_intermediate.isVar());
-    solver().makeInvariant<propagation::CountConst>(
-        solver(), _intermediate, _boundVal.value(), std::move(inputVarIds));
+    assert(mapping.intermediateId(id()) != propagation::NULL_ID);
+    assert(mapping.intermediateId(id()).isVar());
+    solver.makeInvariant<propagation::CountConst>(
+        solver, mapping.intermediateId(id()), _boundVal.value(),
+        std::move(inputVarIds));
     return;
   }
 
   if (inputVarIds.size() == 2) {
-    assert(violationVarId().isVar());
-    assert(_intermediate == propagation::NULL_ID);
+    assert(violationVarId(mapping).isVar());
+    assert(mapping.intermediateId(id()) == propagation::NULL_ID);
     if (shouldHold()) {
-      solver().makeViolationInvariant<propagation::Equal>(
-          solver(), violationVarId(), inputVarIds.front(), inputVarIds.back());
+      solver.makeViolationInvariant<propagation::Equal>(
+          solver, violationVarId(mapping), inputVarIds.front(),
+          inputVarIds.back());
     } else {
-      solver().makeViolationInvariant<propagation::NotEqual>(
-          solver(), violationVarId(), inputVarIds.front(), inputVarIds.back());
+      solver.makeViolationInvariant<propagation::NotEqual>(
+          solver, violationVarId(mapping), inputVarIds.front(),
+          inputVarIds.back());
     }
     return;
   }
 
-  assert(_intermediate != propagation::NULL_ID);
-  assert(_intermediate.isVar());
+  assert(mapping.intermediateId(id()) != propagation::NULL_ID);
+  assert(mapping.intermediateId(id()).isVar());
 
-  solver().makeViolationInvariant<propagation::AllDifferent>(
-      solver(), _intermediate, std::move(inputVarIds));
+  solver.makeViolationInvariant<propagation::AllDifferent>(
+      solver, mapping.intermediateId(id()), std::move(inputVarIds));
 }
 
 std::string IntAllEqualNode::dotLangIdentifier() const {

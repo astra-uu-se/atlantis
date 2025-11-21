@@ -5,41 +5,42 @@
 #include <optional>
 
 #include "atlantis/types.hpp"
+#include "savedAssignment.hpp"
+#include "threadController.hpp"
 
 namespace atlantis::search {
 
 class Assignment;
 
 class SearchController {
-  std::function<void(const Assignment&)> _onSolution;
-  std::function<void(bool)> _onFinish;
   std::optional<std::chrono::milliseconds> _timeout;
+  std::shared_ptr<const bool> _shouldStop;
 
   std::chrono::steady_clock::time_point _startTime;
-  bool _isSatisfactionProblem;
+  const bool _isSatisfactionProblem;
   bool _started{false};
   Int _foundSolution{false};
 
+  std::shared_ptr<ThreadController> _threadController;
+
  public:
   template <typename Rep, typename Period>
-  SearchController(
-      bool isSatisfactionProblem,
-      std::function<void(const Assignment&)>&& onSolution,
-      std::function<void(bool)>&& onFinish,
-      std::optional<std::chrono::duration<Rep, Period>> timeout = {})
-      : _onSolution(std::move(onSolution)),
-        _onFinish(std::move(onFinish)),
-        _timeout(
+  explicit SearchController(
+      const bool isSatisfactionProblem,
+      std::optional<std::chrono::duration<Rep, Period>> timeout,
+      std::shared_ptr<const bool>& shouldStop,
+      const std::shared_ptr<ThreadController>& threadController)
+      : _timeout(
             timeout.has_value()
                 ? std::optional<std::chrono::milliseconds>(
                       std::chrono::duration_cast<std::chrono::milliseconds>(
                           *timeout))
                 : std::nullopt),
-        _isSatisfactionProblem(isSatisfactionProblem) {}
+        _shouldStop(shouldStop),
+        _isSatisfactionProblem(isSatisfactionProblem),
+        _threadController(threadController) {}
 
   bool shouldRun(const Assignment&);
-  void onSolution(const Assignment&);
-  void onFinish() const;
 };
 
 }  // namespace atlantis::search

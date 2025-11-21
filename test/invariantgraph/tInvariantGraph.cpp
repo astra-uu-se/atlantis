@@ -16,8 +16,8 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 TEST(InvariantGraphTest, apply_result) {
+  InvariantGraph invariantGraph;
   propagation::Solver solver;
-  InvariantGraph invariantGraph(solver);
 
   const VarNodeId a = invariantGraph.retrieveIntVarNode(
       std::make_shared<SearchDomain>(0, 10), "a");
@@ -36,17 +36,17 @@ TEST(InvariantGraphTest, apply_result) {
   invariantGraph.addImplicitConstraintNode(std::make_shared<InvariantGraphRoot>(
       invariantGraph, std::vector<VarNodeId>{a, b}));
 
-  invariantGraph.construct();
   invariantGraph.close();
+  const auto solverMapping = invariantGraph.construct(solver);
 
-  EXPECT_NE(invariantGraph.varNode(a).varId(), propagation::NULL_ID);
-  EXPECT_NE(invariantGraph.varNode(b).varId(), propagation::NULL_ID);
-  EXPECT_NE(invariantGraph.varNode(output).varId(), propagation::NULL_ID);
+  EXPECT_NE(solverMapping.solverId(a), propagation::NULL_ID);
+  EXPECT_NE(solverMapping.solverId(b), propagation::NULL_ID);
+  EXPECT_NE(solverMapping.solverId(output), propagation::NULL_ID);
 }
 
 TEST(InvariantGraphTest, ApplyGraph) {
-  propagation::Solver solver;
-  InvariantGraph invariantGraph(solver);
+  InvariantGraph invariantGraph;
+  invariantGraph.open();
 
   const VarNodeId a1 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
@@ -71,8 +71,9 @@ TEST(InvariantGraphTest, ApplyGraph) {
   invariantGraph.addInvariantNode(
       std::make_shared<IntPlusNode>(invariantGraph, output1, output2, output3));
 
-  invariantGraph.construct();
   invariantGraph.close();
+  propagation::Solver solver;
+  const auto solverMapping = invariantGraph.construct(solver);
 
   // 7 variables
   EXPECT_GE(solver.numVars(), 7);
@@ -82,8 +83,6 @@ TEST(InvariantGraphTest, ApplyGraph) {
 }
 
 TEST(InvariantGraphTest, SplitSimpleGraph) {
-  propagation::Solver solver;
-  InvariantGraph invariantGraph(solver);
   /* Graph:
    *
    *  a   b     c   d
@@ -99,6 +98,9 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
    *       output
    *
    */
+
+  InvariantGraph invariantGraph;
+  invariantGraph.open();
 
   const VarNodeId a =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
@@ -117,8 +119,9 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
   invariantGraph.addInvariantNode(
       std::make_shared<IntPlusNode>(invariantGraph, c, d, output));
 
-  invariantGraph.construct();
   invariantGraph.close();
+  propagation::Solver solver;
+  const auto solverMapping = invariantGraph.construct(solver);
 
   // a, b, c, d, output
   // x_copy
@@ -131,8 +134,6 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
 }
 
 TEST(InvariantGraphTest, SplitGraph) {
-  propagation::Solver solver;
-  InvariantGraph invariantGraph(solver);
   /* Graph:
    *
    * 0_0 0_1   0_0 0_1      n_0 n_1
@@ -148,6 +149,9 @@ TEST(InvariantGraphTest, SplitGraph) {
    *       output
    *
    */
+
+  InvariantGraph invariantGraph;
+  invariantGraph.open();
 
   const size_t numInvariants = 5;
   const size_t numInputs = 5;
@@ -174,8 +178,9 @@ TEST(InvariantGraphTest, SplitGraph) {
         output));
   }
 
-  invariantGraph.construct();
   invariantGraph.close();
+  propagation::Solver solver;
+  const auto solverMapping = invariantGraph.construct(solver);
 
   // Each invariant has numInputs inputs
   // Each invariant has 1 output
@@ -186,8 +191,6 @@ TEST(InvariantGraphTest, SplitGraph) {
 }
 
 TEST(InvariantGraphTest, BreakSimpleCycle) {
-  propagation::Solver solver;
-  InvariantGraph invariantGraph(solver);
   /* Graph:
    *
    *      +---------------+
@@ -203,6 +206,8 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
    * output1--+  output2--+
    *
    */
+  InvariantGraph invariantGraph;
+  invariantGraph.open();
 
   const VarNodeId x1 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
@@ -219,8 +224,9 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
   invariantGraph.addInvariantNode(
       std::make_shared<IntPlusNode>(invariantGraph, output1, x2, output2));
 
-  invariantGraph.construct();
   invariantGraph.close();
+  propagation::Solver solver;
+  const auto solverMapping = invariantGraph.construct(solver);
 
   // x1, x2, output1, output2
   // the pivot
@@ -234,8 +240,6 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
 }
 
 TEST(InvariantGraphTest, BreakElementIndexCycle) {
-  propagation::Solver solver;
-  InvariantGraph invariantGraph(solver);
   /* Graph:
    *
    *     x11   x12    x21   x22
@@ -250,6 +254,8 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
    *  |                   |
    *  +-------------------+
    */
+  InvariantGraph invariantGraph;
+  invariantGraph.open();
 
   const VarNodeId x11 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 1));
@@ -270,8 +276,9 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
   invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
       invariantGraph, output1, std::vector<VarNodeId>{x21, x22}, output2, 0));
 
-  invariantGraph.construct();
   invariantGraph.close();
+  propagation::Solver solver;
+  const auto solverMapping = invariantGraph.construct(solver);
 
   // x11, x12, x21, x22, output1, output1
   // the pivot
@@ -285,8 +292,6 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
 }
 
 TEST(InvariantGraphTest, AllowDynamicCycle) {
-  propagation::Solver solver;
-  InvariantGraph invariantGraph(solver);
   /* Graph:
    *
    *             +---------------------+
@@ -302,6 +307,8 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
    *        output1--+        output2--+
    *
    */
+  InvariantGraph invariantGraph;
+  invariantGraph.open();
 
   const VarNodeId idx1 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2));
@@ -322,8 +329,9 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
   invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
       invariantGraph, idx2, std::vector<VarNodeId>{output1, x2}, output2, 1));
 
-  invariantGraph.construct();
   invariantGraph.close();
+  propagation::Solver solver;
+  const auto solverMapping = invariantGraph.construct(solver);
 
   // idx1, x1, idx2, x2, output1, output2
   EXPECT_GE(solver.numVars(), 6);

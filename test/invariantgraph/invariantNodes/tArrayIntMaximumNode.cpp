@@ -98,9 +98,9 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
     lb = std::max(lb, varNode(var).lowerBound());
   }
 
-  propagation::Solver solver;
-  _invariantGraph->construct();
   _invariantGraph->close();
+  _solverMapping =
+      std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
     [[maybe_unused]] const Int expected = computeOutput(true);

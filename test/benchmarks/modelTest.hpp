@@ -8,6 +8,7 @@
 #include <string>
 
 #include "atlantis/fznBackend.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/searchStatistics.hpp"
 
@@ -19,14 +20,20 @@ static void testModelFile(const char* modelFile,
   std::filesystem::path modelFilePath(
       (std::string(FZN_DIR) + "/" + modelFile).c_str());
   logging::Logger logger(stdout, logLvl);
-  FznBackend backend(logger, std::move(modelFilePath));
+  FznBackend backend(logger, std::move(modelFilePath), 4,
+                     search::SearchType::BEAMSEARCH);
   if (seed.has_value()) {
     backend.setRandomSeed(seed.value());
   }
   backend.setTimelimit(std::chrono::seconds(2));
-  const auto statistics = backend.solve(logger);
-  // Don't log to std::cout, since that would interfere with MiniZinc.
-  statistics.display(std::cerr);
+  std::optional<search::SavedAssignment> solution{};
+  backend.setOnSolution(
+      [&solution](const search::SavedAssignment& sol) { solution = sol; });
+  backend.setOnFinish([&](const bool hasSatisfyingSolution) {
+    EXPECT_EQ(hasSatisfyingSolution, solution.has_value());
+  });
+  backend.solve(logger);
+  backend.join(logger);
 }
 
 }  // namespace atlantis::testing

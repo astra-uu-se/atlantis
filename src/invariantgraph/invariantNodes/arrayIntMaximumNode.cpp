@@ -81,25 +81,25 @@ bool ArrayIntMaximumNode::replace() {
   return true;
 }
 
-void ArrayIntMaximumNode::registerOutputVars() {
+void ArrayIntMaximumNode::registerOutputVars(propagation::SolverBase& solver,
+                                             SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() == 1) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .setVarId(solver().makeIntView<propagation::IntMaxView>(
-            solver(), invariantGraph().varId(staticInputVarNodeIds().front()),
-            _lb));
+    mapping.setSolverId(
+        outputVarNodeIds().front(),
+        solver.makeIntView<propagation::IntMaxView>(
+            solver, mapping.solverId(staticInputVarNodeIds().front()), _lb));
   } else if (!staticInputVarNodeIds().empty()) {
-    makeSolverVar(outputVarNodeIds().front());
+    makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void ArrayIntMaximumNode::registerNode() {
+void ArrayIntMaximumNode::registerNode(propagation::SolverBase& solver,
+                                       SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
@@ -108,13 +108,12 @@ void ArrayIntMaximumNode::registerNode() {
   std::ranges::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars),
-      [&](const auto& node) { return invariantGraph().varId(node); });
+      [&](const auto& node) { return mapping.solverId(node); });
 
-  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
-  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
-  solver().makeInvariant<propagation::Max>(
-      solver(), invariantGraph().varId(outputVarNodeIds().front()),
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
+  solver.makeInvariant<propagation::Max>(
+      solver, mapping.solverId(outputVarNodeIds().front()),
       std::move(solverVars));
 }
 

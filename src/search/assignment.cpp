@@ -2,25 +2,27 @@
 
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
+#include "atlantis/search/savedAssignment.hpp"
 
 namespace atlantis::search {
 
-Assignment::Assignment(propagation::Solver& solver,
-                       neighborhoods::Neighborhood& neighborhood,
-                       propagation::VarViewId violation,
-                       propagation::VarViewId objective,
-                       ObjectiveDirection objectiveDirection,
-                       Int objectiveOptimalValue)
+Assignment::Assignment(
+    propagation::Solver& solver,
+    std::shared_ptr<neighborhoods::Neighborhood> neighborhood,
+    propagation::VarViewId violation, propagation::VarViewId objective,
+    ObjectiveDirection objectiveDirection, Int objectiveOptimalValue)
     : _solver(solver),
       _neighborhood(neighborhood),
       _violation(violation),
       _objective(objective),
       _objectiveDirection(objectiveDirection),
-      _objectiveOptimalValue(objectiveOptimalValue) {}
+      _objectiveOptimalValue(objectiveOptimalValue) {
+  assert(_neighborhood != nullptr);
+}
 
 Cost Assignment::initialize(RandomProvider& randomProvider) {
   _solver.beginMove();
-  _neighborhood.initialize(randomProvider, *this);
+  _neighborhood->initialize(randomProvider, *this);
   _solver.endMove();
 
   _solver.beginCommit();
@@ -40,7 +42,7 @@ Cost Assignment::initialize(RandomProvider& randomProvider) {
 
 Cost Assignment::performProbe(RandomProvider& randomProvider) {
   _solver.beginMove();
-  _neighborhood.randomMove(randomProvider, *this);
+  _neighborhood->randomMove(randomProvider, *this);
   _solver.endMove();
 
   _solver.beginProbe();
@@ -61,7 +63,7 @@ Cost Assignment::performProbe(RandomProvider& randomProvider) {
 void Assignment::commitLastProbe() {
   const Timestamp ts = _solver.currentTimestamp();
 
-  _neighborhood.commitIf(*this);
+  _neighborhood->commitIf(*this);
 
   _solver.beginMove();
   for (const auto varId : searchVars()) {
@@ -79,6 +81,15 @@ void Assignment::commitLastProbe() {
 
 Int Assignment::currentValue(propagation::VarViewId var) const {
   return _solver.currentValue(var);
+}
+
+std::unordered_map<propagation::VarId, Int> Assignment::currentValues() const {
+  std::unordered_map<propagation::VarId, Int> saved;
+  for (auto var : searchVars()) {
+    saved[var] = currentValue(var);
+  }
+
+  return saved;
 }
 
 Int Assignment::committedValue(propagation::VarViewId var) const {
@@ -109,6 +120,24 @@ Timestamp Assignment::currentTimestamp() const {
 
 ObjectiveDirection Assignment::objectiveDirection() const {
   return _objectiveDirection;
+}
+
+Cost Assignment::getCost() const {
+  return {
+      _violation == propagation::NULL_ID ? 0 : _solver.currentValue(_violation),
+      _objective == propagation::NULL_ID ? 0 : _solver.currentValue(_objective),
+      _objectiveDirection};
+}
+
+void Assignment::setAssignment(const SavedAssignment& saved) const {
+  _solver.beginMove();
+  _solver.updateSearchValues(saved.getSearchValues());
+  _solver.endMove();
+
+  _solver.beginCommit();
+  _solver.query(_violation);
+  _solver.query(_objective);
+  _solver.endCommit();
 }
 
 }  // namespace atlantis::search

@@ -28,7 +28,7 @@ class SolverBase {
 
   void updateValue(Timestamp, VarId, Int val);
 
-  void updateValue(VarId id, Int val) {
+  [[gnu::always_inline]] void updateValue(VarId id, Int val) {
     updateValue(_currentTimestamp, id, val);
   }
 
@@ -96,6 +96,8 @@ class SolverBase {
   void commitInvariantIf(Timestamp, InvariantId);
 
   void commitInvariant(InvariantId);
+
+  void updateSearchValues(const std::vector<std::pair<VarId, Int>>& values);
 
   //--------------------- Registration ---------------------
   /**

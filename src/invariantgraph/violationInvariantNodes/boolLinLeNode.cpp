@@ -102,43 +102,46 @@ void BoolLinLeNode::updateState() {
   }
 }
 
-void BoolLinLeNode::registerOutputVars() {
-  if (violationVarId() == propagation::NULL_ID) {
-    _intermediate = solver().makeIntVar(0, 0, 0);
+void BoolLinLeNode::registerOutputVars(propagation::SolverBase& solver,
+                                       SolverMapping& mapping) const {
+  if (violationVarId(mapping) == propagation::NULL_ID) {
+    mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
     if (shouldHold()) {
-      setViolationVarId(solver().makeIntView<propagation::LessEqualConst>(
-          solver(), _intermediate, _bound));
+      setViolationVarId(solver.makeIntView<propagation::LessEqualConst>(
+                            solver, mapping.intermediateId(id()), _bound),
+                        mapping);
     } else {
       assert(!isReified());
-      setViolationVarId(solver().makeIntView<propagation::GreaterEqualConst>(
-          solver(), _intermediate, _bound + 1));
+      setViolationVarId(solver.makeIntView<propagation::GreaterEqualConst>(
+                            solver, mapping.intermediateId(id()), _bound + 1),
+                        mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void BoolLinLeNode::registerNode() {
-  assert(violationVarId() != propagation::NULL_ID);
-  assert(violationVarId().isView());
+void BoolLinLeNode::registerNode(propagation::SolverBase& solver,
+                                 SolverMapping& mapping) const {
+  assert(violationVarId(mapping) != propagation::NULL_ID);
+  assert(violationVarId(mapping).isView());
 
-  assert(_intermediate != propagation::NULL_ID);
-  assert(_intermediate.isVar());
+  assert(mapping.intermediateId(id()) != propagation::NULL_ID);
+  assert(mapping.intermediateId(id()).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   std::ranges::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars), [&](const VarNodeId varNodeId) {
-        assert(invariantGraph().varId(varNodeId) != propagation::NULL_ID);
-        return invariantGraph().varId(varNodeId);
+        assert(mapping.solverId(varNodeId) != propagation::NULL_ID);
+        return mapping.solverId(varNodeId);
       });
-  solver().makeInvariant<propagation::BoolLinear>(solver(), _intermediate,
-                                                  std::vector<Int>(_coeffs),
-                                                  std::move(solverVars));
+  solver.makeInvariant<propagation::BoolLinear>(
+      solver, mapping.intermediateId(id()), std::vector<Int>(_coeffs),
+      std::move(solverVars));
 }
 
 const std::vector<Int>& BoolLinLeNode::coeffs() const { return _coeffs; }

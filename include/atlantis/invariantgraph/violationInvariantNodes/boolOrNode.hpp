@@ -5,8 +5,6 @@
 namespace atlantis::invariantgraph {
 
 class BoolOrNode : public ViolationInvariantNode {
-  propagation::VarViewId _intermediate{propagation::NULL_ID};
-
  public:
   BoolOrNode(InvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
 
@@ -15,9 +13,10 @@ class BoolOrNode : public ViolationInvariantNode {
 
   void init(InvariantNodeId) override;
 
-  void registerOutputVars() override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
-  void registerNode() override;
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   [[nodiscard]] VarNodeId a() const noexcept {
     return staticInputVarNodeIds().front();

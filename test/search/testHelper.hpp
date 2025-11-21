@@ -3,9 +3,9 @@
 #include <gtest/gtest.h>
 
 #include "atlantis/propagation/solver.hpp"
-#include "atlantis/search/annealer.hpp"
 #include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "atlantis/search/assignment.hpp"
+#include "atlantis/search/metaheuristic.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 
@@ -14,14 +14,13 @@ namespace atlantis::testing {
 using namespace atlantis::search;
 using namespace atlantis::search::neighborhoods;
 
-class AlwaysAcceptingAnnealer : public Annealer {
+class AlwaysAcceptingMetaHeuristic : public MetaHeuristic {
  public:
-  AlwaysAcceptingAnnealer(RandomProvider& random, AnnealingSchedule& schedule,
-                          const Assignment& assignment)
-      : Annealer(random, schedule, assignment) {}
+  AlwaysAcceptingMetaHeuristic() : MetaHeuristic() {}
 
- protected:
-  [[nodiscard]] bool accept(Int) override { return true; }
+  void start() override {}
+  [[nodiscard]] bool acceptMove(const Cost&) override { return true; }
+  [[nodiscard]] bool isFinished() const override { return false; }
 };
 
 class MockNeighborhood : public Neighborhood {

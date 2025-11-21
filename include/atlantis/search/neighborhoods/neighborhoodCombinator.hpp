@@ -5,14 +5,11 @@
 #include <vector>
 
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
+#include "atlantis/search/searchVariable.hpp"
 #include "atlantis/types.hpp"
 
 namespace atlantis::logging {
 class Logger;
-}
-
-namespace atlantis::search {
-class SearchVar;
 }
 
 namespace atlantis::search::neighborhoods {

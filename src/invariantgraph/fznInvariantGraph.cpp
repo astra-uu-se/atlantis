@@ -87,9 +87,8 @@ DomainType domainType(const fznparser::IntVar& var) {
   return domainType(var.annotations(), defaultDomainType);
 }
 
-FznInvariantGraph::FznInvariantGraph(propagation::SolverBase& solver,
-                                     bool breakDynamicCycles)
-    : InvariantGraph(solver, breakDynamicCycles) {}
+FznInvariantGraph::FznInvariantGraph(bool breakDynamicCycles)
+    : InvariantGraph(breakDynamicCycles) {}
 
 void FznInvariantGraph::build(const fznparser::Model& model) {
   createNodes(model);
@@ -110,6 +109,13 @@ void FznInvariantGraph::build(const fznparser::Model& model) {
         throw FznException("Objective variable is not a BoolVar or IntVar");
       }
     }
+    assert(model.solveType().problemType() != fznparser::ProblemType::SATISFY);
+    _objectiveDirection =
+        model.solveType().problemType() == fznparser::ProblemType::MINIMIZE
+            ? ObjectiveDirection::MINIMIZE
+            : ObjectiveDirection::MAXIMIZE;
+  } else {
+    _objectiveDirection = ObjectiveDirection::NONE;
   }
 }
 
@@ -235,10 +241,12 @@ std::vector<FznOutputVar> FznInvariantGraph::outputBoolVars() const noexcept {
   outputVars.reserve(_outputBoolVars.size());
   for (const auto& [identifier, nId] : _outputBoolVars) {
     const VarNode node = varNodeConst(nId);
-    if (node.isFixed() || node.varId() == propagation::NULL_ID) {
+    if (node.isFixed() ||
+        (node.staticInputTo().empty() && node.dynamicInputTo().empty() &&
+         node.definingNodes().empty())) {
       outputVars.emplace_back(identifier, node.lowerBound());
     } else {
-      outputVars.emplace_back(identifier, node.varId());
+      outputVars.emplace_back(identifier, nId);
     }
   }
   return outputVars;
@@ -249,10 +257,12 @@ std::vector<FznOutputVar> FznInvariantGraph::outputIntVars() const noexcept {
   outputVars.reserve(_outputIntVars.size());
   for (const auto& [identifier, nId] : _outputIntVars) {
     const VarNode node = varNodeConst(nId);
-    if (node.isFixed() || node.varId() == propagation::NULL_ID) {
+    if (node.isFixed() ||
+        (node.staticInputTo().empty() && node.dynamicInputTo().empty() &&
+         node.definingNodes().empty())) {
       outputVars.emplace_back(identifier, node.lowerBound());
     } else {
-      outputVars.emplace_back(identifier, node.varId());
+      outputVars.emplace_back(identifier, nId);
     }
   }
   return outputVars;
@@ -269,10 +279,12 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputBoolVarArrays()
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
-      if (node.isFixed() || node.varId() == propagation::NULL_ID) {
+      if (node.isFixed() ||
+          (node.staticInputTo().empty() && node.dynamicInputTo().empty() &&
+           node.definingNodes().empty())) {
         fznArray.vars.emplace_back(node.lowerBound());
       } else {
-        fznArray.vars.emplace_back(node.varId());
+        fznArray.vars.emplace_back(nId);
       }
     }
   }
@@ -290,14 +302,20 @@ std::vector<FznOutputVarArray> FznInvariantGraph::outputIntVarArrays()
     fznArray.vars.reserve(outputArray.varNodeIds.size());
     for (const VarNodeId nId : outputArray.varNodeIds) {
       const VarNode& node = varNodeConst(nId);
-      if (node.isFixed() || node.varId() == propagation::NULL_ID) {
+      if (node.isFixed() ||
+          (node.staticInputTo().empty() && node.dynamicInputTo().empty() &&
+           node.definingNodes().empty())) {
         fznArray.vars.emplace_back(node.lowerBound());
       } else {
-        fznArray.vars.emplace_back(node.varId());
+        fznArray.vars.emplace_back(nId);
       }
     }
   }
   return outputVarArrays;
+}
+FznOutput FznInvariantGraph::generateFznOutput() const {
+  return {outputBoolVars(), outputIntVars(), outputBoolVarArrays(),
+          outputIntVarArrays()};
 }
 
 void FznInvariantGraph::createNodes(const fznparser::Model& model) {

@@ -1,8 +1,12 @@
 #pragma once
 
+#include <optional>
+
+#include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "atlantis/search/annealing/types.hpp"
 #include "atlantis/search/cost.hpp"
+#include "atlantis/search/metaheuristic.hpp"
 
 namespace atlantis::search {
 
@@ -15,9 +19,9 @@ class RandomProvider;
  * P. Van Hentenryck and L. Michel. Constraint-Based Local Search. The MIT
  * Press, 2005.
  */
-class Annealer {
+class Annealer : public MetaHeuristic {
   RandomProvider& _random;
-  AnnealingSchedule& _schedule;
+  std::unique_ptr<AnnealingSchedule> _schedule;
   Cost _cost;
   RoundStatistics _statistics;
   UInt _requiredMovesPerRound;
@@ -30,26 +34,29 @@ class Annealer {
   UInt _objectiveWeight{1};
 
  public:
-  Annealer(RandomProvider&, AnnealingSchedule&, const Assignment&);
+  Annealer(RandomProvider&, std::unique_ptr<AnnealingSchedule>&&,
+           const Assignment&);
 
-  virtual ~Annealer() = default;
+  ~Annealer() override = default;
 
-  void start();
+  void start() override;
 
-  [[nodiscard]] bool isFinished() const;
+  [[nodiscard]] bool isFinished() const override;
 
+  bool acceptMove(const Cost& cost) override;
+
+ protected:
   void nextRound();
 
   [[nodiscard]] bool shouldRunRound() const;
 
-  bool acceptMove(const Cost& cost);
-
   [[nodiscard]] const RoundStatistics& currentRoundStatistics() const;
 
- protected:
   virtual bool accept(Int moveCost);
 
   [[nodiscard]] Int evaluate(const Cost& cost) const;
+
+  void logRoundStatistics(logging::Logger&);
 };
 
 }  // namespace atlantis::search

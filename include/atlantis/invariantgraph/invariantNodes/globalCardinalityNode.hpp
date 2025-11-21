@@ -6,7 +6,6 @@ namespace atlantis::invariantgraph {
 class GlobalCardinalityNode : public InvariantNode {
   std::vector<Int> _cover;
   std::vector<Int> _countOffsets;
-  std::vector<propagation::VarViewId> _intermediate;
 
  public:
   explicit GlobalCardinalityNode(InvariantGraph& graph,
@@ -17,9 +16,10 @@ class GlobalCardinalityNode : public InvariantNode {
 
   void init(InvariantNodeId) override;
 
-  void registerOutputVars() override;
+  void registerOutputVars(propagation::SolverBase&,
+                          SolverMapping&) const override;
 
-  void registerNode() override;
+  void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   void updateState() override;
 

@@ -44,9 +44,8 @@ static void testChallenge(const std::string& fznFilePath) {
   logging::Logger logger(stdout, logging::Level::LVL_DEBUG);
   FznBackend backend(logger, std::move(modelFilePath));
   backend.setTimelimit(std::chrono::milliseconds(1000));
-  const auto statistics = backend.solve(logger);
-  // Don't log to std::cout, since that would interfere with MiniZinc.
-  statistics.display(std::cerr);
+  backend.solve(logger);
+  backend.join(logger);
 }
 
 class MznChallenge : public ::testing::Test {

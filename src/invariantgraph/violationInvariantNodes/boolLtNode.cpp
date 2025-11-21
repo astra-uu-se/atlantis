@@ -108,32 +108,33 @@ bool BoolLtNode::replace() {
   return true;
 }
 
-void BoolLtNode::registerOutputVars() {
-  registerViolation();
+void BoolLtNode::registerOutputVars(propagation::SolverBase& solver,
+                                    SolverMapping& mapping) const {
+  registerViolation(solver, mapping);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void BoolLtNode::registerNode() {
-  assert(violationVarId() != propagation::NULL_ID);
-  assert(violationVarId().isVar());
+void BoolLtNode::registerNode(propagation::SolverBase& solver,
+                              SolverMapping& mapping) const {
+  assert(violationVarId(mapping) != propagation::NULL_ID);
+  assert(violationVarId(mapping).isVar());
 
-  assert(invariantGraph().varId(a()) != propagation::NULL_ID);
-  assert(invariantGraph().varId(b()) != propagation::NULL_ID);
+  assert(mapping.solverId(a()) != propagation::NULL_ID);
+  assert(mapping.solverId(b()) != propagation::NULL_ID);
 
   if (shouldHold()) {
-    solver().makeViolationInvariant<propagation::BoolLessThan>(
-        solver(), violationVarId(), invariantGraph().varId(a()),
-        invariantGraph().varId(b()));
+    solver.makeViolationInvariant<propagation::BoolLessThan>(
+        solver, violationVarId(mapping), mapping.solverId(a()),
+        mapping.solverId(b()));
   } else {
     assert(!isReified());
-    solver().makeViolationInvariant<propagation::BoolLessEqual>(
-        solver(), violationVarId(), invariantGraph().varId(b()),
-        invariantGraph().varId(a()));
+    solver.makeViolationInvariant<propagation::BoolLessEqual>(
+        solver, violationVarId(mapping), mapping.solverId(b()),
+        mapping.solverId(a()));
   }
 }
 

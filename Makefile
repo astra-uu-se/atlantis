@@ -1,5 +1,5 @@
-C_COMPILER=$(shell which gcc-14)
-CXX_COMPILER=$(shell which g++-14)
+C_COMPILER=$(shell which gcc-13)
+CXX_COMPILER=$(shell which g++-13)
 export CMAKE_OPTIONS+= ${ENV_CMAKE_OPTIONS} -DCMAKE_C_COMPILER=${C_COMPILER} -DCMAKE_CXX_COMPILER=${CXX_COMPILER}
 MKFILE_PATH=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BUILD_DIR=${MKFILE_PATH}build
@@ -7,11 +7,13 @@ BUILD_DIR=${MKFILE_PATH}build
 CMAKE=$(shell which cmake)
 
 BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
-NUM_BENCHMARK_REPETITIONS=5
+NUM_BENCHMARK_REPETITIONS=3
 BENCHMARK_FILTER="^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|NQueens|TSPTW|VesselLoading)\/[A-Za-z]"
 BENCHMARK_FILTER_SYNTH="^(ElementVarTree|LinearTree|TSP|TSPTWAllDiff)\/[A-Za-z]"
+BENCHMARK_FILTER_PAR="^Par(TSP|NQueens)"
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 
+DZN_DIR=${MKFILE_PATH}dzn
 MZN_MODEL_DIR=${MKFILE_PATH}mzn-models
 FZN_MODEL_DIR=${MKFILE_PATH}fzn-models
 MZN_PATH=~/minizinc/MiniZincIDE-build1187512964-bundle-linux-x86_64/bin/minizinc
@@ -38,12 +40,12 @@ define compile_mzn_dzn
 	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 		${MZN_MODEL_DIR}/$(1).mzn \
 		${MZN_MODEL_DIR}/$(2).dzn \
-		--fzn ${FZN_MODEL_DIR}/$(1).fzn \
+		--fzn ${FZN_MODEL_DIR}/$(3).fzn \
 		--no-output-ozn
 	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c --use-gecode \
 		${MZN_MODEL_DIR}/$(1).mzn \
 		${MZN_MODEL_DIR}/$(2).dzn \
-		--fzn ${FZN_MODEL_DIR}/$(1)_gecode.fzn \
+		--fzn ${FZN_MODEL_DIR}/$(3)_gecode.fzn \
 		--no-output-ozn
 endef
 
@@ -132,6 +134,17 @@ benchmark-synth: build-benchmarks
 									--benchmark_filter=${BENCHMARK_FILTER_SYNTH}
 	python3 ${MKFILE_PATH}plot-formatter.py -v --input=${$@_JSON_FILE} --file-suffix=${$@_TIMESTAMP} --output-dir=${BENCHMARK_PLOT_DIR}
 
+.PHONY: benchmark-par
+benchmark-par: build-benchmarks fzn-benchmark
+	mkdir -p ${BENCHMARK_JSON_DIR}
+	mkdir -p ${BENCHMARK_PLOT_DIR}
+	$(eval $@_TIMESTAMP := $(shell date +"%Y-%m-%d-%H-%M-%S-%3N"))
+	$(eval $@_JSON_FILE := ${BENCHMARK_JSON_DIR}/${$@_TIMESTAMP}.json)
+	exec ${BUILD_DIR}/runBenchmarks --benchmark_format=json \
+	                                --benchmark_out=${$@_JSON_FILE} \
+									--benchmark_repetitions=${NUM_BENCHMARK_REPETITIONS} \
+									--benchmark_filter=${BENCHMARK_FILTER_PAR}
+
 .PHONY: all
 all: clean build build-tests build-benchmarks
 
@@ -140,11 +153,36 @@ fzn:
 	@$(call compile_mzn,comp_domain_ann)
 	@$(call compile_mzn,simple_minimize)
 	@$(call compile_mzn,all_different_minimize)
-	@$(call compile_mzn_dzn,car_sequencing,car_sequencing)
-	@$(call compile_mzn_dzn,tsp_alldiff,tsp_17)
-	@$(call compile_mzn_dzn,tsp,tsp_17)
+	@$(call compile_mzn_dzn,car_sequencing,car_sequencing,car_sequencing)
+	@$(call compile_mzn_dzn,tsp_alldiff,tsp_17,tsp_alldiff)
+	@$(call compile_mzn_dzn,tsp,tsp_17,tsp)
+	@$(call compile_mzn_dzn,tsp,tsp_201,tsp_201)
 	@$(call compile_mzn_param,magic_square,n=3)
 	@$(call compile_mzn_param,n_queens,n=16)
+
+.PHONY: fzn-benchmark
+fzn-benchmark:
+	mkdir -p ${FZN_MODEL_DIR}/tsp
+	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/*001.*), \
+		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+			${MZN_MODEL_DIR}/tsp.mzn \
+			${dzn_file} \
+			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
+			--no-output-ozn;)
+	mkdir -p ${FZN_MODEL_DIR}/n_queens
+	$(foreach queens, 8 16 24 32 48 64 128 192 256 512 768 1024, \
+		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+			${MZN_MODEL_DIR}/n_queens.mzn \
+			-D n=${queens} \
+			--fzn ${FZN_MODEL_DIR}/n_queens/${queens}.fzn \
+			--no-output-ozn;)
+	mkdir -p ${FZN_MODEL_DIR}/knapsack
+	$(foreach dzn_file, $(wildcard ${DZN_DIR}/knapsack/*), \
+		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+			${MZN_MODEL_DIR}/knap.mzn \
+			${dzn_file} \
+			--fzn ${FZN_MODEL_DIR}/knapsack/$$(basename ${dzn_file} .dzn).fzn \
+			--no-output-ozn;)
 
 .PHONY: clang-format
 clang-format:

@@ -63,47 +63,45 @@ bool IntPlusNode::replace() {
   return true;
 }
 
-void IntPlusNode::registerOutputVars() {
+void IntPlusNode::registerOutputVars(propagation::SolverBase& solver,
+                                     SolverMapping& mapping) const {
   if (!staticInputVarNodeIds().empty()) {
     if (_offset != 0) {
       if (staticInputVarNodeIds().size() == 1) {
-        invariantGraph()
-            .varNode(outputVarNodeIds().front())
-            .setVarId(solver().makeIntView<propagation::IntOffsetView>(
-                solver(),
-                invariantGraph().varId(staticInputVarNodeIds().front()),
+        mapping.setSolverId(
+            outputVarNodeIds().front(),
+            solver.makeIntView<propagation::IntOffsetView>(
+                solver, mapping.solverId(staticInputVarNodeIds().front()),
                 _offset));
       } else {
-        _intermediate = solver().makeIntVar(0, 0, 0);
-        invariantGraph()
-            .varNode(outputVarNodeIds().front())
-            .setVarId(solver().makeIntView<propagation::IntOffsetView>(
-                solver(), _intermediate, _offset));
+        mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+        mapping.setSolverId(outputVarNodeIds().front(),
+                            solver.makeIntView<propagation::IntOffsetView>(
+                                solver, mapping.intermediateId(id()), _offset));
       }
     } else {
-      makeSolverVar(outputVarNodeIds().front());
+      makeSolverVar(outputVarNodeIds().front(), solver, mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void IntPlusNode::registerNode() {
+void IntPlusNode::registerNode(propagation::SolverBase& solver,
+                               SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
-  assert(invariantGraph().varId(outputVarNodeIds().front()) !=
-         propagation::NULL_ID);
-  assert(invariantGraph().varId(outputVarNodeIds().front()).isVar());
+  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
 
-  solver().makeInvariant<propagation::Plus>(
-      solver(), invariantGraph().varId(outputVarNodeIds().front()),
-      invariantGraph().varId(staticInputVarNodeIds().front()),
-      invariantGraph().varId(staticInputVarNodeIds().back()));
+  solver.makeInvariant<propagation::Plus>(
+      solver, mapping.solverId(outputVarNodeIds().front()),
+      mapping.solverId(staticInputVarNodeIds().front()),
+      mapping.solverId(staticInputVarNodeIds().back()));
 }
 
 std::string IntPlusNode::dotLangIdentifier() const { return "int_plus"; }

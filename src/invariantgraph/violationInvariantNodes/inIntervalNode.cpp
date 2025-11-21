@@ -63,30 +63,35 @@ void InIntervalNode::updateState() {
   }
 }
 
-void InIntervalNode::registerOutputVars() {
-  if (violationVarId() == propagation::NULL_ID) {
+void InIntervalNode::registerOutputVars(propagation::SolverBase& solver,
+                                        SolverMapping& mapping) const {
+  if (violationVarId(mapping) == propagation::NULL_ID) {
     if (shouldHold()) {
-      setViolationVarId(solver().makeIntView<propagation::InIntervalConst>(
-          solver(), invariantGraph().varId(staticInputVarNodeIds().front()),
-          _lb, _ub));
+      setViolationVarId(
+          solver.makeIntView<propagation::InIntervalConst>(
+              solver, mapping.solverId(staticInputVarNodeIds().front()), _lb,
+              _ub),
+          mapping);
     } else {
       assert(!isReified());
-      _intermediate = solver().makeIntView<propagation::InIntervalConst>(
-          solver(), invariantGraph().varId(staticInputVarNodeIds().front()),
-          _lb, _ub);
-      setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
-          solver(), _intermediate, 0));
+      mapping.setIntermediateId(
+          id(), solver.makeIntView<propagation::InIntervalConst>(
+                    solver, mapping.solverId(staticInputVarNodeIds().front()),
+                    _lb, _ub));
+      setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
+                            solver, mapping.intermediateId(id()), 0),
+                        mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void InIntervalNode::registerNode() {}
+void InIntervalNode::registerNode(propagation::SolverBase&,
+                                  SolverMapping&) const {}
 
 std::string InIntervalNode::dotLangIdentifier() const { return "in_interval"; }
 

@@ -7,16 +7,14 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/solverMapping.hpp"
 #include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "implicitConstraintNode.hpp"
 
 namespace atlantis {
 class SearchDomain;
-}
-
-namespace atlantis::propagation {
-class SolverBase;
 }
 
 namespace atlantis::search::neighborhoods {
@@ -30,7 +28,6 @@ class InvariantNode;
 class ImplicitConstraintNode;
 
 class InvariantGraph {
-  propagation::SolverBase& _solver;
   std::vector<VarNode> _varNodes;
   std::unordered_map<std::string, VarNodeId> _namedVarNodeIndices;
   std::unordered_map<Int, VarNodeId> _intVarNodeIndices;
@@ -39,32 +36,33 @@ class InvariantGraph {
   std::vector<std::shared_ptr<InvariantNode>> _invariantNodes;
   std::vector<std::shared_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
   bool _breakDynamicCycles;
+  bool _isOpen{false};
 
   void populateRootNode();
 
   void breakSelfCycles();
 
-  void createVars();
-  void createImplicitConstraints();
-  void createInvariants();
-  propagation::VarViewId createViolations();
+  void createVars(propagation::SolverBase&, SolverMapping&) const;
+  void createImplicitConstraints(propagation::SolverBase&,
+                                 SolverMapping&) const;
+  void createInvariants(propagation::SolverBase&, SolverMapping&) const;
+  void createNeighborhood(propagation::SolverBase&, SolverMapping&) const;
+
+  propagation::VarViewId createViolations(propagation::SolverBase&,
+                                          SolverMapping&) const;
   void sanity(bool);
 
  protected:
-  propagation::VarViewId _totalViolationVarId{propagation::NULL_ID};
   VarNodeId _objectiveVarNodeId;
+  ObjectiveDirection _objectiveDirection{ObjectiveDirection::NONE};
 
  public:
-  explicit InvariantGraph(propagation::SolverBase& solver,
-                          bool breakDynamicCycles = false);
+  explicit InvariantGraph(bool breakDynamicCycles = false);
+
   virtual ~InvariantGraph() = default;
 
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
-
-  [[nodiscard]] virtual propagation::SolverBase& solver();
-
-  [[nodiscard]] virtual const propagation::SolverBase& solverConst() const;
 
   [[nodiscard]] virtual VarNodeId nextVarNodeId() const;
 
@@ -141,11 +139,6 @@ class InvariantGraph {
 
   [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const;
 
-  [[nodiscard]] propagation::VarViewId varId(
-      const std::string& identifier) const;
-
-  [[nodiscard]] propagation::VarViewId varId(VarNodeId id) const;
-
   [[nodiscard]] bool containsInvariantNode(InvariantNodeId) const;
 
   [[nodiscard]] bool containsImplicitConstraintNode(InvariantNodeId) const;
@@ -169,17 +162,17 @@ class InvariantGraph {
   InvariantNodeId addImplicitConstraintNode(
       std::shared_ptr<ImplicitConstraintNode>&&);
 
-  [[nodiscard]] propagation::VarViewId totalViolationVarId() const;
-
   [[nodiscard]] const VarNode& objectiveVarNode() const;
-
-  [[nodiscard]] propagation::VarViewId objectiveVarId() const;
 
   void breakCycles();
 
-  void construct();
+  void open();
+
+  [[nodiscard]] bool isOpen() const { return _isOpen; };
 
   void close();
+
+  SolverMapping construct(propagation::SolverBase&) const;
 
   void splitMultiDefinedVars();
 
@@ -188,9 +181,6 @@ class InvariantGraph {
   void replaceInvariantNodes();
 
   [[nodiscard]] InvariantGraphRoot& root() const;
-
-  [[nodiscard]] search::neighborhoods::NeighborhoodCombinator neighborhood()
-      const;
 
   void writeDotFile(std::ostream&) const;
 };

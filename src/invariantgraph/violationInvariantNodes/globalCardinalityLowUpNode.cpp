@@ -101,6 +101,16 @@ void GlobalCardinalityLowUpNode::propagate() {
   while (!stack.empty()) {
     const size_t coverIndex = stack.top();
     stack.pop();
+    if (_low[coverIndex] >
+        static_cast<Int>(supportedInputs[coverIndex].size())) {
+      if (!isReified() && shouldHold()) {
+        throw InconsistencyException(
+            "GlobalCardinalityLowUpNode::updateState:");
+      }
+      fixReified(false);
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
     if (_low[coverIndex] ==
         static_cast<Int>(supportedInputs[coverIndex].size())) {
       for (const size_t inputIndex : supportedInputs[coverIndex]) {
@@ -213,49 +223,57 @@ void GlobalCardinalityLowUpNode::updateState() {
   verifyCover();
   propagate();
 
+  if (state() == InvariantNodeState::SUBSUMED) {
+    return;
+  }
+
   if (_cover.empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-void GlobalCardinalityLowUpNode::registerOutputVars() {
-  if (violationVarId() == propagation::NULL_ID) {
+void GlobalCardinalityLowUpNode::registerOutputVars(
+    propagation::SolverBase& solver, SolverMapping& mapping) const {
+  if (violationVarId(mapping) == propagation::NULL_ID) {
     if (!shouldHold()) {
-      _intermediate = solver().makeIntVar(
-          0, 0, static_cast<Int>(staticInputVarNodeIds().size()));
-      setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
-          solver(), _intermediate, 0));
+      mapping.setIntermediateId(
+          id(), solver.makeIntVar(
+                    0, 0, static_cast<Int>(staticInputVarNodeIds().size())));
+      setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
+                            solver, mapping.intermediateId(id()), 0),
+                        mapping);
     } else {
-      registerViolation();
+      registerViolation(solver, mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void GlobalCardinalityLowUpNode::registerNode() {
+void GlobalCardinalityLowUpNode::registerNode(propagation::SolverBase& solver,
+                                              SolverMapping& mapping) const {
   std::vector<propagation::VarViewId> inputVarIds;
-  assert(violationVarId() != propagation::NULL_ID);
-  assert(shouldHold() || _intermediate != propagation::NULL_ID);
-  assert(shouldHold() ? violationVarId().isVar() : _intermediate.isVar());
+  assert(violationVarId(mapping) != propagation::NULL_ID);
+  assert(shouldHold() || mapping.intermediateId(id()) != propagation::NULL_ID);
+  assert(shouldHold() ? violationVarId(mapping).isVar()
+                      : mapping.intermediateId(id()).isVar());
 
-  std::ranges::transform(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      std::back_inserter(inputVarIds),
-      [&](const auto& id) { return invariantGraph().varId(id); });
+  std::ranges::transform(staticInputVarNodeIds().begin(),
+                         staticInputVarNodeIds().end(),
+                         std::back_inserter(inputVarIds),
+                         [&](const auto& id) { return mapping.solverId(id); });
 
   if (shouldHold()) {
-    solver().makeInvariant<propagation::GlobalCardinalityLowUp>(
-        solver(), violationVarId(), std::move(inputVarIds),
+    solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
+        solver, violationVarId(mapping), std::move(inputVarIds),
         std::vector<Int>(_cover), std::vector<Int>(_low),
         std::vector<Int>(_up));
   } else {
-    solver().makeInvariant<propagation::GlobalCardinalityLowUp>(
-        solver(), _intermediate, std::move(inputVarIds),
+    solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
+        solver, mapping.intermediateId(id()), std::move(inputVarIds),
         std::vector<Int>(_cover), std::vector<Int>(_low),
         std::vector<Int>(_up));
   }

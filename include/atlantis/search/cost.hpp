@@ -6,6 +6,8 @@
 
 namespace atlantis::search {
 
+class Assignment;
+
 class Cost {
   Int _violationDegree;
   Int _objective;
@@ -13,6 +15,8 @@ class Cost {
 
  public:
   Cost(Int violationDegree, Int objective, ObjectiveDirection direction);
+
+  Cost(const Assignment &);
 
   /**
    * @return True if this cost has no violated constraints.
@@ -32,7 +36,15 @@ class Cost {
   [[nodiscard]] Int evaluate(UInt violationWeight,
                              UInt objectiveWeight) const noexcept;
 
+  [[nodiscard]] bool isBetterThan(const Cost &other) const;
+
+  [[nodiscard]] bool isStrictlyBetterThan(const Cost &other) const;
+
   [[nodiscard]] std::string toString() const;
+
+  [[nodiscard]] Int getObjective() const { return _objective; }
+
+  [[nodiscard]] Int getViolation() const { return _violationDegree; }
 
   void set(Int violationDegree, Int objective) {
     _violationDegree = violationDegree;

@@ -68,10 +68,11 @@ void SetInNode::updateState() {
   }
 }
 
-void SetInNode::registerOutputVars() {
-  if (violationVarId() == propagation::NULL_ID) {
+void SetInNode::registerOutputVars(propagation::SolverBase& solver,
+                                   SolverMapping& mapping) const {
+  if (violationVarId(mapping) == propagation::NULL_ID) {
     const propagation::VarViewId input =
-        invariantGraph().varId(staticInputVarNodeIds().front());
+        mapping.solverId(staticInputVarNodeIds().front());
     std::vector<DomainEntry> domainEntries;
     domainEntries.reserve((*_values).size());
     std::ranges::transform(
@@ -80,24 +81,26 @@ void SetInNode::registerOutputVars() {
 
     if (!shouldHold()) {
       assert(!isReified());
-      _intermediate = solver().makeIntView<propagation::InDomain>(
-          solver(), input, std::move(domainEntries));
-      setViolationVarId(solver().makeIntView<propagation::NotEqualConst>(
-          solver(), _intermediate, 0));
+      mapping.setIntermediateId(id(),
+                                solver.makeIntView<propagation::InDomain>(
+                                    solver, input, std::move(domainEntries)));
+      setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
+                            solver, mapping.intermediateId(id()), 0),
+                        mapping);
     } else {
-      setViolationVarId(solver().makeIntView<propagation::InDomain>(
-          solver(), input, std::move(domainEntries)));
+      setViolationVarId(solver.makeIntView<propagation::InDomain>(
+                            solver, input, std::move(domainEntries)),
+                        mapping);
     }
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).varId() !=
-               propagation::NULL_ID;
+        return mapping.solverId(vId) != propagation::NULL_ID;
       }));
 }
 
-void SetInNode::registerNode() {}
+void SetInNode::registerNode(propagation::SolverBase&, SolverMapping&) const {}
 
 std::string SetInNode::dotLangIdentifier() const { return "set_in"; }
 

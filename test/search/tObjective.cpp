@@ -32,7 +32,7 @@ class ObjectiveTest : public ::testing::Test {
 };
 
 TEST_F(ObjectiveTest, satisfaction_objective) {
-  Objective searchObjective(*_solver, fznparser::ProblemType::SATISFY);
+  Objective searchObjective(*_solver, ObjectiveDirection::NONE);
 
   const auto violation = install(searchObjective);
 
@@ -49,7 +49,7 @@ TEST_F(ObjectiveTest, minimisation_objective) {
   fznparser::Model model;
   fznparser::IntSet domain(1, 10);
   fznparser::IntVar a(domain.lowerBound(), domain.upperBound(), "a");
-  Objective searchObjective(*_solver, fznparser::ProblemType::MINIMIZE);
+  Objective searchObjective(*_solver, ObjectiveDirection::MINIMIZE);
 
   auto violation = install(searchObjective, domain, 5);
 
@@ -83,7 +83,7 @@ TEST_F(ObjectiveTest, maximisation_objective) {
   fznparser::IntSet domain(1, 10);
   fznparser::IntVar a(domain.lowerBound(), domain.upperBound(), "a");
 
-  Objective searchObjective(*_solver, fznparser::ProblemType::MAXIMIZE);
+  Objective searchObjective(*_solver, ObjectiveDirection::MAXIMIZE);
 
   auto violation = install(searchObjective, domain, 5);
 

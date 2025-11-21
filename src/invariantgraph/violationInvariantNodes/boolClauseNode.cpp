@@ -182,12 +182,14 @@ bool BoolClauseNode::replace() {
   return true;
 }
 
-void BoolClauseNode::registerOutputVars() {
+void BoolClauseNode::registerOutputVars(propagation::SolverBase&,
+                                        SolverMapping&) const {
   throw std::runtime_error(
       "BoolClauseNode::registerOutputVars not implemented");
 }
 
-void BoolClauseNode::registerNode() {
+void BoolClauseNode::registerNode(propagation::SolverBase&,
+                                  SolverMapping&) const {
   throw std::runtime_error("BoolClauseNode::registerNode not implemented");
 }
 

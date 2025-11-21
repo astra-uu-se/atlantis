@@ -51,8 +51,8 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     RC_LOG() << "-----" << std::endl
-             << "FznCountEqTest::isSatisfied(" << to_string(committedValue)
-             << ")" << std::endl;
+             << "fzn_global_cardinality_low_up::isSatisfied("
+             << to_string(committedValue) << ")" << std::endl;
     std::vector<Int> counts(cover.size(), 0);
     std::unordered_map<Int, std::vector<size_t>> valToIndices;
     valToIndices.reserve(cover.size());
@@ -66,7 +66,6 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
     }
     for (const auto& input : inputs) {
       const Int val = intVal(input);
-      RC_LOG() << input << " = " << val << std::endl;
       if (valToIndices.contains(val)) {
         for (const size_t index : valToIndices.at(val)) {
           RC_ASSERT(index < cover.size());

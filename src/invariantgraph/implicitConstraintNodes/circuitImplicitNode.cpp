@@ -27,10 +27,7 @@ void CircuitImplicitNode::init(InvariantNodeId id) {
       }));
 }
 
-std::shared_ptr<search::neighborhoods::Neighborhood>
-CircuitImplicitNode::createNeighborhood() {
-  std::vector<search::SearchVar> searchVars;
-  searchVars.reserve(outputVarNodeIds().size());
+void CircuitImplicitNode::updateDomainTypes() {
   std::vector<Int> freeIndices;
   freeIndices.reserve(outputVarNodeIds().size());
   for (const auto& nId : outputVarNodeIds()) {
@@ -41,9 +38,9 @@ CircuitImplicitNode::createNeighborhood() {
   }
 
   for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
-    auto& varNode = invariantGraph().varNode(outputVarNodeIds().at(i));
-    assert(varNode.varId() != propagation::NULL_ID);
-    searchVars.emplace_back(varNode.varId(), varNode.domain());
+    const auto vId = outputVarNodeIds().at(i);
+    auto& varNode = invariantGraph().varNode(vId);
+    assert(vId != propagation::NULL_ID);
 
     if (varNode.constDomain()->isFixed()) {
       varNode.setDomainType(DomainType::DOM_NONE);
@@ -66,8 +63,31 @@ CircuitImplicitNode::createNeighborhood() {
     varNode.setDomainType(enforceDomain ? DomainType::DOM_DOMAIN
                                         : DomainType::DOM_NONE);
   }
-  return std::make_shared<search::neighborhoods::CircuitNeighborhood>(
-      std::move(searchVars), _offset);
+}
+
+void CircuitImplicitNode::registerNode(propagation::SolverBase&,
+                                       SolverMapping& mapping) const {
+  assert(!mapping.hasNeighborhood(id()));
+
+  std::vector<search::SearchVar> searchVars;
+  searchVars.reserve(outputVarNodeIds().size());
+  std::vector<Int> freeIndices;
+  freeIndices.reserve(outputVarNodeIds().size());
+  for (const auto& nId : outputVarNodeIds()) {
+    const auto& varNode = invariantGraphConst().varNodeConst(nId);
+    if (varNode.isFixed()) {
+      freeIndices.emplace_back(varNode.constDomain()->lowerBound());
+    }
+  }
+
+  for (unsigned long vId : outputVarNodeIds()) {
+    const auto& varNode = invariantGraphConst().varNodeConst(vId);
+    assert(vId != propagation::NULL_ID);
+    searchVars.emplace_back(mapping.solverId(vId), varNode.constDomain());
+  }
+  mapping.setNeighborhood(
+      id(), std::make_shared<search::neighborhoods::CircuitNeighborhood>(
+                std::move(searchVars), _offset));
 }
 
 std::string CircuitImplicitNode::dotLangIdentifier() const { return "circuit"; }

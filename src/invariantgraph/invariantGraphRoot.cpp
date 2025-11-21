@@ -13,20 +13,28 @@ InvariantGraphRoot::InvariantGraphRoot(InvariantGraph& graph,
                                        std::vector<VarNodeId>&& vars)
     : ImplicitConstraintNode(graph, std::move(vars)) {}
 
-std::shared_ptr<search::neighborhoods::Neighborhood>
-InvariantGraphRoot::createNeighborhood() {
+void InvariantGraphRoot::updateDomainTypes() {
+  for (const auto& nId : outputVarNodeIds()) {
+    invariantGraph().varNode(nId).setDomainType(DomainType::DOM_NONE);
+  }
+}
+
+void InvariantGraphRoot::registerNode(propagation::SolverBase&,
+                                      SolverMapping& mapping) const {
+  assert(!mapping.hasNeighborhood(id()));
+
   std::vector<search::SearchVar> searchVars;
   searchVars.reserve(outputVarNodeIds().size());
 
   for (const auto& nId : outputVarNodeIds()) {
-    auto& node = invariantGraph().varNode(nId);
-    assert(node.varId() != propagation::NULL_ID);
-    searchVars.emplace_back(node.varId(), node.constDomain());
-    node.setDomainType(DomainType::DOM_NONE);
+    auto& node = invariantGraphConst().varNodeConst(nId);
+    assert(mapping.solverId(nId) != propagation::NULL_ID);
+    searchVars.emplace_back(mapping.solverId(nId), node.constDomain());
   }
 
-  return std::make_shared<search::neighborhoods::RandomNeighborhood>(
-      std::move(searchVars));
+  mapping.setNeighborhood(
+      id(), std::make_shared<search::neighborhoods::RandomNeighborhood>(
+                std::move(searchVars)));
 }
 
 void InvariantGraphRoot::addSearchVarNode(VarNodeId vId) {
