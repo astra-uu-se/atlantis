@@ -9,7 +9,7 @@
 
 namespace atlantis::invariantgraph {
 
-std::vector<VarNodeId> &&append(std::vector<VarNodeId> &&vars, VarNodeId fst,
+std::vector<VarNodeId>&& append(std::vector<VarNodeId>&& vars, VarNodeId fst,
                                 VarNodeId snd) {
   if (fst != NULL_NODE_ID) {
     vars.emplace_back(fst);
@@ -20,15 +20,15 @@ std::vector<VarNodeId> &&append(std::vector<VarNodeId> &&vars, VarNodeId fst,
   return std::move(vars);
 }
 
-std::vector<VarNodeId> &&append(std::vector<VarNodeId> &&vars, VarNodeId var) {
+std::vector<VarNodeId>&& append(std::vector<VarNodeId>&& vars, VarNodeId var) {
   if (var != NULL_NODE_ID) {
     vars.emplace_back(var);
   }
   return std::move(vars);
 }
 
-std::vector<VarNodeId> concat(const std::vector<VarNodeId> &fst,
-                              const std::vector<VarNodeId> &snd) {
+std::vector<VarNodeId> concat(const std::vector<VarNodeId>& fst,
+                              const std::vector<VarNodeId>& snd) {
   std::vector<VarNodeId> res;
   res.reserve(fst.size() + snd.size());
   res.insert(res.end(), fst.begin(), fst.end());
@@ -37,15 +37,15 @@ std::vector<VarNodeId> concat(const std::vector<VarNodeId> &fst,
 }
 
 static std::vector<std::pair<size_t, Int>> allDifferent(
-    InvariantGraph &invariantGraph,
-    const std::vector<VarNodeId> &inputVarNodeIds) {
+    InvariantGraph& invariantGraph,
+    const std::vector<VarNodeId>& inputVarNodeIds) {
   // pruned[i] = <index, value> where index is the index of the static
   // variable with singleton domain {value}.
   std::vector<std::pair<size_t, Int>> fixed;
   fixed.reserve(inputVarNodeIds.size());
 
   for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
-    for (const auto &[index, value] : fixed) {
+    for (const auto& [index, value] : fixed) {
       // remove all fixed values from the current variable:
       assert(index < i);
       invariantGraph.varNode(inputVarNodeIds[i]).removeValue(value);
@@ -58,7 +58,7 @@ static std::vector<std::pair<size_t, Int>> allDifferent(
     // variable that gets a singleton domain is added to the fixed list.
     fixed.emplace_back(i, invariantGraph.varNode(inputVarNodeIds[i]).val());
     for (size_t p = fixed.size() - 1; p < fixed.size(); ++p) {
-      const auto &[index, value] = fixed.at(p);
+      const auto& [index, value] = fixed.at(p);
       for (size_t j = 0; j < index; j++) {
         const bool wasConstant =
             invariantGraph.varNode(inputVarNodeIds[j]).isFixed();
@@ -75,11 +75,11 @@ static std::vector<std::pair<size_t, Int>> allDifferent(
 }
 
 std::vector<VarNodeId> pruneAllDifferentFree(
-    InvariantGraph &invariantGraph,
-    const std::vector<VarNodeId> &inputVarNodeIds) {
+    InvariantGraph& invariantGraph,
+    const std::vector<VarNodeId>& inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
   std::vector<bool> isFree(inputVarNodeIds.size(), true);
-  for (const auto &index : std::views::keys(fixed)) {
+  for (const auto& index : std::views::keys(fixed)) {
     isFree[index] = false;
   }
   std::vector<VarNodeId> freeVars;
@@ -93,8 +93,8 @@ std::vector<VarNodeId> pruneAllDifferentFree(
 }
 
 std::vector<VarNodeId> pruneAllDifferentFixed(
-    InvariantGraph &invariantGraph,
-    const std::vector<VarNodeId> &inputVarNodeIds) {
+    InvariantGraph& invariantGraph,
+    const std::vector<VarNodeId>& inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
   std::vector<VarNodeId> fixedVars;
   fixedVars.reserve(fixed.size());
@@ -105,7 +105,7 @@ std::vector<VarNodeId> pruneAllDifferentFixed(
   return fixedVars;
 }
 
-std::vector<Int> toIntVector(const std::vector<bool> &argument) {
+std::vector<Int> toIntVector(const std::vector<bool>& argument) {
   std::vector<Int> ints;
   ints.reserve(argument.size());
   std::ranges::transform(argument, std::back_inserter(ints),
@@ -114,7 +114,7 @@ std::vector<Int> toIntVector(const std::vector<bool> &argument) {
   return ints;
 }
 
-bool removeFirstOccurrence(std::vector<size_t> &vector, size_t val) {
+bool removeFirstOccurrence(std::vector<size_t>& vector, size_t val) {
   for (size_t i = 0; i < vector.size(); i++) {
     if (vector[i] == val) {
       vector[i] = vector.back();

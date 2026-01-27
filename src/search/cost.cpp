@@ -11,7 +11,7 @@ Cost::Cost(Int violationDegree, Int objective, ObjectiveDirection direction)
       _objective(objective),
       _objectiveWeightSign(static_cast<int>(direction)) {}
 
-Cost::Cost(const Assignment &assignment)
+Cost::Cost(const Assignment& assignment)
     : Cost(
           std::numeric_limits<Int>::max(),
           assignment.objectiveDirection() == ObjectiveDirection::MINIMIZE
@@ -26,7 +26,7 @@ Int Cost::evaluate(UInt violationWeight, UInt objectiveWeight) const noexcept {
          static_cast<Int>(objectiveWeight) * _objectiveWeightSign * _objective;
 }
 
-bool Cost::isBetterThan(const Cost &other) const {
+bool Cost::isBetterThan(const Cost& other) const {
   if (evaluate(1, 0) != 0 || other.evaluate(1, 0) != 0) {
     return evaluate(1, 0) <= other.evaluate(1, 0);
   }
@@ -34,7 +34,7 @@ bool Cost::isBetterThan(const Cost &other) const {
   return evaluate(0, 1) <= other.evaluate(0, 1);
 }
 
-bool Cost::isStrictlyBetterThan(const Cost &other) const {
+bool Cost::isStrictlyBetterThan(const Cost& other) const {
   if (evaluate(1, 0) != 0 || other.evaluate(1, 0) != 0) {
     return evaluate(1, 0) < other.evaluate(1, 0);
   }

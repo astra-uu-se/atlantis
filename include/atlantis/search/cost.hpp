@@ -16,7 +16,7 @@ class Cost {
  public:
   Cost(Int violationDegree, Int objective, ObjectiveDirection direction);
 
-  Cost(const Assignment &);
+  Cost(const Assignment&);
 
   /**
    * @return True if this cost has no violated constraints.
@@ -36,9 +36,9 @@ class Cost {
   [[nodiscard]] Int evaluate(UInt violationWeight,
                              UInt objectiveWeight) const noexcept;
 
-  [[nodiscard]] bool isBetterThan(const Cost &other) const;
+  [[nodiscard]] bool isBetterThan(const Cost& other) const;
 
-  [[nodiscard]] bool isStrictlyBetterThan(const Cost &other) const;
+  [[nodiscard]] bool isStrictlyBetterThan(const Cost& other) const;
 
   [[nodiscard]] std::string toString() const;
 

@@ -40,7 +40,6 @@ class ParNQueens : public ::benchmark::Fixture {
     timelimits = defaultTimelimits();
     numThreads = state.range(1);
     searchType = intToSearchType(state.range(2));
-    startingTime = std::chrono::steady_clock::now();
 
     assert(0 <= instance && instance < static_cast<long>(instances.size()));
 
@@ -84,20 +83,9 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
 
   std::vector<std::shared_ptr<search::SearchStatistics>> threadStatistics;
   threadStatistics.reserve(numThreads);
-  size_t currentTimeoutIndex = 0;
 
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);
-
-    // TODO: Get the pointers to the statistics
-
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = now - startingTime;
-    if (elapsed > timelimits[currentTimeoutIndex]) {
-      currentTimeoutIndex++;
-
-      // TODO: Record probe data
-    }
 
     backend->join(logger);
   }
