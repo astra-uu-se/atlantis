@@ -134,16 +134,18 @@ benchmark-synth: build-benchmarks
 									--benchmark_filter=${BENCHMARK_FILTER_SYNTH}
 	python3 ${MKFILE_PATH}plot-formatter.py -v --input=${$@_JSON_FILE} --file-suffix=${$@_TIMESTAMP} --output-dir=${BENCHMARK_PLOT_DIR}
 
-.PHONY: benchmark-par
-benchmark-par: build-benchmarks fzn-benchmark
+.PHONY: run-benchmark-par
+run-benchmark-par:
 	mkdir -p ${BENCHMARK_JSON_DIR}
-	mkdir -p ${BENCHMARK_PLOT_DIR}
 	$(eval $@_TIMESTAMP := $(shell date +"%Y-%m-%d-%H-%M-%S-%3N"))
 	$(eval $@_JSON_FILE := ${BENCHMARK_JSON_DIR}/${$@_TIMESTAMP}.json)
 	exec ${BUILD_DIR}/runBenchmarks --benchmark_format=json \
 	                                --benchmark_out=${$@_JSON_FILE} \
 									--benchmark_repetitions=${NUM_BENCHMARK_REPETITIONS} \
 									--benchmark_filter=${BENCHMARK_FILTER_PAR}
+
+.PHONY: benchmark-par
+benchmark-par: build-benchmarks fzn-benchmark run-benchmark-par
 
 .PHONY: all
 all: clean build build-tests build-benchmarks
@@ -170,7 +172,7 @@ fzn-benchmark:
 			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
 	mkdir -p ${FZN_MODEL_DIR}/n_queens
-	$(foreach queens, 8 16 24 32 48 64 128 192 256 512 768 1024, \
+	$(foreach queens, 8 16 17 18 19 20 21 22 23 24 32 48 64 128 192 256 512 768 1024, \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/n_queens.mzn \
 			-D n=${queens} \

@@ -1,11 +1,11 @@
 #pragma once
 #include <atomic>
-#include <iostream>
 #include <mutex>
 #include <optional>
 
 #include "cost.hpp"
 #include "savedAssignment.hpp"
+#include "searchStatistics.hpp"
 
 namespace atlantis::search {
 
@@ -21,6 +21,7 @@ class ThreadController {
   std::atomic<size_t> _numFinishedThreads = 0;
   std::optional<Cost> _bestCost;
   std::optional<SavedAssignment> _solution;
+  std::vector<std::shared_ptr<SearchStatistics>> _threadStatistics;
 
   // These are just for statistical tracking purposes
   Int _counter = 0;
@@ -31,7 +32,9 @@ class ThreadController {
 
  public:
   explicit ThreadController(const size_t threadCount)
-      : _threadCount(threadCount) {}
+      : _threadCount(threadCount) {
+    _threadStatistics.resize(threadCount);
+  }
 
   // Returns true iff the new solution is >= the best saved solution.
   bool trySolution(Int threadId, const SavedAssignment& solution);
@@ -69,6 +72,17 @@ class ThreadController {
 
   [[gnu::always_inline]] void markCurSolutionNotified() {
     _curSolutionNotified = true;
+  }
+
+  [[gnu::always_inline]] [[nodiscard]] std::vector<
+      std::shared_ptr<SearchStatistics>>
+  getStats() const {
+    return _threadStatistics;
+  }
+
+  [[gnu::always_inline]] void setThreadStats(
+      const size_t threadId, const std::shared_ptr<SearchStatistics>& stats) {
+    _threadStatistics[threadId] = stats;
   }
 };
 

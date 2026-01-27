@@ -22,7 +22,7 @@ class ParNQueens : public ::benchmark::Fixture {
   std::shared_ptr<FznBackend> backend{nullptr};
 
   long instance{-1};
-  long numThreads{0};
+  size_t numThreads{0};
   search::SearchType searchType{search::SearchType::BESTCOST};
 
   std::vector<std::chrono::milliseconds> timelimits;
@@ -33,15 +33,14 @@ class ParNQueens : public ::benchmark::Fixture {
     instances = createInstances(std::string(FZN_DIR) + "/n_queens");
   }
 
-  static size_t size() {
-    return instances.size();
-  }
+  static size_t size() { return instances.size(); }
 
   void SetUp(const ::benchmark::State& state) override {
     instance = state.range(0);
     timelimits = defaultTimelimits();
     numThreads = state.range(1);
     searchType = intToSearchType(state.range(2));
+    startingTime = std::chrono::steady_clock::now();
 
     assert(0 <= instance && instance < static_cast<long>(instances.size()));
 
@@ -58,6 +57,7 @@ std::vector<std::string> ParNQueens::instances;
 BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   st.SetLabel(instances.at(instance));
   std::vector<size_t> solved(timelimits.size(), 0);
+  std::vector numProbes(timelimits.size(), std::vector<size_t>(numThreads, 0));
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimits.back());
 
@@ -66,22 +66,48 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   for (const auto& tl : timelimits) {
     deadlines.emplace_back(std::chrono::steady_clock::now() + tl);
   }
-  backend->setOnSolution([&](
-                             const search::SavedAssignment&) {
-     for (size_t i = 0; i < timelimits.size(); i++) {
-       if (deadlines[i] < std::chrono::steady_clock::now()) {
-         continue;
-       }
-       solved[i] = 1;
-     }
-  });
+  backend->setOnSolution(
+      [&](const search::SavedAssignment&,
+          const std::optional<
+              std::vector<std::shared_ptr<search::SearchStatistics>>>& stats) {
+        for (size_t i = 0; i < timelimits.size(); i++) {
+          if (deadlines[i] < std::chrono::steady_clock::now()) {
+            continue;
+          }
+          for (size_t t = 0; t < numThreads; t++) {
+            if (stats.has_value())
+              numProbes[i][t] = stoi(stats.value()[t]->getValue("probes"));
+          }
+          solved[i] = 1;
+        }
+      });
+
+  std::vector<std::shared_ptr<search::SearchStatistics>> threadStatistics;
+  threadStatistics.reserve(numThreads);
+  size_t currentTimeoutIndex = 0;
+
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);
+
+    // TODO: Get the pointers to the statistics
+
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = now - startingTime;
+    if (elapsed > timelimits[currentTimeoutIndex]) {
+      currentTimeoutIndex++;
+
+      // TODO: Record probe data
+    }
+
     backend->join(logger);
   }
   for (size_t i = 0; i < timelimits.size(); i++) {
     const std::string prefix = std::to_string(timelimits[i].count());
     st.counters[prefix + "/solved"] = static_cast<double>(solved[i]);
+    for (size_t t = 0; t < numThreads; t++) {
+      st.counters[prefix + "/thread" + std::to_string(t) + "/probes"] =
+          numProbes[i][t];
+    }
   }
 }
 

@@ -17,7 +17,9 @@
 namespace atlantis {
 
 void FznBackend::onSolutionDefault(
-    const search::SavedAssignment& assignment) const {
+    const search::SavedAssignment& assignment,
+    const std::optional<
+        std::vector<std::shared_ptr<search::SearchStatistics>>>&) const {
   _fznOutput->displaySolution(std::cout, assignment.getOutputValues());
   std::cout << "----------" << std::endl;
 }
@@ -41,7 +43,7 @@ void FznBackend::handleSolverNotifications(
     }
 
     solutionId = result.value().first;
-    _onSolution(result.value().second);
+    _onSolution(result.value().second, threadController->getStats());
   }
 
   // Ensure the final solution is printed
@@ -50,7 +52,7 @@ void FznBackend::handleSolverNotifications(
     std::cout << "printing final solution! (previously printed " << solutionId
               << ", final is " << threadController->solutionId() << ")."
               << std::endl;
-    _onSolution(threadController->solution());
+    _onSolution(threadController->solution(), threadController->getStats());
   }
 
   _onFinish(threadController->hasSolution() &&
@@ -68,8 +70,10 @@ FznBackend::FznBackend(fznparser::Model&& model,
       _seed(std::time(nullptr)),
       _threadCount(threadCount),
       _searchType(searchType),
-      _onSolution([&](const search::SavedAssignment& assignment) {
-        onSolutionDefault(assignment);
+      _onSolution([&](const search::SavedAssignment& assignment,
+                      const std::optional<std::vector<
+                          std::shared_ptr<search::SearchStatistics>>>& stats) {
+        onSolutionDefault(assignment, stats);
       }) {}
 
 FznBackend::FznBackend(logging::Logger& logger,

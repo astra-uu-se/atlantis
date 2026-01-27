@@ -11,15 +11,13 @@
 
 namespace atlantis::search {
 
-// TODO: either use or remove this function
-SearchStatistics makeStats(const Statistic& rounds,
-                           const Statistic& initialisations,
-                           const Statistic& moves) {
-  std::vector<std::unique_ptr<Statistic>> statistics;
-  statistics.push_back(rounds.clone());
-  statistics.push_back(initialisations.clone());
-  statistics.push_back(moves.clone());
-  SearchStatistics stats = SearchStatistics(std::move(statistics));
+// TODO: convert input into vector of stat pointers
+std::shared_ptr<SearchStatistics> makeStats(
+    const std::shared_ptr<Statistic>& stat1,
+    const std::shared_ptr<Statistic>& stat2) {
+  auto stats = std::make_shared<SearchStatistics>();
+  stats->insert(stat1);
+  stats->insert(stat2);
   return stats;
 }
 
@@ -62,6 +60,12 @@ void SearchProcedure::onAccepted() {
 
 Int SearchProcedure::run(SearchController& searchController,
                          std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
+  // Make stats here
+  const auto probes = std::make_shared<CounterStatistic>("probes");
+  const auto moves = std::make_shared<CounterStatistic>("moves");
+  const auto stats = makeStats(probes, moves);
+  _threadController->setThreadStats(_threadId, stats);
+
   do {
     _assignment.initialize(_random);
 
@@ -73,8 +77,10 @@ Int SearchProcedure::run(SearchController& searchController,
     while (searchController.shouldRun(_assignment) &&
            !metaHeuristic->isFinished()) {
       const auto cost = _assignment.performProbe(_random);
+      probes->increment();
       if (metaHeuristic->acceptMove(cost)) {
         _assignment.commitLastProbe();
+        moves->increment();
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
           onAccepted();
         }

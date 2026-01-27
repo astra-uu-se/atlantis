@@ -2,9 +2,9 @@
 
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <string_view>
-#include <vector>
 
 namespace atlantis::search {
 
@@ -42,25 +42,24 @@ class CounterStatistic : public Statistic {
 };
 
 class SearchStatistics {
-  std::vector<std::unique_ptr<Statistic>> _statistics;
+  std::unordered_map<std::string, std::shared_ptr<Statistic>> _statistics;
 
  public:
-  using const_iterator =
-      std::vector<std::unique_ptr<Statistic>>::const_iterator;
-
-  SearchStatistics() = default;
-  explicit SearchStatistics(std::vector<std::unique_ptr<Statistic>> statistics)
-      : _statistics(std::move(statistics)) {}
-
   void display(std::ostream& output) const noexcept {
-    for (const auto& statistic : _statistics) {
+    for (const auto& statistic : _statistics | std::views::values) {
       statistic->display(output);
       output << std::endl;
     }
   }
 
-  const_iterator begin() { return _statistics.begin(); }
-  const_iterator end() { return _statistics.end(); }
+  void insert(const std::shared_ptr<Statistic>& statistic) {
+    const std::string name{statistic->name()};
+    _statistics[name] = statistic;
+  }
+
+  std::string getValue(const std::string& name) {
+    return _statistics[name]->value();
+  }
 };
 
 }  // namespace atlantis::search
