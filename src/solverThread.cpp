@@ -26,18 +26,21 @@ SolverThread::SolverThread(FznBackend& backend, size_t threadId)
     : SolverThread(backend.invariantGraph(), backend.outputVarNodeIds(),
                    backend.problemType(), backend.annealingScheduleFactory(),
                    threadId, backend.threadController(), backend.searchType(),
-                   backend.seed(), backend.timelimit(), backend.shouldStop()) {}
+                   backend.onMove(), backend.seed(), backend.timelimit(),
+                   backend.shouldStop()) {}
 
 SolverThread::SolverThread(
     const std::shared_ptr<const invariantgraph::FznInvariantGraph>&
         invariantGraph,
     std::vector<invariantgraph::VarNodeId>&& outputVarNodeIds,
-    fznparser::ProblemType problemType,
+    const fznparser::ProblemType problemType,
     const std::shared_ptr<const search::AnnealingScheduleFactory>&
         annealingScheduleFactory,
     const size_t threadId,
     const std::shared_ptr<search::ThreadController>& controller,
-    search::SearchType searchType, const std::uint_fast32_t seed,
+    search::SearchType searchType,
+    std::function<void(search::ThreadController&)>& onMove,
+    const std::uint_fast32_t seed,
     const std::optional<std::chrono::milliseconds> timeLimit,
     const std::shared_ptr<const bool>& shouldStop)
     : _invariantGraph(invariantGraph),
@@ -47,6 +50,7 @@ SolverThread::SolverThread(
       _threadId(threadId),
       _threadController(controller),
       _searchType(searchType),
+      _onMove(onMove),
       _seed(seed),
       _timelimit(timeLimit),
       _shouldStop(shouldStop) {}
@@ -95,7 +99,7 @@ void SolverThread::solve() {
   search::RandomProvider randomProvider(_seed);
   search::SearchProcedure search(
       randomProvider, assignment, mapping.globalNeighborhood(), searchObjective,
-      _searchType, _threadController, outputVarIds, _threadId);
+      _searchType, _threadController, outputVarIds, _onMove, _threadId);
 
   search::SearchController searchController(
       mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,

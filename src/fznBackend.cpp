@@ -29,6 +29,7 @@ void FznBackend::onFinishDefault(const bool hasSatisfyingSolution) {
     std::cout << "=====UNKNOWN=====\n";
   }
 }
+void FznBackend::onMoveDefault(search::ThreadController&) {}
 
 void FznBackend::handleSolverNotifications(
     const std::shared_ptr<search::ThreadController>& threadController) const {

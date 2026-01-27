@@ -24,6 +24,7 @@ class SolverThread {
   size_t _threadId;
   std::shared_ptr<search::ThreadController> _threadController;
   search::SearchType _searchType;
+  std::function<void(search::ThreadController&)>& _onMove;
 
   // Optional arguments
   std::uint_fast32_t _seed;
@@ -41,7 +42,9 @@ class SolverThread {
           annealingFactorySchedule,
       size_t threadId,
       const std::shared_ptr<search::ThreadController>& controller,
-      search::SearchType searchType, std::uint_fast32_t seed,
+      search::SearchType searchType,
+      std::function<void(search::ThreadController&)>& onMove,
+      std::uint_fast32_t seed,
       std::optional<std::chrono::milliseconds> timeLimit,
       const std::shared_ptr<const bool>& shouldStop);
 

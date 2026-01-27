@@ -34,6 +34,8 @@ class FznBackend {
  public:
   static void onFinishDefault(bool hasSatisfyingSolution);
 
+  static void onMoveDefault(search::ThreadController&);
+
   void onSolutionDefault(
       const search::SavedAssignment&,
       const std::optional<
@@ -55,6 +57,7 @@ class FznBackend {
                      const std::optional<std::vector<
                          std::shared_ptr<search::SearchStatistics>>>&)>
       _onSolution;
+  std::function<void(search::ThreadController&)> _onMove = onMoveDefault;
   std::function<void(bool)> _onFinish = onFinishDefault;
   std::vector<std::thread> _threads{};
   std::shared_ptr<search::ThreadController> _threadController{nullptr};
@@ -150,6 +153,12 @@ class FznBackend {
   void setOnFinish(const std::function<void(bool)>& onFinish) {
     _onFinish = onFinish;
   }
+
+  void setOnMove(const std::function<void(search::ThreadController&)>& onMove) {
+    _onMove = onMove;
+  }
+
+  std::function<void(search::ThreadController&)>& onMove() { return _onMove; }
 };
 
 }  // namespace atlantis

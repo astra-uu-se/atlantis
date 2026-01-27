@@ -39,6 +39,7 @@ class SearchProcedure {
   // TODO: these things should ideally be abstracted from the search itself.
   const std::shared_ptr<ThreadController> _threadController;
   const std::vector<propagation::VarViewId> _outputVarIds;
+  std::function<void(ThreadController&)>& _onMove;
   const Int _threadId;
 
   [[nodiscard]] SavedAssignment saveAssignment() const;
@@ -54,7 +55,7 @@ class SearchProcedure {
       const Objective& objective, const SearchType searchType,
       const std::shared_ptr<ThreadController>& threadController,
       const std::vector<propagation::VarViewId>& outputVarIds,
-      const Int threadId)
+      std::function<void(ThreadController&)>& onMove, const Int threadId)
       : _random(random),
         _assignment(assignment),
         _neighborhood(neighborhood),
@@ -62,6 +63,7 @@ class SearchProcedure {
         _searchType(searchType),
         _threadController(threadController),
         _outputVarIds(outputVarIds),
+        _onMove(onMove),
         _threadId(threadId) {}
 
   Int run(SearchController&, std::unique_ptr<MetaHeuristic>&&);

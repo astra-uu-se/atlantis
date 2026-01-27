@@ -68,14 +68,10 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   backend->setOnSolution(
       [&](const search::SavedAssignment&,
           const std::optional<
-              std::vector<std::shared_ptr<search::SearchStatistics>>>& stats) {
+              std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
         for (size_t i = 0; i < timelimits.size(); i++) {
           if (deadlines[i] < std::chrono::steady_clock::now()) {
             continue;
-          }
-          for (size_t t = 0; t < numThreads; t++) {
-            if (stats.has_value())
-              numProbes[i][t] = stoi(stats.value()[t]->getValue("probes"));
           }
           solved[i] = 1;
         }
@@ -83,6 +79,18 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
 
   std::vector<std::shared_ptr<search::SearchStatistics>> threadStatistics;
   threadStatistics.reserve(numThreads);
+  backend->setOnMove([&](const search::ThreadController& controller) {
+    threadStatistics = controller.getStats();
+
+    for (size_t i = 0; i < timelimits.size(); i++) {
+      if (deadlines[i] < std::chrono::steady_clock::now()) {
+        continue;
+      }
+      for (size_t t = 0; t < numThreads; t++) {
+        numProbes[i][t] = stoi(threadStatistics[t]->getValue("probes"));
+      }
+    }
+  });
 
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);

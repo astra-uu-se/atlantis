@@ -81,6 +81,7 @@ Int SearchProcedure::run(SearchController& searchController,
       if (metaHeuristic->acceptMove(cost)) {
         _assignment.commitLastProbe();
         moves->increment();
+        _onMove(*_threadController);
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
           onAccepted();
         }
