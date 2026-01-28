@@ -24,8 +24,8 @@ void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
   for (size_t instance = 0; instance < F::size(); ++instance) {
     // TODO: re-add threads
     // for (Int numThreads = 1; numThreads <= 16; numThreads *= 2) {
+    Int numThreads = 1;
     for (Int searchType = 0; searchType <= 2; ++searchType) {
-      Int numThreads = 1;
       benchmark->Args({static_cast<long>(instance), numThreads, searchType});
       if (numThreads == 1) {
         break;
@@ -58,14 +58,20 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
 
   // Run only a small subset of instances
   // FIXME: this crashes at the end when running only nQueens
-  // const std::vector<std::string> fileSet = {"16.fzn", "n20w120.001.fzn"};
   const std::vector<std::string> fileSet = {
       // nQueens
-      "16.fzn", "17.fzn", "18.fzn", "19.fzn", "20.fzn", "21.fzn", "22.fzn",
-      "23.fzn", "24.fzn",
+      "16.fzn",
+      "20.fzn",
+      "24.fzn",
       // TSP
-      "n20w120.001.fzn"
+      "n20w120.001.fzn",
+      "n60w140.001.fzn",
+      "n100w140.001.fzn",
       // Knapsack
+      // NOTE: Knapsack is not currently included in the filter. Doing so seems
+      // to make the benchmarks crash for some reason.
+      // "f10_l-d_kp_20_879.fzn",
+      // "knapPI_1_500_1000_1.fzn", "knapPI_3_10000_1000_1.fzn"
   };
   for (const auto& entry : std::filesystem::directory_iterator(relDir)) {
     if (entry.is_regular_file() && entry.path().extension() == ".fzn") {

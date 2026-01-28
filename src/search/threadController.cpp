@@ -38,6 +38,7 @@ bool ThreadController::trySolution(
     return true;
   }
 
+  // TODO: double check this bit
   if (solution.getCost().isBetterThan(_bestCost.value()) &&
       solution.getCost().isStrictlyBetterThan(_bestCost.value())) {
     setBestSolution(threadId, solution);

@@ -22,7 +22,7 @@ class ParTSP : public ::benchmark::Fixture {
   std::shared_ptr<FznBackend> backend{nullptr};
 
   long instance{-1};
-  long numThreads{0};
+  size_t numThreads{0};
   search::SearchType searchType{search::SearchType::BESTCOST};
 
   std::vector<std::chrono::milliseconds> timelimits;
@@ -59,6 +59,12 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
   std::vector<size_t> numSolutions(timelimits.size(), 0);
   std::vector<size_t> bestObjective(timelimits.size(), 0);
   std::vector<double> totalObjective(timelimits.size(), 0.0);
+  std::vector threadNumProbes(timelimits.size(),
+                              std::vector<size_t>(numThreads, 0));
+  std::vector threadNumMoves(timelimits.size(),
+                             std::vector<size_t>(numThreads, 0));
+  std::vector threadNumSolutions(timelimits.size(),
+                                 std::vector<size_t>(numThreads, 0));
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimits.back());
 
@@ -82,6 +88,24 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
         }
       });
 
+  std::vector<std::shared_ptr<search::SearchStatistics>> threadStatistics;
+  threadStatistics.reserve(numThreads);
+  backend->setOnMove([&](const search::ThreadController& controller) {
+    threadStatistics = controller.getStats();
+
+    for (size_t i = 0; i < timelimits.size(); i++) {
+      if (deadlines[i] < std::chrono::steady_clock::now()) {
+        continue;
+      }
+      for (size_t t = 0; t < numThreads; t++) {
+        threadNumProbes[i][t] = stoi(threadStatistics[t]->getValue("probes"));
+        threadNumMoves[i][t] = stoi(threadStatistics[t]->getValue("moves"));
+        threadNumSolutions[i][t] =
+            stoi(threadStatistics[t]->getValue("improvingSolutions"));
+      }
+    }
+  });
+
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);
     backend->join(logger);
@@ -95,6 +119,14 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
         static_cast<double>(bestObjective[i]);
     st.counters[prefix + "/objective_average"] =
         totalObjective[i] / static_cast<double>(numSolutions[i]);
+    for (size_t t = 0; t < numThreads; t++) {
+      st.counters[prefix + "/thread" + std::to_string(t) + "/probes"] =
+          threadNumProbes[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) + "/moves"] =
+          threadNumMoves[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) + "/solutions"] =
+          threadNumSolutions[i][t];
+    }
   }
 }
 
