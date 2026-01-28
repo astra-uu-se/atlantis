@@ -91,7 +91,10 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
   std::vector<std::shared_ptr<search::SearchStatistics>> threadStatistics;
   threadStatistics.reserve(numThreads);
   backend->setOnMove([&](const search::ThreadController& controller) {
-    threadStatistics = controller.getStats();
+
+    auto threadStatsOptional = controller.getStats();
+    if (!threadStatsOptional.has_value()) return;
+    threadStatistics = threadStatsOptional.value();
 
     for (size_t i = 0; i < timelimits.size(); i++) {
       if (deadlines[i] < std::chrono::steady_clock::now()) {

@@ -27,6 +27,7 @@ class CounterStatistic : public Statistic {
   explicit CounterStatistic(std::string name) : _name(std::move(name)) {}
 
   void increment() { _count++; }
+
   [[nodiscard]] std::string_view name() const noexcept override {
     return _name;
   }

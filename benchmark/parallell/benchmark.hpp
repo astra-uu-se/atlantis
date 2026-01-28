@@ -24,7 +24,7 @@ void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
   for (size_t instance = 0; instance < F::size(); ++instance) {
     // TODO: re-add threads
     // for (Int numThreads = 1; numThreads <= 16; numThreads *= 2) {
-    Int numThreads = 1;
+    Int numThreads = 2;
     for (Int searchType = 0; searchType <= 2; ++searchType) {
       benchmark->Args({static_cast<long>(instance), numThreads, searchType});
       if (numThreads == 1) {
@@ -71,7 +71,8 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
       // NOTE: Knapsack is not currently included in the filter. Doing so seems
       // to make the benchmarks crash for some reason.
       // "f10_l-d_kp_20_879.fzn",
-      // "knapPI_1_500_1000_1.fzn", "knapPI_3_10000_1000_1.fzn"
+      // "knapPI_1_500_1000_1.fzn",
+      // "knapPI_3_10000_1000_1.fzn"
   };
   for (const auto& entry : std::filesystem::directory_iterator(relDir)) {
     if (entry.is_regular_file() && entry.path().extension() == ".fzn") {

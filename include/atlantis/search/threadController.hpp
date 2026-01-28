@@ -19,6 +19,7 @@ class ThreadController {
   std::atomic<bool> _curSolutionNotified = true;
   std::atomic<size_t> _curSolutionId = 0;
   std::atomic<size_t> _numFinishedThreads = 0;
+  std::atomic<size_t> _numThreadsWithReportedStats = 0;
   std::optional<Cost> _bestCost;
   std::optional<SavedAssignment> _solution;
   std::vector<std::shared_ptr<SearchStatistics>> _threadStatistics;
@@ -76,15 +77,17 @@ class ThreadController {
     _curSolutionNotified = true;
   }
 
-  [[gnu::always_inline]] [[nodiscard]] std::vector<
-      std::shared_ptr<SearchStatistics>>
+  [[gnu::always_inline]] [[nodiscard]] std::optional<std::vector<
+      std::shared_ptr<SearchStatistics>>>
   getStats() const {
-    return _threadStatistics;
+    if (_numThreadsWithReportedStats.load() >= _threadCount) return _threadStatistics;
+    return std::nullopt;
   }
 
   [[gnu::always_inline]] void setThreadStats(
       const size_t threadId, const std::shared_ptr<SearchStatistics>& stats) {
     _threadStatistics[threadId] = stats;
+    _numThreadsWithReportedStats.operator++();
   }
 };
 
