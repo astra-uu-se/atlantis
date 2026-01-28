@@ -1,9 +1,7 @@
 #include "atlantis/search/searchProcedure.hpp"
 
 #include <chrono>
-#include <iostream>
 
-#include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealing/types.hpp"
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/metaheuristic.hpp"
@@ -11,13 +9,12 @@
 
 namespace atlantis::search {
 
-// TODO: convert input into vector of stat pointers
 std::shared_ptr<SearchStatistics> makeStats(
-    const std::shared_ptr<Statistic>& stat1,
-    const std::shared_ptr<Statistic>& stat2) {
+    const std::vector<std::shared_ptr<Statistic>>& inputStats) {
   auto stats = std::make_shared<SearchStatistics>();
-  stats->insert(stat1);
-  stats->insert(stat2);
+  for (const auto& statistic : inputStats) {
+    stats->insert(statistic);
+  }
   return stats;
 }
 
@@ -35,7 +32,8 @@ void SearchProcedure::tightenSearch() {
   }
 }
 
-void SearchProcedure::onAccepted() {
+void SearchProcedure::onAccepted(
+    const std::shared_ptr<CounterStatistic>& improvingSolutions) {
   // Prevent over-communication before an initial 0-violation solution
   // has been found
   if (!_hasSolution && _savedAssignment.has_value() &&
@@ -45,8 +43,8 @@ void SearchProcedure::onAccepted() {
 
   _savedAssignment = saveAssignment();
 
-  bool isBest =
-      _threadController->trySolution(_threadId, _savedAssignment.value());
+  const bool isBest = _threadController->trySolution(
+      _threadId, _savedAssignment.value(), improvingSolutions);
   if (!isBest) {
     _savedAssignment = _threadController->solution();
   }
@@ -60,17 +58,18 @@ void SearchProcedure::onAccepted() {
 
 Int SearchProcedure::run(SearchController& searchController,
                          std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
-  // Make stats here
   const auto probes = std::make_shared<CounterStatistic>("probes");
   const auto moves = std::make_shared<CounterStatistic>("moves");
-  const auto stats = makeStats(probes, moves);
+  const auto improvingSolutions =
+      std::make_shared<CounterStatistic>("improvingSolutions");
+  const auto stats = makeStats({probes, moves, improvingSolutions});
   _threadController->setThreadStats(_threadId, stats);
 
   do {
     _assignment.initialize(_random);
 
     // TODO: handle this case: this should call some separate version
-    if (_assignment.satisfiesConstraints()) onAccepted();
+    if (_assignment.satisfiesConstraints()) onAccepted(improvingSolutions);
 
     metaHeuristic->start();
 
@@ -83,7 +82,7 @@ Int SearchProcedure::run(SearchController& searchController,
         moves->increment();
         _onMove(*_threadController);
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
-          onAccepted();
+          onAccepted(improvingSolutions);
         }
       }
     }

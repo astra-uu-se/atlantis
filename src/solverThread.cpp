@@ -92,7 +92,7 @@ void SolverThread::solve() {
   // TODO: this case may not be handled properly
   if (mapping.globalNeighborhood()->coveredVars().empty()) {
     _threadController->trySolution(
-        _threadId, search::SavedAssignment(assignment, outputVarIds));
+        _threadId, search::SavedAssignment(assignment, outputVarIds), nullptr);
     return;
   }
 

@@ -57,6 +57,9 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   st.SetLabel(instances.at(instance));
   std::vector<size_t> solved(timelimits.size(), 0);
   std::vector numProbes(timelimits.size(), std::vector<size_t>(numThreads, 0));
+  std::vector numMoves(timelimits.size(), std::vector<size_t>(numThreads, 0));
+  std::vector numSolutions(timelimits.size(),
+                           std::vector<size_t>(numThreads, 0));
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimits.back());
 
@@ -88,6 +91,9 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
       }
       for (size_t t = 0; t < numThreads; t++) {
         numProbes[i][t] = stoi(threadStatistics[t]->getValue("probes"));
+        numMoves[i][t] = stoi(threadStatistics[t]->getValue("moves"));
+        numSolutions[i][t] =
+            stoi(threadStatistics[t]->getValue("improvingSolutions"));
       }
     }
   });
@@ -103,6 +109,10 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
     for (size_t t = 0; t < numThreads; t++) {
       st.counters[prefix + "/thread" + std::to_string(t) + "/probes"] =
           numProbes[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) + "/moves"] =
+          numMoves[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) + "/solutions"] =
+          numSolutions[i][t];
     }
   }
 }

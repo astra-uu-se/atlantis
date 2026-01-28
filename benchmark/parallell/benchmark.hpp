@@ -58,7 +58,7 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
 
   // Run only a small subset of instances
   // FIXME: this crashes at the end when running only nQueens
-  // const std::vector<std::string> fileSet = {"16.fzn","n20w120.001.fzn"};
+  // const std::vector<std::string> fileSet = {"16.fzn", "n20w120.001.fzn"};
   const std::vector<std::string> fileSet = {
       // nQueens
       "16.fzn", "17.fzn", "18.fzn", "19.fzn", "20.fzn", "21.fzn", "22.fzn",

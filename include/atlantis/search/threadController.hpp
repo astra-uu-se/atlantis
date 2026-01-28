@@ -37,7 +37,9 @@ class ThreadController {
   }
 
   // Returns true iff the new solution is >= the best saved solution.
-  bool trySolution(Int threadId, const SavedAssignment& solution);
+  bool trySolution(Int threadId, const SavedAssignment& solution,
+                   const std::optional<std::shared_ptr<CounterStatistic>>&
+                       improvingSolutions);
 
   [[nodiscard]] Int bestThreadId() const;
 
