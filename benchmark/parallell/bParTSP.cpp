@@ -59,12 +59,9 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
   std::vector<size_t> numSolutions(timelimits.size(), 0);
   std::vector<size_t> bestObjective(timelimits.size(), 0);
   std::vector<double> totalObjective(timelimits.size(), 0.0);
-  std::vector threadNumProbes(timelimits.size(),
-                              std::vector<size_t>(numThreads, 0));
-  std::vector threadNumMoves(timelimits.size(),
-                             std::vector<size_t>(numThreads, 0));
-  std::vector threadNumSolutions(timelimits.size(),
-                                 std::vector<size_t>(numThreads, 0));
+#ifdef MORE_STATS
+  std::vector sharedImprovingSolutions(timelimits.size(),
+                                       std::vector<size_t>(numThreads, 0));
   std::vector metaStatAttempted(timelimits.size(),
                                 std::vector<size_t>(numThreads, 0));
   std::vector metaStatAccepted(timelimits.size(),
@@ -75,6 +72,7 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
                                      std::vector<size_t>(numThreads, 0));
   std::vector metaStatImproving(timelimits.size(),
                                 std::vector<size_t>(numThreads, 0));
+#endif
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimits.back());
 
@@ -98,6 +96,7 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
         }
       });
 
+#ifdef MORE_STATS
   std::vector<std::shared_ptr<search::SearchStatistics>> threadStatistics;
   threadStatistics.reserve(numThreads);
   backend->setOnMove([&](const search::ThreadController& controller) {
@@ -110,9 +109,7 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
         continue;
       }
       for (size_t t = 0; t < numThreads; t++) {
-        threadNumProbes[i][t] = stoi(threadStatistics[t]->getValue("probes"));
-        threadNumMoves[i][t] = stoi(threadStatistics[t]->getValue("moves"));
-        threadNumSolutions[i][t] =
+        sharedImprovingSolutions[i][t] =
             stoi(threadStatistics[t]->getValue("improvingSolutions"));
         std::optional<std::shared_ptr<search::RoundStatistics>> metaStats =
             threadStatistics[t]->getRoundStatistics();
@@ -127,6 +124,7 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
       }
     }
   });
+#endif
 
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);
@@ -141,25 +139,23 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
         static_cast<double>(bestObjective[i]);
     st.counters[prefix + "/objective_average"] =
         totalObjective[i] / static_cast<double>(numSolutions[i]);
+#ifdef MORE_STATS
     for (size_t t = 0; t < numThreads; t++) {
-      st.counters[prefix + "/thread" + std::to_string(t) + "/probes"] =
-          threadNumProbes[i][t];
-      st.counters[prefix + "/thread" + std::to_string(t) + "/moves"] =
-          threadNumMoves[i][t];
-      st.counters[prefix + "/thread" + std::to_string(t) + "/solutions"] =
-          threadNumSolutions[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) +
+                  "/improvedSolutionsFound"] = sharedImprovingSolutions[i][t];
 
-      st.counters[prefix + "/thread" + std::to_string(t) + "/metaAttempted"] =
+      st.counters[prefix + "/thread" + std::to_string(t) + "/attemptedMoves"] =
           metaStatAttempted[i][t];
-      st.counters[prefix + "/thread" + std::to_string(t) + "/metaAccepted"] =
+      st.counters[prefix + "/thread" + std::to_string(t) + "/acceptedMoves"] =
           metaStatAccepted[i][t];
       st.counters[prefix + "/thread" + std::to_string(t) +
-                  "/metaUphillAttempted"] = metaStatUphillAttempted[i][t];
+                  "/uphillAttemptedMoves"] = metaStatUphillAttempted[i][t];
       st.counters[prefix + "/thread" + std::to_string(t) +
-                  "/metaUphillAccepted"] = metaStatUphillAccepted[i][t];
-      st.counters[prefix + "/thread" + std::to_string(t) +
-                  "/metaImprovingMoves"] = metaStatImproving[i][t];
+                  "/uphillAcceptedMoves"] = metaStatUphillAccepted[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) + "/improvingMoves"] =
+          metaStatImproving[i][t];
     }
+#endif
   }
 }
 

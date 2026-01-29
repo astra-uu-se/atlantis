@@ -57,12 +57,12 @@ void SearchProcedure::onAccepted(
 
 Int SearchProcedure::run(SearchController& searchController,
                          std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
-  const auto probes = std::make_shared<CounterStatistic>("probes");
-  const auto moves = std::make_shared<CounterStatistic>("moves");
   const auto improvingSolutions =
       std::make_shared<CounterStatistic>("improvingSolutions");
-  const auto stats = makeStats({probes, moves, improvingSolutions});
+  // This counts the number of globally best solutions found by this thread.
+  const auto stats = makeStats({improvingSolutions});
   _threadController->setThreadStats(_threadId, stats);
+  stats->setRoundStatistics(metaHeuristic->currentRoundStatistics());
 
   do {
     _assignment.initialize(_random);
@@ -75,17 +75,13 @@ Int SearchProcedure::run(SearchController& searchController,
     while (searchController.shouldRun(_assignment) &&
            !metaHeuristic->isFinished()) {
       const auto cost = _assignment.performProbe(_random);
-      probes->increment();
       if (metaHeuristic->acceptMove(cost)) {
         _assignment.commitLastProbe();
-        moves->increment();
         _onMove(*_threadController);
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
           onAccepted(improvingSolutions);
         }
       }
-
-      stats->setRoundStatistics(metaHeuristic->currentRoundStatistics());
     }
   } while (searchController.shouldRun(_assignment));
 

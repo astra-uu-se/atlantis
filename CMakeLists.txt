@@ -155,6 +155,11 @@ endif()
 # Options. Turn on with 'cmake -Dmyvarname=ON'.
 option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.
+option(MORE_STATS "Track more statistics in benchmarks" OFF)
+
+if (MORE_STATS)
+  add_compile_definitions(MORE_STATS)
+endif()
 
 if (BUILD_TESTS)
   include(CTest)

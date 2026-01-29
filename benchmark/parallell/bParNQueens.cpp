@@ -56,10 +56,9 @@ std::vector<std::string> ParNQueens::instances;
 BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   st.SetLabel(instances.at(instance));
   std::vector<size_t> solved(timelimits.size(), 0);
-  std::vector numProbes(timelimits.size(), std::vector<size_t>(numThreads, 0));
-  std::vector numMoves(timelimits.size(), std::vector<size_t>(numThreads, 0));
-  std::vector numSolutions(timelimits.size(),
-                           std::vector<size_t>(numThreads, 0));
+#ifdef MORE_STATS
+  std::vector sharedImprovingSolutions(timelimits.size(),
+                                       std::vector<size_t>(numThreads, 0));
   std::vector metaStatAttempted(timelimits.size(),
                                 std::vector<size_t>(numThreads, 0));
   std::vector metaStatAccepted(timelimits.size(),
@@ -70,6 +69,7 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
                                      std::vector<size_t>(numThreads, 0));
   std::vector metaStatImproving(timelimits.size(),
                                 std::vector<size_t>(numThreads, 0));
+#endif
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimits.back());
 
@@ -90,6 +90,7 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
         }
       });
 
+#ifdef MORE_STATS
   std::vector<std::shared_ptr<search::SearchStatistics>> threadStatistics;
   threadStatistics.reserve(numThreads);
   backend->setOnMove([&](const search::ThreadController& controller) {
@@ -102,9 +103,7 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
         continue;
       }
       for (size_t t = 0; t < numThreads; t++) {
-        numProbes[i][t] = stoi(threadStatistics[t]->getValue("probes"));
-        numMoves[i][t] = stoi(threadStatistics[t]->getValue("moves"));
-        numSolutions[i][t] =
+        sharedImprovingSolutions[i][t] =
             stoi(threadStatistics[t]->getValue("improvingSolutions"));
         std::optional<std::shared_ptr<search::RoundStatistics>> metaStats =
             threadStatistics[t]->getRoundStatistics();
@@ -119,6 +118,7 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
       }
     }
   });
+#endif
 
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);
@@ -128,25 +128,23 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   for (size_t i = 0; i < timelimits.size(); i++) {
     const std::string prefix = std::to_string(timelimits[i].count());
     st.counters[prefix + "/solved"] = static_cast<double>(solved[i]);
+#ifdef MORE_STATS
     for (size_t t = 0; t < numThreads; t++) {
-      st.counters[prefix + "/thread" + std::to_string(t) + "/probes"] =
-          numProbes[i][t];
-      st.counters[prefix + "/thread" + std::to_string(t) + "/moves"] =
-          numMoves[i][t];
-      st.counters[prefix + "/thread" + std::to_string(t) + "/solutions"] =
-          numSolutions[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) +
+                  "/improvedSolutionsFound"] = sharedImprovingSolutions[i][t];
 
-      st.counters[prefix + "/thread" + std::to_string(t) + "/metaAttempted"] =
+      st.counters[prefix + "/thread" + std::to_string(t) + "/attemptedMoves"] =
           metaStatAttempted[i][t];
-      st.counters[prefix + "/thread" + std::to_string(t) + "/metaAccepted"] =
+      st.counters[prefix + "/thread" + std::to_string(t) + "/acceptedMoves"] =
           metaStatAccepted[i][t];
       st.counters[prefix + "/thread" + std::to_string(t) +
-                  "/metaUphillAttempted"] = metaStatUphillAttempted[i][t];
+                  "/uphillAttemptedMoves"] = metaStatUphillAttempted[i][t];
       st.counters[prefix + "/thread" + std::to_string(t) +
-                  "/metaUphillAccepted"] = metaStatUphillAccepted[i][t];
-      st.counters[prefix + "/thread" + std::to_string(t) +
-                  "/metaImprovingMoves"] = metaStatImproving[i][t];
+                  "/uphillAcceptedMoves"] = metaStatUphillAccepted[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) + "/improvingMoves"] =
+          metaStatImproving[i][t];
     }
+#endif
   }
 }
 

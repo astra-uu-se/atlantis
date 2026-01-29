@@ -86,6 +86,7 @@ build-tests:
 build-benchmarks:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
+											   -DMORE_STATS=ON \
 	                                           -DBUILD_TESTS:BOOL=OFF \
 	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
 	cd ${BUILD_DIR}; $(MAKE) -j 8
@@ -145,7 +146,7 @@ run-benchmark-par:
 									--benchmark_filter=${BENCHMARK_FILTER_PAR}
 
 .PHONY: benchmark-par
-benchmark-par: build-benchmarks fzn-benchmark run-benchmark-par
+benchmark-par: build-benchmarks run-benchmark-par
 
 .PHONY: all
 all: clean build build-tests build-benchmarks
@@ -172,7 +173,7 @@ fzn-benchmark:
 			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
 	mkdir -p ${FZN_MODEL_DIR}/n_queens
-	$(foreach queens, 8 16 17 18 19 20 21 22 23 24 32 48 64 128 192 256 512 768 1024, \
+	$(foreach queens, 8 16 20 24 32 48 64 128 192 256 512 768 1024, \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/n_queens.mzn \
 			-D n=${queens} \

@@ -22,21 +22,19 @@ template <class F>
 void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
   F::populateInstances();
   for (size_t instance = 0; instance < F::size(); ++instance) {
-    // TODO: re-add threads
-    // for (Int numThreads = 1; numThreads <= 16; numThreads *= 2) {
-    Int numThreads = 2;
-    for (Int searchType = 0; searchType <= 2; ++searchType) {
-      benchmark->Args({static_cast<long>(instance), numThreads, searchType});
-      if (numThreads == 1) {
-        break;
+    for (Int numThreads = 1; numThreads <= 16; numThreads *= 2) {
+      for (Int searchType = 0; searchType <= 2; ++searchType) {
+        benchmark->Args({static_cast<long>(instance), numThreads, searchType});
+        if (numThreads == 1) {
+          break;
+        }
       }
-    }
 #ifndef NDEBUG
-    if (numThreads >= 2) {
-      return;
-    }
+      if (numThreads >= 2) {
+        return;
+      }
 #endif
-    // }
+    }
   }
 }
 
@@ -44,9 +42,8 @@ inline std::vector<std::chrono::milliseconds> defaultTimelimits() {
 #ifndef NDEBUG
   return {std::chrono::milliseconds(1000), std::chrono::milliseconds(2000)};
 #else
-  // TODO: Add 180s timeout back
   return {std::chrono::milliseconds(5000), std::chrono::milliseconds(30000),
-          std::chrono::milliseconds(60000)};
+          std::chrono::milliseconds(60000), std::chrono::milliseconds(180000)};
 #endif
 }
 
@@ -63,6 +60,8 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
       "16.fzn",
       "20.fzn",
       "24.fzn",
+      "32.fzn",
+      "48.fzn",
       // TSP
       "n20w120.001.fzn",
       "n60w140.001.fzn",
