@@ -43,6 +43,9 @@ bool Annealer::acceptMove(const Cost& cost) {
   if (!shouldRunRound()) {
     nextRound();
   }
+
+  if (ret) _cost = cost;
+
   return ret;
 }
 
