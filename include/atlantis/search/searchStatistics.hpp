@@ -46,7 +46,7 @@ class CounterStatistic : public Statistic {
 
 class SearchStatistics {
   std::unordered_map<std::string, std::shared_ptr<Statistic>> _statistics;
-  std::optional<RoundStatistics> _roundStatistics;
+  std::optional<std::shared_ptr<RoundStatistics>> _roundStatistics;
 
  public:
   void display(std::ostream& output) const noexcept {
@@ -65,12 +65,12 @@ class SearchStatistics {
     return _statistics[name]->value();
   }
 
-  std::optional<RoundStatistics> getRoundStatistics() const {
+  std::optional<std::shared_ptr<RoundStatistics>> getRoundStatistics() const {
     return _roundStatistics;
   }
 
   void setRoundStatistics(
-      const std::optional<RoundStatistics>& roundStatistics) {
+      const std::optional<std::shared_ptr<RoundStatistics>>& roundStatistics) {
     _roundStatistics = roundStatistics;
   }
 };

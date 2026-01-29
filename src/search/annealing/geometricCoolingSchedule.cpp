@@ -18,10 +18,11 @@ void GeometricCoolingSchedule::start(double initialTemperature) {
   _successiveFutileRounds = 0;
 }
 
-void GeometricCoolingSchedule::nextRound(const RoundStatistics& statistics) {
+void GeometricCoolingSchedule::nextRound(
+    const std::shared_ptr<RoundStatistics>& statistics) {
   _temperature *= _coolingRate;
 
-  if (statistics.roundImprovedOnPrevious()) {
+  if (statistics->roundImprovedOnPrevious()) {
     _successiveFutileRounds = 0;
   } else {
     _successiveFutileRounds++;

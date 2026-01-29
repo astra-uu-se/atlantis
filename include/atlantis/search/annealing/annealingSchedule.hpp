@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 namespace atlantis::search {
 
 struct RoundStatistics;
@@ -23,7 +25,8 @@ class AnnealingSchedule {
    *
    * @param statistics
    */
-  virtual void nextRound(const RoundStatistics& statistics) = 0;
+  virtual void nextRound(
+      const std::shared_ptr<RoundStatistics>& statistics) = 0;
 
   /**
    * @return The current temperature.

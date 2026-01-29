@@ -114,15 +114,15 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
         threadNumMoves[i][t] = stoi(threadStatistics[t]->getValue("moves"));
         threadNumSolutions[i][t] =
             stoi(threadStatistics[t]->getValue("improvingSolutions"));
-        std::optional<search::RoundStatistics> metaStats =
+        std::optional<std::shared_ptr<search::RoundStatistics>> metaStats =
             threadStatistics[t]->getRoundStatistics();
         if (metaStats.has_value()) {
-          metaStatAttempted[i][t] = metaStats.value().attemptedMoves;
-          metaStatAccepted[i][t] = metaStats.value().acceptedMoves;
+          metaStatAttempted[i][t] = metaStats.value()->attemptedMoves;
+          metaStatAccepted[i][t] = metaStats.value()->acceptedMoves;
           metaStatUphillAttempted[i][t] =
-              metaStats.value().uphillAttemptedMoves;
-          metaStatUphillAccepted[i][t] = metaStats.value().uphillAcceptedMoves;
-          metaStatImproving[i][t] = metaStats.value().improvingMoves;
+              metaStats.value()->uphillAttemptedMoves;
+          metaStatUphillAccepted[i][t] = metaStats.value()->uphillAcceptedMoves;
+          metaStatImproving[i][t] = metaStats.value()->improvingMoves;
         }
       }
     }

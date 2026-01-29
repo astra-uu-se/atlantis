@@ -16,7 +16,7 @@ class GeometricHeatingSchedule : public AnnealingSchedule {
                            double minimumUphillAcceptanceRatio);
 
   void start(double initialTemperature) override;
-  void nextRound(const RoundStatistics& statistics) override;
+  void nextRound(const std::shared_ptr<RoundStatistics>& statistics) override;
   double temperature() override;
   bool frozen() override;
 };

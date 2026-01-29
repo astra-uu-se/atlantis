@@ -16,7 +16,7 @@ class MetaHeuristic {
 
   virtual bool acceptMove(const Cost& cost) = 0;
 
-  [[nodiscard]] virtual std::optional<RoundStatistics>
+  [[nodiscard]] virtual std::optional<std::shared_ptr<RoundStatistics>>
   currentRoundStatistics() {
     return std::nullopt;
   }

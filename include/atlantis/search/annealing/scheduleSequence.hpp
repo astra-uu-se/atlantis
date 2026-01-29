@@ -24,7 +24,7 @@ class ScheduleSequence : public AnnealingSchedule {
   }
 
   void start(double initialTemperature) override;
-  void nextRound(const RoundStatistics& statistics) override;
+  void nextRound(const std::shared_ptr<RoundStatistics>& statistics) override;
   double temperature() override;
   bool frozen() override;
   [[nodiscard]] size_t size() const { return _schedules.size(); }

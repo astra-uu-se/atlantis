@@ -23,7 +23,7 @@ class Annealer : public MetaHeuristic {
   RandomProvider& _random;
   std::unique_ptr<AnnealingSchedule> _schedule;
   Cost _cost;
-  RoundStatistics _statistics;
+  std::shared_ptr<RoundStatistics> _statistics;
   UInt _requiredMovesPerRound;
 
   UInt _attemptedMovesPerRound{0};
@@ -50,7 +50,8 @@ class Annealer : public MetaHeuristic {
 
   [[nodiscard]] bool shouldRunRound() const;
 
-  [[gnu::always_inline]] [[nodiscard]] std::optional<RoundStatistics>
+  [[gnu::always_inline]] [[nodiscard]] std::optional<
+      std::shared_ptr<RoundStatistics>>
   currentRoundStatistics() override {
     return _statistics;
   }

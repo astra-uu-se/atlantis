@@ -36,10 +36,10 @@ TEST_F(GeometricHeatingScheduleTest, temperature_increases_geometrically) {
   schedule->start(initialTemp);
   EXPECT_EQ(schedule->temperature(), initialTemp);
 
-  schedule->nextRound(RoundStatistics());
+  schedule->nextRound(std::make_shared<RoundStatistics>());
   EXPECT_EQ(schedule->temperature(), initialTemp * heatingRate);
 
-  schedule->nextRound(RoundStatistics());
+  schedule->nextRound(std::make_shared<RoundStatistics>());
   EXPECT_EQ(schedule->temperature(), initialTemp * heatingRate * heatingRate);
 }
 
@@ -47,13 +47,13 @@ TEST_F(GeometricHeatingScheduleTest,
        frozen_when_accepted_uphill_moves_surpasses_threshold) {
   EXPECT_FALSE(schedule->frozen());
 
-  RoundStatistics stats;
-  stats.uphillAcceptedMoves = 10;
-  stats.uphillAttemptedMoves = 21;
+  const auto stats = std::make_shared<RoundStatistics>();
+  stats->uphillAcceptedMoves = 10;
+  stats->uphillAttemptedMoves = 21;
   schedule->nextRound(stats);
   EXPECT_FALSE(schedule->frozen());
 
-  stats.uphillAttemptedMoves = 19;
+  stats->uphillAttemptedMoves = 19;
   schedule->nextRound(stats);
   EXPECT_TRUE(schedule->frozen());
 }
@@ -61,9 +61,9 @@ TEST_F(GeometricHeatingScheduleTest,
 TEST_F(GeometricHeatingScheduleTest, restarting_frozen_schedule_is_unfrozen) {
   EXPECT_FALSE(schedule->frozen());
 
-  RoundStatistics stats;
-  stats.uphillAcceptedMoves = 10;
-  stats.uphillAttemptedMoves = 19;
+  const auto stats = std::make_shared<RoundStatistics>();
+  stats->uphillAcceptedMoves = 10;
+  stats->uphillAttemptedMoves = 19;
   schedule->nextRound(stats);
   EXPECT_TRUE(schedule->frozen());
 

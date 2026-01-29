@@ -19,9 +19,10 @@ void GeometricHeatingSchedule::start(double initialTemperature) {
   _lastUphillAcceptanceRatio = 0.0;
 }
 
-void GeometricHeatingSchedule::nextRound(const RoundStatistics& statistics) {
+void GeometricHeatingSchedule::nextRound(
+    const std::shared_ptr<RoundStatistics>& statistics) {
   _temperature *= _heatingRate;
-  _lastUphillAcceptanceRatio = statistics.uphillAcceptanceRatio();
+  _lastUphillAcceptanceRatio = statistics->uphillAcceptanceRatio();
 }
 
 double GeometricHeatingSchedule::temperature() { return _temperature; }
