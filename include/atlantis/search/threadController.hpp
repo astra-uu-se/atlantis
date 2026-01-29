@@ -77,10 +77,11 @@ class ThreadController {
     _curSolutionNotified = true;
   }
 
-  [[gnu::always_inline]] [[nodiscard]] std::optional<std::vector<
-      std::shared_ptr<SearchStatistics>>>
+  [[gnu::always_inline]] [[nodiscard]] std::optional<
+      std::vector<std::shared_ptr<SearchStatistics>>>
   getStats() const {
-    if (_numThreadsWithReportedStats.load() >= _threadCount) return _threadStatistics;
+    if (_numThreadsWithReportedStats.load() >= _threadCount)
+      return _threadStatistics;
     return std::nullopt;
   }
 

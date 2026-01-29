@@ -50,7 +50,10 @@ class Annealer : public MetaHeuristic {
 
   [[nodiscard]] bool shouldRunRound() const;
 
-  [[nodiscard]] const RoundStatistics& currentRoundStatistics() const;
+  [[gnu::always_inline]] [[nodiscard]] std::optional<RoundStatistics>
+  currentRoundStatistics() override {
+    return _statistics;
+  }
 
   virtual bool accept(Int moveCost);
 

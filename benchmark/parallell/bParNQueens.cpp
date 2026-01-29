@@ -60,6 +60,16 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   std::vector numMoves(timelimits.size(), std::vector<size_t>(numThreads, 0));
   std::vector numSolutions(timelimits.size(),
                            std::vector<size_t>(numThreads, 0));
+  std::vector metaStatAttempted(timelimits.size(),
+                                std::vector<size_t>(numThreads, 0));
+  std::vector metaStatAccepted(timelimits.size(),
+                               std::vector<size_t>(numThreads, 0));
+  std::vector metaStatUphillAttempted(timelimits.size(),
+                                      std::vector<size_t>(numThreads, 0));
+  std::vector metaStatUphillAccepted(timelimits.size(),
+                                     std::vector<size_t>(numThreads, 0));
+  std::vector metaStatImproving(timelimits.size(),
+                                std::vector<size_t>(numThreads, 0));
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimits.back());
 
@@ -83,7 +93,6 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   std::vector<std::shared_ptr<search::SearchStatistics>> threadStatistics;
   threadStatistics.reserve(numThreads);
   backend->setOnMove([&](const search::ThreadController& controller) {
-
     auto threadStatsOptional = controller.getStats();
     if (!threadStatsOptional.has_value()) return;
     threadStatistics = threadStatsOptional.value();
@@ -97,6 +106,16 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
         numMoves[i][t] = stoi(threadStatistics[t]->getValue("moves"));
         numSolutions[i][t] =
             stoi(threadStatistics[t]->getValue("improvingSolutions"));
+        std::optional<search::RoundStatistics> metaStats =
+            threadStatistics[t]->getRoundStatistics();
+        if (metaStats.has_value()) {
+          metaStatAttempted[i][t] = metaStats.value().attemptedMoves;
+          metaStatAccepted[i][t] = metaStats.value().acceptedMoves;
+          metaStatUphillAttempted[i][t] =
+              metaStats.value().uphillAttemptedMoves;
+          metaStatUphillAccepted[i][t] = metaStats.value().uphillAcceptedMoves;
+          metaStatImproving[i][t] = metaStats.value().improvingMoves;
+        }
       }
     }
   });
@@ -116,6 +135,17 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
           numMoves[i][t];
       st.counters[prefix + "/thread" + std::to_string(t) + "/solutions"] =
           numSolutions[i][t];
+
+      st.counters[prefix + "/thread" + std::to_string(t) + "/metaAttempted"] =
+          metaStatAttempted[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) + "/metaAccepted"] =
+          metaStatAccepted[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) +
+                  "/metaUphillAttempted"] = metaStatUphillAttempted[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) +
+                  "/metaUphillAccepted"] = metaStatUphillAccepted[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) +
+                  "/metaImprovingMoves"] = metaStatImproving[i][t];
     }
   }
 }

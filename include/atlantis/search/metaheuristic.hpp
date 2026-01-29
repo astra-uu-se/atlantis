@@ -1,7 +1,5 @@
 #pragma once
 
-#include "atlantis/types.hpp"
-
 namespace atlantis::search {
 
 class Assignment;
@@ -17,6 +15,11 @@ class MetaHeuristic {
   [[nodiscard]] virtual bool isFinished() const = 0;
 
   virtual bool acceptMove(const Cost& cost) = 0;
+
+  [[nodiscard]] virtual std::optional<RoundStatistics>
+  currentRoundStatistics() {
+    return std::nullopt;
+  }
 };
 
 }  // namespace atlantis::search

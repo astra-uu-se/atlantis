@@ -6,6 +6,8 @@
 #include <string>
 #include <string_view>
 
+#include "annealing/types.hpp"
+
 namespace atlantis::search {
 
 class Statistic {
@@ -44,6 +46,7 @@ class CounterStatistic : public Statistic {
 
 class SearchStatistics {
   std::unordered_map<std::string, std::shared_ptr<Statistic>> _statistics;
+  std::optional<RoundStatistics> _roundStatistics;
 
  public:
   void display(std::ostream& output) const noexcept {
@@ -60,6 +63,15 @@ class SearchStatistics {
 
   std::string getValue(const std::string& name) {
     return _statistics[name]->value();
+  }
+
+  std::optional<RoundStatistics> getRoundStatistics() const {
+    return _roundStatistics;
+  }
+
+  void setRoundStatistics(
+      const std::optional<RoundStatistics>& roundStatistics) {
+    _roundStatistics = roundStatistics;
   }
 };
 

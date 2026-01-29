@@ -2,7 +2,6 @@
 
 #include <chrono>
 
-#include "atlantis/search/annealing/types.hpp"
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/metaheuristic.hpp"
 #include "atlantis/search/searchController.hpp"
@@ -85,6 +84,8 @@ Int SearchProcedure::run(SearchController& searchController,
           onAccepted(improvingSolutions);
         }
       }
+
+      stats->setRoundStatistics(metaHeuristic->currentRoundStatistics());
     }
   } while (searchController.shouldRun(_assignment));
 
