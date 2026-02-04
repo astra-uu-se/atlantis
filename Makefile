@@ -10,7 +10,7 @@ BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
 NUM_BENCHMARK_REPETITIONS=3
 BENCHMARK_FILTER="^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|NQueens|TSPTW|VesselLoading)\/[A-Za-z]"
 BENCHMARK_FILTER_SYNTH="^(ElementVarTree|LinearTree|TSP|TSPTWAllDiff)\/[A-Za-z]"
-BENCHMARK_FILTER_PAR="^Par(TSP|NQueens)"
+BENCHMARK_FILTER_PAR="^Par(TSP|NQueens|Knapsack)"
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 
 DZN_DIR=${MKFILE_PATH}dzn
@@ -95,6 +95,7 @@ build-benchmarks:
 build-benchmarks-debug:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
+											   -DMORE_STATS=OFF \
 	                                           -DBUILD_TESTS:BOOL=OFF \
 	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
 	cd ${BUILD_DIR}; $(MAKE) -j 8

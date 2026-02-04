@@ -11,7 +11,6 @@ namespace atlantis::search {
 
 class ThreadController {
   mutable std::mutex _lock;
-  mutable std::mutex _printLock;
   Int _bestThread = -1;
   size_t _threadCount;
   std::atomic<bool> _hasSolution = false;

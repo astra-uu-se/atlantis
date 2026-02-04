@@ -59,6 +59,20 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
   std::vector<size_t> numSolutions(timelimits.size(), 0);
   std::vector<size_t> bestObjective(timelimits.size(), 0);
   std::vector<double> totalObjective(timelimits.size(), 0.0);
+#ifdef MORE_STATS
+  std::vector sharedImprovingSolutions(timelimits.size(),
+                                       std::vector<size_t>(numThreads, 0));
+  std::vector metaStatAttempted(timelimits.size(),
+                                std::vector<size_t>(numThreads, 0));
+  std::vector metaStatAccepted(timelimits.size(),
+                               std::vector<size_t>(numThreads, 0));
+  std::vector metaStatUphillAttempted(timelimits.size(),
+                                      std::vector<size_t>(numThreads, 0));
+  std::vector metaStatUphillAccepted(timelimits.size(),
+                                     std::vector<size_t>(numThreads, 0));
+  std::vector metaStatImproving(timelimits.size(),
+                                std::vector<size_t>(numThreads, 0));
+#endif
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimits.back());
 
@@ -82,6 +96,36 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
         }
       });
 
+#ifdef MORE_STATS
+  std::vector<std::shared_ptr<search::SearchStatistics>> threadStatistics;
+  threadStatistics.reserve(numThreads);
+  backend->setOnMove([&](const search::ThreadController& controller) {
+    auto threadStatsOptional = controller.getStats();
+    if (!threadStatsOptional.has_value()) return;
+    threadStatistics = threadStatsOptional.value();
+
+    for (size_t i = 0; i < timelimits.size(); i++) {
+      if (deadlines[i] < std::chrono::steady_clock::now()) {
+        continue;
+      }
+      for (size_t t = 0; t < numThreads; t++) {
+        sharedImprovingSolutions[i][t] =
+            stoi(threadStatistics[t]->getValue("improvingSolutions"));
+        std::optional<std::shared_ptr<search::RoundStatistics>> metaStats =
+            threadStatistics[t]->getRoundStatistics();
+        if (metaStats.has_value()) {
+          metaStatAttempted[i][t] = metaStats.value()->attemptedMoves;
+          metaStatAccepted[i][t] = metaStats.value()->acceptedMoves;
+          metaStatUphillAttempted[i][t] =
+              metaStats.value()->uphillAttemptedMoves;
+          metaStatUphillAccepted[i][t] = metaStats.value()->uphillAcceptedMoves;
+          metaStatImproving[i][t] = metaStats.value()->improvingMoves;
+        }
+      }
+    }
+  });
+#endif
+
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);
     backend->join(logger);
@@ -95,6 +139,23 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
         static_cast<double>(bestObjective[i]);
     st.counters[prefix + "/objective_average"] =
         totalObjective[i] / static_cast<double>(numSolutions[i]);
+#ifdef MORE_STATS
+    for (size_t t = 0; t < numThreads; t++) {
+      st.counters[prefix + "/thread" + std::to_string(t) +
+                  "/improvedSolutionsFound"] = sharedImprovingSolutions[i][t];
+
+      st.counters[prefix + "/thread" + std::to_string(t) + "/attemptedMoves"] =
+          metaStatAttempted[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) + "/acceptedMoves"] =
+          metaStatAccepted[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) +
+                  "/uphillAttemptedMoves"] = metaStatUphillAttempted[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) +
+                  "/uphillAcceptedMoves"] = metaStatUphillAccepted[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) + "/improvingMoves"] =
+          metaStatImproving[i][t];
+    }
+#endif
   }
 }
 
