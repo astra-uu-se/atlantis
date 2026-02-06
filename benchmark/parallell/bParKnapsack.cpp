@@ -72,6 +72,8 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
                                      std::vector<size_t>(numThreads, 0));
   std::vector metaStatImproving(timelimits.size(),
                                 std::vector<size_t>(numThreads, 0));
+  std::vector metaStatRounds(timelimits.size(),
+                                std::vector<size_t>(numThreads, 0));
 #endif
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimits.back());
@@ -120,6 +122,7 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
               metaStats.value()->uphillAttemptedMoves;
           metaStatUphillAccepted[i][t] = metaStats.value()->uphillAcceptedMoves;
           metaStatImproving[i][t] = metaStats.value()->improvingMoves;
+          metaStatRounds[i][t] = metaStats.value()->rounds;
         }
       }
     }
@@ -154,6 +157,8 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
                   "/uphillAcceptedMoves"] = metaStatUphillAccepted[i][t];
       st.counters[prefix + "/thread" + std::to_string(t) + "/improvingMoves"] =
           metaStatImproving[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) + "/annealerRounds"] =
+          metaStatRounds[i][t];
     }
 #endif
   }

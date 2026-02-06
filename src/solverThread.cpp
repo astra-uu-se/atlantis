@@ -51,7 +51,7 @@ SolverThread::SolverThread(
       _threadController(controller),
       _searchType(searchType),
       _onMove(onMove),
-      _seed(seed),
+      _seed(seed + threadId),
       _timelimit(timeLimit),
       _shouldStop(shouldStop) {}
 

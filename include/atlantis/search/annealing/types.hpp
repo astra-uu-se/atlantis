@@ -13,6 +13,7 @@ struct RoundStatistics {
   UInt attemptedMoves{0};
   UInt acceptedMoves{0};
   UInt improvingMoves{0};
+  UInt rounds{0};
 
   Int bestCostOfPreviousRound{std::numeric_limits<Int>::max()};
   Int bestCostOfThisRound{std::numeric_limits<Int>::max()};
@@ -43,6 +44,7 @@ struct RoundStatistics {
   }
 
   void nextRound(double temp) noexcept {
+    rounds++;
     bestCostOfPreviousRound = bestCostOfThisRound;
     bestCostOfThisRound = std::numeric_limits<Int>::max();
     temperature = temp;
