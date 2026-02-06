@@ -56,21 +56,21 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
   // Run only a small subset of instances
   // FIXME: this crashes at the end when running only nQueens
   const std::vector<std::string> fileSet = {
-    // Knapsack
-    "f10_l-d_kp_20_879.fzn",
-    "knapPI_1_500_1000_1.fzn",
-    "knapPI_3_10000_1000_1.fzn"
-    // nQueens
-    "16.fzn",
-    "48.fzn",
-    "64.fzn",
-    "128.fzn",
-    "192.fzn",
-    // TSP
-    "n20w120.001.fzn",
-    "n60w140.001.fzn",
-    "n100w140.001.fzn",
-    "n100w160.001.fzn",
+      // Knapsack
+      "f10_l-d_kp_20_879.fzn",
+      "knapPI_1_500_1000_1.fzn",
+      "knapPI_3_10000_1000_1.fzn"
+      // nQueens
+      "16.fzn",
+      "48.fzn",
+      "64.fzn",
+      "128.fzn",
+      "192.fzn",
+      // TSP
+      "n20w120.001.fzn",
+      "n60w140.001.fzn",
+      "n100w140.001.fzn",
+      "n100w160.001.fzn",
   };
   for (const auto& entry : std::filesystem::directory_iterator(relDir)) {
     if (entry.is_regular_file() && entry.path().extension() == ".fzn") {

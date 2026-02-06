@@ -70,7 +70,7 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   std::vector metaStatImproving(timelimits.size(),
                                 std::vector<size_t>(numThreads, 0));
   std::vector metaStatRounds(timelimits.size(),
-                                std::vector<size_t>(numThreads, 0));
+                             std::vector<size_t>(numThreads, 0));
 #endif
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimits.back());
