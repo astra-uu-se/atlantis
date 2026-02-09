@@ -82,8 +82,6 @@ Int SearchProcedure::run(SearchController& searchController,
         _assignment.commitLastProbe();
         _onMove(*_threadController);
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
-          onAccepted(improvingSolutions);
-          onAccepted(improvingSolutions, communications);
           if (onAccepted(improvingSolutions)) communications->increment();
         }
       }
