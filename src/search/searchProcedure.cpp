@@ -31,12 +31,12 @@ void SearchProcedure::tightenSearch() {
   }
 }
 
-void SearchProcedure::onAccepted(
-    const std::shared_ptr<CounterStatistic>& improvingSolutions, const std::shared_ptr<CounterStatistic>& communications) {
+bool SearchProcedure::onAccepted(
+    const std::shared_ptr<CounterStatistic>& improvingSolutions) {
   // If a worsening move was accepted, there's no need to communicate
   if (_savedAssignment.has_value() &&
       _savedAssignment->getCost().isBetterThan(_assignment.getCost())) {
-    return;
+    return false;
   }
 
   _savedAssignment = saveAssignment();
@@ -52,6 +52,7 @@ void SearchProcedure::onAccepted(
   }
 
   tightenSearch();
+  return true;
 }
 
 Int SearchProcedure::run(SearchController& searchController,
@@ -69,7 +70,8 @@ Int SearchProcedure::run(SearchController& searchController,
     _assignment.initialize(_random);
 
     // TODO: handle this case: this should call some separate version
-    if (_assignment.satisfiesConstraints()) onAccepted(improvingSolutions, communications);
+    if (_assignment.satisfiesConstraints())
+      if (onAccepted(improvingSolutions)) communications->increment();
 
     metaHeuristic->start();
 
@@ -82,6 +84,7 @@ Int SearchProcedure::run(SearchController& searchController,
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
           onAccepted(improvingSolutions);
           onAccepted(improvingSolutions, communications);
+          if (onAccepted(improvingSolutions)) communications->increment();
         }
       }
     }

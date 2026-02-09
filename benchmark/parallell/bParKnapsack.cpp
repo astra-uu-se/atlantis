@@ -150,8 +150,8 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
     for (size_t t = 0; t < numThreads; t++) {
       st.counters[prefix + "/thread" + std::to_string(t) +
                   "/improvedSolutionsFound"] = sharedImprovingSolutions[i][t];
-      st.counters[prefix + "/thread" + std::to_string(t) +
-                  "/communications"] = communications[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) + "/communications"] =
+          communications[i][t];
 
       st.counters[prefix + "/thread" + std::to_string(t) + "/attemptedMoves"] =
           metaStatAttempted[i][t];
