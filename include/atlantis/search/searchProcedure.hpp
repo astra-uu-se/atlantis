@@ -46,7 +46,7 @@ class SearchProcedure {
 
   void tightenSearch();
 
-  void onAccepted(const std::shared_ptr<CounterStatistic>& improvingSolutions);
+  void onAccepted(const std::shared_ptr<CounterStatistic>& improvingSolutions, const std::shared_ptr<CounterStatistic>& communications);
 
  public:
   SearchProcedure(

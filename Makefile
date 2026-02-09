@@ -86,7 +86,7 @@ build-tests:
 build-benchmarks:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
-											   -DMORE_STATS=ON \
+											   -DMORE_STATS=OFF \
 	                                           -DBUILD_TESTS:BOOL=OFF \
 	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
 	cd ${BUILD_DIR}; $(MAKE) -j 8

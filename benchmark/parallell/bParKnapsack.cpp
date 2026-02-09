@@ -74,6 +74,8 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
                                 std::vector<size_t>(numThreads, 0));
   std::vector metaStatRounds(timelimits.size(),
                              std::vector<size_t>(numThreads, 0));
+  std::vector communications(timelimits.size(),
+                             std::vector<size_t>(numThreads, 0));
 #endif
   backend->setOnFinish([](bool) {});
   backend->setTimelimit(timelimits.back());
@@ -113,6 +115,8 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
       for (size_t t = 0; t < numThreads; t++) {
         sharedImprovingSolutions[i][t] =
             stoi(threadStatistics[t]->getValue("improvingSolutions"));
+        communications[i][t] =
+            stoi(threadStatistics[t]->getValue("communications"));
         std::optional<std::shared_ptr<search::RoundStatistics>> metaStats =
             threadStatistics[t]->getRoundStatistics();
         if (metaStats.has_value()) {
@@ -146,6 +150,8 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
     for (size_t t = 0; t < numThreads; t++) {
       st.counters[prefix + "/thread" + std::to_string(t) +
                   "/improvedSolutionsFound"] = sharedImprovingSolutions[i][t];
+      st.counters[prefix + "/thread" + std::to_string(t) +
+                  "/communications"] = communications[i][t];
 
       st.counters[prefix + "/thread" + std::to_string(t) + "/attemptedMoves"] =
           metaStatAttempted[i][t];

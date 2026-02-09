@@ -32,10 +32,9 @@ void SearchProcedure::tightenSearch() {
 }
 
 void SearchProcedure::onAccepted(
-    const std::shared_ptr<CounterStatistic>& improvingSolutions) {
-  // Prevent over-communication before an initial 0-violation solution
-  // has been found
-  if (!_hasSolution && _savedAssignment.has_value() &&
+    const std::shared_ptr<CounterStatistic>& improvingSolutions, const std::shared_ptr<CounterStatistic>& communications) {
+  // If a worsening move was accepted, there's no need to communicate
+  if (_savedAssignment.has_value() &&
       _savedAssignment->getCost().isBetterThan(_assignment.getCost())) {
     return;
   }
@@ -59,8 +58,10 @@ Int SearchProcedure::run(SearchController& searchController,
                          std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
   const auto improvingSolutions =
       std::make_shared<CounterStatistic>("improvingSolutions");
+  const auto communications =
+      std::make_shared<CounterStatistic>("communications");
   // This counts the number of globally best solutions found by this thread.
-  const auto stats = makeStats({improvingSolutions});
+  const auto stats = makeStats({improvingSolutions, communications});
   _threadController->setThreadStats(_threadId, stats);
   stats->setRoundStatistics(metaHeuristic->currentRoundStatistics());
 
@@ -68,7 +69,7 @@ Int SearchProcedure::run(SearchController& searchController,
     _assignment.initialize(_random);
 
     // TODO: handle this case: this should call some separate version
-    if (_assignment.satisfiesConstraints()) onAccepted(improvingSolutions);
+    if (_assignment.satisfiesConstraints()) onAccepted(improvingSolutions, communications);
 
     metaHeuristic->start();
 
@@ -80,6 +81,7 @@ Int SearchProcedure::run(SearchController& searchController,
         _onMove(*_threadController);
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
           onAccepted(improvingSolutions);
+          onAccepted(improvingSolutions, communications);
         }
       }
     }
