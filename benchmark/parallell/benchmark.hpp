@@ -24,6 +24,7 @@ void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
   for (size_t instance = 0; instance < F::size(); ++instance) {
     for (Int numThreads = 1; numThreads <= 8; numThreads *= 2) {
       for (Int searchType = 0; searchType <= 2; ++searchType) {
+        if (searchType == 1) continue;
         benchmark->Args({static_cast<long>(instance), numThreads, searchType});
         if (numThreads == 1) {
           break;
@@ -66,6 +67,10 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
       "64.fzn",
       "128.fzn",
       "192.fzn",
+      "256.fzn",
+      "512.fzn",
+      "768.fzn",
+      "1024.fzn",
       // TSP
       "n20w120.001.fzn",
       "n60w140.001.fzn",
