@@ -7,15 +7,7 @@
 namespace atlantis::benchmark {
 
 inline search::SearchType intToSearchType(Int state) {
-  switch (state) {
-    case 2:
-      return search::SearchType::BEAMSEARCH;
-    case 1:
-      return search::SearchType::PARALLEL;
-    case 0:
-    default:
-      return search::SearchType::BESTCOST;
-  }
+  return static_cast<search::SearchType>(state);
 }
 
 template <class F>
@@ -24,7 +16,6 @@ void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
   for (size_t instance = 0; instance < F::size(); ++instance) {
     for (Int numThreads = 1; numThreads <= 8; numThreads *= 2) {
       for (Int searchType = 0; searchType <= 2; ++searchType) {
-        if (searchType == 1) continue;
         benchmark->Args({static_cast<long>(instance), numThreads, searchType});
         if (numThreads == 1) {
           break;
