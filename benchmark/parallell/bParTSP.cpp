@@ -57,7 +57,8 @@ std::vector<std::string> ParTSP::instances;
 BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
   st.SetLabel(instances.at(instance));
   std::vector<size_t> numSolutions(timelimits.size(), 0);
-  std::vector<size_t> bestObjective(timelimits.size(), 0);
+  std::vector<Int> bestObjective(timelimits.size(), 0);
+  std::vector<Int> bestViolation(timelimits.size(), 0);
   std::vector<double> totalObjective(timelimits.size(), 0.0);
   // std::vector sharedImprovingSolutions(timelimits.size(),
   //                                      std::vector<size_t>(numThreads, 0));
@@ -94,6 +95,7 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
           }
           ++numSolutions[i];
           bestObjective[i] = solution.cost().objective();
+          bestViolation[i] = solution.cost().violation();
           totalObjective[i] += static_cast<double>(bestObjective[i]);
         }
       });
@@ -140,6 +142,8 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
         static_cast<double>(numSolutions[i]), ::benchmark::Counter::kIsRate);
     st.counters[prefix + "/objective_best"] =
         static_cast<double>(bestObjective[i]);
+    st.counters[prefix + "/violation_best"] =
+        static_cast<double>(bestViolation[i]);
     st.counters[prefix + "/objective_average"] =
         totalObjective[i] / static_cast<double>(numSolutions[i]);
     // for (size_t t = 0; t < numThreads; t++) {
