@@ -95,7 +95,7 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
             continue;
           }
           ++numSolutions[i];
-          bestObjective[i] = solution.getCost().getObjective();
+          bestObjective[i] = solution.cost().objective();
           totalObjective[i] += static_cast<double>(bestObjective[i]);
         }
       });

@@ -50,8 +50,8 @@ TEST_F(GeometricCoolingScheduleTest, frozen_if_rounds_no_longer_improve) {
   EXPECT_FALSE(schedule->frozen());
 
   const auto stats = std::make_shared<RoundStatistics>();
-  stats->bestCostOfThisRound = 5;
-  stats->bestCostOfPreviousRound = 5;
+  stats->bestCostOfThisRound = Cost(5);
+  stats->bestCostOfPreviousRound = Cost(5);
   schedule->nextRound(stats);
   EXPECT_FALSE(schedule->frozen());
 
@@ -63,8 +63,8 @@ TEST_F(GeometricCoolingScheduleTest, restarting_frozen_schedule_is_unfrozen) {
   EXPECT_FALSE(schedule->frozen());
 
   const auto stats = std::make_shared<RoundStatistics>();
-  stats->bestCostOfThisRound = 5;
-  stats->bestCostOfPreviousRound = 5;
+  stats->bestCostOfThisRound = Cost(5);
+  stats->bestCostOfPreviousRound = Cost(5);
   schedule->nextRound(stats);
   schedule->nextRound(stats);
   EXPECT_TRUE(schedule->frozen());

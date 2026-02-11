@@ -225,7 +225,10 @@ TEST_P(BoolAllEqualNodeTestFixture, propagation) {
   const propagation::VarViewId violVarId =
       isReified() ? varId(reifiedVar) : _solverMapping->totalViolationId();
 
-  EXPECT_NE(violVarId, propagation::NULL_ID);
+  if (violVarId == propagation::NULL_ID) {
+    EXPECT_EQ(inputVarIds.size(), 1);
+    return;
+  }
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);
 
@@ -235,12 +238,17 @@ TEST_P(BoolAllEqualNodeTestFixture, propagation) {
     _solver->endMove();
 
     _solver->beginProbe();
-    _solver->query(violVarId);
+    if (violVarId == propagation::NULL_ID) {
+      EXPECT_EQ(inputVarIds.size(), 1);
+      _solver->query(inputVarIds.front());
+    } else {
+      _solver->query(violVarId);
+    }
     _solver->endProbe();
 
     expectVarVals(inputVarIds, inputVals);
 
-    const bool actual = _solver->currentValue(violVarId) > 0;
+    const bool actual = violVarId == propagation::NULL_ID ? true : _solver->currentValue(violVarId) > 0;
     const bool expected = isViolating(true);
 
     if (!shouldFail()) {

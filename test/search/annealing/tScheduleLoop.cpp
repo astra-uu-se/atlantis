@@ -115,8 +115,8 @@ TEST_F(ScheduleLoopTest,
   loopSchedule->nextRound(std::make_shared<RoundStatistics>());
 
   const auto improvingRoundStats = std::make_shared<RoundStatistics>();
-  improvingRoundStats->bestCostOfPreviousRound = 10;
-  improvingRoundStats->bestCostOfThisRound = 5;
+  improvingRoundStats->bestCostOfPreviousRound = Cost(10);
+  improvingRoundStats->bestCostOfThisRound = Cost(5);
   loopSchedule->nextRound(improvingRoundStats);
   EXPECT_FALSE(loopSchedule->frozen());
   loopSchedule->nextRound(std::make_shared<RoundStatistics>());
