@@ -21,16 +21,8 @@ SavedAssignment SearchProcedure::saveAssignment() const {
   return SavedAssignment(_assignment, _outputVarIds);
 }
 
-void SearchProcedure::tightenSearch() {
-  if (_searchType == SearchType::BESTCOST) {
-    // TODO: need to keep track of best objective found to reduce communication.
-    assert(false);
-  }
-
-}
-
 bool SearchProcedure::onAccepted(
-    const std::shared_ptr<CounterStatistic>& improvingSolutions) {
+    const std::shared_ptr<CounterStatistic>& improvingSolutions, std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
   // If a worsening move was accepted, there's no need to communicate
   if (_localBestAssignment.has_value() &&
       _localBestAssignment->cost() <= _assignment.getCost()) {
@@ -44,17 +36,20 @@ bool SearchProcedure::onAccepted(
   const bool isGlobalBest = _threadController->trySolution(
       _threadId, _localBestAssignment.value(), improvingSolutions);
   if (!isGlobalBest) {
+    // TODO: this can be optimized; only the cost is needed for other than Beamsearch.
     _localBestAssignment = _threadController->solution();
+
+    switch (_searchType) {
+      case SearchType::BESTCOST: { metaHeuristic->setCost(_localBestAssignment.value().cost()); }
+      case SearchType::BEAMSEARCH: { _assignment.setAssignment(_localBestAssignment.value()); }
+      default:;
+    }
   }
 
   if (!_hasSolution && _localBestAssignment->cost().violation() == 0) {
     _hasSolution = true;
   }
 
-  // If we are doing beam search, then update the current assignment:
-  if (_searchType == SearchType::BEAMSEARCH) {
-    _assignment.setAssignment(_localBestAssignment.value());
-  }
   return true;
 }
 
@@ -83,7 +78,7 @@ Int SearchProcedure::run(SearchController& searchController,
 
     // TODO: handle this case: this should call some separate version
     if (_assignment.satisfiesConstraints()) {
-      if (onAccepted(improvingSolutions)) communications->increment();
+      if (onAccepted(improvingSolutions, std::move(metaHeuristic))) communications->increment();
     }
 
     metaHeuristic->start();
@@ -118,7 +113,7 @@ Int SearchProcedure::run(SearchController& searchController,
 #endif
 
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
-          if (onAccepted(improvingSolutions)) communications->increment();
+          if (onAccepted(improvingSolutions, std::move(metaHeuristic))) communications->increment();
         }
       }
 

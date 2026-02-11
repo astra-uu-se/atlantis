@@ -70,6 +70,7 @@ clean:
 build:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
+											   -DMORE_STATS=OFF \
 	                                           -DBUILD_TESTS:BOOL=OFF \
 	                                           -DBUILD_BENCHMARKS:BOOL=OFF ..
 	cd ${BUILD_DIR}; $(MAKE) -j 8
@@ -78,6 +79,7 @@ build:
 build-tests:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
+											   -DMORE_STATS=OFF \
 	                                           -DBUILD_TESTS:BOOL=ON \
 	                                           -DBUILD_BENCHMARKS:BOOL=OFF ..
 	cd ${BUILD_DIR}; $(MAKE) -j 8
@@ -86,7 +88,7 @@ build-tests:
 build-benchmarks:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
-											   -DMORE_STATS=OFF \
+											   -DMORE_STATS=ON \
 	                                           -DBUILD_TESTS:BOOL=OFF \
 	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
 	cd ${BUILD_DIR}; $(MAKE) -j 8

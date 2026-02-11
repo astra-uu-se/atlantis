@@ -61,6 +61,8 @@ class Annealer : public MetaHeuristic {
   [[nodiscard]] Int evaluate(const Cost& cost) const;
 
   void logRoundStatistics(logging::Logger&);
+
+  void setCost(const Cost& cost) override { _cost = cost; }
 };
 
 }  // namespace atlantis::search

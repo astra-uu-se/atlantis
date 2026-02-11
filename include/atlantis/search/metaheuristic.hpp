@@ -20,6 +20,8 @@ class MetaHeuristic {
   currentRoundStatistics() {
     return std::nullopt;
   }
+
+  virtual void setCost(const Cost& cost) = 0;
 };
 
 }  // namespace atlantis::search

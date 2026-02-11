@@ -46,7 +46,7 @@ class SearchProcedure {
   void tightenSearch();
 
   // Returns true iff the was communication to other threads.
-  bool onAccepted(const std::shared_ptr<CounterStatistic>& improvingSolutions);
+  bool onAccepted(const std::shared_ptr<CounterStatistic>& improvingSolutions, std::unique_ptr<MetaHeuristic>&& metaHeuristic);
 
  public:
   SearchProcedure(
