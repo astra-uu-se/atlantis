@@ -26,7 +26,7 @@ SolverThread::SolverThread(FznBackend& backend, size_t threadId)
     : SolverThread(backend.invariantGraph(), backend.outputVarNodeIds(),
                    backend.problemType(), backend.annealingScheduleFactory(),
                    threadId, backend.threadController(), backend.searchType(),
-                   backend.onMove(), backend.seed(), backend.timelimit(),
+                   backend.seed(), backend.timelimit(),
                    backend.shouldStop()) {}
 
 SolverThread::SolverThread(
@@ -39,7 +39,6 @@ SolverThread::SolverThread(
     const size_t threadId,
     const std::shared_ptr<search::ThreadController>& controller,
     search::SearchType searchType,
-    std::function<void(search::ThreadController&)>& onMove,
     const std::uint_fast32_t seed,
     const std::optional<std::chrono::milliseconds> timeLimit,
     const std::shared_ptr<const bool>& shouldStop)
@@ -50,7 +49,6 @@ SolverThread::SolverThread(
       _threadId(threadId),
       _threadController(controller),
       _searchType(searchType),
-      _onMove(onMove),
       _seed(seed + threadId),
       _timelimit(timeLimit),
       _shouldStop(shouldStop) {}
@@ -94,7 +92,7 @@ void SolverThread::solve() {
   search::RandomProvider randomProvider(_seed);
   search::SearchProcedure search(
       randomProvider, assignment, mapping.globalNeighborhood(),
-      _searchType, _threadController, outputVarIds, _onMove, _threadId);
+      _searchType, _threadController, outputVarIds, _threadId);
 
   search::SearchController searchController(
       mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,

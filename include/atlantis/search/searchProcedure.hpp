@@ -20,6 +20,7 @@ class Neighborhood;
 }
 
 enum class SearchType : unsigned char { PARALLEL, BESTCOST, BEAMSEARCH };
+constexpr std::array<std::string_view, 3> searchTypeNames = {"parallel", "cost-sharing", "beam"};
 
 /**
  * Search procedure based on chapter 12 of:
@@ -38,7 +39,6 @@ class SearchProcedure {
   // TODO: these things should ideally be abstracted from the search itself.
   const std::shared_ptr<ThreadController> _threadController;
   const std::vector<propagation::VarViewId> _outputVarIds;
-  std::function<void(ThreadController&)>& _onMove;
   const Int _threadId;
 
   [[nodiscard]] SavedAssignment saveAssignment() const;
@@ -54,15 +54,13 @@ class SearchProcedure {
       const std::shared_ptr<neighborhoods::Neighborhood>& neighborhood,
       const SearchType searchType,
       const std::shared_ptr<ThreadController>& threadController,
-      const std::vector<propagation::VarViewId>& outputVarIds,
-      std::function<void(ThreadController&)>& onMove, const Int threadId)
+      const std::vector<propagation::VarViewId>& outputVarIds, const Int threadId)
       : _random(random),
         _assignment(assignment),
         _neighborhood(neighborhood),
         _searchType(searchType),
         _threadController(threadController),
         _outputVarIds(outputVarIds),
-        _onMove(onMove),
         _threadId(threadId) {}
 
   Int run(SearchController&, std::unique_ptr<MetaHeuristic>&&);
