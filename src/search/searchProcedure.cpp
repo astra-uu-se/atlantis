@@ -32,7 +32,7 @@ void SearchProcedure::tightenSearch() {
 bool SearchProcedure::onAccepted(
     const std::shared_ptr<CounterStatistic>& improvingSolutions) {
   // If a worsening move was accepted, there's no need to communicate
-  if (!_hasSolution && _localBestAssignment.has_value() &&
+  if (_localBestAssignment.has_value() &&
       _localBestAssignment->cost() <= _assignment.getCost()) {
     return false;
   }
