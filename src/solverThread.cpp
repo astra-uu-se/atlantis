@@ -70,11 +70,6 @@ void SolverThread::solve() {
 
   invariantgraph::SolverMapping mapping = _invariantGraph->construct(solver);
 
-  // Might be changed to shared later
-  search::Objective searchObjective(solver, mapping.objectiveDirection());
-
-  const auto violationId = searchObjective.registerNode(
-      mapping.totalViolationId(), mapping.objectiveId());
   solver.close();
 
   // retrieve the variables that are to be outputted
@@ -85,7 +80,7 @@ void SolverThread::solve() {
   }
 
   search::Assignment assignment(
-      solver, mapping.globalNeighborhood(), violationId, mapping.objectiveId(),
+      solver, mapping.globalNeighborhood(), mapping.totalViolationId(), mapping.objectiveId(),
       mapping.objectiveDirection(), mapping.objectiveOptimalValue());
 
   // TODO: This can possibly be extracted, or restricted to one thread
@@ -98,7 +93,7 @@ void SolverThread::solve() {
 
   search::RandomProvider randomProvider(_seed);
   search::SearchProcedure search(
-      randomProvider, assignment, mapping.globalNeighborhood(), searchObjective,
+      randomProvider, assignment, mapping.globalNeighborhood(),
       _searchType, _threadController, outputVarIds, _onMove, _threadId);
 
   search::SearchController searchController(

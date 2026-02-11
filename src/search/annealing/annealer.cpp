@@ -5,6 +5,7 @@
 
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::search {
 
@@ -18,7 +19,7 @@ Annealer::Annealer(RandomProvider& random,
                    const Assignment& assignment)
     : _random(random),
       _schedule(std::move(schedule)),
-      _cost(assignment),
+      _cost(bool{assignment.hasViolation()}, assignment.objectiveDirection()),
       _statistics(std::make_shared<RoundStatistics>(INITIAL_TEMPERATURE)),
       _requiredMovesPerRound(reqMovesPerRound(assignment.searchVars().size())) {
 }
@@ -38,13 +39,15 @@ bool Annealer::shouldRunRound() const {
 bool Annealer::acceptMove(const Cost& cost) {
   ++_attemptedMovesPerRound;
 
-  const bool ret = accept(evaluate(cost));
+  const bool ret = accept(cost);
 
   if (!shouldRunRound()) {
     nextRound();
   }
 
-  if (ret) _cost = cost;
+  if (ret) {
+    _cost = cost;
+  }
 
   return ret;
 }
@@ -59,26 +62,23 @@ void Annealer::logRoundStatistics(logging::Logger& logger) {
                _statistics->uphillAcceptanceRatio());
   logger.trace("Improving move ratio: {:.3f}",
                _statistics->improvingMoveRatio());
-  logger.trace("Lowest cost this round: {:d}",
-               _statistics->bestCostOfThisRound);
-  logger.trace("Lowest cost previous round: {:d}",
-               _statistics->bestCostOfPreviousRound);
+  logger.trace("Lowest cost this round: {:s}",
+               _statistics->bestCostOfThisRound.toString());
+  logger.trace("Lowest cost previous round: {:s}",
+               _statistics->bestCostOfPreviousRound.toString());
   logger.trace("Temperature: {:.3f}", _statistics->temperature);
 }
 
-bool Annealer::accept(const Int moveCost) {
-  const Int assignmentCost = evaluate(_cost);
-  const Int delta = moveCost - assignmentCost;
-
+bool Annealer::accept(const Cost& move) {
   _statistics->attemptedMoves++;
 
-  if (delta <= 0) {
-    if (delta < 0) {
+  if (move <= _cost) {
+    if (move < _cost) {
       _statistics->improvingMoves++;
     }
 
-    if (moveCost < _statistics->bestCostOfThisRound) {
-      _statistics->bestCostOfThisRound = moveCost;
+    if (move < _statistics->bestCostOfThisRound) {
+      _statistics->bestCostOfThisRound = move;
     }
 
     ++_statistics->acceptedMoves;
@@ -86,6 +86,11 @@ bool Annealer::accept(const Int moveCost) {
     return true;
   }
   ++_statistics->uphillAttemptedMoves;
+
+  Int delta;
+  if (sub_overflow(evaluate(move), evaluate(_cost), delta)) {
+    return false;
+  }
 
   if (std::exp(static_cast<double>(-delta) / _schedule->temperature()) >=
       _random.floatInRange(0.0f, 1.0f)) {
@@ -102,8 +107,8 @@ Int Annealer::evaluate(const Cost& cost) const {
 
 void Annealer::start() {
   _schedule->start(INITIAL_TEMPERATURE);
-  _violationWeight = 1;
-  _objectiveWeight = 0;
+  _violationWeight = _cost.hasViolation() ? 1 : 0;
+  _objectiveWeight = _cost.hasViolation() ? 0 : 1;
 }
 
 }  // namespace atlantis::search

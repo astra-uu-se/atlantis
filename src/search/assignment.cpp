@@ -14,7 +14,7 @@ Assignment::Assignment(
     : _solver(solver),
       _neighborhood(neighborhood),
       _violation(violation),
-      _objective(objective),
+      _objective(objectiveDirection == ObjectiveDirection::NONE ? propagation::NULL_ID : objective),
       _objectiveDirection(objectiveDirection),
       _objectiveOptimalValue(objectiveOptimalValue) {
   assert(_neighborhood != nullptr);
@@ -34,10 +34,7 @@ Cost Assignment::initialize(RandomProvider& randomProvider) {
   }
   _solver.endCommit();
 
-  return {
-      _violation == propagation::NULL_ID ? 0 : _solver.currentValue(_violation),
-      _objective == propagation::NULL_ID ? 0 : _solver.currentValue(_objective),
-      _objectiveDirection};
+  return Cost{*this};
 }
 
 Cost Assignment::performProbe(RandomProvider& randomProvider) {
@@ -54,10 +51,9 @@ Cost Assignment::performProbe(RandomProvider& randomProvider) {
   }
   _solver.endProbe();
 
-  return {
-      _violation == propagation::NULL_ID ? 0 : _solver.currentValue(_violation),
-      _objective == propagation::NULL_ID ? 0 : _solver.currentValue(_objective),
-      _objectiveDirection};
+  assert(_violation != propagation::NULL_ID || _objective != propagation::NULL_ID);
+
+  return Cost{*this};
 }
 
 void Assignment::commitLastProbe() {
@@ -95,6 +91,13 @@ std::unordered_map<propagation::VarId, Int> Assignment::currentValues() const {
 Int Assignment::committedValue(propagation::VarViewId var) const {
   return _solver.committedValue(var);
 }
+Int Assignment::currentViolation() const {
+  return _violation == propagation::NULL_ID ? 0 : _solver.currentValue(_violation);
+}
+
+Int Assignment::currentObjective() const {
+  return _objective == propagation::NULL_ID ? 0 : _solver.currentValue(_objective);
+}
 
 bool Assignment::satisfiesConstraints() const {
   return _violation == propagation::NULL_ID ||
@@ -123,11 +126,18 @@ ObjectiveDirection Assignment::objectiveDirection() const {
 }
 
 Cost Assignment::getCost() const {
-  return {
-      _violation == propagation::NULL_ID ? 0 : _solver.currentValue(_violation),
-      _objective == propagation::NULL_ID ? 0 : _solver.currentValue(_objective),
-      _objectiveDirection};
+  return Cost(*this);
 }
+
+bool Assignment::hasObjective() const {
+  return _objective != propagation::NULL_ID;
+}
+
+bool Assignment::hasViolation() const {
+  return _violation != propagation::NULL_ID;
+}
+
+
 
 void Assignment::setAssignment(const SavedAssignment& saved) const {
   _solver.beginMove();

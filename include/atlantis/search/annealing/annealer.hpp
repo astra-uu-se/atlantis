@@ -56,7 +56,7 @@ class Annealer : public MetaHeuristic {
     return _statistics;
   }
 
-  virtual bool accept(Int moveCost);
+  virtual bool accept(const Cost& move);
 
   [[nodiscard]] Int evaluate(const Cost& cost) const;
 

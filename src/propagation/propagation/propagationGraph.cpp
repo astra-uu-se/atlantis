@@ -598,7 +598,9 @@ void PropagationGraph::partitionIntoLayers() {
 
   // Step 4: compute layer offsets for topological numbers
   _topologicalNumberOffset.resize(_varsInLayer.size());
-  _topologicalNumberOffset[0] = 0;
+  if (!_varsInLayer.empty()) {
+    _topologicalNumberOffset[0] = 0;
+  }
   for (size_t layer = 1; layer < _varsInLayer.size(); ++layer) {
     _topologicalNumberOffset[layer] =
         _topologicalNumberOffset[layer - 1] + _varsInLayer[layer - 1].size();

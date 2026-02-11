@@ -7,11 +7,11 @@ namespace atlantis::search {
 void ThreadController::setBestSolution(const Int threadId,
                                        const SavedAssignment& solution) {
   _bestThread = threadId;
-  _bestCost = solution.getCost();
+  _bestCost = solution.cost();
   _solution = solution;
 
   if (!_hasNoViolations) {
-    if (_bestCost->getViolation() == 0) {
+    if (_bestCost->violation() == 0) {
       _hasNoViolations = true;
     } else {
       return;
@@ -34,13 +34,14 @@ bool ThreadController::trySolution(
   if (!_hasSolution) {
     setBestSolution(threadId, solution);
     _hasSolution = true;
-    if (improvingSolutions.has_value()) improvingSolutions.value()->increment();
+    if (improvingSolutions.has_value()) {
+      improvingSolutions.value()->increment();
+    }
     return true;
   }
 
   // TODO: double check this bit
-  if (solution.getCost().isBetterThan(_bestCost.value()) &&
-      solution.getCost().isStrictlyBetterThan(_bestCost.value())) {
+  if (solution.cost() < _bestCost.value()) {
     setBestSolution(threadId, solution);
     if (improvingSolutions.has_value()) improvingSolutions.value()->increment();
     return true;

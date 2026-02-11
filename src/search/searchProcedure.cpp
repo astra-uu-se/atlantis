@@ -22,36 +22,39 @@ SavedAssignment SearchProcedure::saveAssignment() const {
 }
 
 void SearchProcedure::tightenSearch() {
-  if (_searchType == SearchType::PARALLEL) {
-    _objective.tighten();
-  } else {
-    _objective.tighten(_savedAssignment->getCost());
-    if (_searchType == SearchType::BEAMSEARCH)
-      _assignment.setAssignment(_savedAssignment.value());
+  if (_searchType == SearchType::BESTCOST) {
+    // TODO: need to keep track of best objective found to reduce communication.
+    assert(false);
   }
+
 }
 
 bool SearchProcedure::onAccepted(
     const std::shared_ptr<CounterStatistic>& improvingSolutions) {
   // If a worsening move was accepted, there's no need to communicate
-  if (_savedAssignment.has_value() &&
-      _savedAssignment->getCost().isBetterThan(_assignment.getCost())) {
+  if (!_hasSolution && _localBestAssignment.has_value() &&
+      _localBestAssignment->cost() <= _assignment.getCost()) {
     return false;
   }
 
-  _savedAssignment = saveAssignment();
+  // The found solution is better than any this thread has seen.
+  _localBestAssignment = saveAssignment();
 
-  const bool isBest = _threadController->trySolution(
-      _threadId, _savedAssignment.value(), improvingSolutions);
-  if (!isBest) {
-    _savedAssignment = _threadController->solution();
+  // Is this the best global solution
+  const bool isGlobalBest = _threadController->trySolution(
+      _threadId, _localBestAssignment.value(), improvingSolutions);
+  if (!isGlobalBest) {
+    _localBestAssignment = _threadController->solution();
   }
 
-  if (!_hasSolution && _savedAssignment->getCost().getViolation() == 0) {
+  if (!_hasSolution && _localBestAssignment->cost().violation() == 0) {
     _hasSolution = true;
   }
 
-  tightenSearch();
+  // If we are doing beam search, then update the current assignment:
+  if (_searchType == SearchType::BEAMSEARCH) {
+    _assignment.setAssignment(_localBestAssignment.value());
+  }
   return true;
 }
 
@@ -70,8 +73,9 @@ Int SearchProcedure::run(SearchController& searchController,
     _assignment.initialize(_random);
 
     // TODO: handle this case: this should call some separate version
-    if (_assignment.satisfiesConstraints())
+    if (_assignment.satisfiesConstraints()) {
       if (onAccepted(improvingSolutions)) communications->increment();
+    }
 
     metaHeuristic->start();
 
