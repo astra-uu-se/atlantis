@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <optional>
 
 #include "atlantis/types.hpp"
 
@@ -9,21 +10,37 @@ namespace atlantis::search {
 class Assignment;
 
 class Cost {
-  Int _violationDegree;
-  Int _objective;
-  Int _objectiveWeightSign;
+   std::optional<Int> _violation;
+   std::optional<Int> _objective;
 
  public:
-  Cost(Int violationDegree, Int objective, ObjectiveDirection direction);
+  explicit Cost();
+  explicit Cost(Int violationDegree);
+  explicit Cost(bool hasViolation, ObjectiveDirection direction);
+  explicit Cost(Int objective, bool isMinimization);
+  Cost(Int violationDegree, Int objective, bool isMinimization);
 
-  Cost(const Assignment&);
+  explicit Cost(const Assignment&);
+
 
   /**
    * @return True if this cost has no violated constraints.
    */
-  [[nodiscard]] bool satisfiesConstraints() const noexcept {
-    return _violationDegree == 0;
-  }
+  [[nodiscard]] bool satisfiesConstraints() const noexcept;
+
+  [[nodiscard]] std::string toString() const;
+
+  [[nodiscard]] bool hasViolation() const;
+
+  [[nodiscard]] bool hasObjective() const;
+
+  [[nodiscard]] Int objective() const;
+
+  [[nodiscard]] Int violation() const;
+
+  [[nodiscard]] bool operator<(const Cost& other) const noexcept;
+
+  [[nodiscard]] bool operator<=(const Cost& other) const noexcept;
 
   /**
    * Evaluate the value of this cost, given weights for the components of the
@@ -35,21 +52,6 @@ class Cost {
    */
   [[nodiscard]] Int evaluate(UInt violationWeight,
                              UInt objectiveWeight) const noexcept;
-
-  [[nodiscard]] bool isBetterThan(const Cost& other) const;
-
-  [[nodiscard]] bool isStrictlyBetterThan(const Cost& other) const;
-
-  [[nodiscard]] std::string toString() const;
-
-  [[nodiscard]] Int getObjective() const { return _objective; }
-
-  [[nodiscard]] Int getViolation() const { return _violationDegree; }
-
-  void set(Int violationDegree, Int objective) {
-    _violationDegree = violationDegree;
-    _objective = objective;
-  }
 };
 
 }  // namespace atlantis::search
