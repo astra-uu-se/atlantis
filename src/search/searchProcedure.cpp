@@ -67,9 +67,16 @@ Int SearchProcedure::run(SearchController& searchController,
       std::make_shared<CounterStatistic>("communications");
   const auto stats = makeStats({improvingSolutions, communications});
   _threadController->setThreadStats(_threadId, stats);
-  stats->setRoundStatistics(metaHeuristic->currentRoundStatistics());
   auto roundStats = metaHeuristic->currentRoundStatistics();
   stats->setRoundStatistics(roundStats);
+
+#ifdef MORE_STATS
+  std::chrono::system_clock::time_point startProbe;
+  std::chrono::system_clock::time_point startCommit;
+  double probeTime = 0;
+  double fullProbeTime = 0;
+  double commitTime = 0;
+#endif
 
   do {
     _assignment.initialize(_random);
@@ -83,16 +90,62 @@ Int SearchProcedure::run(SearchController& searchController,
 
     while (searchController.shouldRun(_assignment) &&
            !metaHeuristic->isFinished()) {
+
+#ifdef MORE_STATS
+      startProbe = std::chrono::high_resolution_clock::now();
+#endif
+
       const auto cost = _assignment.performProbe(_random);
+
+#ifdef MORE_STATS
+      probeTime += std::chrono::duration_cast<std::chrono::microseconds>(
+                       std::chrono::high_resolution_clock::now() - startProbe)
+                       .count();
+#endif
+
       if (metaHeuristic->acceptMove(cost)) {
+#ifdef MORE_STATS
+        startCommit = std::chrono::high_resolution_clock::now();
+#endif
+
         _assignment.commitLastProbe();
-        _onMove(*_threadController);
+
+#ifdef MORE_STATS
+        commitTime +=
+            std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::high_resolution_clock::now() - startCommit)
+                .count();
+#endif
+
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
           if (onAccepted(improvingSolutions)) communications->increment();
         }
       }
+
+#ifdef MORE_STATS
+      fullProbeTime +=
+          std::chrono::duration_cast<std::chrono::microseconds>(
+              std::chrono::high_resolution_clock::now() - startProbe)
+              .count();
+#endif
     }
   } while (searchController.shouldRun(_assignment));
+
+#ifdef MORE_STATS
+  double avgProbeTime = probeTime / roundStats.value()->attemptedMoves;
+  double avgFullProbeTime = fullProbeTime / roundStats.value()->attemptedMoves;
+  double avgCommitTime = commitTime / roundStats.value()->attemptedMoves;
+  if (_localBestAssignment.has_value())
+    printf(
+        "Thread %ld: SearchController stopped search at cost %s with %ld "
+        "probes and %ld moves (%ld improving, %s comms, %ld restarts). \n\t Average "
+        "full probe time %.4f, probe time %.4f ms, commit time %.4f ms. Using %s search.\n",
+        _threadId, _localBestAssignment.value().cost().toString().c_str(),
+        roundStats.value()->attemptedMoves, roundStats.value()->acceptedMoves,
+        roundStats.value()->improvingMoves, communications->value().c_str(),
+        roundStats.value()->rounds, avgFullProbeTime, avgProbeTime,
+        avgCommitTime, searchTypeNames[static_cast<size_t>(_searchType)].data());
+#endif
 
   return 1;
 }
