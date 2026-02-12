@@ -128,7 +128,8 @@ AnnealingScheduleFactory::defaultAnnealingSchedule() {
   return AnnealerContainer::loop(std::move(seq), 5);
 }
 
-std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {
+// TODO: make this store the parsed data so it doesn't have to be reparsed at every restart.
+std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create(const size_t index) const {
   if (!_scheduleDefinition) {
     return defaultAnnealingSchedule();
   }
@@ -136,14 +137,33 @@ std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create() const {
   auto contents = readFileToString(*_scheduleDefinition);
   auto parsedJson = json::parse(contents);
 
-  if (!parsedJson.is_object() || parsedJson.size() != 1) {
+  if (!parsedJson.is_object() || !parsedJson.contains("schedules")) {
     throw AnnealingScheduleCreationError(
-        "Expected an object with a single member which describes the "
-        "schedule.");
+        "Expected an object with a 'schedules' array.");
   }
 
-  const auto it = parsedJson.begin();
-  return parseSchedule(it.key(), it.value());
+  const auto& schedulesArray = parsedJson["schedules"];
+  if (!schedulesArray.is_array() || schedulesArray.empty()) {
+    throw AnnealingScheduleCreationError(
+        "Expected 'schedules' to be a non-empty array.");
+  }
+
+  if (index >= schedulesArray.size()) {
+    throw AnnealingScheduleCreationError(
+        "Schedule index " + std::to_string(index) + " is out of bounds. " +
+        "Available schedules: " + std::to_string(schedulesArray.size()));
+  }
+
+  const auto& scheduleObject = schedulesArray[index];
+  if (!scheduleObject.is_object() || scheduleObject.size() != 1) {
+    throw AnnealingScheduleCreationError(
+        "Each schedule in the array must be an object with a single member "
+        "which describes the schedule.");
+  }
+
+  const auto it = scheduleObject.begin();
+  auto res = parseSchedule(it.key(), it.value());
+  return res;
 }
 
 }  // namespace atlantis::search

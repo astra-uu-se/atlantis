@@ -37,6 +37,13 @@ class CounterStatistic : public Statistic {
     return std::to_string(_count);
   }
 
+  [[nodiscard]] uint64_t getValue() const noexcept {
+    return _count;
+  }
+  void setValue(const uint64_t value) noexcept {
+    _count = value;
+  }
+
   [[nodiscard]] std::unique_ptr<Statistic> clone() const override {
     auto cloned = std::make_unique<CounterStatistic>(_name);
     cloned->_count = _count;

@@ -41,7 +41,7 @@ class AnnealingScheduleFactory {
    * @throws AnnealingScheduleCreationError If no schedule can be created from
    * the given definition file.
    */
-  [[nodiscard]] std::unique_ptr<AnnealingSchedule> create() const;
+  [[nodiscard]] std::unique_ptr<AnnealingSchedule> create(size_t index) const;
 };
 
 }  // namespace atlantis::search

@@ -48,9 +48,6 @@ class SolverThread {
 
   void solve();
 
-  [[nodiscard]] std::unique_ptr<search::MetaHeuristic> createMetaHeuristic(
-      search::RandomProvider&, const search::Assignment&) const;
-
   [[gnu::always_inline]] [[nodiscard]] std::vector<invariantgraph::VarNodeId>
   getOutputVarNodeIds() {
     return _outputVarNodeIds;

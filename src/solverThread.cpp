@@ -53,14 +53,6 @@ SolverThread::SolverThread(
       _timelimit(timeLimit),
       _shouldStop(shouldStop) {}
 
-std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
-    search::RandomProvider& randomProvider,
-    const search::Assignment& assignment) const {
-  return std::make_unique<search::Annealer>(
-      randomProvider, std::move(_annealingScheduleFactory->create()),
-      assignment);
-}
-
 void SolverThread::solve() {
   // Create the propagation solver
   propagation::Solver solver;
@@ -90,16 +82,16 @@ void SolverThread::solve() {
   }
 
   search::RandomProvider randomProvider(_seed);
+
   search::SearchProcedure search(
-      randomProvider, assignment, mapping.globalNeighborhood(),
-      _searchType, _threadController, outputVarIds, _threadId);
+    randomProvider, assignment, mapping.globalNeighborhood(),
+      _searchType, _threadController, outputVarIds, _threadId, _annealingScheduleFactory);
 
   search::SearchController searchController(
       mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,
       _shouldStop, _threadController);
 
-  search.run(searchController,
-             std::move(createMetaHeuristic(randomProvider, assignment)));
+  search.run(searchController);
   _threadController->threadIsDone();
 }
 
