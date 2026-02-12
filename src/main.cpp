@@ -54,7 +54,12 @@ int main(int argc, char* argv[]) {
         "The number of threads to use for the search",
         cxxopts::value<std::uint_fast32_t>()->default_value("1")
       )
-    ("help", "Print help");
+    (
+      "communication-type",
+      "The type of communication between the threads",
+      cxxopts::value<std::uint_fast32_t>()->default_value("2")
+    )
+  ("help", "Print help");
 
     options.add_options("Positional")
       (
@@ -88,7 +93,17 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    atlantis::FznBackend backend(logger, std::move(modelFilePath), threadCount);
+    atlantis::search::SearchType searchType = atlantis::search::SearchType::BEAMSEARCH;
+    if (result.count("communication-type") == 1) {
+      size_t searchTypeNumber = result["communication-type"].as<uint_fast32_t>();
+      if (searchTypeNumber > 2) {
+        std::cout << "Error: Invalid search type. Must be in the range 0-2." << std::endl;
+        return 0;
+      }
+      searchType = static_cast<atlantis::search::SearchType>(searchTypeNumber);
+    }
+
+    atlantis::FznBackend backend(logger, std::move(modelFilePath), threadCount, searchType);
 
     if (long givenSeed; (givenSeed = result["seed"].as<long>()) >= 0) {
       backend.setRandomSeed(static_cast<std::uint_fast32_t>(givenSeed));
