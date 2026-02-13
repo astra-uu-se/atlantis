@@ -89,6 +89,8 @@ class ThreadController {
     _threadStatistics[threadId] = stats;
     _numThreadsWithReportedStats.operator++();
   }
+
+  [[nodiscard]] Int chooseArm(Int threadId);
 };
 
 }  // namespace atlantis::search

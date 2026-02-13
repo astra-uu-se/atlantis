@@ -1,7 +1,5 @@
 #include "atlantis/search/threadController.hpp"
 
-#include <iostream>
-
 namespace atlantis::search {
 
 void ThreadController::setBestSolution(const Int threadId,
@@ -87,6 +85,22 @@ void ThreadController::threadIsDone() {
     _curSolutionNotified = false;
     _curSolutionNotified.notify_one();
   }
+}
+
+Int ThreadController::chooseArm(const Int threadId) {
+  // This already has access to all the threads' stats.
+  // It should use the current thread's stats to update the bandit values.
+
+  _lock.lock();
+  // This should require locks only for the actual update.
+  _lock.unlock();
+
+  // The updated value is then used to choose an arm.
+  // The chosen arm is returned.
+
+  // TEMP SOLUTION for testing
+  Int chosenArm = _threadStatistics[threadId]->getValue("probes") % 2;
+  return chosenArm;
 }
 
 }  // namespace atlantis::search

@@ -17,7 +17,7 @@ class Statistic {
     output << name() << ": " << value();
   }
   [[nodiscard]] virtual std::string_view name() const noexcept = 0;
-  [[nodiscard]] virtual std::string value() const noexcept = 0;
+  [[nodiscard]] virtual Int value() const noexcept = 0;
   [[nodiscard]] virtual std::unique_ptr<Statistic> clone() const = 0;
 };
 
@@ -33,13 +33,11 @@ class CounterStatistic : public Statistic {
   [[nodiscard]] std::string_view name() const noexcept override {
     return _name;
   }
-  [[nodiscard]] std::string value() const noexcept override {
-    return std::to_string(_count);
+
+  [[nodiscard]] Int value() const noexcept override {
+    return static_cast<Int>(_count);
   }
 
-  [[nodiscard]] uint64_t getValue() const noexcept {
-    return _count;
-  }
   void setValue(const uint64_t value) noexcept {
     _count = value;
   }
@@ -68,7 +66,7 @@ class SearchStatistics {
     _statistics[name] = statistic;
   }
 
-  std::string getValue(const std::string& name) {
+  Int getValue(const std::string& name) {
     return _statistics[name]->value();
   }
 
