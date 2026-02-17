@@ -9,7 +9,6 @@
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/savedAssignment.hpp"
-#include "atlantis/search/searchController.hpp"
 #include "atlantis/search/threadController.hpp"
 #include "atlantis/solverThread.hpp"
 #include "atlantis/utils/fznOutput.hpp"
@@ -93,7 +92,7 @@ FznBackend::FznBackend(logging::Logger& logger,
 
 void FznBackend::solve(logging::Logger& logger) {
   // Shared data
-  _threadController = std::make_shared<search::ThreadController>(_threadCount);
+  _threadController = std::make_shared<search::ThreadController>(_threadCount, search::ArmSelector(_annealingScheduleFactory));
 
   // TODO: refactor everywhere to use the shared pointer
   assert(_threads.empty());

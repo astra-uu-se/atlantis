@@ -1,19 +1,13 @@
 #include "atlantis/solverThread.hpp"
 
-#include <fstream>
 #include <fznparser/parser.hpp>
 #include <utility>
 
 #include "atlantis/fznBackend.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/logging/logger.hpp"
 #include "atlantis/propagation/solver.hpp"
-#include "atlantis/search/annealing/annealer.hpp"
-#include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 #include "atlantis/search/assignment.hpp"
-#include "atlantis/search/metaheuristic.hpp"
 #include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
-#include "atlantis/search/objective.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
@@ -24,7 +18,7 @@ namespace atlantis {
 
 SolverThread::SolverThread(FznBackend& backend, size_t threadId)
     : SolverThread(backend.invariantGraph(), backend.outputVarNodeIds(),
-                   backend.problemType(), backend.annealingScheduleFactory(),
+                   backend.problemType(),
                    threadId, backend.threadController(), backend.searchType(),
                    backend.seed(), backend.timelimit(),
                    backend.shouldStop()) {}
@@ -34,8 +28,6 @@ SolverThread::SolverThread(
         invariantGraph,
     std::vector<invariantgraph::VarNodeId>&& outputVarNodeIds,
     const fznparser::ProblemType problemType,
-    const std::shared_ptr<const search::AnnealingScheduleFactory>&
-        annealingScheduleFactory,
     const size_t threadId,
     const std::shared_ptr<search::ThreadController>& controller,
     search::SearchType searchType,
@@ -44,7 +36,6 @@ SolverThread::SolverThread(
     const std::shared_ptr<const bool>& shouldStop)
     : _invariantGraph(invariantGraph),
       _outputVarNodeIds(std::move(outputVarNodeIds)),
-      _annealingScheduleFactory(annealingScheduleFactory),
       _problemType(problemType),
       _threadId(threadId),
       _threadController(controller),
@@ -85,7 +76,7 @@ void SolverThread::solve() {
 
   search::SearchProcedure search(
     randomProvider, assignment, mapping.globalNeighborhood(),
-      _searchType, _threadController, outputVarIds, _threadId, _annealingScheduleFactory);
+      _searchType, _threadController, outputVarIds, _threadId);
 
   search::SearchController searchController(
       mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,

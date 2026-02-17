@@ -1,16 +1,13 @@
 #pragma once
 
 #include <filesystem>
-#include <utility>
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/logging/logger.hpp"
-#include "atlantis/search/objective.hpp"
 #include "search/annealing/annealingScheduleFactory.hpp"
 #include "search/savedAssignment.hpp"
 #include "search/searchProcedure.hpp"
 #include "search/threadController.hpp"
-#include "types.hpp"
 
 namespace atlantis {
 class FznBackend;
@@ -18,8 +15,6 @@ class FznBackend;
 class SolverThread {
   std::shared_ptr<const invariantgraph::FznInvariantGraph> _invariantGraph;
   std::vector<invariantgraph::VarNodeId> _outputVarNodeIds;
-  std::shared_ptr<const search::AnnealingScheduleFactory>
-      _annealingScheduleFactory;
   fznparser::ProblemType _problemType;
   size_t _threadId;
   std::shared_ptr<search::ThreadController> _threadController;
@@ -37,8 +32,6 @@ class SolverThread {
           invariantGraph,
       std::vector<invariantgraph::VarNodeId>&& outputVarNodeIds,
       fznparser::ProblemType problemType,
-      const std::shared_ptr<const search::AnnealingScheduleFactory>&
-          annealingFactorySchedule,
       size_t threadId,
       const std::shared_ptr<search::ThreadController>& controller,
       search::SearchType searchType,

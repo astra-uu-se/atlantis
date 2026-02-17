@@ -9,14 +9,6 @@
 
 namespace atlantis::search {
 
-// TODO: This should be abstracted to somewhere else.
-std::unique_ptr<MetaHeuristic> SearchProcedure::createMetaHeuristic(
-    RandomProvider& randomProvider,
-    const Assignment& assignment, const Int arm) const {
-  return std::make_unique<Annealer>(
-      randomProvider, std::move(_annealingScheduleFactory->create(arm)), assignment);
-}
-
 std::shared_ptr<SearchStatistics> makeStats(
     const std::vector<std::shared_ptr<Statistic>>& inputStats) {
   auto stats = std::make_shared<SearchStatistics>();
@@ -88,8 +80,8 @@ Int SearchProcedure::run(SearchController& searchController) {
 #ifdef MORE_STATS
     startScheduleFactory = std::chrono::high_resolution_clock::now();
 #endif
-    Int arm = _threadController->chooseArm(_threadId);
-    std::unique_ptr<MetaHeuristic>&& metaHeuristic = createMetaHeuristic(_random, _assignment, arm);
+    std::unique_ptr<MetaHeuristic>&& metaHeuristic = std::make_unique<Annealer>(
+      _random, _threadController->chooseArm(_threadId, _random), _assignment);
 #ifdef MORE_STATS
     scheduleTime +=
         std::chrono::duration_cast<std::chrono::microseconds>(

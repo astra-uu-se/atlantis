@@ -3,6 +3,9 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <vector>
+
+#include "AnnealingScheduleContainerFactory.hpp"
 
 namespace atlantis::search {
 
@@ -23,14 +26,16 @@ class AnnealingScheduleCreationError : public std::exception {
 
 class AnnealingScheduleFactory {
   std::optional<std::filesystem::path> _scheduleDefinition;
+  std::vector<std::unique_ptr<AnnealingScheduleContainerFactory>> _factories;
+  size_t _armCount = 1;
 
-  [[nodiscard]] static inline std::unique_ptr<AnnealingSchedule>
-  defaultAnnealingSchedule();
+  [[nodiscard]] static inline std::unique_ptr<AnnealingScheduleContainerFactory> makeDefaultAnnealingSchedule();
 
  public:
   explicit AnnealingScheduleFactory(
-      std::optional<std::filesystem::path> scheduleDefinition = {})
-      : _scheduleDefinition(std::move(scheduleDefinition)) {}
+      const std::optional<std::filesystem::path>& scheduleDefinition = {});
+
+  void SetAnnealingSchedule(const std::filesystem::path& scheduleDefinition);
 
   /**
    * Creates an annealing schedule based on the definition file provided to
@@ -42,6 +47,10 @@ class AnnealingScheduleFactory {
    * the given definition file.
    */
   [[nodiscard]] std::unique_ptr<AnnealingSchedule> create(size_t index) const;
+
+  [[nodiscard]] size_t armCount() const{
+    return _armCount;
+  }
 };
 
 }  // namespace atlantis::search

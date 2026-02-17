@@ -3,15 +3,22 @@
 #include <fstream>
 #include <utility>
 
-#include "atlantis/search/annealing/annealerContainer.hpp"
-
 #define JSON_NO_IO
 #define JSON_HAS_CPP_17
 #include <nlohmann/json.hpp>
 
+#include "atlantis/search/annealing/AnnealingScheduleContainerFactory.hpp"
+
 namespace atlantis::search {
 
 using namespace nlohmann;
+
+AnnealingScheduleFactory::AnnealingScheduleFactory(
+    const std::optional<std::filesystem::path>& scheduleDefinition) {
+
+  if (scheduleDefinition.has_value()) SetAnnealingSchedule(scheduleDefinition.value());
+  else _factories.push_back(makeDefaultAnnealingSchedule());
+}
 
 static std::string readFileToString(const std::filesystem::path& path) {
   std::ifstream is{path};
@@ -30,10 +37,10 @@ static std::string readFileToString(const std::filesystem::path& path) {
   return stringStream.str();
 }
 
-static std::unique_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
+static std::unique_ptr<AnnealingScheduleContainerFactory> parseSchedule(const std::string& name,
                                                         const json& value);
 
-static std::unique_ptr<AnnealingSchedule> parseHeatingSchedule(
+static std::unique_ptr<AnnealingScheduleContainerFactory> parseHeatingSchedule(
     const json& value) {
   if (!value.is_object() || !value.contains("heatingRate") ||
       !value.contains("minimumUphillAcceptanceRatio") ||
@@ -45,12 +52,12 @@ static std::unique_ptr<AnnealingSchedule> parseHeatingSchedule(
         "(double).");
   }
 
-  return AnnealerContainer::heating(
-      value["heatingRate"].get<double>(),
-      value["minimumUphillAcceptanceRatio"].get<double>());
+  return std::make_unique<HeatingScheduleFactory>(
+          value["heatingRate"].get<double>(),
+          value["minimumUphillAcceptanceRatio"].get<double>());
 }
 
-static std::unique_ptr<AnnealingSchedule> parseCoolingSchedule(
+static std::unique_ptr<AnnealingScheduleContainerFactory> parseCoolingSchedule(
     const json& value) {
   if (!value.is_object() || !value.contains("coolingRate") ||
       !value.contains("successiveFutileRoundsThreshold") ||
@@ -62,12 +69,12 @@ static std::unique_ptr<AnnealingSchedule> parseCoolingSchedule(
         "(uint).");
   }
 
-  return AnnealerContainer::cooling(
+  return std::make_unique<CoolingScheduleFactory>(
       value["coolingRate"].get<double>(),
       value["successiveFutileRoundsThreshold"].get<UInt>());
 }
 
-static std::unique_ptr<AnnealingSchedule> parseScheduleSequence(
+static std::unique_ptr<AnnealingScheduleContainerFactory> parseScheduleSequence(
     const json& value) {
   if (!value.is_object() || value.empty()) {
     throw AnnealingScheduleCreationError(
@@ -75,15 +82,15 @@ static std::unique_ptr<AnnealingSchedule> parseScheduleSequence(
         "least one schedule as a member.");
   }
 
-  std::vector<std::unique_ptr<AnnealingSchedule>> schedules;
+  std::vector<std::unique_ptr<AnnealingScheduleContainerFactory>> schedules;
   for (auto memberIt = value.begin(); memberIt != value.end(); ++memberIt) {
     schedules.emplace_back(parseSchedule(memberIt.key(), memberIt.value()));
   }
 
-  return AnnealerContainer::sequence(std::move(schedules));
+  return std::make_unique<SequenceFactory>(std::move(schedules));
 }
 
-static std::unique_ptr<AnnealingSchedule> parseScheduleLoop(const json& value) {
+static std::unique_ptr<AnnealingScheduleContainerFactory> parseScheduleLoop(const json& value) {
   if (!value.is_object() || !value.contains("maximumConsecutiveFutileRounds") ||
       !value.contains("inner") ||
       !value["maximumConsecutiveFutileRounds"].is_number_unsigned() ||
@@ -97,10 +104,10 @@ static std::unique_ptr<AnnealingSchedule> parseScheduleLoop(const json& value) {
       value["maximumConsecutiveFutileRounds"].get<UInt>();
   const auto it = value["inner"].begin();
   auto schedule = parseSchedule(it.key(), it.value());
-  return AnnealerContainer::loop(std::move(schedule), iterationCount);
+  return std::make_unique<LoopScheduleFactory>(std::move(schedule), iterationCount);
 }
 
-static std::unique_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
+static std::unique_ptr<AnnealingScheduleContainerFactory> parseSchedule(const std::string& name,
                                                         const json& value) {
   if (name == "heating") {
     return parseHeatingSchedule(value);
@@ -118,21 +125,10 @@ static std::unique_ptr<AnnealingSchedule> parseSchedule(const std::string& name,
       std::string("Unknown schedule key: ").append(name));
 }
 
-std::unique_ptr<AnnealingSchedule>
-AnnealingScheduleFactory::defaultAnnealingSchedule() {
-  std::vector<std::unique_ptr<AnnealingSchedule>> vec;
-  vec.reserve(2);
-  vec.push_back(AnnealerContainer::heating(1.2, 0.75));
-  vec.push_back(AnnealerContainer::cooling(0.99, 4));
-  auto seq = AnnealerContainer::sequence(std::move(vec));
-  return AnnealerContainer::loop(std::move(seq), 5);
-}
+void AnnealingScheduleFactory::SetAnnealingSchedule(
+    const std::filesystem::path& scheduleDefinition) {
 
-// TODO: make this store the parsed data so it doesn't have to be reparsed at every restart.
-std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create(const size_t index) const {
-  if (!_scheduleDefinition) {
-    return defaultAnnealingSchedule();
-  }
+  _scheduleDefinition = scheduleDefinition;
 
   auto contents = readFileToString(*_scheduleDefinition);
   auto parsedJson = json::parse(contents);
@@ -143,27 +139,41 @@ std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create(const size_t
   }
 
   const auto& schedulesArray = parsedJson["schedules"];
+
   if (!schedulesArray.is_array() || schedulesArray.empty()) {
     throw AnnealingScheduleCreationError(
         "Expected 'schedules' to be a non-empty array.");
   }
 
-  if (index >= schedulesArray.size()) {
-    throw AnnealingScheduleCreationError(
-        "Schedule index " + std::to_string(index) + " is out of bounds. " +
-        "Available schedules: " + std::to_string(schedulesArray.size()));
-  }
+  _armCount = schedulesArray.size();
+  _factories.reserve(_armCount);
+  for (size_t i = 0; i < _armCount; ++i) {
+    const auto& scheduleObject = schedulesArray[i];
 
-  const auto& scheduleObject = schedulesArray[index];
-  if (!scheduleObject.is_object() || scheduleObject.size() != 1) {
-    throw AnnealingScheduleCreationError(
-        "Each schedule in the array must be an object with a single member "
-        "which describes the schedule.");
-  }
+    if (!scheduleObject.is_object() || scheduleObject.size() != 1) {
+      throw AnnealingScheduleCreationError(
+          "Each schedule in the array must be an object with a single member "
+          "which describes the schedule.");
+    }
 
-  const auto it = scheduleObject.begin();
-  auto res = parseSchedule(it.key(), it.value());
-  return res;
+    const auto it = scheduleObject.begin();
+    auto res = parseSchedule(it.key(), it.value());
+    _factories.push_back(std::move(res));
+  }
+}
+
+std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create(const size_t index) const {
+  return _factories[index]->create();
+}
+
+std::unique_ptr<AnnealingScheduleContainerFactory> AnnealingScheduleFactory::makeDefaultAnnealingSchedule() {
+  std::vector<std::unique_ptr<AnnealingScheduleContainerFactory>> vec;
+  vec.reserve(2);
+  vec.push_back(std::make_unique<HeatingScheduleFactory>(1.2, 0.75));
+  vec.push_back(std::make_unique<CoolingScheduleFactory>(0.99, 4));
+  auto seq = std::make_unique<SequenceFactory>(std::move(vec));
+
+  return std::make_unique<LoopScheduleFactory>(std::move(seq), 5);
 }
 
 }  // namespace atlantis::search

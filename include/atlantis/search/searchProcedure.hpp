@@ -1,7 +1,6 @@
 #pragma once
 
 #include "annealing/annealingScheduleFactory.hpp"
-#include "atlantis/search/objective.hpp"
 #include "atlantis/search/searchStatistics.hpp"
 #include "savedAssignment.hpp"
 #include "threadController.hpp"
@@ -41,17 +40,11 @@ class SearchProcedure {
   const std::shared_ptr<ThreadController> _threadController;
   const std::vector<propagation::VarViewId> _outputVarIds;
   const Int _threadId;
-  const std::shared_ptr<const AnnealingScheduleFactory>
-      _annealingScheduleFactory;
 
   [[nodiscard]] SavedAssignment saveAssignment() const;
 
   // Returns true iff the was communication to other threads.
   bool onAccepted(const std::shared_ptr<CounterStatistic>& improvingSolutions, std::unique_ptr<MetaHeuristic>&& metaHeuristic);
-
-  [[nodiscard]] std::unique_ptr<MetaHeuristic> createMetaHeuristic(
-      RandomProvider&, const Assignment&, const Int arm) const;
-
 
  public:
   SearchProcedure(
@@ -59,16 +52,14 @@ class SearchProcedure {
       const std::shared_ptr<neighborhoods::Neighborhood>& neighborhood,
       const SearchType searchType,
       const std::shared_ptr<ThreadController>& threadController,
-      const std::vector<propagation::VarViewId>& outputVarIds, const Int threadId,
-      const std::shared_ptr<const AnnealingScheduleFactory>& annealingScheduleFactory)
+      const std::vector<propagation::VarViewId>& outputVarIds, const Int threadId)
       : _random(random),
         _assignment(assignment),
         _neighborhood(neighborhood),
         _searchType(searchType),
         _threadController(threadController),
         _outputVarIds(outputVarIds),
-        _threadId(threadId),
-        _annealingScheduleFactory(annealingScheduleFactory) {}
+        _threadId(threadId) {}
 
   Int run(SearchController&);
 };

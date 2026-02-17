@@ -3,6 +3,8 @@
 #include <mutex>
 #include <optional>
 
+#include "annealing/annealingSchedule.hpp"
+#include "armSelector.hpp"
 #include "cost.hpp"
 #include "savedAssignment.hpp"
 #include "searchStatistics.hpp"
@@ -22,6 +24,7 @@ class ThreadController {
   std::optional<Cost> _bestCost;
   std::optional<SavedAssignment> _solution;
   std::vector<std::shared_ptr<SearchStatistics>> _threadStatistics;
+  ArmSelector _armSelector;
 
   // These are just for statistical tracking purposes
   Int _counter = 0;
@@ -31,8 +34,8 @@ class ThreadController {
   void setBestSolution(Int threadId, const SavedAssignment& solution);
 
  public:
-  explicit ThreadController(const size_t threadCount)
-      : _threadCount(threadCount) {
+  explicit ThreadController(const size_t threadCount, const ArmSelector& armSelector)
+      : _threadCount(threadCount), _armSelector(armSelector) {
     _threadStatistics.resize(threadCount);
   }
 
@@ -90,7 +93,7 @@ class ThreadController {
     _numThreadsWithReportedStats.operator++();
   }
 
-  [[nodiscard]] Int chooseArm(Int threadId);
+  [[nodiscard]] std::unique_ptr<AnnealingSchedule> chooseArm(Int threadId, RandomProvider& random);
 };
 
 }  // namespace atlantis::search
