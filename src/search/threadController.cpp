@@ -88,17 +88,11 @@ void ThreadController::threadIsDone() {
 }
 
 // TODO: consider moving all of this into the armSelector
-std::unique_ptr<AnnealingSchedule> ThreadController::chooseArm(const Int threadId, RandomProvider& random) {
-  // This already has access to all the threads' stats.
-  // It should use the current thread's stats to update the bandit values.
-
-  _lock.lock();
-  // This should require locks only for the actual update.
-  _lock.unlock();
-
-  // The updated value is then used to choose an arm.
-  // The chosen arm is returned.
-  return _armSelector.chooseArm(random);
+std::unique_ptr<AnnealingSchedule> ThreadController::chooseArm(const Int threadId, const std::unique_ptr<PullResults>& results, RandomProvider& random) {
+  if (_currentArm[threadId] < SIZE_MAX) _armSelector->recordArmStats(_currentArm[threadId], results);
+  auto [arm, choice] = _armSelector->chooseArm(random);
+  _currentArm[threadId] = choice;
+  return std::move(arm);
 }
 
 }  // namespace atlantis::search

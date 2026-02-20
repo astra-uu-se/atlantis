@@ -92,7 +92,8 @@ FznBackend::FznBackend(logging::Logger& logger,
 
 void FznBackend::solve(logging::Logger& logger) {
   // Shared data
-  _threadController = std::make_shared<search::ThreadController>(_threadCount, search::ArmSelector(_annealingScheduleFactory));
+  auto selector = std::make_unique<search::ArmSelector>(_annealingScheduleFactory);
+  _threadController = std::make_shared<search::ThreadController>(_threadCount, std::move(selector));
 
   // TODO: refactor everywhere to use the shared pointer
   assert(_threads.empty());

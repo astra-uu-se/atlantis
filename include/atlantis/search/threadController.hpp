@@ -24,7 +24,8 @@ class ThreadController {
   std::optional<Cost> _bestCost;
   std::optional<SavedAssignment> _solution;
   std::vector<std::shared_ptr<SearchStatistics>> _threadStatistics;
-  ArmSelector _armSelector;
+  std::unique_ptr<ArmSelector> _armSelector;
+  std::vector<size_t> _currentArm;
 
   // These are just for statistical tracking purposes
   Int _counter = 0;
@@ -34,9 +35,10 @@ class ThreadController {
   void setBestSolution(Int threadId, const SavedAssignment& solution);
 
  public:
-  explicit ThreadController(const size_t threadCount, const ArmSelector& armSelector)
-      : _threadCount(threadCount), _armSelector(armSelector) {
+  explicit ThreadController(const size_t threadCount, std::unique_ptr<ArmSelector> armSelector)
+      : _threadCount(threadCount), _armSelector(std::move(armSelector)) {
     _threadStatistics.resize(threadCount);
+    _currentArm = std::vector(threadCount, SIZE_MAX);
   }
 
   // Returns true iff the new solution is >= the best saved solution.
@@ -93,7 +95,7 @@ class ThreadController {
     _numThreadsWithReportedStats.operator++();
   }
 
-  [[nodiscard]] std::unique_ptr<AnnealingSchedule> chooseArm(Int threadId, RandomProvider& random);
+  [[nodiscard]] std::unique_ptr<AnnealingSchedule> chooseArm(Int threadId, const std::unique_ptr<PullResults>& results, RandomProvider& random);
 };
 
 }  // namespace atlantis::search

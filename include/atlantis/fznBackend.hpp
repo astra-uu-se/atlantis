@@ -7,12 +7,10 @@
 
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 #include "invariantgraph/fznInvariantGraph.hpp"
-#include "invariantgraph/solverMapping.hpp"
 #include "search/savedAssignment.hpp"
 #include "search/searchProcedure.hpp"
 #include "search/threadController.hpp"
 #include "solverThread.hpp"
-#include "types.hpp"
 #include "utils/fznOutput.hpp"
 
 namespace atlantis {

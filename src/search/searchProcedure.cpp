@@ -5,6 +5,7 @@
 #include "atlantis/search/annealing/annealer.hpp"
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/metaheuristic.hpp"
+#include "atlantis/search/pullResults.hpp"
 #include "atlantis/search/searchController.hpp"
 
 namespace atlantis::search {
@@ -66,6 +67,8 @@ Int SearchProcedure::run(SearchController& searchController) {
   const auto stats = makeStats({improvingSolutions, communications, probes, moves, improvingMoves, rounds, restarts});
   _threadController->setThreadStats(_threadId, stats);
 
+  auto pullResults = std::make_unique<PullResults>(0);
+
 #ifdef MORE_STATS
   std::chrono::system_clock::time_point startProbe;
   std::chrono::system_clock::time_point startScheduleFactory;
@@ -81,7 +84,7 @@ Int SearchProcedure::run(SearchController& searchController) {
     startScheduleFactory = std::chrono::high_resolution_clock::now();
 #endif
     std::unique_ptr<MetaHeuristic>&& metaHeuristic = std::make_unique<Annealer>(
-      _random, _threadController->chooseArm(_threadId, _random), _assignment);
+      _random, _threadController->chooseArm(_threadId, pullResults, _random), _assignment);
 #ifdef MORE_STATS
     scheduleTime +=
         std::chrono::duration_cast<std::chrono::microseconds>(
@@ -148,6 +151,8 @@ Int SearchProcedure::run(SearchController& searchController) {
     moves->setValue(moves->value() + roundStats.value()->acceptedMoves);
     improvingMoves->setValue(improvingMoves->value() + roundStats.value()->improvingMoves);
     rounds->setValue(rounds->value() + roundStats.value()->rounds);
+
+    pullResults = PullResults::newResults(pullResults, improvingSolutions->value());
   } while (searchController.shouldRun(_assignment));
 
 #ifdef MORE_STATS
@@ -158,11 +163,11 @@ Int SearchProcedure::run(SearchController& searchController) {
   if (_localBestAssignment.has_value())
     printf(
         "Thread %ld: SearchController stopped search at cost %s with %ld "
-        "probes and %ld moves (%ld improving, %ld comms, %ld rounds, %ld restarts). \n\t Average "
+        "probes and %ld moves (%ld improving, %ld comms, %ld actual improvements, %ld rounds, %ld restarts). \n\t Average "
         "full probe time %.4f, probe time %.4f ms, commit time %.4f ms, schedule generating time %.4f ms. Using %s search. \n",
         _threadId, _localBestAssignment.value().cost().toString().c_str(),
         probes->value(), moves->value(),
-        improvingMoves->value(), communications->value(),
+        improvingMoves->value(), communications->value(), improvingSolutions->value(),
         rounds->value(), restarts->value(), avgFullProbeTime, avgProbeTime,
         avgCommitTime, avgScheduleTime, searchTypeNames[static_cast<size_t>(_searchType)].data());
 #endif
