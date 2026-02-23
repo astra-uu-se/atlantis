@@ -2,10 +2,10 @@
 
 #include <chrono>
 
+#include "../../include/atlantis/search/bandits/pullResults.hpp"
 #include "atlantis/search/annealing/annealer.hpp"
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/metaheuristic.hpp"
-#include "atlantis/search/pullResults.hpp"
 #include "atlantis/search/searchController.hpp"
 
 namespace atlantis::search {

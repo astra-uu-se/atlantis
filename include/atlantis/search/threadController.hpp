@@ -4,7 +4,7 @@
 #include <optional>
 
 #include "annealing/annealingSchedule.hpp"
-#include "armSelector.hpp"
+#include "bandits/armSelector.hpp"
 #include "cost.hpp"
 #include "savedAssignment.hpp"
 #include "searchStatistics.hpp"

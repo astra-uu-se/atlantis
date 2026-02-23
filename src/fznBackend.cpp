@@ -7,6 +7,7 @@
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealing/annealer.hpp"
 #include "atlantis/search/assignment.hpp"
+#include "atlantis/search/bandits/ExploreThenCommit.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/threadController.hpp"
@@ -92,7 +93,7 @@ FznBackend::FznBackend(logging::Logger& logger,
 
 void FznBackend::solve(logging::Logger& logger) {
   // Shared data
-  auto selector = std::make_unique<search::ArmSelector>(_annealingScheduleFactory);
+  auto selector = std::make_unique<search::ExploreThenCommit>(_annealingScheduleFactory);
   _threadController = std::make_shared<search::ThreadController>(_threadCount, std::move(selector));
 
   // TODO: refactor everywhere to use the shared pointer
