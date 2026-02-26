@@ -8,6 +8,7 @@
 #include "atlantis/search/annealing/annealer.hpp"
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/bandits/ExploreThenCommit.hpp"
+#include "atlantis/search/bandits/ThompsonSampling.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/threadController.hpp"

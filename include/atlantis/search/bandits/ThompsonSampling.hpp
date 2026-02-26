@@ -1,19 +1,23 @@
 #pragma once
 
 #include "armSelector.hpp"
-#include "atlantis/types.hpp"
 
 namespace atlantis::search {
 
-class ExploreThenCommit : public ArmSelector {
-  // Values specifically for the ETC algorithm
-  const size_t _ETC_limit = 4;
-  Int _ETC_bestArm = -1;
-  std::vector<double> _means;
+class ThompsonSampling : public ArmSelector {
+  bool _initialRound = true;
+  bool _hasInitializedValues = false;
+  bool _initializationDone = false;
+  size_t _initialRoundNextArm = 0;
+  size_t _totalPulls = 0;
+
+  double _globalMean = 0;
+  std::vector<double> _alpha;
+  std::vector<double> _beta;
 
 public:
 
-  explicit ExploreThenCommit(
+  explicit ThompsonSampling(
     const std::shared_ptr<AnnealingScheduleFactory> &annealingScheduleFactory);
 
   void recordArmStats(size_t arm, const PullResults& stats) override;

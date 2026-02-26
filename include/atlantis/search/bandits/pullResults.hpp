@@ -1,18 +1,25 @@
 #pragma once
 
-#include <memory>
+#include "../cost.hpp"
 
 namespace atlantis::search {
 
+// TODO: Consider making this some sort of record object
 class PullResults {
 public:
-  const size_t improvingSolutions;
+  size_t improvingSolutions = 0;
+  std::optional<Cost> _pullBestCost;
 
-  explicit PullResults(const size_t improvingSolutions):
-    improvingSolutions(improvingSolutions) {}
+  void submitCost(const Cost& newCost) {
+    if (_pullBestCost.has_value() && newCost < _pullBestCost) {
+      _pullBestCost = newCost;
+      improvingSolutions++;
+    }
+  }
 
-  static std::unique_ptr<PullResults> newResults(const std::unique_ptr<PullResults>& previous, const size_t improvingSolutions) {
-    return std::make_unique<PullResults>(improvingSolutions - previous->improvingSolutions);
+  void reset(const Cost& baseCost) {
+    improvingSolutions = 0;
+    _pullBestCost = baseCost;
   }
 };
 

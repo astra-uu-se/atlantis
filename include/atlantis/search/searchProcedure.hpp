@@ -33,6 +33,7 @@ class SearchProcedure {
   Assignment& _assignment;
   std::shared_ptr<neighborhoods::Neighborhood> _neighborhood;
   std::optional<SavedAssignment> _localBestAssignment;
+  PullResults _pullResults;
   bool _hasSolution = false;
   const SearchType _searchType;
 

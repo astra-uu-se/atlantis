@@ -95,7 +95,7 @@ class ThreadController {
     _numThreadsWithReportedStats.operator++();
   }
 
-  [[nodiscard]] std::unique_ptr<AnnealingSchedule> chooseArm(Int threadId, const std::unique_ptr<PullResults>& results, RandomProvider& random);
+  [[nodiscard]] std::unique_ptr<AnnealingSchedule> chooseArm(Int threadId, const PullResults& results, RandomProvider& random);
 };
 
 }  // namespace atlantis::search

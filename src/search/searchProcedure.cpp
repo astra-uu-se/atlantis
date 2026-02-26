@@ -25,6 +25,8 @@ SavedAssignment SearchProcedure::saveAssignment() const {
 
 bool SearchProcedure::onAccepted(
     const std::shared_ptr<CounterStatistic>& improvingSolutions, std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
+  _pullResults.submitCost(_assignment.getCost());
+
   // If a worsening move was accepted, there's no need to communicate
   if (_localBestAssignment.has_value() &&
       _localBestAssignment->cost() <= _assignment.getCost()) {
@@ -67,8 +69,6 @@ Int SearchProcedure::run(SearchController& searchController) {
   const auto stats = makeStats({improvingSolutions, communications, probes, moves, improvingMoves, rounds, restarts});
   _threadController->setThreadStats(_threadId, stats);
 
-  auto pullResults = std::make_unique<PullResults>(0);
-
 #ifdef MORE_STATS
   std::chrono::system_clock::time_point startProbe;
   std::chrono::system_clock::time_point startScheduleFactory;
@@ -84,7 +84,7 @@ Int SearchProcedure::run(SearchController& searchController) {
     startScheduleFactory = std::chrono::high_resolution_clock::now();
 #endif
     std::unique_ptr<MetaHeuristic>&& metaHeuristic = std::make_unique<Annealer>(
-      _random, _threadController->chooseArm(_threadId, pullResults, _random), _assignment);
+      _random, _threadController->chooseArm(_threadId, _pullResults, _random), _assignment);
 #ifdef MORE_STATS
     scheduleTime +=
         std::chrono::duration_cast<std::chrono::microseconds>(
@@ -94,6 +94,7 @@ Int SearchProcedure::run(SearchController& searchController) {
 
     auto roundStats = metaHeuristic->currentRoundStatistics();
     _assignment.initialize(_random);
+    _pullResults.reset(_assignment.getCost());
 
     // TODO: handle this case: this should call some separate version
     if (_assignment.satisfiesConstraints()) {
@@ -152,7 +153,6 @@ Int SearchProcedure::run(SearchController& searchController) {
     improvingMoves->setValue(improvingMoves->value() + roundStats.value()->improvingMoves);
     rounds->setValue(rounds->value() + roundStats.value()->rounds);
 
-    pullResults = PullResults::newResults(pullResults, improvingSolutions->value());
   } while (searchController.shouldRun(_assignment));
 
 #ifdef MORE_STATS

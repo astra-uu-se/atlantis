@@ -11,20 +11,12 @@ namespace atlantis::search {
 class ArmStats {
 public:
   size_t timesChosen = 0;
-  double mean = 0;
   std::vector<Int> rewards;
 
-  // Variables for Thompson sampling
-  double mu = 0;
-  double sigmaSquared = 0;
-
-void addResult(const Int result) {
+double addResult(const Int result) {
   rewards.push_back(result);
 
-  mean = std::accumulate(rewards.begin(), rewards.end(), 0)
-          / rewards.size();
-
-  // If Thompson, update mean.
+  return static_cast<double>(result);
 }
 };
 
@@ -50,7 +42,7 @@ public:
 
   virtual ~ArmSelector() = default;
 
-  virtual void recordArmStats(size_t arm, const std::unique_ptr<PullResults> &stats) = 0;
+  virtual void recordArmStats(size_t arm, const PullResults &stats) = 0;
 
   virtual std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> chooseArm(RandomProvider& random) = 0;
 };
