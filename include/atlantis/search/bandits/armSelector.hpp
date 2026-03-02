@@ -54,7 +54,7 @@ public:
 
   virtual std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> chooseArm(RandomProvider& random) = 0;
 
-  void printStats() const {
+  virtual void printStats() const {
     for (size_t arm = 0; arm < _numArms; arm++) {
       const auto a = _armStats[arm];
       printf("Arm %ld was chosen %ld times with %.1f avg time (ms).\n", arm, a.timesChosen, a.runTime / a.timesChosen / 1000);

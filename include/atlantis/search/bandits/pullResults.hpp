@@ -11,6 +11,7 @@ class PullResults {
 public:
   size_t improvingSolutions = 0;
   std::optional<Cost> _pullBestCost;
+  std::optional<std::shared_ptr<RoundStatistics>> _roundStatistics;
   std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
   void submitCost(const Cost& newCost) {
@@ -20,9 +21,10 @@ public:
     }
   }
 
-  void reset(const Cost& baseCost) {
+  void reset(const Cost& baseCost, const std::optional<std::shared_ptr<RoundStatistics>>& roundStatistics) {
     improvingSolutions = 0;
     _pullBestCost = baseCost;
+    _roundStatistics = roundStatistics;
     startTime = std::chrono::system_clock::now();
   }
 };

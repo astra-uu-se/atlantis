@@ -11,9 +11,14 @@ class ThompsonSampling : public ArmSelector {
   size_t _initialRoundNextArm = 0;
   size_t _totalPulls = 0;
 
-  double _globalMean = 0;
   std::vector<double> _alpha;
   std::vector<double> _beta;
+
+  std::vector<double> _meanProbes;
+  std::vector<double> _meanMoves;
+  std::vector<double> _meanImprovingMoves;
+  std::vector<double> _meanRounds;
+  std::vector<double> _meanRewards;
 
 public:
 
@@ -23,6 +28,8 @@ public:
   void recordArmStats(size_t arm, const PullResults& stats) override;
 
   std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> chooseArm(RandomProvider& random) override;
+
+  void printStats() const override;
 };
 
 } // namespace atlantis::search
