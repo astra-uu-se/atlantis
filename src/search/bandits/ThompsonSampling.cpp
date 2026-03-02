@@ -9,6 +9,7 @@ ThompsonSampling::ThompsonSampling(
     : ArmSelector(annealingScheduleFactory) {
   _alpha = std::vector<double>(_numArms, 1.0);
   _beta = std::vector<double>(_numArms, 0.001);
+  printf("Using bandit algorithm Thompson sampling.\n");
 }
 
 
@@ -17,7 +18,7 @@ void ThompsonSampling::recordArmStats(const size_t arm,
   printf("Arm %ld got result %ld and cost %s.\n", arm, stats.improvingSolutions, stats._pullBestCost.value().toString().c_str());
 
   std::lock_guard lock(_lock);
-  const double reward = _armStats[arm].addResult(stats.improvingSolutions);
+  const double reward = _armStats[arm].addResult(stats);
   _alpha[arm] += reward;
   _beta[arm]++;
   _totalPulls++;

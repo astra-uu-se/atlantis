@@ -94,7 +94,7 @@ FznBackend::FznBackend(logging::Logger& logger,
 
 void FznBackend::solve(logging::Logger& logger) {
   // Shared data
-  auto selector = std::make_unique<search::ExploreThenCommit>(_annealingScheduleFactory);
+  auto selector = std::make_unique<search::ThompsonSampling>(_annealingScheduleFactory);
   _threadController = std::make_shared<search::ThreadController>(_threadCount, std::move(selector));
 
   // TODO: refactor everywhere to use the shared pointer
@@ -116,6 +116,8 @@ void FznBackend::solve(logging::Logger& logger) {
     });
   }
   handleSolverNotifications(_threadController);
+
+  _threadController->showArmStats();
 }
 
 void FznBackend::join(logging::Logger& logger) {

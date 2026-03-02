@@ -8,6 +8,7 @@ ExploreThenCommit::ExploreThenCommit(
     const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory)
     : ArmSelector(annealingScheduleFactory) {
   _means = std::vector<double>(_numArms, 0);
+  printf("Using bandit algorithm explore-then-commit.\n");
 }
 
 
@@ -15,7 +16,7 @@ void ExploreThenCommit::recordArmStats(const size_t arm,
                     const PullResults& stats) {
   printf("Arm %ld got result %ld and cost %s.\n", arm, stats.improvingSolutions, stats._pullBestCost.value().toString().c_str());
   std::lock_guard lock(_lock);
-  double reward = _armStats[arm].addResult(stats.improvingSolutions);
+  double reward = _armStats[arm].addResult(stats);
 
   double newMean = (_means[arm] * (size(_armStats[arm].rewards) - 1) + reward) / size(_armStats[arm].rewards) ;
   _means[arm] = newMean;

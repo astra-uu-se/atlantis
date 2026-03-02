@@ -96,6 +96,10 @@ class ThreadController {
   }
 
   [[nodiscard]] std::unique_ptr<AnnealingSchedule> chooseArm(Int threadId, const PullResults& results, RandomProvider& random);
+
+  void showArmStats() const {
+    _armSelector->printStats();
+  }
 };
 
 }  // namespace atlantis::search

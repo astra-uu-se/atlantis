@@ -1,4 +1,5 @@
 #pragma once
+
 #include <array>
 #include <vector>
 
@@ -11,12 +12,19 @@ namespace atlantis::search {
 class ArmStats {
 public:
   size_t timesChosen = 0;
+  double runTime = 0;
   std::vector<Int> rewards;
 
-double addResult(const Int result) {
-  rewards.push_back(result);
+double addResult(const PullResults& result) {
+  Int reward = result.improvingSolutions;
+  rewards.push_back(reward);
 
-  return static_cast<double>(result);
+  runTime +=
+    std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::high_resolution_clock::now() - result.startTime)
+        .count();
+
+  return static_cast<double>(reward);
 }
 };
 
@@ -45,6 +53,13 @@ public:
   virtual void recordArmStats(size_t arm, const PullResults &stats) = 0;
 
   virtual std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> chooseArm(RandomProvider& random) = 0;
+
+  void printStats() const {
+    for (size_t arm = 0; arm < _numArms; arm++) {
+      const auto a = _armStats[arm];
+      printf("Arm %ld was chosen %ld times with %.1f avg time (ms).\n", arm, a.timesChosen, a.runTime / a.timesChosen / 1000);
+    }
+  }
 };
 
 }  // namespace atlantis::search
