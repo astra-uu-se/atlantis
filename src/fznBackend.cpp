@@ -62,7 +62,8 @@ void FznBackend::handleSolverNotifications(
 
 FznBackend::FznBackend(fznparser::Model&& model,
                        const std::uint_fast32_t threadCount,
-                       search::SearchType searchType)
+                       const search::SearchType searchType,
+                       const search::BanditAlgorithm banditAlgorithm)
     : _invariantGraph(
           std::make_shared<invariantgraph::FznInvariantGraph>(true)),
       _model(std::make_shared<fznparser::Model>(std::move(model))),
@@ -71,6 +72,7 @@ FznBackend::FznBackend(fznparser::Model&& model,
       _seed(std::time(nullptr)),
       _threadCount(threadCount),
       _searchType(searchType),
+      _banditAlgorithm(banditAlgorithm),
       _onSolution([&](const search::SavedAssignment& assignment,
                       const std::optional<std::vector<
                           std::shared_ptr<search::SearchStatistics>>>& stats) {
@@ -80,7 +82,8 @@ FznBackend::FznBackend(fznparser::Model&& model,
 FznBackend::FznBackend(logging::Logger& logger,
                        std::filesystem::path&& modelFile,
                        const uint_fast32_t threadCount,
-                       search::SearchType searchType)
+                       const search::SearchType searchType,
+                       const search::BanditAlgorithm banditAlgorithm)
     : FznBackend(logger.timedFunction<fznparser::Model>(
                      "parsing FlatZinc",
                      [&] {
@@ -90,11 +93,23 @@ FznBackend::FznBackend(logging::Logger& logger,
                                     m.constraints().size());
                        return m;
                      }),
-                 threadCount, searchType) {}
+                 threadCount, searchType, banditAlgorithm) {}
 
 void FznBackend::solve(logging::Logger& logger) {
   // Shared data
-  auto selector = std::make_unique<search::ThompsonSampling>(_annealingScheduleFactory);
+
+  std::unique_ptr<search::ArmSelector> selector;
+  switch (_banditAlgorithm) {
+    case search::BanditAlgorithm::UCB:
+      printf("UCB algorithm not implemented. Using default instead.\n");
+    case search::BanditAlgorithm::Thompson:
+      printf("Using bandit algorithm Thompson sampling.\n");
+      selector = std::make_unique<search::ThompsonSampling>(_annealingScheduleFactory);
+      break;
+    default:
+      printf("Using bandit algorithm explore-then-commit.\n");
+      selector = std::make_unique<search::ExploreThenCommit>(_annealingScheduleFactory);
+  }
   _threadController = std::make_shared<search::ThreadController>(_threadCount, std::move(selector));
 
   // TODO: refactor everywhere to use the shared pointer

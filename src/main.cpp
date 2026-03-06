@@ -59,6 +59,11 @@ int main(int argc, char* argv[]) {
       "The type of communication between the threads",
       cxxopts::value<std::uint_fast32_t>()->default_value("2")
     )
+    (
+      "bandit-algorithm",
+      "The MAB annealing schedule selector algorithm",
+      cxxopts::value<std::uint_fast32_t>()->default_value("0")
+    )
   ("help", "Print help");
 
     options.add_options("Positional")
@@ -103,7 +108,17 @@ int main(int argc, char* argv[]) {
       searchType = static_cast<atlantis::search::SearchType>(searchTypeNumber);
     }
 
-    atlantis::FznBackend backend(logger, std::move(modelFilePath), threadCount, searchType);
+    atlantis::search::BanditAlgorithm banditAlgorithm = atlantis::search::BanditAlgorithm::ETC;
+    if (result.count("bandit-algorithm") == 1) {
+      size_t algorithmNumber = result["bandit-algorithm"].as<uint_fast32_t>();
+      if (algorithmNumber > 2) {
+        std::cout << "Error: Invalid bandit algorithm. Must be in the range 0-2." << std::endl;
+        return 0;
+      }
+      banditAlgorithm = static_cast<atlantis::search::BanditAlgorithm>(algorithmNumber);
+    }
+
+    atlantis::FznBackend backend(logger, std::move(modelFilePath), threadCount, searchType, banditAlgorithm);
 
     if (long givenSeed; (givenSeed = result["seed"].as<long>()) >= 0) {
       backend.setRandomSeed(static_cast<std::uint_fast32_t>(givenSeed));

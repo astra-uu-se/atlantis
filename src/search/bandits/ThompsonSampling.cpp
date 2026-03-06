@@ -16,8 +16,6 @@ ThompsonSampling::ThompsonSampling(
   _meanImprovingMoves = std::vector(_numArms, 0.0);
   _meanRounds = std::vector(_numArms, 0.0);
   _meanRewards = std::vector(_numArms, 0.0);
-
-  printf("Using bandit algorithm Thompson sampling.\n");
 }
 
 
