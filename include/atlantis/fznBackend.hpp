@@ -46,6 +46,7 @@ class FznBackend {
   std::optional<std::filesystem::path> _dotFilePath{};
   const std::uint_fast32_t _threadCount;
   search::SearchType _searchType;
+  search::BanditAlgorithm _banditAlgorithm;
   std::unique_ptr<FznOutput> _fznOutput{nullptr};
   std::shared_ptr<const bool> _shouldStop{nullptr};
 
@@ -62,12 +63,14 @@ class FznBackend {
 
  public:
   explicit FznBackend(
-      fznparser::Model&& model, const std::uint_fast32_t threadCount,
-      search::SearchType searchType = search::SearchType::BEAMSEARCH);
+      fznparser::Model&& model, std::uint_fast32_t threadCount,
+      search::SearchType searchType = search::SearchType::BEAMSEARCH,
+      search::BanditAlgorithm banditAlgorithm = search::BanditAlgorithm::ETC);
 
   FznBackend(logging::Logger& logger, std::filesystem::path&& modelFile,
              std::uint_fast32_t threadCount = 1,
-             search::SearchType searchType = search::SearchType::BEAMSEARCH);
+             search::SearchType searchType = search::SearchType::BEAMSEARCH,
+      search::BanditAlgorithm banditAlgorithm = search::BanditAlgorithm::ETC);
 
   void solve(logging::Logger&);
   void join(logging::Logger&);
