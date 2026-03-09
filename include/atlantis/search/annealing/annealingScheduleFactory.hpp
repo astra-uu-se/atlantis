@@ -29,7 +29,7 @@ class AnnealingScheduleFactory {
   std::vector<std::unique_ptr<AnnealingScheduleContainerFactory>> _factories;
   size_t _armCount = 1;
 
-  [[nodiscard]] static inline std::unique_ptr<AnnealingScheduleContainerFactory> makeDefaultAnnealingSchedule();
+  inline void setDefaultAnnealingSchedule();
 
  public:
   explicit AnnealingScheduleFactory(

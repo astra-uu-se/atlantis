@@ -17,7 +17,7 @@ AnnealingScheduleFactory::AnnealingScheduleFactory(
     const std::optional<std::filesystem::path>& scheduleDefinition) {
 
   if (scheduleDefinition.has_value()) SetAnnealingSchedule(scheduleDefinition.value());
-  else _factories.push_back(makeDefaultAnnealingSchedule());
+  else setDefaultAnnealingSchedule();
 }
 
 static std::string readFileToString(const std::filesystem::path& path) {
@@ -76,15 +76,19 @@ static std::unique_ptr<AnnealingScheduleContainerFactory> parseCoolingSchedule(
 
 static std::unique_ptr<AnnealingScheduleContainerFactory> parseScheduleSequence(
     const json& value) {
-  if (!value.is_object() || value.empty()) {
+  if (!value.is_array() || value.empty()) {
     throw AnnealingScheduleCreationError(
         "Invalid JSON for a schedule sequence. Expected an object with at "
         "least one schedule as a member.");
   }
 
   std::vector<std::unique_ptr<AnnealingScheduleContainerFactory>> schedules;
-  for (auto memberIt = value.begin(); memberIt != value.end(); ++memberIt) {
-    schedules.emplace_back(parseSchedule(memberIt.key(), memberIt.value()));
+  for (const auto& item : value) {
+    if (!item.is_object() || item.size() != 1) {
+      throw AnnealingScheduleCreationError(
+          "Invalid schedule item. Expected an object with exactly one schedule in each sequence list item.");
+    }
+    schedules.emplace_back(parseSchedule(item.begin().key(), item.begin().value()));
   }
 
   return std::make_unique<SequenceFactory>(std::move(schedules));
@@ -128,6 +132,8 @@ static std::unique_ptr<AnnealingScheduleContainerFactory> parseSchedule(const st
 void AnnealingScheduleFactory::SetAnnealingSchedule(
     const std::filesystem::path& scheduleDefinition) {
 
+  printf("\nMaking non-default annealing schedule:\n");
+
   _scheduleDefinition = scheduleDefinition;
 
   auto contents = readFileToString(*_scheduleDefinition);
@@ -166,14 +172,14 @@ std::unique_ptr<AnnealingSchedule> AnnealingScheduleFactory::create(const size_t
   return _factories[index]->create();
 }
 
-std::unique_ptr<AnnealingScheduleContainerFactory> AnnealingScheduleFactory::makeDefaultAnnealingSchedule() {
+void AnnealingScheduleFactory::setDefaultAnnealingSchedule() {
   std::vector<std::unique_ptr<AnnealingScheduleContainerFactory>> vec;
   vec.reserve(2);
   vec.push_back(std::make_unique<HeatingScheduleFactory>(1.2, 0.75));
   vec.push_back(std::make_unique<CoolingScheduleFactory>(0.99, 4));
   auto seq = std::make_unique<SequenceFactory>(std::move(vec));
 
-  return std::make_unique<LoopScheduleFactory>(std::move(seq), 5);
+  _factories.push_back(std::make_unique<LoopScheduleFactory>(std::move(seq), 5));
 }
 
 }  // namespace atlantis::search

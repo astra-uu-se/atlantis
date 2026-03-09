@@ -64,7 +64,6 @@ std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> ThompsonSampling::chooseA
 
   _lock.unlock();
 
-  printf("  Choosing arm %ld.\n", arm);
   return std::make_tuple(_annealingScheduleFactory->create(arm), arm);
 }
 

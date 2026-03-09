@@ -1,0 +1,21 @@
+{
+  "schedules": [
+    {
+      "loop": {
+        "maximumConsecutiveFutileRounds": 5,
+        "inner": {
+          "sequence": [
+            {"heating": {
+              "heatingRate": 1.2,
+              "minimumUphillAcceptanceRatio": 0.75
+            }},
+            {"cooling": {
+              "coolingRate": 0.99,
+              "successiveFutileRoundsThreshold": 4
+            }}
+          ]
+        }
+      }
+    }
+  ]
+}
