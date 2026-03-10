@@ -1,9 +1,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "atlantis/search/annealing/annealerContainer.hpp"
 #include "atlantis/search/annealing/scheduleSequence.hpp"
 #include "atlantis/search/annealing/types.hpp"
+#include "testHelper.hpp"
 
 namespace atlantis::testing {
 
@@ -12,29 +12,16 @@ using namespace atlantis::search;
 using ::testing::A;
 using ::testing::An;
 using ::testing::Return;
-
-class DummyAnnealingSchedule : public AnnealingSchedule {
- public:
-  MOCK_METHOD(void, start, (double initialTemperature), (override));
-  MOCK_METHOD(void, nextRound,
-              (const std::shared_ptr<RoundStatistics>& initialTemperature),
-              (override));
-  MOCK_METHOD(double, temperature, (), (override));
-  MOCK_METHOD(bool, frozen, (), (override));
-};
+using ::testing::ContainerEq;
 
 class ScheduleSequenceTest : public ::testing::Test {
  protected:
-  std::unique_ptr<AnnealingSchedule> schedule;
+  std::unique_ptr<ScheduleSequence> schedule;
 
-  ScheduleSequence& sequence() {
-    EXPECT_NE(schedule, nullptr);
-    return dynamic_cast<ScheduleSequence&>(*schedule);
-  }
 
-  DummyAnnealingSchedule& inner(size_t index) {
-    EXPECT_LE(index, sequence().size());
-    return dynamic_cast<DummyAnnealingSchedule&>(sequence().at(index));
+  [[nodiscard]] const DummyAnnealingSchedule& inner(const size_t index) const {
+    EXPECT_LE(index, schedule->size());
+    return dynamic_cast<const DummyAnnealingSchedule&>(schedule->at(index));
   }
 
   void SetUp() override {
@@ -42,31 +29,26 @@ class ScheduleSequenceTest : public ::testing::Test {
     seq.emplace_back(std::make_unique<DummyAnnealingSchedule>());
     seq.emplace_back(std::make_unique<DummyAnnealingSchedule>());
 
-    schedule = AnnealerContainer::sequence(std::move(seq));
+    schedule = std::make_unique<ScheduleSequence>(std::move(seq));
   }
 };
 
 TEST_F(ScheduleSequenceTest, first_schedule_is_active) {
   EXPECT_CALL(inner(0), temperature()).WillOnce(Return(1.0));
-  EXPECT_CALL(inner(0), start(A<double>())).WillOnce(Return());
   schedule->start(1.0);
+  EXPECT_THAT(inner(0).temperatures, ContainerEq(std::vector<double>{1.0}));
+  EXPECT_TRUE(inner(0).roundStatistics.empty());
 
   EXPECT_EQ(schedule->temperature(), 1.0);
   EXPECT_FALSE(schedule->frozen());
 }
 
 TEST_F(ScheduleSequenceTest, second_schedule_is_active_after_first_freezes) {
-  EXPECT_CALL(inner(0), start(A<double>())).WillOnce(Return());
   EXPECT_CALL(inner(0), temperature()).WillOnce(Return(1.0));
   EXPECT_CALL(inner(0), frozen()).WillOnce(Return(true));
-  EXPECT_CALL(inner(0), nextRound(A<const std::shared_ptr<RoundStatistics>&>()))
-      .WillOnce(Return());
 
-  EXPECT_CALL(inner(1), start(A<double>())).WillOnce(Return());
   EXPECT_CALL(inner(1), frozen()).WillRepeatedly(Return(false));
   EXPECT_CALL(inner(1), temperature()).WillRepeatedly(Return(2.0));
-  EXPECT_CALL(inner(1), nextRound(A<const std::shared_ptr<RoundStatistics>&>()))
-      .WillOnce(Return());
 
   schedule->start(1.0);
   schedule->nextRound(std::make_shared<RoundStatistics>(1.0));
@@ -75,26 +57,33 @@ TEST_F(ScheduleSequenceTest, second_schedule_is_active_after_first_freezes) {
   EXPECT_FALSE(schedule->frozen());
 
   EXPECT_EQ(schedule->temperature(), 2.0);
+
+  EXPECT_THAT(inner(0).temperatures, ContainerEq(std::vector<double>{1.0}));
+  EXPECT_EQ(inner(0).roundStatistics.size(), 1);
+
+  EXPECT_THAT(inner(1).temperatures, ContainerEq(std::vector<double>{1.0}));
+  EXPECT_EQ(inner(0).roundStatistics.size(), 1);
+
 }
 
 TEST_F(ScheduleSequenceTest, frozen_if_sequence_is_finished) {
-  EXPECT_CALL(inner(0), start(A<double>())).WillOnce(Return());
   EXPECT_CALL(inner(0), frozen()).WillRepeatedly(Return(true));
   EXPECT_CALL(inner(0), temperature()).WillOnce(Return(1.0));
-  EXPECT_CALL(inner(0), nextRound(A<const std::shared_ptr<RoundStatistics>&>()))
-      .WillOnce(Return());
 
-  EXPECT_CALL(inner(1), start(A<double>())).WillOnce(Return());
   EXPECT_CALL(inner(1), frozen()).WillRepeatedly(Return(true));
   EXPECT_CALL(inner(1), temperature()).WillOnce(Return(2.0));
-  EXPECT_CALL(inner(1), nextRound(A<const std::shared_ptr<RoundStatistics>&>()))
-      .WillOnce(Return());
 
   schedule->start(1.0);
 
   schedule->nextRound(std::make_shared<RoundStatistics>(1.0));
   schedule->nextRound(std::make_shared<RoundStatistics>(1.0));
   EXPECT_TRUE(schedule->frozen());
+
+  EXPECT_THAT(inner(0).temperatures, ContainerEq(std::vector<double>{1.0}));
+  EXPECT_EQ(inner(0).roundStatistics.size(), 1);
+  EXPECT_THAT(inner(1).temperatures, ContainerEq(std::vector<double>{1.0}));
+  EXPECT_EQ(inner(1).roundStatistics.size(), 1);
+
 }
 
 }  // namespace atlantis::testing

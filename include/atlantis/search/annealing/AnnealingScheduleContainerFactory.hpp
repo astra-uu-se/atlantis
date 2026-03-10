@@ -2,8 +2,7 @@
 
 #include <vector>
 
-#include "annealerContainer.hpp"
-#include "annealingSchedule.hpp"
+#include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "atlantis/types.hpp"
 
 namespace atlantis::search {
@@ -20,18 +19,12 @@ public:
 
 
 class HeatingScheduleFactory : public AnnealingScheduleContainerFactory {
-  double _heatingRate{};
-  double _minimumUphillAcceptanceRatio{};
+  double _heatingRate;
+  double _minimumUphillAcceptanceRatio;
 
 public:
-  explicit HeatingScheduleFactory(const double heatingRate,
-                                 const double minimumUphillAcceptanceRatio):
-    _heatingRate(heatingRate),
-    _minimumUphillAcceptanceRatio(minimumUphillAcceptanceRatio) {}
-
-  std::unique_ptr<AnnealingSchedule> create() override {
-    return AnnealerContainer::heating(_heatingRate, _minimumUphillAcceptanceRatio);
-  }
+  explicit HeatingScheduleFactory(double heatingRate,
+                                 double minimumUphillAcceptanceRatio);
 };
 
 
@@ -41,13 +34,10 @@ class CoolingScheduleFactory : public AnnealingScheduleContainerFactory {
   UInt _successiveFutileRoundsThreshold;
 
 public:
-  explicit CoolingScheduleFactory(const double coolingRate,
-                                 const UInt successiveFutileRoundsThreshold):
-  _coolingRate(coolingRate), _successiveFutileRoundsThreshold(successiveFutileRoundsThreshold) {}
+  explicit CoolingScheduleFactory(double coolingRate,
+                                 UInt successiveFutileRoundsThreshold);
 
-  std::unique_ptr<AnnealingSchedule> create() override {
-    return AnnealerContainer::cooling(_coolingRate, _successiveFutileRoundsThreshold);
-  }
+  std::unique_ptr<AnnealingSchedule> create() override;
 };
 
 
@@ -59,13 +49,7 @@ public:
   explicit SequenceFactory(std::vector<std::unique_ptr<AnnealingScheduleContainerFactory>> schedule):
   _schedule(std::move(schedule)) {}
 
-  std::unique_ptr<AnnealingSchedule> create() override {
-    std::vector<std::unique_ptr<AnnealingSchedule>> schedules;
-    for (const auto& schedule : _schedule)
-      schedules.emplace_back(schedule->create());
-
-    return AnnealerContainer::sequence(std::move(schedules));
-  }
+  std::unique_ptr<AnnealingSchedule> create() override;
 };
 
 
@@ -76,12 +60,9 @@ class LoopScheduleFactory : public AnnealingScheduleContainerFactory {
 
 public:
   explicit LoopScheduleFactory(
-     std::unique_ptr<AnnealingScheduleContainerFactory> schedule, UInt maximumConsecutiveFutileRounds):
-  _schedule(std::move(schedule)), _maximumConsecutiveFutileRounds(maximumConsecutiveFutileRounds) {}
+     std::unique_ptr<AnnealingScheduleContainerFactory> schedule, UInt maximumConsecutiveFutileRounds);
 
-  std::unique_ptr<AnnealingSchedule> create() override {
-    return AnnealerContainer::loop(_schedule->create(), _maximumConsecutiveFutileRounds);
-  }
+  std::unique_ptr<AnnealingSchedule> create() override;
 };
 
 }  // namespace atlantis::search

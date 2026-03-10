@@ -18,8 +18,13 @@ class GeometricCoolingSchedule : public AnnealingSchedule {
 
   void start(double initialTemperature) override;
   void nextRound(const std::shared_ptr<RoundStatistics>& statistics) override;
-  double temperature() override;
-  bool frozen() override;
+  [[nodiscard]] double temperature() const override;
+  [[nodiscard]] bool frozen() const override;
+    [[nodiscard]] std::unique_ptr<AnnealingSchedule> clone() const override;
+
+  [[nodiscard]] double coolingRate() const { return _coolingRate; }
+  [[nodiscard]] UInt successiveFutileRoundsThreshold() const { return _successiveFutileRoundsThreshold; }
+
 };
 
 }  // namespace atlantis::search

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <limits>
-
 #include "atlantis/search/cost.hpp"
 #include "atlantis/types.hpp"
 

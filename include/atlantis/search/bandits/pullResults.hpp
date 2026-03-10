@@ -2,7 +2,8 @@
 
 #include <chrono>
 
-#include "../cost.hpp"
+#include "atlantis/search/cost.hpp"
+#include "atlantis/search/annealing/types.hpp"
 
 namespace atlantis::search {
 

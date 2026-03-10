@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include "atlantis/search/annealing/annealerContainer.hpp"
 #include "atlantis/search/annealing/geometricCoolingSchedule.hpp"
 #include "atlantis/search/annealing/types.hpp"
 
@@ -18,7 +17,7 @@ class GeometricCoolingScheduleTest : public ::testing::Test {
 
   void SetUp() override {
     schedule =
-        AnnealerContainer::cooling(cooling, successiveFutileRoundsThreshold);
+        std::make_shared<GeometricCoolingSchedule>(cooling, successiveFutileRoundsThreshold);
     schedule->start(initialTemp);
   }
 };

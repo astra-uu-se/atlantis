@@ -1,7 +1,8 @@
 #include "atlantis/search/bandits/ThompsonSampling.hpp"
 
-#include "../../../include/atlantis/search/bandits/armSelector.hpp"
+#include "atlantis/search/bandits/armSelector.hpp"
 #include "atlantis/search/annealing/types.hpp"
+#include "atlantis/search/annealing/annealingSchedule.hpp"
 
 namespace atlantis::search {
 
@@ -45,7 +46,7 @@ void ThompsonSampling::recordArmStats(const size_t arm,
 
 std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> ThompsonSampling::chooseArm(RandomProvider& random) {
   size_t arm = 0;
-  Int sample = INT_MIN;
+  Int sample = std::numeric_limits<Int>::min();
 
   _lock.lock();
 

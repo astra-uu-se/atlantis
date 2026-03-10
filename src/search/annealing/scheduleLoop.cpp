@@ -32,10 +32,13 @@ void ScheduleLoop::nextRound(
   }
 }
 
-double ScheduleLoop::temperature() { return _schedule->temperature(); }
+double ScheduleLoop::temperature() const { return _schedule->temperature(); }
 
-bool ScheduleLoop::frozen() {
+bool ScheduleLoop::frozen() const {
   return _consecutiveFutileIterations >= _maximumConsecutiveFutileRounds;
 }
 
+std::unique_ptr<AnnealingSchedule> ScheduleLoop::clone() const {
+  return std::make_unique<ScheduleLoop>(_schedule->clone(), _maximumConsecutiveFutileRounds);
+}
 }  // namespace atlantis::search

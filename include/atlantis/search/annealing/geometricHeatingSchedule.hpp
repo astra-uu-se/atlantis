@@ -17,8 +17,11 @@ class GeometricHeatingSchedule : public AnnealingSchedule {
 
   void start(double initialTemperature) override;
   void nextRound(const std::shared_ptr<RoundStatistics>& statistics) override;
-  double temperature() override;
-  bool frozen() override;
+  [[nodiscard]] double temperature() const override;
+  [[nodiscard]] bool frozen() const override;
+    [[nodiscard]] std::unique_ptr<AnnealingSchedule> clone() const override;
+  [[nodiscard]] double heatingRate() const { return _heatingRate; }
+  [[nodiscard]] double minimumUphillAcceptanceRatio() const { return _minimumUphillAcceptanceRatio; }
 };
 
 }  // namespace atlantis::search

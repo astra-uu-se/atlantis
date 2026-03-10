@@ -15,7 +15,9 @@ class ScheduleSequence : public AnnealingSchedule {
  private:
   ScheduleList _schedules;
   size_t _currentSchedule{0};
-  AnnealingSchedule& currentSchedule();
+
+  [[nodiscard]] AnnealingSchedule& currentSchedule();
+  [[nodiscard]] const AnnealingSchedule& currentScheduleConst() const;
 
  public:
   explicit ScheduleSequence(ScheduleList schedules)
@@ -25,10 +27,11 @@ class ScheduleSequence : public AnnealingSchedule {
 
   void start(double initialTemperature) override;
   void nextRound(const std::shared_ptr<RoundStatistics>& statistics) override;
-  double temperature() override;
-  bool frozen() override;
+  [[nodiscard]] double temperature() const override;
+  [[nodiscard]] bool frozen() const override;
+    [[nodiscard]] std::unique_ptr<AnnealingSchedule> clone() const override;
   [[nodiscard]] size_t size() const { return _schedules.size(); }
-  [[nodiscard]] AnnealingSchedule& at(size_t index) {
+  [[nodiscard]] const AnnealingSchedule& at(size_t index) const {
     return *(_schedules.at(index));
   }
 };

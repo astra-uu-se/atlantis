@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include "atlantis/search/annealing/annealerContainer.hpp"
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 #include "atlantis/search/annealing/geometricCoolingSchedule.hpp"
 #include "atlantis/search/annealing/geometricHeatingSchedule.hpp"
@@ -16,22 +15,25 @@ class TestAnnealingScheduleFactory : public ::testing::Test {
 };
 
 TEST_F(TestAnnealingScheduleFactory, makeDefaultAnnealingSchedule) {
-  const AnnealingScheduleFactory factory({});
-  auto schedule = factory.create(0);
+  const AnnealingScheduleFactory factory;
+  const auto schedule = factory.create(0);
   auto* loop = dynamic_cast<ScheduleLoop*>(schedule.get());
   EXPECT_NE(loop, nullptr);
   auto& loopInner = loop->inner();
-  auto* sequence = dynamic_cast<ScheduleSequence*>(&loopInner);
+  auto const* sequence = dynamic_cast<ScheduleSequence const*>(&loopInner);
   EXPECT_NE(sequence, nullptr);
   EXPECT_EQ(sequence->size(), 2);
   auto& heatingRef = sequence->at(0);
-  auto* heating = dynamic_cast<GeometricHeatingSchedule*>(&heatingRef);
+  auto const* heating = dynamic_cast<GeometricHeatingSchedule const*>(&heatingRef);
   EXPECT_NE(heating, nullptr);
-  EXPECT_EQ(heating->temperature(), 1.2);
+  EXPECT_EQ(heating->heatingRate(), 1.2);
+  EXPECT_EQ(heating->minimumUphillAcceptanceRatio(), 0.75);
+
   auto& coolingRef = sequence->at(1);
-  auto* cooling = dynamic_cast<GeometricCoolingSchedule*>(&coolingRef);
+  auto const* cooling = dynamic_cast<GeometricCoolingSchedule const*>(&coolingRef);
   EXPECT_NE(cooling, nullptr);
-  EXPECT_EQ(cooling->temperature(), 0.99);
+  EXPECT_EQ(cooling->coolingRate(), 0.99);
+  EXPECT_EQ(cooling->successiveFutileRoundsThreshold(), 4);
 }
 
 }  // namespace atlantis::testing

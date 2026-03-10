@@ -25,10 +25,13 @@ void GeometricHeatingSchedule::nextRound(
   _lastUphillAcceptanceRatio = statistics->uphillAcceptanceRatio();
 }
 
-double GeometricHeatingSchedule::temperature() { return _temperature; }
+double GeometricHeatingSchedule::temperature() const { return _temperature; }
 
-bool GeometricHeatingSchedule::frozen() {
+bool GeometricHeatingSchedule::frozen() const {
   return _lastUphillAcceptanceRatio >= _minimumUphillAcceptanceRatio;
 }
 
+std::unique_ptr<AnnealingSchedule> GeometricHeatingSchedule::clone() const {
+  return std::make_unique<GeometricHeatingSchedule>(_heatingRate, _minimumUphillAcceptanceRatio);
+}
 }  // namespace atlantis::search
