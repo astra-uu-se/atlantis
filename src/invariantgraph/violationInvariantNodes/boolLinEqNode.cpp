@@ -5,12 +5,14 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/countImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/boolLinear.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/search/neighborhoods/countNeighborhood.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -100,6 +102,22 @@ void BoolLinEqNode::updateState() {
     }
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+bool BoolLinEqNode::canBeMadeImplicit() const {
+  return std::ranges::all_of(_coeffs, [&](const Int c) { return c == 1; });
+}
+
+bool BoolLinEqNode::makeImplicit() {
+  if (!canBeMadeImplicit()) {
+    return false;
+  }
+  const auto amount = static_cast<size_t>(_bound);
+  invariantGraph().addImplicitConstraintNode(
+      std::make_shared<CountImplicitNode>(
+          invariantGraph(), std::vector<VarNodeId>(staticInputVarNodeIds()), 0,
+          amount));
+  return true;
 }
 
 void BoolLinEqNode::registerOutputVars(propagation::SolverBase& solver,

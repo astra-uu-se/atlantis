@@ -20,6 +20,10 @@ class IntCountNode : public InvariantNode {
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
+  [[nodiscard]] bool canBeMadeImplicit() const override;
+
+  bool makeImplicit() override;
+
   [[nodiscard]] const std::vector<VarNodeId>& haystack() const;
 
   [[nodiscard]] Int needle() const;
