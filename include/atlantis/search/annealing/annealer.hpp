@@ -1,6 +1,6 @@
 #pragma once
 
-#include <optional>
+#include <memory>
 
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealing/annealingSchedule.hpp"
