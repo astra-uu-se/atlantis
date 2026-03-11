@@ -33,9 +33,7 @@ class ParTSP : public ::benchmark::Fixture {
     instances = createInstances(std::string(FZN_DIR) + "/tsp");
   }
 
-  static size_t size() {
-    return instances.size();
-  }
+  static size_t size() { return instances.size(); }
 
   void SetUp(const ::benchmark::State& state) override {
     instance = state.range(0);
@@ -70,8 +68,7 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
     deadlines.emplace_back(std::chrono::steady_clock::now() + tl);
   }
 
-  backend->setOnSolution([&](
-                             const search::SavedAssignment& solution) {
+  backend->setOnSolution([&](const search::SavedAssignment& solution) {
     for (size_t i = 0; i < timelimits.size(); i++) {
       if (deadlines[i] < std::chrono::steady_clock::now()) {
         continue;
@@ -91,7 +88,8 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
     st.counters[prefix + "/solutions"] = static_cast<double>(numSolutions[i]);
     st.counters[prefix + "/solutions_per_second"] = ::benchmark::Counter(
         static_cast<double>(numSolutions[i]), ::benchmark::Counter::kIsRate);
-    st.counters[prefix + "/objective_best"] = static_cast<double>(bestObjective[i]);
+    st.counters[prefix + "/objective_best"] =
+        static_cast<double>(bestObjective[i]);
     st.counters[prefix + "/objective_average"] =
         totalObjective[i] / static_cast<double>(numSolutions[i]);
   }
