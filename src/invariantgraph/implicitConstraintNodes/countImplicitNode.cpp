@@ -1,7 +1,8 @@
+#include "atlantis/invariantgraph/implicitConstraintNodes/countImplicitNode.hpp"
+
 #include <algorithm>
 
 #include "../parseHelper.hpp"
-#include "atlantis/invariantgraph/implicitConstraintNodes/countImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/search/neighborhoods/allDifferentNonUniformNeighborhood.hpp"
@@ -21,11 +22,12 @@ CountImplicitNode::CountImplicitNode(InvariantGraph& graph,
 
 void CountImplicitNode::init(InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
-  assert(std::ranges::all_of(
-      outputVarNodeIds(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(outputVarNodeIds().front()).isIntVar() == invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return invariantGraphConst()
+               .varNodeConst(outputVarNodeIds().front())
+               .isIntVar() ==
+           invariantGraphConst().varNodeConst(vId).isIntVar();
+  }));
 }
 
 void CountImplicitNode::updateDomainTypes() {

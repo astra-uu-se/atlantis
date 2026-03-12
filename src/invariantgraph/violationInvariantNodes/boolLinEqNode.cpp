@@ -82,13 +82,17 @@ void BoolLinEqNode::updateState() {
     ub += std::max<Int>(0, _coeffs.at(i));
   }
 
-  if (lb == ub && lb == _bound) {
+  if (lb == _bound || ub == _bound) {
     if (isReified()) {
       fixReified(true);
     }
     if (!shouldHold()) {
       throw InconsistencyException(
           "BoolLinEqNode neg: Invariant is always false");
+    }
+    for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+      const bool val = _coeffs[i] > 0 ? ub == _bound : lb == _bound;
+      invariantGraph().varNode(staticInputVarNodeIds().at(i)).fixToValue(val);
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
@@ -105,7 +109,16 @@ void BoolLinEqNode::updateState() {
 }
 
 bool BoolLinEqNode::canBeMadeImplicit() const {
-  return std::ranges::all_of(_coeffs, [&](const Int c) { return c == 1; });
+  return state() == InvariantNodeState::ACTIVE && !isReified() &&
+         shouldHold() &&
+         std::ranges::all_of(staticInputVarNodeIds(),
+                             [&](const auto& id) {
+                               return invariantGraphConst()
+                                   .varNodeConst(id)
+                                   .definingNodes()
+                                   .empty();
+                             }) &&
+         std::ranges::all_of(_coeffs, [&](const Int c) { return c == 1; });
 }
 
 bool BoolLinEqNode::makeImplicit() {

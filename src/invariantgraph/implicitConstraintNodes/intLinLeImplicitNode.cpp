@@ -1,26 +1,25 @@
-#include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/intLinLeImplicitNode.hpp"
 
 #include <algorithm>
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
+#include "atlantis/search/neighborhoods/intLinLeNeighborhood.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntLinEqImplicitNode::IntLinEqImplicitNode(InvariantGraph& graph,
+IntLinLeImplicitNode::IntLinLeImplicitNode(InvariantGraph& graph,
                                            std::vector<Int>&& coeffs,
                                            std::vector<VarNodeId>&& inputVars,
-                                           Int offset)
+                                           Int bound)
     : ImplicitConstraintNode(graph, std::move(inputVars)),
       _coeffs(std::move(coeffs)),
-      _offset(offset) {
+      _bound(bound) {
   assert(_coeffs.size() == outputVarNodeIds().size());
-  assert(std::ranges::all_of(_coeffs, [&](const Int c) { return std::abs(c) == 1; }));
 }
 
-void IntLinEqImplicitNode::init(InvariantNodeId id) {
+void IntLinLeImplicitNode::init(InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
@@ -29,20 +28,32 @@ void IntLinEqImplicitNode::init(InvariantNodeId id) {
       }));
 }
 
-void IntLinEqImplicitNode::updateDomainTypes() {
-  if (outputVarNodeIds().size() <= 1) {
+void IntLinLeImplicitNode::updateDomainTypes() {
+  Int sum = 0;
+  for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
+    const Int v1 = _coeffs[i] * invariantGraphConst().varNodeConst(outputVarNodeIds()[i]).lowerBound();
+    const Int v2 = _coeffs[i] * invariantGraphConst().varNodeConst(outputVarNodeIds()[i]).upperBound();
+    // TODO: check for overflow:
+    sum += std::max(v1, v2);
+  }
+  if (sum <= _bound) {
     return;
   }
-
   for (const auto& nId : outputVarNodeIds()) {
     invariantGraph().varNode(nId).setDomainType(DomainType::DOM_DOMAIN);
   }
 }
 
-void IntLinEqImplicitNode::registerNode(propagation::SolverBase&,
+void IntLinLeImplicitNode::registerNode(propagation::SolverBase&,
                                         SolverMapping& mapping) const {
   assert(!mapping.hasNeighborhood(id()));
-  if (outputVarNodeIds().size() <= 1) {
+  Int sum = 0;
+  for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
+    const Int v1 = _coeffs[i] * invariantGraphConst().varNodeConst(outputVarNodeIds()[i]).lowerBound();
+    const Int v2 = _coeffs[i] * invariantGraphConst().varNodeConst(outputVarNodeIds()[i]).upperBound();
+    sum += std::max(v1, v2);
+  }
+  if (sum <= _bound) {
     return;
   }
 
@@ -56,12 +67,12 @@ void IntLinEqImplicitNode::registerNode(propagation::SolverBase&,
   }
 
   mapping.setNeighborhood(
-      id(), std::make_shared<search::neighborhoods::IntLinEqNeighborhood>(
-                std::vector<Int>{_coeffs}, std::move(searchVars), _offset));
+      id(), std::make_shared<search::neighborhoods::IntLinLeNeighborhood>(
+                std::vector<Int>{_coeffs}, std::move(searchVars), _bound));
 }
 
-std::string IntLinEqImplicitNode::dotLangIdentifier() const {
-  return "int_lin_eq";
+std::string IntLinLeImplicitNode::dotLangIdentifier() const {
+  return "int_lin_le";
 }
 
 }  // namespace atlantis::invariantgraph

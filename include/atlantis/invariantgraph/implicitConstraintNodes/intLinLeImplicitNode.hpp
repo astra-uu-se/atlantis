@@ -10,11 +10,11 @@ namespace atlantis::invariantgraph {
 
 class IntLinLeImplicitNode : public ImplicitConstraintNode {
   std::vector<Int> _coeffs;
-  Int _offset;
+  Int _bound;
 
  public:
   explicit IntLinLeImplicitNode(InvariantGraph&, std::vector<Int>&& coeffs,
-                                std::vector<VarNodeId>&&, Int offset);
+                                std::vector<VarNodeId>&&, Int bound);
 
   void init(InvariantNodeId) override;
 
