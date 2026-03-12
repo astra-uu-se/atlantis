@@ -24,7 +24,7 @@ class IntLinLeNeighborhoodTest
     for (Int i = 0; i < numVars; ++i) {
       _vars.emplace_back(_solver->makeIntVar(0, -10, 10),
                          std::make_shared<SearchDomain>(-10, 10));
-      _coeffs.emplace_back(i % 2 == 0 ? 1 : -1);
+      _coeffs.emplace_back((i % 2 == 0 ? 2 : -2) * (i + 1));
     }
 
     createNeighborhood(std::vector<Int>{_coeffs}, std::vector<SearchVar>{_vars},
@@ -46,8 +46,8 @@ class IntLinLeNeighborhoodTest
       comSum += _coeffs.at(i) * comVal;
     }
 
-    EXPECT_LE(curSum, -_bound);
-    EXPECT_LE(comSum, -_bound);
+    EXPECT_LE(curSum, _bound);
+    EXPECT_LE(comSum, _bound);
   }
 };
 
@@ -66,7 +66,7 @@ TEST_F(IntLinLeNeighborhoodTest, randomMove) {
     initialize();
     expectHolds();
 
-    EXPECT_EQ(_neighborhood->randomMove(_random, *_assignment), 2);
+    EXPECT_EQ(_neighborhood->randomMove(_random, *_assignment), 1);
     expectHolds();
   }
 }

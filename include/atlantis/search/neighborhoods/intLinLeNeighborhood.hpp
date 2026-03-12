@@ -12,11 +12,14 @@ namespace atlantis::search::neighborhoods {
 class IntLinLeNeighborhood : public Neighborhood {
   std::vector<Int> _coeffs;
   std::vector<SearchVar> _vars;
-    std::vector<size_t> _indices;
+  std::vector<size_t> _indices;
   Int _bound;
   Int _curSum;
+  Timestamp _curTimestamp;
+  size_t _curVarIdx;
+  Int _curVarVal;
 
- public:
+public:
   IntLinLeNeighborhood(std::vector<Int>&& coeffs, std::vector<SearchVar>&& vars,
                        Int bound);
 

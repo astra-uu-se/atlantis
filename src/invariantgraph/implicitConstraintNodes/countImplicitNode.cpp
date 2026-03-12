@@ -22,9 +22,9 @@ CountImplicitNode::CountImplicitNode(InvariantGraph& graph,
 void CountImplicitNode::init(InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
   assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      outputVarNodeIds(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
+        return invariantGraphConst().varNodeConst(outputVarNodeIds().front()).isIntVar() == invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
 }
 

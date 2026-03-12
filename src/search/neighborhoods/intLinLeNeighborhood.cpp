@@ -18,11 +18,12 @@ IntLinLeNeighborhood::IntLinLeNeighborhood(std::vector<Int>&& coeffs,
       _vars(std::move(vars)),
       _indices(_vars.size()),
       _bound(bound),
-    _curSum(0) {
+    _curSum(0),
+    _curTimestamp(NULL_TIMESTAMP),
+    _curVarIdx(_vars.size()),
+    _curVarVal(0) {
   assert(_vars.size() > 1);
     std::iota(_indices.begin(), _indices.end(), 0);
-  assert(std::ranges::all_of(_coeffs.begin(), _coeffs.end(),
-                             [](Int coeff) { return std::abs(coeff) == 1; }));
 }
 
 void IntLinLeNeighborhood::initialize(RandomProvider& random,
@@ -33,79 +34,92 @@ void IntLinLeNeighborhood::initialize(RandomProvider& random,
         _indices[random.intInRange(i, static_cast<Int>(_indices.size()) - 1)]);
   }
 
-  std::vector<Int> remainingBound;
-  remainingBound.resize(_indices.size());
-  remainingBound.back() = 0;
+  std::vector<Int> remainingLowerBound;
+  remainingLowerBound.resize(_indices.size());
+  remainingLowerBound[_indices.back()] = 0;
   for (Int i = static_cast<Int>(_indices.size()) - 2; i >= 0; --i) {
     const Int val1 =
-        _coeffs[_indices[i]] * _vars[_indices[i]].domain()->lowerBound();
+        _coeffs[_indices[i + 1]] * _vars[_indices[i + 1]].domain()->lowerBound();
     const Int val2 =
-        _coeffs[_indices[i]] * _vars[_indices[i]].domain()->upperBound();
+        _coeffs[_indices[i + 1]] * _vars[_indices[i + 1]].domain()->upperBound();
 
-    remainingBound[_indices[i]] =
-        remainingBound[_indices[i + 1]] + std::max(val1, val2);
+    remainingLowerBound[_indices[i]] =
+        remainingLowerBound[_indices[i + 1]] + std::min(val1, val2);
   }
+    assert(remainingLowerBound[_indices.front()] + std::min(_coeffs[_indices.front()] * _vars[_indices.front()].domain()->lowerBound(),
+          _coeffs[_indices.front()] * _vars[_indices.front()].domain()->upperBound()) <= _bound);
 
   _curSum = 0;
-  for (size_t i = 0; i < _indices.size(); ++i) {
-    const size_t index = _indices[i];
-    const Int remVal = (-remainingBound[index] - _curSum) / _coeffs[index];
+  for (unsigned long index : _indices) {
+      const Int rlb = remainingLowerBound[index];
+    const Int remVal = (-rlb - _curSum) / _coeffs[index];
+      assert(_coeffs[index] * remVal + rlb + _curSum <= _bound);
+      assert(_coeffs[index] != 0);
     if (0 < _coeffs[index]) {
-      const Int ub =
+        const Int ub =
           std::min(_vars[index].domain()->upperBound(), remVal);
+        assert(_vars[index].domain()->lowerBound() <= ub);
       const Int val = random.intInRange(_vars[index].domain()->lowerBound(), ub);
       assignment.set(_vars[index].solverId(), val);
       _curSum += _coeffs[index] * val;
+
+        assert(_curSum + remainingLowerBound[index] <= _bound);
     } else {
-      assert(_coeffs[index] != 0);
       const Int lb =
           std::max(_vars[index].domain()->lowerBound(), remVal);
+        assert(lb <= _vars[index].domain()->upperBound());
       const Int val = random.intInRange(lb, _vars[index].domain()->upperBound());
       assignment.set(_vars[index].solverId(), val);
       _curSum += _coeffs[index] * val;
+
+        assert(_curSum + remainingLowerBound[index] <= _bound);
     }
-    assert(_curSum <= remainingBound[index]);
   }
-  assert(_curSum <= 0);
+  assert(_curSum <= _bound);
 }
 
 size_t IntLinLeNeighborhood::randomMove(RandomProvider& random,
                                         Assignment& assignment) {
+    _curTimestamp = assignment.currentTimestamp();
   for (size_t i = 0; i < _indices.size() - 1; ++i) {
       std::swap<size_t>(_indices[i], _indices[random.intInRange(i, _indices.size() - 1)]);
-      const size_t index = _indices[i];
-      const Int remVal = (_bound - _curSum) / _coeffs[index];
-      if (0 < _coeffs[index]) {
-          const Int lb = _vars[index].domain()->lowerBound();
+      _curVarIdx = _indices[i];
+      const Int curVal = assignment.committedValue(_vars[_curVarIdx].solverId());
+      const Int remVal = ((_bound - _curSum) / _coeffs[_curVarIdx]) + curVal;
+      if (0 < _coeffs[_curVarIdx]) {
+          const Int lb = _vars[_curVarIdx].domain()->lowerBound();
           const Int ub =
-          std::min(_vars[index].domain()->upperBound(), remVal);
+          std::min(_vars[_curVarIdx].domain()->upperBound(), remVal);
+          assert(lb <= ub);
           if (lb == ub) {
               continue;
           }
-          const Int val = random.intInRange(lb, ub);
-          assignment.set(_vars[index].solverId(), val);
+          _curVarVal = random.intInRange(lb, ub, curVal);
+          assignment.set(_vars[_curVarIdx].solverId(), _curVarVal);
           return 1;
       } else {
-          assert(_coeffs[index] != 0);
           const Int lb =
-          std::max(_vars[index].domain()->lowerBound(), remVal);
-          const Int ub = _vars[index].domain()->upperBound();
+          std::max(_vars[_curVarIdx].domain()->lowerBound(), remVal);
+          const Int ub = _vars[_curVarIdx].domain()->upperBound();
+          assert(lb <= ub);
           if (lb == ub) {
               continue;
           }
-          const Int val = random.intInRange(lb, ub);
-          assignment.set(_vars[index].solverId(), val);
+          _curVarVal = random.intInRange(lb, ub, curVal);
+          assignment.set(_vars[_curVarIdx].solverId(), _curVarVal);
           return 1;
       }
   }
+    _curTimestamp = NULL_TIMESTAMP;
   return 0;
 }
 
 void IntLinLeNeighborhood::commitIf(const Assignment &assignment) {
-    _curSum = 0;
-    for (size_t i = 0; i < _vars.size(); ++i) {
-        _curSum += _coeffs[i] * assignment.committedValue(_vars[i].solverId());
+    if (_curTimestamp != assignment.currentTimestamp()) {
+        return;
     }
+    _curSum -= _coeffs[_curVarIdx] * assignment.committedValue(_vars[_curVarIdx].solverId());
+    _curSum += _coeffs[_curVarIdx] * _curVarVal;
     assert(_curSum <= _bound);
 }
 
