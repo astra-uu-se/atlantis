@@ -105,6 +105,28 @@ void BoolLinEqNode::updateState() {
       throw InconsistencyException("BoolLinEqNode: Invariant is always false");
     }
     setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  bool sameCoeff = !_coeffs.empty() && std::abs(_coeffs.front()) != 1;
+  for (size_t i = 1; sameCoeff && i < _coeffs.size(); ++i) {
+    if (std::abs(_coeffs[i]) != std::abs(_coeffs.front())) {
+      sameCoeff = false;
+    }
+  }
+  if (sameCoeff) {
+    const Int c = std::abs(_coeffs.front());
+    if (_bound % c != 0) {
+      fixReified(false);
+      if (shouldHold()) {
+        throw InconsistencyException("BoolLinEqNode: Invariant is always false");
+      }
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+    for (size_t i = 0; i < _coeffs.size(); ++i) {
+      _coeffs[i] /= c;
+    }
+    _bound /= c;
   }
 }
 

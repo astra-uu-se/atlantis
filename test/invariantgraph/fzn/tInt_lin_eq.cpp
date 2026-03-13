@@ -26,6 +26,31 @@ class int_lin_eqTest : public FznTestBase {
   Int bound{0};
   Int definedIndex{-1};
 
+  [[nodiscard]] Int getFixedLHS() const {
+    Int total = 0;
+    for (size_t i = 0; i < coeffs.size(); ++i) {
+      if (isFixed(inputs.at(i))) {
+        total += coeffs.at(i) * intVal(inputs.at(i));
+      }
+    }
+    return total;
+  }
+
+  [[nodiscard]] bool sameCoeff(Int& coeff) const {
+    bool initialized = false;
+    for (size_t i = 0; i < coeffs.size(); ++i) {
+      if (isFixed(inputs.at(i))) {
+        continue;
+      }
+      if (initialized && coeff != std::abs(coeffs.at(i))) {
+        return false;
+      }
+      initialized = true;
+      coeff = std::abs(coeffs.at(i));
+    }
+    return initialized;
+  }
+
   [[nodiscard]] std::pair<Int, Int> getBounds() const {
     Int lb = 0;
     Int ub = 0;
@@ -82,6 +107,11 @@ class int_lin_eqTest : public FznTestBase {
     if (alwaysUnsat) {
       return isFixedTo(reified, bool{false});
     }
+    const Int total = bound - getFixedLHS();
+    Int coeff;
+    if (sameCoeff(coeff) && total % coeff != 0) {
+      return isFixedTo(reified, bool{false});
+    }
     return false;
   }
 
@@ -98,14 +128,17 @@ class int_lin_eqTest : public FznTestBase {
     if (alwaysUnsat) {
       return isFixedTo(reified, bool{true});
     }
-
+    const Int total = bound - getFixedLHS();
+    Int coeff;
+    if (sameCoeff(coeff) && total % coeff != 0) {
+      return isFixedTo(reified, bool{true});
+    }
     return false;
   }
 
   void generate() override {
     const size_t size = *rc::gen::inRange<size_t>(0, 4);
-    coeffs =
-        *rc::gen::container<std::vector<Int>>(size, rc::gen::inRange(-2, 2));
+    coeffs = *rc::gen::container<std::vector<Int>>(size, rc::gen::inRange(-2, 2));
     addArg(coeffs);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
