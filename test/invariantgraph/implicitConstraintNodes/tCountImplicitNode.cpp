@@ -7,8 +7,7 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class CountNodeTestFixture
-    : public NodeTestBase<CountImplicitNode> {
+class CountNodeTestFixture : public NodeTestBase<CountImplicitNode> {
  public:
   Int numVars = 4;
   std::vector<std::string> inputVars;
@@ -26,7 +25,8 @@ class CountNodeTestFixture
       }
     }
 
-    createImplicitConstraintNode(*_invariantGraph, varNodeIds(inputVars), needle, amount);
+    createImplicitConstraintNode(*_invariantGraph, varNodeIds(inputVars),
+                                 needle, amount);
   }
 };
 
@@ -58,8 +58,7 @@ TEST_P(CountNodeTestFixture, application) {
       neighborhood.get()));
 }
 
-INSTANTIATE_TEST_SUITE_P(CountNodeTest,
-                         CountNodeTestFixture,
+INSTANTIATE_TEST_SUITE_P(CountNodeTest, CountNodeTestFixture,
                          ::testing::Values(ParamData{0}, ParamData{1}));
 
 }  // namespace atlantis::testing
