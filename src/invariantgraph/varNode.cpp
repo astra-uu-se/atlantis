@@ -29,7 +29,9 @@ VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(domain),
-      _identifier(identifier) {}
+      _identifier(identifier) {
+  assert(_domain != nullptr);
+}
 
 VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
                  bool isIntVar, DomainType domainType)
@@ -57,7 +59,9 @@ VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(domain),
-      _identifier(std::nullopt) {}
+      _identifier(std::nullopt) {
+  assert(_domain != nullptr);
+}
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 

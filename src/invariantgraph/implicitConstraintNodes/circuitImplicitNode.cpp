@@ -80,7 +80,7 @@ void CircuitImplicitNode::registerNode(propagation::SolverBase&,
     }
   }
 
-  for (unsigned long vId : outputVarNodeIds()) {
+  for (const size_t vId : outputVarNodeIds()) {
     const auto& varNode = invariantGraphConst().varNodeConst(vId);
     assert(vId != propagation::NULL_ID);
     searchVars.emplace_back(mapping.solverId(vId), varNode.constDomain());
