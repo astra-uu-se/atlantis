@@ -33,9 +33,7 @@ class ParNQueens : public ::benchmark::Fixture {
     instances = createInstances(std::string(FZN_DIR) + "/n_queens");
   }
 
-  static size_t size() {
-    return instances.size();
-  }
+  static size_t size() { return instances.size(); }
 
   void SetUp(const ::benchmark::State& state) override {
     instance = state.range(0);
@@ -66,14 +64,13 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   for (const auto& tl : timelimits) {
     deadlines.emplace_back(std::chrono::steady_clock::now() + tl);
   }
-  backend->setOnSolution([&](
-                             const search::SavedAssignment&) {
-     for (size_t i = 0; i < timelimits.size(); i++) {
-       if (deadlines[i] < std::chrono::steady_clock::now()) {
-         continue;
-       }
-       solved[i] = 1;
-     }
+  backend->setOnSolution([&](const search::SavedAssignment&) {
+    for (size_t i = 0; i < timelimits.size(); i++) {
+      if (deadlines[i] < std::chrono::steady_clock::now()) {
+        continue;
+      }
+      solved[i] = 1;
+    }
   });
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);

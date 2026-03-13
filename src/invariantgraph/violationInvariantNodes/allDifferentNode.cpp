@@ -112,14 +112,12 @@ void AllDifferentNode::updateState() {
 bool AllDifferentNode::canBeMadeImplicit() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
          shouldHold() &&
-         std::ranges::all_of(staticInputVarNodeIds().begin(),
-                             staticInputVarNodeIds().end(),
-                             [&](const auto& id) {
-                               return invariantGraphConst()
-                                   .varNodeConst(id)
-                                   .definingNodes()
-                                   .empty();
-                             });
+         std::ranges::all_of(staticInputVarNodeIds(), [&](const auto& id) {
+           return invariantGraphConst()
+               .varNodeConst(id)
+               .definingNodes()
+               .empty();
+         });
 }
 
 bool AllDifferentNode::makeImplicit() {

@@ -242,7 +242,7 @@ class fzn_global_cardinalityTest : public FznTestBase {
     constraintIdentifier =
         isReified ? "fzn_global_cardinality_reif" : "fzn_global_cardinality";
     if (isReified) {
-      addBoolArg(reified);
+      addBoolArg(BoolArgState::FIXED_FALSE, reified);
     } else {
       addBoolPar(reified, true);
     }
@@ -256,10 +256,34 @@ class fzn_global_cardinalityTest : public FznTestBase {
   }
 
   void move(bool committedValue) override {
-    for (const auto& input : inputs) {
-      if (varId(input) != propagation::NULL_ID && randBool()) {
-        changeValue(input, committedValue);
+    std::unordered_set<InvariantNodeId, InvariantNodeIdHash>
+        implicitConstraints;
+    std::vector<bool> hasImplicitConstraints(inputs.size(), false);
+    implicitConstraints.reserve(inputs.size());
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      if (!isFixed(inputs.at(i))) {
+        const auto& defNodes = varNodeConst(inputs.at(i)).definingNodes();
+        if (!defNodes.empty()) {
+          RC_ASSERT(defNodes.size() == size_t{1});
+          const InvariantNodeId implId = *defNodes.begin();
+          RC_ASSERT(implId.isImplicitConstraint());
+          implicitConstraints.emplace(implId);
+          hasImplicitConstraints.at(i) = true;
+        }
       }
+    }
+
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      if (!hasImplicitConstraints.at(i) && !isFixed(inputs.at(i)) &&
+          randBool()) {
+        changeValue(inputs.at(i), committedValue);
+      }
+    }
+
+    for (const InvariantNodeId implId : implicitConstraints) {
+      auto implNode = _solverMapping->neighborhood(implId);
+      RC_ASSERT(implNode != nullptr);
+      implNode->randomMove(*_randomProvider, *_assignment);
     }
   }
 

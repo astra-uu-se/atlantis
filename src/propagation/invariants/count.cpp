@@ -79,8 +79,7 @@ void Count::close(Timestamp ts) {
   lb = std::max(lb, _solver.lowerBound(_needle));
   ub = std::max(ub, _solver.lowerBound(_needle));
 
-  _counts.resize(static_cast<unsigned long>(ub - lb + 1),
-                 CommittableInt(ts, 0));
+  _counts.resize(static_cast<size_t>(ub - lb + 1), CommittableInt(ts, 0));
   _offset = lb;
 }
 

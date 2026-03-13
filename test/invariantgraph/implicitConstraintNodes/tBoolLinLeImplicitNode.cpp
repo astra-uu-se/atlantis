@@ -1,39 +1,39 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/intLinLeImplicitNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
+#include "atlantis/search/neighborhoods/intLinLeNeighborhood.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntLinEqImplicitNodeTestFixture
-    : public NodeTestBase<IntLinEqImplicitNode> {
+class BoolLinLeImplicitNodeTestFixture
+    : public NodeTestBase<IntLinLeImplicitNode> {
  public:
   Int numVars = 4;
   std::vector<std::string> inputVars;
 
   std::vector<Int> coeffs;
-  Int amount = -7;
+  Int bound = -7;
 
   void SetUp() override {
     NodeTestBase::SetUp();
     for (Int i = 0; i < numVars; ++i) {
       inputVars.emplace_back("input_" + std::to_string(i));
       retrieveIntVarNode(-10, 10, inputVars.back());
-      coeffs.emplace_back(i % 2 == 0 ? 1 : -1);
+      coeffs.emplace_back((i % 2 == 0 ? 2 : -2) * (i + 1));
     }
 
     createImplicitConstraintNode(*_invariantGraph, std::vector<Int>{coeffs},
-                                 varNodeIds(inputVars), amount);
+                                 varNodeIds(inputVars), bound);
   }
 };
 
-TEST_P(IntLinEqImplicitNodeTestFixture, construction) {
+TEST_P(BoolLinLeImplicitNodeTestFixture, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds(), varNodeIds(inputVars));
 }
 
-TEST_P(IntLinEqImplicitNodeTestFixture, application) {
+TEST_P(BoolLinLeImplicitNodeTestFixture, application) {
   _solver->open();
   _solverMapping = std::make_shared<SolverMapping>();
   invNode().registerOutputVars(*_solver, *_solverMapping);
@@ -53,12 +53,12 @@ TEST_P(IntLinEqImplicitNodeTestFixture, application) {
 
   const auto neighborhood = _solverMapping->neighborhood(_invNodeId);
 
-  EXPECT_TRUE(dynamic_cast<search::neighborhoods::IntLinEqNeighborhood*>(
+  EXPECT_TRUE(dynamic_cast<search::neighborhoods::IntLinLeNeighborhood*>(
       neighborhood.get()));
 }
 
-INSTANTIATE_TEST_SUITE_P(IntLinEqImplicitNodeTest,
-                         IntLinEqImplicitNodeTestFixture,
+INSTANTIATE_TEST_SUITE_P(BoolLinLeImplicitNodeTest,
+                         BoolLinLeImplicitNodeTestFixture,
                          ::testing::Values(ParamData{}));
 
 }  // namespace atlantis::testing

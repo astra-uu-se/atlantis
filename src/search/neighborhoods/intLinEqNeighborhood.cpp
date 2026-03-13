@@ -34,19 +34,33 @@ void IntLinEqNeighborhood::initialize(RandomProvider& random,
 
   std::vector<std::array<Int, 2>> remainingBounds;
   remainingBounds.resize(_indices.size());
-  remainingBounds.back()[0] = 0;
-  remainingBounds.back()[1] = 0;
+  remainingBounds[_indices.back()][0] = 0;
+  remainingBounds[_indices.back()][1] = 0;
   for (Int i = static_cast<Int>(_indices.size()) - 2; i >= 0; --i) {
-    const Int val1 =
-        _coeffs[_indices[i]] * _vars[_indices[i]].domain()->lowerBound();
-    const Int val2 =
-        _coeffs[_indices[i]] * _vars[_indices[i]].domain()->upperBound();
+    const Int val1 = _coeffs[_indices[i + 1]] *
+                     _vars[_indices[i + 1]].domain()->lowerBound();
+    const Int val2 = _coeffs[_indices[i + 1]] *
+                     _vars[_indices[i + 1]].domain()->upperBound();
 
     remainingBounds[_indices[i]][0] =
         remainingBounds[_indices[i + 1]][0] + std::min(val1, val2);
     remainingBounds[_indices[i]][1] =
         remainingBounds[_indices[i + 1]][1] + std::max(val1, val2);
   }
+
+  assert(remainingBounds[_indices.front()][0] +
+             std::min(_coeffs[_indices.front()] *
+                          _vars[_indices.front()].domain()->lowerBound(),
+                      _coeffs[_indices.front()] *
+                          _vars[_indices.front()].domain()->upperBound()) <=
+         _offset);
+
+  assert(remainingBounds[_indices.front()][1] +
+             std::max(_coeffs[_indices.front()] *
+                          _vars[_indices.front()].domain()->lowerBound(),
+                      _coeffs[_indices.front()] *
+                          _vars[_indices.front()].domain()->upperBound()) >=
+         _offset);
 
   Int curSum = _offset;
   for (size_t i = 0; i < _indices.size(); ++i) {

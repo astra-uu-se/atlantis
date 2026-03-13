@@ -42,7 +42,8 @@ inline std::vector<std::chrono::milliseconds> defaultTimelimits() {
 #ifndef NDEBUG
   return {std::chrono::milliseconds(1000), std::chrono::milliseconds(2000)};
 #else
-  return {std::chrono::milliseconds(5000), std::chrono::milliseconds(30000), std::chrono::milliseconds(60000), std::chrono::milliseconds(180000)};
+  return {std::chrono::milliseconds(5000), std::chrono::milliseconds(30000),
+          std::chrono::milliseconds(60000), std::chrono::milliseconds(180000)};
 #endif
 }
 
@@ -54,13 +55,12 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
   for (const auto& entry : std::filesystem::directory_iterator(relDir)) {
     if (entry.is_regular_file() && entry.path().extension() == ".fzn") {
       const std::string dirPath = entry.path().parent_path().string();
-        instances.emplace_back(entry.path().string());
+      instances.emplace_back(entry.path().string());
     }
   }
 
   std::ranges::sort(instances);
   return instances;
 }
-
 
 }  // namespace atlantis::benchmark

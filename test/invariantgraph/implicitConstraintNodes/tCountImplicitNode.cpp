@@ -1,39 +1,40 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/countImplicitNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/search/neighborhoods/intLinEqNeighborhood.hpp"
+#include "atlantis/search/neighborhoods/countNeighborhood.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntLinEqImplicitNodeTestFixture
-    : public NodeTestBase<IntLinEqImplicitNode> {
+class CountNodeTestFixture : public NodeTestBase<CountImplicitNode> {
  public:
   Int numVars = 4;
   std::vector<std::string> inputVars;
-
-  std::vector<Int> coeffs;
-  Int amount = -7;
+  size_t amount = 2;
+  Int needle = 0;
 
   void SetUp() override {
     NodeTestBase::SetUp();
     for (Int i = 0; i < numVars; ++i) {
       inputVars.emplace_back("input_" + std::to_string(i));
-      retrieveIntVarNode(-10, 10, inputVars.back());
-      coeffs.emplace_back(i % 2 == 0 ? 1 : -1);
+      if (_paramData.data == 0) {
+        retrieveIntVarNode(-10, 10, inputVars.back());
+      } else {
+        retrieveBoolVarNode(inputVars.back());
+      }
     }
 
-    createImplicitConstraintNode(*_invariantGraph, std::vector<Int>{coeffs},
-                                 varNodeIds(inputVars), amount);
+    createImplicitConstraintNode(*_invariantGraph, varNodeIds(inputVars),
+                                 needle, amount);
   }
 };
 
-TEST_P(IntLinEqImplicitNodeTestFixture, construction) {
+TEST_P(CountNodeTestFixture, construction) {
   EXPECT_EQ(invNode().outputVarNodeIds(), varNodeIds(inputVars));
 }
 
-TEST_P(IntLinEqImplicitNodeTestFixture, application) {
+TEST_P(CountNodeTestFixture, application) {
   _solver->open();
   _solverMapping = std::make_shared<SolverMapping>();
   invNode().registerOutputVars(*_solver, *_solverMapping);
@@ -53,12 +54,11 @@ TEST_P(IntLinEqImplicitNodeTestFixture, application) {
 
   const auto neighborhood = _solverMapping->neighborhood(_invNodeId);
 
-  EXPECT_TRUE(dynamic_cast<search::neighborhoods::IntLinEqNeighborhood*>(
+  EXPECT_TRUE(dynamic_cast<search::neighborhoods::CountNeighborhood*>(
       neighborhood.get()));
 }
 
-INSTANTIATE_TEST_SUITE_P(IntLinEqImplicitNodeTest,
-                         IntLinEqImplicitNodeTestFixture,
-                         ::testing::Values(ParamData{}));
+INSTANTIATE_TEST_SUITE_P(CountNodeTest, CountNodeTestFixture,
+                         ::testing::Values(ParamData{0}, ParamData{1}));
 
 }  // namespace atlantis::testing

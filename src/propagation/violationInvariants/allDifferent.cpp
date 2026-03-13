@@ -81,7 +81,7 @@ void AllDifferent::close(Timestamp ts) {
   if (overlapUb < overlapLb) {
     _counts.clear();
   } else {
-    _counts.resize(static_cast<unsigned long>(overlapUb - overlapLb + 1),
+    _counts.resize(static_cast<size_t>(overlapUb - overlapLb + 1),
                    CommittableInt(ts, 0));
   }
   _offset = overlapLb;

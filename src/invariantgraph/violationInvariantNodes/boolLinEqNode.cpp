@@ -5,12 +5,14 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/countImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/boolLinear.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/search/neighborhoods/countNeighborhood.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -80,13 +82,17 @@ void BoolLinEqNode::updateState() {
     ub += std::max<Int>(0, _coeffs.at(i));
   }
 
-  if (lb == ub && lb == _bound) {
+  if (lb == _bound || ub == _bound) {
     if (isReified()) {
       fixReified(true);
     }
     if (!shouldHold()) {
       throw InconsistencyException(
           "BoolLinEqNode neg: Invariant is always false");
+    }
+    for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+      const bool val = _coeffs[i] > 0 ? ub == _bound : lb == _bound;
+      invariantGraph().varNode(staticInputVarNodeIds().at(i)).fixToValue(val);
     }
     setState(InvariantNodeState::SUBSUMED);
     return;
@@ -99,7 +105,54 @@ void BoolLinEqNode::updateState() {
       throw InconsistencyException("BoolLinEqNode: Invariant is always false");
     }
     setState(InvariantNodeState::SUBSUMED);
+    return;
   }
+  bool sameCoeff = !_coeffs.empty() && std::abs(_coeffs.front()) != 1;
+  for (size_t i = 1; sameCoeff && i < _coeffs.size(); ++i) {
+    if (std::abs(_coeffs[i]) != std::abs(_coeffs.front())) {
+      sameCoeff = false;
+    }
+  }
+  if (sameCoeff) {
+    const Int c = std::abs(_coeffs.front());
+    if (_bound % c != 0) {
+      fixReified(false);
+      if (shouldHold()) {
+        throw InconsistencyException("BoolLinEqNode: Invariant is always false");
+      }
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+    for (size_t i = 0; i < _coeffs.size(); ++i) {
+      _coeffs[i] /= c;
+    }
+    _bound /= c;
+  }
+}
+
+bool BoolLinEqNode::canBeMadeImplicit() const {
+  return state() == InvariantNodeState::ACTIVE && !isReified() &&
+         shouldHold() &&
+         std::ranges::all_of(staticInputVarNodeIds(),
+                             [&](const auto& id) {
+                               return invariantGraphConst()
+                                   .varNodeConst(id)
+                                   .definingNodes()
+                                   .empty();
+                             }) &&
+         std::ranges::all_of(_coeffs, [&](const Int c) { return c == 1; });
+}
+
+bool BoolLinEqNode::makeImplicit() {
+  if (!canBeMadeImplicit()) {
+    return false;
+  }
+  const auto amount = static_cast<size_t>(_bound);
+  invariantGraph().addImplicitConstraintNode(
+      std::make_shared<CountImplicitNode>(
+          invariantGraph(), std::vector<VarNodeId>(staticInputVarNodeIds()), 0,
+          amount));
+  return true;
 }
 
 void BoolLinEqNode::registerOutputVars(propagation::SolverBase& solver,
