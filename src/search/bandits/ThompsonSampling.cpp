@@ -32,8 +32,9 @@ void ThompsonSampling::recordArmStats(const size_t arm,
   const double reward = _armStats[arm].addResult(stats);
   _alpha[arm] += reward;
   _beta[arm]++;
-  _totalPulls++;
+  _totalRecordedPulls++;
 
+  // Stats stuff - not necessary for the solver.
   const size_t n = _armStats[arm].timesChosen;
   _meanProbes[arm] = calcNewMean(_meanProbes[arm], stats._roundStatistics.value()->attemptedMoves, n);
   _meanMoves[arm] = calcNewMean(_meanMoves[arm], stats._roundStatistics.value()->acceptedMoves, n);
@@ -48,6 +49,7 @@ std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> ThompsonSampling::chooseA
   Int sample = INT_MIN;
 
   _lock.lock();
+  _totalPulls++;
 
   for (size_t i = 0; i < _numArms; i++) {
     const Int mean = random.fromDistribution<Int, std::gamma_distribution<>>(

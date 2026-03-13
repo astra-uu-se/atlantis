@@ -8,6 +8,7 @@
 #include "atlantis/search/annealing/annealer.hpp"
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/bandits/ExploreThenCommit.hpp"
+#include "atlantis/search/bandits/KullbackLeiblerUpperConfidenceBound.hpp"
 #include "atlantis/search/bandits/ThompsonSampling.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/savedAssignment.hpp"
@@ -101,7 +102,9 @@ void FznBackend::solve(logging::Logger& logger) {
   std::unique_ptr<search::ArmSelector> selector;
   switch (_banditAlgorithm) {
     case search::BanditAlgorithm::UCB:
-      printf("UCB algorithm not implemented. Using default instead.\n");
+      printf("Using bandit algorithm upper confidence bound (KL-UCB).\n");
+      selector = std::make_unique<search::KullbackLeiblerUpperConfidenceBound>(_annealingScheduleFactory);
+      break;
     case search::BanditAlgorithm::Thompson:
       printf("Using bandit algorithm Thompson sampling.\n");
       selector = std::make_unique<search::ThompsonSampling>(_annealingScheduleFactory);
