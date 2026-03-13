@@ -131,15 +131,16 @@ void IntCountNode::registerNode(propagation::SolverBase& solver,
 
 bool IntCountNode::canBeMadeImplicit() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
-         std::ranges::all_of(staticInputVarNodeIds(), [&](const auto& id) {
-           return invariantGraphConst()
-               .varNodeConst(id)
-               .definingNodes()
-               .empty();
-         }) &&
-  invariantGraphConst()
-      .varNodeConst(outputVarNodeIds().front())
-      .isFixed();
+         std::ranges::all_of(staticInputVarNodeIds(),
+                             [&](const auto& id) {
+                               return invariantGraphConst()
+                                   .varNodeConst(id)
+                                   .definingNodes()
+                                   .empty();
+                             }) &&
+         invariantGraphConst()
+             .varNodeConst(outputVarNodeIds().front())
+             .isFixed();
 }
 
 bool IntCountNode::makeImplicit() {

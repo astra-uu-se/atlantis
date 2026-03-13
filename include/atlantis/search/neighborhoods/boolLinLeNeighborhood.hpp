@@ -9,19 +9,24 @@ class SearchVar;
 
 namespace atlantis::search::neighborhoods {
 
-class BoolLinEqNeighborhood : public Neighborhood {
+class BoolLinLeNeighborhood : public Neighborhood {
   std::vector<Int> _coeffs;
   std::vector<SearchVar> _vars;
-  Int _offset;
   std::vector<size_t> _indices;
+  Int _bound;
+  Int _curSum;
+  Timestamp _curTimestamp;
+  size_t _curVarIdx;
 
  public:
-  BoolLinEqNeighborhood(std::vector<Int>&& coeffs, std::vector<SearchVar>&& vars,
-                       Int offset);
+  BoolLinLeNeighborhood(std::vector<Int>&& coeffs,
+                        std::vector<SearchVar>&& vars, Int offset);
 
   void initialize(RandomProvider&, Assignment&) override;
 
   size_t randomMove(RandomProvider&, Assignment&) override;
+
+  void commitIf(const Assignment&) override;
 
   [[nodiscard]] const std::vector<SearchVar>& coveredVars() const override {
     return _vars;

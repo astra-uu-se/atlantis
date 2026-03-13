@@ -1,25 +1,25 @@
-#include "atlantis/invariantgraph/implicitConstraintNodes/intLinLeImplicitNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/boolLinLeImplicitNode.hpp"
 
 #include <algorithm>
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/search/neighborhoods/intLinLeNeighborhood.hpp"
+#include "atlantis/search/neighborhoods/boolLinLeNeighborhood.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntLinLeImplicitNode::IntLinLeImplicitNode(InvariantGraph& graph,
-                                           std::vector<Int>&& coeffs,
-                                           std::vector<VarNodeId>&& inputVars,
-                                           Int bound)
+BoolLinLeImplicitNode::BoolLinLeImplicitNode(InvariantGraph& graph,
+                                             std::vector<Int>&& coeffs,
+                                             std::vector<VarNodeId>&& inputVars,
+                                             Int bound)
     : ImplicitConstraintNode(graph, std::move(inputVars)),
       _coeffs(std::move(coeffs)),
       _bound(bound) {
   assert(_coeffs.size() == outputVarNodeIds().size());
 }
 
-void IntLinLeImplicitNode::init(InvariantNodeId id) {
+void BoolLinLeImplicitNode::init(InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
@@ -28,7 +28,7 @@ void IntLinLeImplicitNode::init(InvariantNodeId id) {
       }));
 }
 
-void IntLinLeImplicitNode::updateDomainTypes() {
+void BoolLinLeImplicitNode::updateDomainTypes() {
   Int sum = 0;
   for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
     const Int v1 =
@@ -48,8 +48,8 @@ void IntLinLeImplicitNode::updateDomainTypes() {
   }
 }
 
-void IntLinLeImplicitNode::registerNode(propagation::SolverBase&,
-                                        SolverMapping& mapping) const {
+void BoolLinLeImplicitNode::registerNode(propagation::SolverBase&,
+                                         SolverMapping& mapping) const {
   assert(!mapping.hasNeighborhood(id()));
   Int sum = 0;
   for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
@@ -75,12 +75,12 @@ void IntLinLeImplicitNode::registerNode(propagation::SolverBase&,
   }
 
   mapping.setNeighborhood(
-      id(), std::make_shared<search::neighborhoods::IntLinLeNeighborhood>(
+      id(), std::make_shared<search::neighborhoods::BoolLinLeNeighborhood>(
                 std::vector<Int>{_coeffs}, std::move(searchVars), _bound));
 }
 
-std::string IntLinLeImplicitNode::dotLangIdentifier() const {
-  return "int_lin_le";
+std::string BoolLinLeImplicitNode::dotLangIdentifier() const {
+  return "bool_lin_le";
 }
 
 }  // namespace atlantis::invariantgraph

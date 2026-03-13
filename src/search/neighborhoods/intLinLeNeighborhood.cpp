@@ -47,7 +47,7 @@ void IntLinLeNeighborhood::initialize(RandomProvider& random,
 
   std::vector<Int> remainingLowerBound;
   remainingLowerBound.resize(_indices.size());
-  remainingLowerBound[_indices.back()] = _bound;
+  remainingLowerBound[_indices.back()] = -_bound;
   for (Int i = static_cast<Int>(_indices.size()) - 2; i >= 0; --i) {
     const Int val1 = _coeffs[_indices[i + 1]] *
                      _vars[_indices[i + 1]].domain()->lowerBound();
@@ -62,10 +62,10 @@ void IntLinLeNeighborhood::initialize(RandomProvider& random,
                           _vars[_indices.front()].domain()->lowerBound(),
                       _coeffs[_indices.front()] *
                           _vars[_indices.front()].domain()->upperBound()) <=
-         _bound);
+         0);
 
   _curSum = 0;
-  for (unsigned long index : _indices) {
+  for (const size_t index : _indices) {
     const Int rlb = remainingLowerBound[index];
     const Int remVal = divRound(-rlb - _curSum, _coeffs[index]);
     assert(_coeffs[index] * remVal + rlb + _curSum <= 0);
