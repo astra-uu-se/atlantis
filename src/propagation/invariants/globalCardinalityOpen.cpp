@@ -5,6 +5,8 @@
 #include <functional>
 #include <vector>
 
+#include "invariantHelper.hpp"
+
 #include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::propagation {
@@ -16,16 +18,6 @@ inline bool all_in_range(Int start, Int stop,
     vec.at(i) = start + i;
   }
   return std::ranges::all_of(vec.begin(), vec.end(), std::move(predicate));
-}
-
-inline std::vector<VarId> toVarIds(std::vector<VarViewId>&& ids) {
-  std::vector<VarId> varIds;
-  varIds.reserve(ids.size());
-  for (const auto& id : ids) {
-    assert(id.isVar());
-    varIds.emplace_back(VarId(id));
-  }
-  return varIds;
 }
 
 GlobalCardinalityOpen::GlobalCardinalityOpen(SolverBase& solver,
