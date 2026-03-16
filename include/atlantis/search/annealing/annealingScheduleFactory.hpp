@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-#include "AnnealingScheduleContainerFactory.hpp"
-
 namespace atlantis::search {
 
 class AnnealingSchedule;
@@ -25,17 +23,13 @@ class AnnealingScheduleCreationError : public std::exception {
 };
 
 class AnnealingScheduleFactory {
-  std::optional<std::filesystem::path> _scheduleDefinition;
-  std::vector<std::unique_ptr<AnnealingScheduleContainerFactory>> _factories;
+  std::vector<std::unique_ptr<AnnealingSchedule>> _schedules;
   size_t _armCount = 1;
 
-  inline void setDefaultAnnealingSchedule();
-
  public:
-  explicit AnnealingScheduleFactory(
-      const std::optional<std::filesystem::path>& scheduleDefinition = {});
+  explicit AnnealingScheduleFactory();
 
-  void SetAnnealingSchedule(const std::filesystem::path& scheduleDefinition);
+  explicit AnnealingScheduleFactory(const std::filesystem::path& scheduleDefinition);
 
   /**
    * Creates an annealing schedule based on the definition file provided to

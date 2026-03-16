@@ -29,10 +29,13 @@ void GeometricCoolingSchedule::nextRound(
   }
 }
 
-double GeometricCoolingSchedule::temperature() { return _temperature; }
+double GeometricCoolingSchedule::temperature() const { return _temperature; }
 
-bool GeometricCoolingSchedule::frozen() {
+bool GeometricCoolingSchedule::frozen() const {
   return _successiveFutileRounds >= _successiveFutileRoundsThreshold;
 }
 
+std::unique_ptr<AnnealingSchedule> GeometricCoolingSchedule::clone() const {
+  return std::make_unique<GeometricCoolingSchedule>(_coolingRate, _successiveFutileRoundsThreshold);
+}
 }  // namespace atlantis::search

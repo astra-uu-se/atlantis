@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include "atlantis/search/annealing/annealerContainer.hpp"
 #include "atlantis/search/annealing/geometricHeatingSchedule.hpp"
 #include "atlantis/search/annealing/types.hpp"
 
@@ -17,7 +16,7 @@ class GeometricHeatingScheduleTest : public ::testing::Test {
   std::shared_ptr<AnnealingSchedule> schedule;
 
   void SetUp() override {
-    schedule = AnnealerContainer::heating(heatingRate,
+    schedule = std::make_shared<GeometricHeatingSchedule>(heatingRate,
                                           minimumUphillMoveAcceptanceRatio);
     schedule->start(initialTemp);
   }

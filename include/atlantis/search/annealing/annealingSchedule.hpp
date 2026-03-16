@@ -10,6 +10,8 @@ class AnnealingSchedule {
  public:
   virtual ~AnnealingSchedule() = default;
 
+    [[nodiscard]] virtual std::unique_ptr<AnnealingSchedule> clone() const = 0;
+
   /**
    * Start the annealing schedule. This should reset the internal state of the
    * schedule and start anew. Annealing combinators will use this when switching
@@ -31,12 +33,12 @@ class AnnealingSchedule {
   /**
    * @return The current temperature.
    */
-  virtual double temperature() = 0;
+  [[nodiscard]] virtual double temperature() const = 0;
 
   /**
    * @return True if the schedule has completed, false otherwise.
    */
-  virtual bool frozen() = 0;
+  [[nodiscard]] virtual bool frozen() const = 0;
 };
 
 }  // namespace atlantis::search

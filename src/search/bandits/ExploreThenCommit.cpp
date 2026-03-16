@@ -1,6 +1,7 @@
 #include "atlantis/search/bandits/ExploreThenCommit.hpp"
 
-#include "../../../include/atlantis/search/bandits/armSelector.hpp"
+#include "atlantis/search/bandits/armSelector.hpp"
+#include "atlantis/search/annealing/annealingSchedule.hpp"
 
 namespace atlantis::search {
 

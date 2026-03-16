@@ -27,9 +27,12 @@ class ScheduleLoop : public AnnealingSchedule {
 
   void start(double initialTemperature) override;
   void nextRound(const std::shared_ptr<RoundStatistics>& statistics) override;
-  double temperature() override;
-  bool frozen() override;
-  [[nodiscard]] AnnealingSchedule& inner() { return *_schedule; }
+  [[nodiscard]] double temperature() const override;
+  [[nodiscard]] bool frozen() const override;
+    [[nodiscard]] std::unique_ptr<AnnealingSchedule> clone() const override;
+  [[nodiscard]] const AnnealingSchedule& inner() const { return *_schedule; }
+  [[nodiscard]] UInt maximumConsecutiveFutileRounds() const { return _maximumConsecutiveFutileRounds; }
+  [[nodiscard]] UInt consecutiveFutileIterations() const { return _consecutiveFutileIterations; }
 };
 
 }  // namespace atlantis::search

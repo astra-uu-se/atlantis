@@ -27,12 +27,25 @@ void ScheduleSequence::nextRound(
   }
 }
 
-double ScheduleSequence::temperature() {
-  return currentSchedule().temperature();
+double ScheduleSequence::temperature() const {
+  return currentScheduleConst().temperature();
 }
 
-bool ScheduleSequence::frozen() {
+bool ScheduleSequence::frozen() const {
   return _currentSchedule >= _schedules.size();
+}
+
+std::unique_ptr<AnnealingSchedule> ScheduleSequence::clone() const {
+  std::vector<std::unique_ptr<AnnealingSchedule>> schedules;
+  schedules.reserve(_schedules.size());
+  for (const auto& schedule : _schedules) {
+    schedules.emplace_back(schedule->clone());
+  }
+  return std::make_unique<ScheduleSequence>(std::move(schedules));
+}
+
+const AnnealingSchedule& ScheduleSequence::currentScheduleConst() const {
+  return *_schedules[_currentSchedule];
 }
 
 AnnealingSchedule& ScheduleSequence::currentSchedule() {
