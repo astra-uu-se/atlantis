@@ -63,8 +63,13 @@ jobs:
       - name: Output Test Errors
         if: failure() && steps.test.outcome == 'failure'
         working-directory: ${{github.workspace}}/Testing/Temporary
-        shell: bash
-        run: cat LastTest.log
+        run: |
+          FILE=./LastTest.log
+          if [ -f "$FILE" ]; then
+            cat "$FILE"
+          else
+            echo "$FILE not found"
+          fi
 
       - name: Slack
         id: slack
