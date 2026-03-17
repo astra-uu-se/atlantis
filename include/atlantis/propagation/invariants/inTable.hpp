@@ -10,21 +10,18 @@ namespace atlantis::propagation {
  * The violation variable is the minimum of all output variables.
  * Therefore, this invariant should be combined with a min invariant
  */
-class Table : public Invariant {
+class InTable : public Invariant {
  protected:
-  VarViewId _inputVar;
-  std::vector<VarId> _outputVars;
-  std::unordered_map<Int, size_t> _valToRow;
-  std::vector<std::vector<Int>> _table;
-
-  void recompute(Timestamp, bool);
+  std::vector<VarViewId> _varArray;
+  std::vector<std::unordered_map<Int, std::vector<size_t>>> _valToRows;
+  std::vector<VarId> _rowViolations;
 
  public:
-  explicit Table(SolverBase&, std::vector<VarId>&& outputVars,
-                        VarViewId inputVar, std::vector<std::vector<Int>>&& table, size_t inputColumn = 0);
+  explicit InTable(SolverBase&, std::vector<VarId>&& rowViolations,
+                        std::vector<VarViewId>&& vars, const std::vector<std::vector<Int>>& table);
 
-  explicit Table(SolverBase&, std::vector<VarViewId>&& outputVars,
-                      VarViewId inputVar, std::vector<std::vector<Int>>&& table, size_t inputColumn = 0);
+  explicit InTable(SolverBase&, std::vector<VarViewId>&& rowViolations,
+                        std::vector<VarViewId>&& vars, const std::vector<std::vector<Int>>& table);
 
 
   void registerVars() override;

@@ -1,12 +1,12 @@
 #include "../invariantTestHelper.hpp"
-#include "atlantis/propagation/invariants/table.hpp"
+#include "atlantis/propagation/invariants/inTable.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::propagation;
 using ::testing::ContainerEq;
 
-class TableTest : public InvariantTest {
+class InTableTest : public InvariantTest {
  public:
   Int numInputVars{3};
   size_t numRows{5};
@@ -37,7 +37,7 @@ class TableTest : public InvariantTest {
     outputVars.clear();
   }
 
-  Table& generate() {
+  InTable& generate() {
     inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
     inputVars.clear();
     inputVars.reserve(numInputVars);
@@ -62,8 +62,8 @@ class TableTest : public InvariantTest {
       outputVars.emplace_back(_solver->makeIntVar(0, 0, 0));
     }
 
-    Table& invariant =
-        _solver->makeInvariant<Table>(
+    InTable& invariant =
+        _solver->makeInvariant<InTable>(
             *_solver, std::vector<VarViewId>(outputVars),
             std::vector<VarViewId>(inputVars), table);
     _solver->close();
@@ -129,7 +129,7 @@ class TableTest : public InvariantTest {
   }
 };
 
-TEST_F(TableTest, UpdateBounds) {
+TEST_F(InTableTest, UpdateBounds) {
   const Int lb = 0;
   const Int ub = 2;
 
@@ -155,7 +155,7 @@ TEST_F(TableTest, UpdateBounds) {
   }
 }
 
-TEST_F(TableTest, Recompute) {
+TEST_F(InTableTest, Recompute) {
   generateState = GenerateState::LB;
 
   for (size_t i = 0; i < 5; ++i) {
@@ -176,7 +176,7 @@ TEST_F(TableTest, Recompute) {
   }
 }
 
-TEST_F(TableTest, NotifyInputChanged) {
+TEST_F(InTableTest, NotifyInputChanged) {
   generateState = GenerateState::LB;
 
   for (size_t b = 0; b < 5; ++b) {
@@ -197,7 +197,7 @@ TEST_F(TableTest, NotifyInputChanged) {
   }
 }
 
-TEST_F(TableTest, NextInput) {
+TEST_F(InTableTest, NextInput) {
   numInputVars = 100;
   inputVarLb = -2;
   inputVarUb = 2;
@@ -207,7 +207,7 @@ TEST_F(TableTest, NextInput) {
   expectNextInput(inputVars, invariant);
 }
 
-TEST_F(TableTest, NotifyCurrentInputChanged) {
+TEST_F(InTableTest, NotifyCurrentInputChanged) {
   inputVarLb = -2;
   inputVarUb = 2;
 
@@ -231,7 +231,7 @@ TEST_F(TableTest, NotifyCurrentInputChanged) {
   }
 }
 
-TEST_F(TableTest, Commit) {
+TEST_F(InTableTest, Commit) {
   numInputVars = 1000;
   inputVarLb = -2;
   inputVarUb = 2;
@@ -292,7 +292,7 @@ TEST_F(TableTest, Commit) {
   }
 }
 
-RC_GTEST_FIXTURE_PROP(TableTest, rapidcheck, ()) {
+RC_GTEST_FIXTURE_PROP(InTableTest, rapidcheck, ()) {
   numInputVars = *rc::gen::inRange(1, 100);
   inputVarLb = -2;
   inputVarUb = 2;
@@ -346,35 +346,35 @@ RC_GTEST_FIXTURE_PROP(TableTest, rapidcheck, ()) {
   }
 }
 
-class MockTable : public Table {
+class MockInTable : public InTable {
  public:
   bool registered = false;
   void registerVars() override {
     registered = true;
-    Table::registerVars();
+    InTable::registerVars();
   }
-  explicit MockTable(SolverBase& _solver,
+  explicit MockInTable(SolverBase& _solver,
                                      std::vector<VarViewId>&& rowViolations,
                                      std::vector<VarViewId>&& inputVars,
                                      const std::vector<std::vector<Int>>& table)
-      : Table(_solver, std::move(rowViolations),
+      : InTable(_solver, std::move(rowViolations),
                               std::move(inputVars), table) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
-      return Table::recompute(timestamp);
+      return InTable::recompute(timestamp);
     });
     ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
-      return Table::nextInput(timestamp);
+      return InTable::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp timestamp) {
-          Table::notifyCurrentInputChanged(timestamp);
+          InTable::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp timestamp, LocalId localId) {
-          Table::notifyInputChanged(timestamp, localId);
+          InTable::notifyInputChanged(timestamp, localId);
         });
     ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
-      Table::commit(timestamp);
+      InTable::commit(timestamp);
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
@@ -383,7 +383,7 @@ class MockTable : public Table {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(TableTest, SolverIntegration) {
+TEST_F(InTableTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!_solver->isOpen()) {
       _solver->open();
@@ -406,8 +406,8 @@ TEST_F(TableTest, SolverIntegration) {
     }
     const VarViewId modifiedVarId = inputVars.front();
     const VarViewId queryVarId = outputVars.front();
-    testNotifications<MockTable>(
-        &_solver->makeInvariant<MockTable>(
+    testNotifications<MockInTable>(
+        &_solver->makeInvariant<MockInTable>(
             *_solver, std::move(outputVars), std::move(inputVars),
             cover),
         {propMode, markingMode, numinputVars + 1, modifiedVarId, 1,
