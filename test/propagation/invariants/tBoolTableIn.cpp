@@ -1,12 +1,12 @@
 #include "../invariantTestHelper.hpp"
-#include "atlantis/propagation/invariants/inTable.hpp"
+#include "atlantis/propagation/invariants/boolTableIn.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::propagation;
 using ::testing::ContainerEq;
 
-class InTableTest : public InvariantTest {
+class BoolTableTestIn : public InvariantTest {
  public:
   Int numInputVars{3};
   size_t numRows{5};
@@ -17,11 +17,8 @@ class InTableTest : public InvariantTest {
   std::vector<VarViewId> inputVars;
   std::uniform_int_distribution<Int> inputVarDist;
 
-  Int tableLb = inputVarLb-1;
-  Int tableUb = inputVarUb+1;
-
-  std::vector<std::vector<Int>> table;
-  std::uniform_int_distribution<Int> tableDist;
+  std::vector<std::vector<bool>> table;
+  std::uniform_int_distribution<unsigned char> tableDist;
 
   std::vector<VarViewId> outputVars;
 
@@ -37,7 +34,7 @@ class InTableTest : public InvariantTest {
     outputVars.clear();
   }
 
-  InTable& generate() {
+  BoolTableIn& generate() {
     inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
     inputVars.clear();
     inputVars.reserve(numInputVars);
@@ -47,12 +44,12 @@ class InTableTest : public InvariantTest {
       inputVars.emplace_back(makeIntVar(inputVarLb, inputVarUb, inputVarDist));
     }
 
-    tableDist = std::uniform_int_distribution<Int>(tableLb, tableUb);
-    table.resize(numRows, std::vector<Int>(numInputVars));
+    tableDist = std::uniform_int_distribution<unsigned char>(0, 1);
+    table.resize(numRows, std::vector<bool>(numInputVars));
 
     for (size_t r = 0; r < numRows; ++r) {
       for (size_t c = 0; c < static_cast<size_t>(numInputVars); ++c) {
-        table.at(r).at(c) = tableDist(gen);
+        table.at(r).at(c) = tableDist(gen) == 0;
       }
     }
 
@@ -62,54 +59,42 @@ class InTableTest : public InvariantTest {
       outputVars.emplace_back(_solver->makeIntVar(0, 0, 0));
     }
 
-    InTable& invariant =
-        _solver->makeInvariant<InTable>(
+    BoolTableIn& invariant =
+        _solver->makeInvariant<BoolTableIn>(
             *_solver, std::vector<VarViewId>(outputVars),
             std::vector<VarViewId>(inputVars), table);
     _solver->close();
     return invariant;
   }
 
-  std::vector<Int> computeViolations(Timestamp ts) {
-    std::vector<Int> values(inputVars.size());
+  std::vector<Int> computeViolations(const Timestamp ts) {
+    std::vector<bool> values(inputVars.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
-      values.at(i) = _solver->value(ts, inputVars.at(i));
+      values.at(i) = _solver->value(ts, inputVars.at(i)) == 0;
     }
     return computeViolations(values);
   }
 
-  std::vector<Int> computeViolations(bool committedValue = false) {
-    std::vector<Int> values(inputVars.size());
+  std::vector<Int> computeViolations(const bool committedValue = false) {
+    std::vector<bool> values(inputVars.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
-      values.at(i) = committedValue ? _solver->committedValue(inputVars.at(i))
-                                    : _solver->currentValue(inputVars.at(i));
+      values.at(i) = (committedValue ? _solver->committedValue(inputVars.at(i))
+                                    : _solver->currentValue(inputVars.at(i))) == 0;
     }
     return computeViolations(values);
   }
 
-  std::vector<Int> computeViolations(const std::vector<Int>& values) {
-    std::vector<std::unordered_map<Int, std::vector<size_t>>> valToRows(values.size(), std::unordered_map<Int, std::vector<size_t>>());
-    for (size_t c = 0; c < values.size(); ++c) {
-      for (size_t r = 0; r < numRows; ++r) {
-        if (!valToRows.at(c).contains(table.at(r).at(c))) {
-          valToRows.at(c).emplace(table.at(r).at(c), std::vector<size_t>());
-        }
-        valToRows.at(c).at(table.at(r).at(c)).emplace_back(r);
-      }
-    }
-
-    std::vector<Int> violations(numRows, values.size());
-    for (size_t c = 0; c < values.size(); ++c) {
-      if (valToRows.at(c).contains(values.at(c))) {
-        for (const auto& row : valToRows.at(c).at(values.at(c))) {
-          --violations.at(row);
-        }
+  std::vector<Int> computeViolations(const std::vector<bool>& values) {
+    std::vector<Int> violations(numRows, 0);
+    for (size_t r = 0; r < numRows; ++r) {
+      for (size_t c = 0; c < values.size(); ++c) {
+        violations.at(r) += (table.at(r).at(c) != values.at(c)) ? 1 : 0;
       }
     }
     return violations;
   }
 
-  std::vector<Int> actualViolations(bool committedValue = false) {
+  std::vector<Int> actualViolations(const bool committedValue = false) {
     std::vector<Int> vals;
     vals.reserve(outputVars.size());
     for (const auto& varId : outputVars) {
@@ -129,7 +114,7 @@ class InTableTest : public InvariantTest {
   }
 };
 
-TEST_F(InTableTest, UpdateBounds) {
+TEST_F(BoolTableTestIn, UpdateBounds) {
   const Int lb = 0;
   const Int ub = 2;
 
@@ -155,7 +140,7 @@ TEST_F(InTableTest, UpdateBounds) {
   }
 }
 
-TEST_F(InTableTest, Recompute) {
+TEST_F(BoolTableTestIn, Recompute) {
   generateState = GenerateState::LB;
 
   for (size_t i = 0; i < 5; ++i) {
@@ -176,7 +161,7 @@ TEST_F(InTableTest, Recompute) {
   }
 }
 
-TEST_F(InTableTest, NotifyInputChanged) {
+TEST_F(BoolTableTestIn, NotifyInputChanged) {
   generateState = GenerateState::LB;
 
   for (size_t b = 0; b < 5; ++b) {
@@ -197,9 +182,9 @@ TEST_F(InTableTest, NotifyInputChanged) {
   }
 }
 
-TEST_F(InTableTest, NextInput) {
+TEST_F(BoolTableTestIn, NextInput) {
   numInputVars = 100;
-  inputVarLb = -2;
+  inputVarLb = 0;
   inputVarUb = 2;
 
   auto& invariant = generate();
@@ -207,8 +192,8 @@ TEST_F(InTableTest, NextInput) {
   expectNextInput(inputVars, invariant);
 }
 
-TEST_F(InTableTest, NotifyCurrentInputChanged) {
-  inputVarLb = -2;
+TEST_F(BoolTableTestIn, NotifyCurrentInputChanged) {
+  inputVarLb = 0;
   inputVarUb = 2;
 
   auto& invariant = generate();
@@ -231,9 +216,9 @@ TEST_F(InTableTest, NotifyCurrentInputChanged) {
   }
 }
 
-TEST_F(InTableTest, Commit) {
+TEST_F(BoolTableTestIn, Commit) {
   numInputVars = 1000;
-  inputVarLb = -2;
+  inputVarLb = 0;
   inputVarUb = 2;
 
   auto& invariant = generate();
@@ -292,9 +277,9 @@ TEST_F(InTableTest, Commit) {
   }
 }
 
-RC_GTEST_FIXTURE_PROP(InTableTest, rapidcheck, ()) {
+RC_GTEST_FIXTURE_PROP(BoolTableTestIn, rapidcheck, ()) {
   numInputVars = *rc::gen::inRange(1, 100);
-  inputVarLb = -2;
+  inputVarLb = 0;
   inputVarUb = 2;
 
 
@@ -346,35 +331,35 @@ RC_GTEST_FIXTURE_PROP(InTableTest, rapidcheck, ()) {
   }
 }
 
-class MockInTable : public InTable {
+class MockBoolTableIn : public BoolTableIn {
  public:
   bool registered = false;
   void registerVars() override {
     registered = true;
-    InTable::registerVars();
+    BoolTableIn::registerVars();
   }
-  explicit MockInTable(SolverBase& _solver,
+  explicit MockBoolTableIn(SolverBase& _solver,
                                      std::vector<VarViewId>&& rowViolations,
                                      std::vector<VarViewId>&& inputVars,
-                                     const std::vector<std::vector<Int>>& table)
-      : InTable(_solver, std::move(rowViolations),
+                                     const std::vector<std::vector<bool>>& table)
+      : BoolTableIn(_solver, std::move(rowViolations),
                               std::move(inputVars), table) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
-      return InTable::recompute(timestamp);
+      return BoolTableIn::recompute(timestamp);
     });
     ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
-      return InTable::nextInput(timestamp);
+      return BoolTableIn::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
         .WillByDefault([this](Timestamp timestamp) {
-          InTable::notifyCurrentInputChanged(timestamp);
+          BoolTableIn::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
         .WillByDefault([this](Timestamp timestamp, LocalId localId) {
-          InTable::notifyInputChanged(timestamp, localId);
+          BoolTableIn::notifyInputChanged(timestamp, localId);
         });
     ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
-      InTable::commit(timestamp);
+      BoolTableIn::commit(timestamp);
     });
   }
   MOCK_METHOD(void, recompute, (Timestamp), (override));
@@ -383,7 +368,7 @@ class MockInTable : public InTable {
   MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
   MOCK_METHOD(void, commit, (Timestamp), (override));
 };
-TEST_F(InTableTest, SolverIntegration) {
+TEST_F(BoolTableTestIn, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
     if (!_solver->isOpen()) {
       _solver->open();
@@ -392,24 +377,24 @@ TEST_F(InTableTest, SolverIntegration) {
 
     std::vector<VarViewId> inputVars;
     for (Int value = 0; value < numinputVars; ++value) {
-      inputVars.push_back(_solver->makeIntVar(0, -100, 100));
+      inputVars.push_back(_solver->makeIntVar(0, 0, 2));
     }
-    std::vector<std::vector<Int>> cover(5, std::vector<Int>(numinputVars));
-    for (size_t r = 0; r < cover.size(); ++r) {
-      for (size_t c = 0; c < cover[r].size(); ++c) {
-        cover[r][c] = -2 + r;
+    std::vector<std::vector<bool>> table(5, std::vector<bool>(numinputVars));
+    for (size_t r = 0; r < table.size(); ++r) {
+      for (size_t c = 0; c < table[r].size(); ++c) {
+        table[r][c] = (r + c) % 2 == 0;
       }
     }
     std::vector<VarViewId> outputVars;
-    for (size_t i = 0; i < cover.size(); ++i) {
+    for (size_t i = 0; i < table.size(); ++i) {
       outputVars.push_back(_solver->makeIntVar(0, 0, numinputVars));
     }
     const VarViewId modifiedVarId = inputVars.front();
     const VarViewId queryVarId = outputVars.front();
-    testNotifications<MockInTable>(
-        &_solver->makeInvariant<MockInTable>(
+    testNotifications<MockBoolTableIn>(
+        &_solver->makeInvariant<MockBoolTableIn>(
             *_solver, std::move(outputVars), std::move(inputVars),
-            cover),
+            table),
         {propMode, markingMode, numinputVars + 1, modifiedVarId, 1,
          queryVarId});
   }

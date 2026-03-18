@@ -1,4 +1,4 @@
-#include "atlantis/propagation/invariants/inTable.hpp"
+#include "atlantis/propagation/invariants/tableIn.hpp"
 
 #include <cassert>
 #include <ranges>
@@ -25,7 +25,7 @@ std::vector<std::unordered_map<Int, std::vector<size_t>>> generateValToRows(cons
   return valToRows;
 }
 
-InTable::InTable(SolverBase& solver, std::vector<VarId>&& rowViolations,
+TableIn::TableIn(SolverBase& solver, std::vector<VarId>&& rowViolations,
                            std::vector<VarViewId>&& vars, const std::vector<std::vector<Int>>& table)
     : Invariant(solver),
       _varArray(std::move(vars)),
@@ -33,10 +33,10 @@ InTable::InTable(SolverBase& solver, std::vector<VarId>&& rowViolations,
   _rowViolations(std::move(rowViolations))
   {}
 
-InTable::InTable(SolverBase& solver, std::vector<VarViewId>&& rowViolations, std::vector<VarViewId>&& vars, const std::vector<std::vector<Int>>& table)
-  : InTable(solver, toVarIds(std::move(rowViolations)), std::move(vars), table) {}
+TableIn::TableIn(SolverBase& solver, std::vector<VarViewId>&& rowViolations, std::vector<VarViewId>&& vars, const std::vector<std::vector<Int>>& table)
+  : TableIn(solver, toVarIds(std::move(rowViolations)), std::move(vars), table) {}
 
-void InTable::registerVars() {
+void TableIn::registerVars() {
   assert(_id != NULL_ID);
   for (size_t i = 0; i < _varArray.size(); ++i) {
     _solver.registerInvariantInput(_id, _varArray[i], i, false);
@@ -46,7 +46,7 @@ void InTable::registerVars() {
   }
 }
 
-void InTable::updateBounds(const bool widenOnly) {
+void TableIn::updateBounds(const bool widenOnly) {
   for (const VarId rw : _rowViolations) {
     _solver.updateBounds(rw, 0, static_cast<Int>(_varArray.size()),
                        widenOnly);
@@ -54,7 +54,7 @@ void InTable::updateBounds(const bool widenOnly) {
   }
 }
 
-void InTable::close(const Timestamp) {
+void TableIn::close(const Timestamp) {
   // reduce the size of _valToVars:
   std::vector<Int> valsToRemove;
   for (size_t c = 0; c < _varArray.size(); ++c) {
@@ -73,7 +73,7 @@ void InTable::close(const Timestamp) {
   }
 }
 
-void InTable::recompute(const Timestamp ts) {
+void TableIn::recompute(const Timestamp ts) {
   std::vector<Int> violations(_rowViolations.size(), static_cast<Int>(_varArray.size()));
 
   // reduce violation for all active rows:
@@ -92,7 +92,7 @@ void InTable::recompute(const Timestamp ts) {
   }
 }
 
-void InTable::notifyInputChanged(const Timestamp ts, const LocalId id) {
+void TableIn::notifyInputChanged(const Timestamp ts, const LocalId id) {
   assert(id < _varArray.size());
   const Int newValue = _solver.value(ts, _varArray[id]);
   const Int committedValue = _solver.committedValue(_varArray[id]);
@@ -113,7 +113,7 @@ void InTable::notifyInputChanged(const Timestamp ts, const LocalId id) {
   }
 }
 
-VarViewId InTable::nextInput(const Timestamp ts) {
+VarViewId TableIn::nextInput(const Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _varArray.size()) {
     return _varArray[index];
@@ -121,7 +121,7 @@ VarViewId InTable::nextInput(const Timestamp ts) {
   return NULL_ID;
 }
 
-void InTable::notifyCurrentInputChanged(const Timestamp ts) {
+void TableIn::notifyCurrentInputChanged(const Timestamp ts) {
   assert(static_cast<size_t>(_state.value(ts)) < _varArray.size());
   notifyInputChanged(ts, static_cast<size_t>(_state.value(ts)));
 }
