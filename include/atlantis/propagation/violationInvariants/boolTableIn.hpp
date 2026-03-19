@@ -1,8 +1,6 @@
 #pragma once
 
-#include <unordered_map>
-
-#include "atlantis/propagation/invariants/invariant.hpp"
+#include "atlantis/propagation/violationInvariants/violationInvariant.hpp"
 
 namespace atlantis::propagation {
 /**
@@ -10,17 +8,18 @@ namespace atlantis::propagation {
  * The violation variable is the minimum of all output variables.
  * Therefore, this invariant should be combined with a min invariant
  */
-class BoolTableIn : public Invariant {
+class BoolTableIn : public ViolationInvariant {
  protected:
   std::vector<VarViewId> _varArray;
   std::vector<std::vector<bool>> _transposed;
-  std::vector<VarId> _rowViolations;
+  std::vector<CommittableInt> _rowViolations;
+  std::vector<CommittableInt> _violationCounts;
 
  public:
-  explicit BoolTableIn(SolverBase&, std::vector<VarId>&& rowViolations,
+  explicit BoolTableIn(SolverBase&, VarId violationId,
                         std::vector<VarViewId>&& vars, const std::vector<std::vector<bool>>& table);
 
-  explicit BoolTableIn(SolverBase&, std::vector<VarViewId>&& rowViolations,
+  explicit BoolTableIn(SolverBase&, VarViewId violationId,
                         std::vector<VarViewId>&& vars, const std::vector<std::vector<bool>>& table);
 
 
@@ -30,6 +29,7 @@ class BoolTableIn : public Invariant {
   void notifyInputChanged(Timestamp, LocalId) override;
   VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
+    void commit(Timestamp) override;
 };
 
 }  // namespace atlantis::propagation
