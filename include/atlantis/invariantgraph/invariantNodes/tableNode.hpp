@@ -5,10 +5,16 @@
 namespace atlantis::invariantgraph {
 class TableNode : public InvariantNode {
   std::vector<std::vector<Int>> _table;
-  size_t _inputColumnIndex;
 
   [[nodiscard]] VarNodeId numCols() const;
   [[nodiscard]] VarNodeId colVar(size_t index) const;
+
+  bool removeRows();
+
+  void removeColumn(size_t colIndex);
+  void removeDuplicateColumns();
+
+  [[nodiscard]] bool propagate();
 
  public:
   explicit TableNode(InvariantGraph& graph,
