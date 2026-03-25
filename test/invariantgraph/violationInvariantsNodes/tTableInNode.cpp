@@ -1,6 +1,7 @@
 #include <boost/spirit/home/classic/phoenix/primitives.hpp>
 
 #include "../nodeTestBase.hpp"
+#include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/tableInNode.hpp"
 
 namespace atlantis::testing {
@@ -108,6 +109,13 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
         }
       }
     }
+    if (!shouldBeMadeImplicit()) {
+      for (size_t i = 0; i < inputVars.size(); ++i) {
+        if (!shouldBeReplaced() || fixedColIndex() != static_cast<Int>(i)) {
+          _invariantGraph->root().addSearchVarNode(varNodeId(inputVars.at(i)));
+        }
+      }
+    }
 
     if (isIntTable()) {
       table = intTable;
@@ -199,6 +207,16 @@ TEST_P(TableInNodeTestFixture, propagation) {
   _solverMapping =
       std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
+  if (shouldBeMadeImplicit()) {
+    for (Int i = 0; i < static_cast<Int>(inputVars.size()); ++i) {
+      if (varNode(inputVars.at(i)).isFixed()) {
+        continue;
+      }
+      EXPECT_TRUE(std::ranges::contains(_solver->searchVars().begin(), _solver->searchVars().end(), static_cast<propagation::VarId>(varId(inputVars.at(i)))));
+    }
+    return;
+  }
+
   if (shouldBeSubsumed()) {
     const bool expected = isViolating();
     if (isReified()) {
@@ -220,7 +238,6 @@ TEST_P(TableInNodeTestFixture, propagation) {
         continue;
       }
       EXPECT_NE(varId(inputVars.at(i)), propagation::NULL_ID);
-      EXPECT_EQ(std::ranges::contains(_solver->searchVars().begin(), _solver->searchVars().end(), static_cast<propagation::VarId>(varId(inputVars.at(i)))), fixedColIndex() == i) << i;
     }
     return;
   }
@@ -280,6 +297,7 @@ INSTANTIATE_TEST_CASE_P(
       ParamData{InvariantNodeAction::SUBSUME, ViolationInvariantType::CONSTANT_TRUE, 2},
       ParamData{InvariantNodeAction::SUBSUME, ViolationInvariantType::CONSTANT_TRUE, 4},
       ParamData{InvariantNodeAction::SUBSUME, ViolationInvariantType::CONSTANT_TRUE, 5},
-      ParamData{InvariantNodeAction::SUBSUME, ViolationInvariantType::CONSTANT_TRUE, 6}));
+      ParamData{InvariantNodeAction::SUBSUME, ViolationInvariantType::CONSTANT_TRUE, 6},
+      ParamData{InvariantNodeAction::MAKE_IMPLICIT}));
 
 }  // namespace atlantis::testing

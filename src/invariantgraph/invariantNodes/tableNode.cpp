@@ -7,11 +7,12 @@
 #include <vector>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/tableImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/invariants/table.hpp"
+#include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
@@ -199,12 +200,24 @@ void TableNode::updateState() {
   }
 }
 
-bool TableNode::canBeReplaced() const {
-  return false;
+bool TableNode::canBeMadeImplicit() const {
+  return  state() != InvariantNodeState::SUBSUMED &&
+    invariantGraphConst().varNodeConst(staticInputVarNodeIds().front()).definingNodes().empty();
 }
 
-bool TableNode::replace() {
-  return false;
+bool TableNode::makeImplicit() {
+  if (!canBeMadeImplicit()) {
+    return false;
+  }
+  std::vector<VarNodeId> vars;
+  vars.reserve(_table.size());
+  vars.emplace_back(staticInputVarNodeIds().front());
+  for (const auto vId : outputVarNodeIds()) {
+    vars.emplace_back(vId);
+  }
+  invariantGraph().addImplicitConstraintNode(std::make_shared<TableImplicitNode>(
+            invariantGraph(), std::move(vars), std::move(_table)));
+  return true;
 }
 
 void TableNode::registerOutputVars(propagation::SolverBase& solver,

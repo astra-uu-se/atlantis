@@ -46,6 +46,10 @@ class TableInNode : public ViolationInvariantNode {
 
   [[nodiscard]] bool replace() override;
 
+  [[nodiscard]] bool canBeMadeImplicit() const override;
+
+  [[nodiscard]] bool makeImplicit() override;
+
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 

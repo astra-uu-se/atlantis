@@ -1,4 +1,5 @@
 #include "../nodeTestBase.hpp"
+#include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/invariantNodes/tableNode.hpp"
 
 namespace atlantis::testing {
@@ -122,6 +123,11 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
         }
       }
     }
+
+    if (!shouldBeMadeImplicit()) {
+      _invariantGraph->root().addSearchVarNode(varNodeId(inputVar));
+    }
+
     if (isIntTable()) {
       createInvariantNode(*_invariantGraph,
                         varNodeIds(outputVars), varNodeId(inputVar), std::vector<std::vector<Int>>{table}, inputColIndex());
@@ -175,6 +181,19 @@ TEST_P(TableNodeTestFixture, propagation) {
   _invariantGraph->close();
   _solverMapping =
       std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
+
+  if (shouldBeMadeImplicit()) {
+    if (!varNode(inputVar).isFixed()) {
+      EXPECT_TRUE(std::ranges::contains(_solver->searchVars().begin(), _solver->searchVars().end(), static_cast<propagation::VarId>(varId(inputVar))));
+    }
+    for (Int i = 0; i < static_cast<Int>(outputVars.size()); ++i) {
+      if (varNode(outputVars.at(i)).isFixed()) {
+        continue;
+      }
+      EXPECT_TRUE(std::ranges::contains(_solver->searchVars().begin(), _solver->searchVars().end(), static_cast<propagation::VarId>(varId(outputVars.at(i)))));
+    }
+    return;
+  }
 
   const auto expected = computeOutputs(true);
   for (size_t i = 0; i < outputVars.size(); ++i) {
@@ -249,6 +268,7 @@ INSTANTIATE_TEST_CASE_P(
       ParamData{InvariantNodeAction::SUBSUME, 2},
       ParamData{InvariantNodeAction::SUBSUME, 4},
       ParamData{InvariantNodeAction::SUBSUME, 5},
-      ParamData{InvariantNodeAction::SUBSUME, 6}));
+      ParamData{InvariantNodeAction::SUBSUME, 6},
+      ParamData{InvariantNodeAction::MAKE_IMPLICIT}));
 
 }  // namespace atlantis::testing

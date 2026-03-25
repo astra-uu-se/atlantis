@@ -34,9 +34,9 @@ class TableNode : public InvariantNode {
 
   void updateState() override;
 
-  [[nodiscard]] bool canBeReplaced() const override;
+  [[nodiscard]] bool canBeMadeImplicit() const override;
 
-  [[nodiscard]] bool replace() override;
+  [[nodiscard]] bool makeImplicit() override;
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

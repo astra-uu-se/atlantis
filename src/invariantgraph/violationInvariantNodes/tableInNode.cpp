@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/tableImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/tableNode.hpp"
@@ -232,6 +233,22 @@ bool TableInNode::replace() {
   invariantGraph().addInvariantNode(std::make_shared<TableNode>(
             invariantGraph(), std::move(outputs), staticInputVarNodeIds().at(inputColIndex),
             std::move(_table), inputColIndex, _isBoolTable));
+  return true;
+}
+
+bool TableInNode::canBeMadeImplicit() const {
+  return !isReified() && shouldHold() && state() != InvariantNodeState::SUBSUMED &&
+    std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId id) {
+      return invariantGraphConst().varNodeConst(id).definingNodes().empty();
+    });
+}
+
+bool TableInNode::makeImplicit() {
+  if (!canBeMadeImplicit()) {
+    return false;
+  }
+  invariantGraph().addImplicitConstraintNode(std::make_shared<TableImplicitNode>(
+            invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}, std::move(_table)));
   return true;
 }
 
