@@ -1,5 +1,6 @@
 #include "atlantis/propagation/violationInvariants/boolTableIn.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <ranges>
 

@@ -22,7 +22,6 @@ class BoolTableIn : public ViolationInvariant {
   explicit BoolTableIn(SolverBase&, VarViewId violationId,
                         std::vector<VarViewId>&& vars, const std::vector<std::vector<bool>>& table);
 
-
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
   void recompute(Timestamp) override;

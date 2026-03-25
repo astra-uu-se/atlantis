@@ -18,10 +18,9 @@ static Int getVal(const std::vector<Int>& parVector, Int idx, Int offset) {
 }
 
 static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
-  std::vector<Int> intVec;
-  intVec.reserve(boolVec.size());
-  for (const bool par : boolVec) {
-    intVec.emplace_back(par ? 0 : 1);
+  std::vector<Int> intVec(boolVec.size());
+  for (size_t i = 0; i < boolVec.size(); ++i) {
+    intVec[i] = boolVec[i] ? 0 : 1;
   }
   return intVec;
 }

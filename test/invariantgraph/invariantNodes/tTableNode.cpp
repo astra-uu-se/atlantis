@@ -8,14 +8,30 @@ using namespace atlantis::invariantgraph;
 class TableNodeTestFixture : public NodeTestBase<TableNode> {
  public:
   std::string inputVar{"input_col"};
-  std::vector<std::string> outputVars{"output_col_1", "output_col_2"};
-  std::vector<std::vector<Int>> table{{0, 1, 2},
-  {1, 2, 3},
-    {2, 3, 4}};
+  std::vector<std::string> outputVars{"output_col_1", "output_col_2", "fixed_col"};
 
-  [[nodiscard]] size_t inputColIndex() const { return _paramData.data; }
+  std::vector<std::vector<Int>> intTable{{0, 1, 2, 10},
+  {1, 2, 3, 10},
+    {2, 3, 4, 10}};
+  std::vector<std::vector<bool>> boolTable{{false, true, false, false},
+  {true, false, true, false}};
 
-  std::vector<Int> computeOutputs(bool isRegistered = false) {
+  std::vector<std::vector<Int>> table{};
+
+  [[nodiscard]] bool isIntTable() const { return _paramData.data < static_cast<Int>(outputVars.size()); }
+  [[nodiscard]] size_t inputColIndex() const { return _paramData.data % static_cast<Int>(outputVars.size() + 1); }
+
+  [[nodiscard]] bool colIsFixed(const size_t col) const {
+    EXPECT_LE(col, outputVars.size());
+    std::unordered_set<Int> colVals;
+    colVals.reserve(table.size());
+    for (const auto & row : table) {
+      colVals.insert(row.at(col));
+    }
+    return colVals.size() == 1;
+  }
+
+  std::vector<Int> computeOutputs(const bool isRegistered = false) {
     std::vector<Int> outputs;
     outputs.reserve(outputVars.size());
     EXPECT_GE(inputColIndex(), 0);
@@ -23,57 +39,96 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
     if (isRegistered) {
       EXPECT_TRUE(varNode(inputVar).isFixed() ||
                   varId(inputVar) != propagation::NULL_ID);
-      for (size_t i = 0; i < table.front().size(); ++i) {
-        if (i == inputColIndex()) {
-          continue;
-        }
-        outputs.emplace_back(table.at((varNode(inputVar).isFixed()
-                                     ? varNode(inputVar).lowerBound()
-                                     : _solver->currentValue(varId(inputVar)))).at(i));
-      }
     } else {
       EXPECT_TRUE(varNode(inputVar).isFixed());
-      for (size_t i = 0; i < table.front().size(); ++i) {
-        if (i == inputColIndex()) {
-          continue;
-        }
-        outputs.emplace_back(table.at(varNode(inputVar).lowerBound()).at(i));
+    }
+    const Int inputColVal = varNode(inputVar).isFixed()
+                                   ? varNode(inputVar).lowerBound()
+                                   : _solver->currentValue(varId(inputVar));
+    Int row = -1;
+    for (Int r = 0; r < static_cast<Int>(table.size()); ++r) {
+      if (table.at(r).at(inputColIndex()) == inputColVal) {
+        row = r;
+        break;
       }
+    }
+    for (size_t i = 0; i < table.front().size(); ++i) {
+      if (i == inputColIndex()) {
+        continue;
+      }
+      outputs.emplace_back(table.at(row).at(i));
     }
     return outputs;
   }
 
-  Int colLb(size_t i) const {
-    Int lb = table.front().at(i);
-    for (size_t j = 1; j < table.size(); ++j) {
-      lb = std::min(lb, table.at(j).at(i));
+  [[nodiscard]] Int colLb(size_t i) const {
+    if (isIntTable()) {
+      Int lb = intTable.front().at(i);
+      for (size_t j = 1; j < intTable.size(); ++j) {
+        lb = std::min(lb, intTable.at(j).at(i));
+      }
+      return lb;
+    }
+    Int lb = 0;
+    for (size_t j = 1; j < boolTable.size(); ++j) {
+      lb = std::min(lb, Int{boolTable.at(j).at(i) ? 0 : 1});
     }
     return lb;
   }
 
-  Int colUb(size_t i) const {
-    Int ub = table.front().at(i);
-    for (size_t j = 1; j < table.size(); ++j) {
-      ub = std::max(ub, table.at(j).at(i));
+  [[nodiscard]] Int colUb(size_t i) const {
+    EXPECT_TRUE(isIntTable());
+    Int ub = intTable.front().at(i);
+    for (size_t j = 1; j < intTable.size(); ++j) {
+      ub = std::max(ub, intTable.at(j).at(i));
     }
     return ub;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
 
-    retrieveIntVarNode(
-      colLb(inputColIndex()),
-      shouldBeSubsumed()
-          ? colLb(inputColIndex())
-          : colUb(inputColIndex()),
-      inputVar);
-
-    for (size_t i = 0; i < outputVars.size(); ++i) {
-      retrieveIntVarNode(-10, 10, outputVars.at(i));
+    if (isIntTable()) {
+      retrieveIntVarNode(
+        colLb(inputColIndex()),
+        shouldBeSubsumed()
+            ? colLb(inputColIndex())
+            : colUb(inputColIndex()),
+        inputVar);
+    } else {
+      if (shouldBeSubsumed()) {
+        const bool val = colLb(inputColIndex()) == 0;
+        retrieveBoolVarNode(val, inputVar);
+      } else {
+        retrieveBoolVarNode(inputVar);
+      }
     }
-    createInvariantNode(*_invariantGraph,
+
+    for (const auto & outputVar : outputVars) {
+      if (isIntTable()) {
+        retrieveIntVarNode(-10, 10, outputVar);
+      } else {
+        retrieveBoolVarNode(outputVar);
+      }
+    }
+
+    if (isIntTable()) {
+      table = intTable;
+    } else {
+      table.resize(boolTable.size(), std::vector<Int>(outputVars.size() + 1));
+      for (size_t r = 0; r < boolTable.size(); ++r) {
+        for (size_t c = 0; c < boolTable.at(r).size(); ++c) {
+          table.at(r).at(c) = boolTable.at(r).at(c) ? 0 : 1;
+        }
+      }
+    }
+    if (isIntTable()) {
+      createInvariantNode(*_invariantGraph,
                         varNodeIds(outputVars), varNodeId(inputVar), std::vector<std::vector<Int>>{table}, inputColIndex());
+    } else {
+      createInvariantNode(*_invariantGraph,
+                        varNodeIds(outputVars), varNodeId(inputVar), std::vector<std::vector<bool>>{boolTable}, inputColIndex());
+    }
   }
 };
 
@@ -82,7 +137,7 @@ TEST_P(TableNodeTestFixture, construction) {
   expectOutputOf(invNode());
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().front(), varNodeId(inputVar));
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), 2);
+  EXPECT_EQ(invNode().outputVarNodeIds().size(), 3);
   EXPECT_THAT(invNode().outputVarNodeIds(), ::testing::ContainerEq(varNodeIds(outputVars)));
 }
 
@@ -102,8 +157,16 @@ TEST_P(TableNodeTestFixture, updateState) {
     EXPECT_THAT(expected, ::testing::ContainerEq(actual));
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);
-    for (const auto& outputVar : outputVars) {
-      EXPECT_FALSE(varNode(outputVar).isFixed());
+    for (size_t c = 0; c <= outputVars.size(); ++c) {
+      if (c == inputColIndex()) {
+        continue;
+      }
+      const auto& outputVar = outputVars.at(c < inputColIndex() ? c : c - 1);
+      if (colIsFixed(c)) {
+        EXPECT_TRUE(varNode(outputVar).isFixed());
+      } else {
+        EXPECT_FALSE(varNode(outputVar).isFixed());
+      }
     }
   }
 }
@@ -122,11 +185,29 @@ TEST_P(TableNodeTestFixture, propagation) {
   }
 
   const propagation::VarViewId inputVarId = varId(inputVar);
-  EXPECT_NE(inputVarId, propagation::NULL_ID);
+  if (shouldBeSubsumed()) {
+    if (isIntTable()) {
+      EXPECT_EQ(inputVarId, propagation::NULL_ID);
+    } else {
+      EXPECT_TRUE(varNode(inputVar).isFixed());
+    }
+    for (const auto& outputVar : outputVars) {
+      EXPECT_TRUE(varNode(outputVar).isFixed());
+    }
+    return;
+  }
 
-  for (const auto& outputVar : outputVars) {
-    const propagation::VarViewId outputId = varId(outputVar);
-    EXPECT_NE(outputId, propagation::NULL_ID);
+  EXPECT_NE(inputVarId, propagation::NULL_ID);
+  for (size_t c = 0; c <= outputVars.size(); ++c) {
+    if (c == inputColIndex()) {
+      continue;
+    }
+    const auto& outputVar = outputVars.at(c < inputColIndex() ? c : c - 1);
+    if (colIsFixed(c)) {
+      EXPECT_EQ(varId(outputVar), propagation::NULL_ID);
+    } else {
+      EXPECT_NE(varId(outputVar), propagation::NULL_ID);
+    }
   }
 
   for (Int inputVal = _solver->lowerBound(inputVarId);
@@ -143,7 +224,11 @@ TEST_P(TableNodeTestFixture, propagation) {
 
     std::vector<Int> actual(outputVars.size());
     for (size_t i = 0; i < outputVars.size(); ++i) {
-      actual.at(i) = (_solver->currentValue(varId(outputVars.at(i))));
+      if (varNode(outputVars.at(i)).isFixed()) {
+        actual.at(i) = varNode(outputVars.at(i)).lowerBound();
+      } else {
+        actual.at(i) = _solver->currentValue(varId(outputVars.at(i)));
+      }
     }
 
     EXPECT_EQ(actual, computeOutputs(true));
@@ -152,7 +237,18 @@ TEST_P(TableNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     TableNodeTest, TableNodeTestFixture,
-    ::testing::Values(ParamData{0}, ParamData{1}, ParamData{2},
-      ParamData{InvariantNodeAction::SUBSUME, 0}, ParamData{InvariantNodeAction::SUBSUME, 1}, ParamData{InvariantNodeAction::SUBSUME, 2}));
+    ::testing::Values(
+      ParamData{0},
+      ParamData{1},
+      ParamData{2},
+      ParamData{4},
+      ParamData{5},
+      ParamData{6},
+      ParamData{InvariantNodeAction::SUBSUME, 0},
+      ParamData{InvariantNodeAction::SUBSUME, 1},
+      ParamData{InvariantNodeAction::SUBSUME, 2},
+      ParamData{InvariantNodeAction::SUBSUME, 4},
+      ParamData{InvariantNodeAction::SUBSUME, 5},
+      ParamData{InvariantNodeAction::SUBSUME, 6}));
 
 }  // namespace atlantis::testing

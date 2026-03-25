@@ -177,6 +177,10 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->retrieveBoolVarNode(identifier);
   }
 
+  VarNodeId retrieveBoolVarNode(bool val, const std::string& identifier) const {
+    return _invariantGraph->retrieveBoolVarNode(val, identifier);
+  }
+
   [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const {
     return _invariantGraph->varNodeId(identifier);
   }
