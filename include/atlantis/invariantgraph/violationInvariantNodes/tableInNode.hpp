@@ -9,7 +9,8 @@ class TableInNode : public ViolationInvariantNode {
 
   [[nodiscard]] VarNodeId numCols() const;
 
-  bool removeRows();
+  bool removeFixedColumns();
+  bool removeInvalidRows();
 
   void removeColumn(size_t colIndex);
   void removeDuplicateColumns();

@@ -99,7 +99,7 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
         if (shouldBeSubsumed() && fixedColIndex() == static_cast<Int>(c)) {
           retrieveIntVarNode(colLb(c), colLb(c), inputVars.at(c));
         } else {
-          retrieveIntVarNode(-10, 10, inputVars.at(c));
+          retrieveIntVarNode(-1, 10, inputVars.at(c));
         }
       } else {
         if (shouldBeSubsumed() && fixedColIndex() == static_cast<Int>(c)) {

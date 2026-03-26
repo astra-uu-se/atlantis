@@ -41,6 +41,8 @@
 #include "atlantis/invariantgraph/fzn/fzn_global_cardinality_closed.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_global_cardinality_low_up.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_global_cardinality_low_up_closed.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_table_int.hpp"
+#include "atlantis/invariantgraph/fzn/fzn_table_bool.hpp"
 #include "atlantis/invariantgraph/fzn/int_abs.hpp"
 #include "atlantis/invariantgraph/fzn/int_div.hpp"
 #include "atlantis/invariantgraph/fzn/int_eq.hpp"
@@ -487,6 +489,8 @@ bool FznInvariantGraph::makeViolationInvariantNode(
   MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_closed)
   MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_low_up)
   MAKE_VIOLATION_INVARIANT(fzn::fzn_global_cardinality_low_up_closed)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_table_int)
+  MAKE_VIOLATION_INVARIANT(fzn::fzn_table_bool)
   MAKE_VIOLATION_INVARIANT(fzn::int_eq)
   MAKE_VIOLATION_INVARIANT(fzn::int_le)
   MAKE_VIOLATION_INVARIANT(fzn::int_lin_eq)

@@ -38,8 +38,7 @@ TableInNode::TableInNode(InvariantGraph& graph,
     : ViolationInvariantNode(graph, std::move(vars), reified),
       _table(std::move(table)),
       _isBoolTable(isBoolTable){
-  assert(!_table.empty());
-  assert(_table.front().size() == staticInputVarNodeIds().size());
+  assert(_table.empty() || _table.front().size() == staticInputVarNodeIds().size());
 }
 
 TableInNode::TableInNode(InvariantGraph& graph,
@@ -49,8 +48,7 @@ TableInNode::TableInNode(InvariantGraph& graph,
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
       _table(std::move(table)),
       _isBoolTable(isBoolTable){
-  assert(!_table.empty());
-  assert(_table.front().size() == staticInputVarNodeIds().size());
+  assert(_table.empty() || _table.front().size() == staticInputVarNodeIds().size());
 }
 
 TableInNode::TableInNode(InvariantGraph& graph,
@@ -77,7 +75,10 @@ void TableInNode::init(const InvariantNodeId id) {
 
 size_t TableInNode::numCols() const { return _table.front().size(); }
 
-bool TableInNode::removeRows() {
+bool TableInNode::removeInvalidRows() {
+  if (state() != InvariantNodeState::ACTIVE) {
+    return false;
+  }
   std::vector<size_t> invalidRows;
   invalidRows.reserve(_table.size());
   for (size_t r = 0; r < _table.size(); ++r) {
@@ -93,6 +94,14 @@ bool TableInNode::removeRows() {
     std::swap(_table.back(), _table[invalidRow]);
     _table.pop_back();
   }
+  if (_table.empty()) {
+    if (isReified()) {
+      fixReified(false);
+    } else if (shouldHold()) {
+      throw InconsistencyException("TableInNode: there are no valid rows");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+  }
   return !invalidRows.empty();
 }
 
@@ -103,6 +112,46 @@ void TableInNode::removeColumn(const size_t index) {
   }
 }
 
+bool TableInNode::removeFixedColumns() {
+  if (state() != InvariantNodeState::ACTIVE) {
+    return false;
+  }
+  const size_t numCuls = staticInputVarNodeIds().size();
+  for (Int i = static_cast<Int>(staticInputVarNodeIds().size())-1; i >= 0; --i) {
+    if (!invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i)).isFixed()) {
+      continue;
+    }
+    const Int val = invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i)).lowerBound();
+    for (Int r = static_cast<Int>(_table.size()) - 1; r >= 0; --r) {
+      if (_table[r][i] != val) {
+        std::swap(_table[r], _table.back());
+        _table.pop_back();
+      }
+    }
+    removeColumn(i);
+    removeStaticInputAtIndex(i);
+  }
+  if (staticInputVarNodeIds().empty()) {
+    if (_table.empty()) {
+      // There are no valid rows
+      if (isReified()) {
+        fixReified(false);
+      } else if (shouldHold()) {
+        throw InconsistencyException("TableInNode: there are no valid rows");
+      }
+    } else {
+      // There are valid rows
+      if (isReified()) {
+        fixReified(true);
+      } else if (!shouldHold()) {
+        throw InconsistencyException("TableInNode neg: there are only valid rows");
+      }
+    }
+    setState(InvariantNodeState::SUBSUMED);
+  }
+  return staticInputVarNodeIds().size() < numCuls;
+}
+
 void TableInNode::removeDuplicateColumns() {
   std::vector<bool> invalidRow(_table.size(), false);
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
@@ -111,7 +160,7 @@ void TableInNode::removeDuplicateColumns() {
         continue;
       }
       for (size_t r = 0; r < _table.size(); ++r) {
-        invalidRow[r] = invalidRow[r] || _table[r][i + 1] != _table[r][j + 1];
+        invalidRow[r] = invalidRow[r] || _table[r][i] != _table[r][j];
       }
       removeStaticInputAtIndex(j);
       removeColumn(j);
@@ -144,8 +193,11 @@ void TableInNode::removeDuplicateColumns() {
 }
 
 bool TableInNode::propagate() {
+  if (state() != InvariantNodeState::ACTIVE) {
+    return false;
+  }
   bool prunedVals = false;
-  for (Int c = static_cast<Int>(numCols()) - 1; c >= 0; --c) {
+  for (Int c = static_cast<Int>(staticInputVarNodeIds().size()) - 1; c >= 0; --c) {
     std::vector<Int> values(_table.size());
     values.reserve(_table.size());
     for (size_t r = 0; r < _table.size(); ++r) {
@@ -163,24 +215,59 @@ bool TableInNode::propagate() {
       prunedVals |= prevDomSize != invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(c)).constDomain()->size();
     }
   }
+  if (staticInputVarNodeIds().empty()) {
+    if (_table.empty()) {
+      // There are no valid rows
+      if (isReified()) {
+        fixReified(false);
+      } else if (shouldHold()) {
+        throw InconsistencyException("TableInNode: there are no valid rows");
+      }
+    } else {
+      // There are valid rows
+      if (isReified()) {
+        fixReified(true);
+      } else if (!shouldHold()) {
+        throw InconsistencyException("TableInNode neg: there are only valid rows");
+      }
+    }
+    setState(InvariantNodeState::SUBSUMED);
+  }
   return prunedVals;
 }
 
 void TableInNode::updateState() {
   ViolationInvariantNode::updateState();
+  if (_table.empty()) {
+    if (isReified()) {
+      fixReified(false);
+    } else if (shouldHold()) {
+      throw InconsistencyException("TableInNode: there are no valid rows");
+    }
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
   if (isReified() || !shouldHold()) {
     return;
   }
   removeDuplicateColumns();
-  while (true) {
-    const bool didPruneVals = propagate();
-    const bool didRemoveRows = removeRows();
-    if (!didPruneVals && !didRemoveRows) {
-      break;
+  bool didRemoveCols;
+  bool didPruneVals;
+  bool didRemoveRows;
+  do {
+    didRemoveCols = removeFixedColumns();
+    didPruneVals = propagate();
+    didRemoveRows = removeInvalidRows();
+  } while (state() == InvariantNodeState::ACTIVE && (didRemoveCols || didPruneVals || didRemoveRows));
+
+  if (_table.empty() || _table.front().empty()) {
+    if (isReified()) {
+      fixReified(staticInputVarNodeIds().empty());
+    } else if (shouldHold() != staticInputVarNodeIds().empty()) {
+      throw InconsistencyException("TableInNode::updateState: all rows are valid");
     }
-  }
-  if (_table.empty()) {
-    throw FznArgumentException("TableInNode::updateState: Table is empty");
+    setState(InvariantNodeState::SUBSUMED);
+    return;
   }
   if (_table.size() == 1 || _table.front().size() == 1) {
     setState(InvariantNodeState::SUBSUMED);

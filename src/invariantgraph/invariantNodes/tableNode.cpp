@@ -192,8 +192,8 @@ void TableNode::updateState() {
       break;
     }
   }
-  if (_table.empty()) {
-    throw FznArgumentException("TableNode::updateState: Table is empty");
+  if (_table.empty() || _table.front().empty()) {
+    throw InconsistencyException("TableNode::updateState: Table is empty");
   }
   if (_table.size() == 1 || _table.front().size() == 1) {
     setState(InvariantNodeState::SUBSUMED);
