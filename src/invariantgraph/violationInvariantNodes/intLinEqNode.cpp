@@ -134,7 +134,8 @@ void IntLinEqNode::updateState() {
     if (_bound % c != 0) {
       fixReified(false);
       if (shouldHold()) {
-        throw InconsistencyException("BoolLinEqNode: Invariant is always false");
+        throw InconsistencyException(
+            "BoolLinEqNode: Invariant is always false");
       }
       setState(InvariantNodeState::SUBSUMED);
       return;

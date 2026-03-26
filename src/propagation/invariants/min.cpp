@@ -147,6 +147,7 @@ void Min::commit(Timestamp ts) {
   Invariant::commit(ts);
   close(ts);
   for (size_t i = 0; i < _varArray.size(); ++i) {
+    // TODO: We need to resort the list!
     _linkedList[i].first.commitIf(ts);
     _linkedList[i].second.commitIf(ts);
   }

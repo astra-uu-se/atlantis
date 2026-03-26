@@ -582,11 +582,10 @@ void SetDomain::intersect(const std::vector<Int>& otherVals) {
 
   std::ranges::set_intersection(_values, otherVals,
                                 std::back_inserter(newValues));
-
-  _values = std::move(newValues);
-  if (_values.empty()) {
+  if (newValues.empty()) {
     throw InconsistencyException("SetDomain::intersect: Empty domain");
   }
+  _values = std::move(newValues);
 }
 
 void SetDomain::intersect(const SortedUniqueVector& otherVals) {

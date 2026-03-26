@@ -38,7 +38,7 @@ class bool_lin_eqTest : public FznTestBase {
   [[nodiscard]] bool sameCoeff(Int& coeff) const {
     bool initialized = false;
     for (size_t i = 0; i < coeffs.size(); ++i) {
-      if (isFixed(inputs.at(i))) {
+      if (isFixed(inputs.at(i)) || coeffs.at(i) == 0) {
         continue;
       }
       if (initialized && coeff != std::abs(coeffs.at(i))) {
@@ -131,7 +131,8 @@ class bool_lin_eqTest : public FznTestBase {
 
   void generate() override {
     const size_t size = *rc::gen::inRange<size_t>(0, 4);
-    coeffs = *rc::gen::container<std::vector<Int>>(size, rc::gen::inRange(-2, 2));
+    coeffs =
+        *rc::gen::container<std::vector<Int>>(size, rc::gen::inRange(-2, 2));
     addArg(coeffs);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
