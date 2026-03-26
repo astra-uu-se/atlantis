@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::propagation {
 
@@ -69,14 +70,27 @@ void BoolLinear::updateBounds(bool widenOnly) {
 }
 
 void BoolLinear::recompute(Timestamp ts) {
-  Int sum = 0;
+  Int totalSum = 0;
   for (size_t i = 0; i < _violArray.size(); ++i) {
-    sum += _coeffs[i] * static_cast<Int>(_solver.value(ts, _violArray[i]) == 0);
+    Int prod;
+    const Int val = static_cast<Int>(_solver.value(ts, _violArray[i]) == 0);
+    if (mul_overflow<Int>(_coeffs[i], val, prod)) {
+      totalSum = _coeffs[i] > 0 ? std::numeric_limits<Int>::max()
+                                : std::numeric_limits<Int>::min();
+      break;
+    }
+    Int sum;
+    if (add_overflow<Int>(totalSum, prod, sum)) {
+      totalSum = prod < 0 ? std::numeric_limits<Int>::min()
+                          : std::numeric_limits<Int>::max();
+      break;
+    }
+    totalSum = sum;
   }
-  updateValue(ts, _output, sum);
+  updateValue(ts, _output, totalSum);
 }
 
-void BoolLinear::notifyInputChanged(Timestamp ts, LocalId id) {
+void BoolLinear::notifyInputChanged(const Timestamp ts, const LocalId id) {
   assert(id < _violArray.size());
   const Int newValue = _solver.value(ts, _violArray[id]) == 0 ? 1 : 0;
   const Int committedValue =
@@ -84,7 +98,23 @@ void BoolLinear::notifyInputChanged(Timestamp ts, LocalId id) {
   if (newValue == committedValue) {
     return;
   }
-  incValue(ts, _output, (newValue - committedValue) * _coeffs[id]);
+
+  Int prod;
+  const Int difference = newValue - committedValue;
+  if (mul_overflow<Int>(_coeffs[id], difference, prod)) {
+    updateValue(ts, _output,
+                (_coeffs[id] < 0) == (difference < 0)
+                    ? std::numeric_limits<Int>::max()
+                    : std::numeric_limits<Int>::min());
+  }
+  Int sum;
+  if (add_overflow<Int>(_solver.value(ts, _output), prod, sum)) {
+    updateValue(ts, _output,
+                prod < 0 ? std::numeric_limits<Int>::min()
+                         : std::numeric_limits<Int>::max());
+    return;
+  }
+  updateValue(ts, _output, sum);
 }
 
 VarViewId BoolLinear::nextInput(Timestamp ts) {

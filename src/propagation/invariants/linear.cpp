@@ -60,17 +60,17 @@ void Linear::updateBounds(bool widenOnly) {
   _solver.updateBounds(_output, sumLb, sumUb, widenOnly);
 }
 
-void Linear::recompute(Timestamp ts) {
-  Int sum = 0;
+void Linear::recompute(const Timestamp ts) {
+  Int totalSum = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
     sum = overflow::saturatingAdd(
         sum,
         overflow::saturatingMul(_coeffs[i], _solver.value(ts, _varArray[i])));
   }
-  updateValue(ts, _output, sum);
+  updateValue(ts, _output, totalSum);
 }
 
-void Linear::notifyInputChanged(Timestamp ts, LocalId id) {
+void Linear::notifyInputChanged(const Timestamp ts, const LocalId id) {
   assert(id < _varArray.size());
   const Int committedValue = _solver.committedValue(_varArray[id]);
   const Int newValue = _solver.value(ts, _varArray[id]);
