@@ -6,13 +6,14 @@
 #include <ranges>
 
 #include "./invariantHelper.hpp"
-
 #include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::propagation {
 
-std::unordered_map<Int, size_t> generateValToRows(const std::vector<std::vector<Int>>& table, const size_t inputColumn) {
-  std::unordered_map<Int, size_t> valToRows(std::unordered_map<Int, size_t>(table.size()));
+std::unordered_map<Int, size_t> generateValToRows(
+    const std::vector<std::vector<Int>>& table, const size_t inputColumn) {
+  std::unordered_map<Int, size_t> valToRows(
+      std::unordered_map<Int, size_t>(table.size()));
   for (size_t r = 0; r < table.size(); ++r) {
     assert(table[r].size() > inputColumn);
     const Int val = table[r][inputColumn];
@@ -22,7 +23,8 @@ std::unordered_map<Int, size_t> generateValToRows(const std::vector<std::vector<
   return valToRows;
 }
 
-std::vector<std::vector<Int>>&& removeInputColumn(std::vector<std::vector<Int>>&& table, const size_t inputColumn) {
+std::vector<std::vector<Int>>&& removeInputColumn(
+    std::vector<std::vector<Int>>&& table, const size_t inputColumn) {
   assert(inputColumn < table.front().size());
   for (size_t r = 0; r < table.size(); ++r) {
     for (size_t c = inputColumn; c + 1 < table[r].size(); ++c) {
@@ -34,19 +36,26 @@ std::vector<std::vector<Int>>&& removeInputColumn(std::vector<std::vector<Int>>&
 }
 
 Table::Table(SolverBase& solver, std::vector<VarId>&& outputVars,
-                           const VarViewId inputVar, std::vector<std::vector<Int>>&& table, size_t inputColumn)
+             const VarViewId inputVar, std::vector<std::vector<Int>>&& table,
+             size_t inputColumn)
     : Invariant(solver),
-  _inputVar(inputVar),
-  _outputVars(std::move(outputVars)),
-  _valToRow(generateValToRows(table, inputColumn)), // must come before _table
-  _table(std::move(removeInputColumn(std::move(table), inputColumn))) {
+      _inputVar(inputVar),
+      _outputVars(std::move(outputVars)),
+      _valToRow(
+          generateValToRows(table, inputColumn)),  // must come before _table
+      _table(std::move(removeInputColumn(std::move(table), inputColumn))) {
   assert(!_table.empty());
-  assert(std::ranges::all_of(_table, [&](const std::vector<Int>& row) { return row.size() == _outputVars.size();}));
+  assert(std::ranges::all_of(_table, [&](const std::vector<Int>& row) {
+    return row.size() == _outputVars.size();
+  }));
   assert(_valToRow.size() == _table.size());
 }
 
-Table::Table(SolverBase& solver, std::vector<VarViewId>&& outputVars, const VarViewId inputVar, std::vector<std::vector<Int>>&& table, size_t inputColumn)
-  : Table(solver, toVarIds(std::move(outputVars)), inputVar, std::move(table), inputColumn) {}
+Table::Table(SolverBase& solver, std::vector<VarViewId>&& outputVars,
+             const VarViewId inputVar, std::vector<std::vector<Int>>&& table,
+             size_t inputColumn)
+    : Table(solver, toVarIds(std::move(outputVars)), inputVar, std::move(table),
+            inputColumn) {}
 
 void Table::registerVars() {
   assert(_id != NULL_ID);
@@ -57,7 +66,9 @@ void Table::registerVars() {
 }
 
 void Table::updateBounds(const bool widenOnly) {
-  std::vector<std::array<Int, 2>> bounds(_outputVars.size(), {std::numeric_limits<Int>::max(), std::numeric_limits<Int>::min()});
+  std::vector<std::array<Int, 2>> bounds(
+      _outputVars.size(),
+      {std::numeric_limits<Int>::max(), std::numeric_limits<Int>::min()});
 
   const Int lb = _solver.lowerBound(_inputVar);
   const Int ub = _solver.upperBound(_inputVar);
@@ -84,7 +95,7 @@ void Table::close(const Timestamp) {
   valsToRemove.reserve(_valToRow.size());
   const Int lb = _solver.lowerBound(_inputVar);
   const Int ub = _solver.upperBound(_inputVar);
-  for (const Int val: std::views::keys(_valToRow)) {
+  for (const Int val : std::views::keys(_valToRow)) {
     if (val < lb || ub < val) {
       valsToRemove.emplace_back(val);
     }
@@ -106,10 +117,7 @@ void Table::recompute(const Timestamp ts, bool forceRecompute) {
   }
 }
 
-
-void Table::recompute(const Timestamp ts) {
-  recompute(ts, true);
-}
+void Table::recompute(const Timestamp ts) { recompute(ts, true); }
 
 void Table::notifyInputChanged(const Timestamp ts, const LocalId) {
   recompute(ts, false);

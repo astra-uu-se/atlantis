@@ -30,7 +30,7 @@ class fzn_table_boolTest : public FznTestBase {
 
     table = *rc::gen::container<std::vector<std::vector<bool>>>(
         *rc::gen::inRange(0, 5), rc::gen::container<std::vector<bool>>(
-                     numVars, rc::gen::arbitrary<bool>()));
+                                     numVars, rc::gen::arbitrary<bool>()));
 
     std::vector<bool> flatTable(table.size() * numVars);
     size_t i = 0;
@@ -43,8 +43,7 @@ class fzn_table_boolTest : public FznTestBase {
     addArg(flatTable);
 
     const bool isReified = *rc::gen::arbitrary<bool>();
-    constraintIdentifier =
-        isReified ? "fzn_table_bool_reif" : "fzn_table_bool";
+    constraintIdentifier = isReified ? "fzn_table_bool_reif" : "fzn_table_bool";
 
     if (isReified) {
       addBoolArg(reified);
@@ -102,11 +101,13 @@ class fzn_table_boolTest : public FznTestBase {
         }
       }
     }
-    const size_t numValidRows = std::ranges::count_if(validRows, [&](const bool isValid) { return isValid; });
+    const size_t numValidRows = std::ranges::count_if(
+        validRows, [&](const bool isValid) { return isValid; });
     if (numValidRows == 0) {
       return boolVal(reified);
     }
-    const size_t numFree = std::ranges::count_if(inputs, [&](const std::string& input) { return !isFixed(input); });
+    const size_t numFree = std::ranges::count_if(
+        inputs, [&](const std::string& input) { return !isFixed(input); });
     if (numFree <= 1 && boolVal(reified)) {
       return false;
     }
@@ -135,11 +136,13 @@ class fzn_table_boolTest : public FznTestBase {
         }
       }
     }
-    const size_t numValidRows = std::ranges::count_if(validRows, [&](const bool isValid) { return isValid; });
+    const size_t numValidRows = std::ranges::count_if(
+        validRows, [&](const bool isValid) { return isValid; });
     if (numValidRows == 0) {
       return !boolVal(reified);
     }
-    const size_t numFree = std::ranges::count_if(inputs, [&](const std::string& input) { return !isFixed(input); });
+    const size_t numFree = std::ranges::count_if(
+        inputs, [&](const std::string& input) { return !isFixed(input); });
     if (numFree <= 1 && boolVal(reified)) {
       return true;
     }
@@ -147,9 +150,8 @@ class fzn_table_boolTest : public FznTestBase {
   }
 
   [[nodiscard]] bool canMove() const override {
-    return std::ranges::any_of(inputs, [&](const std::string& input) {
-      return !isFixed(input);
-    });
+    return std::ranges::any_of(
+        inputs, [&](const std::string& input) { return !isFixed(input); });
   }
 
   void move(const bool committedValue) override {

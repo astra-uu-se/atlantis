@@ -8,8 +8,11 @@
 
 namespace atlantis::propagation {
 
-std::vector<std::unordered_map<Int, std::vector<size_t>>> generateValToRows(const std::vector<std::vector<Int>>& table) {
-  std::vector<std::unordered_map<Int, std::vector<size_t>>> valToRows(table.front().size(), std::unordered_map<Int, std::vector<size_t>>(table.size()));
+std::vector<std::unordered_map<Int, std::vector<size_t>>> generateValToRows(
+    const std::vector<std::vector<Int>>& table) {
+  std::vector<std::unordered_map<Int, std::vector<size_t>>> valToRows(
+      table.front().size(),
+      std::unordered_map<Int, std::vector<size_t>>(table.size()));
   for (size_t r = 0; r < table.size(); ++r) {
     for (size_t c = 0; c < table[r].size(); ++c) {
       const Int val = table[r][c];
@@ -25,16 +28,19 @@ std::vector<std::unordered_map<Int, std::vector<size_t>>> generateValToRows(cons
 }
 
 TableIn::TableIn(SolverBase& solver, VarId violationId,
-                           std::vector<VarViewId>&& vars, const std::vector<std::vector<Int>>& table)
+                 std::vector<VarViewId>&& vars,
+                 const std::vector<std::vector<Int>>& table)
     : ViolationInvariant(solver, violationId),
       _varArray(std::move(vars)),
-  _valToRows(generateValToRows(table)),
-  _rowViolations(table.size(), {NULL_TIMESTAMP, -1, -1}),
-  _violationCounts(_varArray.size() + 1, {NULL_TIMESTAMP, -1, -1})
-  {}
+      _valToRows(generateValToRows(table)),
+      _rowViolations(table.size(), {NULL_TIMESTAMP, -1, -1}),
+      _violationCounts(_varArray.size() + 1, {NULL_TIMESTAMP, -1, -1}) {}
 
-TableIn::TableIn(SolverBase& solver, VarViewId violationId, std::vector<VarViewId>&& vars, const std::vector<std::vector<Int>>& table)
-  : TableIn(solver, static_cast<VarId>(violationId), std::move(vars), table) {}
+TableIn::TableIn(SolverBase& solver, VarViewId violationId,
+                 std::vector<VarViewId>&& vars,
+                 const std::vector<std::vector<Int>>& table)
+    : TableIn(solver, static_cast<VarId>(violationId), std::move(vars), table) {
+}
 
 void TableIn::registerVars() {
   assert(_id != NULL_ID);
@@ -57,7 +63,7 @@ void TableIn::close(const Timestamp) {
     valsToRemove.reserve(_valToRows[c].size());
     const Int lb = _solver.lowerBound(_varArray[c]);
     const Int ub = _solver.upperBound(_varArray[c]);
-    for (const Int val: std::views::keys(_valToRows[c])) {
+    for (const Int val : std::views::keys(_valToRows[c])) {
       if (val < lb || ub < val) {
         valsToRemove.emplace_back(val);
       }
@@ -88,7 +94,8 @@ void TableIn::recompute(const Timestamp ts) {
   }
   Int violation = static_cast<Int>(_varArray.size());
   for (auto& rw : _rowViolations) {
-    assert(0 <= rw.value(ts) && rw.value(ts) <= static_cast<Int>(_varArray.size()));
+    assert(0 <= rw.value(ts) &&
+           rw.value(ts) <= static_cast<Int>(_varArray.size()));
     _violationCounts[rw.value(ts)].incValue(ts, 1);
     violation = std::min(violation, rw.value(ts));
   }
@@ -105,17 +112,24 @@ void TableIn::notifyInputChanged(const Timestamp ts, const LocalId id) {
   assert(0 <= _solver.value(ts, _violationId));
   assert(_solver.value(ts, _violationId) <= static_cast<Int>(_varArray.size()));
   assert(_violationCounts.at(_solver.value(ts, _violationId)).value(ts) > 0);
-  assert(std::all_of(_violationCounts.begin(), _violationCounts.begin() + _solver.value(ts, _violationId), [&](const CommittableInt& count) { return count.value(ts) == 0; }));
+  assert(std::all_of(
+      _violationCounts.begin(),
+      _violationCounts.begin() + _solver.value(ts, _violationId),
+      [&](const CommittableInt& count) { return count.value(ts) == 0; }));
   const auto& committedIter = _valToRows[id].find(committedValue);
   // Increase row violations of committed rows.
   // Decrease the counts of committed rows.
   if (committedIter != _valToRows[id].end()) {
     for (const size_t committedRow : committedIter->second) {
-      assert(_rowViolations[committedRow].value(ts) < static_cast<Int>(_varArray.size()));
-      assert(_violationCounts.at(_rowViolations.at(committedRow).value(ts)).value(ts) > 0);
-      assert(_violationCounts.at(_rowViolations.at(committedRow).value(ts) + 1).value(ts) < static_cast<Int>(_rowViolations.size()));
+      assert(_rowViolations[committedRow].value(ts) <
+             static_cast<Int>(_varArray.size()));
+      assert(_violationCounts.at(_rowViolations.at(committedRow).value(ts))
+                 .value(ts) > 0);
+      assert(_violationCounts.at(_rowViolations.at(committedRow).value(ts) + 1)
+                 .value(ts) < static_cast<Int>(_rowViolations.size()));
       _violationCounts[_rowViolations[committedRow].value(ts)].incValue(ts, -1);
-      _violationCounts[_rowViolations[committedRow].incValue(ts, 1)].incValue(ts, 1);
+      _violationCounts[_rowViolations[committedRow].incValue(ts, 1)].incValue(
+          ts, 1);
     }
   }
   // Decrease row violations of committed rows.
@@ -124,8 +138,11 @@ void TableIn::notifyInputChanged(const Timestamp ts, const LocalId id) {
   if (newIter != _valToRows[id].end()) {
     for (const size_t newRow : newIter->second) {
       assert(_rowViolations[newRow].value(ts) > 0);
-      assert(_violationCounts.at(_rowViolations.at(newRow).value(ts)).value(ts) > 0);
-      assert(_violationCounts.at(_rowViolations.at(newRow).value(ts) - 1).value(ts) < static_cast<Int>(_rowViolations.size()));
+      assert(
+          _violationCounts.at(_rowViolations.at(newRow).value(ts)).value(ts) >
+          0);
+      assert(_violationCounts.at(_rowViolations.at(newRow).value(ts) - 1)
+                 .value(ts) < static_cast<Int>(_rowViolations.size()));
       _violationCounts[_rowViolations[newRow].value(ts)].incValue(ts, -1);
       _violationCounts[_rowViolations[newRow].incValue(ts, -1)].incValue(ts, 1);
     }
@@ -139,7 +156,10 @@ void TableIn::notifyInputChanged(const Timestamp ts, const LocalId id) {
     updateValue(ts, _violationId, violation + 1);
   }
   assert(_violationCounts.at(_solver.value(ts, _violationId)).value(ts) > 0);
-  assert(std::all_of(_violationCounts.begin(), _violationCounts.begin() + _solver.value(ts, _violationId), [&](const CommittableInt& count) { return count.value(ts) == 0; }));
+  assert(std::all_of(
+      _violationCounts.begin(),
+      _violationCounts.begin() + _solver.value(ts, _violationId),
+      [&](const CommittableInt& count) { return count.value(ts) == 0; }));
 }
 
 VarViewId TableIn::nextInput(const Timestamp ts) {

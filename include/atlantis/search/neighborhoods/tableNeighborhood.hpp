@@ -16,7 +16,8 @@ class TableNeighborhood : public Neighborhood {
   propagation::CommittableInt _index;
 
  public:
-  explicit TableNeighborhood(std::vector<SearchVar>&& vars, std::vector<std::vector<Int>>&& table);
+  explicit TableNeighborhood(std::vector<SearchVar>&& vars,
+                             std::vector<std::vector<Int>>&& table);
 
   void initialize(RandomProvider&, Assignment&) override;
 

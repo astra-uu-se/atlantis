@@ -21,11 +21,12 @@ class Table : public Invariant {
 
  public:
   explicit Table(SolverBase&, std::vector<VarId>&& outputVars,
-                        VarViewId inputVar, std::vector<std::vector<Int>>&& table, size_t inputColumn = 0);
+                 VarViewId inputVar, std::vector<std::vector<Int>>&& table,
+                 size_t inputColumn = 0);
 
   explicit Table(SolverBase&, std::vector<VarViewId>&& outputVars,
-                      VarViewId inputVar, std::vector<std::vector<Int>>&& table, size_t inputColumn = 0);
-
+                 VarViewId inputVar, std::vector<std::vector<Int>>&& table,
+                 size_t inputColumn = 0);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;

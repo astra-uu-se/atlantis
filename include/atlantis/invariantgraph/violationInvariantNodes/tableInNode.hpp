@@ -21,18 +21,20 @@ class TableInNode : public ViolationInvariantNode {
 
  public:
   explicit TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                       std::vector<std::vector<Int>>&& table,
-                       VarNodeId reified, bool isBoolTable = false);
+                       std::vector<std::vector<Int>>&& table, VarNodeId reified,
+                       bool isBoolTable = false);
 
   explicit TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-              std::vector<std::vector<Int>>&& table, bool shouldHold = true, bool isBoolTable = false);
+                       std::vector<std::vector<Int>>&& table,
+                       bool shouldHold = true, bool isBoolTable = false);
 
   explicit TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
                        std::vector<std::vector<bool>>&& table,
                        VarNodeId reified);
 
   explicit TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-              std::vector<std::vector<bool>>&& table, bool shouldHold = true);
+                       std::vector<std::vector<bool>>&& table,
+                       bool shouldHold = true);
 
   void init(InvariantNodeId) override;
 

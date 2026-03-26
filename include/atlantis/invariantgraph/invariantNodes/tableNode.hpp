@@ -22,8 +22,8 @@ class TableNode : public InvariantNode {
                      VarNodeId input, std::vector<std::vector<Int>>&& table,
                      size_t inputColumnIndex, bool isBoolTable = false);
   explicit TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
-            VarNodeId input, std::vector<std::vector<bool>>&& table,
-            size_t inputColumnIndex);
+                     VarNodeId input, std::vector<std::vector<bool>>&& table,
+                     size_t inputColumnIndex);
 
   void init(InvariantNodeId) override;
 

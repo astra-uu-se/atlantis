@@ -14,9 +14,11 @@
 
 namespace atlantis::invariantgraph {
 
-TableImplicitNode::TableImplicitNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& inputVars, std::vector<std::vector<Int>>&& table)
-    : ImplicitConstraintNode(graph, std::move(inputVars)), _table(std::move(table)) {}
+TableImplicitNode::TableImplicitNode(InvariantGraph& graph,
+                                     std::vector<VarNodeId>&& inputVars,
+                                     std::vector<std::vector<Int>>&& table)
+    : ImplicitConstraintNode(graph, std::move(inputVars)),
+      _table(std::move(table)) {}
 
 void TableImplicitNode::init(const InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
@@ -39,7 +41,7 @@ void TableImplicitNode::updateDomainTypes() {
 }
 
 void TableImplicitNode::registerNode(propagation::SolverBase&,
-                                            SolverMapping& mapping) const {
+                                     SolverMapping& mapping) const {
   assert(!mapping.hasNeighborhood(id()));
 
   if (outputVarNodeIds().size() <= 1) {
@@ -60,13 +62,10 @@ void TableImplicitNode::registerNode(propagation::SolverBase&,
     searchVars.emplace_back(mapping.solverId(nId), varNode.constDomain());
   }
   mapping.setNeighborhood(
-      id(), std::make_shared<
-                search::neighborhoods::TableNeighborhood>(
+      id(), std::make_shared<search::neighborhoods::TableNeighborhood>(
                 std::move(searchVars), std::vector<std::vector<Int>>{_table}));
 }
 
-std::string TableImplicitNode::dotLangIdentifier() const {
-  return "table";
-}
+std::string TableImplicitNode::dotLangIdentifier() const { return "table"; }
 
 }  // namespace atlantis::invariantgraph

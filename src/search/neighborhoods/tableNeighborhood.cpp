@@ -10,8 +10,8 @@
 
 namespace atlantis::search::neighborhoods {
 
-TableNeighborhood::TableNeighborhood(
-    std::vector<SearchVar>&& vars, std::vector<std::vector<Int>>&& table)
+TableNeighborhood::TableNeighborhood(std::vector<SearchVar>&& vars,
+                                     std::vector<std::vector<Int>>&& table)
     : _vars(std::move(vars)),
       _table(std::move(table)),
       _index({NULL_TIMESTAMP, -1, -1}) {
@@ -19,7 +19,7 @@ TableNeighborhood::TableNeighborhood(
 }
 
 void TableNeighborhood::initialize(RandomProvider& random,
-                                                 Assignment& assignment) {
+                                   Assignment& assignment) {
   const Int row = random.intInRange(0, static_cast<Int>(_table.size()) - 1);
   _index.setValue(assignment.currentTimestamp(), row);
   _index.commit();
@@ -30,15 +30,18 @@ void TableNeighborhood::initialize(RandomProvider& random,
 }
 
 size_t TableNeighborhood::randomMove(RandomProvider& random,
-                                                   Assignment& assignment) {
-
-  const Int row = random.intInRange(0, static_cast<Int>(_table.size()) - 1, _index.committedValue());
+                                     Assignment& assignment) {
+  const Int row = random.intInRange(0, static_cast<Int>(_table.size()) - 1,
+                                    _index.committedValue());
   _index.setValue(assignment.currentTimestamp(), row);
 
   Int numModified = 0;
   for (size_t c = 0; c < _vars.size(); ++c) {
     assignment.set(_vars[c].solverId(), _table[row][c]);
-    numModified += assignment.committedValue(_vars[c].solverId()) != assignment.currentValue(_vars[c].solverId()) ? 1 : 0;
+    numModified += assignment.committedValue(_vars[c].solverId()) !=
+                           assignment.currentValue(_vars[c].solverId())
+                       ? 1
+                       : 0;
   }
   return numModified;
 }

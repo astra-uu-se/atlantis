@@ -10,28 +10,31 @@ using namespace atlantis::invariantgraph;
 
 class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
  public:
-  std::vector<std::string> inputVars{"output_col_1", "output_col_2", "output_col_3", "fixed_col"};
+  std::vector<std::string> inputVars{"output_col_1", "output_col_2",
+                                     "output_col_3", "fixed_col"};
   std::string reifiedVar{"reified"};
 
-  std::vector<std::vector<Int>> intTable{{2, 1, 2, 10},
-  {1, 2, 3, 10},
-    {0, 3, 4, 10},
-  {2, 2, 4, 10}};
+  std::vector<std::vector<Int>> intTable{
+      {2, 1, 2, 10}, {1, 2, 3, 10}, {0, 3, 4, 10}, {2, 2, 4, 10}};
   std::vector<std::vector<bool>> boolTable{{false, true, true, false},
-  {true, false, false, false},
-  {false, false, false, false}};
+                                           {true, false, false, false},
+                                           {false, false, false, false}};
 
   std::vector<std::vector<Int>> table{};
 
-  [[nodiscard]] bool isIntTable() const { return _paramData.data < static_cast<Int>(inputVars.size()); }
+  [[nodiscard]] bool isIntTable() const {
+    return _paramData.data < static_cast<Int>(inputVars.size());
+  }
 
-  [[nodiscard]] Int fixedColIndex() const { return _paramData.data % static_cast<Int>(inputVars.size()); }
+  [[nodiscard]] Int fixedColIndex() const {
+    return _paramData.data % static_cast<Int>(inputVars.size());
+  }
 
   [[nodiscard]] bool colIsFixed(const size_t col) const {
     EXPECT_LE(col, inputVars.size());
     std::unordered_set<Int> colVals;
     colVals.reserve(table.size());
-    for (const auto & row : table) {
+    for (const auto& row : table) {
       colVals.insert(row.at(col));
     }
     return colVals.size() == 1;
@@ -48,8 +51,8 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
         EXPECT_TRUE(varNode(inputVar).isFixed());
       }
       colVals.emplace_back(varNode(inputVar).isFixed()
-                                     ? varNode(inputVar).lowerBound()
-                                     : _solver->currentValue(varId(inputVar)));
+                               ? varNode(inputVar).lowerBound()
+                               : _solver->currentValue(varId(inputVar)));
     }
     for (const auto& row : table) {
       EXPECT_EQ(row.size(), colVals.size());
@@ -150,21 +153,24 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
     if (isIntTable()) {
       if (isReified()) {
         retrieveBoolVarNode(reifiedVar);
-        createInvariantNode(*_invariantGraph,
-                        varNodeIds(inputVars), std::vector<std::vector<Int>>{table}, varNodeId(reifiedVar));
+        createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
+                            std::vector<std::vector<Int>>{table},
+                            varNodeId(reifiedVar));
       } else {
-        createInvariantNode(*_invariantGraph,
-                        varNodeIds(inputVars), std::vector<std::vector<Int>>{table}, shouldHold());
+        createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
+                            std::vector<std::vector<Int>>{table}, shouldHold());
       }
     } else {
       if (isReified()) {
         retrieveBoolVarNode(reifiedVar);
 
-        createInvariantNode(*_invariantGraph,
-                          varNodeIds(inputVars), std::vector<std::vector<bool>>{boolTable}, varNodeId(reifiedVar));
+        createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
+                            std::vector<std::vector<bool>>{boolTable},
+                            varNodeId(reifiedVar));
       } else {
-        createInvariantNode(*_invariantGraph,
-                          varNodeIds(inputVars), std::vector<std::vector<bool>>{boolTable}, shouldHold());
+        createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
+                            std::vector<std::vector<bool>>{boolTable},
+                            shouldHold());
       }
     }
   }
@@ -176,7 +182,8 @@ TEST_P(TableInNodeTestFixture, construction) {
 
   EXPECT_EQ(invNode().outputVarNodeIds().size(), isReified() ? 1 : 0);
 
-  EXPECT_THAT(invNode().staticInputVarNodeIds(), ::testing::ContainerEq(varNodeIds(inputVars)));
+  EXPECT_THAT(invNode().staticInputVarNodeIds(),
+              ::testing::ContainerEq(varNodeIds(inputVars)));
 }
 
 TEST_P(TableInNodeTestFixture, updateState) {
@@ -212,7 +219,9 @@ TEST_P(TableInNodeTestFixture, propagation) {
       if (varNode(inputVars.at(i)).isFixed()) {
         continue;
       }
-      EXPECT_TRUE(std::ranges::contains(_solver->searchVars().begin(), _solver->searchVars().end(), static_cast<propagation::VarId>(varId(inputVars.at(i)))));
+      EXPECT_TRUE(std::ranges::contains(
+          _solver->searchVars().begin(), _solver->searchVars().end(),
+          static_cast<propagation::VarId>(varId(inputVars.at(i)))));
     }
     return;
   }
@@ -243,7 +252,7 @@ TEST_P(TableInNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto & inputVar : inputVars) {
+  for (const auto& inputVar : inputVars) {
     if (!varNode(inputVar).isFixed()) {
       EXPECT_NE(varId(inputVar), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(inputVar));
@@ -253,7 +262,7 @@ TEST_P(TableInNodeTestFixture, propagation) {
   EXPECT_FALSE(inputVarIds.empty());
 
   const propagation::VarViewId violVarId =
-    isReified() ? varId(reifiedVar) : _solverMapping->totalViolationId();
+      isReified() ? varId(reifiedVar) : _solverMapping->totalViolationId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 
@@ -283,21 +292,31 @@ TEST_P(TableInNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     TableInNodeTest, TableInNodeTestFixture,
-    ::testing::Values(
-      ParamData{ViolationInvariantType::REIFIED},
-      ParamData{ViolationInvariantType::CONSTANT_TRUE},
-      ParamData{ViolationInvariantType::CONSTANT_FALSE},
-      ParamData{InvariantNodeAction::REPLACE, ViolationInvariantType::CONSTANT_TRUE, 0},
-      ParamData{InvariantNodeAction::REPLACE, ViolationInvariantType::CONSTANT_TRUE, 1},
-      ParamData{InvariantNodeAction::REPLACE, ViolationInvariantType::CONSTANT_TRUE, 2},
-      ParamData{InvariantNodeAction::REPLACE, ViolationInvariantType::CONSTANT_TRUE, 4},
-      ParamData{InvariantNodeAction::REPLACE, ViolationInvariantType::CONSTANT_TRUE, 5},
-      ParamData{InvariantNodeAction::SUBSUME, ViolationInvariantType::CONSTANT_TRUE, 0},
-      ParamData{InvariantNodeAction::SUBSUME, ViolationInvariantType::CONSTANT_TRUE, 1},
-      ParamData{InvariantNodeAction::SUBSUME, ViolationInvariantType::CONSTANT_TRUE, 2},
-      ParamData{InvariantNodeAction::SUBSUME, ViolationInvariantType::CONSTANT_TRUE, 4},
-      ParamData{InvariantNodeAction::SUBSUME, ViolationInvariantType::CONSTANT_TRUE, 5},
-      ParamData{InvariantNodeAction::SUBSUME, ViolationInvariantType::CONSTANT_TRUE, 6},
-      ParamData{InvariantNodeAction::MAKE_IMPLICIT}));
+    ::testing::Values(ParamData{ViolationInvariantType::REIFIED},
+                      ParamData{ViolationInvariantType::CONSTANT_TRUE},
+                      ParamData{ViolationInvariantType::CONSTANT_FALSE},
+                      ParamData{InvariantNodeAction::REPLACE,
+                                ViolationInvariantType::CONSTANT_TRUE, 0},
+                      ParamData{InvariantNodeAction::REPLACE,
+                                ViolationInvariantType::CONSTANT_TRUE, 1},
+                      ParamData{InvariantNodeAction::REPLACE,
+                                ViolationInvariantType::CONSTANT_TRUE, 2},
+                      ParamData{InvariantNodeAction::REPLACE,
+                                ViolationInvariantType::CONSTANT_TRUE, 4},
+                      ParamData{InvariantNodeAction::REPLACE,
+                                ViolationInvariantType::CONSTANT_TRUE, 5},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_TRUE, 0},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_TRUE, 1},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_TRUE, 2},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_TRUE, 4},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_TRUE, 5},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_TRUE, 6},
+                      ParamData{InvariantNodeAction::MAKE_IMPLICIT}));
 
 }  // namespace atlantis::testing

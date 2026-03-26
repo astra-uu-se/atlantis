@@ -5,9 +5,8 @@
 #include <functional>
 #include <vector>
 
-#include "invariantHelper.hpp"
-
 #include "atlantis/propagation/solverBase.hpp"
+#include "invariantHelper.hpp"
 
 namespace atlantis::propagation {
 

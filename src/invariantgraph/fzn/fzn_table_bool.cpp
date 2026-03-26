@@ -8,25 +8,26 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool fzn_table_bool(
-    FznInvariantGraph& graph,
-    const std::shared_ptr<fznparser::BoolVarArray>& inputs, std::vector<std::vector<bool>>&& table) {
+bool fzn_table_bool(FznInvariantGraph& graph,
+                    const std::shared_ptr<fznparser::BoolVarArray>& inputs,
+                    std::vector<std::vector<bool>>&& table) {
   graph.addInvariantNode(std::make_shared<TableInNode>(
       graph, graph.retrieveVarNodes(inputs), std::move(table), true));
   return true;
 }
 
-bool fzn_table_bool(
-    FznInvariantGraph& graph,
-    const std::shared_ptr<fznparser::BoolVarArray>& inputs, std::vector<std::vector<bool>>&& table,
-    const fznparser::BoolArg& reified) {
+bool fzn_table_bool(FznInvariantGraph& graph,
+                    const std::shared_ptr<fznparser::BoolVarArray>& inputs,
+                    std::vector<std::vector<bool>>&& table,
+                    const fznparser::BoolArg& reified) {
   graph.addInvariantNode(std::make_shared<TableInNode>(
-      graph, graph.retrieveVarNodes(inputs), std::move(table),graph.retrieveVarNode(reified)));
+      graph, graph.retrieveVarNodes(inputs), std::move(table),
+      graph.retrieveVarNode(reified)));
   return true;
 }
 
 bool fzn_table_bool(FznInvariantGraph& graph,
-                           const fznparser::Constraint& constraint) {
+                    const fznparser::Constraint& constraint) {
   if (constraint.identifier() != "fzn_table_bool" &&
       constraint.identifier() != "fzn_table_bool_reif") {
     return false;
@@ -37,19 +38,27 @@ bool fzn_table_bool(FznInvariantGraph& graph,
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true)
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, false)
 
-  const auto& vars = getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0));
+  const auto& vars =
+      getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0));
   if (vars->size() == 0) {
     throw FznArgumentException(
-        "Constraint fzn_table_bool the number of variables must be strictly positive.");
+        "Constraint fzn_table_bool the number of variables must be strictly "
+        "positive.");
   }
 
-  const std::vector<bool> flatTable = getArgArray<fznparser::BoolVarArray>(getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)))->toParVector();
+  const std::vector<bool> flatTable =
+      getArgArray<fznparser::BoolVarArray>(
+          getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)))
+          ->toParVector();
 
   if (flatTable.size() % vars->size() != 0) {
     throw FznArgumentException(
-        "Constraint fzn_table_bool the number of variables must divide the number of elements in the array.");
+        "Constraint fzn_table_bool the number of variables must divide the "
+        "number of elements in the array.");
   }
-  std::vector<std::vector<bool>> table( flatTable.empty() ? 0 : flatTable.size() / vars->size(), std::vector<bool>(vars->size()));
+  std::vector<std::vector<bool>> table(
+      flatTable.empty() ? 0 : flatTable.size() / vars->size(),
+      std::vector<bool>(vars->size()));
   size_t i = 0;
   for (size_t r = 0; r < table.size(); ++r) {
     for (size_t c = 0; c < table[r].size(); ++c) {

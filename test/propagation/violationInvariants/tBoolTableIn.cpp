@@ -54,10 +54,8 @@ class BoolTableTestIn : public InvariantTest {
 
     outputVar = _solver->makeIntVar(0, 0, 0);
 
-    BoolTableIn& invariant =
-        _solver->makeViolationInvariant<BoolTableIn>(
-            *_solver, outputVar,
-            std::vector<VarViewId>(inputVars), table);
+    BoolTableIn& invariant = _solver->makeViolationInvariant<BoolTableIn>(
+        *_solver, outputVar, std::vector<VarViewId>(inputVars), table);
     _solver->close();
     return invariant;
   }
@@ -73,8 +71,9 @@ class BoolTableTestIn : public InvariantTest {
   Int computeViolation(const bool committedValue = false) {
     std::vector<bool> values(inputVars.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
-      values.at(i) = (committedValue ? _solver->committedValue(inputVars.at(i))
-                                    : _solver->currentValue(inputVars.at(i))) == 0;
+      values.at(i) =
+          (committedValue ? _solver->committedValue(inputVars.at(i))
+                          : _solver->currentValue(inputVars.at(i))) == 0;
     }
     return computeViolation(values);
   }
@@ -91,7 +90,7 @@ class BoolTableTestIn : public InvariantTest {
 
   Int actualViolation(const bool committedValue = false) {
     return committedValue ? _solver->committedValue(outputVar)
-                                       : _solver->currentValue(outputVar);
+                          : _solver->currentValue(outputVar);
   }
 
   Int actualViolation(const Timestamp ts) {
@@ -233,8 +232,7 @@ TEST_F(BoolTableTestIn, Commit) {
 
     invariant.recompute(ts);
 
-    ASSERT_EQ(notifiedOutputValue,
-                _solver->value(ts, outputVar));
+    ASSERT_EQ(notifiedOutputValue, _solver->value(ts, outputVar));
 
     _solver->commitIf(ts, VarId(inputVars.at(i)));
     committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
@@ -242,8 +240,7 @@ TEST_F(BoolTableTestIn, Commit) {
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutputValue,
-                _solver->value(ts + 1, outputVar));
+    ASSERT_EQ(notifiedOutputValue, _solver->value(ts + 1, outputVar));
   }
 }
 
@@ -251,7 +248,6 @@ RC_GTEST_FIXTURE_PROP(BoolTableTestIn, rapidcheck, ()) {
   numInputVars = *rc::gen::inRange(1, 100);
   inputVarLb = 0;
   inputVarUb = 2;
-
 
   generate();
 
@@ -297,12 +293,10 @@ class MockBoolTableIn : public BoolTableIn {
     registered = true;
     BoolTableIn::registerVars();
   }
-  explicit MockBoolTableIn(SolverBase& _solver,
-                                     VarViewId violationId,
-                                     std::vector<VarViewId>&& inputVars,
-                                     const std::vector<std::vector<bool>>& table)
-      : BoolTableIn(_solver, violationId,
-                              std::move(inputVars), table) {
+  explicit MockBoolTableIn(SolverBase& _solver, VarViewId violationId,
+                           std::vector<VarViewId>&& inputVars,
+                           const std::vector<std::vector<bool>>& table)
+      : BoolTableIn(_solver, violationId, std::move(inputVars), table) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return BoolTableIn::recompute(timestamp);
     });
@@ -348,10 +342,8 @@ TEST_F(BoolTableTestIn, SolverIntegration) {
     const VarViewId modifiedVarId = inputVars.front();
     testNotifications<MockBoolTableIn>(
         &_solver->makeViolationInvariant<MockBoolTableIn>(
-            *_solver, outputVar, std::move(inputVars),
-            table),
-        {propMode, markingMode, numinputVars + 1, modifiedVarId, 1,
-         outputVar});
+            *_solver, outputVar, std::move(inputVars), table),
+        {propMode, markingMode, numinputVars + 1, modifiedVarId, 1, outputVar});
   }
 }
 

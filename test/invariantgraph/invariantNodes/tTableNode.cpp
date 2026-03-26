@@ -9,24 +9,28 @@ using namespace atlantis::invariantgraph;
 class TableNodeTestFixture : public NodeTestBase<TableNode> {
  public:
   std::string inputVar{"input_col"};
-  std::vector<std::string> outputVars{"output_col_1", "output_col_2", "fixed_col"};
+  std::vector<std::string> outputVars{"output_col_1", "output_col_2",
+                                      "fixed_col"};
 
-  std::vector<std::vector<Int>> intTable{{0, 1, 2, 10},
-  {1, 2, 3, 10},
-    {2, 3, 4, 10}};
+  std::vector<std::vector<Int>> intTable{
+      {0, 1, 2, 10}, {1, 2, 3, 10}, {2, 3, 4, 10}};
   std::vector<std::vector<bool>> boolTable{{false, true, false, false},
-  {true, false, true, false}};
+                                           {true, false, true, false}};
 
   std::vector<std::vector<Int>> table{};
 
-  [[nodiscard]] bool isIntTable() const { return _paramData.data < static_cast<Int>(outputVars.size()); }
-  [[nodiscard]] size_t inputColIndex() const { return _paramData.data % static_cast<Int>(outputVars.size() + 1); }
+  [[nodiscard]] bool isIntTable() const {
+    return _paramData.data < static_cast<Int>(outputVars.size());
+  }
+  [[nodiscard]] size_t inputColIndex() const {
+    return _paramData.data % static_cast<Int>(outputVars.size() + 1);
+  }
 
   [[nodiscard]] bool colIsFixed(const size_t col) const {
     EXPECT_LE(col, outputVars.size());
     std::unordered_set<Int> colVals;
     colVals.reserve(table.size());
-    for (const auto & row : table) {
+    for (const auto& row : table) {
       colVals.insert(row.at(col));
     }
     return colVals.size() == 1;
@@ -44,8 +48,8 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
       EXPECT_TRUE(varNode(inputVar).isFixed());
     }
     const Int inputColVal = varNode(inputVar).isFixed()
-                                   ? varNode(inputVar).lowerBound()
-                                   : _solver->currentValue(varId(inputVar));
+                                ? varNode(inputVar).lowerBound()
+                                : _solver->currentValue(varId(inputVar));
     Int row = -1;
     for (Int r = 0; r < static_cast<Int>(table.size()); ++r) {
       if (table.at(r).at(inputColIndex()) == inputColVal) {
@@ -91,11 +95,9 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
 
     if (isIntTable()) {
       retrieveIntVarNode(
-        colLb(inputColIndex()),
-        shouldBeSubsumed()
-            ? colLb(inputColIndex())
-            : colUb(inputColIndex()),
-        inputVar);
+          colLb(inputColIndex()),
+          shouldBeSubsumed() ? colLb(inputColIndex()) : colUb(inputColIndex()),
+          inputVar);
     } else {
       if (shouldBeSubsumed()) {
         const bool val = colLb(inputColIndex()) == 0;
@@ -105,7 +107,7 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
       }
     }
 
-    for (const auto & outputVar : outputVars) {
+    for (const auto& outputVar : outputVars) {
       if (isIntTable()) {
         retrieveIntVarNode(-10, 10, outputVar);
       } else {
@@ -129,11 +131,13 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
     }
 
     if (isIntTable()) {
-      createInvariantNode(*_invariantGraph,
-                        varNodeIds(outputVars), varNodeId(inputVar), std::vector<std::vector<Int>>{table}, inputColIndex());
+      createInvariantNode(
+          *_invariantGraph, varNodeIds(outputVars), varNodeId(inputVar),
+          std::vector<std::vector<Int>>{table}, inputColIndex());
     } else {
-      createInvariantNode(*_invariantGraph,
-                        varNodeIds(outputVars), varNodeId(inputVar), std::vector<std::vector<bool>>{boolTable}, inputColIndex());
+      createInvariantNode(
+          *_invariantGraph, varNodeIds(outputVars), varNodeId(inputVar),
+          std::vector<std::vector<bool>>{boolTable}, inputColIndex());
     }
   }
 };
@@ -144,7 +148,8 @@ TEST_P(TableNodeTestFixture, construction) {
 
   EXPECT_EQ(invNode().staticInputVarNodeIds().front(), varNodeId(inputVar));
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 3);
-  EXPECT_THAT(invNode().outputVarNodeIds(), ::testing::ContainerEq(varNodeIds(outputVars)));
+  EXPECT_THAT(invNode().outputVarNodeIds(),
+              ::testing::ContainerEq(varNodeIds(outputVars)));
 }
 
 TEST_P(TableNodeTestFixture, updateState) {
@@ -184,13 +189,17 @@ TEST_P(TableNodeTestFixture, propagation) {
 
   if (shouldBeMadeImplicit()) {
     if (!varNode(inputVar).isFixed()) {
-      EXPECT_TRUE(std::ranges::contains(_solver->searchVars().begin(), _solver->searchVars().end(), static_cast<propagation::VarId>(varId(inputVar))));
+      EXPECT_TRUE(std::ranges::contains(
+          _solver->searchVars().begin(), _solver->searchVars().end(),
+          static_cast<propagation::VarId>(varId(inputVar))));
     }
     for (Int i = 0; i < static_cast<Int>(outputVars.size()); ++i) {
       if (varNode(outputVars.at(i)).isFixed()) {
         continue;
       }
-      EXPECT_TRUE(std::ranges::contains(_solver->searchVars().begin(), _solver->searchVars().end(), static_cast<propagation::VarId>(varId(outputVars.at(i)))));
+      EXPECT_TRUE(std::ranges::contains(
+          _solver->searchVars().begin(), _solver->searchVars().end(),
+          static_cast<propagation::VarId>(varId(outputVars.at(i)))));
     }
     return;
   }
@@ -256,19 +265,14 @@ TEST_P(TableNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_CASE_P(
     TableNodeTest, TableNodeTestFixture,
-    ::testing::Values(
-      ParamData{0},
-      ParamData{1},
-      ParamData{2},
-      ParamData{4},
-      ParamData{5},
-      ParamData{6},
-      ParamData{InvariantNodeAction::SUBSUME, 0},
-      ParamData{InvariantNodeAction::SUBSUME, 1},
-      ParamData{InvariantNodeAction::SUBSUME, 2},
-      ParamData{InvariantNodeAction::SUBSUME, 4},
-      ParamData{InvariantNodeAction::SUBSUME, 5},
-      ParamData{InvariantNodeAction::SUBSUME, 6},
-      ParamData{InvariantNodeAction::MAKE_IMPLICIT}));
+    ::testing::Values(ParamData{0}, ParamData{1}, ParamData{2}, ParamData{4},
+                      ParamData{5}, ParamData{6},
+                      ParamData{InvariantNodeAction::SUBSUME, 0},
+                      ParamData{InvariantNodeAction::SUBSUME, 1},
+                      ParamData{InvariantNodeAction::SUBSUME, 2},
+                      ParamData{InvariantNodeAction::SUBSUME, 4},
+                      ParamData{InvariantNodeAction::SUBSUME, 5},
+                      ParamData{InvariantNodeAction::SUBSUME, 6},
+                      ParamData{InvariantNodeAction::MAKE_IMPLICIT}));
 
 }  // namespace atlantis::testing

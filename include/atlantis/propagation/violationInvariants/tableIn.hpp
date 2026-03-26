@@ -19,11 +19,12 @@ class TableIn : public ViolationInvariant {
 
  public:
   explicit TableIn(SolverBase&, VarId violationVarId,
-                        std::vector<VarViewId>&& vars, const std::vector<std::vector<Int>>& table);
+                   std::vector<VarViewId>&& vars,
+                   const std::vector<std::vector<Int>>& table);
 
   explicit TableIn(SolverBase&, VarViewId violationVarId,
-                        std::vector<VarViewId>&& vars, const std::vector<std::vector<Int>>& table);
-
+                   std::vector<VarViewId>&& vars,
+                   const std::vector<std::vector<Int>>& table);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;

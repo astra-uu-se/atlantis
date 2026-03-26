@@ -44,7 +44,8 @@ class TableTest : public InvariantTest {
     table.resize(numRows, std::vector<Int>(numOutputVars + 1));
     for (size_t r = 0; r < numRows; ++r) {
       for (size_t c = 0; c <= numOutputVars; ++c) {
-        table.at(r).at(c) = c == inputColIndex ? inputColVals.at(r) : varDist(gen);
+        table.at(r).at(c) =
+            c == inputColIndex ? inputColVals.at(r) : varDist(gen);
       }
     }
 
@@ -54,10 +55,9 @@ class TableTest : public InvariantTest {
       outputVars.emplace_back(_solver->makeIntVar(0, 0, 0));
     }
 
-    Table& invariant =
-        _solver->makeInvariant<Table>(
-            *_solver, std::vector<VarViewId>(outputVars),
-            inputVar, std::vector<std::vector<Int>>{table});
+    Table& invariant = _solver->makeInvariant<Table>(
+        *_solver, std::vector<VarViewId>(outputVars), inputVar,
+        std::vector<std::vector<Int>>{table});
     _solver->close();
     return invariant;
   }
@@ -68,7 +68,7 @@ class TableTest : public InvariantTest {
 
   std::vector<Int> expectedRow(bool committedValue = false) {
     return expectedRow(committedValue ? _solver->committedValue(inputVar)
-                                    : _solver->currentValue(inputVar));
+                                      : _solver->currentValue(inputVar));
   }
 
   std::vector<Int> expectedRow(const Int val) {
@@ -85,7 +85,9 @@ class TableTest : public InvariantTest {
   std::vector<Int> actualRow(const Timestamp ts) {
     std::vector<Int> vals(numOutputVars + 1);
     for (size_t c = 0; c < numOutputVars + 1; ++c) {
-      const VarViewId vId = c == inputColIndex ? inputVar : outputVars.at(c - (c < inputColIndex ? 0 : 1));
+      const VarViewId vId =
+          c == inputColIndex ? inputVar
+                             : outputVars.at(c - (c < inputColIndex ? 0 : 1));
       vals.at(c) = _solver->value(ts, vId);
     }
     return vals;
@@ -95,9 +97,12 @@ class TableTest : public InvariantTest {
     std::vector<Int> vals;
     vals.reserve(numOutputVars + 1);
     for (size_t c = 0; c < numOutputVars + 1; ++c) {
-      const VarViewId vId = c == inputColIndex ? inputVar : outputVars.at(c - (c < inputColIndex ? 0 : 1));
-      vals.at(c) = vals.emplace_back(committedValue ? _solver->committedValue(vId)
-                                    : _solver->currentValue(vId));
+      const VarViewId vId =
+          c == inputColIndex ? inputVar
+                             : outputVars.at(c - (c < inputColIndex ? 0 : 1));
+      vals.at(c) =
+          vals.emplace_back(committedValue ? _solver->committedValue(vId)
+                                           : _solver->currentValue(vId));
     }
     return vals;
   }
@@ -187,7 +192,6 @@ TEST_F(TableTest, NotifyCurrentInputChanged) {
     invariant.notifyCurrentInputChanged(ts);
     const auto actual = actualRow(ts);
     EXPECT_THAT(expected, ContainerEq(actual));
-
   }
 }
 
@@ -239,7 +243,6 @@ RC_GTEST_FIXTURE_PROP(TableTest, rapidcheck, ()) {
       for (size_t i = 0; i < expected.size(); ++i) {
         RC_ASSERT(actual.at(i) == expected.at(i));
       }
-
     }
     expected = expectedRow(true);
     actual = actualRow(true);
@@ -260,12 +263,10 @@ class MockTable : public Table {
     Table::registerVars();
   }
   explicit MockTable(SolverBase& _solver,
-                                     std::vector<VarViewId>&& rowViolations,
-                                     VarViewId inputVar,
-                                     std::vector<std::vector<Int>>&& table,
-                                     size_t inputColumn)
-      : Table(_solver, std::move(rowViolations),
-                              inputVar, std::move(table), inputColumn) {
+                     std::vector<VarViewId>&& rowViolations, VarViewId inputVar,
+                     std::vector<std::vector<Int>>&& table, size_t inputColumn)
+      : Table(_solver, std::move(rowViolations), inputVar, std::move(table),
+              inputColumn) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return Table::recompute(timestamp);
     });
@@ -309,11 +310,9 @@ TEST_F(TableTest, SolverIntegration) {
     }
     const VarViewId queryVarId = outputVars.front();
     testNotifications<MockTable>(
-        &_solver->makeInvariant<MockTable>(
-            *_solver, std::move(outputVars), inputVar,
-            std::move(table), 0),
-        {propMode, markingMode, 2, inputVar, 1,
-         queryVarId});
+        &_solver->makeInvariant<MockTable>(*_solver, std::move(outputVars),
+                                           inputVar, std::move(table), 0),
+        {propMode, markingMode, 2, inputVar, 1, queryVarId});
   }
 }
 

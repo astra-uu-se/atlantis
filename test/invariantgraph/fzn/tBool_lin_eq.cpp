@@ -131,7 +131,8 @@ class bool_lin_eqTest : public FznTestBase {
 
   void generate() override {
     const size_t size = *rc::gen::inRange<size_t>(0, 4);
-    coeffs = *rc::gen::container<std::vector<Int>>(size, rc::gen::inRange(-2, 2));
+    coeffs =
+        *rc::gen::container<std::vector<Int>>(size, rc::gen::inRange(-2, 2));
     addArg(coeffs);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {

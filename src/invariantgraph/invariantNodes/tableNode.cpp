@@ -17,7 +17,8 @@
 
 namespace atlantis::invariantgraph {
 
-static std::vector<std::vector<Int>> toIntTable(std::vector<std::vector<bool>>&& boolTable) {
+static std::vector<std::vector<Int>> toIntTable(
+    std::vector<std::vector<bool>>&& boolTable) {
   std::vector<std::vector<Int>> intTable(boolTable.size());
   for (size_t r = 0; r < boolTable.size(); ++r) {
     intTable[r].resize(boolTable[r].size());
@@ -28,9 +29,10 @@ static std::vector<std::vector<Int>> toIntTable(std::vector<std::vector<bool>>&&
   return intTable;
 }
 
-static std::vector<std::vector<Int>>&& moveInputFirst(std::vector<std::vector<Int>>&& table, const size_t inputColumn) {
+static std::vector<std::vector<Int>>&& moveInputFirst(
+    std::vector<std::vector<Int>>&& table, const size_t inputColumn) {
   assert(inputColumn < table.front().size());
-  for (auto & r : table) {
+  for (auto& r : table) {
     const Int inputVal = r[inputColumn];
     for (size_t c = inputColumn; c >= 1; --c) {
       r[c] = r[c - 1];
@@ -40,38 +42,34 @@ static std::vector<std::vector<Int>>&& moveInputFirst(std::vector<std::vector<In
   return std::move(table);
 }
 
-TableNode::TableNode(InvariantGraph& graph,
-                     std::vector<VarNodeId>&& outputs,
+TableNode::TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
                      const VarNodeId input,
                      std::vector<std::vector<Int>>&& table,
                      const size_t inputColumnIndex, const bool isBoolTable)
     : InvariantNode(graph, std::move(outputs), {input}),
       _table(std::move(moveInputFirst(std::move(table), inputColumnIndex))),
-      _isBoolTable(isBoolTable){
+      _isBoolTable(isBoolTable) {
   assert(!_table.empty());
   assert(_table.front().size() == outputVarNodeIds().size() + 1);
 }
 
-TableNode::TableNode(InvariantGraph& graph,
-                     std::vector<VarNodeId>&& outputs,
+TableNode::TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
                      const VarNodeId input,
                      std::vector<std::vector<bool>>&& table,
                      const size_t inputColumnIndex)
-    : TableNode(graph, std::move(outputs), input, std::move(toIntTable(std::move(table))), inputColumnIndex, true) {}
+    : TableNode(graph, std::move(outputs), input,
+                std::move(toIntTable(std::move(table))), inputColumnIndex,
+                true) {}
 
 void TableNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
   assert(staticInputVarNodeIds().size() == 1);
-  assert(std::ranges::all_of(
-      staticInputVarNodeIds(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar() != _isBoolTable;
-      }));
-  assert(std::ranges::all_of(
-      outputVarNodeIds(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar() != _isBoolTable;
-      }));
+  assert(std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+    return invariantGraphConst().varNodeConst(vId).isIntVar() != _isBoolTable;
+  }));
+  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return invariantGraphConst().varNodeConst(vId).isIntVar() != _isBoolTable;
+  }));
 }
 
 size_t TableNode::numCols() const { return _table.front().size(); }
@@ -88,13 +86,17 @@ bool TableNode::removeRows() {
   invalidRows.reserve(_table.size());
   for (size_t r = 0; r < _table.size(); ++r) {
     for (size_t c = 0; c < numCols(); ++c) {
-      if (!invariantGraphConst().varNodeConst(colVar(c)).constDomain()->contains(_table[r][c])) {
+      if (!invariantGraphConst()
+               .varNodeConst(colVar(c))
+               .constDomain()
+               ->contains(_table[r][c])) {
         invalidRows.emplace_back(r);
         break;
       }
     }
   }
-  for (Int index = static_cast<Int>(invalidRows.size()) - 1; index >= 0; --index) {
+  for (Int index = static_cast<Int>(invalidRows.size()) - 1; index >= 0;
+       --index) {
     const size_t invalidRow = invalidRows[index];
     std::swap(_table.back(), _table[invalidRow]);
     _table.pop_back();
@@ -134,7 +136,7 @@ void TableNode::removeDuplicateColumns() {
       removeColumn(j + 1);
     }
   }
-  for (size_t r1 = 0; r1 < _table.size(); ++r1 ) {
+  for (size_t r1 = 0; r1 < _table.size(); ++r1) {
     if (invalidRow[r1]) {
       continue;
     }
@@ -169,15 +171,20 @@ bool TableNode::propagate() {
       values[r] = _table[r][c];
     }
     SortedUniqueVector sortedValues(std::move(values));
-    const size_t prevDomSize = invariantGraphConst().varNodeConst(colVar(c)).constDomain()->size();
+    const size_t prevDomSize =
+        invariantGraphConst().varNodeConst(colVar(c)).constDomain()->size();
     if (c != 0 && (*sortedValues).size() == 1) {
-      invariantGraph().varNode(colVar(c)).domain()->fix((*sortedValues).front());
+      invariantGraph().varNode(colVar(c)).domain()->fix(
+          (*sortedValues).front());
       removeColumn(c);
       removeOutputAtIndex(c - 1);
       prunedVals |= prevDomSize > 1;
     } else {
-      invariantGraph().varNode(colVar(c)).domain()->removeAllValuesExcept(sortedValues);
-      prunedVals |= prevDomSize != invariantGraphConst().varNodeConst(colVar(c)).constDomain()->size();
+      invariantGraph().varNode(colVar(c)).domain()->removeAllValuesExcept(
+          sortedValues);
+      prunedVals |=
+          prevDomSize !=
+          invariantGraphConst().varNodeConst(colVar(c)).constDomain()->size();
     }
   }
   return prunedVals;
@@ -201,8 +208,11 @@ void TableNode::updateState() {
 }
 
 bool TableNode::canBeMadeImplicit() const {
-  return  state() != InvariantNodeState::SUBSUMED &&
-    invariantGraphConst().varNodeConst(staticInputVarNodeIds().front()).definingNodes().empty();
+  return state() != InvariantNodeState::SUBSUMED &&
+         invariantGraphConst()
+             .varNodeConst(staticInputVarNodeIds().front())
+             .definingNodes()
+             .empty();
 }
 
 bool TableNode::makeImplicit() {
@@ -215,21 +225,21 @@ bool TableNode::makeImplicit() {
   for (const auto vId : outputVarNodeIds()) {
     vars.emplace_back(vId);
   }
-  invariantGraph().addImplicitConstraintNode(std::make_shared<TableImplicitNode>(
-            invariantGraph(), std::move(vars), std::move(_table)));
+  invariantGraph().addImplicitConstraintNode(
+      std::make_shared<TableImplicitNode>(invariantGraph(), std::move(vars),
+                                          std::move(_table)));
   return true;
 }
 
 void TableNode::registerOutputVars(propagation::SolverBase& solver,
-                                               SolverMapping& mapping) const {
+                                   SolverMapping& mapping) const {
   for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
     assert(std::ranges::none_of(
         outputVarNodeIds().begin(),
         outputVarNodeIds().begin() + static_cast<Int>(i),
         [&](const VarNodeId vId) { return vId == outputVarNodeIds().at(i); }));
 
-    assert(mapping.solverId(outputVarNodeIds().at(i)) ==
-           propagation::NULL_ID);
+    assert(mapping.solverId(outputVarNodeIds().at(i)) == propagation::NULL_ID);
     makeSolverVar(outputVarNodeIds().at(i), solver, mapping);
   }
   assert(std::ranges::all_of(
@@ -240,8 +250,9 @@ void TableNode::registerOutputVars(propagation::SolverBase& solver,
 }
 
 void TableNode::registerNode(propagation::SolverBase& solver,
-                                         SolverMapping& mapping) const {
-  const propagation::VarViewId inputVarId = mapping.solverId(staticInputVarNodeIds().front());
+                             SolverMapping& mapping) const {
+  const propagation::VarViewId inputVarId =
+      mapping.solverId(staticInputVarNodeIds().front());
 
   std::vector<propagation::VarViewId> outputVarIds;
   outputVarIds.reserve(outputVarNodeIds().size());
@@ -255,8 +266,6 @@ void TableNode::registerNode(propagation::SolverBase& solver,
       std::vector<std::vector<Int>>(_table), 0);
 }
 
-std::string TableNode::dotLangIdentifier() const {
-  return {"table"};
-}
+std::string TableNode::dotLangIdentifier() const { return {"table"}; }
 
 }  // namespace atlantis::invariantgraph

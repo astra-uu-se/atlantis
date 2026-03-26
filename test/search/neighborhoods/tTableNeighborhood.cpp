@@ -8,12 +8,10 @@ namespace atlantis::testing {
 
 using namespace atlantis::search::neighborhoods;
 
-class TableNeighborhoodTest
-    : public NeighborhoodTestBase<TableNeighborhood> {
+class TableNeighborhoodTest : public NeighborhoodTestBase<TableNeighborhood> {
  public:
   std::vector<SearchVar> _vars;
   std::vector<std::vector<Int>> _table;
-
 
   void expectHolds() {
     std::vector<Int> curVals(_vars.size());
@@ -63,7 +61,8 @@ class TableNeighborhoodTest
     }
     _solver->close();
 
-    createNeighborhood(std::vector<SearchVar>(_vars), std::vector<std::vector<Int>>(_table));
+    createNeighborhood(std::vector<SearchVar>(_vars),
+                       std::vector<std::vector<Int>>(_table));
   }
 };
 

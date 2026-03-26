@@ -17,10 +17,12 @@ class BoolTableIn : public ViolationInvariant {
 
  public:
   explicit BoolTableIn(SolverBase&, VarId violationId,
-                        std::vector<VarViewId>&& vars, const std::vector<std::vector<bool>>& table);
+                       std::vector<VarViewId>&& vars,
+                       const std::vector<std::vector<bool>>& table);
 
   explicit BoolTableIn(SolverBase&, VarViewId violationId,
-                        std::vector<VarViewId>&& vars, const std::vector<std::vector<bool>>& table);
+                       std::vector<VarViewId>&& vars,
+                       const std::vector<std::vector<bool>>& table);
 
   void registerVars() override;
   void updateBounds(bool widenOnly) override;
@@ -28,7 +30,7 @@ class BoolTableIn : public ViolationInvariant {
   void notifyInputChanged(Timestamp, LocalId) override;
   VarViewId nextInput(Timestamp) override;
   void notifyCurrentInputChanged(Timestamp) override;
-    void commit(Timestamp) override;
+  void commit(Timestamp) override;
 };
 
 }  // namespace atlantis::propagation

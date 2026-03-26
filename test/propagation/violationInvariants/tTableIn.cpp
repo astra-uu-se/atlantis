@@ -17,8 +17,8 @@ class TableInTest : public InvariantTest {
   std::vector<VarViewId> inputVars;
   std::uniform_int_distribution<Int> inputVarDist;
 
-  Int tableLb = inputVarLb-1;
-  Int tableUb = inputVarUb+1;
+  Int tableLb = inputVarLb - 1;
+  Int tableUb = inputVarUb + 1;
 
   std::vector<std::vector<Int>> table;
   std::uniform_int_distribution<Int> tableDist;
@@ -57,10 +57,8 @@ class TableInTest : public InvariantTest {
 
     outputVar = _solver->makeIntVar(0, 0, 0);
 
-    TableIn& invariant =
-        _solver->makeInvariant<TableIn>(
-            *_solver, outputVar,
-            std::vector<VarViewId>(inputVars), table);
+    TableIn& invariant = _solver->makeInvariant<TableIn>(
+        *_solver, outputVar, std::vector<VarViewId>(inputVars), table);
     _solver->close();
     return invariant;
   }
@@ -83,7 +81,8 @@ class TableInTest : public InvariantTest {
   }
 
   Int computeViolation(const std::vector<Int>& values) {
-    std::vector<std::unordered_map<Int, std::vector<size_t>>> valToRows(values.size(), std::unordered_map<Int, std::vector<size_t>>());
+    std::vector<std::unordered_map<Int, std::vector<size_t>>> valToRows(
+        values.size(), std::unordered_map<Int, std::vector<size_t>>());
     for (size_t c = 0; c < values.size(); ++c) {
       for (size_t r = 0; r < numRows; ++r) {
         if (!valToRows.at(c).contains(table.at(r).at(c))) {
@@ -105,13 +104,11 @@ class TableInTest : public InvariantTest {
   }
 
   Int actualViolation(bool committedValue = false) {
-      return committedValue ? _solver->committedValue(outputVar)
-                                       : _solver->currentValue(outputVar);
+    return committedValue ? _solver->committedValue(outputVar)
+                          : _solver->currentValue(outputVar);
   }
 
-  Int actualViolation(Timestamp ts) {
-    return _solver->value(ts, outputVar);
-  }
+  Int actualViolation(Timestamp ts) { return _solver->value(ts, outputVar); }
 };
 
 TEST_F(TableInTest, UpdateBounds) {
@@ -256,8 +253,7 @@ TEST_F(TableInTest, Commit) {
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
-    ASSERT_EQ(notifiedOutputValue,
-                _solver->value(ts + 1, outputVar));
+    ASSERT_EQ(notifiedOutputValue, _solver->value(ts + 1, outputVar));
   }
 }
 
@@ -265,7 +261,6 @@ RC_GTEST_FIXTURE_PROP(TableInTest, rapidcheck, ()) {
   numInputVars = *rc::gen::inRange(1, 100);
   inputVarLb = -2;
   inputVarUb = 2;
-
 
   generate();
 
@@ -311,12 +306,10 @@ class MockTableIn : public TableIn {
     registered = true;
     TableIn::registerVars();
   }
-  explicit MockTableIn(SolverBase& _solver,
-                                     VarViewId violationId,
-                                     std::vector<VarViewId>&& inputVars,
-                                     const std::vector<std::vector<Int>>& table)
-      : TableIn(_solver, violationId,
-                              std::move(inputVars), table) {
+  explicit MockTableIn(SolverBase& _solver, VarViewId violationId,
+                       std::vector<VarViewId>&& inputVars,
+                       const std::vector<std::vector<Int>>& table)
+      : TableIn(_solver, violationId, std::move(inputVars), table) {
     ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
       return TableIn::recompute(timestamp);
     });
@@ -363,8 +356,7 @@ TEST_F(TableInTest, SolverIntegration) {
     const VarViewId queryVarId = outputVar;
     testNotifications<MockTableIn>(
         &_solver->makeViolationInvariant<MockTableIn>(
-            *_solver, outputVar, std::move(inputVars),
-            table),
+            *_solver, outputVar, std::move(inputVars), table),
         {propMode, markingMode, numinputVars + 1, modifiedVarId, 1,
          queryVarId});
   }

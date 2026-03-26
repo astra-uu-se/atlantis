@@ -6,8 +6,7 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class TableImplicitNodeTestFixture
-    : public NodeTestBase<TableImplicitNode> {
+class TableImplicitNodeTestFixture : public NodeTestBase<TableImplicitNode> {
  public:
   VarNodeId a{NULL_NODE_ID};
   VarNodeId b{NULL_NODE_ID};
@@ -22,20 +21,23 @@ class TableImplicitNodeTestFixture
     d = retrieveIntVarNode(2, 7, "d");
 
     std::vector<VarNodeId> vars{a, b, c, d};
-    std::vector<std::vector<Int>> table(7 - 2 + 1, std::vector<Int>(vars.size()));
+    std::vector<std::vector<Int>> table(7 - 2 + 1,
+                                        std::vector<Int>(vars.size()));
     for (size_t row = 0; row < table.size(); row++) {
       for (size_t col = 0; col < table.at(row).size(); col++) {
         table.at(row).at(col) = (static_cast<Int>(row + col) % 6) + 2;
       }
     }
-    createImplicitConstraintNode(*_invariantGraph, std::move(vars), std::move(table));
+    createImplicitConstraintNode(*_invariantGraph, std::move(vars),
+                                 std::move(table));
   }
 };
 
 TEST_P(TableImplicitNodeTestFixture, construction) {
   const std::vector<VarNodeId> expectedVars{a, b, c, d};
 
-  EXPECT_THAT(invNode().outputVarNodeIds(), ::testing::ContainerEq(expectedVars));
+  EXPECT_THAT(invNode().outputVarNodeIds(),
+              ::testing::ContainerEq(expectedVars));
 }
 
 TEST_P(TableImplicitNodeTestFixture, application) {
@@ -58,13 +60,11 @@ TEST_P(TableImplicitNodeTestFixture, application) {
 
   const auto neighborhood = _solverMapping->neighborhood(_invNodeId);
 
-  EXPECT_TRUE(
-      dynamic_cast<search::neighborhoods::TableNeighborhood*>(
-          neighborhood.get()));
+  EXPECT_TRUE(dynamic_cast<search::neighborhoods::TableNeighborhood*>(
+      neighborhood.get()));
 }
 
-INSTANTIATE_TEST_SUITE_P(TableImplicitNodeTest,
-                         TableImplicitNodeTestFixture,
+INSTANTIATE_TEST_SUITE_P(TableImplicitNodeTest, TableImplicitNodeTestFixture,
                          ::testing::Values(ParamData{}));
 
 }  // namespace atlantis::testing

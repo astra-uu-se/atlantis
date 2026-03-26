@@ -10,8 +10,10 @@ namespace atlantis::invariantgraph {
 
 class TableImplicitNode : public ImplicitConstraintNode {
   std::vector<std::vector<Int>> _table;
+
  public:
-  explicit TableImplicitNode(InvariantGraph&, std::vector<VarNodeId>&&, std::vector<std::vector<Int>>&&);
+  explicit TableImplicitNode(InvariantGraph&, std::vector<VarNodeId>&&,
+                             std::vector<std::vector<Int>>&&);
 
   void init(InvariantNodeId) override;
 

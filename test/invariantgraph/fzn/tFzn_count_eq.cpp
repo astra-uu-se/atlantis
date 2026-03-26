@@ -170,7 +170,7 @@ class fzn_count_eqTest : public FznTestBase {
       if (!hasImplicitConstraints.at(i) && !isFixed(inputs.at(i)) &&
           randBool()) {
         changeValue(inputs.at(i), committedValue);
-          }
+      }
     }
 
     for (const InvariantNodeId implId : implicitConstraints) {
