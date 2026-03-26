@@ -69,6 +69,7 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
   }
 
   backend->setOnSolution([&](const search::SavedAssignment& solution) {
+    assert(solution.getCost().getViolation() >= 0);
     for (size_t i = 0; i < timelimits.size(); i++) {
       if (deadlines[i] < std::chrono::steady_clock::now()) {
         continue;
