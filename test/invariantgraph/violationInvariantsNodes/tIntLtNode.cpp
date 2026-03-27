@@ -66,7 +66,7 @@ TEST_P(IntLtNodeTestFixture, propagation) {
       // TODO: disabled for the MZN challenge. This should be computed by
       // Gecode.
       // EXPECT_TRUE(varNode(reifiedVar).isFixed());
-      const bool actual = varNode(reifiedVar).inDomain({false});
+      const bool actual = varNode(reifiedVar).inDomain(false);
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {
