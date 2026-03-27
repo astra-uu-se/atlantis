@@ -206,9 +206,13 @@ if(BUILD_TESTS)
   FetchContent_MakeAvailable(googletest rapidcheck)
 
   if(APPLE AND TARGET rapidcheck)
-    # rapidcheck's g++-23 branch assumes exception declarations are reachable
-    # without explicitly including <exception>; libc++ is stricter here.
-    target_compile_options(rapidcheck PRIVATE -include exception)
+    # rapidcheck's g++-23 branch relies on transitive standard-library includes
+    # that libc++ does not provide. Force-include a tiny compatibility shim
+    # only for the rapidcheck target on Apple platforms.
+    target_compile_options(
+      rapidcheck PUBLIC
+      -include ${CMAKE_CURRENT_SOURCE_DIR}/cmake/rapidcheck_apple_compat.hpp
+    )
   endif()
 
   # #############
@@ -220,12 +224,8 @@ if(BUILD_TESTS)
   # Standard linking to gtest, gmock, and rapidcheck.
   target_link_libraries(
     runUnitTests
-    gtest
-    gtest_main
-    gmock
     gmock_main
     rapidcheck_gtest
-    rapidcheck_gmock
     Threads::Threads
     -lm
     ${PROJECT_LIB}
