@@ -5,6 +5,15 @@
 
 namespace atlantis::propagation {
 
+static Int compute(const Int x, const Int y) {
+  Int difference;
+  if (sub_overflow(std::max(x, y), std::min(x, y), difference)) {
+    return std::numeric_limits<Int>::max();
+  }
+  assert(difference >= 0);
+  return difference;
+}
+
 /**
  * Constraint x = y
  * @param solver the solver that the invariant is added to
@@ -12,19 +21,19 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-Equal::Equal(SolverBase& solver, VarId violationId, VarViewId x, VarViewId y)
+Equal::Equal(SolverBase& solver, const VarId violationId, const VarViewId x, const VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
-Equal::Equal(SolverBase& solver, VarViewId violationId, VarViewId x,
-             VarViewId y)
-    : Equal(solver, VarId(violationId), x, y) {
+Equal::Equal(SolverBase& solver, const VarViewId violationId, const VarViewId x,
+             const VarViewId y)
+    : Equal(solver, VarId{violationId}, x, y) {
   assert(violationId.isVar());
 }
 
 void Equal::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, LocalId(0), false);
-  _solver.registerInvariantInput(_id, _y, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _x, LocalId{0}, false);
+  _solver.registerInvariantInput(_id, _y, LocalId{1}, false);
   registerDefinedVar(_violationId);
 }
 
@@ -53,9 +62,9 @@ void Equal::recompute(Timestamp ts) {
                                           _solver.value(ts, _y)));
 }
 
-void Equal::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void Equal::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
 
-VarViewId Equal::nextInput(Timestamp ts) {
+VarViewId Equal::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;

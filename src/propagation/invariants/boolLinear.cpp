@@ -73,7 +73,7 @@ void BoolLinear::recompute(Timestamp ts) {
   Int totalSum = 0;
   for (size_t i = 0; i < _violArray.size(); ++i) {
     Int prod;
-    const Int val = static_cast<Int>(_solver.value(ts, _violArray[i]) == 0);
+    const Int val = _solver.value(ts, _violArray[i]) == 0 ? 1 : 0;
     if (mul_overflow<Int>(_coeffs[i], val, prod)) {
       totalSum = _coeffs[i] > 0 ? std::numeric_limits<Int>::max()
                                 : std::numeric_limits<Int>::min();
