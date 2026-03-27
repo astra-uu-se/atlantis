@@ -8,6 +8,7 @@
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::search::neighborhoods {
 
@@ -49,13 +50,19 @@ void IntLinLeNeighborhood::initialize(RandomProvider& random,
   remainingLowerBound.resize(_indices.size());
   remainingLowerBound[_indices.back()] = -_bound;
   for (Int i = static_cast<Int>(_indices.size()) - 2; i >= 0; --i) {
-    const Int val1 = _coeffs[_indices[i + 1]] *
-                     _vars[_indices[i + 1]].domain()->lowerBound();
-    const Int val2 = _coeffs[_indices[i + 1]] *
-                     _vars[_indices[i + 1]].domain()->upperBound();
-
-    remainingLowerBound[_indices[i]] =
-        remainingLowerBound[_indices[i + 1]] + std::min(val1, val2);
+    const Int c = _coeffs[_indices[i + 1]];
+    const Int lb = _vars[_indices[i + 1]].domain()->lowerBound();
+    const Int ub = _vars[_indices[i + 1]].domain()->upperBound();
+    Int val1, val2;
+    if (mul_overflow(c, lb, val1)) {
+      val1 = (c < 0) == (lb < 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
+    }
+    if (mul_overflow(c, ub, val2)) {
+      val2 = (c < 0) == (ub < 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
+    }
+    if (add_overflow(remainingLowerBound[_indices[i + 1]], std::min(val1, val2), remainingLowerBound[_indices[i]])) {
+      remainingLowerBound[_indices[i]] = std::min(val1, val2) > 0 ? std::numeric_limits<Int>::min() : std::numeric_limits<Int>::max();
+    }
   }
   assert(remainingLowerBound[_indices.front()] +
              std::min(_coeffs[_indices.front()] *
@@ -98,10 +105,18 @@ size_t IntLinLeNeighborhood::randomMove(RandomProvider& random,
   _curTimestamp = assignment.currentTimestamp();
   for (size_t i = 0; i < _indices.size(); ++i) {
     std::swap<size_t>(_indices[i],
-                      _indices[random.intInRange(i, _indices.size() - 1)]);
+                      _indices[random.intInRange(static_cast<Int>(i), static_cast<Int>(_indices.size()) - 1)]);
     _curVarIdx = _indices[i];
     const Int curVal = assignment.committedValue(_vars[_curVarIdx].solverId());
-    const Int remVal = curVal + (_bound - _curSum) / _coeffs[_curVarIdx];
+    Int diff;
+    if (sub_overflow(_bound, _curSum, diff)) {
+      continue;
+    }
+    const Int quotient = diff / _coeffs[_curVarIdx];
+    Int remVal;
+    if (add_overflow(curVal, quotient, remVal)) {
+      continue;
+    }
     assert(_curSum + _coeffs[_curVarIdx] * (remVal - curVal) <= _bound);
     if (0 < _coeffs[_curVarIdx]) {
       const Int lb = _vars[_curVarIdx].domain()->lowerBound();
