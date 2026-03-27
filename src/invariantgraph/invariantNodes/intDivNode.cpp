@@ -70,7 +70,7 @@ bool IntDivNode::updateNumerator() {
     }
     const bool nIsPos = (q >= 0) == (d >= 0);
     Int prod;
-    if (__builtin_smull_overflow(q, d, &prod)) {
+    if (__builtin_mul_overflow(q, d, &prod)) {
       if (nIsPos) {
         prod = std::numeric_limits<Int>::max();
       } else {
@@ -80,8 +80,8 @@ bool IntDivNode::updateNumerator() {
     assert(prod != 0);
     const Int remainder = std::abs(d) - 1;
     Int sum;
-    if (__builtin_saddl_overflow(prod, prod > 0 ? remainder : -remainder,
-                                 &sum)) {
+    if (__builtin_add_overflow(prod, prod > 0 ? remainder : -remainder,
+                               &sum)) {
       if (nIsPos) {
         sum = std::numeric_limits<Int>::max();
       } else {

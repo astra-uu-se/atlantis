@@ -79,24 +79,24 @@ void IntLinLeNode::updateState() {
     Int prod2;
     const Int varLb =
         invariantGraph().varNode(staticInputVarNodeIds().at(i)).lowerBound();
-    if (__builtin_smull_overflow(_coeffs[i], varLb, &prod1)) {
-      prod1 = (_coeffs[1] < 0) == (varLb < 0) ? std::numeric_limits<Int>::max()
+    if (__builtin_mul_overflow(_coeffs[i], varLb, &prod1)) {
+      prod1 = (_coeffs[i] < 0) == (varLb < 0) ? std::numeric_limits<Int>::max()
                                               : std::numeric_limits<Int>::min();
     }
     const Int varUb =
         invariantGraph().varNode(staticInputVarNodeIds().at(i)).upperBound();
-    if (__builtin_smull_overflow(_coeffs[i], varUb, &prod2)) {
-      prod2 = (_coeffs[1] < 0) == (varUb < 0) ? std::numeric_limits<Int>::max()
+    if (__builtin_mul_overflow(_coeffs[i], varUb, &prod2)) {
+      prod2 = (_coeffs[i] < 0) == (varUb < 0) ? std::numeric_limits<Int>::max()
                                               : std::numeric_limits<Int>::min();
     }
     Int sum;
-    if (__builtin_saddl_overflow(lb, std::min(prod1, prod2), &sum)) {
+    if (__builtin_add_overflow(lb, std::min(prod1, prod2), &sum)) {
       lb = lb < 0 ? std::numeric_limits<Int>::min()
                   : std::numeric_limits<Int>::max();
     } else {
       lb = sum;
     }
-    if (__builtin_saddl_overflow(ub, std::max(prod1, prod2), &sum)) {
+    if (__builtin_add_overflow(ub, std::max(prod1, prod2), &sum)) {
       ub = ub < 0 ? std::numeric_limits<Int>::min()
                   : std::numeric_limits<Int>::max();
     } else {

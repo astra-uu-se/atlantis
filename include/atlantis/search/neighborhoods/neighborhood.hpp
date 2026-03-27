@@ -2,8 +2,9 @@
 
 #include <vector>
 
+#include "atlantis/search/searchVariable.hpp"
+
 namespace atlantis::search {
-class SearchVar;
 class Assignment;
 class RandomProvider;
 }  // namespace atlantis::search

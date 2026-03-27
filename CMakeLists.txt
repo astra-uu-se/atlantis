@@ -10,6 +10,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include(GNUInstallDirs)
 include(cmake/CPM.cmake)
 
+if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+  # Boost 1.80, pulled indirectly via fznparser, still references
+  # std::unary_function unless this compatibility define is enabled.
+  set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX98_FUNCTION_BASE")
+endif()
+
 CPMAddPackage(
   NAME PackageProject.cmake
   VERSION 1.13.0
