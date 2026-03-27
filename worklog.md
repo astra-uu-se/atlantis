@@ -11,7 +11,7 @@
 - Fix low-risk findings that improve robustness without changing intended behavior.
 
 ### Status
-- In progress.
+- Completed for baseline, warnings, ASan, UBSan, and TSan verification on macOS with Apple Clang.
 
 ### Completed
 - Added portable sanitizer selection through `ATLANTIS_SANITIZERS` in CMake.
@@ -20,6 +20,7 @@
 - Ran `ctest --output-on-failure -j 8` in `build`.
 - Ran full AddressSanitizer build and test sweep.
 - Ran full UndefinedBehaviorSanitizer build and test sweep.
+- Ran full ThreadSanitizer build and test sweep.
 
 ### Results
 - Baseline debug suite: 1079 passed, 0 failed, 6 disabled challenge tests.
@@ -30,6 +31,9 @@
 - UBSan build: succeeded with `make build-tests-ubsan`.
 - Initial UBSan runs exposed several signed-overflow and indexing issues in production code plus one UBSan-hostile mock pattern in `tElement2dVar`.
 - UBSan suite after fixes: 1079 passed, 0 failed, 6 disabled challenge tests.
+- Initial TSan configure attempts stalled in third-party dependency population because each build tree fetched its own CPM/FetchContent dependencies.
+- TSan build: succeeded with `make build-tests-tsan` after switching to a shared CPM source cache for all build variants.
+- TSan suite: 1079 passed, 0 failed, 6 disabled challenge tests.
 
 ### Fixes applied
 - Fixed `test/testHelper.hpp::subsets` to:
@@ -44,12 +48,14 @@
 - Switched `Linear` recomputation to saturating arithmetic and made incremental updates fall back to full recomputation so sanitizer-safe behavior matches the invariant contract.
 - Updated affected tests to assert the new saturating semantics instead of relying on undefined signed overflow.
 - Reworked `tElement2dVar` integration coverage to avoid a mock pattern that triggers UBSan object-type diagnostics under Apple Clang/libc++.
+- Added a shared CPM source cache default so normal, ASan, UBSan, and TSan build trees reuse the same dependency sources instead of refetching Boost/fznparser independently.
 
 ### Retest results
 - Baseline debug suite: 1079 passed, 0 failed, 6 disabled challenge tests.
 - ASan suite: 1079 passed, 0 failed, 6 disabled challenge tests.
 - UBSan suite: 1079 passed, 0 failed, 6 disabled challenge tests.
+- TSan suite: 1079 passed, 0 failed, 6 disabled challenge tests.
 
 ### Next
-- Investigate the ThreadSanitizer build on macOS, which is currently stalling during third-party Boost/fznparser dependency population in `build-tsan` before Atlantis itself is compiled.
 - Decide whether the remaining 4 Apple Clang warnings from fetched third-party Boost/fznparser code are worth suppressing locally or should remain as external noise.
+- If Linux or GCC sanitizer validation is important, repeat the same sanitizer matrix there to confirm behavior outside the Apple Clang/libc++ toolchain.
