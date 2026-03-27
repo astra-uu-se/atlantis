@@ -67,15 +67,36 @@ CPMAddPackage(
   GIT_TAG "v1.13.0"
 )
 
-# Check if microsoft visual code. I have no idea if this works
+# Apply warning flags only to C++ compilation. The C++ standard itself is
+# configured via CMAKE_CXX_STANDARD above.
 if(MSVC)
-  add_compile_options(/std:c++23 /permissive /W4 /w14640)
+  add_compile_options(
+    $<$<COMPILE_LANGUAGE:CXX>:/permissive>
+    $<$<COMPILE_LANGUAGE:CXX>:/W4>
+    $<$<COMPILE_LANGUAGE:CXX>:/w14640>
+  )
 elseif(APPLE)
-  add_compile_options(-std=c++23 -Wall -Wextra -Wnon-virtual-dtor -pedantic)
+  add_compile_options(
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
+    $<$<COMPILE_LANGUAGE:CXX>:-pedantic>
+  )
 elseif(NOT ATLANTIS_SANITIZERS)
-  add_compile_options(-std=c++23 -Wall -Wextra -Wnon-virtual-dtor -pedantic -static)
+  add_compile_options(
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
+    $<$<COMPILE_LANGUAGE:CXX>:-pedantic>
+    $<$<COMPILE_LANGUAGE:CXX>:-static>
+  )
 else()
-  add_compile_options(-std=c++23 -Wall -Wextra -Wnon-virtual-dtor -pedantic)
+  add_compile_options(
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
+    $<$<COMPILE_LANGUAGE:CXX>:-pedantic>
+  )
 endif()
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
