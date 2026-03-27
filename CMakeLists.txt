@@ -9,6 +9,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(GNUInstallDirs)
+if(NOT CPM_SOURCE_CACHE AND NOT DEFINED ENV{CPM_SOURCE_CACHE})
+  set(CPM_SOURCE_CACHE "${CMAKE_SOURCE_DIR}/.cpm-cache" CACHE PATH
+      "Directory to share CPM dependency sources across build trees")
+endif()
 include(cmake/CPM.cmake)
 
 set(ATLANTIS_SANITIZERS "" CACHE STRING
