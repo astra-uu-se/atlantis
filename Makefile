@@ -12,7 +12,7 @@ CMAKE_C_COMPILER=$(if ${GCC}, -DCMAKE_C_COMPILER=${GCC},)
 CMAKE_CXX_COMPILER=$(if ${GPP}, -DCMAKE_CXX_COMPILER=${GPP},)
 export CMAKE_OPTIONS+= ${ENV_CMAKE_OPTIONS}${CMAKE_C_COMPILER}${CMAKE_CXX_COMPILER}
 MKFILE_PATH=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-BUILD_DIR=${MKFILE_PATH}build
+BUILD_DIR?=${MKFILE_PATH}build
 
 CMAKE=$(shell which cmake)
 
@@ -92,6 +92,36 @@ build-tests:
 	                                           -DBUILD_BENCHMARKS:BOOL=OFF ..
 	cd ${BUILD_DIR}; $(MAKE) -j 8
 
+.PHONY: build-tests-asan
+build-tests-asan: BUILD_DIR=${MKFILE_PATH}build-asan
+build-tests-asan:
+	mkdir -p ${BUILD_DIR}
+	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
+	                                           -DBUILD_TESTS:BOOL=ON \
+	                                           -DBUILD_BENCHMARKS:BOOL=OFF \
+	                                           -DATLANTIS_SANITIZERS=address ..
+	cd ${BUILD_DIR}; $(MAKE) -j 8
+
+.PHONY: build-tests-ubsan
+build-tests-ubsan: BUILD_DIR=${MKFILE_PATH}build-ubsan
+build-tests-ubsan:
+	mkdir -p ${BUILD_DIR}
+	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
+	                                           -DBUILD_TESTS:BOOL=ON \
+	                                           -DBUILD_BENCHMARKS:BOOL=OFF \
+	                                           -DATLANTIS_SANITIZERS=undefined ..
+	cd ${BUILD_DIR}; $(MAKE) -j 8
+
+.PHONY: build-tests-tsan
+build-tests-tsan: BUILD_DIR=${MKFILE_PATH}build-tsan
+build-tests-tsan:
+	mkdir -p ${BUILD_DIR}
+	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
+	                                           -DBUILD_TESTS:BOOL=ON \
+	                                           -DBUILD_BENCHMARKS:BOOL=OFF \
+	                                           -DATLANTIS_SANITIZERS=thread ..
+	cd ${BUILD_DIR}; $(MAKE) -j 8
+
 .PHONY: build-benchmarks
 build-benchmarks:
 	mkdir -p ${BUILD_DIR}
@@ -114,6 +144,18 @@ run: build
 
 .PHONY: run-tests
 run-tests: build-tests
+	exec ${BUILD_DIR}/runUnitTests
+
+.PHONY: run-tests-asan
+run-tests-asan: build-tests-asan
+	exec ${BUILD_DIR}/runUnitTests
+
+.PHONY: run-tests-ubsan
+run-tests-ubsan: build-tests-ubsan
+	exec ${BUILD_DIR}/runUnitTests
+
+.PHONY: run-tests-tsan
+run-tests-tsan: build-tests-tsan
 	exec ${BUILD_DIR}/runUnitTests
 
 .PHONY: run-benchmarks

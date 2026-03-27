@@ -1,6 +1,7 @@
 #include "atlantis/propagation/violationInvariants/equal.hpp"
 
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::propagation {
 
@@ -35,17 +36,22 @@ void Equal::updateBounds(bool widenOnly) {
 
   const Int lb = xLb <= yUb && yLb <= xUb
                      ? 0
-                     : std::min(std::abs(xLb - yUb), std::abs(yLb - xUb));
+                     : std::min(overflow::saturatingAbsDiff(xLb, yUb),
+                                overflow::saturatingAbsDiff(yLb, xUb));
 
-  const Int ub = std::max(std::max(std::abs(xLb - yLb), std::abs(xLb - yUb)),
-                          std::max(std::abs(xUb - yLb), std::abs(xUb - yUb)));
+  const Int ub = std::max(
+      std::max(overflow::saturatingAbsDiff(xLb, yLb),
+               overflow::saturatingAbsDiff(xLb, yUb)),
+      std::max(overflow::saturatingAbsDiff(xUb, yLb),
+               overflow::saturatingAbsDiff(xUb, yUb)));
 
   _solver.updateBounds(_violationId, lb, ub, widenOnly);
 }
 
 void Equal::recompute(Timestamp ts) {
   updateValue(ts, _violationId,
-              std::abs(_solver.value(ts, _x) - _solver.value(ts, _y)));
+              overflow::saturatingAbsDiff(_solver.value(ts, _x),
+                                          _solver.value(ts, _y)));
 }
 
 void Equal::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }

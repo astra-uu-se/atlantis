@@ -12,6 +12,7 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/utils/overflow.hpp"
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
 #include "atlantis/utils/domains.hpp"
@@ -73,8 +74,8 @@ void AllDifferentNode::updateState() {
     unionUb =
         std::max(unionUb, invariantGraph().varNodeConst(vId).upperBound());
   }
-  const Int numVals = unionUb - unionLb + 1;
-  if (numVals < static_cast<Int>(staticInputVarNodeIds().size())) {
+  if (overflow::saturatingIntervalSize(unionLb, unionUb) <
+      staticInputVarNodeIds().size()) {
     if (isReified()) {
       fixReified(false);
     } else if (shouldHold()) {

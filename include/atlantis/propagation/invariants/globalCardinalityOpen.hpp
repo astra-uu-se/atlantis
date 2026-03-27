@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "atlantis/propagation/invariants/invariant.hpp"
 
 namespace atlantis::propagation {
@@ -11,6 +13,7 @@ class GlobalCardinalityOpen : public Invariant {
   std::vector<Int> _coverVarIndex;
   std::vector<CommittableInt> _counts;
   Int _offset;
+  [[nodiscard]] std::optional<size_t> coverIndex(Int value) const;
   void increaseCount(Timestamp ts, Int value);
   void decreaseCountAndUpdateOutput(Timestamp ts, Int value);
   void increaseCountAndUpdateOutput(Timestamp ts, Int value);
@@ -35,30 +38,27 @@ class GlobalCardinalityOpen : public Invariant {
 };
 
 inline void GlobalCardinalityOpen::increaseCount(Timestamp ts, Int value) {
-  if (0 <= value - _offset &&
-      value - _offset < static_cast<Int>(_coverVarIndex.size()) &&
-      _coverVarIndex[value - _offset] >= 0) {
-    _counts[_coverVarIndex[value - _offset]].incValue(ts, 1);
+  const auto index = coverIndex(value);
+  if (index.has_value() && _coverVarIndex[*index] >= 0) {
+    _counts[_coverVarIndex[*index]].incValue(ts, 1);
   }
 }
 
 inline void GlobalCardinalityOpen::decreaseCountAndUpdateOutput(Timestamp ts,
                                                                 Int value) {
-  if (0 <= value - _offset &&
-      value - _offset < static_cast<Int>(_coverVarIndex.size()) &&
-      _coverVarIndex[value - _offset] >= 0) {
-    updateValue(ts, _outputs[_coverVarIndex[value - _offset]],
-                _counts[_coverVarIndex[value - _offset]].incValue(ts, -1));
+  const auto index = coverIndex(value);
+  if (index.has_value() && _coverVarIndex[*index] >= 0) {
+    updateValue(ts, _outputs[_coverVarIndex[*index]],
+                _counts[_coverVarIndex[*index]].incValue(ts, -1));
   }
 }
 
 inline void GlobalCardinalityOpen::increaseCountAndUpdateOutput(Timestamp ts,
                                                                 Int value) {
-  if (0 <= value - _offset &&
-      value - _offset < static_cast<Int>(_coverVarIndex.size()) &&
-      _coverVarIndex[value - _offset] >= 0) {
-    updateValue(ts, _outputs[_coverVarIndex[value - _offset]],
-                _counts[_coverVarIndex[value - _offset]].incValue(ts, 1));
+  const auto index = coverIndex(value);
+  if (index.has_value() && _coverVarIndex[*index] >= 0) {
+    updateValue(ts, _outputs[_coverVarIndex[*index]],
+                _counts[_coverVarIndex[*index]].incValue(ts, 1));
   }
 }
 

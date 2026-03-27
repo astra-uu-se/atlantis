@@ -6,9 +6,40 @@ project(${PROJECT_NAME} VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(GNUInstallDirs)
 include(cmake/CPM.cmake)
+
+set(ATLANTIS_SANITIZERS "" CACHE STRING
+    "Comma- or semicolon-separated list of sanitizers to enable (address, undefined, thread)")
+
+set(_atlantis_supported_sanitizers address undefined thread)
+set(_atlantis_sanitizer_flags "")
+if(ATLANTIS_SANITIZERS)
+  if(MSVC)
+    message(FATAL_ERROR "ATLANTIS_SANITIZERS is only supported with GCC- and Clang-like toolchains")
+  endif()
+
+  string(REPLACE "," ";" _atlantis_requested_sanitizers "${ATLANTIS_SANITIZERS}")
+  separate_arguments(_atlantis_requested_sanitizers)
+  list(REMOVE_DUPLICATES _atlantis_requested_sanitizers)
+
+  foreach(_atlantis_sanitizer IN LISTS _atlantis_requested_sanitizers)
+    if(NOT _atlantis_sanitizer IN_LIST _atlantis_supported_sanitizers)
+      message(FATAL_ERROR
+        "Unsupported sanitizer '${_atlantis_sanitizer}'. "
+        "Use one or more of: ${_atlantis_supported_sanitizers}")
+    endif()
+    list(APPEND _atlantis_sanitizer_flags "-fsanitize=${_atlantis_sanitizer}")
+  endforeach()
+
+  if("thread" IN_LIST _atlantis_requested_sanitizers
+     AND ("address" IN_LIST _atlantis_requested_sanitizers
+          OR "undefined" IN_LIST _atlantis_requested_sanitizers))
+    message(FATAL_ERROR "ThreadSanitizer must be used without address/undefined sanitizers")
+  endif()
+endif()
 
 if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
   # Boost 1.80, pulled indirectly via fznparser, still references
@@ -30,8 +61,10 @@ if(MSVC)
   add_compile_options(/std:c++23 /permissive /W4 /w14640)
 elseif(APPLE)
   add_compile_options(-std=c++23 -Wall -Wextra -Wnon-virtual-dtor -pedantic)
-else()
+elseif(NOT ATLANTIS_SANITIZERS)
   add_compile_options(-std=c++23 -Wall -Wextra -Wnon-virtual-dtor -pedantic -static)
+else()
+  add_compile_options(-std=c++23 -Wall -Wextra -Wnon-virtual-dtor -pedantic)
 endif()
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -41,6 +74,11 @@ if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g0 -O3 -DNDEBUG")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
+endif()
+
+if(_atlantis_sanitizer_flags)
+  add_compile_options(${_atlantis_sanitizer_flags} -fno-omit-frame-pointer)
+  add_link_options(${_atlantis_sanitizer_flags})
 endif()
 
 # ----------------------------------------------------------------------------
@@ -150,7 +188,7 @@ target_link_libraries(${PROJECT_LIB} fznparser::fznparser fmt::fmt)
 target_link_libraries(${PROJECT_EXEC} ${PROJECT_LIB} cxxopts::cxxopts fmt::fmt)
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-else()
+elseif(NOT ATLANTIS_SANITIZERS)
   include(CheckIPOSupported)
   check_ipo_supported(RESULT lto_supported OUTPUT error)
 
@@ -160,6 +198,8 @@ else()
   else()
     message(STATUS "IPO / LTO not supported: <${error}>")
   endif()
+elseif(ATLANTIS_SANITIZERS)
+  message(STATUS "IPO / LTO disabled because ATLANTIS_SANITIZERS=${ATLANTIS_SANITIZERS}")
 endif()
 
 # Options. Turn on with 'cmake -Dmyvarname=ON'.

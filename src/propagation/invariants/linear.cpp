@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::propagation {
 
@@ -81,17 +82,15 @@ void Linear::updateBounds(bool widenOnly) {
 void Linear::recompute(Timestamp ts) {
   Int sum = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    sum += _coeffs[i] * _solver.value(ts, _varArray[i]);
+    sum = overflow::saturatingAdd(
+        sum, overflow::saturatingMul(_coeffs[i], _solver.value(ts, _varArray[i])));
   }
   updateValue(ts, _output, sum);
 }
 
 void Linear::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _varArray.size());
-  incValue(ts, _output,
-           (_solver.value(ts, _varArray[id]) -
-            _solver.committedValue(_varArray[id])) *
-               _coeffs[id]);
+  recompute(ts);
 }
 
 VarViewId Linear::nextInput(Timestamp ts) {

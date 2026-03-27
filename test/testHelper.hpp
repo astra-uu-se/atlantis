@@ -10,16 +10,19 @@ namespace atlantis::testing {
 // below function returns the subsets of vector origin.
 template <class T>
 std::vector<std::vector<T>> subsets(std::vector<T>& origin) {
-  std::vector<T> subset;
   std::vector<std::vector<T>> res;
   std::deque<std::pair<size_t, size_t>> q;
   res.emplace_back(std::vector<T>{});
-  q.emplace_back(size_t{0}, 0 + 1);
-  q.emplace_back(res.size(), 0 + 1);
+  if (origin.empty()) {
+    return res;
+  }
+
+  q.emplace_back(size_t{0}, 1);
   res.emplace_back(std::vector<T>{origin.at(0)});
+  q.emplace_back(res.size() - 1, 1);
 
   while (!q.empty()) {
-    const auto& [resIndex, originIndex] = q.front();
+    const auto [resIndex, originIndex] = q.front();
     q.pop_front();
     for (size_t j = originIndex; j < origin.size(); ++j) {
       q.emplace_back(std::pair<size_t, size_t>{res.size(), j + 1});
