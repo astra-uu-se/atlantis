@@ -1,11 +1,12 @@
 UNAME_S := $(shell uname -s)
+find-first = $(firstword $(foreach candidate,$1,$(shell which $(candidate) 2>/dev/null)))
 
 ifeq ($(UNAME_S),Darwin)
-GCC=$(shell which clang)
-GPP=$(shell which clang++)
+GCC=$(call find-first,clang)
+GPP=$(call find-first,clang++)
 else
-GCC=$(shell which gcc-13)
-GPP=$(shell which g++-13)
+GCC=$(call find-first,gcc-14 gcc-13 gcc)
+GPP=$(call find-first,g++-14 g++-13 g++)
 endif
 
 CMAKE_C_COMPILER=$(if ${GCC}, -DCMAKE_C_COMPILER=${GCC},)
