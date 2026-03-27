@@ -17,6 +17,9 @@ if(NOT CPM_SOURCE_CACHE AND NOT DEFINED ENV{CPM_SOURCE_CACHE})
   set(CPM_SOURCE_CACHE "${CMAKE_SOURCE_DIR}/.cpm-cache" CACHE PATH
       "Directory to share CPM dependency sources across build trees")
 endif()
+if(CPM_SOURCE_CACHE AND NOT DEFINED ENV{CPM_SOURCE_CACHE})
+  set(ENV{CPM_SOURCE_CACHE} "${CPM_SOURCE_CACHE}")
+endif()
 include(cmake/CPM.cmake)
 
 set(ATLANTIS_SANITIZERS "" CACHE STRING
@@ -178,6 +181,51 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/fmtlib/fmt
   GIT_TAG 11.2.0
 )
+
+# fznparser's fallback probe may redirect Boost to a SourceForge .7z archive
+# that recent CMake builds on macOS fail to extract reliably. Preseed a shared
+# Boost source tree from the upstream .tar.bz2 archive and force nested
+# dependencies to reuse it instead of downloading Boost again.
+set(BOOST_URL "https://archives.boost.io/release/1.80.0/source/boost_1_80_0.tar.bz2"
+    CACHE STRING "Boost download URL" FORCE)
+set(BOOST_URL_SHA256 "1e19565d82e43bc59209a168f5ac899d3ba471d55c7610c677d4ccf2c9c500c0"
+    CACHE STRING "Boost download URL SHA256 checksum" FORCE)
+set(_atlantis_boost_source_dir "${CPM_SOURCE_CACHE}/boost_1_80_0")
+if(NOT EXISTS "${_atlantis_boost_source_dir}/boost/version.hpp")
+  set(_atlantis_boost_archive "${CPM_SOURCE_CACHE}/boost_1_80_0.tar.bz2")
+  set(_atlantis_boost_extract_dir "${CPM_SOURCE_CACHE}/boost_1_80_0.extract")
+  if(EXISTS "${_atlantis_boost_archive}")
+    file(SHA256 "${_atlantis_boost_archive}" _atlantis_boost_archive_hash)
+    if(NOT _atlantis_boost_archive_hash STREQUAL BOOST_URL_SHA256)
+      file(REMOVE "${_atlantis_boost_archive}")
+    endif()
+  endif()
+
+  file(MAKE_DIRECTORY "${CPM_SOURCE_CACHE}")
+  file(DOWNLOAD
+       "${BOOST_URL}"
+       "${_atlantis_boost_archive}"
+       EXPECTED_HASH "SHA256=${BOOST_URL_SHA256}"
+       SHOW_PROGRESS)
+
+  file(REMOVE_RECURSE "${_atlantis_boost_extract_dir}")
+  file(MAKE_DIRECTORY "${_atlantis_boost_extract_dir}")
+  execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E tar xjf "${_atlantis_boost_archive}"
+    WORKING_DIRECTORY "${_atlantis_boost_extract_dir}"
+    RESULT_VARIABLE _atlantis_boost_extract_result)
+  if(NOT _atlantis_boost_extract_result EQUAL 0)
+    message(FATAL_ERROR "Failed to extract cached Boost archive: ${_atlantis_boost_archive}")
+  endif()
+
+  file(REMOVE_RECURSE "${_atlantis_boost_source_dir}")
+  file(RENAME
+       "${_atlantis_boost_extract_dir}/boost_1_80_0"
+       "${_atlantis_boost_source_dir}")
+  file(REMOVE_RECURSE "${_atlantis_boost_extract_dir}")
+endif()
+set(FETCHCONTENT_SOURCE_DIR_BOOST "${_atlantis_boost_source_dir}"
+    CACHE PATH "Shared Boost source directory" FORCE)
 
 FetchContent_MakeAvailable(cxxopts fznparser fmt)
 
