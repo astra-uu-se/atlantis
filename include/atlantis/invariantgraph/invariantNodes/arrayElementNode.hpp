@@ -7,7 +7,7 @@ namespace atlantis::invariantgraph {
 class ArrayElementNode : public InvariantNode {
   std::vector<Int> _parVector;
   Int _offset;
-  bool _isIntVector;
+  [[maybe_unused]] bool _isIntVector;
 
  public:
   ArrayElementNode(InvariantGraph& graph, std::vector<Int>&& parVector,

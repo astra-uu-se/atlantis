@@ -5,7 +5,7 @@
 namespace atlantis::invariantgraph {
 class TableNode : public InvariantNode {
   std::vector<std::vector<Int>> _table;
-  bool _isBoolTable;
+  [[maybe_unused]] bool _isBoolTable;
 
   [[nodiscard]] VarNodeId numCols() const;
   [[nodiscard]] VarNodeId colVar(size_t index) const;

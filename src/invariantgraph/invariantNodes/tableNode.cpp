@@ -58,7 +58,7 @@ TableNode::TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
                      std::vector<std::vector<bool>>&& table,
                      const size_t inputColumnIndex)
     : TableNode(graph, std::move(outputs), input,
-                std::move(toIntTable(std::move(table))), inputColumnIndex,
+                toIntTable(std::move(table)), inputColumnIndex,
                 true) {}
 
 void TableNode::init(InvariantNodeId id) {

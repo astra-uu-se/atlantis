@@ -13,8 +13,9 @@ include(cmake/CPM.cmake)
 if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
   # Boost 1.80, pulled indirectly via fznparser, still references
   # std::unary_function unless this compatibility define is enabled.
+  # The extra warning suppressions are for third-party Boost/fznparser headers.
   set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX98_FUNCTION_BASE")
+      "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX98_FUNCTION_BASE -Wno-deprecated-builtins -Wno-deprecated-copy -Wno-deprecated-copy-with-user-provided-copy")
 endif()
 
 CPMAddPackage(
@@ -27,6 +28,8 @@ CPMAddPackage(
 # Check if microsoft visual code. I have no idea if this works
 if(MSVC)
   add_compile_options(/std:c++23 /permissive /W4 /w14640)
+elseif(APPLE)
+  add_compile_options(-std=c++23 -Wall -Wextra -Wnon-virtual-dtor -pedantic)
 else()
   add_compile_options(-std=c++23 -Wall -Wextra -Wnon-virtual-dtor -pedantic -static)
 endif()
@@ -201,6 +204,12 @@ if(BUILD_TESTS)
   )
 
   FetchContent_MakeAvailable(googletest rapidcheck)
+
+  if(APPLE AND TARGET rapidcheck)
+    # rapidcheck's g++-23 branch assumes exception declarations are reachable
+    # without explicitly including <exception>; libc++ is stricter here.
+    target_compile_options(rapidcheck PRIVATE -include exception)
+  endif()
 
   # #############
   # Unit Tests

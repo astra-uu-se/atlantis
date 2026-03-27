@@ -133,8 +133,7 @@ static void partitionIntoLayersUtil(
     const size_t comp = componentOfVar[varId];
     for (const VarId cVarId : components[comp]) {
       visited[cVarId] = true;
-      const InvariantId cDefInv = graph.definingInvariant(cVarId);
-      assert(cDefInv != NULL_ID);
+      assert(graph.definingInvariant(cVarId) != NULL_ID);
       for (const VarId inputId : std::views::keys(graph.inputVars(defInv))) {
         if (componentOfVar[inputId] != comp) {
           if (!visited[inputId]) {

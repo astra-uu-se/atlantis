@@ -7,7 +7,7 @@
 namespace atlantis::invariantgraph {
 
 class IntAllEqualNode : public ViolationInvariantNode {
-  bool _breaksCycle{false};
+  [[maybe_unused]] bool _breaksCycle{false};
 
   std::optional<Int> _boundVal;
 

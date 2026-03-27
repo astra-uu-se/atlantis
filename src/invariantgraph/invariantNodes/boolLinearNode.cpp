@@ -64,17 +64,6 @@ void BoolLinearNode::updateState() {
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
 
-  // update bounds of output:
-  Int lb = _offset;
-  Int ub = _offset;
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    lb += std::min<Int>(0, _coeffs.at(i));
-    ub += std::max<Int>(0, _coeffs.at(i));
-  }
-
-  // invariantGraph().varNode(outputVarNodeIds().front()).removeValuesBelow(lb);
-  // invariantGraph().varNode(outputVarNodeIds().front()).removeValuesAbove(ub);
-
   if (staticInputVarNodeIds().empty()) {
     invariantGraph().varNode(outputVarNodeIds().front()).fixToValue(_offset);
     setState(InvariantNodeState::SUBSUMED);

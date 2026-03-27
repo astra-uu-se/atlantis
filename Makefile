@@ -1,6 +1,14 @@
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S),Darwin)
+GCC=$(shell which clang)
+GPP=$(shell which clang++)
+else
 GCC=$(shell which gcc-13)
-CMAKE_C_COMPILER=$(if ${GCC}, -DCMAKE_C_COMPILER=${GCC},)
 GPP=$(shell which g++-13)
+endif
+
+CMAKE_C_COMPILER=$(if ${GCC}, -DCMAKE_C_COMPILER=${GCC},)
 CMAKE_CXX_COMPILER=$(if ${GPP}, -DCMAKE_CXX_COMPILER=${GPP},)
 export CMAKE_OPTIONS+= ${ENV_CMAKE_OPTIONS}${CMAKE_C_COMPILER}${CMAKE_CXX_COMPILER}
 MKFILE_PATH=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))

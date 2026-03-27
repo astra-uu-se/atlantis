@@ -24,7 +24,7 @@ class GlobalCardinalityLowUpClosedNode : public ViolationInvariantNode {
                                             bool shouldHold = true);
 
   void init(InvariantNodeId) override;
-  void updateState();
+  void updateState() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

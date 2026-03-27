@@ -36,7 +36,7 @@ class Domain {
     explicit Iterator(Int lb, Int ub, Int pos);
     explicit Iterator(const std::vector<Int>&, size_t pos);
 
-    const reference operator*() const;
+    reference operator*() const;
     pointer operator->() const;
 
     Iterator& operator++();

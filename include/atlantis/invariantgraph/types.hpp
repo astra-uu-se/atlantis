@@ -84,7 +84,7 @@ struct InvariantGraphOutputVarArray {
   explicit InvariantGraphOutputVarArray(
       const std::string& identifier, const std::vector<Int>& indexSetSizes,
       const std::vector<VarNodeId>& varNodeIds)
-      : InvariantGraphOutputVarArray(std::move(std::string(identifier)),
+      : InvariantGraphOutputVarArray(std::string(identifier),
                                      indexSetSizes, varNodeIds) {}
 };
 

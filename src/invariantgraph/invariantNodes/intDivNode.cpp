@@ -288,9 +288,9 @@ bool IntDivNode::replace() {
     return true;
   }
   auto& nNode = invariantGraph().varNode(numerator());
-  const auto& qNode = invariantGraph().varNode(quotient());
-  assert((!nNode.isFixed() || !dNode.isFixed()) && qNode.isFixed() &&
-         qNode.lowerBound() == 0);
+  assert((!nNode.isFixed() || !dNode.isFixed()) &&
+         invariantGraph().varNode(quotient()).isFixed() &&
+         invariantGraph().varNode(quotient()).lowerBound() == 0);
   if (!nNode.isFixed() && !dNode.isFixed()) {
     if (nNode.lowerBound() >= 0 && dNode.lowerBound() >= 0) {
       invariantGraph().addInvariantNode(std::make_shared<IntLtNode>(

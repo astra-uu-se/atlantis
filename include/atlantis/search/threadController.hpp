@@ -23,9 +23,9 @@ class ThreadController {
   std::optional<SavedAssignment> _solution;
 
   // These are just for statistical tracking purposes
-  Int _counter = 0;
-  Int _counterSet = 0;
-  Int _counterSetSolutions = 0;
+  [[maybe_unused]] Int _counter = 0;
+  [[maybe_unused]] Int _counterSet = 0;
+  [[maybe_unused]] Int _counterSetSolutions = 0;
 
   void setBestSolution(Int threadId, const SavedAssignment& solution);
 
