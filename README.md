@@ -3,12 +3,10 @@ Atlantis CBLS solver
 
 ## Building
 The project is built using cmake, but a `Makefile` is used to simplify the execution of cmake.
+This project is tested with gcc version 13.
 
 ### First time
-- `make submodule` to initialise the submodules (used for testing and benchmarking).
 - `make` to build
-- `make run` to see if things are working.
-
 
 ### Building Queens
 
