@@ -1,4 +1,8 @@
 cmake_minimum_required(VERSION 3.23 FATAL_ERROR)
+set(CMAKE_POLICY_DEFAULT_CMP0169 OLD)
+if(POLICY CMP0169)
+  cmake_policy(SET CMP0169 OLD)
+endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PROJECT_NAME atlantis)
