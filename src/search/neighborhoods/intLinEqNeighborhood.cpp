@@ -8,12 +8,13 @@
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::search::neighborhoods {
 
 IntLinEqNeighborhood::IntLinEqNeighborhood(std::vector<Int>&& coeffs,
                                            std::vector<SearchVar>&& vars,
-                                           Int offset)
+                                           const Int offset)
     : _coeffs(coeffs),
       _vars(std::move(vars)),
       _offset(offset),
@@ -21,7 +22,7 @@ IntLinEqNeighborhood::IntLinEqNeighborhood(std::vector<Int>&& coeffs,
   assert(_vars.size() > 1);
   std::iota(_indices.begin(), _indices.end(), 0);
   assert(std::ranges::all_of(_coeffs.begin(), _coeffs.end(),
-                             [](Int coeff) { return std::abs(coeff) == 1; }));
+                             [](const Int coeff) { return std::abs(coeff) == 1; }));
 }
 
 void IntLinEqNeighborhood::initialize(RandomProvider& random,
@@ -37,15 +38,18 @@ void IntLinEqNeighborhood::initialize(RandomProvider& random,
   remainingBounds[_indices.back()][0] = 0;
   remainingBounds[_indices.back()][1] = 0;
   for (Int i = static_cast<Int>(_indices.size()) - 2; i >= 0; --i) {
-    const Int val1 = _coeffs[_indices[i + 1]] *
-                     _vars[_indices[i + 1]].domain()->lowerBound();
-    const Int val2 = _coeffs[_indices[i + 1]] *
-                     _vars[_indices[i + 1]].domain()->upperBound();
+    const Int c = _coeffs[_indices[i + 1]];
+    const Int val1 = c * _vars[_indices[i + 1]].domain()->lowerBound();
+    const Int val2 = c * _vars[_indices[i + 1]].domain()->upperBound();
+    const Int lb = std::min(val1, val2);
+    const Int ub = std::max(val1, val2);
 
-    remainingBounds[_indices[i]][0] =
-        remainingBounds[_indices[i + 1]][0] + std::min(val1, val2);
-    remainingBounds[_indices[i]][1] =
-        remainingBounds[_indices[i + 1]][1] + std::max(val1, val2);
+    if (add_overflow(remainingBounds[_indices[i + 1]][0], lb, remainingBounds[_indices[i]][0])) {
+      remainingBounds[_indices[i]][0] = (lb > 0) == (c > 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
+    }
+    if (add_overflow(remainingBounds[_indices[i + 1]][1], ub, remainingBounds[_indices[i]][1])) {
+      remainingBounds[_indices[i]][1] = (ub > 0) == (c > 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
+    }
   }
 
   assert(remainingBounds[_indices.front()][0] +
