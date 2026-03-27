@@ -227,7 +227,38 @@ endif()
 set(FETCHCONTENT_SOURCE_DIR_BOOST "${_atlantis_boost_source_dir}"
     CACHE PATH "Shared Boost source directory" FORCE)
 
-FetchContent_MakeAvailable(cxxopts fznparser fmt)
+FetchContent_MakeAvailable(cxxopts fmt)
+FetchContent_GetProperties(fznparser)
+if(NOT fznparser_POPULATED)
+  FetchContent_Populate(fznparser)
+endif()
+
+set(_atlantis_fznparser_cmakelists "${fznparser_SOURCE_DIR}/CMakeLists.txt")
+file(READ "${_atlantis_fznparser_cmakelists}" _atlantis_fznparser_cmake)
+set(_atlantis_fznparser_boost_probe [[find_program(HAS_CURL curl)
+
+if(NOT HAS_CURL STREQUAL "HAS_CURL-NOTFOUND")
+  message("curl found at ${HAS_CURL}")
+  execute_process(
+    COMMAND ${HAS_CURL} -so /dev/null -I --head --fail https://landing.jfrog.com/reactivate-server/boostorg
+    RESULT_VARIABLE BOOST_URL_NO_CONNECTION)
+
+  if(NOT BOOST_URL_NO_CONNECTION STREQUAL '200')
+    message("The boost URL is not available, switching to sourceforge")
+    set(BOOST_URL https://sourceforge.net/projects/boost/files/boost/1.80.0/boost_1_80_0.7z)
+    set(BOOST_URL_SHA256 d12a2af721e22dbfb984ef061ee4c4ab2387f1904f6d65bc5acebaa34d6366ec)
+  endif()
+endif()
+]])
+if(_atlantis_fznparser_cmake MATCHES "The boost URL is not available, switching to sourceforge")
+  string(REPLACE
+         "${_atlantis_fznparser_boost_probe}"
+         "# Atlantis: Boost source selection is handled by the parent project.\n"
+         _atlantis_fznparser_cmake
+         "${_atlantis_fznparser_cmake}")
+  file(WRITE "${_atlantis_fznparser_cmakelists}" "${_atlantis_fznparser_cmake}")
+endif()
+add_subdirectory("${fznparser_SOURCE_DIR}" "${fznparser_BINARY_DIR}")
 
 # includes (hpp/h) files are in ./include
 target_include_directories(${PROJECT_LIB}
