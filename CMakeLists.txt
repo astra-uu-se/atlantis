@@ -15,7 +15,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(GNUInstallDirs)
 if(NOT CPM_SOURCE_CACHE AND NOT DEFINED ENV{CPM_SOURCE_CACHE})
   set(CPM_SOURCE_CACHE "${CMAKE_SOURCE_DIR}/.cpm-cache" CACHE PATH
-      "Directory to share CPM dependency sources across build trees")
+      "Directory to share CPM dependency sources across build trees" FORCE)
 endif()
 if(CPM_SOURCE_CACHE AND NOT DEFINED ENV{CPM_SOURCE_CACHE})
   set(ENV{CPM_SOURCE_CACHE} "${CPM_SOURCE_CACHE}")
