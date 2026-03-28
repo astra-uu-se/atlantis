@@ -89,3 +89,65 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BENCH }}
         shell: bash
         run: chmod +x ./slack-benchmark.sh; ./slack-benchmark.sh;
+
+  linux-sanitizers-advisory:
+    name: Linux Sanitizers Advisory (${{ matrix.sanitizer }})
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined]
+        include:
+          - sanitizer: address
+            test_env: ASAN_OPTIONS=detect_leaks=0:abort_on_error=1
+          - sanitizer: undefined
+            test_env: UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.9
+        with:
+          cmake-version: "3.28.*"
+
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
+          sudo apt-get install gcc-14 g++-14 python3; \
+          sudo apt-get update -qq;
+
+      - name: Configure
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          cmake -S . -B build-${{ matrix.sanitizer }} \
+            -DBUILD_TESTS:BOOL=ON \
+            -DBUILD_BENCHMARKS:BOOL=OFF \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DATLANTIS_SANITIZERS=${{ matrix.sanitizer }}
+
+      - name: Build
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: cmake --build build-${{ matrix.sanitizer }} -j 4
+
+      - name: Test
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: env ${{ matrix.test_env }} ctest --test-dir build-${{ matrix.sanitizer }} --output-on-failure -j 4
+
+      - name: Summarize Advisory Result
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Linux sanitizer advisory: ${{ matrix.sanitizer }}"
+            echo
+            echo "- This job is non-blocking by design (`continue-on-error: true`)."
+            echo "- Treat failures here as guidance for cleanup, not as a merge gate."
+            echo "- Build URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } >> "$GITHUB_STEP_SUMMARY"
