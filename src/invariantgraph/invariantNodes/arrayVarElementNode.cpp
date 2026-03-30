@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
 
 #include <algorithm>
+#include <unordered_set>
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
@@ -11,6 +12,55 @@
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
+
+namespace {
+
+bool domainsOverlap(const VarNode& a, const VarNode& b) {
+  assert(a.isIntVar() == b.isIntVar());
+  if (!a.isIntVar()) {
+    return (a.inDomain(bool{true}) && b.inDomain(bool{true})) ||
+           (a.inDomain(bool{false}) && b.inDomain(bool{false}));
+  }
+  const auto* smaller = &a;
+  const auto* larger = &b;
+  if (a.constDomain()->size() > b.constDomain()->size()) {
+    std::swap(smaller, larger);
+  }
+  return std::any_of(smaller->constDomain()->begin(),
+                     smaller->constDomain()->end(), [&](const Int value) {
+                       return larger->inDomain(value);
+                     });
+}
+
+SortedUniqueVector commonDomain(const VarNode& a, const VarNode& b) {
+  assert(a.isIntVar() == b.isIntVar());
+  if (!a.isIntVar()) {
+    std::vector<Int> values;
+    values.reserve(2);
+    if (a.inDomain(bool{true}) && b.inDomain(bool{true})) {
+      values.emplace_back(0);
+    }
+    if (a.inDomain(bool{false}) && b.inDomain(bool{false})) {
+      values.emplace_back(1);
+    }
+    return SortedUniqueVector(std::move(values));
+  }
+  const auto* smaller = &a;
+  const auto* larger = &b;
+  if (a.constDomain()->size() > b.constDomain()->size()) {
+    std::swap(smaller, larger);
+  }
+  std::vector<Int> values;
+  values.reserve(smaller->constDomain()->size());
+  for (const Int value : *smaller->constDomain()) {
+    if (larger->inDomain(value)) {
+      values.emplace_back(value);
+    }
+  }
+  return SortedUniqueVector(std::move(values));
+}
+
+}  // namespace
 
 ArrayVarElementNode::ArrayVarElementNode(InvariantGraph& graph, VarNodeId idx,
                                          std::vector<VarNodeId>&& varVector,
@@ -37,10 +87,76 @@ void ArrayVarElementNode::init(InvariantNodeId id) {
 
 void ArrayVarElementNode::updateState() {
   VarNode& idxNode = invariantGraph().varNode(idx());
+  VarNode& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
 
   idxNode.removeValuesBelow(_offset);
   idxNode.removeValuesAbove(
       _offset + static_cast<Int>(dynamicInputVarNodeIds().size()) - 1);
+
+  auto pruneIdxByOutputDomain = [&] {
+    std::vector<Int> valuesToRemove;
+    valuesToRemove.reserve(idxNode.constDomain()->size());
+    for (const Int index : *idxNode.constDomain()) {
+      const auto& inputNode =
+          invariantGraphConst().varNodeConst(
+              dynamicInputVarNodeIds().at(index - _offset));
+      if (!domainsOverlap(inputNode, outputNode)) {
+        valuesToRemove.emplace_back(index);
+      }
+    }
+    if (!valuesToRemove.empty()) {
+      idxNode.domain()->remove(SortedUniqueVector(std::move(valuesToRemove)));
+    }
+  };
+
+  pruneIdxByOutputDomain();
+
+  if (outputNode.isIntVar()) {
+    std::unordered_set<Int> outputVals;
+    outputVals.reserve(outputNode.constDomain()->size());
+    for (const Int index : *idxNode.constDomain()) {
+      const auto& inputNode =
+          invariantGraphConst().varNodeConst(
+              dynamicInputVarNodeIds().at(index - _offset));
+      for (const Int value : *inputNode.constDomain()) {
+        if (outputNode.inDomain(value)) {
+          outputVals.emplace(value);
+        }
+      }
+    }
+    outputNode.domain()->removeAllValuesExcept(
+        SortedUniqueVector(std::vector<Int>(outputVals.begin(), outputVals.end())));
+  } else {
+    const bool canHoldTrue = std::any_of(
+        idxNode.constDomain()->begin(), idxNode.constDomain()->end(),
+        [&](const Int index) {
+          return invariantGraphConst()
+              .varNodeConst(dynamicInputVarNodeIds().at(index - _offset))
+              .inDomain(bool{true});
+        });
+    const bool canHoldFalse = std::any_of(
+        idxNode.constDomain()->begin(), idxNode.constDomain()->end(),
+        [&](const Int index) {
+          return invariantGraphConst()
+              .varNodeConst(dynamicInputVarNodeIds().at(index - _offset))
+              .inDomain(bool{false});
+        });
+    if (!canHoldTrue) {
+      outputNode.fixToValue(bool{false});
+    } else if (!canHoldFalse) {
+      outputNode.fixToValue(bool{true});
+    }
+  }
+
+  pruneIdxByOutputDomain();
+
+  if (idxNode.isFixed()) {
+    auto& selectedNode = invariantGraph().varNode(
+        dynamicInputVarNodeIds().at(idxNode.lowerBound() - _offset));
+    const SortedUniqueVector overlap = commonDomain(selectedNode, outputNode);
+    selectedNode.domain()->removeAllValuesExcept(overlap);
+    outputNode.domain()->removeAllValuesExcept(overlap);
+  }
 
   const Int overflow = _offset +
                        static_cast<Int>(dynamicInputVarNodeIds().size()) - 1 -
