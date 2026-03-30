@@ -1,0 +1,8 @@
+{
+  "default_compile_timeout_sec": 60,
+  "per_problem_timeout_sec": {
+    "2008/slow_convergence": 120,
+    "2022/ma-path-finding": 90,
+    "2025/ihtc-2024-kletzander": 150
+  }
+}

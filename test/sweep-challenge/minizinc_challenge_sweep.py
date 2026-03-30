@@ -6,7 +6,9 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as dt
+import errno
 import hashlib
 import json
 import os
@@ -22,12 +24,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+import fcntl
+
 
 SCRIPT_PATH = Path(__file__).resolve()
 DEFAULT_ARCHIVE_REPO = "https://github.com/MiniZinc/mzn-challenge.git"
 DEFAULT_ARCHIVE_REF = "develop"
+DEFAULT_PATCH_PACK = "default"
+DEFAULT_TIMEOUT_OVERRIDE_FILE = "challenge-config/compile-timeouts.json"
 CHALLENGE_ROOT_NAME = ".challenge"
 UPSTREAM_REPO_NAME = "mzn-challenge"
+PATCH_PACK_ROOT_NAME = "challenge-patches"
 TERMINAL_STATUSES = {
     "compile_ok",
     "compile_timeout",
@@ -89,6 +96,38 @@ class Case:
         }
 
 
+@dataclass(frozen=True)
+class PatchReplacement:
+    kind: str
+    pattern: str
+    replacement: str
+    flags: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class PatchRule:
+    id: str
+    description: str
+    path_globs: tuple[str, ...]
+    replacements: tuple[PatchReplacement, ...]
+    rationale: str | None = None
+    semantics_note: str | None = None
+
+
+@dataclass(frozen=True)
+class PatchPack:
+    id: str
+    description: str
+    rules: tuple[PatchRule, ...]
+
+
+@dataclass(frozen=True)
+class TimeoutOverrides:
+    source_path: Path
+    default_compile_timeout_sec: int | None
+    per_problem_timeout_sec: dict[str, int]
+
+
 def log(message: str) -> None:
     print(message, flush=True)
 
@@ -148,6 +187,20 @@ def challenge_root(repo_root: Path) -> Path:
     return repo_root / CHALLENGE_ROOT_NAME
 
 
+def patch_pack_root(repo_root: Path) -> Path:
+    return repo_root / PATCH_PACK_ROOT_NAME
+
+
+def timeout_override_path(repo_root: Path, raw: str | None) -> Path | None:
+    requested = (raw or DEFAULT_TIMEOUT_OVERRIDE_FILE).strip()
+    if requested.lower() in {"none", "off", "raw"}:
+        return None
+    candidate = Path(requested).expanduser()
+    if not candidate.is_absolute():
+        candidate = (repo_root / candidate).resolve()
+    return candidate
+
+
 def run_root(repo_root: Path, name: str) -> Path:
     return challenge_root(repo_root) / "runs" / name
 
@@ -172,8 +225,16 @@ def upstream_dir(repo_root: Path) -> Path:
     return challenge_root(repo_root) / "upstream" / UPSTREAM_REPO_NAME
 
 
+def upstream_lock_path(repo_root: Path) -> Path:
+    return challenge_root(repo_root) / "upstream" / ".lock"
+
+
 def corpus_dir(repo_root: Path, archive_commit: str) -> Path:
     return challenge_root(repo_root) / "corpus" / archive_commit
+
+
+def patched_corpus_dir(repo_root: Path, archive_commit: str, patch_pack_id: str) -> Path:
+    return challenge_root(repo_root) / "patched" / archive_commit / slugify(patch_pack_id)
 
 
 def compiled_root(repo_root: Path, archive_commit: str, minizinc_cache_key: str) -> Path:
@@ -190,6 +251,26 @@ def ensure_run_layout(repo_root: Path, name: str) -> None:
         plots_dir(repo_root, name),
     ):
         ensure_dir(path)
+
+
+@contextlib.contextmanager
+def shared_upstream_lock(repo_root: Path) -> Iterable[None]:
+    lock_path = upstream_lock_path(repo_root)
+    ensure_dir(lock_path.parent)
+    with lock_path.open("a+") as handle:
+        while True:
+            try:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except OSError as exc:
+                if exc.errno != errno.EAGAIN:
+                    raise
+                log(f"Waiting for upstream lock {lock_path}")
+                time.sleep(0.1)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
 def git_output(cwd: Path, *args: str) -> str:
@@ -422,6 +503,198 @@ def materialize_corpus(
     return target_root, years
 
 
+def parse_regex_flags(raw_flags: Iterable[str]) -> int:
+    value = 0
+    for raw in raw_flags:
+        normalized = raw.strip().upper()
+        if not normalized:
+            continue
+        if normalized == "IGNORECASE":
+            value |= re.IGNORECASE
+        elif normalized == "MULTILINE":
+            value |= re.MULTILINE
+        elif normalized == "DOTALL":
+            value |= re.DOTALL
+        else:
+            raise SweepError(f"Unsupported regex flag in patch pack: {raw}")
+    return value
+
+
+def load_patch_pack(repo_root: Path, requested_name: str | None) -> PatchPack | None:
+    requested = (requested_name or DEFAULT_PATCH_PACK).strip()
+    if requested.lower() in {"none", "raw", "off"}:
+        return None
+    manifest_path = patch_pack_root(repo_root) / "manifest.json"
+    if not manifest_path.exists():
+        raise SweepError(f"Patch-pack manifest not found: {manifest_path}")
+    manifest = read_json(manifest_path)
+    if not isinstance(manifest, dict):
+        raise SweepError(f"Patch-pack manifest must be a JSON object: {manifest_path}")
+    resolved_name = manifest.get("default_pack") if requested == "default" else requested
+    packs = manifest.get("packs")
+    if not isinstance(packs, dict):
+        raise SweepError(f"Patch-pack manifest missing `packs`: {manifest_path}")
+    pack_payload = packs.get(resolved_name)
+    if not isinstance(pack_payload, dict):
+        raise SweepError(f"Patch pack not found: {resolved_name}")
+    rules: list[PatchRule] = []
+    for raw_rule_path in pack_payload.get("rules", []):
+        rule_path = patch_pack_root(repo_root) / str(raw_rule_path)
+        rule_payload = read_json(rule_path)
+        if not isinstance(rule_payload, dict):
+            raise SweepError(f"Patch rule must be a JSON object: {rule_path}")
+        replacements: list[PatchReplacement] = []
+        for raw_replacement in rule_payload.get("replacements", []):
+            if not isinstance(raw_replacement, dict):
+                raise SweepError(f"Patch replacement must be a JSON object: {rule_path}")
+            replacements.append(
+                PatchReplacement(
+                    kind=str(raw_replacement.get("kind", "literal")),
+                    pattern=str(raw_replacement.get("pattern", "")),
+                    replacement=str(raw_replacement.get("replacement", "")),
+                    flags=tuple(str(flag) for flag in raw_replacement.get("flags", [])),
+                )
+            )
+        rules.append(
+            PatchRule(
+                id=str(rule_payload.get("id", rule_path.stem)),
+                description=str(rule_payload.get("description", "")),
+                path_globs=tuple(str(item) for item in rule_payload.get("path_globs", [])),
+                replacements=tuple(replacements),
+                rationale=rule_payload.get("rationale"),
+                semantics_note=rule_payload.get("semantics_note"),
+            )
+        )
+    return PatchPack(
+        id=str(pack_payload.get("id", resolved_name)),
+        description=str(pack_payload.get("description", "")),
+        rules=tuple(rules),
+    )
+
+
+def apply_patch_replacement(text: str, replacement: PatchReplacement) -> tuple[str, int]:
+    if replacement.kind == "literal":
+        count = text.count(replacement.pattern)
+        if count == 0:
+            return text, 0
+        return text.replace(replacement.pattern, replacement.replacement), count
+    if replacement.kind == "regex":
+        return re.subn(
+            replacement.pattern,
+            replacement.replacement,
+            text,
+            flags=parse_regex_flags(replacement.flags),
+        )
+    raise SweepError(f"Unsupported patch replacement kind: {replacement.kind}")
+
+
+def apply_patch_pack(
+    repo_root: Path,
+    corpus_root: Path,
+    archive_commit: str,
+    years: list[str],
+    patch_pack: PatchPack | None,
+    *,
+    force: bool,
+) -> tuple[Path, dict[str, Any]]:
+    if patch_pack is None:
+        return corpus_root, {"patch_pack_id": "raw", "applied": False, "rules": []}
+    target_root = patched_corpus_dir(repo_root, archive_commit, patch_pack.id)
+    summary_path = target_root / ".patch-summary.json"
+    if target_root.exists():
+        existing_summary = maybe_read_json(summary_path)
+        if (
+            not force
+            and isinstance(existing_summary, dict)
+            and existing_summary.get("patch_pack_id") == patch_pack.id
+            and all((target_root / year).exists() for year in years)
+        ):
+            return target_root, existing_summary
+        shutil.rmtree(target_root)
+    ensure_dir(target_root)
+    for year in years:
+        copy_tree_contents(corpus_root / year, target_root / year, force=False)
+    rule_summaries: list[dict[str, Any]] = []
+    for rule in patch_pack.rules:
+        matched_files: set[Path] = set()
+        for raw_glob in rule.path_globs:
+            matched_files.update(target_root.glob(raw_glob))
+        files_changed = 0
+        replacement_count = 0
+        for path in sorted(matched_files):
+            if not path.is_file():
+                continue
+            original = path.read_text(errors="replace")
+            updated = original
+            file_replacements = 0
+            for replacement in rule.replacements:
+                updated, count = apply_patch_replacement(updated, replacement)
+                file_replacements += count
+            if updated != original:
+                path.write_text(updated)
+                files_changed += 1
+                replacement_count += file_replacements
+        rule_summaries.append(
+            {
+                "id": rule.id,
+                "description": rule.description,
+                "matched_globs": list(rule.path_globs),
+                "files_changed": files_changed,
+                "replacement_count": replacement_count,
+            }
+        )
+    summary = {
+        "patch_pack_id": patch_pack.id,
+        "description": patch_pack.description,
+        "applied": True,
+        "years": years,
+        "target_root": str(target_root),
+        "generated_at": utc_now(),
+        "rules": rule_summaries,
+    }
+    write_json(summary_path, summary)
+    return target_root, summary
+
+
+def load_timeout_overrides(repo_root: Path, raw_path: str | None) -> TimeoutOverrides | None:
+    resolved_path = timeout_override_path(repo_root, raw_path)
+    if resolved_path is None:
+        return None
+    if not resolved_path.exists():
+        raise SweepError(f"Compile-timeout override file not found: {resolved_path}")
+    payload = read_json(resolved_path)
+    if not isinstance(payload, dict):
+        raise SweepError(f"Compile-timeout override file must be a JSON object: {resolved_path}")
+    raw_overrides = payload.get("per_problem_timeout_sec", {})
+    if not isinstance(raw_overrides, dict):
+        raise SweepError(f"`per_problem_timeout_sec` must be a JSON object: {resolved_path}")
+    normalized: dict[str, int] = {}
+    for key, value in raw_overrides.items():
+        normalized[str(key)] = int(value)
+    default_timeout = payload.get("default_compile_timeout_sec")
+    return TimeoutOverrides(
+        source_path=resolved_path,
+        default_compile_timeout_sec=int(default_timeout) if default_timeout is not None else None,
+        per_problem_timeout_sec=normalized,
+    )
+
+
+def compile_timeout_for_case(case: Case, cli_timeout_sec: int, overrides: TimeoutOverrides | None) -> int:
+    timeout_sec = cli_timeout_sec
+    if overrides is not None and overrides.default_compile_timeout_sec is not None:
+        timeout_sec = overrides.default_compile_timeout_sec
+    if overrides is None:
+        return timeout_sec
+    keys = (
+        f"{case.year}/{case.problem}",
+        case.problem,
+    )
+    for key in keys:
+        if key in overrides.per_problem_timeout_sec:
+            return int(overrides.per_problem_timeout_sec[key])
+    return timeout_sec
+
+
 def discover_cases(
     corpus_root: Path,
     years: Iterable[str],
@@ -488,6 +761,23 @@ def discover_cases(
 def artifact_paths(repo_root: Path, name: str, run_id: str) -> tuple[Path, Path, Path]:
     root = runs_dir(repo_root, name)
     return root / f"{run_id}.json", root / f"{run_id}.stdout", root / f"{run_id}.stderr"
+
+
+def prune_run_artifacts(repo_root: Path, name: str, expected_run_ids: set[str]) -> int:
+    removed = 0
+    for json_path in runs_dir(repo_root, name).glob("*.json"):
+        run_id = json_path.stem
+        if run_id in expected_run_ids:
+            continue
+        for path in (
+            json_path,
+            json_path.with_suffix(".stdout"),
+            json_path.with_suffix(".stderr"),
+        ):
+            if path.exists():
+                path.unlink()
+                removed += 1
+    return removed
 
 
 def terminal_json(path: Path) -> dict[str, Any] | None:
@@ -595,6 +885,16 @@ def runtime_run_id(archive_commit: str, minizinc_key: str, case: Case) -> str:
     )
 
 
+def expected_run_ids_for_cases(
+    archive_commit: str, minizinc_key: str, cases: Iterable[Case]
+) -> set[str]:
+    expected: set[str] = set()
+    for case in cases:
+        expected.add(compile_run_id(archive_commit, minizinc_key, case))
+        expected.add(runtime_run_id(archive_commit, minizinc_key, case))
+    return expected
+
+
 def compile_case(
     *,
     repo_root: Path,
@@ -610,6 +910,7 @@ def compile_case(
     atlantis_binary: Path,
     time_strategy: TimeStrategy,
     timeout_sec: int,
+    timeout_source: str,
     force: bool,
 ) -> dict[str, Any]:
     run_id = compile_run_id(archive_commit, minizinc_key, case)
@@ -657,6 +958,8 @@ def compile_case(
         "return_code": result.return_code,
         "signal": result.signal,
         "elapsed_wall_sec": result.elapsed_wall_sec,
+        "timeout_sec": timeout_sec,
+        "timeout_source": timeout_source,
         "peak_memory_kib": result.peak_memory_kib,
         "stdout_path": str(stdout_path),
         "stderr_path": str(stderr_path),
@@ -822,6 +1125,21 @@ def analyze_run(repo_root: Path, name: str) -> dict[str, Any]:
 
     compile_payloads = [payload for payload in collect_phase_payloads(repo_root, name, "compile") if in_current_plan(payload)]
     run_payloads = [payload for payload in collect_phase_payloads(repo_root, name, "run") if in_current_plan(payload)]
+    compile_case_keys = {
+        (str(payload.get("year")), str(payload.get("problem")), str(payload.get("case_id")))
+        for payload in compile_payloads
+    }
+    run_case_keys = {
+        (str(payload.get("year")), str(payload.get("problem")), str(payload.get("case_id")))
+        for payload in run_payloads
+    }
+    compile_ok_case_keys = {
+        (str(payload.get("year")), str(payload.get("problem")), str(payload.get("case_id")))
+        for payload in compile_payloads
+        if payload.get("status") == "compile_ok"
+    }
+    compile_missing_count = max(0, len(valid_cases) - len(compile_case_keys))
+    run_missing_count = max(0, len(compile_ok_case_keys) - len(run_case_keys))
     by_year: dict[str, dict[str, int]] = {}
     by_problem: dict[str, dict[str, int]] = {}
     by_year_problem: dict[str, dict[str, int]] = {}
@@ -849,6 +1167,8 @@ def analyze_run(repo_root: Path, name: str) -> dict[str, Any]:
         "discovery_error_count": len(plan_payload.get("discovery_errors", [])),
         "compile_status_counts": aggregate_status_counts(compile_payloads),
         "run_status_counts": aggregate_status_counts(run_payloads),
+        "compile_missing_count": compile_missing_count,
+        "run_missing_count": run_missing_count,
         "failure_classes": dict(sorted(failure_classes.items(), key=lambda item: (-item[1], item[0]))),
         "worst_problems": sorted(
             (
@@ -944,6 +1264,8 @@ def write_report(repo_root: Path, name: str) -> Path:
         f"- Repo git commit: `{summary_payload.get('repo_git_commit')}`",
         f"- Total discovered cases: {summary_payload.get('total_discovered')}",
         f"- Discovery errors: {summary_payload.get('discovery_error_count')}",
+        f"- Missing compile artifacts for current plan: {summary_payload.get('compile_missing_count')}",
+        f"- Missing run artifacts for compile-ok cases: {summary_payload.get('run_missing_count')}",
         "",
         render_counts("Compile Status Counts", summary_payload.get("compile_status_counts", {})),
         render_counts("Run Status Counts", summary_payload.get("run_status_counts", {})),
@@ -984,22 +1306,41 @@ def execute_fetch_or_generate_setup(
 ) -> dict[str, Any]:
     repo_root = repo_root_from_args(args)
     ensure_run_layout(repo_root, args.name)
-    checkout, archive_commit = fetch_upstream(repo_root, args.archive_repo, args.archive_ref)
     selected_years = parse_csv_arg(args.years)
-    corpus_root, years = materialize_corpus(
+    patch_pack = load_patch_pack(repo_root, getattr(args, "patch_pack", DEFAULT_PATCH_PACK))
+    timeout_overrides = load_timeout_overrides(repo_root, getattr(args, "compile_timeout_overrides", None))
+    with shared_upstream_lock(repo_root):
+        checkout, archive_commit = fetch_upstream(repo_root, args.archive_repo, args.archive_ref)
+        corpus_root, years = materialize_corpus(
+            repo_root,
+            checkout,
+            archive_commit,
+            selected_years,
+            force=bool(getattr(args, "force", False)),
+        )
+    effective_corpus_root, patch_summary = apply_patch_pack(
         repo_root,
-        checkout,
+        corpus_root,
         archive_commit,
-        selected_years,
+        years,
+        patch_pack,
         force=bool(getattr(args, "force", False)),
     )
+    if patch_summary.get("applied"):
+        log(f"Using patched corpus {effective_corpus_root} with patch pack {patch_summary.get('patch_pack_id')}")
+    else:
+        log(f"Using raw corpus {effective_corpus_root}")
     selected_problems = parse_csv_arg(args.problems)
-    cases, discovery_errors = discover_cases(corpus_root, years, selected_problems, args.limit)
+    cases, discovery_errors = discover_cases(effective_corpus_root, years, selected_problems, args.limit)
     payload: dict[str, Any] = {
         "repo_root": repo_root,
         "checkout": checkout,
         "archive_commit": archive_commit,
         "corpus_root": corpus_root,
+        "effective_corpus_root": effective_corpus_root,
+        "patch_pack_id": patch_summary.get("patch_pack_id", "raw"),
+        "patch_summary": patch_summary,
+        "compile_timeout_overrides": timeout_overrides,
         "selected_years": years,
         "selected_problems": selected_problems,
         "cases": cases,
@@ -1010,7 +1351,7 @@ def execute_fetch_or_generate_setup(
         version = minizinc_version(minizinc_binary)
         payload["minizinc_binary"] = minizinc_binary
         payload["minizinc_version"] = version
-        payload["minizinc_key"] = minizinc_cache_key(minizinc_binary, version)
+        payload["minizinc_key"] = f"{slugify(payload['patch_pack_id'])}-{minizinc_cache_key(minizinc_binary, version)}"
     return payload
 
 
@@ -1027,6 +1368,14 @@ def cmd_fetch(args: argparse.Namespace) -> int:
         limit=args.limit,
         cases=setup["cases"],
         discovery_errors=setup["discovery_errors"],
+        extra={
+            "corpus_root": str(setup["corpus_root"]),
+            "effective_corpus_root": str(setup["effective_corpus_root"]),
+            "patch_pack_id": setup["patch_pack_id"],
+            "patch_summary": setup["patch_summary"],
+            "compile_timeout_override_file": str(setup["compile_timeout_overrides"].source_path) if setup["compile_timeout_overrides"] else None,
+            "compile_timeout_override_map": setup["compile_timeout_overrides"].per_problem_timeout_sec if setup["compile_timeout_overrides"] else {},
+        },
     )
     write_json(analysis_dir(setup["repo_root"], args.name) / "plan.json", plan)
     log(f"Wrote plan to {analysis_dir(setup['repo_root'], args.name) / 'plan.json'}")
@@ -1057,12 +1406,30 @@ def cmd_generate(args: argparse.Namespace) -> int:
             "minizinc_cache_key": setup["minizinc_key"],
             "solver_config": str(solver_config),
             "atlantis_binary": str(atlantis_binary),
+            "corpus_root": str(setup["corpus_root"]),
+            "effective_corpus_root": str(setup["effective_corpus_root"]),
+            "patch_pack_id": setup["patch_pack_id"],
+            "patch_summary": setup["patch_summary"],
+            "compile_timeout_override_file": str(setup["compile_timeout_overrides"].source_path) if setup["compile_timeout_overrides"] else None,
+            "compile_timeout_override_map": setup["compile_timeout_overrides"].per_problem_timeout_sec if setup["compile_timeout_overrides"] else {},
         },
     )
     write_json(analysis_dir(repo_root, args.name) / "plan.json", plan)
+    if args.force:
+        removed = prune_run_artifacts(
+            repo_root,
+            args.name,
+            expected_run_ids_for_cases(setup["archive_commit"], setup["minizinc_key"], setup["cases"]),
+        )
+        if removed:
+            log(f"Pruned {removed} stale run artifacts for {args.name}")
     compile_payloads = []
     for index, case in enumerate(setup["cases"], start=1):
-        log(f"[compile {index}/{len(setup['cases'])}] {case.year}/{case.problem}/{case.case_id}")
+        case_timeout = compile_timeout_for_case(case, args.compile_timeout, setup["compile_timeout_overrides"])
+        timeout_source = "cli_default"
+        if setup["compile_timeout_overrides"] is not None:
+            timeout_source = "override" if case_timeout != args.compile_timeout else "override_default"
+        log(f"[compile {index}/{len(setup['cases'])}] {case.year}/{case.problem}/{case.case_id} timeout={case_timeout}s")
         payload = compile_case(
             repo_root=repo_root,
             name=args.name,
@@ -1076,7 +1443,8 @@ def cmd_generate(args: argparse.Namespace) -> int:
             compiled_cache_root=compiled_cache,
             atlantis_binary=atlantis_binary,
             time_strategy=time_strategy,
-            timeout_sec=args.compile_timeout,
+            timeout_sec=case_timeout,
+            timeout_source=timeout_source,
             force=args.force,
         )
         compile_payloads.append(payload)
@@ -1106,9 +1474,23 @@ def cmd_run(args: argparse.Namespace) -> int:
                 "minizinc_version": setup["minizinc_version"],
                 "minizinc_cache_key": setup["minizinc_key"],
                 "atlantis_binary": str(atlantis_binary),
+                "corpus_root": str(setup["corpus_root"]),
+                "effective_corpus_root": str(setup["effective_corpus_root"]),
+                "patch_pack_id": setup["patch_pack_id"],
+                "patch_summary": setup["patch_summary"],
+                "compile_timeout_override_file": str(setup["compile_timeout_overrides"].source_path) if setup["compile_timeout_overrides"] else None,
+                "compile_timeout_override_map": setup["compile_timeout_overrides"].per_problem_timeout_sec if setup["compile_timeout_overrides"] else {},
             },
         )
         write_json(plan_path, plan)
+    if args.force:
+        removed = prune_run_artifacts(
+            repo_root,
+            args.name,
+            expected_run_ids_for_cases(setup["archive_commit"], setup["minizinc_key"], setup["cases"]),
+        )
+        if removed:
+            log(f"Pruned {removed} stale run artifacts for {args.name}")
     time_strategy = resolve_time_strategy()
     if args.dry_run:
         log(f"Would evaluate {len(setup['cases'])} cases for Atlantis runtime.")
@@ -1160,6 +1542,16 @@ def add_common_run_selection_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--repo-root", help="Repository root. Defaults to the current working directory.")
     parser.add_argument("--archive-repo", default=DEFAULT_ARCHIVE_REPO, help="MiniZinc Challenge git repository URL.")
     parser.add_argument("--archive-ref", default=DEFAULT_ARCHIVE_REF, help="Git ref to fetch from the archive repository.")
+    parser.add_argument(
+        "--patch-pack",
+        default=DEFAULT_PATCH_PACK,
+        help="Committed corpus patch pack to apply after materialization. Use `none` to disable.",
+    )
+    parser.add_argument(
+        "--compile-timeout-overrides",
+        default=DEFAULT_TIMEOUT_OVERRIDE_FILE,
+        help="JSON file with per-problem compile-time timeout overrides. Use `none` to disable.",
+    )
     parser.add_argument("--years", help="Comma-separated list of challenge years to include.")
     parser.add_argument("--problems", help="Comma-separated list of challenge problem directories to include.")
     parser.add_argument("--limit", type=int, help="Limit the number of discovered cases after filtering.")

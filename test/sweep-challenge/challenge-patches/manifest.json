@@ -1,0 +1,21 @@
+{
+  "default_pack": "challenge-compat-v2",
+  "packs": {
+    "challenge-compat-v2": {
+      "description": "Compatibility rewrites for old MiniZinc Challenge models that no longer compile on modern MiniZinc.",
+      "id": "challenge-compat-v2",
+      "rules": [
+        "rules/010-remove-is_output.json",
+        "rules/020-unquote-search-annotations.json",
+        "rules/030-debruijn-global-cardinality.json",
+        "rules/040-p1f-rename-local-circuit.json",
+        "rules/050-search-stress2-relax-domain-asserts.json",
+        "rules/060-yumi-dynamic-empty-max.json",
+        "rules/070-yumi-static-empty-max.json",
+        "rules/080-train-scheduling-string-interpolation.json",
+        "rules/090-cryptanalysis-array-signatures.json"
+      ]
+    }
+  },
+  "version": 1
+}

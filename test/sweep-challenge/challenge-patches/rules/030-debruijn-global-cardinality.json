@@ -1,0 +1,16 @@
+{
+  "description": "Update the old 2-argument global_cardinality call to the modern 3-argument form.",
+  "id": "debruijn-global-cardinality",
+  "path_globs": [
+    "2008/debruijn_binary/debruijn_binary.mzn"
+  ],
+  "rationale": "The old model relies on a deprecated `global_cardinality(x, counts)` form. Current MiniZinc requires an explicit cover array.",
+  "replacements": [
+    {
+      "kind": "literal",
+      "pattern": "global_cardinality(bin_code, gcc)",
+      "replacement": "global_cardinality(bin_code, array1d(0..base-1, [i | i in 0..base-1]), gcc)"
+    }
+  ],
+  "semantics_note": "The explicit cover array preserves the original meaning: count occurrences of values 0..base-1."
+}

@@ -1,0 +1,16 @@
+{
+  "description": "Rewrite tuple-style string interpolation in 2024/train-scheduling to syntax accepted by modern MiniZinc.",
+  "id": "train-scheduling-string-interpolation",
+  "path_globs": [
+    "2024/train-scheduling/trains.mzn"
+  ],
+  "rationale": "Modern MiniZinc rejects tuple-like interpolation forms such as \\(s1,s2) inside strings.",
+  "replacements": [
+    {
+      "kind": "literal",
+      "pattern": "\"Non symmetric line \\(s1,s2)\\n\"",
+      "replacement": "\"Non symmetric line \\(s1)-\\(s2)\\n\""
+    }
+  ],
+  "semantics_note": "This only changes an assertion message string and does not affect model semantics."
+}
