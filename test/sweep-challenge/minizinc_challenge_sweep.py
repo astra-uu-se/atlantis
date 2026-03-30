@@ -13,16 +13,19 @@ import hashlib
 import json
 import os
 import platform
+import queue
 import re
 import shutil
+import signal
 import socket
 import subprocess
 import sys
+import threading
 import textwrap
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import fcntl
 
@@ -31,10 +34,12 @@ SCRIPT_PATH = Path(__file__).resolve()
 DEFAULT_ARCHIVE_REPO = "https://github.com/MiniZinc/mzn-challenge.git"
 DEFAULT_ARCHIVE_REF = "develop"
 DEFAULT_PATCH_PACK = "default"
-DEFAULT_TIMEOUT_OVERRIDE_FILE = "challenge-config/compile-timeouts.json"
+DEFAULT_TIMEOUT_OVERRIDE_FILE = (
+    "test/sweep-challenge/challenge-config/compile-timeouts.json"
+)
 CHALLENGE_ROOT_NAME = ".challenge"
 UPSTREAM_REPO_NAME = "mzn-challenge"
-PATCH_PACK_ROOT_NAME = "challenge-patches"
+PATCH_PACK_ROOT_NAME = "test/sweep-challenge/challenge-patches"
 TERMINAL_STATUSES = {
     "compile_ok",
     "compile_timeout",
@@ -128,6 +133,13 @@ class TimeoutOverrides:
     per_problem_timeout_sec: dict[str, int]
 
 
+@dataclass(frozen=True)
+class CaseTask:
+    ordinal_index: int
+    case: Case
+    extra: dict[str, Any] | None = None
+
+
 def log(message: str) -> None:
     print(message, flush=True)
 
@@ -140,6 +152,44 @@ def slugify(value: str) -> str:
     value = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip())
     value = re.sub(r"-{2,}", "-", value).strip("-")
     return value or "unknown"
+
+
+def positive_worker_count(raw: str) -> int:
+    value = int(raw)
+    if value < 1:
+        raise argparse.ArgumentTypeError("--workers must be at least 1")
+    return value
+
+
+def discover_instance_paths(problem_dir: Path) -> list[Path]:
+    top_level = sorted([*problem_dir.glob("*.dzn"), *problem_dir.glob("*.json")])
+    if top_level:
+        return top_level
+    return sorted(
+        path
+        for path in problem_dir.rglob("*")
+        if path.is_file() and path.suffix in {".dzn", ".json"} and path.parent != problem_dir
+    )
+
+
+def case_id_for_instance(problem_dir: Path, instance_path: Path) -> str:
+    relative = instance_path.relative_to(problem_dir)
+    stem_path = relative.with_suffix("")
+    if relative.parent == Path("."):
+        return slugify(stem_path.name)
+    return slugify(str(stem_path))
+
+
+def case_key_from_case(case: Case) -> tuple[str, str, str]:
+    return (case.year, case.problem, case.case_id)
+
+
+def case_key_from_payload(payload: dict[str, Any]) -> tuple[str, str, str]:
+    return (
+        str(payload.get("year")),
+        str(payload.get("problem")),
+        str(payload.get("case_id")),
+    )
 
 
 def short_hash(value: str, length: int = 8) -> str:
@@ -229,6 +279,10 @@ def upstream_lock_path(repo_root: Path) -> Path:
     return challenge_root(repo_root) / "upstream" / ".lock"
 
 
+def corpus_lock_path(repo_root: Path) -> Path:
+    return challenge_root(repo_root) / ".corpus.lock"
+
+
 def corpus_dir(repo_root: Path, archive_commit: str) -> Path:
     return challenge_root(repo_root) / "corpus" / archive_commit
 
@@ -254,8 +308,7 @@ def ensure_run_layout(repo_root: Path, name: str) -> None:
 
 
 @contextlib.contextmanager
-def shared_upstream_lock(repo_root: Path) -> Iterable[None]:
-    lock_path = upstream_lock_path(repo_root)
+def shared_lock(lock_path: Path, *, label: str) -> Iterable[None]:
     ensure_dir(lock_path.parent)
     with lock_path.open("a+") as handle:
         while True:
@@ -265,12 +318,24 @@ def shared_upstream_lock(repo_root: Path) -> Iterable[None]:
             except OSError as exc:
                 if exc.errno != errno.EAGAIN:
                     raise
-                log(f"Waiting for upstream lock {lock_path}")
+                log(f"Waiting for {label} lock {lock_path}")
                 time.sleep(0.1)
         try:
             yield
         finally:
             fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+@contextlib.contextmanager
+def shared_upstream_lock(repo_root: Path) -> Iterable[None]:
+    with shared_lock(upstream_lock_path(repo_root), label="upstream"):
+        yield
+
+
+@contextlib.contextmanager
+def shared_corpus_lock(repo_root: Path) -> Iterable[None]:
+    with shared_lock(corpus_lock_path(repo_root), label="corpus"):
+        yield
 
 
 def git_output(cwd: Path, *args: str) -> str:
@@ -340,24 +405,37 @@ def run_command(
 ) -> CommandResult:
     full_command = [*time_strategy.command_prefix, *command]
     started = time.perf_counter()
+    process: subprocess.Popen[str] | None = None
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             full_command,
             cwd=cwd,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout_sec,
+            start_new_session=True,
         )
-        return_code = completed.returncode
-        signal = -return_code if return_code is not None and return_code < 0 else None
-        stderr = completed.stderr
-        stdout = completed.stdout
+        stdout, stderr = process.communicate(timeout=timeout_sec)
+        return_code = process.returncode
+        signal_num = -return_code if return_code is not None and return_code < 0 else None
         timed_out = False
     except subprocess.TimeoutExpired as exc:
+        assert process is not None
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        stdout, stderr = process.communicate()
         return_code = None
-        signal = None
-        stdout = exc.stdout or ""
-        stderr = exc.stderr or ""
+        signal_num = signal.SIGKILL
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", errors="replace")
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode("utf-8", errors="replace")
+        if not stdout and exc.stdout:
+            stdout = exc.stdout.decode("utf-8", errors="replace") if isinstance(exc.stdout, bytes) else exc.stdout
+        if not stderr and exc.stderr:
+            stderr = exc.stderr.decode("utf-8", errors="replace") if isinstance(exc.stderr, bytes) else exc.stderr
         timed_out = True
     elapsed_wall_sec = time.perf_counter() - started
     return CommandResult(
@@ -367,7 +445,7 @@ def run_command(
         stdout=stdout,
         stderr=stderr,
         return_code=return_code,
-        signal=signal,
+        signal=signal_num,
         timed_out=timed_out,
         peak_memory_kib=parse_peak_memory_kib(stderr, time_strategy),
     )
@@ -601,19 +679,18 @@ def apply_patch_pack(
         return corpus_root, {"patch_pack_id": "raw", "applied": False, "rules": []}
     target_root = patched_corpus_dir(repo_root, archive_commit, patch_pack.id)
     summary_path = target_root / ".patch-summary.json"
-    if target_root.exists():
-        existing_summary = maybe_read_json(summary_path)
-        if (
-            not force
-            and isinstance(existing_summary, dict)
-            and existing_summary.get("patch_pack_id") == patch_pack.id
-            and all((target_root / year).exists() for year in years)
-        ):
-            return target_root, existing_summary
-        shutil.rmtree(target_root)
+    existing_summary = maybe_read_json(summary_path) if target_root.exists() else None
+    if (
+        not force
+        and target_root.exists()
+        and isinstance(existing_summary, dict)
+        and existing_summary.get("patch_pack_id") == patch_pack.id
+        and all((target_root / year).exists() for year in years)
+    ):
+        return target_root, existing_summary
     ensure_dir(target_root)
     for year in years:
-        copy_tree_contents(corpus_root / year, target_root / year, force=False)
+        copy_tree_contents(corpus_root / year, target_root / year, force=force)
     rule_summaries: list[dict[str, Any]] = []
     for rule in patch_pack.rules:
         matched_files: set[Path] = set()
@@ -647,7 +724,7 @@ def apply_patch_pack(
         "patch_pack_id": patch_pack.id,
         "description": patch_pack.description,
         "applied": True,
-        "years": years,
+        "years": sorted(path.name for path in target_root.iterdir() if path.is_dir() and re.fullmatch(r"\d{4}", path.name)),
         "target_root": str(target_root),
         "generated_at": utc_now(),
         "rules": rule_summaries,
@@ -725,15 +802,17 @@ def discover_cases(
                 )
                 continue
             model_path = model_paths[0]
-            instance_paths = sorted([*problem_dir.glob("*.dzn"), *problem_dir.glob("*.json")])
+            instance_paths = discover_instance_paths(problem_dir)
             if instance_paths:
-                stem_counts: dict[str, int] = {}
+                case_id_counts: dict[str, int] = {}
                 for instance_path in instance_paths:
-                    stem_counts[instance_path.stem] = stem_counts.get(instance_path.stem, 0) + 1
+                    case_id = case_id_for_instance(problem_dir, instance_path)
+                    case_id_counts[case_id] = case_id_counts.get(case_id, 0) + 1
                 for instance_path in instance_paths:
-                    case_id = slugify(instance_path.stem)
-                    if stem_counts[instance_path.stem] > 1:
-                        case_id = slugify(f"{instance_path.stem}-{instance_path.suffix.lstrip('.')}")
+                    case_id = case_id_for_instance(problem_dir, instance_path)
+                    if case_id_counts[case_id] > 1:
+                        relative = instance_path.relative_to(problem_dir)
+                        case_id = slugify(f"{relative}-{instance_path.suffix.lstrip('.')}")
                     cases.append(
                         Case(
                             year=year,
@@ -785,6 +864,114 @@ def terminal_json(path: Path) -> dict[str, Any] | None:
     if isinstance(payload, dict) and payload.get("status") in TERMINAL_STATUSES:
         return payload
     return None
+
+
+def format_case_label(case: Case) -> str:
+    return f"{case.year}/{case.problem}/{case.case_id}"
+
+
+def build_error_payload(
+    *,
+    repo_root: Path,
+    name: str,
+    archive_commit: str,
+    archive_ref: str,
+    case: Case,
+    run_id: str,
+    phase: str,
+    status: str,
+    stderr_text: str,
+    repo_git_commit_value: str,
+    command: list[str] | None = None,
+    fzn_path: str | None = None,
+    minizinc_version: str | None = None,
+    atlantis_binary: str | None = None,
+) -> dict[str, Any]:
+    json_path, stdout_path, stderr_path = artifact_paths(repo_root, name, run_id)
+    stdout_path.write_text("")
+    stderr_path.write_text(stderr_text)
+    payload = {
+        "run_id": run_id,
+        "phase": phase,
+        "archive_commit": archive_commit,
+        "archive_ref": archive_ref,
+        "year": case.year,
+        "problem": case.problem,
+        "model_path": str(case.model_path),
+        "instance_path": str(case.instance_path) if case.instance_path else None,
+        "case_id": case.case_id,
+        "command": command or [],
+        "cwd": str(repo_root),
+        "status": status,
+        "return_code": None,
+        "signal": None,
+        "elapsed_wall_sec": 0.0,
+        "peak_memory_kib": None,
+        "stdout_path": str(stdout_path),
+        "stderr_path": str(stderr_path),
+        "fzn_path": fzn_path,
+        "minizinc_version": minizinc_version,
+        "atlantis_binary": atlantis_binary,
+        "repo_git_commit": repo_git_commit_value,
+        "timestamp_utc": utc_now(),
+    }
+    if phase == "run":
+        payload["solver_status"] = "none"
+        payload["crash_signature"] = None
+    write_json(json_path, payload)
+    return payload
+
+
+def execute_case_pool(
+    *,
+    phase: str,
+    workers: int,
+    tasks: list[CaseTask],
+    worker_fn: Callable[[int, CaseTask], dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if workers == 1:
+        results: list[tuple[int, dict[str, Any]]] = []
+        for task in tasks:
+            results.append((task.ordinal_index, worker_fn(1, task)))
+        return [payload for _, payload in sorted(results, key=lambda item: item[0])]
+
+    task_queue: queue.Queue[CaseTask] = queue.Queue()
+    for task in tasks:
+        task_queue.put(task)
+
+    stop_event = threading.Event()
+    results: list[tuple[int, dict[str, Any]]] = []
+    results_lock = threading.Lock()
+
+    def worker_loop(worker_id: int) -> None:
+        while not stop_event.is_set():
+            try:
+                task = task_queue.get_nowait()
+            except queue.Empty:
+                return
+            try:
+                payload = worker_fn(worker_id, task)
+                with results_lock:
+                    results.append((task.ordinal_index, payload))
+            finally:
+                task_queue.task_done()
+
+    threads = [
+        threading.Thread(target=worker_loop, args=(worker_id,), name=f"{phase}-worker-{worker_id}")
+        for worker_id in range(1, workers + 1)
+    ]
+    for thread in threads:
+        thread.start()
+    try:
+        task_queue.join()
+    except KeyboardInterrupt:
+        stop_event.set()
+        raise
+    finally:
+        stop_event.set()
+        for thread in threads:
+            thread.join()
+    return [payload for _, payload in sorted(results, key=lambda item: item[0])]
 
 
 def year_version_map() -> dict[str, str]:
@@ -912,6 +1099,7 @@ def compile_case(
     timeout_sec: int,
     timeout_source: str,
     force: bool,
+    repo_git_commit_value: str,
 ) -> dict[str, Any]:
     run_id = compile_run_id(archive_commit, minizinc_key, case)
     json_path, stdout_path, stderr_path = artifact_paths(repo_root, name, run_id)
@@ -966,7 +1154,7 @@ def compile_case(
         "fzn_path": str(fzn_path) if fzn_path.exists() else None,
         "minizinc_version": minizinc_version_value,
         "atlantis_binary": str(atlantis_binary),
-        "repo_git_commit": repo_git_commit(repo_root),
+        "repo_git_commit": repo_git_commit_value,
         "timestamp_utc": utc_now(),
     }
     write_json(json_path, payload)
@@ -987,6 +1175,7 @@ def run_case(
     timeout_sec: int,
     solver_timelimit_ms: int,
     force: bool,
+    repo_git_commit_value: str,
 ) -> dict[str, Any]:
     run_id = runtime_run_id(archive_commit, minizinc_key, case)
     json_path, stdout_path, stderr_path = artifact_paths(repo_root, name, run_id)
@@ -1017,7 +1206,7 @@ def run_case(
             "fzn_path": compile_payload.get("fzn_path") if compile_payload else None,
             "minizinc_version": compile_payload.get("minizinc_version") if compile_payload else None,
             "atlantis_binary": str(atlantis_binary),
-            "repo_git_commit": repo_git_commit(repo_root),
+            "repo_git_commit": repo_git_commit_value,
             "timestamp_utc": utc_now(),
             "solver_status": "none",
             "crash_signature": None,
@@ -1069,7 +1258,7 @@ def run_case(
         "fzn_path": str(fzn_path),
         "minizinc_version": compile_payload.get("minizinc_version"),
         "atlantis_binary": str(atlantis_binary),
-        "repo_git_commit": repo_git_commit(repo_root),
+        "repo_git_commit": repo_git_commit_value,
         "timestamp_utc": utc_now(),
         "solver_status": parse_solver_status(result.stdout),
         "crash_signature": crash_signature,
@@ -1356,7 +1545,9 @@ def execute_fetch_or_generate_setup(
 
 
 def cmd_fetch(args: argparse.Namespace) -> int:
-    setup = execute_fetch_or_generate_setup(args, require_minizinc=False)
+    repo_root = repo_root_from_args(args)
+    with shared_corpus_lock(repo_root):
+        setup = execute_fetch_or_generate_setup(args, require_minizinc=False)
     plan = build_plan(
         repo_root=setup["repo_root"],
         name=args.name,
@@ -1384,78 +1575,132 @@ def cmd_fetch(args: argparse.Namespace) -> int:
 
 
 def cmd_generate(args: argparse.Namespace) -> int:
-    setup = execute_fetch_or_generate_setup(args, require_minizinc=True)
-    repo_root = setup["repo_root"]
-    solver_config, atlantis_binary = resolve_build_artifacts(repo_root, args.build_dir)
-    compiled_cache = ensure_dir(compiled_root(repo_root, setup["archive_commit"], setup["minizinc_key"]))
-    time_strategy = resolve_time_strategy()
-    plan = build_plan(
-        repo_root=repo_root,
-        name=args.name,
-        archive_commit=setup["archive_commit"],
-        archive_ref=args.archive_ref,
-        archive_repo=args.archive_repo,
-        selected_years=setup["selected_years"],
-        selected_problems=setup["selected_problems"],
-        limit=args.limit,
-        cases=setup["cases"],
-        discovery_errors=setup["discovery_errors"],
-        extra={
-            "minizinc_binary": str(setup["minizinc_binary"]),
-            "minizinc_version": setup["minizinc_version"],
-            "minizinc_cache_key": setup["minizinc_key"],
-            "solver_config": str(solver_config),
-            "atlantis_binary": str(atlantis_binary),
-            "corpus_root": str(setup["corpus_root"]),
-            "effective_corpus_root": str(setup["effective_corpus_root"]),
-            "patch_pack_id": setup["patch_pack_id"],
-            "patch_summary": setup["patch_summary"],
-            "compile_timeout_override_file": str(setup["compile_timeout_overrides"].source_path) if setup["compile_timeout_overrides"] else None,
-            "compile_timeout_override_map": setup["compile_timeout_overrides"].per_problem_timeout_sec if setup["compile_timeout_overrides"] else {},
-        },
-    )
-    write_json(analysis_dir(repo_root, args.name) / "plan.json", plan)
-    if args.force:
-        removed = prune_run_artifacts(
-            repo_root,
-            args.name,
-            expected_run_ids_for_cases(setup["archive_commit"], setup["minizinc_key"], setup["cases"]),
-        )
-        if removed:
-            log(f"Pruned {removed} stale run artifacts for {args.name}")
-    compile_payloads = []
-    for index, case in enumerate(setup["cases"], start=1):
-        case_timeout = compile_timeout_for_case(case, args.compile_timeout, setup["compile_timeout_overrides"])
-        timeout_source = "cli_default"
-        if setup["compile_timeout_overrides"] is not None:
-            timeout_source = "override" if case_timeout != args.compile_timeout else "override_default"
-        log(f"[compile {index}/{len(setup['cases'])}] {case.year}/{case.problem}/{case.case_id} timeout={case_timeout}s")
-        payload = compile_case(
+    repo_root = repo_root_from_args(args)
+    with shared_corpus_lock(repo_root):
+        setup = execute_fetch_or_generate_setup(args, require_minizinc=True)
+        repo_root = setup["repo_root"]
+        solver_config, atlantis_binary = resolve_build_artifacts(repo_root, args.build_dir)
+        compiled_cache = ensure_dir(compiled_root(repo_root, setup["archive_commit"], setup["minizinc_key"]))
+        time_strategy = resolve_time_strategy()
+        repo_git_commit_value = repo_git_commit(repo_root)
+        plan = build_plan(
             repo_root=repo_root,
             name=args.name,
             archive_commit=setup["archive_commit"],
             archive_ref=args.archive_ref,
-            case=case,
-            solver_config=solver_config,
-            minizinc_binary=setup["minizinc_binary"],
-            minizinc_version_value=setup["minizinc_version"],
-            minizinc_key=setup["minizinc_key"],
-            compiled_cache_root=compiled_cache,
-            atlantis_binary=atlantis_binary,
-            time_strategy=time_strategy,
-            timeout_sec=case_timeout,
-            timeout_source=timeout_source,
-            force=args.force,
+            archive_repo=args.archive_repo,
+            selected_years=setup["selected_years"],
+            selected_problems=setup["selected_problems"],
+            limit=args.limit,
+            cases=setup["cases"],
+            discovery_errors=setup["discovery_errors"],
+            extra={
+                "minizinc_binary": str(setup["minizinc_binary"]),
+                "minizinc_version": setup["minizinc_version"],
+                "minizinc_cache_key": setup["minizinc_key"],
+                "solver_config": str(solver_config),
+                "atlantis_binary": str(atlantis_binary),
+                "corpus_root": str(setup["corpus_root"]),
+                "effective_corpus_root": str(setup["effective_corpus_root"]),
+                "patch_pack_id": setup["patch_pack_id"],
+                "patch_summary": setup["patch_summary"],
+                "compile_timeout_override_file": str(setup["compile_timeout_overrides"].source_path) if setup["compile_timeout_overrides"] else None,
+                "compile_timeout_override_map": setup["compile_timeout_overrides"].per_problem_timeout_sec if setup["compile_timeout_overrides"] else {},
+            },
         )
-        compile_payloads.append(payload)
-    log(f"Compile status counts: {aggregate_status_counts(compile_payloads)}")
+        write_json(analysis_dir(repo_root, args.name) / "plan.json", plan)
+        if args.force:
+            removed = prune_run_artifacts(
+                repo_root,
+                args.name,
+                expected_run_ids_for_cases(setup["archive_commit"], setup["minizinc_key"], setup["cases"]),
+            )
+            if removed:
+                log(f"Pruned {removed} stale run artifacts for {args.name}")
+        compile_tasks: list[CaseTask] = []
+        total_cases = len(setup["cases"])
+        for index, case in enumerate(setup["cases"], start=1):
+            case_timeout = compile_timeout_for_case(case, args.compile_timeout, setup["compile_timeout_overrides"])
+            timeout_source = "cli_default"
+            if setup["compile_timeout_overrides"] is not None:
+                timeout_source = "override" if case_timeout != args.compile_timeout else "override_default"
+            compile_tasks.append(
+                CaseTask(
+                    ordinal_index=index,
+                    case=case,
+                    extra={
+                        "timeout_sec": case_timeout,
+                        "timeout_source": timeout_source,
+                        "total_cases": total_cases,
+                    },
+                )
+            )
+
+        def compile_worker(worker_id: int, task: CaseTask) -> dict[str, Any]:
+            case = task.case
+            assert task.extra is not None
+            log(
+                f"[compile {task.ordinal_index}/{task.extra['total_cases']} w{worker_id}] start "
+                f"{format_case_label(case)} timeout={task.extra['timeout_sec']}s"
+            )
+            try:
+                payload = compile_case(
+                    repo_root=repo_root,
+                    name=args.name,
+                    archive_commit=setup["archive_commit"],
+                    archive_ref=args.archive_ref,
+                    case=case,
+                    solver_config=solver_config,
+                    minizinc_binary=setup["minizinc_binary"],
+                    minizinc_version_value=setup["minizinc_version"],
+                    minizinc_key=setup["minizinc_key"],
+                    compiled_cache_root=compiled_cache,
+                    atlantis_binary=atlantis_binary,
+                    time_strategy=time_strategy,
+                    timeout_sec=int(task.extra["timeout_sec"]),
+                    timeout_source=str(task.extra["timeout_source"]),
+                    force=args.force,
+                    repo_git_commit_value=repo_git_commit_value,
+                )
+            except Exception as exc:
+                payload = build_error_payload(
+                    repo_root=repo_root,
+                    name=args.name,
+                    archive_commit=setup["archive_commit"],
+                    archive_ref=args.archive_ref,
+                    case=case,
+                    run_id=compile_run_id(setup["archive_commit"], setup["minizinc_key"], case),
+                    phase="compile",
+                    status="compile_error",
+                    stderr_text=f"Unhandled compile worker exception: {exc}\n",
+                    repo_git_commit_value=repo_git_commit_value,
+                    minizinc_version=setup["minizinc_version"],
+                    atlantis_binary=str(atlantis_binary),
+                )
+            log(
+                f"[compile {task.ordinal_index}/{task.extra['total_cases']} w{worker_id}] done "
+                f"status={payload.get('status')} elapsed={float(payload.get('elapsed_wall_sec', 0.0)):.2f}s "
+                f"{format_case_label(case)}"
+            )
+            return payload
+
+        compile_payloads = execute_case_pool(
+            phase="compile",
+            workers=args.workers,
+            tasks=compile_tasks,
+            worker_fn=compile_worker,
+        )
+        log(f"Compile status counts: {aggregate_status_counts(compile_payloads)}")
     return 0
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    setup = execute_fetch_or_generate_setup(args, require_minizinc=True)
+    repo_root = repo_root_from_args(args)
+    with shared_corpus_lock(repo_root):
+        setup = execute_fetch_or_generate_setup(args, require_minizinc=True)
     repo_root = setup["repo_root"]
     _, atlantis_binary = resolve_build_artifacts(repo_root, args.build_dir)
+    repo_git_commit_value = repo_git_commit(repo_root)
     plan_path = analysis_dir(repo_root, args.name) / "plan.json"
     if not plan_path.exists():
         plan = build_plan(
@@ -1493,28 +1738,71 @@ def cmd_run(args: argparse.Namespace) -> int:
             log(f"Pruned {removed} stale run artifacts for {args.name}")
     time_strategy = resolve_time_strategy()
     if args.dry_run:
-        log(f"Would evaluate {len(setup['cases'])} cases for Atlantis runtime.")
+        log(f"Would evaluate {len(setup['cases'])} cases for Atlantis runtime with workers={args.workers}.")
         return 0
-    run_payloads = []
-    for index, case in enumerate(setup["cases"], start=1):
-        compile_json_path, _, _ = artifact_paths(repo_root, args.name, compile_run_id(setup["archive_commit"], setup["minizinc_key"], case))
-        compile_payload = maybe_read_json(compile_json_path)
-        log(f"[run {index}/{len(setup['cases'])}] {case.year}/{case.problem}/{case.case_id}")
-        payload = run_case(
-            repo_root=repo_root,
-            name=args.name,
-            archive_commit=setup["archive_commit"],
-            archive_ref=args.archive_ref,
+    compile_payloads = {
+        case_key_from_payload(payload): payload
+        for payload in collect_phase_payloads(repo_root, args.name, "compile")
+    }
+    run_tasks = [
+        CaseTask(
+            ordinal_index=index,
             case=case,
-            atlantis_binary=atlantis_binary,
-            minizinc_key=setup["minizinc_key"],
-            compile_payload=compile_payload if isinstance(compile_payload, dict) else None,
-            time_strategy=time_strategy,
-            timeout_sec=args.run_timeout,
-            solver_timelimit_ms=args.solver_timelimit_ms,
-            force=args.force,
+            extra={"total_cases": len(setup["cases"])},
         )
-        run_payloads.append(payload)
+        for index, case in enumerate(setup["cases"], start=1)
+    ]
+
+    def run_worker(worker_id: int, task: CaseTask) -> dict[str, Any]:
+        case = task.case
+        total_cases = int(task.extra["total_cases"]) if task.extra else len(setup["cases"])
+        log(f"[run {task.ordinal_index}/{total_cases} w{worker_id}] start {format_case_label(case)}")
+        compile_payload = compile_payloads.get(case_key_from_case(case))
+        try:
+            payload = run_case(
+                repo_root=repo_root,
+                name=args.name,
+                archive_commit=setup["archive_commit"],
+                archive_ref=args.archive_ref,
+                case=case,
+                atlantis_binary=atlantis_binary,
+                minizinc_key=setup["minizinc_key"],
+                compile_payload=compile_payload if isinstance(compile_payload, dict) else None,
+                time_strategy=time_strategy,
+                timeout_sec=args.run_timeout,
+                solver_timelimit_ms=args.solver_timelimit_ms,
+                force=args.force,
+                repo_git_commit_value=repo_git_commit_value,
+            )
+        except Exception as exc:
+            payload = build_error_payload(
+                repo_root=repo_root,
+                name=args.name,
+                archive_commit=setup["archive_commit"],
+                archive_ref=args.archive_ref,
+                case=case,
+                run_id=runtime_run_id(setup["archive_commit"], setup["minizinc_key"], case),
+                phase="run",
+                status="run_error",
+                stderr_text=f"Unhandled run worker exception: {exc}\n",
+                repo_git_commit_value=repo_git_commit_value,
+                fzn_path=str(compile_payload.get("fzn_path")) if isinstance(compile_payload, dict) and compile_payload.get("fzn_path") else None,
+                minizinc_version=str(compile_payload.get("minizinc_version")) if isinstance(compile_payload, dict) and compile_payload.get("minizinc_version") else None,
+                atlantis_binary=str(atlantis_binary),
+            )
+        log(
+            f"[run {task.ordinal_index}/{total_cases} w{worker_id}] done "
+            f"status={payload.get('status')} elapsed={float(payload.get('elapsed_wall_sec', 0.0)):.2f}s "
+            f"{format_case_label(case)}"
+        )
+        return payload
+
+    run_payloads = execute_case_pool(
+        phase="run",
+        workers=args.workers,
+        tasks=run_tasks,
+        worker_fn=run_worker,
+    )
     log(f"Run status counts: {aggregate_status_counts(run_payloads)}")
     return 0
 
@@ -1565,11 +1853,11 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=textwrap.dedent(
             """\
             Examples:
-              tools/minizinc_challenge_sweep.py fetch --name smoke --years 2025 --limit 2
-              tools/minizinc_challenge_sweep.py generate --name smoke --years 2025 --limit 2
-              tools/minizinc_challenge_sweep.py run --name smoke --years 2025 --limit 2
-              tools/minizinc_challenge_sweep.py analyze --name smoke
-              tools/minizinc_challenge_sweep.py report --name smoke
+              test/sweep-challenge/minizinc_challenge_sweep.py fetch --name smoke --years 2025 --limit 2
+              test/sweep-challenge/minizinc_challenge_sweep.py generate --name smoke --years 2025 --limit 2
+              test/sweep-challenge/minizinc_challenge_sweep.py run --name smoke --years 2025 --limit 2
+              test/sweep-challenge/minizinc_challenge_sweep.py analyze --name smoke
+              test/sweep-challenge/minizinc_challenge_sweep.py report --name smoke
             """
         ),
     )
@@ -1584,6 +1872,7 @@ def build_parser() -> argparse.ArgumentParser:
     generate_parser.add_argument("--minizinc", help="Path to the MiniZinc executable. Defaults to `minizinc` on PATH.")
     generate_parser.add_argument("--build-dir", default="build", help="Atlantis build directory containing atlantis.msc and fzn-atlantis.")
     generate_parser.add_argument("--compile-timeout", type=int, default=60, help="Per-case MiniZinc compile timeout in seconds.")
+    generate_parser.add_argument("--workers", type=positive_worker_count, default=1, help="Number of worker threads to use.")
     generate_parser.set_defaults(func=cmd_generate)
 
     run_parser = subparsers.add_parser("run", help="Run Atlantis on compile-success cases.")
@@ -1592,6 +1881,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--build-dir", default="build", help="Atlantis build directory containing fzn-atlantis.")
     run_parser.add_argument("--run-timeout", type=int, default=5, help="Per-case Atlantis subprocess timeout in seconds.")
     run_parser.add_argument("--solver-timelimit-ms", type=int, default=2000, help="Atlantis internal time limit in milliseconds.")
+    run_parser.add_argument("--workers", type=positive_worker_count, default=1, help="Number of worker threads to use.")
     run_parser.add_argument("--dry-run", action="store_true", help="Print the intended runtime case count without executing Atlantis.")
     run_parser.set_defaults(func=cmd_run)
 
@@ -1618,6 +1908,9 @@ def main(argv: list[str] | None = None) -> int:
     except subprocess.CalledProcessError as exc:
         print(f"error: command failed with exit code {exc.returncode}: {' '.join(exc.cmd)}", file=sys.stderr)
         return 1
+    except KeyboardInterrupt:
+        print("error: interrupted", file=sys.stderr)
+        return 130
 
 
 if __name__ == "__main__":
