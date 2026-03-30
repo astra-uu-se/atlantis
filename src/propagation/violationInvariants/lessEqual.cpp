@@ -1,6 +1,7 @@
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::propagation {
 
@@ -29,15 +30,18 @@ void LessEqual::registerVars() {
 
 void LessEqual::updateBounds(bool widenOnly) {
   _solver.updateBounds(
-      _violationId,
-      std::max(Int(0), _solver.lowerBound(_x) - _solver.upperBound(_y)),
-      std::max(Int(0), _solver.upperBound(_x) - _solver.lowerBound(_y)),
+      _violationId, std::max(Int(0), overflow::saturatingSub(
+                                         _solver.lowerBound(_x),
+                                         _solver.upperBound(_y))),
+      std::max(Int(0), overflow::saturatingSub(_solver.upperBound(_x),
+                                               _solver.lowerBound(_y))),
       widenOnly);
 }
 
 void LessEqual::recompute(Timestamp ts) {
   updateValue(ts, _violationId,
-              std::max(Int(0), _solver.value(ts, _x) - _solver.value(ts, _y)));
+              std::max(Int(0), overflow::saturatingSub(_solver.value(ts, _x),
+                                                       _solver.value(ts, _y))));
 }
 
 void LessEqual::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }

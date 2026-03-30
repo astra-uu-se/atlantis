@@ -213,4 +213,51 @@ class int_lin_eqTest : public FznTestBase {
 
 RC_GTEST_FIXTURE_PROP(int_lin_eqTest, RapidCheck, ()) { rapidCheck(); }
 
+TEST(IntLinEqRegression, DefinedVarDomainDoesNotConflictWithDefinition) {
+  auto model = std::make_shared<fznparser::Model>();
+
+  auto out = std::make_shared<fznparser::IntVar>(1, 4, "out");
+  out->addAnnotation("is_defined_var");
+  model->addVar(out);
+
+  auto a = std::make_shared<fznparser::IntVar>(1, "a");
+  auto b = std::make_shared<fznparser::IntVar>(1, "b");
+  auto c = std::make_shared<fznparser::IntVar>(1, "c");
+  auto d = std::make_shared<fznparser::IntVar>(1, "d");
+  model->addVar(a);
+  model->addVar(b);
+  model->addVar(c);
+  model->addVar(d);
+
+  auto coeffs = std::make_shared<fznparser::IntVarArray>("coeffs");
+  coeffs->append(Int{1});
+  coeffs->append(Int{-1});
+  coeffs->append(Int{-1});
+  coeffs->append(Int{-1});
+  coeffs->append(Int{-1});
+
+  auto vars = std::make_shared<fznparser::IntVarArray>("vars");
+  vars->append(out);
+  vars->append(a);
+  vars->append(b);
+  vars->append(c);
+  vars->append(d);
+
+  fznparser::Constraint constraint{
+      "int_lin_eq",
+      std::vector<fznparser::Arg>{coeffs, vars, fznparser::IntArg(Int{-4})}};
+  constraint.addAnnotation("defines_var",
+                           fznparser::AnnotationExpression(
+                               fznparser::Annotation("out")));
+  model->addConstraint(std::move(constraint));
+
+  auto graph = std::make_shared<FznInvariantGraph>(true);
+  graph->open();
+  ASSERT_NO_THROW(graph->build(*model));
+  graph->close();
+
+  auto solver = std::make_shared<propagation::Solver>();
+  EXPECT_NO_THROW(static_cast<void>(graph->construct(*solver)));
+}
+
 }  // namespace atlantis::testing

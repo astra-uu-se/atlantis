@@ -63,6 +63,7 @@
 #include "atlantis/utils/domains.hpp"
 #include "atlantis/utils/fznAst.hpp"
 #include "atlantis/utils/fznOutput.hpp"
+#include <limits>
 
 namespace atlantis::invariantgraph {
 
@@ -77,11 +78,17 @@ DomainType domainType(const std::vector<fznparser::Annotation>& annotations,
 }
 
 DomainType domainType(const fznparser::BoolVar& var) {
+  if (var.isDefinedVar()) {
+    return DomainType::DOM_NONE;
+  }
   return domainType(var.annotations(), var.isFixed() ? DomainType::DOM_FIXED
                                                      : DomainType::DOM_RANGE);
 }
 
 DomainType domainType(const fznparser::IntVar& var) {
+  if (var.isDefinedVar()) {
+    return DomainType::DOM_NONE;
+  }
   const auto defaultDomainType =
       var.isFixed() ? DomainType::DOM_FIXED
                     : (var.domain().isInterval() ? DomainType::DOM_RANGE
@@ -159,6 +166,11 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntVar& var) {
     nId = var.identifier().empty()
               ? retrieveIntVarNode(var.lowerBound())
               : retrieveIntVarNode(var.lowerBound(), var.identifier());
+  } else if (var.isDefinedVar() && !var.identifier().empty()) {
+    nId = retrieveIntVarNode(
+        std::make_shared<SearchDomain>(std::numeric_limits<Int>::min(),
+                                       std::numeric_limits<Int>::max()),
+        var.identifier(), DomainType::DOM_NONE);
   } else if (!var.identifier().empty()) {
     nId = retrieveIntVarNode(
         var.domain().isInterval()
