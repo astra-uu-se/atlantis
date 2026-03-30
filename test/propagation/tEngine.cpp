@@ -880,6 +880,59 @@ TEST_F(SolverTest, ComputeBoundsCycle) {
   EXPECT_EQ(solver->upperBound(outputs.at(1)), 40);
 }
 
+TEST_F(SolverTest, CloseHandlesSccMembersWithDifferentExternalInputs) {
+  solver->open();
+
+  const VarViewId x = solver->makeIntVar(0, 0, 10);
+  const VarViewId layer1 = solver->makeIntVar(0, 0, 20);
+  const VarViewId layer2 = solver->makeIntVar(0, 0, 30);
+  const VarViewId idx = solver->makeIntVar(0, 0, 0);
+  const VarViewId a = solver->makeIntVar(0, 0, 30);
+  const VarViewId b = solver->makeIntVar(0, 0, 30);
+
+  solver->makeInvariant<MockSimplePlus>(*solver, layer1, x, x);
+  solver->makeInvariant<MockSimplePlus>(*solver, layer2, layer1, x);
+  solver->makeInvariant<ElementVar>(
+      *solver, a, idx, std::vector<VarViewId>{x, b}, 0);
+  solver->makeInvariant<ElementVar>(
+      *solver, b, idx, std::vector<VarViewId>{layer2, a}, 0);
+
+  EXPECT_NO_THROW(solver->close());
+}
+
+TEST_F(SolverTest, DynamicSccOrderingDoesNotThrowTopologicalOrderError) {
+  solver->open();
+
+  const VarViewId x = solver->makeIntVar(1, 0, 10);
+  const VarViewId layer1 = solver->makeIntVar(0, 0, 20);
+  const VarViewId layer2 = solver->makeIntVar(0, 0, 30);
+  const VarViewId idx = solver->makeIntVar(0, 0, 0);
+  const VarViewId a = solver->makeIntVar(0, 0, 30);
+  const VarViewId b = solver->makeIntVar(0, 0, 30);
+
+  solver->makeInvariant<MockSimplePlus>(*solver, layer1, x, x);
+  solver->makeInvariant<MockSimplePlus>(*solver, layer2, layer1, x);
+  solver->makeInvariant<ElementVar>(*solver, a, idx,
+                                    std::vector<VarViewId>{x, b}, 0);
+  solver->makeInvariant<ElementVar>(*solver, b, idx,
+                                    std::vector<VarViewId>{layer2, a}, 0);
+
+  ASSERT_NO_THROW(solver->close());
+
+  solver->beginMove();
+  solver->setValue(x, 2);
+  solver->endMove();
+
+  solver->beginProbe();
+  EXPECT_NO_THROW(solver->query(b));
+  solver->endProbe();
+
+  EXPECT_EQ(solver->currentValue(layer1), 4);
+  EXPECT_EQ(solver->currentValue(layer2), 6);
+  EXPECT_EQ(solver->currentValue(a), 2);
+  EXPECT_EQ(solver->currentValue(b), 6);
+}
+
 TEST_F(SolverTest, InputToOutputPropagation) {
   propagation(PropagationMode::INPUT_TO_OUTPUT, OutputToInputMarkingMode::NONE);
 }

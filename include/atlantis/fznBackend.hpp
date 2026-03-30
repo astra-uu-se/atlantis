@@ -32,7 +32,13 @@ class SearchStatistics;
 
 class FznBackend {
  public:
-  static void onFinishDefault(bool hasSatisfyingSolution);
+  enum class SolveOutcome {
+    SATISFIABLE,
+    UNSATISFIABLE,
+    UNKNOWN,
+  };
+
+  static void onFinishDefault(SolveOutcome outcome);
 
   void onSolutionDefault(const search::SavedAssignment&) const;
 
@@ -49,7 +55,7 @@ class FznBackend {
   std::shared_ptr<const bool> _shouldStop{nullptr};
 
   std::function<void(const search::SavedAssignment&)> _onSolution;
-  std::function<void(bool)> _onFinish = onFinishDefault;
+  std::function<void(SolveOutcome)> _onFinish = onFinishDefault;
   std::vector<std::thread> _threads{};
   std::shared_ptr<search::ThreadController> _threadController{nullptr};
 
@@ -116,7 +122,7 @@ class FznBackend {
     return _onSolution;
   }
 
-  [[nodiscard]] const std::function<void(bool)>& onFinish() const {
+  [[nodiscard]] const std::function<void(SolveOutcome)>& onFinish() const {
     return _onFinish;
   };
 
@@ -136,7 +142,7 @@ class FznBackend {
     _dotFilePath = std::optional(std::move(path));
   }
 
-  void setOnFinish(const std::function<void(bool)>& onFinish) {
+  void setOnFinish(const std::function<void(SolveOutcome)>& onFinish) {
     _onFinish = onFinish;
   }
 };

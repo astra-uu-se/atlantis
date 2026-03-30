@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
       threadCount = result["threads"].as<uint_fast32_t>();
       if (threadCount < 1) {
         std::cout << "Error: Invalid thread count" << std::endl;
-        return 0;
+        return 2;
       }
     }
 
@@ -110,14 +110,36 @@ int main(int argc, char* argv[]) {
       backend.setDotFilePath(std::move(dotFilePath));
     }
 
-    backend.solve(logger);
-    backend.join(logger);
+    try {
+      backend.solve(logger);
+      backend.join(logger);
+    } catch (const std::exception& e) {
+      try {
+        backend.join(logger);
+      } catch (...) {
+      }
+      std::cerr << "Internal Atlantis error: " << e.what() << std::endl;
+      return 1;
+    } catch (...) {
+      try {
+        backend.join(logger);
+      } catch (...) {
+      }
+      std::cerr << "Internal Atlantis error: unknown non-standard exception"
+                << std::endl;
+      return 1;
+    }
+
+    return 0;
 
   } catch (const cxxopts::exceptions::exception& e) {
     std::cerr << "Error: " << e.what() << std::endl;
+    return 2;
   } catch (const std::invalid_argument& e) {
     std::cerr << "Error: " << e.what() << std::endl;
+    return 2;
   }
+  return 1;
 }
 
 atlantis::logging::Level getLogLevel(const cxxopts::ParseResult& result) {

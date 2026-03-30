@@ -11,7 +11,8 @@ namespace atlantis::search::neighborhoods {
 
 class CountNeighborhood : public Neighborhood {
   std::vector<SearchVar> _vars;
-  std::vector<size_t> _indices;
+  std::vector<size_t> _eligibleIndices;
+  std::vector<size_t> _ineligibleIndices;
   Int _needle;
   size_t _amount;
   Timestamp _curTimestamp;

@@ -133,8 +133,9 @@ static void partitionIntoLayersUtil(
     const size_t comp = componentOfVar[varId];
     for (const VarId cVarId : components[comp]) {
       visited[cVarId] = true;
-      assert(graph.definingInvariant(cVarId) != NULL_ID);
-      for (const VarId inputId : std::views::keys(graph.inputVars(defInv))) {
+      const InvariantId cDefInv = graph.definingInvariant(cVarId);
+      assert(cDefInv != NULL_ID);
+      for (const VarId inputId : std::views::keys(graph.inputVars(cDefInv))) {
         if (componentOfVar[inputId] != comp) {
           if (!visited[inputId]) {
             visited[inputId] = true;
@@ -352,9 +353,41 @@ void topologicallyOrderUtil(
                              }));
 
   const VarId dynInput = isDynInv ? graph.dynamicInputVar(ts, defInv) : NULL_ID;
+  const bool staticInputsPrevious =
+      !isDynInv ||
+      std::ranges::all_of(graph.inputVars(defInv),
+                          [&](const std::pair<VarId, bool>& p) {
+                            return p.first != NULL_ID &&
+                                   (p.second ||
+                                    varLayerIndex[p.first].layer < layer);
+                          });
+  const bool dynamicInputsPrevious =
+      !isDynInv ||
+      std::ranges::all_of(graph.inputVars(defInv),
+                          [&](const std::pair<VarId, bool>& p) {
+                            return p.first != NULL_ID &&
+                                   (!p.second ||
+                                    varLayerIndex[p.first].layer < layer);
+                          });
+  auto ignoreInputForOrdering = [&](const VarId inputId,
+                                    const bool isDynamicInput) {
+    if (!isDynInv || inputId == NULL_ID || varLayerIndex[inputId].layer != layer) {
+      return false;
+    }
+    if (staticInputsPrevious) {
+      return isDynamicInput && dynInput == inputId;
+    }
+    if (dynamicInputsPrevious) {
+      return !isDynamicInput;
+    }
+    return false;
+  };
   const size_t numVars = graph.numVars();
   for (const auto& [inputId, isDynamicInput] : graph.inputVars(defInv)) {
     if (isDynInv && isDynamicInput && dynInput != inputId) {
+      continue;
+    }
+    if (ignoreInputForOrdering(inputId, isDynamicInput)) {
       continue;
     }
     assert(inputId < varLayerIndex.size());
@@ -371,23 +404,6 @@ void topologicallyOrderUtil(
         std::max(topologicalNumber[varId], topologicalNumber[inputId] + 1);
   }
   assert(!isDynInv || dynInput == graph.dynamicInputVar(ts, defInv));
-  assert(std::ranges::all_of(
-      graph.inputVars(defInv), [&](const std::pair<VarId, bool>& p) {
-        if (p.first == NULL_ID) {
-          return false;
-        }
-        if (isDynInv && p.second) {
-          if (dynInput == p.first &&
-              topologicalNumber[p.first] >= topologicalNumber[varId]) {
-            return false;
-          }
-          return true;
-        }
-        if (topologicalNumber[p.first] >= topologicalNumber[varId]) {
-          return false;
-        }
-        return true;
-      }));
 
   inFrontier[index] = false;
 }
@@ -672,8 +688,41 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
         _layerHasDynamicCycle.at(layer) && isDynamicInvariant(defInv);
 
     const VarId dynInput = isDynInv ? dynamicInputVar(ts, defInv) : NULL_ID;
+    const bool staticInputsPrevious =
+        !isDynInv ||
+        std::ranges::all_of(inputVars(defInv),
+                            [&](const std::pair<VarId, bool>& p) {
+                              return p.first != NULL_ID &&
+                                     (p.second ||
+                                      _varLayerIndex[p.first].layer < layer);
+                            });
+    const bool dynamicInputsPrevious =
+        !isDynInv ||
+        std::ranges::all_of(inputVars(defInv),
+                            [&](const std::pair<VarId, bool>& p) {
+                              return p.first != NULL_ID &&
+                                     (!p.second ||
+                                      _varLayerIndex[p.first].layer < layer);
+                            });
+    auto ignoreInputForOrdering = [&](const VarId inputId,
+                                      const bool isDynamicInput) {
+      if (!isDynInv || inputId == NULL_ID ||
+          _varLayerIndex[inputId].layer != layer) {
+        return false;
+      }
+      if (staticInputsPrevious) {
+        return isDynamicInput && dynInput == inputId;
+      }
+      if (dynamicInputsPrevious) {
+        return !isDynamicInput;
+      }
+      return false;
+    };
     for (const auto& [inputId, isDynamicInput] : inputVars(defInv)) {
       if (isDynInv && isDynamicInput && dynInput != inputId) {
+        continue;
+      }
+      if (ignoreInputForOrdering(inputId, isDynamicInput)) {
         continue;
       }
       if (_topologicalNumber[inputId] >= _topologicalNumber[outputId]) {

@@ -1,8 +1,11 @@
 #pragma once
 #include <atomic>
+#include <exception>
 #include <iostream>
 #include <mutex>
 #include <optional>
+#include <string>
+#include <string_view>
 
 #include "cost.hpp"
 #include "savedAssignment.hpp"
@@ -21,6 +24,9 @@ class ThreadController {
   std::atomic<size_t> _numFinishedThreads = 0;
   std::optional<Cost> _bestCost;
   std::optional<SavedAssignment> _solution;
+  std::exception_ptr _fatalError;
+  std::optional<Int> _fatalErrorThreadId;
+  std::optional<std::string> _fatalErrorContext;
 
   // These are just for statistical tracking purposes
   [[maybe_unused]] Int _counter = 0;
@@ -44,6 +50,13 @@ class ThreadController {
 
   [[nodiscard]] std::optional<std::pair<size_t, SavedAssignment>> loadSolution(
       size_t solutionId) const;
+
+  void recordFatalError(std::exception_ptr error, Int threadId,
+                        std::string_view context);
+
+  [[nodiscard]] bool hasFatalError() const;
+
+  void rethrowFatalErrorIfAny() const;
 
   [[gnu::always_inline]] [[nodiscard]] bool hasSolution() const {
     return _hasSolution.load();
