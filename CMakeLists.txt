@@ -55,9 +55,8 @@ endif()
 if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
   # Boost 1.80, pulled indirectly via fznparser, still references
   # std::unary_function unless this compatibility define is enabled.
-  # The extra warning suppressions are for third-party Boost/fznparser headers.
   set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX98_FUNCTION_BASE -Wno-deprecated-builtins -Wno-deprecated-copy -Wno-deprecated-copy-with-user-provided-copy")
+      "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX98_FUNCTION_BASE")
 endif()
 
 CPMAddPackage(
@@ -281,6 +280,17 @@ if(_atlantis_fznparser_cmake MATCHES "The boost URL is not available, switching 
 endif()
 add_subdirectory("${fznparser_SOURCE_DIR}" "${fznparser_BINARY_DIR}")
 
+if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" AND TARGET fznparser)
+  # Boost Spirit warnings originate in vendored fznparser/Boost code on Apple
+  # Clang. Keep the suppression scoped to that external target.
+  target_compile_options(
+    fznparser PRIVATE
+    -Wno-deprecated-builtins
+    -Wno-deprecated-copy
+    -Wno-deprecated-copy-with-user-provided-copy
+  )
+endif()
+
 # includes (hpp/h) files are in ./include
 target_include_directories(${PROJECT_LIB}
   PRIVATE
@@ -289,6 +299,10 @@ target_include_directories(${PROJECT_LIB}
   PUBLIC
   $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${COMMON_INCLUDES}>)
+
+if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+  target_include_directories(${PROJECT_LIB} SYSTEM PRIVATE "${_atlantis_boost_source_dir}")
+endif()
 
 target_link_libraries(${PROJECT_LIB} fznparser::fznparser fmt::fmt)
 
