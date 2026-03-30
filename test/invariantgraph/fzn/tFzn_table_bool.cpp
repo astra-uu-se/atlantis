@@ -178,12 +178,10 @@ class fzn_table_boolRegressionTest : public FznTestBase {
 
   void generate() override {}
 
-  void SetUp() override {
-    FznTestBase::SetUp();
-
-    addBoolVarArray(
-        {BoolArgState::FIXED_TRUE, BoolArgState::VAR, BoolArgState::VAR},
-        inputs);
+  void buildConstraint(const std::string& identifier, bool reifiedConstraint) {
+    addBoolVarArray({BoolArgState::FIXED_TRUE, BoolArgState::VAR,
+                     BoolArgState::VAR},
+                    inputs);
 
     std::vector<bool> flatTable{};
     flatTable.reserve(table.size() * inputs.size());
@@ -194,10 +192,18 @@ class fzn_table_boolRegressionTest : public FznTestBase {
     }
 
     addArg(flatTable);
-    addBoolPar(reified, true);
-    constraintIdentifier = "fzn_table_bool";
+    constraintIdentifier = identifier;
+    if (reifiedConstraint) {
+      addBoolArg(BoolArgState::VAR, reified);
+    } else {
+      addBoolPar(reified, true);
+    }
     generateConstraint();
     closeInvariantGraph();
+  }
+
+  void SetUp() override {
+    FznTestBase::SetUp();
   }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
@@ -222,6 +228,8 @@ class fzn_table_boolRegressionTest : public FznTestBase {
 };
 
 TEST_F(fzn_table_boolRegressionTest, RejectsShrunkRapidCheckCounterexample) {
+  buildConstraint("fzn_table_bool", false);
+
   _solver->beginMove();
   setValue("i_1", 1);
   setValue("i_2", 1);
@@ -247,6 +255,34 @@ TEST_F(fzn_table_boolRegressionTest, RejectsShrunkRapidCheckCounterexample) {
   EXPECT_TRUE(boolVal("i_1", false));
   EXPECT_TRUE(boolVal("i_2", false));
 
+  _solver->endProbe();
+}
+
+TEST_F(fzn_table_boolRegressionTest, AcceptsFlatBoolTable) {
+  buildConstraint("fzn_table_bool_flat", false);
+
+  _solver->beginMove();
+  setValue("i_1", 1);
+  setValue("i_2", 0);
+  _solver->endMove();
+
+  _solver->beginProbe();
+  query();
+  EXPECT_TRUE(isSatisfied(false));
+  _solver->endProbe();
+}
+
+TEST_F(fzn_table_boolRegressionTest, AcceptsFlatBoolTableReif) {
+  buildConstraint("fzn_table_bool_flat_reif", true);
+
+  _solver->beginMove();
+  setValue("i_1", 1);
+  setValue("i_2", 1);
+  _solver->endMove();
+
+  _solver->beginProbe();
+  query();
+  EXPECT_FALSE(boolVal(reified, false));
   _solver->endProbe();
 }
 }  // namespace atlantis::testing

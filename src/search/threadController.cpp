@@ -89,9 +89,16 @@ void ThreadController::recordFatalError(std::exception_ptr error,
     _fatalErrorThreadId = threadId;
     _fatalErrorContext = std::string(context);
   }
+  requestStop();
+}
+
+void ThreadController::requestStop() {
+  _stopRequested = true;
   _curSolutionNotified = false;
   _curSolutionNotified.notify_one();
 }
+
+bool ThreadController::stopRequested() const { return _stopRequested.load(); }
 
 bool ThreadController::hasFatalError() const {
   std::lock_guard lock(_lock);

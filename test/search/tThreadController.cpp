@@ -15,6 +15,7 @@ TEST(ThreadControllerTest, RethrowsRecordedFatalError) {
       std::make_exception_ptr(std::runtime_error("boom")), 7, "solver thread");
 
   ASSERT_TRUE(controller.hasFatalError());
+  EXPECT_TRUE(controller.stopRequested());
   try {
     controller.rethrowFatalErrorIfAny();
     FAIL() << "Expected a fatal error to be rethrown";
@@ -39,6 +40,14 @@ TEST(ThreadControllerTest, KeepsFirstFatalError) {
     EXPECT_NE(std::string(e.what()).find("first"), std::string::npos);
     EXPECT_EQ(std::string(e.what()).find("second"), std::string::npos);
   }
+}
+
+TEST(ThreadControllerTest, RequestStopMarksControllerStopped) {
+  ThreadController controller(1);
+
+  EXPECT_FALSE(controller.stopRequested());
+  controller.requestStop();
+  EXPECT_TRUE(controller.stopRequested());
 }
 
 }  // namespace atlantis::testing

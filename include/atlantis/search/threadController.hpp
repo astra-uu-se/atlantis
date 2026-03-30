@@ -19,6 +19,7 @@ class ThreadController {
   size_t _threadCount;
   std::atomic<bool> _hasSolution = false;
   std::atomic<bool> _hasNoViolations = false;
+  std::atomic<bool> _stopRequested = false;
   std::atomic<bool> _curSolutionNotified = true;
   std::atomic<size_t> _curSolutionId = 0;
   std::atomic<size_t> _numFinishedThreads = 0;
@@ -53,6 +54,10 @@ class ThreadController {
 
   void recordFatalError(std::exception_ptr error, Int threadId,
                         std::string_view context);
+
+  void requestStop();
+
+  [[nodiscard]] bool stopRequested() const;
 
   [[nodiscard]] bool hasFatalError() const;
 

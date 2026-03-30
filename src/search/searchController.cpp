@@ -11,6 +11,9 @@ bool SearchController::shouldRun(const Assignment& assignment) {
   if (_shouldStop != nullptr && *_shouldStop) {
     return false;
   }
+  if (_threadController != nullptr && _threadController->stopRequested()) {
+    return false;
+  }
   if ((_foundSolution &&
        (_isSatisfactionProblem || assignment.objectiveIsOptimal())) ||
       (_isSatisfactionProblem && _threadController->hasNoViolations())) {

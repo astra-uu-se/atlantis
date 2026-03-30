@@ -42,6 +42,9 @@ void FznBackend::handleSolverNotifications(
 
   while (threadController->numFinishedThreads() < _threadCount) {
     threadController->awaitChanges();
+    if (threadController->hasFatalError()) {
+      threadController->rethrowFatalErrorIfAny();
+    }
 
     auto result = threadController->loadSolution(solutionId);
     if (!result.has_value()) {

@@ -63,7 +63,6 @@
 #include "atlantis/utils/domains.hpp"
 #include "atlantis/utils/fznAst.hpp"
 #include "atlantis/utils/fznOutput.hpp"
-#include <limits>
 
 namespace atlantis::invariantgraph {
 
@@ -166,11 +165,6 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntVar& var) {
     nId = var.identifier().empty()
               ? retrieveIntVarNode(var.lowerBound())
               : retrieveIntVarNode(var.lowerBound(), var.identifier());
-  } else if (var.isDefinedVar() && !var.identifier().empty()) {
-    nId = retrieveIntVarNode(
-        std::make_shared<SearchDomain>(std::numeric_limits<Int>::min(),
-                                       std::numeric_limits<Int>::max()),
-        var.identifier(), DomainType::DOM_NONE);
   } else if (!var.identifier().empty()) {
     nId = retrieveIntVarNode(
         var.domain().isInterval()
