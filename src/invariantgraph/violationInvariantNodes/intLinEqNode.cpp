@@ -12,6 +12,7 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -75,33 +76,14 @@ void IntLinEqNode::updateState() {
   Int lb = 0;
   Int ub = 0;
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    Int prod1;
-    Int prod2;
     const Int varLb =
         invariantGraph().varNode(staticInputVarNodeIds().at(i)).lowerBound();
-    if (__builtin_mul_overflow(_coeffs[i], varLb, &prod1)) {
-      prod1 = (_coeffs[i] < 0) == (varLb < 0) ? std::numeric_limits<Int>::max()
-                                              : std::numeric_limits<Int>::min();
-    }
     const Int varUb =
         invariantGraph().varNode(staticInputVarNodeIds().at(i)).upperBound();
-    if (__builtin_mul_overflow(_coeffs[i], varUb, &prod2)) {
-      prod2 = (_coeffs[i] < 0) == (varUb < 0) ? std::numeric_limits<Int>::max()
-                                              : std::numeric_limits<Int>::min();
-    }
-    Int sum;
-    if (__builtin_add_overflow(lb, std::min(prod1, prod2), &sum)) {
-      lb = lb < 0 ? std::numeric_limits<Int>::min()
-                  : std::numeric_limits<Int>::max();
-    } else {
-      lb = sum;
-    }
-    if (__builtin_add_overflow(ub, std::max(prod1, prod2), &sum)) {
-      ub = ub < 0 ? std::numeric_limits<Int>::min()
-                  : std::numeric_limits<Int>::max();
-    } else {
-      ub = sum;
-    }
+    const Int prod1 = overflow::saturatingMul(_coeffs[i], varLb);
+    const Int prod2 = overflow::saturatingMul(_coeffs[i], varUb);
+    lb = overflow::saturatingAdd(lb, std::min(prod1, prod2));
+    ub = overflow::saturatingAdd(ub, std::max(prod1, prod2));
   }
 
   if (lb == ub && lb == _bound) {

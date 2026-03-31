@@ -26,7 +26,6 @@ std::optional<size_t> AllDifferent::countIndex(const Int value) const {
   if (value < _offset) {
     return std::nullopt;
   }
-  using UInt = std::make_unsigned_t<Int>;
   const UInt delta = static_cast<UInt>(value) - static_cast<UInt>(_offset);
   if (delta >= _counts.size()) {
     return std::nullopt;

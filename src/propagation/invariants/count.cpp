@@ -15,7 +15,6 @@ std::optional<size_t> countIndex(Int value, Int offset, size_t size) {
   if (value < offset) {
     return std::nullopt;
   }
-  using UInt = std::make_unsigned_t<Int>;
   const UInt delta = static_cast<UInt>(value) - static_cast<UInt>(offset);
   if (delta >= size) {
     return std::nullopt;

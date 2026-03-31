@@ -1,4 +1,9 @@
 #pragma once
+#ifdef _DEBUG
+#ifndef NDEBUG
+#define NDEBUG
+#endif
+#endif
 
 #include <cstddef>
 #include <cstdlib>
@@ -12,89 +17,116 @@ namespace atlantis::overflow {
 inline constexpr Int kIntMin = std::numeric_limits<Int>::min();
 inline constexpr Int kIntMax = std::numeric_limits<Int>::max();
 
-inline Int saturatingAdd(Int lhs, Int rhs) noexcept {
-  Int result = 0;
-#if defined(__clang__) || defined(__GNUC__)
-  if (__builtin_add_overflow(lhs, rhs, &result)) {
-    return rhs >= 0 ? kIntMax : kIntMin;
-  }
-  return result;
+inline bool addOverflow(const Int lhs, const Int rhs, Int* result) {
+#if defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
+  return __builtin_add_overflow(lhs, rhs, result);
 #else
   if (rhs > 0 && lhs > kIntMax - rhs) {
-    return kIntMax;
+    return true;
   }
   if (rhs < 0) {
-    if (rhs == kIntMin) {
-      return lhs < 0 ? kIntMin : lhs + rhs;
+    if (rhs == kIntMin && lhs < 0) {
+      return true;
     }
     if (lhs < kIntMin - rhs) {
-      return kIntMin;
+      return true;
     }
   }
-  return lhs + rhs;
+  *result = lhs + rhs;
+  return false;
 #endif
 }
 
-inline Int saturatingSub(Int lhs, Int rhs) noexcept {
-  Int result = 0;
-#if defined(__clang__) || defined(__GNUC__)
-  if (__builtin_sub_overflow(lhs, rhs, &result)) {
-    return rhs < 0 ? kIntMax : kIntMin;
-  }
-  return result;
+inline bool subOverflow(const Int lhs, const Int rhs, Int* result) {
+#if defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
+  return __builtin_sub_overflow(lhs, rhs, result);
 #else
   if (rhs == kIntMin) {
-    return lhs >= 0 ? kIntMax : kIntMax + lhs + 1;
+    if (lhs >= 0) {
+      return true;
+    }
+    *result = kIntMax - lhs + 1;
+    return false;
   }
-  return saturatingAdd(lhs, -rhs);
+  return addOverflow(lhs, -rhs, result);
 #endif
 }
 
-inline Int saturatingMul(Int lhs, Int rhs) noexcept {
-  Int result = 0;
-#if defined(__clang__) || defined(__GNUC__)
-  if (__builtin_mul_overflow(lhs, rhs, &result)) {
-    return (lhs < 0) == (rhs < 0) ? kIntMax : kIntMin;
-  }
-  return result;
+inline bool mulOverflow(const Int lhs, const Int rhs, Int* result) {
+#if defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
+  return __builtin_mul_overflow(lhs, rhs, result);
 #else
   if (lhs == 0 || rhs == 0) {
-    return 0;
+    *result = 0;
+    return false;
   }
   if (lhs == -1) {
-    return rhs == kIntMin ? kIntMax : -rhs;
+    if (rhs == kIntMin) {
+      return true;
+    }
+    *result = -rhs;
+    return false;
   }
   if (rhs == -1) {
-    return lhs == kIntMin ? kIntMax : -lhs;
+    if (lhs == kIntMin) {
+      return true;
+    }
+    *result = -lhs;
+    return false;
   }
   if (lhs > 0) {
     if (rhs > 0 && lhs > kIntMax / rhs) {
-      return kIntMax;
+      return true;
     }
     if (rhs < 0 && rhs < kIntMin / lhs) {
-      return kIntMin;
+      return true;
     }
   } else {
     if (rhs > 0 && lhs < kIntMin / rhs) {
-      return kIntMin;
+      return true;
     }
     if (rhs < 0 && lhs < kIntMax / rhs) {
-      return kIntMax;
+      return true;
     }
   }
-  return lhs * rhs;
+  *result = lhs * rhs;
+  return false;
 #endif
 }
 
-inline Int saturatingAbs(Int value) noexcept {
+inline Int saturatingAdd(const Int lhs, const Int rhs) noexcept {
+  Int result = 0;
+  if (addOverflow(lhs, rhs, &result)) {
+    return rhs >= 0 ? kIntMax : kIntMin;
+  }
+  return result;
+}
+
+inline Int saturatingSub(const Int lhs, const Int rhs) noexcept {
+  Int result = 0;
+  if (subOverflow(lhs, rhs, &result)) {
+    return rhs < 0 ? kIntMax : kIntMin;
+  }
+  return result;
+}
+
+inline Int saturatingMul(const Int lhs, const Int rhs) noexcept {
+  Int result = 0;
+  if (mulOverflow(lhs, rhs, &result)) {
+    return (lhs < 0) == (rhs < 0) ? kIntMax : kIntMin;
+  }
+  return result;
+}
+
+inline Int saturatingAbs(const Int value) noexcept {
   return value == kIntMin ? kIntMax : std::abs(value);
 }
 
-inline Int saturatingAbsDiff(Int lhs, Int rhs) noexcept {
+inline Int saturatingAbsDiff(const Int lhs, const Int rhs) noexcept {
   return saturatingAbs(saturatingSub(lhs, rhs));
 }
 
-inline size_t saturatingIntervalSize(Int lb, Int ub) noexcept {
+inline size_t saturatingIntervalSize(const Int lb, const Int ub) noexcept {
   if (ub < lb) {
     return 0;
   }

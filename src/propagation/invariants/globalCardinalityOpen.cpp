@@ -58,7 +58,6 @@ std::optional<size_t> GlobalCardinalityOpen::coverIndex(Int value) const {
   if (value < _offset) {
     return std::nullopt;
   }
-  using UInt = std::make_unsigned_t<Int>;
   const UInt delta = static_cast<UInt>(value) - static_cast<UInt>(_offset);
   if (delta >= _coverVarIndex.size()) {
     return std::nullopt;
