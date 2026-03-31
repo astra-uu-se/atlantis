@@ -151,7 +151,7 @@ TEST(ArrayElementNodeRegression, UpdateStatePrunesOutOfRangeIndexValues) {
       graph->retrieveIntVarNode(std::make_shared<SearchDomain>(-2, 1), "out");
 
   const auto invId = graph->addInvariantNode(std::make_shared<ArrayElementNode>(
-      *graph, std::vector<Int>{-2, -1, 0, 1}, idx, output, 1, true));
+      *graph, std::vector<Int>{-2, -1, 0, 1}, idx, output, 1));
   auto& node = dynamic_cast<ArrayElementNode&>(graph->invariantNode(invId));
 
   EXPECT_NO_THROW(node.updateState());
