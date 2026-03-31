@@ -63,6 +63,7 @@ atlantis
 
 #Ignore mzn challange files
 /fzn-challanges/*
+/.challenge/
 
 /dot_graphs/*
 

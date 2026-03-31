@@ -168,4 +168,90 @@ class fzn_table_intTest : public FznTestBase {
 };
 
 RC_GTEST_FIXTURE_PROP(fzn_table_intTest, RapidCheck, ()) { rapidCheck(); }
+
+class fzn_table_intRegressionTest : public FznTestBase {
+ public:
+  std::vector<std::string> inputs{"x0", "x1"};
+  std::string reified{"reified"};
+  std::vector<std::vector<Int>> table{{1, 2}, {0, 1}};
+
+  void generate() override {}
+
+  void buildConstraint(const std::string& identifier, bool reifiedConstraint) {
+    addIntVarArray({IntArgState::VAR, IntArgState::VAR},
+                   std::vector<std::string>{"x0", "x1"});
+
+    std::vector<Int> flatTable{};
+    flatTable.reserve(table.size() * inputs.size());
+    for (const auto& row : table) {
+      for (const Int col : row) {
+        flatTable.emplace_back(col);
+      }
+    }
+
+    addArg(flatTable);
+    constraintIdentifier = identifier;
+    if (reifiedConstraint) {
+      addBoolArg(BoolArgState::VAR, reified);
+    } else {
+      addBoolPar(reified, true);
+    }
+    generateConstraint();
+    closeInvariantGraph();
+  }
+
+  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+    std::vector<Int> vals(inputs.size());
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      vals.at(i) = intVal(inputs.at(i), committedValue);
+    }
+    const bool expected = std::ranges::any_of(table, [&](const auto& row) {
+      return row == vals;
+    });
+    if (isFixed(reified)) {
+      const bool isSolution = violation(committedValue) == 0;
+      return isSolution ? expected == boolVal(reified)
+                        : expected != boolVal(reified);
+    }
+    return expected == boolVal(reified, committedValue);
+  }
+
+  [[nodiscard]] bool canMove() const override { return true; }
+
+  void move(bool) override {}
+
+  void query() override {
+    _solver->query(totalViolationVarId() != propagation::NULL_ID
+                       ? totalViolationVarId()
+                       : varId(reified));
+  }
+};
+
+TEST_F(fzn_table_intRegressionTest, AcceptsFlatIntTable) {
+  buildConstraint("fzn_table_int_flat", false);
+
+  _solver->beginMove();
+  setValue("x0", 1);
+  setValue("x1", 2);
+  _solver->endMove();
+
+  _solver->beginProbe();
+  query();
+  EXPECT_TRUE(isSatisfied(false));
+  _solver->endProbe();
+}
+
+TEST_F(fzn_table_intRegressionTest, AcceptsFlatIntTableReif) {
+  buildConstraint("fzn_table_int_flat_reif", true);
+
+  _solver->beginMove();
+  setValue("x0", 2);
+  setValue("x1", 2);
+  _solver->endMove();
+
+  _solver->beginProbe();
+  query();
+  EXPECT_FALSE(boolVal(reified, false));
+  _solver->endProbe();
+}
 }  // namespace atlantis::testing

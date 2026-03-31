@@ -112,4 +112,17 @@ TEST_F(ObjectiveTest, maximisation_objective) {
   EXPECT_EQ(_solver->committedValue(searchObjective.bound()), 8);
 }
 
+TEST_F(ObjectiveTest, minimisation_objective_handles_extreme_bounds) {
+  Objective searchObjective(*_solver, ObjectiveDirection::MINIMIZE);
+
+  auto violation = install(
+      searchObjective,
+      fznparser::IntSet(std::numeric_limits<Int>::min() + 14,
+                        std::numeric_limits<Int>::max()),
+      0);
+
+  EXPECT_EQ(_solver->lowerBound(violation), 0);
+  EXPECT_EQ(_solver->upperBound(violation), std::numeric_limits<Int>::max());
+}
+
 }  // namespace atlantis::testing

@@ -16,13 +16,20 @@ class PropagationGraph {
   struct ListeningInvariantData {
     InvariantId invariantId;
     LocalId localId;
+    // Dynamic/static status for this listening edge. localId values are not
+    // unique across an invariant's registered inputs.
+    bool isDynamicInput;
     ListeningInvariantData(const ListeningInvariantData& other) = default;
     ListeningInvariantData(const InvariantId t_invariantId,
-                           const LocalId t_localId)
-        : invariantId(t_invariantId), localId(t_localId) {}
+                           const LocalId t_localId,
+                           bool t_isDynamicInput)
+        : invariantId(t_invariantId),
+          localId(t_localId),
+          isDynamicInput(t_isDynamicInput) {}
     ListeningInvariantData& operator=(ListeningInvariantData&& other) noexcept {
       invariantId = other.invariantId;
       localId = other.localId;
+      isDynamicInput = other.isDynamicInput;
       return *this;
     }
   };
@@ -247,6 +254,12 @@ class PropagationGraph {
     return _topologicalNumber.at(
         _varsDefinedByInvariant.at(invariantId).front());
   }
+
+  // Returns true for a currently inactive same-layer input in a dynamic SCC.
+  [[nodiscard]] bool shouldIgnoreInputForOrdering(Timestamp ts,
+                                                  InvariantId invariantId,
+                                                  VarId inputId,
+                                                  bool isDynamicInput) const;
 
   void enqueuePropagationQueue(VarId id) { _propagationQueue.push(id); }
 };

@@ -56,7 +56,7 @@ std::vector<std::string> ParNQueens::instances;
 BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   st.SetLabel(instances.at(instance));
   std::vector<size_t> solved(timelimits.size(), 0);
-  backend->setOnFinish([](bool) {});
+  backend->setOnFinish([](FznBackend::SolveOutcome) {});
   backend->setTimelimit(timelimits.back());
 
   std::vector<std::chrono::time_point<std::chrono::steady_clock>> deadlines;

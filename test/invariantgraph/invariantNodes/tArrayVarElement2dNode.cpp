@@ -135,4 +135,32 @@ INSTANTIATE_TEST_CASE_P(
                       ParamData{InvariantNodeAction::REPLACE, 2},
                       ParamData{InvariantNodeAction::REPLACE, 3}));
 
+TEST(ArrayVarElement2dNodeRegression, ReplaceHandlesReducedMatrixOffsets) {
+  auto graph = std::make_shared<InvariantGraph>();
+  graph->open();
+
+  const auto rowIdx =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2), "row");
+  const auto colIdx =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(5, 5), "col");
+  const auto output =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(0, 9), "out");
+
+  std::vector<VarNodeId> flat;
+  flat.reserve(10);
+  for (Int r = 0; r < 2; ++r) {
+    for (Int c = 0; c < 5; ++c) {
+      flat.emplace_back(graph->retrieveIntVarNode(r * 10 + c, r * 10 + c));
+    }
+  }
+
+  const auto invId = graph->addInvariantNode(std::make_shared<ArrayVarElement2dNode>(
+      *graph, rowIdx, colIdx, std::move(flat), output, 2, 1, 1));
+  auto& node = dynamic_cast<ArrayVarElement2dNode&>(graph->invariantNode(invId));
+
+  node.updateState();
+  EXPECT_TRUE(node.canBeReplaced());
+  EXPECT_TRUE(node.replace());
+}
+
 }  // namespace atlantis::testing

@@ -29,8 +29,9 @@ static void testModelFile(const char* modelFile,
   std::optional<search::SavedAssignment> solution{};
   backend.setOnSolution(
       [&solution](const search::SavedAssignment& sol) { solution = sol; });
-  backend.setOnFinish([&](const bool hasSatisfyingSolution) {
-    EXPECT_EQ(hasSatisfyingSolution, solution.has_value());
+  backend.setOnFinish([&](const FznBackend::SolveOutcome outcome) {
+    EXPECT_EQ(outcome == FznBackend::SolveOutcome::SATISFIABLE,
+              solution.has_value());
   });
   backend.solve(logger);
   backend.join(logger);

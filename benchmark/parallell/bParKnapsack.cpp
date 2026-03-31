@@ -59,7 +59,7 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
   std::vector<size_t> numSolutions(timelimits.size(), 0);
   std::vector<size_t> bestObjective(timelimits.size(), 0);
   std::vector<double> totalObjective(timelimits.size(), 0.0);
-  backend->setOnFinish([](bool) {});
+  backend->setOnFinish([](FznBackend::SolveOutcome) {});
   backend->setTimelimit(timelimits.back());
 
   std::vector<std::chrono::time_point<std::chrono::steady_clock>> deadlines;

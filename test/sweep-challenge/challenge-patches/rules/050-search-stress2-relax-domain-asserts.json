@@ -1,0 +1,19 @@
+{
+  "description": "Relax search_stress2's domain assertions so modern MiniZinc presolve can narrow domains without triggering model-side assertion failures.",
+  "id": "search-stress2-relax-domain-asserts",
+  "path_globs": [
+    "2009/search_stress2/search_stress2.mzn"
+  ],
+  "rationale": "The model asserts that some intermediate variables have exact domain 0..n. Modern MiniZinc can legitimately narrow those domains during flattening, which preserves semantics but trips the assertion.",
+  "replacements": [
+    {
+      "flags": [
+        "MULTILINE"
+      ],
+      "kind": "regex",
+      "pattern": "assert\\(index_set\\(z\\) == 1\\.\\.n /\\\\ dom\\(x\\) == 0\\.\\.n /\\\\ dom\\(y\\) == 0\\.\\.n,",
+      "replacement": "assert(index_set(z) == 1..n,"
+    }
+  ],
+  "semantics_note": "This keeps the structural size check and removes only a brittle assertion about exact presolve domains."
+}

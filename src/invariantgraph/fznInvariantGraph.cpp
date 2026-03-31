@@ -77,11 +77,17 @@ DomainType domainType(const std::vector<fznparser::Annotation>& annotations,
 }
 
 DomainType domainType(const fznparser::BoolVar& var) {
+  if (var.isDefinedVar()) {
+    return DomainType::DOM_NONE;
+  }
   return domainType(var.annotations(), var.isFixed() ? DomainType::DOM_FIXED
                                                      : DomainType::DOM_RANGE);
 }
 
 DomainType domainType(const fznparser::IntVar& var) {
+  if (var.isDefinedVar()) {
+    return DomainType::DOM_NONE;
+  }
   const auto defaultDomainType =
       var.isFixed() ? DomainType::DOM_FIXED
                     : (var.domain().isInterval() ? DomainType::DOM_RANGE

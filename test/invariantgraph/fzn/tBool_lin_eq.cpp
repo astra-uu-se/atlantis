@@ -9,6 +9,7 @@
 
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/bool_lin_eq.hpp"
+#include "atlantis/invariantgraph/invariantNodes/boolLinearNode.hpp"
 
 namespace atlantis::testing {
 
@@ -179,5 +180,27 @@ class bool_lin_eqTest : public FznTestBase {
 };
 
 RC_GTEST_FIXTURE_PROP(bool_lin_eqTest, RapidCheck, ()) { rapidCheck(); }
+
+TEST_F(bool_lin_eqTest, SupportsVariableBoundOutput) {
+  coeffs = {1, 1, 1};
+  addArg(coeffs);
+
+  inputs = {"b_0", "b_1", "b_2"};
+  addBoolVarArray({BoolArgState::VAR, BoolArgState::VAR, BoolArgState::VAR},
+                  inputs);
+
+  const std::string sum{"sum"};
+  addIntArg(IntArgState::VAR, 0, 3, sum);
+
+  constraintIdentifier = "bool_lin_eq";
+  generateConstraint();
+
+  ASSERT_NE(varNodeId(sum), NULL_NODE_ID);
+  ASSERT_EQ(varNodeConst(sum).definingNodes().size(), 1U);
+  const auto invId = *varNodeConst(sum).definingNodes().begin();
+  EXPECT_NE(dynamic_cast<const BoolLinearNode*>(
+                &_invariantGraph->invariantNodeConst(invId)),
+            nullptr);
+}
 
 }  // namespace atlantis::testing

@@ -12,6 +12,7 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/views/scalarView.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -119,14 +120,26 @@ void IntLinearNode::registerOutputVars(propagation::SolverBase& solver,
     return;
   }
   if (!staticInputVarNodeIds().empty()) {
-    if (_offset == 0) {
-      makeSolverVar(outputVarNodeIds().front(), solver, mapping);
-      assert(mapping.solverId(outputVarNodeIds().front()).isVar());
-    } else if (mapping.intermediateId(id()) == propagation::NULL_ID) {
-      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+    if (_offset != 0) {
+      if (mapping.intermediateId(id()) == propagation::NULL_ID) {
+        const auto& outputNode =
+            invariantGraphConst().varNodeConst(outputVarNodeIds().front());
+        const Int intermediateLb =
+            overflow::saturatingSub(outputNode.lowerBound(), _offset);
+        const Int intermediateUb =
+            overflow::saturatingSub(outputNode.upperBound(), _offset);
+        mapping.setIntermediateId(
+            id(),
+            solver.makeIntVar(
+                std::max(intermediateLb, std::min(intermediateUb, Int{0})),
+                intermediateLb, intermediateUb));
+      }
       mapping.setSolverId(outputVarNodeIds().front(),
                           solver.makeIntView<propagation::IntOffsetView>(
                               solver, mapping.intermediateId(id()), _offset));
+    } else {
+      makeSolverVar(outputVarNodeIds().front(), solver, mapping);
+      assert(mapping.solverId(outputVarNodeIds().front()).isVar());
     }
   }
   assert(std::ranges::all_of(

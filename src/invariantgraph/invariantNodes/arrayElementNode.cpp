@@ -50,6 +50,9 @@ void ArrayElementNode::updateState() {
   auto& idxNode = invariantGraph().varNode(idx());
   auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
 
+  idxNode.removeValuesBelow(_offset);
+  idxNode.removeValuesAbove(_offset + static_cast<Int>(_parVector.size()) - 1);
+
   if (idxNode.isFixed()) {
     if (outputNode.isIntVar()) {
       outputNode.fixToValue(getVal(_parVector, idxNode.lowerBound(), _offset));

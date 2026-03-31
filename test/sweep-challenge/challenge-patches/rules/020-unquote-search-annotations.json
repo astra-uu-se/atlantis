@@ -1,0 +1,74 @@
+{
+  "description": "Rewrite old string-based search annotations to modern annotation syntax.",
+  "id": "unquote-search-annotations",
+  "path_globs": [
+    "2008/debruijn_binary/debruijn_binary.mzn",
+    "2008/nmseq/nmseq.mzn",
+    "2008/pentominoes-int/pentominoes-int.mzn",
+    "2008/quasigroup7/quasigroup7.mzn",
+    "2008/radiation/radiation.mzn",
+    "2008/rcpsp/rcpsp.mzn",
+    "2008/search_stress/search_stress.mzn",
+    "2008/trucking/trucking.mzn",
+    "2009/roster/roster_model.mzn"
+  ],
+  "rationale": "MiniZinc 0.x and 1.x allowed some search annotations to be passed as strings; current MiniZinc expects annotation identifiers.",
+  "replacements": [
+    {
+      "kind": "literal",
+      "pattern": "\"first_fail\"",
+      "replacement": "first_fail"
+    },
+    {
+      "kind": "literal",
+      "pattern": "\"anti_first_fail\"",
+      "replacement": "anti_first_fail"
+    },
+    {
+      "kind": "literal",
+      "pattern": "\"smallest\"",
+      "replacement": "smallest"
+    },
+    {
+      "kind": "literal",
+      "pattern": "\"largest\"",
+      "replacement": "largest"
+    },
+    {
+      "kind": "literal",
+      "pattern": "\"occurrence\"",
+      "replacement": "occurrence"
+    },
+    {
+      "kind": "literal",
+      "pattern": "\"input_order\"",
+      "replacement": "input_order"
+    },
+    {
+      "kind": "literal",
+      "pattern": "\"indomain\"",
+      "replacement": "indomain"
+    },
+    {
+      "kind": "literal",
+      "pattern": "\"indomain_min\"",
+      "replacement": "indomain_min"
+    },
+    {
+      "kind": "literal",
+      "pattern": "\"indomain_max\"",
+      "replacement": "indomain_max"
+    },
+    {
+      "kind": "literal",
+      "pattern": "\"indomain_split\"",
+      "replacement": "indomain_split"
+    },
+    {
+      "kind": "literal",
+      "pattern": "\"complete\"",
+      "replacement": "complete"
+    }
+  ],
+  "semantics_note": "This preserves the intended search strategy in modern syntax."
+}
