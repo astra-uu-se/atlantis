@@ -81,7 +81,7 @@ TEST_P(IntLinLeNodeTestFixture, propagation) {
     const bool expected = isViolating();
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedVar).isFixed());
-      const bool actual = varNode(reifiedVar).inDomain({false});
+      const bool actual = varNode(reifiedVar).inDomain(false);
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {

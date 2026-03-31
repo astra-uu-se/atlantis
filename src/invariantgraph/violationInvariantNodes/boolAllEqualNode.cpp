@@ -197,6 +197,7 @@ bool BoolAllEqualNode::replace() {
   }
   assert(!isReified());
   if (shouldHold()) {
+    assert(!_breaksCycle);
     const VarNodeId frontVarId = staticInputVarNodeIds().front();
     for (size_t i = 1; i < staticInputVarNodeIds().size(); ++i) {
       invariantGraph().replaceVarNode(staticInputVarNodeIds().at(i),

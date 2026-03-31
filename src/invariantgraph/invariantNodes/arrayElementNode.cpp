@@ -27,26 +27,23 @@ static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
 
 ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
                                    std::vector<Int>&& parVector, VarNodeId idx,
-                                   VarNodeId output, Int offset,
-                                   bool isIntVector)
+                                   VarNodeId output, Int offset)
     : InvariantNode(graph, {output}, {idx}),
       _parVector(std::move(parVector)),
-      _offset(offset),
-      _isIntVector(isIntVector) {}
+      _offset(offset) {}
 
 ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
                                    std::vector<bool>&& parVector, VarNodeId idx,
                                    VarNodeId output, Int offset)
     : InvariantNode(graph, {output}, {idx}),
       _parVector(toIntVec(std::move(parVector))),
-      _offset(offset),
-      _isIntVector(false) {}
+      _offset(offset) {}
 
 void ArrayElementNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(_isIntVector == invariantGraphConst()
-                             .varNodeConst(outputVarNodeIds().front())
-                             .isIntVar());
+  assert(invariantGraphConst()
+             .varNodeConst(staticInputVarNodeIds().front())
+             .isIntVar());
 }
 
 void ArrayElementNode::updateState() {

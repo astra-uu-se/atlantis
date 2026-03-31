@@ -1,5 +1,6 @@
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/invariants/absDiff.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::testing {
 
@@ -29,7 +30,7 @@ class AbsDiffTest : public InvariantTest {
   }
 
   static Int computeOutput(const Int xVal, const Int yVal) {
-    return std::abs(xVal - yVal);
+    return overflow::saturatingAbsDiff(xVal, yVal);
   }
 
   AbsDiff& generate() {

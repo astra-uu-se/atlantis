@@ -64,25 +64,7 @@ void IntLinearNode::updateState() {
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
 
-  Int lb = _offset;
-  Int ub = _offset;
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    const Int v1 =
-        _coeffs.at(i) *
-        invariantGraph().varNode(staticInputVarNodeIds().at(i)).lowerBound();
-    const Int v2 =
-        _coeffs.at(i) *
-        invariantGraph().varNode(staticInputVarNodeIds().at(i)).upperBound();
-    lb += std::min(v1, v2);
-    ub += std::max(v1, v2);
-  }
-
   auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
-
-  /*
-  outputNode.removeValuesBelow(lb);
-  outputNode.removeValuesAbove(ub);
-  */
 
   if (staticInputVarNodeIds().empty()) {
     outputNode.fixToValue(_offset);

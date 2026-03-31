@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::propagation {
 
@@ -48,31 +49,12 @@ void Linear::updateBounds(bool widenOnly) {
   Int sumLb = 0;
   Int sumUb = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    Int prod1;
-    Int prod2;
     const Int varLb = _solver.lowerBound(_varArray[i]);
-    if (__builtin_smull_overflow(_coeffs[i], varLb, &prod1)) {
-      prod1 = (_coeffs[1] < 0) == (varLb < 0) ? std::numeric_limits<Int>::max()
-                                              : std::numeric_limits<Int>::min();
-    }
     const Int varUb = _solver.upperBound(_varArray[i]);
-    if (__builtin_smull_overflow(_coeffs[i], varUb, &prod2)) {
-      prod2 = (_coeffs[1] < 0) == (varUb < 0) ? std::numeric_limits<Int>::max()
-                                              : std::numeric_limits<Int>::min();
-    }
-    Int sum;
-    if (__builtin_saddl_overflow(sumLb, std::min(prod1, prod2), &sum)) {
-      sumLb = sumLb < 0 ? std::numeric_limits<Int>::min()
-                        : std::numeric_limits<Int>::max();
-    } else {
-      sumLb = sum;
-    }
-    if (__builtin_saddl_overflow(sumUb, std::max(prod1, prod2), &sum)) {
-      sumUb = sumUb < 0 ? std::numeric_limits<Int>::min()
-                        : std::numeric_limits<Int>::max();
-    } else {
-      sumUb = sum;
-    }
+    const Int prod1 = overflow::saturatingMul(_coeffs[i], varLb);
+    const Int prod2 = overflow::saturatingMul(_coeffs[i], varUb);
+    sumLb = overflow::saturatingAdd(sumLb, std::min(prod1, prod2));
+    sumUb = overflow::saturatingAdd(sumUb, std::max(prod1, prod2));
     assert(sumLb <= sumUb);
   }
   _solver.updateBounds(_output, sumLb, sumUb, widenOnly);
@@ -81,17 +63,16 @@ void Linear::updateBounds(bool widenOnly) {
 void Linear::recompute(Timestamp ts) {
   Int sum = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    sum += _coeffs[i] * _solver.value(ts, _varArray[i]);
+    sum = overflow::saturatingAdd(
+        sum,
+        overflow::saturatingMul(_coeffs[i], _solver.value(ts, _varArray[i])));
   }
   updateValue(ts, _output, sum);
 }
 
 void Linear::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _varArray.size());
-  incValue(ts, _output,
-           (_solver.value(ts, _varArray[id]) -
-            _solver.committedValue(_varArray[id])) *
-               _coeffs[id]);
+  recompute(ts);
 }
 
 VarViewId Linear::nextInput(Timestamp ts) {

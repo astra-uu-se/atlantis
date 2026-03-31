@@ -122,10 +122,7 @@ bool ArrayVarElementNode::replace() {
   }
   invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
       invariantGraph(), std::move(parameters), idx(),
-      outputVarNodeIds().front(), _offset,
-      invariantGraphConst()
-          .varNodeConst(outputVarNodeIds().front())
-          .isIntVar()));
+      outputVarNodeIds().front(), _offset));
   return true;
 }
 

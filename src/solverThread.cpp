@@ -55,8 +55,7 @@ std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
     search::RandomProvider& randomProvider,
     const search::Assignment& assignment) const {
   return std::make_unique<search::Annealer>(
-      randomProvider, std::move(_annealingScheduleFactory->create()),
-      assignment);
+      randomProvider, _annealingScheduleFactory->create(), assignment);
 }
 
 void SolverThread::solve() {
@@ -101,8 +100,7 @@ void SolverThread::solve() {
       mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,
       _shouldStop, _threadController);
 
-  search.run(searchController,
-             std::move(createMetaHeuristic(randomProvider, assignment)));
+  search.run(searchController, createMetaHeuristic(randomProvider, assignment));
   _threadController->threadIsDone();
 }
 

@@ -48,8 +48,6 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinNeNode> {
     NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
-    Int minSum = 0;
-    Int maxSum = 0;
     const Int lb = -2;
     const Int ub = 2;
     for (Int i = 0; i < static_cast<Int>(numInputs); ++i) {
@@ -61,8 +59,6 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinNeNode> {
         retrieveIntVarNode(lb, ub, inputVars.back());
       }
       coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
-      minSum += std::min(lb * coeffs.back(), ub * coeffs.back());
-      maxSum += std::max(lb * coeffs.back(), ub * coeffs.back());
     }
 
     if (isReified()) {
@@ -108,7 +104,7 @@ TEST_P(IntLinNeNodeTestFixture, propagation) {
     const bool expected = isViolating();
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedVar).isFixed());
-      const bool actual = varNode(reifiedVar).inDomain({false});
+      const bool actual = varNode(reifiedVar).inDomain(false);
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {

@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "atlantis/types.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis {
 
@@ -27,7 +28,7 @@ inline Int pow(Int base, Int power) {
   }
   Int result = 1;
   for (int i = 0; i < power; i++) {
-    result *= base;
+    result = overflow::saturatingMul(result, base);
   }
   return result;
 }
@@ -53,7 +54,7 @@ inline Int pow_zero_replacement(Int base, Int power, Int zeroReplacement) {
   }
   Int result = 1;
   for (int i = 0; i < power; i++) {
-    result *= base;
+    result = overflow::saturatingMul(result, base);
   }
   return result;
 }

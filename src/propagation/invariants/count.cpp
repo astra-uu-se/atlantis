@@ -1,11 +1,28 @@
 #include "atlantis/propagation/invariants/count.hpp"
 
 #include <limits>
+#include <optional>
 #include <utility>
 
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::propagation {
+
+namespace {
+
+std::optional<size_t> countIndex(Int value, Int offset, size_t size) {
+  if (value < offset) {
+    return std::nullopt;
+  }
+  const UInt delta = static_cast<UInt>(value) - static_cast<UInt>(offset);
+  if (delta >= size) {
+    return std::nullopt;
+  }
+  return static_cast<size_t>(delta);
+}
+
+}  // namespace
 
 Count::Count(SolverBase& solver, VarId output, VarViewId needle,
              std::vector<VarViewId>&& varArray)
@@ -22,36 +39,32 @@ Count::Count(SolverBase& solver, VarViewId output, VarViewId needle,
 }
 
 inline void Count::increaseCount(Timestamp ts, Int value) {
-  if (value - _offset < 0 ||
-      static_cast<Int>(_counts.size()) <= value - _offset) {
+  const auto index = countIndex(value, _offset, _counts.size());
+  if (!index.has_value()) {
     return;
   }
-  assert(_counts[value - _offset].value(ts) + 1 > 0);
-  assert(_counts[value - _offset].value(ts) + 1 <=
-         static_cast<Int>(_vars.size()));
-  _counts[value - _offset].incValue(ts, 1);
+  assert(_counts[*index].value(ts) + 1 > 0);
+  assert(_counts[*index].value(ts) + 1 <= static_cast<Int>(_vars.size()));
+  _counts[*index].incValue(ts, 1);
 }
 
 inline void Count::decreaseCount(Timestamp ts, Int value) {
-  if (value - _offset < 0 ||
-      static_cast<Int>(_counts.size()) <= value - _offset) {
+  const auto index = countIndex(value, _offset, _counts.size());
+  if (!index.has_value()) {
     return;
   }
-  assert(_counts[value - _offset].value(ts) - 1 >= 0);
-  assert(_counts[value - _offset].value(ts) - 1 <
-         static_cast<Int>(_vars.size()));
-  _counts[value - _offset].incValue(ts, -1);
+  assert(_counts[*index].value(ts) - 1 >= 0);
+  assert(_counts[*index].value(ts) - 1 < static_cast<Int>(_vars.size()));
+  _counts[*index].incValue(ts, -1);
 }
 
 inline signed char Count::count(Timestamp ts, Int value) const {
-  if (value - _offset < 0 ||
-      static_cast<Int>(_counts.size()) <= value - _offset) {
+  const auto index = countIndex(value, _offset, _counts.size());
+  if (!index.has_value()) {
     return 0;
   }
-  assert(0 <= value - _offset);
-  assert(static_cast<size_t>(value - _offset) <= _counts.size());
-  assert(_counts.at(value - _offset).value(ts) >= 0);
-  return static_cast<signed char>(_counts[value - _offset].value(ts));
+  assert(_counts.at(*index).value(ts) >= 0);
+  return static_cast<signed char>(_counts[*index].value(ts));
 }
 
 void Count::registerVars() {
@@ -77,9 +90,10 @@ void Count::close(Timestamp ts) {
   }
   assert(ub >= lb);
   lb = std::max(lb, _solver.lowerBound(_needle));
-  ub = std::max(ub, _solver.lowerBound(_needle));
+  ub = std::max(ub, _solver.upperBound(_needle));
 
-  _counts.resize(static_cast<size_t>(ub - lb + 1), CommittableInt(ts, 0));
+  _counts.resize(overflow::saturatingIntervalSize(lb, ub),
+                 CommittableInt(ts, 0));
   _offset = lb;
 }
 

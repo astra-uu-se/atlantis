@@ -168,4 +168,85 @@ class fzn_table_boolTest : public FznTestBase {
 };
 
 RC_GTEST_FIXTURE_PROP(fzn_table_boolTest, RapidCheck, ()) { rapidCheck(); }
+
+class fzn_table_boolRegressionTest : public FznTestBase {
+ public:
+  std::vector<std::string> inputs{"i_0", "i_1", "i_2"};
+  std::string reified{"reified"};
+  std::vector<std::vector<bool>> table{
+      {true, false, false}, {true, false, true}, {true, true, false}};
+
+  void generate() override {}
+
+  void SetUp() override {
+    FznTestBase::SetUp();
+
+    addBoolVarArray(
+        {BoolArgState::FIXED_TRUE, BoolArgState::VAR, BoolArgState::VAR},
+        inputs);
+
+    std::vector<bool> flatTable{};
+    flatTable.reserve(table.size() * inputs.size());
+    for (const auto& row : table) {
+      for (const bool col : row) {
+        flatTable.emplace_back(col);
+      }
+    }
+
+    addArg(flatTable);
+    addBoolPar(reified, true);
+    constraintIdentifier = "fzn_table_bool";
+    generateConstraint();
+    closeInvariantGraph();
+  }
+
+  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+    std::vector<bool> vals(inputs.size());
+    for (size_t i = 0; i < inputs.size(); i++) {
+      vals.at(i) = boolVal(inputs.at(i), committedValue);
+    }
+    const bool expected = std::ranges::any_of(
+        table, [&](const auto& row) { return row == vals; });
+    return expected && violation(committedValue) == 0;
+  }
+
+  [[nodiscard]] bool canMove() const override { return true; }
+
+  void move(bool) override {}
+
+  void query() override {
+    _solver->query(totalViolationVarId() != propagation::NULL_ID
+                       ? totalViolationVarId()
+                       : varId(reified));
+  }
+};
+
+TEST_F(fzn_table_boolRegressionTest, RejectsShrunkRapidCheckCounterexample) {
+  _solver->beginMove();
+  setValue("i_1", 1);
+  setValue("i_2", 1);
+  _solver->endMove();
+
+  _solver->beginCommit();
+  query();
+  _solver->endCommit();
+
+  ASSERT_TRUE(isSatisfied(true));
+
+  _solver->beginMove();
+  setValue("i_1", 0);
+  setValue("i_2", 0);
+  _solver->endMove();
+
+  _solver->beginProbe();
+  query();
+
+  EXPECT_FALSE(isSatisfied(false));
+  EXPECT_TRUE(isSatisfied(true));
+  EXPECT_TRUE(boolVal("i_0", false));
+  EXPECT_TRUE(boolVal("i_1", false));
+  EXPECT_TRUE(boolVal("i_2", false));
+
+  _solver->endProbe();
+}
 }  // namespace atlantis::testing
