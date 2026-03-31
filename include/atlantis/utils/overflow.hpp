@@ -45,7 +45,7 @@ inline bool subOverflow(const Int lhs, const Int rhs, Int* result) {
     if (lhs >= 0) {
       return true;
     }
-    *result = kIntMax - lhs + 1;
+    *result = kIntMax + lhs + 1;
     return false;
   }
   return addOverflow(lhs, -rhs, result);
