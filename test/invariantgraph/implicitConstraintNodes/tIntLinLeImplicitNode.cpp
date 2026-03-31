@@ -1,5 +1,5 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/implicitConstraintNodes/intLinLeImplicitNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/linLeImplicitNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/search/neighborhoods/intLinLeNeighborhood.hpp"
 
@@ -8,7 +8,7 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class IntLinLeImplicitNodeTestFixture
-    : public NodeTestBase<IntLinLeImplicitNode> {
+    : public NodeTestBase<LinLeImplicitNode> {
  public:
   Int numVars = 4;
   std::vector<std::string> inputVars;

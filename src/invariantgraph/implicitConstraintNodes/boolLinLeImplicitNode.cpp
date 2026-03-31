@@ -5,7 +5,7 @@
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/search/neighborhoods/boolLinLeNeighborhood.hpp"
+#include "atlantis/search/neighborhoods/binaryLinLeNeighborhood.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -75,7 +75,7 @@ void BoolLinLeImplicitNode::registerNode(propagation::SolverBase&,
   }
 
   mapping.setNeighborhood(
-      id(), std::make_shared<search::neighborhoods::BoolLinLeNeighborhood>(
+      id(), std::make_shared<search::neighborhoods::BinaryLinLeNeighborhood<true>>(
                 std::vector<Int>{_coeffs}, std::move(searchVars), _bound));
 }
 

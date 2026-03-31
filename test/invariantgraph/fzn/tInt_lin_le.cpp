@@ -46,7 +46,7 @@ class int_lin_leTest : public FznTestBase {
     return {lb, ub};
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     Int sum = 0;
     for (size_t i = 0; i < coeffs.size(); ++i) {
       if (coeffs.at(i) != 0) {
@@ -96,15 +96,15 @@ class int_lin_leTest : public FznTestBase {
   }
 
   void generate() override {
-    const size_t size = *rc::gen::inRange<size_t>(0, 4);
-    coeffs =
+    const size_t size = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
+    coeffs = true ? std::vector<Int>{-2} :
         *rc::gen::container<std::vector<Int>>(size, rc::gen::inRange(-2, 2));
     addArg(coeffs);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
-    addIntVarArray(inputs);
+    addIntVarArray({IntArgState::VAR}, inputs);
 
     Int lb = -1;
     Int ub = 2;
@@ -113,10 +113,10 @@ class int_lin_leTest : public FznTestBase {
       lb += std::min<Int>(0, c);
     }
 
-    bound = *rc::gen::inRange<Int>(lb, ub);
+    bound = true ? -3 : *rc::gen::inRange<Int>(lb, ub);
     addArg(bound);
 
-    const bool isReified = *rc::gen::arbitrary<bool>();
+    const bool isReified = true ? false : *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "int_lin_le_reif" : "int_lin_le";
     if (isReified) {
       addBoolArg(reified);
@@ -133,10 +133,33 @@ class int_lin_leTest : public FznTestBase {
   }
 
   void move(bool committedValue) override {
-    for (const auto& input : inputs) {
-      if (varId(input) != propagation::NULL_ID && randBool()) {
-        changeValue(input, committedValue);
+    std::unordered_set<InvariantNodeId, InvariantNodeIdHash>
+        implicitConstraints;
+    std::vector<bool> hasImplicitConstraints(inputs.size(), false);
+    implicitConstraints.reserve(inputs.size());
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      if (!isFixed(inputs.at(i))) {
+        const auto& defNodes = varNodeConst(inputs.at(i)).definingNodes();
+        if (!defNodes.empty()) {
+          RC_ASSERT(defNodes.size() == size_t{1});
+          const InvariantNodeId implId = *defNodes.begin();
+          RC_ASSERT(implId.isImplicitConstraint());
+          implicitConstraints.emplace(implId);
+          hasImplicitConstraints.at(i) = true;
+        }
       }
+    }
+
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      if (!hasImplicitConstraints.at(i) && varId(inputs.at(i)) != propagation::NULL_ID && randBool()) {
+        changeValue(inputs.at(i), committedValue);
+      }
+    }
+
+    for (const InvariantNodeId implId : implicitConstraints) {
+      auto implNode = _solverMapping->neighborhood(implId);
+      RC_ASSERT(implNode != nullptr);
+      implNode->randomMove(*_randomProvider, *_assignment);
     }
   }
 

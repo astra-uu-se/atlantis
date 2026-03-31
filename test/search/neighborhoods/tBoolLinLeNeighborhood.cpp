@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
 
 #include "./testHelper.hpp"
-#include "atlantis/search/neighborhoods/boolLinLeNeighborhood.hpp"
+#include "atlantis/search/neighborhoods/binaryLinLeNeighborhood.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::search::neighborhoods;
 
 class BoolLinLeNeighborhoodTest
-    : public NeighborhoodTestBase<BoolLinLeNeighborhood> {
+    : public NeighborhoodTestBase<BinaryLinLeNeighborhood<true>> {
  public:
   Int numVars = 4;
   RandomProvider _random{123456789};

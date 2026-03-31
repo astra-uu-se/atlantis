@@ -375,7 +375,6 @@ RC_GTEST_FIXTURE_PROP(LinearTest, rapidcheck, ()) {
       } else {
         _solver->endProbe();
       }
-      const Int val = _solver->committedValue(inputVars.front());
       const Int expected = computeOutput(true);
       const Int actual = _solver->committedValue(outputVar);
       RC_ASSERT(expected == actual);

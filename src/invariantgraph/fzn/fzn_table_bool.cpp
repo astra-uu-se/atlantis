@@ -31,8 +31,9 @@ bool fzn_table_bool(FznInvariantGraph& graph,
   const bool isFlat = constraint.identifier() == "fzn_table_bool_flat" ||
                       constraint.identifier() == "fzn_table_bool_flat_reif";
   if (constraint.identifier() != "fzn_table_bool" &&
+      constraint.identifier() != "fzn_table_flat_bool" &&
       constraint.identifier() != "fzn_table_bool_reif" &&
-      !isFlat) {
+      constraint.identifier() != "fzn_table_bool_flat_reif") {
     return false;
   }
 

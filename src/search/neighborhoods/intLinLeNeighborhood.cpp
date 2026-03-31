@@ -23,8 +23,8 @@ IntLinLeNeighborhood::IntLinLeNeighborhood(std::vector<Int>&& coeffs,
       _curTimestamp(NULL_TIMESTAMP),
       _curVarIdx(_vars.size()),
       _curVarVal(0) {
-  assert(_vars.size() > 1);
-  std::iota(_indices.begin(), _indices.end(), 0);
+  assert(!_vars.empty());
+  std::ranges::iota(_indices, 0);
 }
 
 static Int divRound(const Int nominator, const Int denominator) {

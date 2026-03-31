@@ -31,8 +31,9 @@ bool fzn_table_int(FznInvariantGraph& graph,
   const bool isFlat = constraint.identifier() == "fzn_table_int_flat" ||
                       constraint.identifier() == "fzn_table_int_flat_reif";
   if (constraint.identifier() != "fzn_table_int" &&
+      constraint.identifier() != "fzn_table_int_flat" &&
       constraint.identifier() != "fzn_table_int_reif" &&
-      !isFlat) {
+      constraint.identifier() != "fzn_table_int_flat_reif") {
     return false;
   }
 

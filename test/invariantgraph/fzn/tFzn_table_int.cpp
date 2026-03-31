@@ -43,7 +43,7 @@ class fzn_table_intTest : public FznTestBase {
     addArg(flatTable);
 
     const bool isReified = *rc::gen::arbitrary<bool>();
-    constraintIdentifier = isReified ? "fzn_table_int_reif" : "fzn_table_int";
+    constraintIdentifier = isReified ? "fzn_table_int_flat_reif" : "fzn_table_int_flat";
 
     if (isReified) {
       addBoolArg(reified);

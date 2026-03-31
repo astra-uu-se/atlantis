@@ -43,7 +43,7 @@ class fzn_table_boolTest : public FznTestBase {
     addArg(flatTable);
 
     const bool isReified = *rc::gen::arbitrary<bool>();
-    constraintIdentifier = isReified ? "fzn_table_bool_reif" : "fzn_table_bool";
+    constraintIdentifier = isReified ? "fzn_table_bool_flat_reif" : "fzn_table_flat_bool";
 
     if (isReified) {
       addBoolArg(reified);
