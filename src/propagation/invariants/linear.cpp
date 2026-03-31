@@ -64,7 +64,8 @@ void Linear::recompute(Timestamp ts) {
   Int sum = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
     sum = overflow::saturatingAdd(
-        sum, overflow::saturatingMul(_coeffs[i], _solver.value(ts, _varArray[i])));
+        sum,
+        overflow::saturatingMul(_coeffs[i], _solver.value(ts, _varArray[i])));
   }
   updateValue(ts, _output, sum);
 }

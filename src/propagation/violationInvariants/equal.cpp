@@ -39,11 +39,10 @@ void Equal::updateBounds(bool widenOnly) {
                      : std::min(overflow::saturatingAbsDiff(xLb, yUb),
                                 overflow::saturatingAbsDiff(yLb, xUb));
 
-  const Int ub = std::max(
-      std::max(overflow::saturatingAbsDiff(xLb, yLb),
-               overflow::saturatingAbsDiff(xLb, yUb)),
-      std::max(overflow::saturatingAbsDiff(xUb, yLb),
-               overflow::saturatingAbsDiff(xUb, yUb)));
+  const Int ub = std::max(std::max(overflow::saturatingAbsDiff(xLb, yLb),
+                                   overflow::saturatingAbsDiff(xLb, yUb)),
+                          std::max(overflow::saturatingAbsDiff(xUb, yLb),
+                                   overflow::saturatingAbsDiff(xUb, yUb)));
 
   _solver.updateBounds(_violationId, lb, ub, widenOnly);
 }

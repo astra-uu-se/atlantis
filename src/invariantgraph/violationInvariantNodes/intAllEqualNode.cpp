@@ -169,8 +169,8 @@ bool IntAllEqualNode::canBeReplaced() const {
     return false;
   }
   return !isReified() &&
-         (shouldHold() || (staticInputVarNodeIds().size() <= 2 &&
-         !_boundVal.has_value()));
+         (shouldHold() ||
+          (staticInputVarNodeIds().size() <= 2 && !_boundVal.has_value()));
 }
 
 bool IntAllEqualNode::replace() {

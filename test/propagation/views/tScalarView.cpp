@@ -24,8 +24,8 @@ RC_GTEST_FIXTURE_PROP(ScalarViewTest, simple,
       _solver->makeIntView<ScalarView>(*_solver, varId, scalar, offset);
   _solver->close();
 
-  RC_ASSERT(_solver->committedValue(viewId) ==
-            overflow::saturatingAdd(overflow::saturatingMul(val, scalar),
-                                    offset));
+  RC_ASSERT(
+      _solver->committedValue(viewId) ==
+      overflow::saturatingAdd(overflow::saturatingMul(val, scalar), offset));
 }
 }  // namespace atlantis::testing

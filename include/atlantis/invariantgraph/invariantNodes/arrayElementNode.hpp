@@ -10,10 +10,11 @@ class ArrayElementNode : public InvariantNode {
 
  public:
   explicit ArrayElementNode(InvariantGraph& graph, std::vector<Int>&& parVector,
-                   VarNodeId idx, VarNodeId output, Int offset);
+                            VarNodeId idx, VarNodeId output, Int offset);
 
-  explicit ArrayElementNode(InvariantGraph& graph, std::vector<bool>&& parVector,
-                   VarNodeId idx, VarNodeId output, Int offset);
+  explicit ArrayElementNode(InvariantGraph& graph,
+                            std::vector<bool>&& parVector, VarNodeId idx,
+                            VarNodeId output, Int offset);
 
   void init(InvariantNodeId) override;
 

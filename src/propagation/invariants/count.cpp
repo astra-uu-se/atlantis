@@ -44,8 +44,7 @@ inline void Count::increaseCount(Timestamp ts, Int value) {
     return;
   }
   assert(_counts[*index].value(ts) + 1 > 0);
-  assert(_counts[*index].value(ts) + 1 <=
-         static_cast<Int>(_vars.size()));
+  assert(_counts[*index].value(ts) + 1 <= static_cast<Int>(_vars.size()));
   _counts[*index].incValue(ts, 1);
 }
 
@@ -55,8 +54,7 @@ inline void Count::decreaseCount(Timestamp ts, Int value) {
     return;
   }
   assert(_counts[*index].value(ts) - 1 >= 0);
-  assert(_counts[*index].value(ts) - 1 <
-         static_cast<Int>(_vars.size()));
+  assert(_counts[*index].value(ts) - 1 < static_cast<Int>(_vars.size()));
   _counts[*index].incValue(ts, -1);
 }
 

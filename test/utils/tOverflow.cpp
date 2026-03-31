@@ -9,16 +9,16 @@ namespace atlantis::testing {
 #if defined(__clang__) || defined(__GNUC__)
 
 class OverflowTest : public ::testing::Test {
-public:
+ public:
   std::vector<std::pair<Int, Int>> extrema;
 
-
   void SetUp() override {
-    std::vector<Int> limits{std::numeric_limits<Int>::min(), -1, 0, 1, std::numeric_limits<Int>::max()};
+    std::vector<Int> limits{std::numeric_limits<Int>::min(), -1, 0, 1,
+                            std::numeric_limits<Int>::max()};
     extrema.clear();
     extrema.resize(limits.size() * limits.size());
     for (const Int lhs : limits) {
-      for (const Int rhs: limits) {
+      for (const Int rhs : limits) {
         extrema.emplace_back(lhs, rhs);
       }
     }

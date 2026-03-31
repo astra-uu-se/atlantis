@@ -74,8 +74,7 @@ bool IntDivNode::updateNumerator() {
     assert(prod != 0);
     const Int remainder = std::abs(d) - 1;
     Int sum;
-    if (overflow::addOverflow(prod, prod > 0 ? remainder : -remainder,
-                               &sum)) {
+    if (overflow::addOverflow(prod, prod > 0 ? remainder : -remainder, &sum)) {
       if (nIsPos) {
         sum = std::numeric_limits<Int>::max();
       } else {

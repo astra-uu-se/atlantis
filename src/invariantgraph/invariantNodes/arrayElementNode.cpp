@@ -41,7 +41,9 @@ ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
 
 void ArrayElementNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(invariantGraphConst().varNodeConst(staticInputVarNodeIds().front()).isIntVar());
+  assert(invariantGraphConst()
+             .varNodeConst(staticInputVarNodeIds().front())
+             .isIntVar());
 }
 
 void ArrayElementNode::updateState() {

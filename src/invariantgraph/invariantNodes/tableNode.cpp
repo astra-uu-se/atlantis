@@ -56,17 +56,23 @@ TableNode::TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
                      const VarNodeId input,
                      std::vector<std::vector<bool>>&& table,
                      const size_t inputColumnIndex)
-    : TableNode(graph, std::move(outputs), input,
-                toIntTable(std::move(table)), inputColumnIndex) {}
+    : TableNode(graph, std::move(outputs), input, toIntTable(std::move(table)),
+                inputColumnIndex) {}
 
 void TableNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
   assert(staticInputVarNodeIds().size() == 1);
   assert(std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
-    return invariantGraphConst().varNodeConst(vId).isIntVar() == invariantGraphConst().varNodeConst(staticInputVarNodeIds().front()).isIntVar();
+    return invariantGraphConst().varNodeConst(vId).isIntVar() ==
+           invariantGraphConst()
+               .varNodeConst(staticInputVarNodeIds().front())
+               .isIntVar();
   }));
   assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return invariantGraphConst().varNodeConst(vId).isIntVar() == invariantGraphConst().varNodeConst(staticInputVarNodeIds().front()).isIntVar();
+    return invariantGraphConst().varNodeConst(vId).isIntVar() ==
+           invariantGraphConst()
+               .varNodeConst(staticInputVarNodeIds().front())
+               .isIntVar();
   }));
 }
 

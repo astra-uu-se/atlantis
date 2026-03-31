@@ -173,18 +173,17 @@ class fzn_table_boolRegressionTest : public FznTestBase {
  public:
   std::vector<std::string> inputs{"i_0", "i_1", "i_2"};
   std::string reified{"reified"};
-  std::vector<std::vector<bool>> table{{true, false, false},
-                                       {true, false, true},
-                                       {true, true, false}};
+  std::vector<std::vector<bool>> table{
+      {true, false, false}, {true, false, true}, {true, true, false}};
 
   void generate() override {}
 
   void SetUp() override {
     FznTestBase::SetUp();
 
-    addBoolVarArray({BoolArgState::FIXED_TRUE, BoolArgState::VAR,
-                     BoolArgState::VAR},
-                    inputs);
+    addBoolVarArray(
+        {BoolArgState::FIXED_TRUE, BoolArgState::VAR, BoolArgState::VAR},
+        inputs);
 
     std::vector<bool> flatTable{};
     flatTable.reserve(table.size() * inputs.size());
@@ -206,9 +205,8 @@ class fzn_table_boolRegressionTest : public FznTestBase {
     for (size_t i = 0; i < inputs.size(); i++) {
       vals.at(i) = boolVal(inputs.at(i), committedValue);
     }
-    const bool expected = std::ranges::any_of(table, [&](const auto& row) {
-      return row == vals;
-    });
+    const bool expected = std::ranges::any_of(
+        table, [&](const auto& row) { return row == vals; });
     return expected && violation(committedValue) == 0;
   }
 

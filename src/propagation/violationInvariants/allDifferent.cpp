@@ -33,13 +33,11 @@ std::optional<size_t> AllDifferent::countIndex(const Int value) const {
   return {delta};
 }
 
-
 signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
   const auto index = countIndex(value);
   if (index.has_value()) {
     assert(_counts[*index].value(ts) + 1 >= 0);
-    assert(_counts[*index].value(ts) + 1 <=
-           static_cast<Int>(_vars.size()));
+    assert(_counts[*index].value(ts) + 1 <= static_cast<Int>(_vars.size()));
     return _counts[*index].incValue(ts, 1) >= 2 ? 1 : 0;
   }
   return 0;
@@ -49,8 +47,7 @@ signed char AllDifferent::decreaseCount(Timestamp ts, Int value) {
   const auto index = countIndex(value);
   if (index.has_value()) {
     assert(_counts[*index].value(ts) - 1 >= 0);
-    assert(_counts[*index].value(ts) - 1 <=
-           static_cast<Int>(_vars.size()));
+    assert(_counts[*index].value(ts) - 1 <= static_cast<Int>(_vars.size()));
     return _counts[*index].incValue(ts, -1) >= 1 ? -1 : 0;
   }
   return 0;

@@ -24,21 +24,17 @@ Int ScalarView::committedValue() {
 
 Int ScalarView::lowerBound() const {
   const Int fromLb = overflow::saturatingAdd(
-      overflow::saturatingMul(_factor, _solver.lowerBound(_parentId)),
-      _offset);
+      overflow::saturatingMul(_factor, _solver.lowerBound(_parentId)), _offset);
   const Int fromUb = overflow::saturatingAdd(
-      overflow::saturatingMul(_factor, _solver.upperBound(_parentId)),
-      _offset);
+      overflow::saturatingMul(_factor, _solver.upperBound(_parentId)), _offset);
   return std::min(fromLb, fromUb);
 }
 
 Int ScalarView::upperBound() const {
   const Int fromLb = overflow::saturatingAdd(
-      overflow::saturatingMul(_factor, _solver.lowerBound(_parentId)),
-      _offset);
+      overflow::saturatingMul(_factor, _solver.lowerBound(_parentId)), _offset);
   const Int fromUb = overflow::saturatingAdd(
-      overflow::saturatingMul(_factor, _solver.upperBound(_parentId)),
-      _offset);
+      overflow::saturatingMul(_factor, _solver.upperBound(_parentId)), _offset);
   return std::max(fromLb, fromUb);
 }
 

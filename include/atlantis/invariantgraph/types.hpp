@@ -84,8 +84,8 @@ struct InvariantGraphOutputVarArray {
   explicit InvariantGraphOutputVarArray(
       const std::string& identifier, const std::vector<Int>& indexSetSizes,
       const std::vector<VarNodeId>& varNodeIds)
-      : InvariantGraphOutputVarArray(std::string(identifier),
-                                     indexSetSizes, varNodeIds) {}
+      : InvariantGraphOutputVarArray(std::string(identifier), indexSetSizes,
+                                     varNodeIds) {}
 };
 
 enum struct InvariantNodeState : unsigned char {

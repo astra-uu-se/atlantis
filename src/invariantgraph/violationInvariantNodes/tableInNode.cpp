@@ -347,10 +347,10 @@ bool TableInNode::replace() {
       outputs.emplace_back(staticInputVarNodeIds().at(c));
     }
   }
-  invariantGraph().addInvariantNode(std::make_shared<TableNode>(
-      invariantGraph(), std::move(outputs),
-      staticInputVarNodeIds().at(inputColIndex), std::move(_table),
-      inputColIndex));
+  invariantGraph().addInvariantNode(
+      std::make_shared<TableNode>(invariantGraph(), std::move(outputs),
+                                  staticInputVarNodeIds().at(inputColIndex),
+                                  std::move(_table), inputColIndex));
   return true;
 }
 
