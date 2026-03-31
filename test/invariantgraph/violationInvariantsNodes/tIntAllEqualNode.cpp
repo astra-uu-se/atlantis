@@ -98,10 +98,9 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
     if (isReified()) {
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          varNodeId(reifiedVar), true);
+                          varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph, varNodeIds(inputVars), shouldHold(),
-                          true);
+      createInvariantNode(*_invariantGraph, varNodeIds(inputVars), shouldHold());
     }
   }
 };

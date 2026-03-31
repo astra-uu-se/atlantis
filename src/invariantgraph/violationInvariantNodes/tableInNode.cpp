@@ -350,7 +350,7 @@ bool TableInNode::replace() {
   invariantGraph().addInvariantNode(std::make_shared<TableNode>(
       invariantGraph(), std::move(outputs),
       staticInputVarNodeIds().at(inputColIndex), std::move(_table),
-      inputColIndex, _isBoolTable));
+      inputColIndex));
   return true;
 }
 

@@ -165,15 +165,29 @@ void IntAllEqualNode::updateState() {
 }
 
 bool IntAllEqualNode::canBeReplaced() const {
-  return state() == InvariantNodeState::ACTIVE && !isReified() &&
-         !shouldHold() && staticInputVarNodeIds().size() <= 2 &&
-         !_boundVal.has_value();
+  if (state() != InvariantNodeState::ACTIVE || _breaksCycle) {
+    return false;
+  }
+  return !isReified() &&
+         (shouldHold() || (staticInputVarNodeIds().size() <= 2 &&
+         !_boundVal.has_value()));
 }
 
 bool IntAllEqualNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
+  if (!isReified() && shouldHold()) {
+    assert(!_breaksCycle);
+    const VarNodeId frontVarId = staticInputVarNodeIds().front();
+    for (size_t i = 1; i < staticInputVarNodeIds().size(); ++i) {
+      invariantGraph().replaceVarNode(staticInputVarNodeIds().at(i),
+                                      frontVarId);
+    }
+    return true;
+  }
+  assert(staticInputVarNodeIds().size() <= 2);
+  assert(!_boundVal.has_value());
   invariantGraph().addInvariantNode(std::make_shared<AllDifferentNode>(
       invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
   return true;

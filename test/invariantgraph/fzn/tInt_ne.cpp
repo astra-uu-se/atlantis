@@ -23,9 +23,17 @@ class int_neTest : public FznTestBase {
   std::string b{"i_2"};
   std::string reified{"reified"};
 
+  [[nodiscard]] bool computeExpected(const bool committedValue) const {
+    if (isFixed(reified) && !boolVal(reified)) {
+      if (varNodeId(a) == varNodeId(b)) {
+        return false;
+      }
+    }
+    return intVal(a, committedValue) != intVal(b, committedValue);
+  }
+
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
-    const bool expected =
-        intVal(a, committedValue) != intVal(b, committedValue);
+    const bool expected = computeExpected(committedValue);
     const bool actual = boolVal(reified, committedValue);
 
     if (isFixed(reified)) {

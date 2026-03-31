@@ -77,7 +77,7 @@ void GlobalCardinalityNode::updateState() {
     replacedOutputs.pop_back();
     if (!invariantGraphConst().varNodeConst(oldVarNodeId).isFixed()) {
       invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
-          invariantGraph(), std::move(duplicates), true, true));
+          invariantGraph(), std::move(duplicates), true));
     }
   }
   for (Int i = 0; i < static_cast<Int>(_cover.size()); i++) {

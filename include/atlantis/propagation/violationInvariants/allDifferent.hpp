@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "atlantis/propagation/violationInvariants/violationInvariant.hpp"
 
 namespace atlantis::propagation {
@@ -9,6 +11,7 @@ class AllDifferent : public ViolationInvariant {
   std::vector<VarViewId> _vars;
   std::vector<CommittableInt> _counts;
   Int _offset;
+  [[nodiscard]] std::optional<size_t> countIndex(Int value) const;
   signed char increaseCount(Timestamp ts, Int value);
   signed char decreaseCount(Timestamp ts, Int value);
 

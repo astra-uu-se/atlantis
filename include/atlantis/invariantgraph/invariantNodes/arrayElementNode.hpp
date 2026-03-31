@@ -7,14 +7,12 @@ namespace atlantis::invariantgraph {
 class ArrayElementNode : public InvariantNode {
   std::vector<Int> _parVector;
   Int _offset;
-  [[maybe_unused]] bool _isIntVector;
 
  public:
-  ArrayElementNode(InvariantGraph& graph, std::vector<Int>&& parVector,
-                   VarNodeId idx, VarNodeId output, Int offset,
-                   bool isIntVector = true);
+  explicit ArrayElementNode(InvariantGraph& graph, std::vector<Int>&& parVector,
+                   VarNodeId idx, VarNodeId output, Int offset);
 
-  ArrayElementNode(InvariantGraph& graph, std::vector<bool>&& parVector,
+  explicit ArrayElementNode(InvariantGraph& graph, std::vector<bool>&& parVector,
                    VarNodeId idx, VarNodeId output, Int offset);
 
   void init(InvariantNodeId) override;
