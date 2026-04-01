@@ -6,6 +6,7 @@
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/linLeImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
@@ -106,6 +107,21 @@ void IntLinLeNode::updateState() {
     }
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+bool IntLinLeNode::canBeMadeImplicit() const {
+  return std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+    return invariantGraphConst().varNodeConst(vId).definingNodes().empty();
+  });
+}
+
+bool IntLinLeNode::makeImplicit() {
+  if (!canBeMadeImplicit()) {
+    return false;
+  }
+  invariantGraph().addImplicitConstraintNode(
+    std::make_shared<LinLeImplicitNode>(invariantGraph(), std::move(_coeffs), std::vector<VarNodeId>{staticInputVarNodeIds()}, _bound));
+  return true;
 }
 
 void IntLinLeNode::registerOutputVars(propagation::SolverBase& solver,

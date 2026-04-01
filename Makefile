@@ -236,6 +236,11 @@ fzn-benchmark:
 			${dzn_file} \
 			--fzn ${FZN_MODEL_DIR}/knapsack/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
+	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+		${MZN_MODEL_DIR}/knap_bool.mzn \
+		${DZN_DIR}/knapsack/f1_l-d_kp_10_269.dzn \
+		--fzn ${FZN_MODEL_DIR}/knapsack/f1_l-d_kp_10_269_bool.fzn \
+		--no-output-ozn
 
 .PHONY: clang-format
 clang-format:

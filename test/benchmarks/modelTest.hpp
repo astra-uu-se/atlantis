@@ -15,6 +15,7 @@
 namespace atlantis::testing {
 
 static void testModelFile(const char* modelFile,
+                          std::unordered_set<Int> validObjectives = std::unordered_set<Int>{},
                           logging::Level logLvl = logging::Level::LVL_ERROR,
                           std::optional<std::uint_fast32_t> seed = {}) {
   std::filesystem::path modelFilePath(
@@ -28,7 +29,13 @@ static void testModelFile(const char* modelFile,
   backend.setTimelimit(std::chrono::seconds(2));
   std::optional<search::SavedAssignment> solution{};
   backend.setOnSolution(
-      [&solution](const search::SavedAssignment& sol) { solution = sol; });
+      [&solution, &validObjectives](const search::SavedAssignment& sol) {
+        solution = sol;
+        EXPECT_EQ(sol.getCost().getViolation(), 0);
+        if (!validObjectives.empty()) {
+          EXPECT_TRUE(validObjectives.contains(sol.getCost().getObjective())) << "Objective: " << sol.getCost().getObjective();
+        }
+      });
   backend.setOnFinish([&](const FznBackend::SolveOutcome outcome) {
     EXPECT_EQ(outcome == FznBackend::SolveOutcome::SATISFIABLE,
               solution.has_value());

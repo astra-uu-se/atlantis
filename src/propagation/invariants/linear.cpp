@@ -43,9 +43,7 @@ void Linear::registerVars() {
   registerDefinedVar(_output);
 }
 
-void Linear::updateBounds(bool widenOnly) {
-  // precondition: this invariant must be registered with the solver before it
-  // is initialised.
+void Linear::updateBounds(const bool widenOnly) {
   Int sumLb = 0;
   Int sumUb = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
@@ -60,17 +58,15 @@ void Linear::updateBounds(bool widenOnly) {
   _solver.updateBounds(_output, sumLb, sumUb, widenOnly);
 }
 
-void Linear::recompute(Timestamp ts) {
-  Int sum = 0;
+void Linear::recompute(const Timestamp ts) {
+  Int total = 0;
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    sum = overflow::saturatingAdd(
-        sum,
-        overflow::saturatingMul(_coeffs[i], _solver.value(ts, _varArray[i])));
+    total += _coeffs[i] * _solver.value(ts, _varArray[i]);
   }
-  updateValue(ts, _output, sum);
+  updateValue(ts, _output, total);
 }
 
-void Linear::notifyInputChanged(Timestamp ts, LocalId id) {
+void Linear::notifyInputChanged(const Timestamp ts, const LocalId id) {
   assert(id < _varArray.size());
   const Int committedValue = _solver.committedValue(_varArray[id]);
   const Int newValue = _solver.value(ts, _varArray[id]);
@@ -98,7 +94,7 @@ void Linear::notifyInputChanged(Timestamp ts, LocalId id) {
   incValue(ts, _output, _coeffs[id] * (newValue - committedValue));
 }
 
-VarViewId Linear::nextInput(Timestamp ts) {
+VarViewId Linear::nextInput(const Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index < _varArray.size()) {
@@ -107,7 +103,7 @@ VarViewId Linear::nextInput(Timestamp ts) {
   return NULL_ID;  // Done
 }
 
-void Linear::notifyCurrentInputChanged(Timestamp ts) {
+void Linear::notifyCurrentInputChanged(const Timestamp ts) {
   assert(_state.value(ts) != -1);
   notifyInputChanged(ts, _state.value(ts));
 }

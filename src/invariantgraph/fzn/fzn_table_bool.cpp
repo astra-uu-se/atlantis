@@ -28,11 +28,10 @@ bool fzn_table_bool(FznInvariantGraph& graph,
 
 bool fzn_table_bool(FznInvariantGraph& graph,
                     const fznparser::Constraint& constraint) {
-  const bool isFlat = constraint.identifier() == "fzn_table_bool_flat" ||
-                      constraint.identifier() == "fzn_table_bool_flat_reif";
   if (constraint.identifier() != "fzn_table_bool" &&
+      constraint.identifier() != "fzn_table_bool_flat" &&
       constraint.identifier() != "fzn_table_bool_reif" &&
-      !isFlat) {
+      constraint.identifier() != "fzn_table_bool_flat_reif") {
     return false;
   }
 
@@ -49,10 +48,7 @@ bool fzn_table_bool(FznInvariantGraph& graph,
         "positive.");
   }
 
-  const std::vector<bool> flatTable =
-      isFlat ? getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1))
-                     ->toParVector()
-             : getArgArray<fznparser::BoolVarArray>(
+  const std::vector<bool> flatTable = getArgArray<fznparser::BoolVarArray>(
                    getArgArray<fznparser::BoolVarArray>(
                        constraint.arguments().at(1)))
                    ->toParVector();

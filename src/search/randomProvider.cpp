@@ -6,7 +6,7 @@
 
 namespace atlantis::search {
 
-RandomProvider::RandomProvider(std::uint_fast32_t seed)
+RandomProvider::RandomProvider(const std::uint_fast32_t seed)
     : _gen(std::mt19937(seed)) {}
 
 Int RandomProvider::element(const std::vector<Int>& collection) {
@@ -15,12 +15,17 @@ Int RandomProvider::element(const std::vector<Int>& collection) {
   return collection[distribution(_gen)];
 }
 
-Int RandomProvider::intInRange(Int lowerBound, Int upperBound) {
+bool RandomProvider::boolean() {
+  return std::uniform_int_distribution<Int>(0, 1)(_gen) == 1;
+}
+
+
+Int RandomProvider::intInRange(const Int lowerBound, const Int upperBound) {
   return std::uniform_int_distribution<Int>(lowerBound, upperBound)(_gen);
 }
 
-Int RandomProvider::intInRange(Int lowerBound, Int upperBound,
-                               Int ignoredValue) {
+Int RandomProvider::intInRange(const Int lowerBound, const Int upperBound,
+                               const Int ignoredValue) {
   assert(lowerBound < upperBound);
   assert(lowerBound <= ignoredValue && ignoredValue <= upperBound);
   const Int val =
@@ -28,7 +33,7 @@ Int RandomProvider::intInRange(Int lowerBound, Int upperBound,
   return val == ignoredValue ? upperBound : val;
 }
 
-float RandomProvider::floatInRange(float lowerBound, float upperBound) {
+float RandomProvider::floatInRange(const float lowerBound, const float upperBound) {
   return std::uniform_real_distribution<float>(lowerBound, upperBound)(_gen);
 }
 
@@ -37,7 +42,7 @@ Int RandomProvider::inDomain(const SetDomain& domain) {
                                                       domain.size() - 1)(_gen)];
 }
 
-Int RandomProvider::inDomain(const SetDomain& domain, Int ignoredValue) {
+Int RandomProvider::inDomain(const SetDomain& domain, const Int ignoredValue) {
   assert(domain.contains(ignoredValue));
   const size_t index =
       std::uniform_int_distribution<size_t>(0, domain.size() - 2)(_gen);
@@ -49,7 +54,7 @@ Int RandomProvider::inDomain(const IntervalDomain& domain) {
   return intInRange(domain.lowerBound(), domain.upperBound());
 }
 
-Int RandomProvider::inDomain(const IntervalDomain& domain, Int ignoredValue) {
+Int RandomProvider::inDomain(const IntervalDomain& domain, const Int ignoredValue) {
   return intInRange(domain.lowerBound(), domain.upperBound(), ignoredValue);
 }
 
@@ -57,7 +62,7 @@ Int RandomProvider::inDomain(const SearchDomain& domain) {
   return domain[intInRange(0, static_cast<Int>(domain.size()) - 1)];
 }
 
-Int RandomProvider::inDomain(const SearchDomain& domain, Int ignoredValue) {
+Int RandomProvider::inDomain(const SearchDomain& domain, const Int ignoredValue) {
   assert(domain.contains(ignoredValue));
   const size_t index =
       std::uniform_int_distribution<size_t>(0, domain.size() - 2)(_gen);
@@ -65,6 +70,6 @@ Int RandomProvider::inDomain(const SearchDomain& domain, Int ignoredValue) {
   return val == ignoredValue ? domain.upperBound() : val;
 }
 
-void RandomProvider::seed(std::int_fast32_t seed) { _gen.seed(seed); }
+void RandomProvider::seed(const std::int_fast32_t seed) { _gen.seed(seed); }
 
 }  // namespace atlantis::search
