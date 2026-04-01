@@ -72,7 +72,30 @@ void Linear::recompute(Timestamp ts) {
 
 void Linear::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _varArray.size());
-  recompute(ts);
+  const Int committedValue = _solver.committedValue(_varArray[id]);
+  const Int newValue = _solver.value(ts, _varArray[id]);
+  if (newValue == committedValue) {
+    return;
+  }
+  assert([&]() {
+    Int diff;
+    return !overflow::subOverflow(newValue, committedValue, &diff);
+  }());
+
+  assert([&]() {
+    const Int diff = overflow::saturatingSub(newValue, committedValue);
+    Int prod;
+    return !overflow::mulOverflow(_coeffs.at(id), diff, &prod);
+  }());
+
+  assert([&]() {
+    const Int diff = overflow::saturatingSub(newValue, committedValue);
+    const Int prod = overflow::saturatingMul(_coeffs.at(id), diff);
+    Int sum;
+    return !overflow::addOverflow(_solver.value(ts, _output), prod, &sum);
+  }());
+
+  incValue(ts, _output, _coeffs[id] * (newValue - committedValue));
 }
 
 VarViewId Linear::nextInput(Timestamp ts) {

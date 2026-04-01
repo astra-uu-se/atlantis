@@ -58,14 +58,27 @@ class LinearTest : public InvariantTest {
       }
     }
 
-    std::vector<Int> bounds{
-        (std::numeric_limits<Int>::min() / numInputVars) / coeffLb,
-        (std::numeric_limits<Int>::min() / numInputVars) / coeffUb,
-        (std::numeric_limits<Int>::max() / numInputVars) / coeffLb,
-        (std::numeric_limits<Int>::max() / numInputVars) / coeffUb};
-    const auto [lb, ub] = std::minmax_element(bounds.begin(), bounds.end());
-    inputVarLb = std::max(inputVarLb, *lb);
-    inputVarUb = std::min(inputVarUb, *ub);
+    EXPECT_LE(coeffLb, 0);
+    EXPECT_GE(coeffUb, 0);
+
+    const Int range = std::min(-std::numeric_limits<Int>::max() / (2 * coeffLb * numInputVars),
+    std::numeric_limits<Int>::max() / (2 * coeffUb * numInputVars));
+    EXPECT_GE(range, 0);
+
+    const Int minLb = -(range / 2);
+    const Int maxUb = minLb + range - 1;
+
+    inputVarLb = std::max(inputVarLb, minLb);
+    inputVarUb = std::min(inputVarUb, maxUb);
+
+    EXPECT_LE(inputVarLb, inputVarUb);
+
+    Int diff, res;
+    EXPECT_FALSE(overflow::subOverflow(inputVarUb, inputVarLb, &diff)) << inputVarLb << " - " << inputVarUb;
+    EXPECT_LE(diff, range);
+    EXPECT_FALSE(overflow::mulOverflow(-diff, coeffLb, &res)) << -diff << " * " << coeffLb;
+    EXPECT_FALSE(overflow::mulOverflow(diff, coeffUb, &res)) << diff << " * " << coeffUb;
+
     inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
 
     inputVars.clear();
@@ -305,11 +318,48 @@ RC_GTEST_FIXTURE_PROP(LinearTest, rapidcheck, ()) {
   for (size_t c = 0; c < numCommits; ++c) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
+    std::vector<std::optional<Int>> vals(numInputVars, std::nullopt);
+
     for (size_t p = 0; p <= numProbes; ++p) {
-      _solver->beginMove();
-      for (const auto& var : inputVars) {
+      Int posSum = 0;
+      Int negSum = 0;
+      bool overflow = false;
+      for (Int i = 0; i < numInputVars; ++i) {
+        Int val;
         if (randBool()) {
-          _solver->setValue(var, inputVarDist(gen));
+          val = inputVarDist(gen);
+          vals.at(i) = val;
+        } else {
+          val = _solver->committedValue(inputVars.at(i));
+        }
+        Int prod;
+        const bool mulOverflow = overflow::mulOverflow(val, coeffs.at(i), &prod);
+        overflow |= mulOverflow;
+        EXPECT_FALSE(mulOverflow);
+        if (!mulOverflow) {
+          Int sum;
+          const bool addOverflow = prod > 0 ? overflow::addOverflow(posSum, prod, &sum) : overflow::addOverflow(negSum, prod, &sum);
+          overflow |= addOverflow;
+          EXPECT_FALSE(addOverflow);
+          if (!addOverflow) {
+            if (prod > 0) {
+              posSum = sum;
+            } else {
+              negSum = sum;
+            }
+          }
+        }
+        EXPECT_FALSE(overflow);
+      }
+
+      if (overflow) {
+        continue;
+      }
+
+      _solver->beginMove();
+      for (Int i = 0; i < numInputVars; ++i) {
+        if (vals.at(i).has_value()) {
+          _solver->setValue(inputVars.at(i), *vals.at(i));
         }
       }
       _solver->endMove();
