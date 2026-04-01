@@ -58,14 +58,27 @@ class LinearTest : public InvariantTest {
       }
     }
 
-    std::vector<Int> bounds{
-        std::numeric_limits<Int>::min() / (numInputVars * coeffLb),
-        std::numeric_limits<Int>::min() / (numInputVars * coeffUb),
-        std::numeric_limits<Int>::max() / (numInputVars * coeffLb),
-        std::numeric_limits<Int>::max() / (numInputVars * coeffUb)};
-    const auto [lb, ub] = std::minmax_element(bounds.begin(), bounds.end());
-    inputVarLb = std::max(inputVarLb + 1, *lb);
-    inputVarUb = std::min(inputVarUb - 1, *ub);
+    EXPECT_LE(coeffLb, 0);
+    EXPECT_GE(coeffUb, 0);
+
+    const Int range = std::min(-std::numeric_limits<Int>::max() / (2 * coeffLb * numInputVars),
+    std::numeric_limits<Int>::max() / (2 * coeffUb * numInputVars));
+    EXPECT_GE(range, 0);
+
+    const Int minLb = -(range / 2);
+    const Int maxUb = minLb + range - 1;
+
+    inputVarLb = std::max(inputVarLb, minLb);
+    inputVarUb = std::min(inputVarUb, maxUb);
+
+    EXPECT_LE(inputVarLb, inputVarUb);
+
+    Int diff, res;
+    EXPECT_FALSE(overflow::subOverflow(inputVarUb, inputVarLb, &diff)) << inputVarLb << " - " << inputVarUb;
+    EXPECT_LE(diff, range);
+    EXPECT_FALSE(overflow::mulOverflow(-diff, coeffLb, &res)) << -diff << " * " << coeffLb;
+    EXPECT_FALSE(overflow::mulOverflow(diff, coeffUb, &res)) << diff << " * " << coeffUb;
+
     inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
 
     inputVars.clear();
