@@ -5,11 +5,6 @@
 
 namespace atlantis::propagation {
 
-static Int compute(const Int x, const Int y) {
-  assert(overflow::saturatingSub(std::max(x, y), std::min(x, y)) >= 0);
-  return overflow::saturatingSub(std::max(x, y), std::min(x, y));
-}
-
 /**
  * Constraint x = y
  * @param solver the solver that the invariant is added to
