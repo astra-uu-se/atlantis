@@ -87,13 +87,9 @@ static std::vector<std::vector<VarId>> SCC(const PropagationGraph& graph) {
 static void partitionIntoLayersUtil(
     const PropagationGraph& graph,
     const std::vector<std::vector<VarId>>& components, VarId varId,
-    const std::vector<size_t>& componentOfVar, std::vector<bool>& visiting,
-    std::vector<bool>& assigned, std::vector<VarId>& layerOfVar,
-    std::vector<bool>& layerHasSCC) {
-  if (assigned[varId]) {
-    return;
-  }
-  visiting[varId] = true;
+    const std::vector<size_t>& componentOfVar, std::vector<bool>& visited,
+    std::vector<VarId>& layerOfVar, std::vector<bool>& layerHasSCC) {
+  visited[varId] = true;
   const InvariantId defInv = graph.definingInvariant(varId);
   if (defInv == NULL_ID) {
     // varId is a search variable, put into layer 0:
@@ -103,18 +99,16 @@ static void partitionIntoLayersUtil(
       layerHasSCC.emplace_back(false);
     }
     assert(!layerHasSCC[0]);
-    assigned[varId] = true;
-    visiting[varId] = false;
     return;
   }
 
   if (componentOfVar[varId] >= components.size()) {
     // varId is not in an SCC:
     for (const VarId inputId : std::views::keys(graph.inputVars(defInv))) {
-      assert(!visiting[inputId]);
-      if (!assigned[inputId]) {
+      if (!visited[inputId]) {
+        visited[inputId] = true;
         partitionIntoLayersUtil(graph, components, inputId, componentOfVar,
-                                visiting, assigned, layerOfVar, layerHasSCC);
+                                visited, layerOfVar, layerHasSCC);
       }
       assert(layerOfVar[inputId] < layerHasSCC.size());
       layerOfVar[varId] = std::max(
@@ -135,22 +129,18 @@ static void partitionIntoLayersUtil(
         }
       }
     }
-    assigned[varId] = true;
-    visiting[varId] = false;
   } else {
     // varId is in an SCC:
     const size_t comp = componentOfVar[varId];
     for (const VarId cVarId : components[comp]) {
-      visiting[cVarId] = true;
-      const InvariantId cDefInv = graph.definingInvariant(cVarId);
-      assert(cDefInv != NULL_ID);
-      for (const VarId inputId : std::views::keys(graph.inputVars(cDefInv))) {
+      visited[cVarId] = true;
+      assert(graph.definingInvariant(cVarId) != NULL_ID);
+      for (const VarId inputId : std::views::keys(graph.inputVars(defInv))) {
         if (componentOfVar[inputId] != comp) {
-          assert(!visiting[inputId]);
-          if (!assigned[inputId]) {
+          if (!visited[inputId]) {
+            visited[inputId] = true;
             partitionIntoLayersUtil(graph, components, inputId, componentOfVar,
-                                    visiting, assigned, layerOfVar,
-                                    layerHasSCC);
+                                    visited, layerOfVar, layerHasSCC);
           }
           assert(layerOfVar[inputId] < layerHasSCC.size());
           // update layer of varId. The layer of the component will be updated
@@ -177,8 +167,6 @@ static void partitionIntoLayersUtil(
     // update the layer of the remaining variables in the SCC:
     for (const VarId cVarId : components[comp]) {
       layerOfVar[cVarId] = layerOfVar[varId];
-      assigned[cVarId] = true;
-      visiting[cVarId] = false;
     }
   }
 }
@@ -197,20 +185,19 @@ static std::vector<bool> partitionIntoLayersUsingSCC(
       componentOfVar[varId] = c;
     }
   }
-  std::vector<bool> visiting(graph.numVars(), false);
-  std::vector<bool> assigned(graph.numVars(), false);
+  std::vector<bool> visited(graph.numVars(), false);
   std::vector<bool> layerHasSCC;
   layerHasSCC.reserve(components.size() * 2);
 
   for (const VarId evalVarId : graph.evaluationVars()) {
     partitionIntoLayersUtil(graph, components, evalVarId, componentOfVar,
-                            visiting, assigned, layerOfVar, layerHasSCC);
+                            visited, layerOfVar, layerHasSCC);
   }
   for (Int c = static_cast<Int>(components.size()) - 1; c >= 0; --c) {
     for (const VarId varId : components[c]) {
-      if (!assigned[varId]) {
+      if (!visited[varId]) {
         partitionIntoLayersUtil(graph, components, varId, componentOfVar,
-                                visiting, assigned, layerOfVar, layerHasSCC);
+                                visited, layerOfVar, layerHasSCC);
       }
     }
   }
@@ -282,46 +269,6 @@ static bool hasUndeterminableDynamicCycle(
         }
       }
     }
-  }
-  return false;
-}
-
-bool PropagationGraph::shouldIgnoreInputForOrdering(
-    Timestamp ts, InvariantId invariantId, VarId inputId,
-    bool isDynamicInput) const {
-  // Same-layer inactive inputs in a dynamic SCC are excluded from both
-  // topological ordering and propagation.
-  if (inputId == NULL_ID) {
-    return false;
-  }
-  const size_t layer = invariantLayer(invariantId);
-  const bool isDynInv = hasDynamicCycle(layer) && isDynamicInvariant(invariantId);
-  if (!isDynInv || _varLayerIndex[inputId].layer != layer) {
-    return false;
-  }
-
-  const VarId dynInput = dynamicInputVar(ts, invariantId);
-  if (isDynamicInput && dynInput != inputId) {
-    return true;
-  }
-
-  const bool staticInputsPrevious =
-      std::ranges::all_of(inputVars(invariantId),
-                          [&](const std::pair<VarId, bool>& p) {
-                            return p.first != NULL_ID &&
-                                   (p.second || _varLayerIndex[p.first].layer < layer);
-                          });
-  const bool dynamicInputsPrevious =
-      std::ranges::all_of(inputVars(invariantId),
-                          [&](const std::pair<VarId, bool>& p) {
-                            return p.first != NULL_ID &&
-                                   (!p.second || _varLayerIndex[p.first].layer < layer);
-                          });
-  if (staticInputsPrevious) {
-    return isDynamicInput && dynInput == inputId;
-  }
-  if (dynamicInputsPrevious) {
-    return !isDynamicInput;
   }
   return false;
 }
@@ -408,8 +355,7 @@ void topologicallyOrderUtil(
   const VarId dynInput = isDynInv ? graph.dynamicInputVar(ts, defInv) : NULL_ID;
   const size_t numVars = graph.numVars();
   for (const auto& [inputId, isDynamicInput] : graph.inputVars(defInv)) {
-    if (graph.shouldIgnoreInputForOrdering(ts, defInv, inputId,
-                                           isDynamicInput)) {
+    if (isDynInv && isDynamicInput && dynInput != inputId) {
       continue;
     }
     assert(inputId < varLayerIndex.size());
@@ -426,6 +372,23 @@ void topologicallyOrderUtil(
         std::max(topologicalNumber[varId], topologicalNumber[inputId] + 1);
   }
   assert(!isDynInv || dynInput == graph.dynamicInputVar(ts, defInv));
+  assert(std::ranges::all_of(
+      graph.inputVars(defInv), [&](const std::pair<VarId, bool>& p) {
+        if (p.first == NULL_ID) {
+          return false;
+        }
+        if (isDynInv && p.second) {
+          if (dynInput == p.first &&
+              topologicalNumber[p.first] >= topologicalNumber[varId]) {
+            return false;
+          }
+          return true;
+        }
+        if (topologicalNumber[p.first] >= topologicalNumber[varId]) {
+          return false;
+        }
+        return true;
+      }));
 
   inFrontier[index] = false;
 }
@@ -480,10 +443,7 @@ void PropagationGraph::registerInvariantInput(InvariantId invariantId,
       _isDynamicInvariant[invariantId] || isDynamicInput;
 
   assert(inputVarId < _listeningInvariantData.size());
-  // listeningInvariantData is keyed by input variable, so the listening edge
-  // stores its own dynamic/static status.
-  _listeningInvariantData[inputVarId].emplace_back(invariantId, localId,
-                                                   isDynamicInput);
+  _listeningInvariantData[inputVarId].emplace_back(invariantId, localId);
 
   assert(invariantId < _inputVars.size());
   _inputVars[invariantId].emplace_back(inputVarId, isDynamicInput);
@@ -709,8 +669,12 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
       assert(_topologicalNumber[outputId] == 0);
       continue;
     }
+    const bool isDynInv =
+        _layerHasDynamicCycle.at(layer) && isDynamicInvariant(defInv);
+
+    const VarId dynInput = isDynInv ? dynamicInputVar(ts, defInv) : NULL_ID;
     for (const auto& [inputId, isDynamicInput] : inputVars(defInv)) {
-      if (shouldIgnoreInputForOrdering(ts, defInv, inputId, isDynamicInput)) {
+      if (isDynInv && isDynamicInput && dynInput != inputId) {
         continue;
       }
       if (_topologicalNumber[inputId] >= _topologicalNumber[outputId]) {

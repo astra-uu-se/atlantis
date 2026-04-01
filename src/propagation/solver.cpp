@@ -350,9 +350,9 @@ void Solver::propagate() {
         } else {
           if (_propGraph.varPosition(queuedVar) >
               _propGraph.varPosition(primaryDefinedVar)) {
-            assert(_propGraph.shouldIgnoreInputForOrdering(
-                _currentTimestamp, toNotify.invariantId, queuedVar,
-                toNotify.isDynamicInput));
+            assert(_propGraph.isDynamicInvariant(toNotify.invariantId) &&
+                   _store.dynamicInputVar(_currentTimestamp,
+                                          toNotify.invariantId) != queuedVar);
             continue;
           }
         }
