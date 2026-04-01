@@ -72,7 +72,12 @@ void Linear::recompute(Timestamp ts) {
 
 void Linear::notifyInputChanged(Timestamp ts, LocalId id) {
   assert(id < _varArray.size());
-  recompute(ts);
+  const Int committedValue = _solver.committedValue(_varArray[id]);
+  const Int newValue = _solver.value(ts, _varArray[id]);
+  if (newValue == committedValue) {
+    return;
+  }
+  incValue(ts, _output, _coeffs[id] * (newValue - committedValue));
 }
 
 VarViewId Linear::nextInput(Timestamp ts) {
