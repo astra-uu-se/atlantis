@@ -53,16 +53,9 @@ void IntLinLeNeighborhood::initialize(RandomProvider& random,
     const Int c = _coeffs[_indices[i + 1]];
     const Int lb = _vars[_indices[i + 1]].domain()->lowerBound();
     const Int ub = _vars[_indices[i + 1]].domain()->upperBound();
-    Int val1, val2;
-    if (mul_overflow(c, lb, val1)) {
-      val1 = (c < 0) == (lb < 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
-    }
-    if (mul_overflow(c, ub, val2)) {
-      val2 = (c < 0) == (ub < 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
-    }
-    if (add_overflow(remainingLowerBound[_indices[i + 1]], std::min(val1, val2), remainingLowerBound[_indices[i]])) {
-      remainingLowerBound[_indices[i]] = std::min(val1, val2) > 0 ? std::numeric_limits<Int>::min() : std::numeric_limits<Int>::max();
-    }
+    const Int val1 = overflow::saturatingMul(c, lb);
+    const Int val2 = overflow::saturatingMul(c, ub);
+    remainingLowerBound[_indices[i]] = overflow::saturatingAdd(remainingLowerBound[_indices[i + 1]], std::min(val1, val2));
   }
   assert(remainingLowerBound[_indices.front()] +
              std::min(_coeffs[_indices.front()] *
@@ -109,12 +102,12 @@ size_t IntLinLeNeighborhood::randomMove(RandomProvider& random,
     _curVarIdx = _indices[i];
     const Int curVal = assignment.committedValue(_vars[_curVarIdx].solverId());
     Int diff;
-    if (sub_overflow(_bound, _curSum, diff)) {
+    if (overflow::subOverflow(_bound, _curSum, &diff)) {
       continue;
     }
     const Int quotient = diff / _coeffs[_curVarIdx];
     Int remVal;
-    if (add_overflow(curVal, quotient, remVal)) {
+    if (overflow::addOverflow(curVal, quotient, &remVal)) {
       continue;
     }
     assert(_curSum + _coeffs[_curVarIdx] * (remVal - curVal) <= _bound);

@@ -44,12 +44,8 @@ void IntLinEqNeighborhood::initialize(RandomProvider& random,
     const Int lb = std::min(val1, val2);
     const Int ub = std::max(val1, val2);
 
-    if (add_overflow(remainingBounds[_indices[i + 1]][0], lb, remainingBounds[_indices[i]][0])) {
-      remainingBounds[_indices[i]][0] = (lb > 0) == (c > 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
-    }
-    if (add_overflow(remainingBounds[_indices[i + 1]][1], ub, remainingBounds[_indices[i]][1])) {
-      remainingBounds[_indices[i]][1] = (ub > 0) == (c > 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
-    }
+    remainingBounds[_indices[i]][0] = overflow::saturatingAdd(remainingBounds[_indices[i + 1]][0], lb);
+    remainingBounds[_indices[i]][1] = overflow::saturatingAdd(remainingBounds[_indices[i + 1]][1], ub);
   }
 
   assert(remainingBounds[_indices.front()][0] +

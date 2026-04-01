@@ -72,20 +72,9 @@ void BoolLinear::updateBounds(bool widenOnly) {
 void BoolLinear::recompute(Timestamp ts) {
   Int totalSum = 0;
   for (size_t i = 0; i < _violArray.size(); ++i) {
-    Int prod;
     const Int val = _solver.value(ts, _violArray[i]) == 0 ? 1 : 0;
-    if (mul_overflow<Int>(_coeffs[i], val, prod)) {
-      totalSum = _coeffs[i] > 0 ? std::numeric_limits<Int>::max()
-                                : std::numeric_limits<Int>::min();
-      break;
-    }
-    Int sum;
-    if (add_overflow<Int>(totalSum, prod, sum)) {
-      totalSum = prod < 0 ? std::numeric_limits<Int>::min()
-                          : std::numeric_limits<Int>::max();
-      break;
-    }
-    totalSum = sum;
+    const Int prod = overflow::saturatingMul(_coeffs[i], val);
+    totalSum = overflow::saturatingAdd(totalSum, prod);
   }
   updateValue(ts, _output, totalSum);
 }
@@ -99,22 +88,8 @@ void BoolLinear::notifyInputChanged(const Timestamp ts, const LocalId id) {
     return;
   }
 
-  Int prod;
-  const Int difference = newValue - committedValue;
-  if (mul_overflow<Int>(_coeffs[id], difference, prod)) {
-    updateValue(ts, _output,
-                (_coeffs[id] < 0) == (difference < 0)
-                    ? std::numeric_limits<Int>::max()
-                    : std::numeric_limits<Int>::min());
-  }
-  Int sum;
-  if (add_overflow<Int>(_solver.value(ts, _output), prod, sum)) {
-    updateValue(ts, _output,
-                prod < 0 ? std::numeric_limits<Int>::min()
-                         : std::numeric_limits<Int>::max());
-    return;
-  }
-  updateValue(ts, _output, sum);
+  const Int prod = _coeffs[id] * (newValue - committedValue);
+  incValue(ts, _output, prod);
 }
 
 VarViewId BoolLinear::nextInput(Timestamp ts) {

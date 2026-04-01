@@ -6,8 +6,7 @@
 namespace atlantis::propagation {
 
 static Int compute(const Int x, const Int y) {
-  assert(x <= y ? true : ([&]{Int diff; return !sub_overflow(x, y, diff);})());
-  return x <= y ? 0 : x - y;
+  return x <= y ? 0 : overflow::saturatingSub(x, y);
 }
 
 /**

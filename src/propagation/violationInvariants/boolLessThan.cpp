@@ -35,16 +35,7 @@ void BoolLessThan::updateBounds(const bool widenOnly) {
 }
 
 void BoolLessThan::recompute(const Timestamp ts) {
-  Int viol;
-  if (add_overflow<Int>(_solver.value(ts, _x) == 0 ? 1 : 0, _solver.value(ts, _y), viol)) {
-    updateValue(
-      ts, _violationId,
-      std::numeric_limits<Int>::max());
-    return;
-  }
-  updateValue(
-      ts, _violationId,
-      viol);
+  updateValue(ts, _violationId, overflow::saturatingAdd(_solver.value(ts, _x) == 0 ? 1 : 0, _solver.value(ts, _y)));
 }
 
 void BoolLessThan::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }

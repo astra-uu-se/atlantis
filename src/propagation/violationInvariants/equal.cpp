@@ -6,12 +6,8 @@
 namespace atlantis::propagation {
 
 static Int compute(const Int x, const Int y) {
-  Int difference;
-  if (sub_overflow(std::max(x, y), std::min(x, y), difference)) {
-    return std::numeric_limits<Int>::max();
-  }
-  assert(difference >= 0);
-  return difference;
+  assert(overflow::saturatingSub(std::max(x, y), std::min(x, y)) >= 0);
+  return overflow::saturatingSub(std::max(x, y), std::min(x, y));
 }
 
 /**

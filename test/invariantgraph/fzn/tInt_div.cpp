@@ -131,7 +131,7 @@ class int_divTest : public FznTestBase {
       Int expectedUb = std::numeric_limits<Int>::min();
       for (const auto& [q, d] : arr) {
         Int prod;
-        if (mul_overflow(q, d, prod)) {
+        if (overflow::mulOverflow(q, d, &prod)) {
           if ((q >= 0) == (d >= 0)) {
             expectedUb = std::numeric_limits<Int>::max();
           } else {

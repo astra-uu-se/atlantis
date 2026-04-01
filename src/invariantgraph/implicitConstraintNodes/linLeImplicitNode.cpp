@@ -42,20 +42,11 @@ void LinLeImplicitNode::registerNode(propagation::SolverBase&,
   assert(!mapping.hasNeighborhood(id()));
   Int total = 0;
   for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
-    const Int c = _coeffs[i];
     const Int lb = invariantGraphConst().varNodeConst(outputVarNodeIds()[i]).lowerBound();
     const Int ub = invariantGraphConst().varNodeConst(outputVarNodeIds()[i]).upperBound();
-    Int val1, val2, sum;
-    if (mul_overflow(c, lb, val1)) {
-      val1 = (c > 0) == (lb > 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
-    }
-    if (mul_overflow(c, ub, val2)) {
-      val2 = (c > 0) == (ub > 0) ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
-    }
-    if (add_overflow(std::max(val1, val2), total, sum)) {
-      sum = total > 0 ? std::numeric_limits<Int>::max() : std::numeric_limits<Int>::min();
-    }
-    total = sum;
+    const Int val1 = overflow::saturatingMul(_coeffs[i], lb);
+    const Int val2 = overflow::saturatingMul(_coeffs[i], ub);
+    total = overflow::saturatingAdd(total, std::max(val1, val2));
   }
   if (total <= _bound) {
     return;

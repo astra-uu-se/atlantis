@@ -57,9 +57,8 @@ void BinaryLinLeNeighborhood<Violation>::initialize(RandomProvider& random,
   std::vector<Int> remainingLowerBound(_indices.size());
   remainingLowerBound[_indices.back()] = -_bound;
   for (Int i = static_cast<Int>(_indices.size()) - 2; i >= 0; --i) {
-    if (add_overflow(remainingLowerBound[_indices[i + 1]], std::min(_coeffs[_indices[i + 1]], Int{0}), remainingLowerBound[_indices[i]])) {
-      remainingLowerBound[_indices[i]] = std::numeric_limits<Int>::min();
-    }
+
+    remainingLowerBound[_indices[i]] = overflow::saturatingAdd(remainingLowerBound[_indices[i + 1]], std::min(_coeffs[_indices[i + 1]], Int{0}));
   }
   assert(remainingLowerBound[_indices.front()] +
              std::min(_coeffs[_indices.front()], Int{0}) <=
@@ -93,11 +92,11 @@ size_t BinaryLinLeNeighborhood<Violation>::randomMove(RandomProvider& random,
     _curVarIdx = _indices[i];
     const Int curVal = assignment.committedValue(_vars[_curVarIdx].solverId());
     Int prod;
-    if (mul_overflow<Int>(_coeffs[_curVarIdx], toBool<Violation>(curVal) ? -1 : 1, prod)) {
+    if (overflow::mulOverflow(_coeffs[_curVarIdx], toBool<Violation>(curVal) ? -1 : 1, &prod)) {
       continue;
     }
     Int sum;
-    if (add_overflow(_curSum, prod, sum)) {
+    if (overflow::addOverflow(_curSum, prod, &sum)) {
       continue;
     }
     if (sum > _bound) {

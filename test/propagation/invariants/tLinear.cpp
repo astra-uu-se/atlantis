@@ -119,12 +119,12 @@ class LinearTest : public InvariantTest {
   }
 
   [[nodiscard]] Int computeOutput(const std::vector<Int>& values) const {
-    Int totalSum = 0;
+    Int sum = 0;
     for (size_t i = 0; i < values.size(); ++i) {
       sum = overflow::saturatingAdd(
           sum, overflow::saturatingMul(values.at(i), coeffs.at(i)));
     }
-    return totalSum;
+    return sum;
   }
 };
 

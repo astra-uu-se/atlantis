@@ -6,15 +6,10 @@
 namespace atlantis::propagation {
 
 static Int compute(const Int x, const Int y) {
-  assert(x < y ? true : ([&]{Int diff; return !sub_overflow(x, y, diff);})());
   if (x < y) {
     return 0;
   }
-  const Int diff = x - y;
-  if (diff == std::numeric_limits<Int>::max()) {
-    return std::numeric_limits<Int>::max();
-  }
-  return diff + 1;
+  return overflow::saturatingAdd(overflow::saturatingSub(x , y), 1);
 }
 
 /**
