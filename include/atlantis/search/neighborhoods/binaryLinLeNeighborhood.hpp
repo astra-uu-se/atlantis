@@ -8,7 +8,7 @@ class SearchVar;
 }
 
 namespace atlantis::search::neighborhoods {
-template <bool Boolean>
+template <bool Violation>
 class BinaryLinLeNeighborhood : public Neighborhood {
   std::vector<Int> _coeffs;
   std::vector<SearchVar> _vars;
