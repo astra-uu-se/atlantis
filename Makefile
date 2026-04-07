@@ -229,7 +229,7 @@ fzn-benchmark:
 			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
 	mkdir -p ${FZN_MODEL_DIR}/n_queens
-	$(foreach queens, 8 16 20 24 32 48 64 128 192 256 512 768 1024, \
+	$(foreach queens, 8 16 20 24 32 48 64 128 192 256 512 768 1024 2048, \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/n_queens.mzn \
 			-D n=${queens} \

@@ -88,7 +88,7 @@ bool Annealer::accept(const Cost& move) {
   ++_statistics->uphillAttemptedMoves;
 
   Int delta;
-  if (sub_overflow(evaluate(move), evaluate(_cost), delta)) {
+  if (overflow::subOverflow(evaluate(move), evaluate(_cost), &delta)) {
     return false;
   }
 

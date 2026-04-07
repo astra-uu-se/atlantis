@@ -57,8 +57,7 @@ std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
     search::RandomProvider& randomProvider,
     const search::Assignment& assignment) const {
   return std::make_unique<search::Annealer>(
-      randomProvider, std::move(_annealingScheduleFactory->create()),
-      assignment);
+      randomProvider, _annealingScheduleFactory->create(), assignment);
 }
 
 void SolverThread::solve() {
@@ -69,11 +68,6 @@ void SolverThread::solve() {
 
     invariantgraph::SolverMapping mapping = _invariantGraph->construct(solver);
 
-    // Might be changed to shared later
-    search::Objective searchObjective(solver, mapping.objectiveDirection());
-
-    const auto violationId = searchObjective.registerNode(
-        mapping.totalViolationId(), mapping.objectiveId());
     solver.close();
 
     // retrieve the variables that are to be outputted
@@ -84,7 +78,8 @@ void SolverThread::solve() {
     }
 
     search::Assignment assignment(solver, mapping.globalNeighborhood(),
-                                  violationId, mapping.objectiveId(),
+                                  mapping.totalViolationId(),
+                                  mapping.objectiveId(),
                                   mapping.objectiveDirection(),
                                   mapping.objectiveOptimalValue());
 
@@ -96,15 +91,13 @@ void SolverThread::solve() {
       search::RandomProvider randomProvider(_seed);
       search::SearchProcedure search(
           randomProvider, assignment, mapping.globalNeighborhood(),
-          searchObjective, _searchType, _threadController, outputVarIds,
-          _threadId);
+          _searchType, _threadController, outputVarIds, _threadId);
 
       search::SearchController searchController(
           mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,
           _shouldStop, _threadController);
 
-      search.run(searchController,
-                 std::move(createMetaHeuristic(randomProvider, assignment)));
+      search.run(searchController, createMetaHeuristic(randomProvider, assignment));
     }
   } catch (const std::exception&) {
     _threadController->recordFatalError(

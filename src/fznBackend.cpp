@@ -34,7 +34,6 @@ void FznBackend::onFinishDefault(const SolveOutcome outcome) {
       return;
     case SolveOutcome::UNKNOWN:
       std::cout << "=====UNKNOWN=====\n";
-      return;
   }
 }
 

@@ -21,7 +21,7 @@ inline Int getObj(const Int obj, const bool minimize) {
     return obj;
   }
   Int res = std::numeric_limits<Int>::max();
-  if (mul_overflow(Int{-1}, obj, res)) {
+  if (overflow::mulOverflow(Int{-1}, obj, &res)) {
     return std::numeric_limits<Int>::max();
   }
   return res;
@@ -70,10 +70,10 @@ Int Cost::evaluate(const UInt violationWeight,
     Int violProd = 0;
     Int objProd = 0;
     Int sum = 0;
-    if (!mul_overflow(static_cast<Int>(violationWeight),
-                      *_violation, violProd) &&
-        !mul_overflow(*_objective, static_cast<Int>(objectiveWeight), objProd) &&
-        !add_overflow(violProd, objProd, sum)) {
+    if (!overflow::mulOverflow(static_cast<Int>(violationWeight),
+                      *_violation, &violProd) &&
+        !overflow::mulOverflow(*_objective, static_cast<Int>(objectiveWeight), &objProd) &&
+        !overflow::addOverflow(violProd, objProd, &sum)) {
       return sum;
     }
     return std::numeric_limits<Int>::max();
