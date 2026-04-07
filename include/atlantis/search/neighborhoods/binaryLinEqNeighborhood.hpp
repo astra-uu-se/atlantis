@@ -18,6 +18,18 @@ class BinaryLinEqNeighborhood : public Neighborhood {
   size_t _bound;
   Timestamp _curTimestamp;
   size_t _index1, _index2;
+  Int _moveType;
+
+  [[nodiscard]] size_t numPositive() const noexcept;
+  [[nodiscard]] bool canIncrement() const noexcept;
+  [[nodiscard]] bool canDecrement() const noexcept;
+  [[nodiscard]] bool canSwapNeg() const noexcept;
+  [[nodiscard]] bool canSwapPos() const noexcept;
+
+  size_t incrementMove(RandomProvider&, Assignment&);
+  size_t decrementMove(RandomProvider&, Assignment&);
+  size_t swapNegMove(RandomProvider&, Assignment&);
+  size_t swapPosMove(RandomProvider&, Assignment&);
 
  public:
   BinaryLinEqNeighborhood(const std::vector<Int>& coeffs,

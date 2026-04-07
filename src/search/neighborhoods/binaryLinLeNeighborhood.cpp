@@ -9,26 +9,9 @@
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/utils/domains.hpp"
 #include "atlantis/utils/overflow.hpp"
+#include "helper.hpp"
 
 namespace atlantis::search::neighborhoods {
-
-template <bool Violation>
-static Int toInt(const bool b) {
-  if (Violation) {
-    return b ? 0 : 1;
-  } else {
-    return b ? 1 : 0;
-  }
-}
-
-template <bool Violation>
-static bool toBool(const Int val) {
-  if constexpr (Violation) {
-    return val == 0;
-  } else {
-    return val == 1;
-  }
-}
 
 template <bool Violation>
 BinaryLinLeNeighborhood<Violation>::BinaryLinLeNeighborhood(
