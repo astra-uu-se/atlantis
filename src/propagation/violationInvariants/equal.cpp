@@ -12,7 +12,8 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-Equal::Equal(SolverBase& solver, const VarId violationId, const VarViewId x, const VarViewId y)
+Equal::Equal(SolverBase& solver, const VarId violationId, const VarViewId x,
+             const VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
 Equal::Equal(SolverBase& solver, const VarViewId violationId, const VarViewId x,

@@ -226,9 +226,8 @@ TEST(IntLinEqRegression, DefinedIntVarKeepsDeclaredDomainOnImport) {
   fznparser::Constraint constraint{
       "int_eq", std::vector<fznparser::Arg>{fznparser::IntArg(out),
                                             fznparser::IntArg(x)}};
-  constraint.addAnnotation("defines_var",
-                           fznparser::AnnotationExpression(
-                               fznparser::Annotation("out")));
+  constraint.addAnnotation("defines_var", fznparser::AnnotationExpression(
+                                              fznparser::Annotation("out")));
   model->addConstraint(std::move(constraint));
 
   auto graph = std::make_shared<FznInvariantGraph>(true);
@@ -274,9 +273,8 @@ TEST(IntLinEqRegression, DefinedVarDomainDoesNotConflictWithDefinition) {
   fznparser::Constraint constraint{
       "int_lin_eq",
       std::vector<fznparser::Arg>{coeffs, vars, fznparser::IntArg(Int{-2})}};
-  constraint.addAnnotation("defines_var",
-                           fznparser::AnnotationExpression(
-                               fznparser::Annotation("out")));
+  constraint.addAnnotation("defines_var", fznparser::AnnotationExpression(
+                                              fznparser::Annotation("out")));
   model->addConstraint(std::move(constraint));
 
   auto graph = std::make_shared<FznInvariantGraph>(true);
@@ -301,9 +299,8 @@ TEST(IntLinEqRegression, NonLinearDefinedIntVarDoesNotGetFullIntRange) {
   fznparser::Constraint constraint{
       "int_eq", std::vector<fznparser::Arg>{fznparser::IntArg(out),
                                             fznparser::IntArg(x)}};
-  constraint.addAnnotation("defines_var",
-                           fznparser::AnnotationExpression(
-                               fznparser::Annotation("out")));
+  constraint.addAnnotation("defines_var", fznparser::AnnotationExpression(
+                                              fznparser::Annotation("out")));
   model->addConstraint(std::move(constraint));
 
   auto graph = std::make_shared<FznInvariantGraph>(true);

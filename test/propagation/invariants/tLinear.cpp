@@ -61,8 +61,9 @@ class LinearTest : public InvariantTest {
     EXPECT_LE(coeffLb, 0);
     EXPECT_GE(coeffUb, 0);
 
-    const Int range = std::min(-std::numeric_limits<Int>::max() / (2 * coeffLb * numInputVars),
-    std::numeric_limits<Int>::max() / (2 * coeffUb * numInputVars));
+    const Int range = std::min(
+        -std::numeric_limits<Int>::max() / (2 * coeffLb * numInputVars),
+        std::numeric_limits<Int>::max() / (2 * coeffUb * numInputVars));
     EXPECT_GE(range, 0);
 
     const Int minLb = -(range / 2);
@@ -74,10 +75,13 @@ class LinearTest : public InvariantTest {
     EXPECT_LE(inputVarLb, inputVarUb);
 
     Int diff, res;
-    EXPECT_FALSE(overflow::subOverflow(inputVarUb, inputVarLb, &diff)) << inputVarLb << " - " << inputVarUb;
+    EXPECT_FALSE(overflow::subOverflow(inputVarUb, inputVarLb, &diff))
+        << inputVarLb << " - " << inputVarUb;
     EXPECT_LE(diff, range);
-    EXPECT_FALSE(overflow::mulOverflow(-diff, coeffLb, &res)) << -diff << " * " << coeffLb;
-    EXPECT_FALSE(overflow::mulOverflow(diff, coeffUb, &res)) << diff << " * " << coeffUb;
+    EXPECT_FALSE(overflow::mulOverflow(-diff, coeffLb, &res))
+        << -diff << " * " << coeffLb;
+    EXPECT_FALSE(overflow::mulOverflow(diff, coeffUb, &res))
+        << diff << " * " << coeffUb;
 
     inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
 
@@ -333,12 +337,15 @@ RC_GTEST_FIXTURE_PROP(LinearTest, rapidcheck, ()) {
           val = _solver->committedValue(inputVars.at(i));
         }
         Int prod;
-        const bool mulOverflow = overflow::mulOverflow(val, coeffs.at(i), &prod);
+        const bool mulOverflow =
+            overflow::mulOverflow(val, coeffs.at(i), &prod);
         overflow |= mulOverflow;
         EXPECT_FALSE(mulOverflow);
         if (!mulOverflow) {
           Int sum;
-          const bool addOverflow = prod > 0 ? overflow::addOverflow(posSum, prod, &sum) : overflow::addOverflow(negSum, prod, &sum);
+          const bool addOverflow =
+              prod > 0 ? overflow::addOverflow(posSum, prod, &sum)
+                       : overflow::addOverflow(negSum, prod, &sum);
           overflow |= addOverflow;
           EXPECT_FALSE(addOverflow);
           if (!addOverflow) {

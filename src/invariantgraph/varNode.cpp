@@ -137,9 +137,8 @@ propagation::VarViewId VarNode::postDomainConstraint(
       return mapping.domainViolationId(varNodeId());
     }
     mapping.setDomainViolationId(
-        varNodeId(),
-        solver.makeIntView<propagation::EqualConst>(
-            solver, mapping.solverId(varNodeId()), lowerBound()));
+        varNodeId(), solver.makeIntView<propagation::EqualConst>(
+                         solver, mapping.solverId(varNodeId()), lowerBound()));
     return mapping.domainViolationId(varNodeId());
   }
 
@@ -148,9 +147,8 @@ propagation::VarViewId VarNode::postDomainConstraint(
       return mapping.domainViolationId(varNodeId());
     }
     mapping.setDomainViolationId(
-        varNodeId(),
-        solver.makeIntView<propagation::GreaterEqualConst>(
-            solver, mapping.solverId(varNodeId()), lowerBound()));
+        varNodeId(), solver.makeIntView<propagation::GreaterEqualConst>(
+                         solver, mapping.solverId(varNodeId()), lowerBound()));
     return mapping.domainViolationId(varNodeId());
   }
 
@@ -159,9 +157,8 @@ propagation::VarViewId VarNode::postDomainConstraint(
       return mapping.domainViolationId(varNodeId());
     }
     mapping.setDomainViolationId(
-        varNodeId(),
-        solver.makeIntView<propagation::LessEqualConst>(
-            solver, mapping.solverId(varNodeId()), upperBound()));
+        varNodeId(), solver.makeIntView<propagation::LessEqualConst>(
+                         solver, mapping.solverId(varNodeId()), upperBound()));
     return mapping.domainViolationId(varNodeId());
   }
 
@@ -170,9 +167,9 @@ propagation::VarViewId VarNode::postDomainConstraint(
       return mapping.domainViolationId(varNodeId());
     }
     mapping.setDomainViolationId(
-        varNodeId(), solver.makeIntView<propagation::InIntervalConst>(
-                         solver, mapping.solverId(varNodeId()), lowerBound(),
-                         upperBound()));
+        varNodeId(),
+        solver.makeIntView<propagation::InIntervalConst>(
+            solver, mapping.solverId(varNodeId()), lowerBound(), upperBound()));
     return mapping.domainViolationId(varNodeId());
   }
   assert(_domainType == DomainType::DOM_DOMAIN);
@@ -183,9 +180,9 @@ propagation::VarViewId VarNode::postDomainConstraint(
 
   if (_domain->isInterval()) {
     mapping.setDomainViolationId(
-        varNodeId(), solver.makeIntView<propagation::InIntervalConst>(
-                         solver, mapping.solverId(varNodeId()), lowerBound(),
-                         upperBound()));
+        varNodeId(),
+        solver.makeIntView<propagation::InIntervalConst>(
+            solver, mapping.solverId(varNodeId()), lowerBound(), upperBound()));
     return mapping.domainViolationId(varNodeId());
   }
 

@@ -121,8 +121,8 @@ TEST(ArrayVarElementNodeRegression, FixedBoolOutputPrunesIncompatibleIndices) {
   const auto output = graph.retrieveBoolVarNode("output");
   graph.varNode(output).fixToValue(bool{true});
 
-  const auto nodeId = graph.addInvariantNode(
-      std::make_shared<ArrayVarElementNode>(
+  const auto nodeId =
+      graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
           graph, idx, std::vector<VarNodeId>{x1, x2}, output, 1));
   auto& node = dynamic_cast<ArrayVarElementNode&>(graph.invariantNode(nodeId));
 
@@ -142,8 +142,8 @@ TEST(ArrayVarElementNodeRegression, FixedIndexAndOutputPruneSelectedChild) {
   const auto output = graph.retrieveBoolVarNode("output");
   graph.varNode(output).fixToValue(bool{true});
 
-  const auto nodeId = graph.addInvariantNode(
-      std::make_shared<ArrayVarElementNode>(
+  const auto nodeId =
+      graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
           graph, idx, std::vector<VarNodeId>{x1, x2}, output, 1));
   auto& node = dynamic_cast<ArrayVarElementNode&>(graph.invariantNode(nodeId));
 

@@ -892,10 +892,10 @@ TEST_F(SolverTest, CloseHandlesSccMembersWithDifferentExternalInputs) {
 
   solver->makeInvariant<MockSimplePlus>(*solver, layer1, x, x);
   solver->makeInvariant<MockSimplePlus>(*solver, layer2, layer1, x);
-  solver->makeInvariant<ElementVar>(
-      *solver, a, idx, std::vector<VarViewId>{x, b}, 0);
-  solver->makeInvariant<ElementVar>(
-      *solver, b, idx, std::vector<VarViewId>{layer2, a}, 0);
+  solver->makeInvariant<ElementVar>(*solver, a, idx,
+                                    std::vector<VarViewId>{x, b}, 0);
+  solver->makeInvariant<ElementVar>(*solver, b, idx,
+                                    std::vector<VarViewId>{layer2, a}, 0);
 
   EXPECT_NO_THROW(solver->close());
 }

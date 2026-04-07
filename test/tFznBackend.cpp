@@ -24,8 +24,9 @@ TEST(FznBackendTest, BuildInconsistencyReportsUnsatisfiable) {
   bool sawSolution = false;
   backend.setOnSolution(
       [&](const search::SavedAssignment&) { sawSolution = true; });
-  backend.setOnFinish(
-      [&](const FznBackend::SolveOutcome actualOutcome) { outcome = actualOutcome; });
+  backend.setOnFinish([&](const FznBackend::SolveOutcome actualOutcome) {
+    outcome = actualOutcome;
+  });
 
   EXPECT_NO_THROW(backend.solve(logger));
   EXPECT_NO_THROW(backend.join(logger));

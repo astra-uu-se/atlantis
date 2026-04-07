@@ -151,10 +151,10 @@ TEST(IntLinearNodeRegression, MultiInputOffsetUsesOffsetViewForOutput) {
   auto graph = std::make_shared<InvariantGraph>();
   graph->open();
 
-  const auto a = graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2),
-                                           "a");
-  const auto b = graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2),
-                                           "b");
+  const auto a =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2), "a");
+  const auto b =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2), "b");
   const auto out =
       graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 3), "out");
 

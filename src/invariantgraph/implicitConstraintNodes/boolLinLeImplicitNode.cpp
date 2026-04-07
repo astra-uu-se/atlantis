@@ -75,8 +75,9 @@ void BoolLinLeImplicitNode::registerNode(propagation::SolverBase&,
   }
 
   mapping.setNeighborhood(
-      id(), std::make_shared<search::neighborhoods::BinaryLinLeNeighborhood<true>>(
-                std::vector<Int>{_coeffs}, std::move(searchVars), _bound));
+      id(),
+      std::make_shared<search::neighborhoods::BinaryLinLeNeighborhood<true>>(
+          std::vector<Int>{_coeffs}, std::move(searchVars), _bound));
 }
 
 std::string BoolLinLeImplicitNode::dotLangIdentifier() const {

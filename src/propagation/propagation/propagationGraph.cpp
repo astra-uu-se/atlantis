@@ -41,8 +41,7 @@ static void SCCUtil(const PropagationGraph& graph, VarId inputId,
                 components);
         lowTime[inputId] = std::min(lowTime[outputId], lowTime[inputId]);
       } else if (onStack[outputId]) {
-        lowTime[inputId] =
-            std::min(lowTime[inputId], discoverTime[outputId]);
+        lowTime[inputId] = std::min(lowTime[inputId], discoverTime[outputId]);
       }
     }
   }

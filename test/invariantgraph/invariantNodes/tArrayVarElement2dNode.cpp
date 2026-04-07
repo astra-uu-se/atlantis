@@ -154,9 +154,11 @@ TEST(ArrayVarElement2dNodeRegression, ReplaceHandlesReducedMatrixOffsets) {
     }
   }
 
-  const auto invId = graph->addInvariantNode(std::make_shared<ArrayVarElement2dNode>(
-      *graph, rowIdx, colIdx, std::move(flat), output, 2, 1, 1));
-  auto& node = dynamic_cast<ArrayVarElement2dNode&>(graph->invariantNode(invId));
+  const auto invId =
+      graph->addInvariantNode(std::make_shared<ArrayVarElement2dNode>(
+          *graph, rowIdx, colIdx, std::move(flat), output, 2, 1, 1));
+  auto& node =
+      dynamic_cast<ArrayVarElement2dNode&>(graph->invariantNode(invId));
 
   node.updateState();
   EXPECT_TRUE(node.canBeReplaced());

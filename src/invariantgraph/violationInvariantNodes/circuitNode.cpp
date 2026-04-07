@@ -40,8 +40,9 @@ void CircuitNode::updateState() {
     invariantGraph()
         .varNode(staticInputVarNodeIds().front())
         .fixToValue(_offset + 1);
-    invariantGraph().varNode(staticInputVarNodeIds().back()).fixToValue(
-        _offset);
+    invariantGraph()
+        .varNode(staticInputVarNodeIds().back())
+        .fixToValue(_offset);
   }
   if (staticInputVarNodeIds().size() <= 2) {
     setState(InvariantNodeState::SUBSUMED);

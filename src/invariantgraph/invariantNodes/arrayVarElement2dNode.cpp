@@ -118,8 +118,8 @@ void ArrayVarElement2dNode::updateState() {
   };
 
   std::vector<VarNodeId> varNodeIdsToRemove;
-  varNodeIdsToRemove.reserve(
-      static_cast<Int>(dynamicInputVarNodeIds().size() - newNumRows * newNumCols));
+  varNodeIdsToRemove.reserve(static_cast<Int>(dynamicInputVarNodeIds().size() -
+                                              newNumRows * newNumCols));
 
   Int index = 0;
   for (Int row = rowIdxNode.lowerBound(); row <= rowIdxNode.upperBound();

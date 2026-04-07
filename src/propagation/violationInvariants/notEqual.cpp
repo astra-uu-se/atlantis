@@ -13,12 +13,12 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-NotEqual::NotEqual(SolverBase& solver, const VarId violationId, const VarViewId x,
-                   const VarViewId y)
+NotEqual::NotEqual(SolverBase& solver, const VarId violationId,
+                   const VarViewId x, const VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
-NotEqual::NotEqual(SolverBase& solver, const VarViewId violationId, const VarViewId x,
-                   const VarViewId y)
+NotEqual::NotEqual(SolverBase& solver, const VarViewId violationId,
+                   const VarViewId x, const VarViewId y)
     : NotEqual(solver, VarId{violationId}, x, y) {
   assert(violationId.isVar());
 }
@@ -53,7 +53,9 @@ void NotEqual::recompute(const Timestamp ts) {
   updateValue(ts, _violationId, _solver.value(ts, _x) == _solver.value(ts, _y));
 }
 
-void NotEqual::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
+void NotEqual::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 
 VarViewId NotEqual::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {

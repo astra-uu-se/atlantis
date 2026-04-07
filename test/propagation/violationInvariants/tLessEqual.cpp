@@ -1,6 +1,6 @@
 #include "../invariantTestHelper.hpp"
-#include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 #include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::testing {
@@ -293,7 +293,7 @@ TEST_F(LessEqualTest, SolverIntegration) {
     x = _solver->makeIntVar(5, -100, 100);
     y = _solver->makeIntVar(0, -100, 100);
     const VarViewId viol = _solver->makeIntVar(0, 0, 200);
-      testNotifications<MockLessEqual>(
+    testNotifications<MockLessEqual>(
         &_solver->makeViolationInvariant<MockLessEqual>(*_solver, viol, x, y),
         {propMode, markingMode, 3, x, -5, viol});
   }
@@ -305,8 +305,7 @@ TEST_F(LessEqualTest, UpdateBoundsSaturatesOnExtremeInputRanges) {
                           std::numeric_limits<Int>::max());
   y = _solver->makeIntVar(0, std::numeric_limits<Int>::min() + 14,
                           std::numeric_limits<Int>::max());
-  outputVar =
-      _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
+  outputVar = _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
 
   _solver->makeViolationInvariant<LessEqual>(*_solver, outputVar, x, y);
 
@@ -318,16 +317,15 @@ TEST_F(LessEqualTest, UpdateBoundsSaturatesOnExtremeInputRanges) {
 
 TEST_F(LessEqualTest, UpdateBoundsHandlesOverflowedOffsetViews) {
   _solver->open();
-  const auto baseX = _solver->makeIntVar(
-      overflow::kIntMax - 150, overflow::kIntMax - 200,
-      overflow::kIntMax - 100);
-  const auto baseY = _solver->makeIntVar(
-      overflow::kIntMin + 150, overflow::kIntMin + 100,
-      overflow::kIntMin + 200);
+  const auto baseX =
+      _solver->makeIntVar(overflow::kIntMax - 150, overflow::kIntMax - 200,
+                          overflow::kIntMax - 100);
+  const auto baseY =
+      _solver->makeIntVar(overflow::kIntMin + 150, overflow::kIntMin + 100,
+                          overflow::kIntMin + 200);
   x = _solver->makeIntView<IntOffsetView>(*_solver, baseX, 150);
   y = _solver->makeIntView<IntOffsetView>(*_solver, baseY, -150);
-  outputVar =
-      _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
+  outputVar = _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
 
   _solver->makeViolationInvariant<LessEqual>(*_solver, outputVar, x, y);
 

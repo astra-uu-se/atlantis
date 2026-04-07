@@ -43,7 +43,8 @@ class fzn_table_intTest : public FznTestBase {
     addArg(flatTable);
 
     const bool isReified = *rc::gen::arbitrary<bool>();
-    constraintIdentifier = isReified ? "fzn_table_int_flat_reif" : "fzn_table_int_flat";
+    constraintIdentifier =
+        isReified ? "fzn_table_int_flat_reif" : "fzn_table_int_flat";
 
     if (isReified) {
       addBoolArg(reified);
@@ -205,9 +206,8 @@ class fzn_table_intRegressionTest : public FznTestBase {
     for (size_t i = 0; i < inputs.size(); ++i) {
       vals.at(i) = intVal(inputs.at(i), committedValue);
     }
-    const bool expected = std::ranges::any_of(table, [&](const auto& row) {
-      return row == vals;
-    });
+    const bool expected = std::ranges::any_of(
+        table, [&](const auto& row) { return row == vals; });
     if (isFixed(reified)) {
       const bool isSolution = violation(committedValue) == 0;
       return isSolution ? expected == boolVal(reified)

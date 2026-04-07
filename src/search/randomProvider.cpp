@@ -19,7 +19,6 @@ bool RandomProvider::boolean() {
   return std::uniform_int_distribution<Int>(0, 1)(_gen) == 1;
 }
 
-
 Int RandomProvider::intInRange(const Int lowerBound, const Int upperBound) {
   return std::uniform_int_distribution<Int>(lowerBound, upperBound)(_gen);
 }
@@ -33,7 +32,8 @@ Int RandomProvider::intInRange(const Int lowerBound, const Int upperBound,
   return val == ignoredValue ? upperBound : val;
 }
 
-float RandomProvider::floatInRange(const float lowerBound, const float upperBound) {
+float RandomProvider::floatInRange(const float lowerBound,
+                                   const float upperBound) {
   return std::uniform_real_distribution<float>(lowerBound, upperBound)(_gen);
 }
 
@@ -54,7 +54,8 @@ Int RandomProvider::inDomain(const IntervalDomain& domain) {
   return intInRange(domain.lowerBound(), domain.upperBound());
 }
 
-Int RandomProvider::inDomain(const IntervalDomain& domain, const Int ignoredValue) {
+Int RandomProvider::inDomain(const IntervalDomain& domain,
+                             const Int ignoredValue) {
   return intInRange(domain.lowerBound(), domain.upperBound(), ignoredValue);
 }
 
@@ -62,7 +63,8 @@ Int RandomProvider::inDomain(const SearchDomain& domain) {
   return domain[intInRange(0, static_cast<Int>(domain.size()) - 1)];
 }
 
-Int RandomProvider::inDomain(const SearchDomain& domain, const Int ignoredValue) {
+Int RandomProvider::inDomain(const SearchDomain& domain,
+                             const Int ignoredValue) {
   assert(domain.contains(ignoredValue));
   const size_t index =
       std::uniform_int_distribution<size_t>(0, domain.size() - 2)(_gen);

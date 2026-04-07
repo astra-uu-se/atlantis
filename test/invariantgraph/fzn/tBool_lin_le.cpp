@@ -143,7 +143,8 @@ class bool_lin_leTest : public FznTestBase {
     }
 
     for (size_t i = 0; i < inputs.size(); ++i) {
-      if (!hasImplicitConstraints.at(i) && varId(inputs.at(i)) != propagation::NULL_ID && randBool()) {
+      if (!hasImplicitConstraints.at(i) &&
+          varId(inputs.at(i)) != propagation::NULL_ID && randBool()) {
         changeValue(inputs.at(i), committedValue);
       }
     }

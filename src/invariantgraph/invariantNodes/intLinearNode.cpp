@@ -129,10 +129,9 @@ void IntLinearNode::registerOutputVars(propagation::SolverBase& solver,
         const Int intermediateUb =
             overflow::saturatingSub(outputNode.upperBound(), _offset);
         mapping.setIntermediateId(
-            id(),
-            solver.makeIntVar(
-                std::max(intermediateLb, std::min(intermediateUb, Int{0})),
-                intermediateLb, intermediateUb));
+            id(), solver.makeIntVar(std::max(intermediateLb,
+                                             std::min(intermediateUb, Int{0})),
+                                    intermediateLb, intermediateUb));
       }
       mapping.setSolverId(outputVarNodeIds().front(),
                           solver.makeIntView<propagation::IntOffsetView>(

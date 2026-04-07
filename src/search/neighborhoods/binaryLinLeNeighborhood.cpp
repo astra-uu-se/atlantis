@@ -31,9 +31,8 @@ static bool toBool(const Int val) {
 }
 
 template <bool Violation>
-BinaryLinLeNeighborhood<Violation>::BinaryLinLeNeighborhood(std::vector<Int>&& coeffs,
-                                             std::vector<SearchVar>&& vars,
-                                             const Int bound)
+BinaryLinLeNeighborhood<Violation>::BinaryLinLeNeighborhood(
+    std::vector<Int>&& coeffs, std::vector<SearchVar>&& vars, const Int bound)
     : _coeffs(coeffs),
       _vars(std::move(vars)),
       _indices(_vars.size()),
@@ -47,7 +46,7 @@ BinaryLinLeNeighborhood<Violation>::BinaryLinLeNeighborhood(std::vector<Int>&& c
 
 template <bool Violation>
 void BinaryLinLeNeighborhood<Violation>::initialize(RandomProvider& random,
-                                       Assignment& assignment) {
+                                                    Assignment& assignment) {
   for (Int i = 0; i < static_cast<Int>(_indices.size()) - 1; ++i) {
     std::swap<size_t>(
         _indices[i],
@@ -57,8 +56,9 @@ void BinaryLinLeNeighborhood<Violation>::initialize(RandomProvider& random,
   std::vector<Int> remainingLowerBound(_indices.size());
   remainingLowerBound[_indices.back()] = -_bound;
   for (Int i = static_cast<Int>(_indices.size()) - 2; i >= 0; --i) {
-
-    remainingLowerBound[_indices[i]] = overflow::saturatingAdd(remainingLowerBound[_indices[i + 1]], std::min(_coeffs[_indices[i + 1]], Int{0}));
+    remainingLowerBound[_indices[i]] =
+        overflow::saturatingAdd(remainingLowerBound[_indices[i + 1]],
+                                std::min(_coeffs[_indices[i + 1]], Int{0}));
   }
   assert(remainingLowerBound[_indices.front()] +
              std::min(_coeffs[_indices.front()], Int{0}) <=
@@ -84,15 +84,18 @@ void BinaryLinLeNeighborhood<Violation>::initialize(RandomProvider& random,
 
 template <bool Violation>
 size_t BinaryLinLeNeighborhood<Violation>::randomMove(RandomProvider& random,
-                                         Assignment& assignment) {
+                                                      Assignment& assignment) {
   _curTimestamp = assignment.currentTimestamp();
   for (size_t i = 0; i < _indices.size(); ++i) {
-    std::swap<size_t>(_indices[i],
-                      _indices[random.intInRange(static_cast<Int>(i), static_cast<Int>(_indices.size()) - 1)]);
+    std::swap<size_t>(
+        _indices[i],
+        _indices[random.intInRange(static_cast<Int>(i),
+                                   static_cast<Int>(_indices.size()) - 1)]);
     _curVarIdx = _indices[i];
     const Int curVal = assignment.committedValue(_vars[_curVarIdx].solverId());
     Int prod;
-    if (overflow::mulOverflow(_coeffs[_curVarIdx], toBool<Violation>(curVal) ? -1 : 1, &prod)) {
+    if (overflow::mulOverflow(_coeffs[_curVarIdx],
+                              toBool<Violation>(curVal) ? -1 : 1, &prod)) {
       continue;
     }
     Int sum;
@@ -110,14 +113,17 @@ size_t BinaryLinLeNeighborhood<Violation>::randomMove(RandomProvider& random,
 }
 
 template <bool Violation>
-void BinaryLinLeNeighborhood<Violation>::commitIf(const Assignment& assignment) {
+void BinaryLinLeNeighborhood<Violation>::commitIf(
+    const Assignment& assignment) {
   if (_curTimestamp != assignment.currentTimestamp()) {
     return;
   }
   assert(assignment.committedValue(_vars[_curVarIdx].solverId()) !=
          assignment.currentValue(_vars[_curVarIdx].solverId()));
   _curSum +=
-      (toBool<Violation>(assignment.currentValue(_vars[_curVarIdx].solverId())) ? 1 : -1) *
+      (toBool<Violation>(assignment.currentValue(_vars[_curVarIdx].solverId()))
+           ? 1
+           : -1) *
       _coeffs[_curVarIdx];
   assert(_curSum <= _bound);
 }

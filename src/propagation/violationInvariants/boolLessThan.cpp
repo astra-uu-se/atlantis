@@ -13,8 +13,8 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-BoolLessThan::BoolLessThan(SolverBase& solver, const VarId violationId, const VarViewId x,
-                           const VarViewId y)
+BoolLessThan::BoolLessThan(SolverBase& solver, const VarId violationId,
+                           const VarViewId x, const VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
 BoolLessThan::BoolLessThan(SolverBase& solver, const VarViewId violationId,
@@ -35,7 +35,9 @@ void BoolLessThan::updateBounds(const bool widenOnly) {
 }
 
 void BoolLessThan::recompute(const Timestamp ts) {
-  updateValue(ts, _violationId, overflow::saturatingAdd(_solver.value(ts, _x) == 0 ? 1 : 0, _solver.value(ts, _y)));
+  updateValue(ts, _violationId,
+              overflow::saturatingAdd(_solver.value(ts, _x) == 0 ? 1 : 0,
+                                      _solver.value(ts, _y)));
 }
 
 void BoolLessThan::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }

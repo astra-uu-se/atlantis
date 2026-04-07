@@ -7,8 +7,7 @@ namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntLinLeImplicitNodeTestFixture
-    : public NodeTestBase<LinLeImplicitNode> {
+class IntLinLeImplicitNodeTestFixture : public NodeTestBase<LinLeImplicitNode> {
  public:
   Int numVars = 4;
   std::vector<std::string> inputVars;
