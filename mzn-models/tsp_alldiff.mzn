@@ -1,6 +1,8 @@
 include "globals.mzn";
 
 int: n;
+array[Locations] of int: early;
+array[Locations] of int: late;
 set of int: Locations = 1..n;
 
 array[Locations, Locations] of int: duration;
