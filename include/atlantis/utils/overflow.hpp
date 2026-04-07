@@ -1,65 +1,143 @@
 #pragma once
+#ifdef _DEBUG
+#ifndef NDEBUG
+#define NDEBUG
+#endif
+#endif
 
+#include <cstddef>
+#include <cstdlib>
 #include <limits>
+#include <type_traits>
 
-template <typename T>
-inline bool add_overflow(T x, T y, T& result) {
-  static_assert(std::numeric_limits<T>::is_integer, "add_overflow expects integral types");
-#ifdef __GNUC__
-  return __builtin_add_overflow(x, y, &result);
-#elifdef __clang__
-  return __builtin_add_overflow(x, y, &result);
+#include "atlantis/types.hpp"
+
+namespace atlantis::overflow {
+
+inline constexpr Int kIntMin = std::numeric_limits<Int>::min();
+inline constexpr Int kIntMax = std::numeric_limits<Int>::max();
+
+inline bool addOverflow(const Int lhs, const Int rhs, Int* result) {
+#if defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
+  return __builtin_add_overflow(lhs, rhs, result);
 #else
-  if constexpr (std::numeric_limits<T>::is_bounded) {
-    if ((y > T{0} && x > std::numeric_limits<T>::max() - y) ||
-      (y < T{0} && x < std::numeric_limits<T>::min() - y)) {
+  if (rhs > 0 && lhs > kIntMax - rhs) {
+    return true;
+  }
+  if (rhs < 0) {
+    if (rhs == kIntMin && lhs < 0) {
       return true;
     }
-    result = x + y;
-    return false;
-  }
-  return true;
-#endif
-}
-
-template <typename T>
-inline bool sub_overflow(T x, T y, T& result) {
-  static_assert(std::numeric_limits<T>::is_integer, "sub_overflow expects integral types");
-#ifdef __GNUC__
-  return __builtin_sub_overflow(x, y, &result);
-#elifdef __clang__
-  return __builtin_sub_overflow(x, y, &result);
-#else
-  if constexpr (std::numeric_limits<T>::is_bounded) {
-    if ((y < T{0} && x > std::numeric_limits<T>::max() + y) ||
-      (y > T{0} && x < std::numeric_limits<T>::min() + y)) {
+    if (lhs < kIntMin - rhs) {
       return true;
     }
-    result = x - y;
+  }
+  *result = lhs + rhs;
+  return false;
+#endif
+}
+
+inline bool subOverflow(const Int lhs, const Int rhs, Int* result) {
+#if defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
+  return __builtin_sub_overflow(lhs, rhs, result);
+#else
+  if (rhs == kIntMin) {
+    if (lhs >= 0) {
+      return true;
+    }
+    *result = kIntMax + lhs + 1;
     return false;
   }
-  return true;
+  return addOverflow(lhs, -rhs, result);
 #endif
 }
 
-template <typename T>
-bool mul_overflow(T x, T y, T& result) {
-  static_assert(std::numeric_limits<T>::is_integer, "mul_overflow expects integral types");
-#ifdef __GNUC__
-  return __builtin_mul_overflow(x, y, &result);
-#elifdef __clang__
-  return __builtin_mul_overflow(x, y, &result);
+inline bool mulOverflow(const Int lhs, const Int rhs, Int* result) {
+#if defined(NDEBUG) && (defined(__clang__) || defined(__GNUC__))
+  return __builtin_mul_overflow(lhs, rhs, result);
 #else
-  if constexpr (std::numeric_limits<T>::is_bounded) {
-    result = x * y;
-    if (x == T{0} || y == T{0}) {
-      result = 0;
-      return false;
-    }
-    result = x * y;
-    return x != result / y;
+  if (lhs == 0 || rhs == 0) {
+    *result = 0;
+    return false;
   }
-  return true;
+  if (lhs == -1) {
+    if (rhs == kIntMin) {
+      return true;
+    }
+    *result = -rhs;
+    return false;
+  }
+  if (rhs == -1) {
+    if (lhs == kIntMin) {
+      return true;
+    }
+    *result = -lhs;
+    return false;
+  }
+  if (lhs > 0) {
+    if (rhs > 0 && lhs > kIntMax / rhs) {
+      return true;
+    }
+    if (rhs < 0 && rhs < kIntMin / lhs) {
+      return true;
+    }
+  } else {
+    if (rhs > 0 && lhs < kIntMin / rhs) {
+      return true;
+    }
+    if (rhs < 0 && lhs < kIntMax / rhs) {
+      return true;
+    }
+  }
+  *result = lhs * rhs;
+  return false;
 #endif
 }
 
+inline Int saturatingAdd(const Int lhs, const Int rhs) noexcept {
+  Int result = 0;
+  if (addOverflow(lhs, rhs, &result)) {
+    return rhs >= 0 ? kIntMax : kIntMin;
+  }
+  return result;
+}
+
+inline Int saturatingSub(const Int lhs, const Int rhs) noexcept {
+  Int result = 0;
+  if (subOverflow(lhs, rhs, &result)) {
+    return rhs < 0 ? kIntMax : kIntMin;
+  }
+  return result;
+}
+
+inline Int saturatingMul(const Int lhs, const Int rhs) noexcept {
+  Int result = 0;
+  if (mulOverflow(lhs, rhs, &result)) {
+    return (lhs < 0) == (rhs < 0) ? kIntMax : kIntMin;
+  }
+  return result;
+}
+
+inline Int saturatingAbs(const Int value) noexcept {
+  return value == kIntMin ? kIntMax : std::abs(value);
+}
+
+inline Int saturatingAbsDiff(const Int lhs, const Int rhs) noexcept {
+  return saturatingAbs(saturatingSub(lhs, rhs));
+}
+
+inline size_t saturatingIntervalSize(const Int lb, const Int ub) noexcept {
+  if (ub < lb) {
+    return 0;
+  }
+  using UInt = std::make_unsigned_t<Int>;
+  const UInt width = static_cast<UInt>(ub) - static_cast<UInt>(lb);
+  constexpr UInt kSizeMax =
+      static_cast<UInt>(std::numeric_limits<size_t>::max());
+  if (width >= kSizeMax) {
+    return std::numeric_limits<size_t>::max();
+  }
+  return static_cast<size_t>(width + UInt{1});
+}
+
+}  // namespace atlantis::overflow

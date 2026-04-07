@@ -120,6 +120,27 @@ TEST_P(CircuitNodeTestFixture, propagation) {
   }
 }
 
+TEST(CircuitNodeRegression, UpdateStateRespectsZeroOffsetForTwoNodeCircuit) {
+  InvariantGraph graph;
+  graph.open();
+
+  const auto a = graph.retrieveIntVarNode(
+      std::make_shared<SearchDomain>(std::vector<Int>{1}), "a");
+  const auto b = graph.retrieveIntVarNode(
+      std::make_shared<SearchDomain>(std::vector<Int>{0}), "b");
+
+  const auto id = graph.addInvariantNode(
+      std::make_shared<CircuitNode>(graph, std::vector<VarNodeId>{a, b}, 0));
+  auto& node = dynamic_cast<CircuitNode&>(graph.invariantNode(id));
+
+  EXPECT_NO_THROW(node.updateState());
+  EXPECT_TRUE(graph.varNode(a).isFixed());
+  EXPECT_TRUE(graph.varNode(b).isFixed());
+  EXPECT_EQ(graph.varNode(a).lowerBound(), 1);
+  EXPECT_EQ(graph.varNode(b).lowerBound(), 0);
+  EXPECT_EQ(node.state(), InvariantNodeState::SUBSUMED);
+}
+
 INSTANTIATE_TEST_CASE_P(
     CircuitNodeTest, CircuitNodeTestFixture,
     ::testing::Values(ParamData{InvariantNodeAction::MAKE_IMPLICIT},

@@ -19,6 +19,8 @@ class IntLinLeNode : public ViolationInvariantNode {
   void init(InvariantNodeId) override;
 
   void updateState() override;
+  bool canBeMadeImplicit() const override;
+  bool makeImplicit() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

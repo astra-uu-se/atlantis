@@ -20,8 +20,9 @@ void FznTestBase::SetUp() {
   _solver = nullptr;
   _solverMapping = nullptr;
 
-  std::random_device rd;
-  gen = std::mt19937(rd());
+  // Keep the non-RapidCheck move generation deterministic so failing property
+  // cases can actually be reproduced from RC_PARAMS.
+  gen = std::mt19937(0x5eed1234u);
   binaryDist = std::uniform_int_distribution<unsigned char>(0, 1);
 }
 

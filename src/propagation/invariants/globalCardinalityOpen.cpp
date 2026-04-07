@@ -6,6 +6,8 @@
 #include <vector>
 
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/overflow.hpp"
+#include "invariantHelper.hpp"
 
 namespace atlantis::propagation {
 
@@ -16,16 +18,6 @@ inline bool all_in_range(Int start, Int stop,
     vec.at(i) = start + i;
   }
   return std::ranges::all_of(vec.begin(), vec.end(), std::move(predicate));
-}
-
-inline std::vector<VarId> toVarIds(std::vector<VarViewId>&& ids) {
-  std::vector<VarId> varIds;
-  varIds.reserve(ids.size());
-  for (const auto& id : ids) {
-    assert(id.isVar());
-    varIds.emplace_back(VarId(id));
-  }
-  return varIds;
 }
 
 GlobalCardinalityOpen::GlobalCardinalityOpen(SolverBase& solver,
@@ -62,6 +54,17 @@ void GlobalCardinalityOpen::registerVars() {
   }
 }
 
+std::optional<size_t> GlobalCardinalityOpen::coverIndex(Int value) const {
+  if (value < _offset) {
+    return std::nullopt;
+  }
+  const UInt delta = static_cast<UInt>(value) - static_cast<UInt>(_offset);
+  if (delta >= _coverVarIndex.size()) {
+    return std::nullopt;
+  }
+  return static_cast<size_t>(delta);
+}
+
 void GlobalCardinalityOpen::updateBounds(bool widenOnly) {
   for (const VarId output : _outputs) {
     _solver.updateBounds(output, 0, static_cast<Int>(_inputs.size()),
@@ -72,11 +75,11 @@ void GlobalCardinalityOpen::updateBounds(bool widenOnly) {
 void GlobalCardinalityOpen::close(Timestamp timestamp) {
   const auto [lb, ub] = std::minmax_element(_cover.begin(), _cover.end());
   _offset = *lb;
-  _coverVarIndex.resize(*ub - *lb + 1, -1);
+  _coverVarIndex.resize(overflow::saturatingIntervalSize(*lb, *ub), -1);
   for (Int i = 0; i < static_cast<Int>(_cover.size()); ++i) {
-    assert(0 <= _cover[i] - _offset);
-    assert(_cover[i] - _offset < static_cast<Int>(_coverVarIndex.size()));
-    _coverVarIndex[_cover[i] - _offset] = i;
+    const auto index = coverIndex(_cover[i]);
+    assert(index.has_value());
+    _coverVarIndex[*index] = i;
   }
   _counts.resize(_outputs.size(), CommittableInt(timestamp, 0));
 }
@@ -91,8 +94,6 @@ void GlobalCardinalityOpen::recompute(Timestamp timestamp) {
   }
 
   for (size_t i = 0; i < _outputs.size(); ++i) {
-    assert(0 <= _cover[i] - _offset &&
-           _cover[i] - _offset < static_cast<Int>(_coverVarIndex.size()));
     updateValue(timestamp, _outputs[i], _counts[i].value(timestamp));
   }
 }

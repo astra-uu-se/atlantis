@@ -3,12 +3,10 @@ Atlantis CBLS solver
 
 ## Building
 The project is built using cmake, but a `Makefile` is used to simplify the execution of cmake.
+This project is tested with gcc version 13.
 
 ### First time
-- `make submodule` to initialise the submodules (used for testing and benchmarking).
 - `make` to build
-- `make run` to see if things are working.
-
 
 ### Building Queens
 
@@ -23,3 +21,8 @@ The project should now be importable as a cmake project.
 ## Resources
 
 C++ tools: https://github.com/lefticus/cppbestpractices/blob/master/02-Use_the_Tools_Available.md
+
+## MiniZinc Challenge Tooling
+
+- [MiniZinc challenge sweep workflow](test/sweep-challenge/README.md)
+- [Challenge compatibility patch packs](test/sweep-challenge/challenge-patches/README.md)

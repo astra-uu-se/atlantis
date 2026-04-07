@@ -139,4 +139,26 @@ INSTANTIATE_TEST_CASE_P(
                       ParamData{InvariantNodeAction::SUBSUME, 1},
                       ParamData{InvariantNodeAction::REPLACE, 1}));
 
+TEST(ArrayElementNodeRegression, UpdateStatePrunesOutOfRangeIndexValues) {
+  auto graph = std::make_shared<InvariantGraph>();
+  graph->open();
+
+  const auto idx =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(std::vector<Int>{
+                                    std::numeric_limits<Int>::min(), 1}),
+                                "idx");
+  const auto output =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(-2, 1), "out");
+
+  const auto invId = graph->addInvariantNode(std::make_shared<ArrayElementNode>(
+      *graph, std::vector<Int>{-2, -1, 0, 1}, idx, output, 1));
+  auto& node = dynamic_cast<ArrayElementNode&>(graph->invariantNode(invId));
+
+  EXPECT_NO_THROW(node.updateState());
+  EXPECT_TRUE(graph->varNode(idx).isFixed());
+  EXPECT_EQ(graph->varNode(idx).lowerBound(), 1);
+  EXPECT_TRUE(graph->varNode(output).isFixed());
+  EXPECT_EQ(graph->varNode(output).lowerBound(), -2);
+}
+
 }  // namespace atlantis::testing

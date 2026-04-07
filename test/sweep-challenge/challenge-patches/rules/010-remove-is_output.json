@@ -1,0 +1,34 @@
+{
+  "description": "Remove legacy output annotations that modern MiniZinc no longer defines.",
+  "id": "remove-is_output",
+  "path_globs": [
+    "2009/black-hole/black-hole.mzn",
+    "2009/fillomino/fillomino.mzn",
+    "2009/nonogram/non.mzn",
+    "2009/open_stacks/open_stacks_01.mzn",
+    "2009/p1f/p1f.mzn",
+    "2009/prop_stress/prop_stress.mzn",
+    "2009/rectangle-packing/rect_packing.mzn",
+    "2009/roster/roster_model.mzn",
+    "2009/search_stress2/search_stress2.mzn",
+    "2009/still_life/still_life.mzn",
+    "2009/vrp/vrp.mzn",
+    "2010/depot_placement/depot_placement.mzn",
+    "2010/ghoulomb/ghoulomb.mzn",
+    "2010/rcpsp_max/rcpsp_max.mzn",
+    "2010/wwtp_random/wwtpp.mzn",
+    "2010/wwtp_real/wwtpp.mzn"
+  ],
+  "rationale": "Older challenge models rely on a legacy `is_output` annotation. Modern MiniZinc uses output items directly and no longer defines `is_output`.",
+  "replacements": [
+    {
+      "flags": [
+        "MULTILINE"
+      ],
+      "kind": "regex",
+      "pattern": "\\s*::\\s*is_output\\b",
+      "replacement": ""
+    }
+  ],
+  "semantics_note": "This only changes output metadata, not the constraint model."
+}

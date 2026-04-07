@@ -19,7 +19,6 @@ class Invariant {
   VarId _primaryDefinedVar{NULL_ID};
   size_t _level{0};
   InvariantId _id{NULL_ID};
-  bool _isPostponed{false};
 
   explicit Invariant(SolverBase& solver, Int nullState = -1)
       : _solver(solver), _state(NULL_TIMESTAMP, nullState) {}
@@ -105,10 +104,7 @@ class Invariant {
    */
   virtual void notifyInputChanged(Timestamp ts, LocalId localId) = 0;
 
-  virtual void commit(Timestamp) { _isPostponed = false; }
-
-  void postpone() { _isPostponed = true; }
-  [[nodiscard]] bool isPostponed() const { return _isPostponed; }
+  virtual void commit(Timestamp) {}
 
   [[nodiscard]] VarId primaryDefinedVar() const { return _primaryDefinedVar; }
   [[nodiscard]] const std::vector<VarId>& nonPrimaryDefinedVars() const {

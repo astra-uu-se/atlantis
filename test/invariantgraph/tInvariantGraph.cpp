@@ -289,6 +289,25 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
   EXPECT_EQ(solver.numInvariants(), 2 + 1);
 }
 
+TEST(InvariantGraphTest, FixedBoolDomainMismatchCreatesViolationView) {
+  InvariantGraph invariantGraph;
+  propagation::Solver solver;
+  SolverMapping mapping;
+  solver.open();
+
+  const VarNodeId fixedTrue = invariantGraph.retrieveBoolVarNode(true, true);
+  invariantGraph.varNode(fixedTrue).markOutputTo(InvariantNodeId{0, false});
+
+  mapping.setSolverId(fixedTrue, solver.makeIntVar(1, 1, 1));
+
+  const propagation::VarViewId violationId =
+      invariantGraph.varNode(fixedTrue).postDomainConstraint(solver, mapping);
+
+  ASSERT_NE(violationId, propagation::NULL_ID);
+  EXPECT_EQ(solver.lowerBound(violationId), 1);
+  EXPECT_EQ(solver.upperBound(violationId), 1);
+}
+
 TEST(InvariantGraphTest, AllowDynamicCycle) {
   /* Graph:
    *

@@ -1,5 +1,7 @@
 #include "../invariantTestHelper.hpp"
+#include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::testing {
 
@@ -295,6 +297,41 @@ TEST_F(LessEqualTest, SolverIntegration) {
         &_solver->makeViolationInvariant<MockLessEqual>(*_solver, viol, x, y),
         {propMode, markingMode, 3, x, -5, viol});
   }
+}
+
+TEST_F(LessEqualTest, UpdateBoundsSaturatesOnExtremeInputRanges) {
+  _solver->open();
+  x = _solver->makeIntVar(0, std::numeric_limits<Int>::min() + 14,
+                          std::numeric_limits<Int>::max());
+  y = _solver->makeIntVar(0, std::numeric_limits<Int>::min() + 14,
+                          std::numeric_limits<Int>::max());
+  outputVar = _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
+
+  _solver->makeViolationInvariant<LessEqual>(*_solver, outputVar, x, y);
+
+  EXPECT_EQ(_solver->lowerBound(outputVar), 0);
+  EXPECT_EQ(_solver->upperBound(outputVar), std::numeric_limits<Int>::max());
+
+  _solver->close();
+}
+
+TEST_F(LessEqualTest, UpdateBoundsHandlesOverflowedOffsetViews) {
+  _solver->open();
+  const auto baseX =
+      _solver->makeIntVar(overflow::kIntMax - 150, overflow::kIntMax - 200,
+                          overflow::kIntMax - 100);
+  const auto baseY =
+      _solver->makeIntVar(overflow::kIntMin + 150, overflow::kIntMin + 100,
+                          overflow::kIntMin + 200);
+  x = _solver->makeIntView<IntOffsetView>(*_solver, baseX, 150);
+  y = _solver->makeIntView<IntOffsetView>(*_solver, baseY, -150);
+  outputVar = _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
+
+  _solver->makeViolationInvariant<LessEqual>(*_solver, outputVar, x, y);
+
+  EXPECT_LE(_solver->lowerBound(outputVar), _solver->upperBound(outputVar));
+
+  _solver->close();
 }
 
 }  // namespace atlantis::testing

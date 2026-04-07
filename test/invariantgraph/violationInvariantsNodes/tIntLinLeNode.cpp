@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
+#include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intLinLeNode.hpp"
 
 namespace atlantis::testing {
@@ -44,7 +45,7 @@ class IntLinLeNodeTestFixture : public NodeTestBase<IntLinLeNode> {
     return sum > bound;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
@@ -57,6 +58,9 @@ class IntLinLeNodeTestFixture : public NodeTestBase<IntLinLeNode> {
         retrieveIntVarNode(val, val, inputVars.back());
       } else {
         retrieveIntVarNode(lb, ub, inputVars.back());
+      }
+      if (!shouldBeReplaced()) {
+        _invariantGraph->root().addSearchVarNode(varNodeId(inputVars.at(i)));
       }
       coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
     }
@@ -81,7 +85,7 @@ TEST_P(IntLinLeNodeTestFixture, propagation) {
     const bool expected = isViolating();
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedVar).isFixed());
-      const bool actual = varNode(reifiedVar).inDomain({false});
+      const bool actual = varNode(reifiedVar).inDomain(false);
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {
@@ -102,6 +106,9 @@ TEST_P(IntLinLeNodeTestFixture, propagation) {
   }
 
   EXPECT_FALSE(inputVarIds.empty());
+  if (shouldBeReplaced()) {
+    return;
+  }
   EXPECT_TRUE(invNode().state() == InvariantNodeState::ACTIVE);
 
   const propagation::VarViewId violVarId =
@@ -138,6 +145,7 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED},
-                      ParamData{InvariantNodeAction::SUBSUME}));
+                      ParamData{InvariantNodeAction::SUBSUME},
+                      ParamData{InvariantNodeAction::REPLACE}));
 
 }  // namespace atlantis::testing

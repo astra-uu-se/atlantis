@@ -14,17 +14,18 @@ class IntLinEqImplicitNodeTestFixture
   std::vector<std::string> inputVars;
 
   std::vector<Int> coeffs;
-  Int bound = -7;
+  Int amount = -7;
 
   void SetUp() override {
     NodeTestBase::SetUp();
     for (Int i = 0; i < numVars; ++i) {
       inputVars.emplace_back("input_" + std::to_string(i));
       retrieveIntVarNode(-10, 10, inputVars.back());
+      coeffs.emplace_back(i % 2 == 0 ? 1 : -1);
     }
 
     createImplicitConstraintNode(*_invariantGraph, std::vector<Int>{coeffs},
-                                 varNodeIds(inputVars), bound);
+                                 varNodeIds(inputVars), amount);
   }
 };
 

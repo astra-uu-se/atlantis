@@ -36,6 +36,7 @@ build*
 build/*
 cmake-build*
 cmake-build*/*
+.cpm-cache/
 
 # Misc
 .vscode
@@ -62,6 +63,7 @@ atlantis
 
 #Ignore mzn challange files
 /fzn-challanges/*
+/.challenge/
 
 /dot_graphs/*
 

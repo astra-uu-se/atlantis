@@ -6,6 +6,7 @@
 
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis {
 
@@ -175,7 +176,9 @@ std::pair<Int, Int> IntervalDomain::bounds() const {
   return std::pair<Int, Int>{_lb, _ub};
 }
 
-size_t IntervalDomain::size() const noexcept { return _ub - _lb + 1; }
+size_t IntervalDomain::size() const noexcept {
+  return overflow::saturatingIntervalSize(_lb, _ub);
+}
 
 bool IntervalDomain::isFixed() const noexcept { return _lb == _ub; }
 
@@ -582,11 +585,10 @@ void SetDomain::intersect(const std::vector<Int>& otherVals) {
 
   std::ranges::set_intersection(_values, otherVals,
                                 std::back_inserter(newValues));
-
-  _values = std::move(newValues);
-  if (_values.empty()) {
+  if (newValues.empty()) {
     throw InconsistencyException("SetDomain::intersect: Empty domain");
   }
+  _values = std::move(newValues);
 }
 
 void SetDomain::intersect(const SortedUniqueVector& otherVals) {

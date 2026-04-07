@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::propagation {
 
@@ -69,14 +70,16 @@ void BoolLinear::updateBounds(bool widenOnly) {
 }
 
 void BoolLinear::recompute(Timestamp ts) {
-  Int sum = 0;
+  Int totalSum = 0;
   for (size_t i = 0; i < _violArray.size(); ++i) {
-    sum += _coeffs[i] * static_cast<Int>(_solver.value(ts, _violArray[i]) == 0);
+    const Int val = _solver.value(ts, _violArray[i]) == 0 ? 1 : 0;
+    const Int prod = overflow::saturatingMul(_coeffs[i], val);
+    totalSum = overflow::saturatingAdd(totalSum, prod);
   }
-  updateValue(ts, _output, sum);
+  updateValue(ts, _output, totalSum);
 }
 
-void BoolLinear::notifyInputChanged(Timestamp ts, LocalId id) {
+void BoolLinear::notifyInputChanged(const Timestamp ts, const LocalId id) {
   assert(id < _violArray.size());
   const Int newValue = _solver.value(ts, _violArray[id]) == 0 ? 1 : 0;
   const Int committedValue =
@@ -84,7 +87,9 @@ void BoolLinear::notifyInputChanged(Timestamp ts, LocalId id) {
   if (newValue == committedValue) {
     return;
   }
-  incValue(ts, _output, (newValue - committedValue) * _coeffs[id]);
+
+  const Int prod = _coeffs[id] * (newValue - committedValue);
+  incValue(ts, _output, prod);
 }
 
 VarViewId BoolLinear::nextInput(Timestamp ts) {

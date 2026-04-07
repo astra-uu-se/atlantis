@@ -455,50 +455,13 @@ RC_GTEST_FIXTURE_PROP(Element2dVarTest, rapidcheck, ()) {
   }
 }
 
-class MockElement2dVar : public Element2dVar {
- public:
-  bool registered = false;
-  void registerVars() override {
-    registered = true;
-    Element2dVar::registerVars();
-  }
-  explicit MockElement2dVar(SolverBase& solver, VarViewId output,
-                            VarViewId index1, VarViewId index2,
-                            std::vector<std::vector<VarViewId>>&& varMatrix,
-                            Int offset1, Int offset2)
-      : Element2dVar(solver, output, index1, index2, std::move(varMatrix),
-                     offset1, offset2) {
-    EXPECT_TRUE(output.isVar());
-
-    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
-      return Element2dVar::recompute(timestamp);
-    });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
-      return Element2dVar::nextInput(timestamp);
-    });
-    ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp) {
-          Element2dVar::notifyCurrentInputChanged(timestamp);
-        });
-    ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp timestamp, LocalId id) {
-          Element2dVar::notifyInputChanged(timestamp, id);
-        });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
-      Element2dVar::commit(timestamp);
-    });
-  }
-  MOCK_METHOD(void, recompute, (Timestamp), (override));
-  MOCK_METHOD(VarViewId, nextInput, (Timestamp), (override));
-  MOCK_METHOD(void, notifyCurrentInputChanged, (Timestamp), (override));
-  MOCK_METHOD(void, notifyInputChanged, (Timestamp, LocalId), (override));
-  MOCK_METHOD(void, commit, (Timestamp), (override));
-};
 TEST_F(Element2dVarTest, SolverIntegration) {
   for (const auto& [propMode, markingMode] : propMarkModes) {
-    if (!_solver->isOpen()) {
-      _solver->open();
-    }
+    _solver = std::make_shared<Solver>();
+    _solver->open();
+    _solver->setPropagationMode(propMode);
+    _solver->setOutputToInputMarkingMode(markingMode);
+
     std::vector<std::vector<VarViewId>> varMatrix(
         numRows, std::vector<VarViewId>(numCols, NULL_ID));
     for (Int i = 0; i < numRows; ++i) {
@@ -509,10 +472,31 @@ TEST_F(Element2dVarTest, SolverIntegration) {
     VarViewId index1 = _solver->makeIntVar(1, 1, numRows);
     VarViewId index2 = _solver->makeIntVar(1, 1, numCols);
     VarViewId output = _solver->makeIntVar(-10, -100, 100);
-    testNotifications<MockElement2dVar>(
-        &_solver->makeInvariant<MockElement2dVar>(
-            *_solver, output, index1, index2, std::move(varMatrix), 1, 1),
-        {propMode, markingMode, 4, index1, 5, output});
+    const VarViewId selectedInput = varMatrix.at(1).at(2);
+    _solver->makeInvariant<Element2dVar>(*_solver, output, index1, index2,
+                                         std::move(varMatrix), 1, 1);
+    _solver->close();
+
+    _solver->beginMove();
+    _solver->setValue(index1, 2);
+    _solver->setValue(index2, 3);
+    _solver->endMove();
+
+    _solver->beginProbe();
+    _solver->query(output);
+    EXPECT_LE(_solver->lowerBound(output), _solver->currentValue(output));
+    EXPECT_GE(_solver->upperBound(output), _solver->currentValue(output));
+    _solver->endProbe();
+
+    _solver->beginMove();
+    _solver->setValue(selectedInput, 42);
+    _solver->endMove();
+
+    _solver->beginProbe();
+    _solver->query(output);
+    EXPECT_LE(_solver->lowerBound(output), _solver->currentValue(output));
+    EXPECT_GE(_solver->upperBound(output), _solver->currentValue(output));
+    _solver->endProbe();
   }
 }
 

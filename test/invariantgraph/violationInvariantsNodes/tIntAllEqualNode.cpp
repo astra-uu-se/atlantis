@@ -98,10 +98,10 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
     if (isReified()) {
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          varNodeId(reifiedVar), true);
+                          varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph, varNodeIds(inputVars), shouldHold(),
-                          true);
+      createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
+                          shouldHold());
     }
   }
 };
@@ -179,7 +179,7 @@ TEST_P(IntAllEqualNodeTestFixture, propagation) {
     const bool expected = isViolating();
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedVar).isFixed());
-      const bool actual = varNode(reifiedVar).inDomain({false});
+      const bool actual = varNode(reifiedVar).inDomain(false);
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {

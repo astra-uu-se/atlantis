@@ -60,23 +60,7 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
   std::vector<Int> bestObjective(timelimits.size(), 0);
   std::vector<Int> bestViolation(timelimits.size(), 0);
   std::vector<double> totalObjective(timelimits.size(), 0.0);
-  // std::vector sharedImprovingSolutions(timelimits.size(),
-  //                                      std::vector<size_t>(numThreads, 0));
-  // std::vector metaStatAttempted(timelimits.size(),
-  //                               std::vector<size_t>(numThreads, 0));
-  // std::vector metaStatAccepted(timelimits.size(),
-  //                              std::vector<size_t>(numThreads, 0));
-  // std::vector metaStatUphillAttempted(timelimits.size(),
-  //                                     std::vector<size_t>(numThreads, 0));
-  // std::vector metaStatUphillAccepted(timelimits.size(),
-  //                                    std::vector<size_t>(numThreads, 0));
-  // std::vector metaStatImproving(timelimits.size(),
-  //                               std::vector<size_t>(numThreads, 0));
-  // std::vector metaStatRounds(timelimits.size(),
-  //                            std::vector<size_t>(numThreads, 0));
-  // std::vector communications(timelimits.size(),
-  //                            std::vector<size_t>(numThreads, 0));
-  backend->setOnFinish([](bool) {});
+  backend->setOnFinish([](FznBackend::SolveOutcome) {});
   backend->setTimelimit(timelimits.back());
 
   std::vector<std::chrono::time_point<std::chrono::steady_clock>> deadlines;
@@ -89,6 +73,7 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
       [&](const search::SavedAssignment& solution,
           const std::optional<
               std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
+        assert(solution.getCost().getViolation() >= 0);
         for (size_t i = 0; i < timelimits.size(); i++) {
           if (deadlines[i] < std::chrono::steady_clock::now()) {
             continue;
@@ -99,37 +84,6 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
           totalObjective[i] += static_cast<double>(bestObjective[i]);
         }
       });
-
-  // std::vector<std::shared_ptr<search::SearchStatistics>> threadStatistics;
-  // threadStatistics.reserve(numThreads);
-  // backend->setOnMove([&](const search::ThreadController& controller) {
-  //   auto threadStatsOptional = controller.getStats();
-  //   if (!threadStatsOptional.has_value()) return;
-  //   threadStatistics = threadStatsOptional.value();
-  //
-  //   for (size_t i = 0; i < timelimits.size(); i++) {
-  //     if (deadlines[i] < std::chrono::steady_clock::now()) {
-  //       continue;
-  //     }
-  //     for (size_t t = 0; t < numThreads; t++) {
-  //       sharedImprovingSolutions[i][t] =
-  //           stoi(threadStatistics[t]->getValue("improvingSolutions"));
-  //       communications[i][t] =
-  //           stoi(threadStatistics[t]->getValue("communications"));
-  //       std::optional<std::shared_ptr<search::RoundStatistics>> metaStats =
-  //           threadStatistics[t]->getRoundStatistics();
-  //       if (metaStats.has_value()) {
-  //         metaStatAttempted[i][t] = metaStats.value()->attemptedMoves;
-  //         metaStatAccepted[i][t] = metaStats.value()->acceptedMoves;
-  //         metaStatUphillAttempted[i][t] =
-  //             metaStats.value()->uphillAttemptedMoves;
-  //         metaStatUphillAccepted[i][t] = metaStats.value()->uphillAcceptedMoves;
-  //         metaStatImproving[i][t] = metaStats.value()->improvingMoves;
-  //         metaStatRounds[i][t] = metaStats.value()->rounds;
-  //       }
-  //     }
-  //   }
-  // });
 
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);
@@ -146,26 +100,6 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
         static_cast<double>(bestViolation[i]);
     st.counters[prefix + "/objective_average"] =
         totalObjective[i] / static_cast<double>(numSolutions[i]);
-
-    // for (size_t t = 0; t < numThreads; t++) {
-    //   st.counters[prefix + "/thread" + std::to_string(t) +
-    //               "/improvedSolutionsFound"] = sharedImprovingSolutions[i][t];
-    //   st.counters[prefix + "/thread" + std::to_string(t) + "/communications"] =
-    //       communications[i][t];
-    //
-    //   st.counters[prefix + "/thread" + std::to_string(t) + "/attemptedMoves"] =
-    //       metaStatAttempted[i][t];
-    //   st.counters[prefix + "/thread" + std::to_string(t) + "/acceptedMoves"] =
-    //       metaStatAccepted[i][t];
-    //   st.counters[prefix + "/thread" + std::to_string(t) +
-    //               "/uphillAttemptedMoves"] = metaStatUphillAttempted[i][t];
-    //   st.counters[prefix + "/thread" + std::to_string(t) +
-    //               "/uphillAcceptedMoves"] = metaStatUphillAccepted[i][t];
-    //   st.counters[prefix + "/thread" + std::to_string(t) + "/improvingMoves"] =
-    //       metaStatImproving[i][t];
-    //   st.counters[prefix + "/thread" + std::to_string(t) + "/annealerRounds"] =
-    //       metaStatRounds[i][t];
-    // }
   }
 }
 

@@ -70,6 +70,8 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
   };
   for (const auto& entry : std::filesystem::directory_iterator(relDir)) {
     if (entry.is_regular_file() && entry.path().extension() == ".fzn") {
+      const std::string dirPath = entry.path().parent_path().string();
+      instances.emplace_back(entry.path().string());
       if (std::string file = entry.path().filename().string();
           std::ranges::find(fileSet, file) != fileSet.end()) {
         const std::string dirPath = entry.path().parent_path().string();
