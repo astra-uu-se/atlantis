@@ -48,10 +48,10 @@ bool fzn_table_bool(FznInvariantGraph& graph,
         "positive.");
   }
 
-  const std::vector<bool> flatTable = getArgArray<fznparser::BoolVarArray>(
-                   getArgArray<fznparser::BoolVarArray>(
-                       constraint.arguments().at(1)))
-                   ->toParVector();
+  const std::vector<bool> flatTable =
+      getArgArray<fznparser::BoolVarArray>(
+          getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)))
+          ->toParVector();
 
   if (flatTable.size() % vars->size() != 0) {
     throw FznArgumentException(

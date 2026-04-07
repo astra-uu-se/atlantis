@@ -43,7 +43,8 @@ class fzn_table_boolTest : public FznTestBase {
     addArg(flatTable);
 
     const bool isReified = *rc::gen::arbitrary<bool>();
-    constraintIdentifier = isReified ? "fzn_table_bool_flat_reif" : "fzn_table_bool_flat";
+    constraintIdentifier =
+        isReified ? "fzn_table_bool_flat_reif" : "fzn_table_bool_flat";
 
     if (isReified) {
       addBoolArg(reified);
@@ -179,9 +180,9 @@ class fzn_table_boolRegressionTest : public FznTestBase {
   void generate() override {}
 
   void buildConstraint(const std::string& identifier, bool reifiedConstraint) {
-    addBoolVarArray({BoolArgState::FIXED_TRUE, BoolArgState::VAR,
-                     BoolArgState::VAR},
-                    inputs);
+    addBoolVarArray(
+        {BoolArgState::FIXED_TRUE, BoolArgState::VAR, BoolArgState::VAR},
+        inputs);
 
     std::vector<bool> flatTable{};
     flatTable.reserve(table.size() * inputs.size());
@@ -202,9 +203,7 @@ class fzn_table_boolRegressionTest : public FznTestBase {
     closeInvariantGraph();
   }
 
-  void SetUp() override {
-    FznTestBase::SetUp();
-  }
+  void SetUp() override { FznTestBase::SetUp(); }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     std::vector<bool> vals(inputs.size());

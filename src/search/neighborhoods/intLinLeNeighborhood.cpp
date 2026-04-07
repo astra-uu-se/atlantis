@@ -55,7 +55,8 @@ void IntLinLeNeighborhood::initialize(RandomProvider& random,
     const Int ub = _vars[_indices[i + 1]].domain()->upperBound();
     const Int val1 = overflow::saturatingMul(c, lb);
     const Int val2 = overflow::saturatingMul(c, ub);
-    remainingLowerBound[_indices[i]] = overflow::saturatingAdd(remainingLowerBound[_indices[i + 1]], std::min(val1, val2));
+    remainingLowerBound[_indices[i]] = overflow::saturatingAdd(
+        remainingLowerBound[_indices[i + 1]], std::min(val1, val2));
   }
   assert(remainingLowerBound[_indices.front()] +
              std::min(_coeffs[_indices.front()] *
@@ -97,8 +98,10 @@ size_t IntLinLeNeighborhood::randomMove(RandomProvider& random,
                                         Assignment& assignment) {
   _curTimestamp = assignment.currentTimestamp();
   for (size_t i = 0; i < _indices.size(); ++i) {
-    std::swap<size_t>(_indices[i],
-                      _indices[random.intInRange(static_cast<Int>(i), static_cast<Int>(_indices.size()) - 1)]);
+    std::swap<size_t>(
+        _indices[i],
+        _indices[random.intInRange(static_cast<Int>(i),
+                                   static_cast<Int>(_indices.size()) - 1)]);
     _curVarIdx = _indices[i];
     const Int curVal = assignment.committedValue(_vars[_curVarIdx].solverId());
     Int diff;

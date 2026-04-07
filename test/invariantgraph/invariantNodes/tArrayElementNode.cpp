@@ -143,10 +143,10 @@ TEST(ArrayElementNodeRegression, UpdateStatePrunesOutOfRangeIndexValues) {
   auto graph = std::make_shared<InvariantGraph>();
   graph->open();
 
-  const auto idx = graph->retrieveIntVarNode(
-      std::make_shared<SearchDomain>(
-          std::vector<Int>{std::numeric_limits<Int>::min(), 1}),
-      "idx");
+  const auto idx =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(std::vector<Int>{
+                                    std::numeric_limits<Int>::min(), 1}),
+                                "idx");
   const auto output =
       graph->retrieveIntVarNode(std::make_shared<SearchDomain>(-2, 1), "out");
 

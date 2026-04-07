@@ -50,14 +50,13 @@ bool fzn_table_int(FznInvariantGraph& graph,
         "positive.");
   }
 
-  const std::vector<Int> flatTable = isFlat
-                                         ? getArgArray<fznparser::IntVarArray>(
-                                               constraint.arguments().at(1))
-                                               ->toParVector()
-                                         : getArgArray<fznparser::IntVarArray>(
-                                               getArgArray<fznparser::IntVarArray>(
-                                                   constraint.arguments().at(1)))
-                                               ->toParVector();
+  const std::vector<Int> flatTable =
+      isFlat ? getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1))
+                   ->toParVector()
+             : getArgArray<fznparser::IntVarArray>(
+                   getArgArray<fznparser::IntVarArray>(
+                       constraint.arguments().at(1)))
+                   ->toParVector();
 
   if (!flatTable.empty() && flatTable.size() % vars->size() != 0) {
     throw FznArgumentException(

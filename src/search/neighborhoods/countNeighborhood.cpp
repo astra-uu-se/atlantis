@@ -44,7 +44,8 @@ void CountNeighborhood::initialize(RandomProvider& random,
                    random.inDomain(*_vars[eligibleIndex].domain(), _needle));
   }
   for (const auto index : _ineligibleIndices) {
-    assignment.set(_vars[index].solverId(), random.inDomain(*_vars[index].domain()));
+    assignment.set(_vars[index].solverId(),
+                   random.inDomain(*_vars[index].domain()));
   }
 }
 

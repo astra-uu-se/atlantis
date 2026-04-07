@@ -120,7 +120,9 @@ bool IntLinLeNode::makeImplicit() {
     return false;
   }
   invariantGraph().addImplicitConstraintNode(
-    std::make_shared<LinLeImplicitNode>(invariantGraph(), std::move(_coeffs), std::vector<VarNodeId>{staticInputVarNodeIds()}, _bound));
+      std::make_shared<LinLeImplicitNode>(
+          invariantGraph(), std::move(_coeffs),
+          std::vector<VarNodeId>{staticInputVarNodeIds()}, _bound));
   return true;
 }
 

@@ -97,8 +97,9 @@ class int_lin_leTest : public FznTestBase {
 
   void generate() override {
     const size_t size = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
-    coeffs = true ? std::vector<Int>{-2} :
-        *rc::gen::container<std::vector<Int>>(size, rc::gen::inRange(-2, 2));
+    coeffs = true ? std::vector<Int>{-2}
+                  : *rc::gen::container<std::vector<Int>>(
+                        size, rc::gen::inRange(-2, 2));
     addArg(coeffs);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
@@ -151,7 +152,8 @@ class int_lin_leTest : public FznTestBase {
     }
 
     for (size_t i = 0; i < inputs.size(); ++i) {
-      if (!hasImplicitConstraints.at(i) && varId(inputs.at(i)) != propagation::NULL_ID && randBool()) {
+      if (!hasImplicitConstraints.at(i) &&
+          varId(inputs.at(i)) != propagation::NULL_ID && randBool()) {
         changeValue(inputs.at(i), committedValue);
       }
     }

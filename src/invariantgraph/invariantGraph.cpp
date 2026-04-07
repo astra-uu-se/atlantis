@@ -215,12 +215,12 @@ static std::pair<VarNodeId, InvariantNodeId> findPivotInCycle(
           invNode.outputVarNodeIds(),
           [&](const VarNodeId vId) { return vId == outputNode.varNodeId(); });
       const bool usesPivot =
-          std::ranges::any_of(invNode.staticInputVarNodeIds(), [&](const VarNodeId vId) {
-            return vId == pivot;
-          }) ||
-          std::ranges::any_of(invNode.dynamicInputVarNodeIds(), [&](const VarNodeId vId) {
-            return vId == pivot;
-          });
+          std::ranges::any_of(
+              invNode.staticInputVarNodeIds(),
+              [&](const VarNodeId vId) { return vId == pivot; }) ||
+          std::ranges::any_of(
+              invNode.dynamicInputVarNodeIds(),
+              [&](const VarNodeId vId) { return vId == pivot; });
       if (definesOutput && usesPivot) {
         return {pivot, invId};
       }

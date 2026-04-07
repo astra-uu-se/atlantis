@@ -15,7 +15,7 @@ class LinLeImplicitNode : public ImplicitConstraintNode {
 
  public:
   explicit LinLeImplicitNode(InvariantGraph&, std::vector<Int>&& coeffs,
-                                std::vector<VarNodeId>&&, Int bound);
+                             std::vector<VarNodeId>&&, Int bound);
 
   void init(InvariantNodeId) override;
 

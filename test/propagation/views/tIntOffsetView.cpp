@@ -17,11 +17,10 @@ class IntOffsetViewTest : public ::testing::Test {
 
 TEST_F(IntOffsetViewTest, BoundsSaturateInsteadOfOverflowing) {
   _solver->open();
-  const auto varId = _solver->makeIntVar(
-      overflow::kIntMax - 150, overflow::kIntMax - 200,
-      overflow::kIntMax - 100);
-  const auto viewId =
-      _solver->makeIntView<IntOffsetView>(*_solver, varId, 150);
+  const auto varId =
+      _solver->makeIntVar(overflow::kIntMax - 150, overflow::kIntMax - 200,
+                          overflow::kIntMax - 100);
+  const auto viewId = _solver->makeIntView<IntOffsetView>(*_solver, varId, 150);
   _solver->close();
 
   EXPECT_EQ(_solver->lowerBound(viewId), overflow::kIntMax - 50);

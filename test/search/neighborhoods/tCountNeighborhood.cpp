@@ -1,5 +1,6 @@
-#include <algorithm>
 #include <gtest/gtest.h>
+
+#include <algorithm>
 
 #include "./testHelper.hpp"
 #include "atlantis/search/neighborhoods/countNeighborhood.hpp"
@@ -117,7 +118,8 @@ TEST_F(CountNeighborhoodTest, SupportsVarsThatCannotTakeNeedle) {
   }
 }
 
-TEST_F(CountNeighborhoodTest, RandomMoveReturnsZeroWhenAllEligibleVarsMustEqualNeedle) {
+TEST_F(CountNeighborhoodTest,
+       RandomMoveReturnsZeroWhenAllEligibleVarsMustEqualNeedle) {
   _vars.clear();
   if (_solver->isOpen()) {
     _solver->close();

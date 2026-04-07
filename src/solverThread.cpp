@@ -4,8 +4,8 @@
 #include <fznparser/parser.hpp>
 #include <utility>
 
-#include "atlantis/fznBackend.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/fznBackend.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/propagation/solver.hpp"
@@ -81,9 +81,10 @@ void SolverThread::solve() {
       outputVarIds.emplace_back(mapping.solverId(oId));
     }
 
-    search::Assignment assignment(
-        solver, mapping.globalNeighborhood(), violationId, mapping.objectiveId(),
-        mapping.objectiveDirection(), mapping.objectiveOptimalValue());
+    search::Assignment assignment(solver, mapping.globalNeighborhood(),
+                                  violationId, mapping.objectiveId(),
+                                  mapping.objectiveDirection(),
+                                  mapping.objectiveOptimalValue());
 
     // TODO: This can possibly be extracted, or restricted to one thread
     if (mapping.globalNeighborhood()->coveredVars().empty()) {
@@ -104,13 +105,11 @@ void SolverThread::solve() {
                  createMetaHeuristic(randomProvider, assignment));
     }
   } catch (const std::exception&) {
-    _threadController->recordFatalError(std::current_exception(),
-                                        static_cast<Int>(_threadId),
-                                        "solver thread");
+    _threadController->recordFatalError(
+        std::current_exception(), static_cast<Int>(_threadId), "solver thread");
   } catch (...) {
-    _threadController->recordFatalError(std::current_exception(),
-                                        static_cast<Int>(_threadId),
-                                        "solver thread");
+    _threadController->recordFatalError(
+        std::current_exception(), static_cast<Int>(_threadId), "solver thread");
   }
   _threadController->threadIsDone();
 }

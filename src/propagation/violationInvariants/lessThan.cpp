@@ -9,7 +9,7 @@ static Int compute(const Int x, const Int y) {
   if (x < y) {
     return 0;
   }
-  return overflow::saturatingAdd(overflow::saturatingSub(x , y), 1);
+  return overflow::saturatingAdd(overflow::saturatingSub(x, y), 1);
 }
 
 /**
@@ -19,12 +19,12 @@ static Int compute(const Int x, const Int y) {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-LessThan::LessThan(SolverBase& solver, const VarId violationId, const VarViewId x,
-                   const VarViewId y)
+LessThan::LessThan(SolverBase& solver, const VarId violationId,
+                   const VarViewId x, const VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
-LessThan::LessThan(SolverBase& solver, const VarViewId violationId, const VarViewId x,
-                   const VarViewId y)
+LessThan::LessThan(SolverBase& solver, const VarViewId violationId,
+                   const VarViewId x, const VarViewId y)
     : LessThan(solver, VarId{violationId}, x, y) {
   assert(violationId.isVar());
 }
@@ -38,19 +38,18 @@ void LessThan::registerVars() {
 
 void LessThan::updateBounds(const bool widenOnly) {
   _solver.updateBounds(
-      _violationId,
-      compute(_solver.lowerBound(_x), _solver.upperBound(_y)),
-      compute(_solver.upperBound(_x), _solver.lowerBound(_y)),
-      widenOnly);
+      _violationId, compute(_solver.lowerBound(_x), _solver.upperBound(_y)),
+      compute(_solver.upperBound(_x), _solver.lowerBound(_y)), widenOnly);
 }
 
 void LessThan::recompute(const Timestamp ts) {
-  updateValue(
-      ts, _violationId,
-      compute(_solver.value(ts, _x), _solver.value(ts, _y)));
+  updateValue(ts, _violationId,
+              compute(_solver.value(ts, _x), _solver.value(ts, _y)));
 }
 
-void LessThan::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
+void LessThan::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 
 VarViewId LessThan::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {

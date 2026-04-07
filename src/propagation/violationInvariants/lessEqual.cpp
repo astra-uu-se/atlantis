@@ -16,12 +16,12 @@ static Int compute(const Int x, const Int y) {
  * @param y variable of rhs
  */
 
-LessEqual::LessEqual(SolverBase& solver, const VarId violationId, const VarViewId x,
-                     const VarViewId y)
+LessEqual::LessEqual(SolverBase& solver, const VarId violationId,
+                     const VarViewId x, const VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
-LessEqual::LessEqual(SolverBase& solver, const VarViewId violationId, const VarViewId x,
-                     const VarViewId y)
+LessEqual::LessEqual(SolverBase& solver, const VarViewId violationId,
+                     const VarViewId x, const VarViewId y)
     : LessEqual(solver, VarId{violationId}, x, y) {
   assert(violationId.isVar());
 }
@@ -35,10 +35,8 @@ void LessEqual::registerVars() {
 
 void LessEqual::updateBounds(const bool widenOnly) {
   _solver.updateBounds(
-      _violationId,
-      compute(_solver.lowerBound(_x), _solver.upperBound(_y)),
-      compute(_solver.upperBound(_x), _solver.lowerBound(_y)),
-      widenOnly);
+      _violationId, compute(_solver.lowerBound(_x), _solver.upperBound(_y)),
+      compute(_solver.upperBound(_x), _solver.lowerBound(_y)), widenOnly);
 }
 
 void LessEqual::recompute(const Timestamp ts) {
@@ -46,7 +44,9 @@ void LessEqual::recompute(const Timestamp ts) {
               compute(_solver.value(ts, _x), _solver.value(ts, _y)));
 }
 
-void LessEqual::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
+void LessEqual::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 
 VarViewId LessEqual::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {

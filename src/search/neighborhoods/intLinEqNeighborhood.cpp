@@ -21,8 +21,9 @@ IntLinEqNeighborhood::IntLinEqNeighborhood(std::vector<Int>&& coeffs,
       _indices(_vars.size()) {
   assert(_vars.size() > 1);
   std::iota(_indices.begin(), _indices.end(), 0);
-  assert(std::ranges::all_of(_coeffs.begin(), _coeffs.end(),
-                             [](const Int coeff) { return std::abs(coeff) == 1; }));
+  assert(std::ranges::all_of(
+      _coeffs.begin(), _coeffs.end(),
+      [](const Int coeff) { return std::abs(coeff) == 1; }));
 }
 
 void IntLinEqNeighborhood::initialize(RandomProvider& random,
@@ -44,8 +45,10 @@ void IntLinEqNeighborhood::initialize(RandomProvider& random,
     const Int lb = std::min(val1, val2);
     const Int ub = std::max(val1, val2);
 
-    remainingBounds[_indices[i]][0] = overflow::saturatingAdd(remainingBounds[_indices[i + 1]][0], lb);
-    remainingBounds[_indices[i]][1] = overflow::saturatingAdd(remainingBounds[_indices[i + 1]][1], ub);
+    remainingBounds[_indices[i]][0] =
+        overflow::saturatingAdd(remainingBounds[_indices[i + 1]][0], lb);
+    remainingBounds[_indices[i]][1] =
+        overflow::saturatingAdd(remainingBounds[_indices[i + 1]][1], ub);
   }
 
   assert(remainingBounds[_indices.front()][0] +

@@ -27,9 +27,8 @@ bool domainsOverlap(const VarNode& a, const VarNode& b) {
     std::swap(smaller, larger);
   }
   return std::any_of(smaller->constDomain()->begin(),
-                     smaller->constDomain()->end(), [&](const Int value) {
-                       return larger->inDomain(value);
-                     });
+                     smaller->constDomain()->end(),
+                     [&](const Int value) { return larger->inDomain(value); });
 }
 
 SortedUniqueVector commonDomain(const VarNode& a, const VarNode& b) {
@@ -97,9 +96,8 @@ void ArrayVarElementNode::updateState() {
     std::vector<Int> valuesToRemove;
     valuesToRemove.reserve(idxNode.constDomain()->size());
     for (const Int index : *idxNode.constDomain()) {
-      const auto& inputNode =
-          invariantGraphConst().varNodeConst(
-              dynamicInputVarNodeIds().at(index - _offset));
+      const auto& inputNode = invariantGraphConst().varNodeConst(
+          dynamicInputVarNodeIds().at(index - _offset));
       if (!domainsOverlap(inputNode, outputNode)) {
         valuesToRemove.emplace_back(index);
       }
@@ -115,17 +113,16 @@ void ArrayVarElementNode::updateState() {
     std::unordered_set<Int> outputVals;
     outputVals.reserve(outputNode.constDomain()->size());
     for (const Int index : *idxNode.constDomain()) {
-      const auto& inputNode =
-          invariantGraphConst().varNodeConst(
-              dynamicInputVarNodeIds().at(index - _offset));
+      const auto& inputNode = invariantGraphConst().varNodeConst(
+          dynamicInputVarNodeIds().at(index - _offset));
       for (const Int value : *inputNode.constDomain()) {
         if (outputNode.inDomain(value)) {
           outputVals.emplace(value);
         }
       }
     }
-    outputNode.domain()->removeAllValuesExcept(
-        SortedUniqueVector(std::vector<Int>(outputVals.begin(), outputVals.end())));
+    outputNode.domain()->removeAllValuesExcept(SortedUniqueVector(
+        std::vector<Int>(outputVals.begin(), outputVals.end())));
   } else {
     const bool canHoldTrue = std::any_of(
         idxNode.constDomain()->begin(), idxNode.constDomain()->end(),

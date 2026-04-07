@@ -73,12 +73,10 @@ TEST(BoolNotRegression, DefinedVarWithLiteralNegationDoesNotCrash) {
   model->addVar(input);
 
   fznparser::Constraint constraint{
-      "bool_not",
-      std::vector<fznparser::Arg>{fznparser::BoolArg(input),
-                                  fznparser::BoolArg(false)}};
-  constraint.addAnnotation("defines_var",
-                           fznparser::AnnotationExpression(
-                               fznparser::Annotation("input")));
+      "bool_not", std::vector<fznparser::Arg>{fznparser::BoolArg(input),
+                                              fznparser::BoolArg(false)}};
+  constraint.addAnnotation("defines_var", fznparser::AnnotationExpression(
+                                              fznparser::Annotation("input")));
   model->addConstraint(std::move(constraint));
 
   auto graph = std::make_shared<FznInvariantGraph>(true);

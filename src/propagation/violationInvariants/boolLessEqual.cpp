@@ -11,8 +11,8 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-BoolLessEqual::BoolLessEqual(SolverBase& solver, const VarId violationId, const VarViewId x,
-                             const VarViewId y)
+BoolLessEqual::BoolLessEqual(SolverBase& solver, const VarId violationId,
+                             const VarViewId x, const VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
 BoolLessEqual::BoolLessEqual(SolverBase& solver, const VarViewId violationId,
@@ -38,7 +38,9 @@ void BoolLessEqual::recompute(const Timestamp ts) {
       (_solver.value(ts, _x) != 0) || (_solver.value(ts, _y) == 0) ? 0 : 1);
 }
 
-void BoolLessEqual::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
+void BoolLessEqual::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 
 VarViewId BoolLessEqual::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
@@ -51,5 +53,7 @@ VarViewId BoolLessEqual::nextInput(const Timestamp ts) {
   }
 }
 
-void BoolLessEqual::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
+void BoolLessEqual::notifyCurrentInputChanged(const Timestamp ts) {
+  recompute(ts);
+}
 }  // namespace atlantis::propagation
