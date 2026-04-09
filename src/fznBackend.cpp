@@ -8,7 +8,6 @@
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealing/annealer.hpp"
 #include "atlantis/search/assignment.hpp"
-#include "atlantis/search/objective.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
 #include "atlantis/search/threadController.hpp"
@@ -48,9 +47,12 @@ void FznBackend::handleSolverNotifications(
     }
 
     auto result = threadController->loadSolution(solutionId);
-    if (!result.has_value()) {
-      continue;
-    }
+
+    if (!result.has_value()) continue;
+
+#ifndef MORE_STATS
+    if (result.value().second.cost().violation() != 0) continue;
+#endif
 
     solutionId = result.value().first;
     _onSolution(result.value().second, threadController->getStats());

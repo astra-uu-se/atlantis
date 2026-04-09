@@ -58,6 +58,7 @@ BENCHMARK_DEFINE_F(ParTSPTW, run)(::benchmark::State& st) {
   st.SetLabel(instances.at(instance));
   std::vector<size_t> numSolutions(timelimits.size(), 0);
   std::vector<size_t> bestObjective(timelimits.size(), 0);
+  std::vector<size_t> bestViolation(timelimits.size(), 0);
   std::vector<double> totalObjective(timelimits.size(), 0.0);
   backend->setOnFinish([](FznBackend::SolveOutcome) {});
   backend->setTimelimit(timelimits.back());
@@ -68,13 +69,16 @@ BENCHMARK_DEFINE_F(ParTSPTW, run)(::benchmark::State& st) {
     deadlines.emplace_back(std::chrono::steady_clock::now() + tl);
   }
 
-  backend->setOnSolution([&](const search::SavedAssignment& solution) {
+  backend->setOnSolution([&](const search::SavedAssignment& solution,
+  const std::optional<
+            std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
     for (size_t i = 0; i < timelimits.size(); i++) {
       if (deadlines[i] < std::chrono::steady_clock::now()) {
         continue;
       }
       ++numSolutions[i];
-      bestObjective[i] = solution.getCost().getObjective();
+      bestObjective[i] = solution.cost().objective();
+      bestViolation[i] = solution.cost().violation();
       totalObjective[i] += static_cast<double>(bestObjective[i]);
     }
   });
@@ -90,6 +94,8 @@ BENCHMARK_DEFINE_F(ParTSPTW, run)(::benchmark::State& st) {
         static_cast<double>(numSolutions[i]), ::benchmark::Counter::kIsRate);
     st.counters[prefix + "/objective_best"] =
         static_cast<double>(bestObjective[i]);
+    st.counters[prefix + "/violation_best"] =
+        static_cast<double>(bestViolation[i]);
     st.counters[prefix + "/objective_average"] =
         totalObjective[i] / static_cast<double>(numSolutions[i]);
   }

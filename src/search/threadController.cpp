@@ -10,16 +10,11 @@ void ThreadController::setBestSolution(const Int threadId,
   _bestThread = threadId;
   _bestCost = solution.cost();
   _solution = solution;
-
-  if (!_hasNoViolations) {
-    if (_bestCost->violation() == 0) {
-      _hasNoViolations = true;
-    } else {
-      return;
-    }
-  }
-
   ++_curSolutionId;
+
+  if (!_hasNoViolations && _bestCost->violation() == 0) _hasNoViolations = true;
+
+
   _curSolutionNotified = false;
   _curSolutionNotified.notify_one();
 }
@@ -41,7 +36,6 @@ bool ThreadController::trySolution(
     return true;
   }
 
-  // TODO: double check this bit
   if (solution.cost() < _bestCost.value()) {
     setBestSolution(threadId, solution);
     if (improvingSolutions.has_value()) improvingSolutions.value()->increment();

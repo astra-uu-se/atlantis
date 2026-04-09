@@ -21,7 +21,7 @@ BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
 NUM_BENCHMARK_REPETITIONS=3
 BENCHMARK_FILTER="^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|NQueens|TSPTW|VesselLoading)\/[A-Za-z]"
 BENCHMARK_FILTER_SYNTH="^(ElementVarTree|LinearTree|TSP|TSPTWAllDiff)\/[A-Za-z]"
-BENCHMARK_FILTER_PAR="^Par(TSP|NQueens|Knapsack)"
+BENCHMARK_FILTER_PAR="^Par(TSP|TSPTW|NQueens|Knapsack)"
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 
 DZN_DIR=${MKFILE_PATH}dzn
@@ -229,8 +229,20 @@ fzn-benchmark:
 			${dzn_file} \
 			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
+	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/n100w140.*.*), \
+		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+			${MZN_MODEL_DIR}/tsp.mzn \
+			${dzn_file} \
+			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
+			--no-output-ozn;)
 	mkdir -p ${FZN_MODEL_DIR}/tsptw
 	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/*001.*), \
+		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+			${MZN_MODEL_DIR}/tsptw_alldiff.mzn \
+			${dzn_file} \
+			--fzn ${FZN_MODEL_DIR}/tsptw/$$(basename ${dzn_file} .dzn).fzn \
+			--no-output-ozn;)
+	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/n100w140.*.*), \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/tsptw_alldiff.mzn \
 			${dzn_file} \
