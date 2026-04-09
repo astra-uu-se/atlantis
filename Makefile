@@ -216,6 +216,7 @@ fzn:
 	@$(call compile_mzn_dzn,tsp_alldiff,tsp_17,tsp_alldiff)
 	@$(call compile_mzn_dzn,tsp,tsp_17,tsp)
 	@$(call compile_mzn_dzn,tsp,tsp_201,tsp_201)
+	@$(call compile_mzn_dzn,tsptw_alldiff,tsptw_6,tsptw_6)
 	@$(call compile_mzn_param,magic_square,n=3)
 	@$(call compile_mzn_param,n_queens,n=16)
 
@@ -227,6 +228,13 @@ fzn-benchmark:
 			${MZN_MODEL_DIR}/tsp.mzn \
 			${dzn_file} \
 			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
+			--no-output-ozn;)
+	mkdir -p ${FZN_MODEL_DIR}/tsptw
+	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/*001.*), \
+		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+			${MZN_MODEL_DIR}/tsptw_alldiff.mzn \
+			${dzn_file} \
+			--fzn ${FZN_MODEL_DIR}/tsptw/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
 	mkdir -p ${FZN_MODEL_DIR}/n_queens
 	$(foreach queens, 8 16 20 24 32 48 64 128 192 256 512 768 1024 2048, \
