@@ -217,10 +217,10 @@ Int evaluate(const Cost& c, UInt violationWeight, UInt objectiveWeight) {
   Int violProd = 0;
   Int objProd = 0;
   Int sum = 0;
-  if (!mul_overflow(static_cast<Int>(violationWeight),
-                    c.violation(), violProd) &&
-      !mul_overflow(c.objective(), static_cast<Int>(objectiveWeight), objProd) &&
-      !add_overflow(violProd, objProd, sum)) {
+  if (!overflow::mulOverflow(static_cast<Int>(violationWeight),
+                    c.violation(), &violProd) &&
+      !overflow::mulOverflow(c.objective(), static_cast<Int>(objectiveWeight), &objProd) &&
+      !overflow::addOverflow(violProd, objProd, &sum)) {
     return sum;
   }
   return std::numeric_limits<Int>::max();

@@ -34,10 +34,10 @@ static void testModelFile(
       const std::optional<
             std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
         solution = sol;
-        EXPECT_EQ(sol.getCost().getViolation(), 0);
+        EXPECT_EQ(sol.cost().violation(), 0);
         if (!validObjectives.empty()) {
-          EXPECT_TRUE(validObjectives.contains(sol.getCost().getObjective()))
-              << "Objective: " << sol.getCost().getObjective();
+          EXPECT_TRUE(validObjectives.contains(sol.cost().objective()))
+              << "Objective: " << sol.cost().objective();
         }
       });
   backend.setOnFinish([&](const FznBackend::SolveOutcome outcome) {
