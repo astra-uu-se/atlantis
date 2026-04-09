@@ -35,7 +35,8 @@ inline std::vector<std::chrono::milliseconds> defaultTimelimits() {
   return {std::chrono::milliseconds(1000), std::chrono::milliseconds(2000)};
 #else
   std::vector<std::chrono::milliseconds> result;
-  for (constexpr int times_ms[] = {1, 2, 5, 10, 15, 20, 25, 30, 45, 60, 90, 120, 150, 180, 210, 240, 270, 300};
+  for (constexpr int times_ms[] = {1, 2, 5, 10, 15, 20, 25, 30, 45, 60, 90, 120,
+                                   150, 180, 210, 240, 270, 300};
        const int ms : times_ms) {
     result.emplace_back(ms * 1000);
   }

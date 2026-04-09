@@ -22,7 +22,8 @@ SavedAssignment SearchProcedure::saveAssignment() const {
 }
 
 bool SearchProcedure::onAccepted(
-    const std::shared_ptr<CounterStatistic>& improvingSolutions, std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
+    const std::shared_ptr<CounterStatistic>& improvingSolutions,
+    std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
   // If a worsening move was accepted, there's no need to communicate
   if (_localBestAssignment.has_value() &&
       _localBestAssignment->cost() <= _assignment.getCost()) {
@@ -36,12 +37,17 @@ bool SearchProcedure::onAccepted(
   const bool isGlobalBest = _threadController->trySolution(
       _threadId, _localBestAssignment.value(), improvingSolutions);
   if (!isGlobalBest) {
-    // TODO: this can be optimized; only the cost is needed for other than Beamsearch.
+    // TODO: this can be optimized; only the cost is needed for other than
+    // Beamsearch.
     _localBestAssignment = _threadController->solution();
 
     switch (_searchType) {
-      case SearchType::BESTCOST: { metaHeuristic->setCost(_localBestAssignment.value().cost()); }
-      case SearchType::BEAMSEARCH: { _assignment.setAssignment(_localBestAssignment.value()); }
+      case SearchType::BESTCOST: {
+        metaHeuristic->setCost(_localBestAssignment.value().cost());
+      }
+      case SearchType::BEAMSEARCH: {
+        _assignment.setAssignment(_localBestAssignment.value());
+      }
       default:;
     }
   }
@@ -78,14 +84,14 @@ Int SearchProcedure::run(SearchController& searchController,
 
     // TODO: handle this case: this should call some separate version
     if (_assignment.satisfiesConstraints()) {
-      if (onAccepted(improvingSolutions, std::move(metaHeuristic))) communications->increment();
+      if (onAccepted(improvingSolutions, std::move(metaHeuristic)))
+        communications->increment();
     }
 
     metaHeuristic->start();
 
     while (searchController.shouldRun(_assignment) &&
            !metaHeuristic->isFinished()) {
-
 #ifdef MORE_STATS
       startProbe = std::chrono::high_resolution_clock::now();
 #endif
@@ -113,7 +119,8 @@ Int SearchProcedure::run(SearchController& searchController,
 #endif
 
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
-          if (onAccepted(improvingSolutions, std::move(metaHeuristic))) communications->increment();
+          if (onAccepted(improvingSolutions, std::move(metaHeuristic)))
+            communications->increment();
         }
       }
 
@@ -133,13 +140,16 @@ Int SearchProcedure::run(SearchController& searchController,
   if (_localBestAssignment.has_value())
     printf(
         "Thread %ld: SearchController stopped search at cost %s with %ld "
-        "probes and %ld moves (%ld improving, %s comms, %ld restarts). \n\t Average "
-        "full probe time %.4f, probe time %.4f ms, commit time %.4f ms. Using %s search.\n",
+        "probes and %ld moves (%ld improving, %s comms, %ld restarts). \n\t "
+        "Average "
+        "full probe time %.4f, probe time %.4f ms, commit time %.4f ms. Using "
+        "%s search.\n",
         _threadId, _localBestAssignment.value().cost().toString().c_str(),
         roundStats.value()->attemptedMoves, roundStats.value()->acceptedMoves,
         roundStats.value()->improvingMoves, communications->value().c_str(),
         roundStats.value()->rounds, avgFullProbeTime, avgProbeTime,
-        avgCommitTime, searchTypeNames[static_cast<size_t>(_searchType)].data());
+        avgCommitTime,
+        searchTypeNames[static_cast<size_t>(_searchType)].data());
 #endif
 
   return 1;

@@ -20,7 +20,8 @@ class Neighborhood;
 }
 
 enum class SearchType : unsigned char { PARALLEL, BESTCOST, BEAMSEARCH };
-constexpr std::array<std::string_view, 3> searchTypeNames = {"parallel", "cost-sharing", "beam"};
+constexpr std::array<std::string_view, 3> searchTypeNames = {
+    "parallel", "cost-sharing", "beam"};
 
 /**
  * Search procedure based on chapter 12 of:
@@ -44,7 +45,8 @@ class SearchProcedure {
   [[nodiscard]] SavedAssignment saveAssignment() const;
 
   // Returns true iff the was communication to other threads.
-  bool onAccepted(const std::shared_ptr<CounterStatistic>& improvingSolutions, std::unique_ptr<MetaHeuristic>&& metaHeuristic);
+  bool onAccepted(const std::shared_ptr<CounterStatistic>& improvingSolutions,
+                  std::unique_ptr<MetaHeuristic>&& metaHeuristic);
 
  public:
   SearchProcedure(
@@ -52,7 +54,8 @@ class SearchProcedure {
       const std::shared_ptr<neighborhoods::Neighborhood>& neighborhood,
       const SearchType searchType,
       const std::shared_ptr<ThreadController>& threadController,
-      const std::vector<propagation::VarViewId>& outputVarIds, const Int threadId)
+      const std::vector<propagation::VarViewId>& outputVarIds,
+      const Int threadId)
       : _random(random),
         _assignment(assignment),
         _neighborhood(neighborhood),

@@ -1097,12 +1097,12 @@ SolverMapping InvariantGraph::construct(SolverBase& solver) const {
   mapping.setTotalViolationId(createViolations(solver, mapping));
   mapping.setObjectiveDirection(_objectiveDirection);
   if (_objectiveDirection != ObjectiveDirection::NONE &&
-    _objectiveVarNodeId != NULL_NODE_ID) {
+      _objectiveVarNodeId != NULL_NODE_ID) {
     mapping.setObjectiveId(mapping.solverId(_objectiveVarNodeId));
-    mapping.setObjectiveOptimalValue(
-      _objectiveDirection == ObjectiveDirection::MINIMIZE
-          ? objectiveVarNode().lowerBound()
-          : objectiveVarNode().upperBound());
+    mapping.setObjectiveOptimalValue(_objectiveDirection ==
+                                             ObjectiveDirection::MINIMIZE
+                                         ? objectiveVarNode().lowerBound()
+                                         : objectiveVarNode().upperBound());
   } else {
     mapping.setObjectiveOptimalValue(0);
   }

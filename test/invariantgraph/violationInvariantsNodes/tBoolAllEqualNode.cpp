@@ -248,7 +248,9 @@ TEST_P(BoolAllEqualNodeTestFixture, propagation) {
 
     expectVarVals(inputVarIds, inputVals);
 
-    const bool actual = violVarId == propagation::NULL_ID ? true : _solver->currentValue(violVarId) > 0;
+    const bool actual = violVarId == propagation::NULL_ID
+                            ? true
+                            : _solver->currentValue(violVarId) > 0;
     const bool expected = isViolating(true);
 
     if (!shouldFail()) {

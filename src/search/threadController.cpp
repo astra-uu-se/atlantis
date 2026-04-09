@@ -14,7 +14,6 @@ void ThreadController::setBestSolution(const Int threadId,
 
   if (!_hasNoViolations && _bestCost->violation() == 0) _hasNoViolations = true;
 
-
   _curSolutionNotified = false;
   _curSolutionNotified.notify_one();
 }

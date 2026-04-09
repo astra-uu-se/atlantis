@@ -1,5 +1,7 @@
 #include "atlantis/search/assignment.hpp"
 
+#include <utility>
+
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/savedAssignment.hpp"
@@ -9,12 +11,16 @@ namespace atlantis::search {
 Assignment::Assignment(
     propagation::Solver& solver,
     std::shared_ptr<neighborhoods::Neighborhood> neighborhood,
-    propagation::VarViewId violation, propagation::VarViewId objective,
-    ObjectiveDirection objectiveDirection, Int objectiveOptimalValue)
+    const propagation::VarViewId violation,
+    const propagation::VarViewId objective,
+    const ObjectiveDirection objectiveDirection,
+    const Int objectiveOptimalValue)
     : _solver(solver),
-      _neighborhood(neighborhood),
+      _neighborhood(std::move(neighborhood)),
       _violation(violation),
-      _objective(objectiveDirection == ObjectiveDirection::NONE ? propagation::NULL_ID : objective),
+      _objective(objectiveDirection == ObjectiveDirection::NONE
+                     ? propagation::NULL_ID
+                     : objective),
       _objectiveDirection(objectiveDirection),
       _objectiveOptimalValue(objectiveOptimalValue) {
   assert(_neighborhood != nullptr);
@@ -51,7 +57,8 @@ Cost Assignment::performProbe(RandomProvider& randomProvider) {
   }
   _solver.endProbe();
 
-  assert(_violation != propagation::NULL_ID || _objective != propagation::NULL_ID);
+  assert(_violation != propagation::NULL_ID ||
+         _objective != propagation::NULL_ID);
 
   return Cost{*this};
 }
@@ -92,11 +99,13 @@ Int Assignment::committedValue(propagation::VarViewId var) const {
   return _solver.committedValue(var);
 }
 Int Assignment::currentViolation() const {
-  return _violation == propagation::NULL_ID ? 0 : _solver.currentValue(_violation);
+  return _violation == propagation::NULL_ID ? 0
+                                            : _solver.currentValue(_violation);
 }
 
 Int Assignment::currentObjective() const {
-  return _objective == propagation::NULL_ID ? 0 : _solver.currentValue(_objective);
+  return _objective == propagation::NULL_ID ? 0
+                                            : _solver.currentValue(_objective);
 }
 
 bool Assignment::satisfiesConstraints() const {
@@ -125,9 +134,7 @@ ObjectiveDirection Assignment::objectiveDirection() const {
   return _objectiveDirection;
 }
 
-Cost Assignment::getCost() const {
-  return Cost(*this);
-}
+Cost Assignment::getCost() const { return Cost(*this); }
 
 bool Assignment::hasObjective() const {
   return _objective != propagation::NULL_ID;
@@ -136,8 +143,6 @@ bool Assignment::hasObjective() const {
 bool Assignment::hasViolation() const {
   return _violation != propagation::NULL_ID;
 }
-
-
 
 void Assignment::setAssignment(const SavedAssignment& saved) const {
   _solver.beginMove();

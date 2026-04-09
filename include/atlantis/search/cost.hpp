@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <optional>
+#include <string>
 
 #include "atlantis/types.hpp"
 
@@ -10,8 +10,8 @@ namespace atlantis::search {
 class Assignment;
 
 class Cost {
-   std::optional<Int> _violation;
-   std::optional<Int> _objective;
+  std::optional<Int> _violation;
+  std::optional<Int> _objective;
 
  public:
   explicit Cost();
@@ -21,7 +21,6 @@ class Cost {
   Cost(Int violationDegree, Int objective, bool isMinimization);
 
   explicit Cost(const Assignment&);
-
 
   /**
    * @return True if this cost has no violated constraints.

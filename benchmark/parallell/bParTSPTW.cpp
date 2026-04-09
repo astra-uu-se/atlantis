@@ -69,19 +69,20 @@ BENCHMARK_DEFINE_F(ParTSPTW, run)(::benchmark::State& st) {
     deadlines.emplace_back(std::chrono::steady_clock::now() + tl);
   }
 
-  backend->setOnSolution([&](const search::SavedAssignment& solution,
-  const std::optional<
-            std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
-    for (size_t i = 0; i < timelimits.size(); i++) {
-      if (deadlines[i] < std::chrono::steady_clock::now()) {
-        continue;
-      }
-      ++numSolutions[i];
-      bestObjective[i] = solution.cost().objective();
-      bestViolation[i] = solution.cost().violation();
-      totalObjective[i] += static_cast<double>(bestObjective[i]);
-    }
-  });
+  backend->setOnSolution(
+      [&](const search::SavedAssignment& solution,
+          const std::optional<
+              std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
+        for (size_t i = 0; i < timelimits.size(); i++) {
+          if (deadlines[i] < std::chrono::steady_clock::now()) {
+            continue;
+          }
+          ++numSolutions[i];
+          bestObjective[i] = solution.cost().objective();
+          bestViolation[i] = solution.cost().violation();
+          totalObjective[i] += static_cast<double>(bestObjective[i]);
+        }
+      });
 
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);

@@ -23,8 +23,11 @@ TEST(FznBackendTest, BuildInconsistencyReportsUnsatisfiable) {
   std::optional<FznBackend::SolveOutcome> outcome;
   bool sawSolution = false;
   backend.setOnSolution(
-  [&](const search::SavedAssignment&, const std::optional<
-    std::vector<std::shared_ptr<search::SearchStatistics>>>&) { sawSolution = true; });
+      [&](const search::SavedAssignment&,
+          const std::optional<
+              std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
+        sawSolution = true;
+      });
   backend.setOnFinish([&](const FznBackend::SolveOutcome actualOutcome) {
     outcome = actualOutcome;
   });

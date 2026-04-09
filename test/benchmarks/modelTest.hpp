@@ -30,9 +30,10 @@ static void testModelFile(
   backend.setTimelimit(std::chrono::seconds(2));
   std::optional<search::SavedAssignment> solution{};
   backend.setOnSolution(
-      [&solution, &validObjectives](const search::SavedAssignment& sol,
-      const std::optional<
-            std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
+      [&solution, &validObjectives](
+          const search::SavedAssignment& sol,
+          const std::optional<
+              std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
         solution = sol;
         EXPECT_EQ(sol.cost().violation(), 0);
         if (!validObjectives.empty()) {

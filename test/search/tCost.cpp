@@ -14,21 +14,20 @@ using ::testing::Return;
 using ::testing::ReturnRef;
 
 class CostTest : public ::testing::Test {
-public:
+ public:
   static std::vector<Cost> generateCosts() {
-    return std::vector<Cost>{
-      Cost(),
-      Cost(5),
-      Cost(false, ObjectiveDirection::NONE),
-      Cost(false, ObjectiveDirection::MINIMIZE),
-      Cost(false, ObjectiveDirection::MAXIMIZE),
-      Cost(true, ObjectiveDirection::NONE),
-      Cost(true, ObjectiveDirection::MINIMIZE),
-      Cost(true, ObjectiveDirection::MAXIMIZE),
-      Cost(1, true),
-      Cost(1, false),
-      Cost(5, 1, true),
-      Cost(5, 1, false)};
+    return std::vector<Cost>{Cost(),
+                             Cost(5),
+                             Cost(false, ObjectiveDirection::NONE),
+                             Cost(false, ObjectiveDirection::MINIMIZE),
+                             Cost(false, ObjectiveDirection::MAXIMIZE),
+                             Cost(true, ObjectiveDirection::NONE),
+                             Cost(true, ObjectiveDirection::MINIMIZE),
+                             Cost(true, ObjectiveDirection::MAXIMIZE),
+                             Cost(1, true),
+                             Cost(1, false),
+                             Cost(5, 1, true),
+                             Cost(5, 1, false)};
   }
   static Int getObj(const Assignment& assignment) {
     switch (assignment.objectiveDirection()) {
@@ -45,30 +44,44 @@ public:
 
 TEST_F(CostTest, constructor) {
   const auto costs = generateCosts();
-  std::vector<std::optional<Int>> violation{
-    std::nullopt,
-    {5},
-    std::nullopt, std::nullopt, std::nullopt,
-    {std::numeric_limits<Int>::max()}, {std::numeric_limits<Int>::max()}, {std::numeric_limits<Int>::max()},
-    std::nullopt, std::nullopt,
-    {5}, {5}};
+  std::vector<std::optional<Int>> violation{std::nullopt,
+                                            {5},
+                                            std::nullopt,
+                                            std::nullopt,
+                                            std::nullopt,
+                                            {std::numeric_limits<Int>::max()},
+                                            {std::numeric_limits<Int>::max()},
+                                            {std::numeric_limits<Int>::max()},
+                                            std::nullopt,
+                                            std::nullopt,
+                                            {5},
+                                            {5}};
 
-  std::vector<std::optional<Int>> objective{
-    std::nullopt,
-    std::nullopt,
-    std::nullopt, {std::numeric_limits<Int>::max()}, {std::numeric_limits<Int>::max()},
-    std::nullopt, {std::numeric_limits<Int>::max()}, {std::numeric_limits<Int>::max()},
-    {1}, {-1},
-    {1}, {-1}};
+  std::vector<std::optional<Int>> objective{std::nullopt,
+                                            std::nullopt,
+                                            std::nullopt,
+                                            {std::numeric_limits<Int>::max()},
+                                            {std::numeric_limits<Int>::max()},
+                                            std::nullopt,
+                                            {std::numeric_limits<Int>::max()},
+                                            {std::numeric_limits<Int>::max()},
+                                            {1},
+                                            {-1},
+                                            {1},
+                                            {-1}};
 
   EXPECT_EQ(costs.size(), violation.size());
   EXPECT_EQ(costs.size(), objective.size());
 
   for (size_t i = 0; i < costs.size(); i++) {
-    EXPECT_EQ(costs[i].hasViolation(), violation[i].has_value()) << "iteration: " << i;
-    EXPECT_EQ(costs[i].hasObjective(), objective[i].has_value()) << "iteration: " << i;
-    EXPECT_EQ(costs[i].violation(), violation[i].value_or(Int{0})) << "iteration: " << i;
-    EXPECT_EQ(costs[i].objective(), objective[i].value_or(Int{0})) << "iteration: " << i;
+    EXPECT_EQ(costs[i].hasViolation(), violation[i].has_value())
+        << "iteration: " << i;
+    EXPECT_EQ(costs[i].hasObjective(), objective[i].has_value())
+        << "iteration: " << i;
+    EXPECT_EQ(costs[i].violation(), violation[i].value_or(Int{0}))
+        << "iteration: " << i;
+    EXPECT_EQ(costs[i].objective(), objective[i].value_or(Int{0}))
+        << "iteration: " << i;
     if (violation[i].has_value()) {
       EXPECT_EQ(costs[i].satisfiesConstraints(), violation[i].value() == 0);
     } else {
@@ -83,28 +96,44 @@ TEST_F(CostTest, assignment) {
   const auto violVar = solver.makeIntVar(1, 0, 10);
   const auto objVar = solver.makeIntVar(5, 2, 10);
   solver.close();
-  std::shared_ptr<MockNeighborhood> neighborhood = std::make_shared<MockNeighborhood>();
+  std::shared_ptr<MockNeighborhood> neighborhood =
+      std::make_shared<MockNeighborhood>();
 
   std::vector<Assignment> assignments{
-    Assignment(solver, neighborhood, propagation::NULL_ID, propagation::NULL_ID, ObjectiveDirection::NONE, 0),
-    Assignment(solver, neighborhood, propagation::NULL_ID, propagation::NULL_ID, ObjectiveDirection::MINIMIZE, 2),
-    Assignment(solver, neighborhood, propagation::NULL_ID, propagation::NULL_ID, ObjectiveDirection::MAXIMIZE, 10),
-    Assignment(solver, neighborhood, violVar, propagation::NULL_ID, ObjectiveDirection::NONE, 0),
-    Assignment(solver, neighborhood, violVar, propagation::NULL_ID, ObjectiveDirection::MINIMIZE, 2),
-    Assignment(solver, neighborhood, violVar, propagation::NULL_ID, ObjectiveDirection::MAXIMIZE, 10),
-    Assignment(solver, neighborhood, propagation::NULL_ID, objVar, ObjectiveDirection::NONE, 0),
-    Assignment(solver, neighborhood, propagation::NULL_ID, objVar, ObjectiveDirection::MINIMIZE, 2),
-    Assignment(solver, neighborhood, propagation::NULL_ID, objVar, ObjectiveDirection::MAXIMIZE, 10),
-    Assignment(solver, neighborhood, violVar, objVar, ObjectiveDirection::NONE, 0),
-    Assignment(solver, neighborhood, violVar, objVar, ObjectiveDirection::MINIMIZE, 2),
-    Assignment(solver, neighborhood, violVar, objVar, ObjectiveDirection::MAXIMIZE, 10),
-    };
+      Assignment(solver, neighborhood, propagation::NULL_ID,
+                 propagation::NULL_ID, ObjectiveDirection::NONE, 0),
+      Assignment(solver, neighborhood, propagation::NULL_ID,
+                 propagation::NULL_ID, ObjectiveDirection::MINIMIZE, 2),
+      Assignment(solver, neighborhood, propagation::NULL_ID,
+                 propagation::NULL_ID, ObjectiveDirection::MAXIMIZE, 10),
+      Assignment(solver, neighborhood, violVar, propagation::NULL_ID,
+                 ObjectiveDirection::NONE, 0),
+      Assignment(solver, neighborhood, violVar, propagation::NULL_ID,
+                 ObjectiveDirection::MINIMIZE, 2),
+      Assignment(solver, neighborhood, violVar, propagation::NULL_ID,
+                 ObjectiveDirection::MAXIMIZE, 10),
+      Assignment(solver, neighborhood, propagation::NULL_ID, objVar,
+                 ObjectiveDirection::NONE, 0),
+      Assignment(solver, neighborhood, propagation::NULL_ID, objVar,
+                 ObjectiveDirection::MINIMIZE, 2),
+      Assignment(solver, neighborhood, propagation::NULL_ID, objVar,
+                 ObjectiveDirection::MAXIMIZE, 10),
+      Assignment(solver, neighborhood, violVar, objVar,
+                 ObjectiveDirection::NONE, 0),
+      Assignment(solver, neighborhood, violVar, objVar,
+                 ObjectiveDirection::MINIMIZE, 2),
+      Assignment(solver, neighborhood, violVar, objVar,
+                 ObjectiveDirection::MAXIMIZE, 10),
+  };
 
   for (size_t i = 0; i < assignments.size(); i++) {
     const Cost cost(assignments[i]);
-    EXPECT_EQ(cost.hasViolation(), assignments[i].hasViolation()) << "iteration: " << i;
-    EXPECT_EQ(cost.violation(), assignments[i].currentViolation()) << "iteration: " << i;
-    if (assignments[i].objectiveDirection() != ObjectiveDirection::NONE && assignments[i].hasObjective()) {
+    EXPECT_EQ(cost.hasViolation(), assignments[i].hasViolation())
+        << "iteration: " << i;
+    EXPECT_EQ(cost.violation(), assignments[i].currentViolation())
+        << "iteration: " << i;
+    if (assignments[i].objectiveDirection() != ObjectiveDirection::NONE &&
+        assignments[i].hasObjective()) {
       EXPECT_TRUE(cost.hasObjective()) << "iteration: " << i;
       EXPECT_EQ(cost.objective(), getObj(assignments[i])) << "iteration: " << i;
     } else {
@@ -112,7 +141,8 @@ TEST_F(CostTest, assignment) {
       EXPECT_EQ(cost.objective(), Int{0}) << "iteration: " << i;
     }
     if (assignments[i].hasViolation()) {
-      EXPECT_EQ(cost.satisfiesConstraints(), assignments[i].currentViolation() == 0);
+      EXPECT_EQ(cost.satisfiesConstraints(),
+                assignments[i].currentViolation() == 0);
     } else {
       EXPECT_TRUE(cost.satisfiesConstraints());
     }
@@ -134,14 +164,23 @@ TEST_F(CostTest, lessThan) {
       } else if (!costs[j].hasViolation() && !costs[j].hasObjective()) {
         EXPECT_TRUE(costs[i] < costs[j]) << "iteration: " << i;
         EXPECT_FALSE(costs[j] < costs[i]) << "iteration: " << i;
-      } else if (costs[i].hasObjective() != costs[j].hasObjective() || costs[i].hasViolation() != costs[j].hasViolation()) {
+      } else if (costs[i].hasObjective() != costs[j].hasObjective() ||
+                 costs[i].hasViolation() != costs[j].hasViolation()) {
         EXPECT_FALSE(costs[i] < costs[j]) << "iteration: " << i << ", " << j;
         EXPECT_FALSE(costs[j] < costs[i]) << "iteration: " << i << ", " << j;
       } else {
-        const bool violLt = costs[i].hasViolation() ? costs[i].violation() < costs[j].violation() : false;
-        const bool violEq = costs[i].hasViolation() ? costs[i].violation() == costs[j].violation() : true;
-        const bool objLt = costs[i].hasObjective() ? (costs[i].objective() < costs[j].objective()) : false;
-        const bool objEq = costs[i].hasObjective() ? (costs[i].objective() == costs[j].objective()) : true;
+        const bool violLt = costs[i].hasViolation()
+                                ? costs[i].violation() < costs[j].violation()
+                                : false;
+        const bool violEq = costs[i].hasViolation()
+                                ? costs[i].violation() == costs[j].violation()
+                                : true;
+        const bool objLt = costs[i].hasObjective()
+                               ? (costs[i].objective() < costs[j].objective())
+                               : false;
+        const bool objEq = costs[i].hasObjective()
+                               ? (costs[i].objective() == costs[j].objective())
+                               : true;
         if (violEq && objEq) {
           EXPECT_FALSE(costs[i] < costs[j]) << "iteration: " << i << ", " << j;
           EXPECT_FALSE(costs[j] < costs[i]) << "iteration: " << i << ", " << j;
@@ -172,14 +211,23 @@ TEST_F(CostTest, lessEqualThen) {
       } else if (!costs[j].hasViolation() && !costs[j].hasObjective()) {
         EXPECT_TRUE(costs[i] <= costs[j]) << "iteration: " << i;
         EXPECT_FALSE(costs[j] <= costs[i]) << "iteration: " << i;
-      } else if (costs[i].hasObjective() != costs[j].hasObjective() || costs[i].hasViolation() != costs[j].hasViolation()) {
+      } else if (costs[i].hasObjective() != costs[j].hasObjective() ||
+                 costs[i].hasViolation() != costs[j].hasViolation()) {
         EXPECT_FALSE(costs[i] <= costs[j]) << "iteration: " << i << ", " << j;
         EXPECT_FALSE(costs[j] <= costs[i]) << "iteration: " << i << ", " << j;
       } else {
-        const bool violLt = costs[i].hasViolation() ? costs[i].violation() < costs[j].violation() : false;
-        const bool violEq = costs[i].hasViolation() ? costs[i].violation() == costs[j].violation() : true;
-        const bool objLe = costs[i].hasObjective() ? (costs[i].objective() <= costs[j].objective()) : false;
-        const bool objeq = costs[i].hasObjective() ? (costs[i].objective() == costs[j].objective()) : true;
+        const bool violLt = costs[i].hasViolation()
+                                ? costs[i].violation() < costs[j].violation()
+                                : false;
+        const bool violEq = costs[i].hasViolation()
+                                ? costs[i].violation() == costs[j].violation()
+                                : true;
+        const bool objLe = costs[i].hasObjective()
+                               ? (costs[i].objective() <= costs[j].objective())
+                               : false;
+        const bool objeq = costs[i].hasObjective()
+                               ? (costs[i].objective() == costs[j].objective())
+                               : true;
         if (violEq && objeq) {
           EXPECT_TRUE(costs[i] <= costs[j]) << "iteration: " << i << ", " << j;
           EXPECT_TRUE(costs[j] <= costs[i]) << "iteration: " << i << ", " << j;
@@ -217,9 +265,10 @@ Int evaluate(const Cost& c, UInt violationWeight, UInt objectiveWeight) {
   Int violProd = 0;
   Int objProd = 0;
   Int sum = 0;
-  if (!overflow::mulOverflow(static_cast<Int>(violationWeight),
-                    c.violation(), &violProd) &&
-      !overflow::mulOverflow(c.objective(), static_cast<Int>(objectiveWeight), &objProd) &&
+  if (!overflow::mulOverflow(static_cast<Int>(violationWeight), c.violation(),
+                             &violProd) &&
+      !overflow::mulOverflow(c.objective(), static_cast<Int>(objectiveWeight),
+                             &objProd) &&
       !overflow::addOverflow(violProd, objProd, &sum)) {
     return sum;
   }

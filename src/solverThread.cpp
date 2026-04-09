@@ -38,8 +38,7 @@ SolverThread::SolverThread(
         annealingScheduleFactory,
     const size_t threadId,
     const std::shared_ptr<search::ThreadController>& controller,
-    search::SearchType searchType,
-    const std::uint_fast32_t seed,
+    search::SearchType searchType, const std::uint_fast32_t seed,
     const std::optional<std::chrono::milliseconds> timeLimit,
     const std::shared_ptr<const bool>& shouldStop)
     : _invariantGraph(invariantGraph),
@@ -77,27 +76,28 @@ void SolverThread::solve() {
       outputVarIds.emplace_back(mapping.solverId(oId));
     }
 
-    search::Assignment assignment(solver, mapping.globalNeighborhood(),
-                                  mapping.totalViolationId(),
-                                  mapping.objectiveId(),
-                                  mapping.objectiveDirection(),
-                                  mapping.objectiveOptimalValue());
+    search::Assignment assignment(
+        solver, mapping.globalNeighborhood(), mapping.totalViolationId(),
+        mapping.objectiveId(), mapping.objectiveDirection(),
+        mapping.objectiveOptimalValue());
 
     // TODO: This can possibly be extracted, or restricted to one thread
     if (mapping.globalNeighborhood()->coveredVars().empty()) {
       _threadController->trySolution(
-          _threadId, search::SavedAssignment(assignment, outputVarIds), nullptr);
+          _threadId, search::SavedAssignment(assignment, outputVarIds),
+          nullptr);
     } else {
       search::RandomProvider randomProvider(_seed);
       search::SearchProcedure search(
-          randomProvider, assignment, mapping.globalNeighborhood(),
-          _searchType, _threadController, outputVarIds, _threadId);
+          randomProvider, assignment, mapping.globalNeighborhood(), _searchType,
+          _threadController, outputVarIds, _threadId);
 
       search::SearchController searchController(
           mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,
           _shouldStop, _threadController);
 
-      search.run(searchController, createMetaHeuristic(randomProvider, assignment));
+      search.run(searchController,
+                 createMetaHeuristic(randomProvider, assignment));
     }
   } catch (const std::exception&) {
     _threadController->recordFatalError(

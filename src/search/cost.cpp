@@ -1,11 +1,10 @@
 
 #include "atlantis/search/cost.hpp"
-#include "atlantis/utils/overflow.hpp"
 
 #include <limits>
 
-
 #include "atlantis/search/assignment.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::search {
 
@@ -42,26 +41,39 @@ inline std::optional<Int> getObj(const ObjectiveDirection dir) {
 }
 
 inline std::optional<Int> getObj(const Assignment& assignment) {
-  if (!assignment.hasObjective() || assignment.objectiveDirection() == ObjectiveDirection::NONE) {
+  if (!assignment.hasObjective() ||
+      assignment.objectiveDirection() == ObjectiveDirection::NONE) {
     return std::nullopt;
   }
-  return {getObj(assignment.currentObjective(), assignment.objectiveDirection() == ObjectiveDirection::MINIMIZE)};
+  return {
+      getObj(assignment.currentObjective(),
+             assignment.objectiveDirection() == ObjectiveDirection::MINIMIZE)};
 }
 
 Cost::Cost() : _violation(std::nullopt), _objective(std::nullopt) {}
 
-Cost::Cost(Int violationDegree) : _violation(violationDegree), _objective(std::nullopt) {}
+Cost::Cost(Int violationDegree)
+    : _violation(violationDegree), _objective(std::nullopt) {}
 
-Cost::Cost(const bool hasViolation, ObjectiveDirection direction) : _violation(hasViolation ? std::optional<Int>{std::numeric_limits<Int>::max()} : std::optional<Int>{std::nullopt}), _objective(getObj(direction)) {}
+Cost::Cost(const bool hasViolation, ObjectiveDirection direction)
+    : _violation(hasViolation
+                     ? std::optional<Int>{std::numeric_limits<Int>::max()}
+                     : std::optional<Int>{std::nullopt}),
+      _objective(getObj(direction)) {}
 
-Cost::Cost(const Int objective, const bool isMinimization) : _violation(std::nullopt), _objective(getObj(objective, isMinimization)) {}
+Cost::Cost(const Int objective, const bool isMinimization)
+    : _violation(std::nullopt), _objective(getObj(objective, isMinimization)) {}
 
-Cost::Cost(const Int violationDegree, const Int objective, const bool isMinimization) : _violation(violationDegree), _objective(getObj(objective, isMinimization)) {}
+Cost::Cost(const Int violationDegree, const Int objective,
+           const bool isMinimization)
+    : _violation(violationDegree),
+      _objective(getObj(objective, isMinimization)) {}
 
-Cost::Cost(const Assignment& assignment) : _violation(getViol(assignment)), _objective(getObj(assignment)) {}
+Cost::Cost(const Assignment& assignment)
+    : _violation(getViol(assignment)), _objective(getObj(assignment)) {}
 
 bool Cost::satisfiesConstraints() const noexcept {
-  return !_violation.has_value() || (*_violation == 0);
+  return !_violation.has_value() || *_violation == 0;
 }
 
 Int Cost::evaluate(const UInt violationWeight,
@@ -70,9 +82,10 @@ Int Cost::evaluate(const UInt violationWeight,
     Int violProd = 0;
     Int objProd = 0;
     Int sum = 0;
-    if (!overflow::mulOverflow(static_cast<Int>(violationWeight),
-                      *_violation, &violProd) &&
-        !overflow::mulOverflow(*_objective, static_cast<Int>(objectiveWeight), &objProd) &&
+    if (!overflow::mulOverflow(static_cast<Int>(violationWeight), *_violation,
+                               &violProd) &&
+        !overflow::mulOverflow(*_objective, static_cast<Int>(objectiveWeight),
+                               &objProd) &&
         !overflow::addOverflow(violProd, objProd, &sum)) {
       return sum;
     }
@@ -85,7 +98,6 @@ Int Cost::evaluate(const UInt violationWeight,
     return *_violation;
   }
   return std::numeric_limits<Int>::max();
-
 }
 
 bool Cost::operator<(const Cost& other) const noexcept {
@@ -96,27 +108,20 @@ bool Cost::operator<(const Cost& other) const noexcept {
     return true;
   }
   if (_violation.has_value() != other._violation.has_value() ||
-    _objective.has_value() != other._objective.has_value()) {
+      _objective.has_value() != other._objective.has_value()) {
     return false;
   }
-  if (_violation.has_value() &&
-      other._violation.has_value() &&
-      _objective.has_value() &&
-      other._objective.has_value()) {
-    if (*_violation !=
-        other._violation.value()) {
-      return _violation <
-             other._violation.value();
+  if (_violation.has_value() && other._violation.has_value() &&
+      _objective.has_value() && other._objective.has_value()) {
+    if (*_violation != other._violation.value()) {
+      return _violation < other._violation.value();
     }
     return *_objective < other._objective.value();
   }
-  if (_objective.has_value() &&
-      other._objective.has_value()) {
-    return *_objective <
-                     other._objective.value();
+  if (_objective.has_value() && other._objective.has_value()) {
+    return *_objective < other._objective.value();
   }
-  if (_violation.has_value() &&
-      other._violation.has_value()) {
+  if (_violation.has_value() && other._violation.has_value()) {
     return _violation < other._violation.value();
   }
   return false;
@@ -130,29 +135,22 @@ bool Cost::operator<=(const Cost& other) const noexcept {
     return true;
   }
   if (_violation.has_value() != other._violation.has_value() ||
-    _objective.has_value() != other._objective.has_value()) {
+      _objective.has_value() != other._objective.has_value()) {
     return false;
   }
-  if (_violation.has_value() &&
-      other._violation.has_value() &&
-      _objective.has_value() &&
-      other._objective.has_value()) {
-    if (*_violation !=
-        other._violation.value()) {
-      return _violation <
-             other._violation.value();
-        }
+  if (_violation.has_value() && other._violation.has_value() &&
+      _objective.has_value() && other._objective.has_value()) {
+    if (*_violation != other._violation.value()) {
+      return _violation < other._violation.value();
+    }
     return *_objective <= other._objective.value();
-      }
-  if (_objective.has_value() &&
-      other._objective.has_value()) {
-    return *_objective <=
-                     other._objective.value();
-      }
-  if (_violation.has_value() &&
-      other._violation.has_value()) {
+  }
+  if (_objective.has_value() && other._objective.has_value()) {
+    return *_objective <= other._objective.value();
+  }
+  if (_violation.has_value() && other._violation.has_value()) {
     return _violation <= other._violation.value();
-      }
+  }
   return false;
 }
 
@@ -162,8 +160,7 @@ std::string Cost::toString() const {
            std::to_string(*_objective) + '>';
   }
   if (_objective.has_value()) {
-    return "<-, " + std::to_string(*_objective) +
-           '>';
+    return "<-, " + std::to_string(*_objective) + '>';
   }
   if (_violation.has_value()) {
     return '<' + std::to_string(*_violation) + ", ->";
@@ -171,17 +168,11 @@ std::string Cost::toString() const {
   return "<-, ->";
 }
 
-bool Cost::hasViolation() const {
-  return _violation.has_value();
-}
+bool Cost::hasViolation() const { return _violation.has_value(); }
 
 bool Cost::hasObjective() const { return _objective.has_value(); }
 
-Int Cost::objective() const {
-  return _objective.value_or(0);
-}
-Int Cost::violation() const {
-  return _violation.value_or(0);
-}
+Int Cost::objective() const { return _objective.value_or(0); }
+Int Cost::violation() const { return _violation.value_or(0); }
 
 }  // namespace atlantis::search
