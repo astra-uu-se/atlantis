@@ -77,7 +77,7 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
     return false;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     numInputs = 4;
 
@@ -90,18 +90,16 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
         retrieveIntVarNode(-2, 2, inputVars.back());
       }
     }
-    if (!shouldBeMadeImplicit()) {
-      for (const auto& var : inputVars) {
-        _invariantGraph->root().addSearchVarNode(varNodeId(var));
-      }
+    for (const auto& var : inputVars) {
+      _invariantGraph->root().addSearchVarNode(varNodeId(var));
     }
     if (isReified()) {
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          varNodeId(reifiedVar));
+                          varNodeId(reifiedVar), true);
     } else {
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          shouldHold());
+                          shouldHold(), true);
     }
   }
 };
@@ -139,11 +137,11 @@ TEST_P(IntAllEqualNodeTestFixture, application) {
   for (const auto& identifier : inputVars) {
     EXPECT_TRUE(varId(identifier).isVar());
     EXPECT_THAT(_solver->searchVars(),
-                ::testing::Contains(size_t(varId(identifier))));
+                ::testing::Contains(size_t{varId(identifier)}));
   }
 
   EXPECT_GE(_solver->numVars(),
-            size_t(invNode().violationVarId(*_solverMapping)));
+            size_t{invNode().violationVarId(*_solverMapping)});
 
   EXPECT_EQ(_solver->numInvariants(), 1);
 }
