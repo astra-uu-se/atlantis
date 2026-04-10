@@ -1,5 +1,8 @@
 #include "atlantis/search/threadController.hpp"
 
+#include <iostream>
+#include <sstream>
+
 namespace atlantis::search {
 
 void ThreadController::setBestSolution(const Int threadId,
@@ -7,16 +10,10 @@ void ThreadController::setBestSolution(const Int threadId,
   _bestThread = threadId;
   _bestCost = solution.cost();
   _solution = solution;
-
-  if (!_hasNoViolations) {
-    if (_bestCost->violation() == 0) {
-      _hasNoViolations = true;
-    } else {
-      return;
-    }
-  }
-
   ++_curSolutionId;
+
+  if (!_hasNoViolations && _bestCost->violation() == 0) _hasNoViolations = true;
+
   _curSolutionNotified = false;
   _curSolutionNotified.notify_one();
 }
@@ -38,7 +35,6 @@ bool ThreadController::trySolution(
     return true;
   }
 
-  // TODO: double check this bit
   if (solution.cost() < _bestCost.value()) {
     setBestSolution(threadId, solution);
     if (improvingSolutions.has_value()) improvingSolutions.value()->increment();
@@ -75,6 +71,74 @@ ThreadController::loadSolution(size_t solutionId) const {
     return {};
   }
   return std::make_pair(_curSolutionId.load(), _solution.value());
+}
+
+void ThreadController::recordFatalError(std::exception_ptr error,
+                                        const Int threadId,
+                                        std::string_view context) {
+  if (error == nullptr) {
+    return;
+  }
+  {
+    std::lock_guard lock(_lock);
+    if (_fatalError != nullptr) {
+      return;
+    }
+    _fatalError = error;
+    _fatalErrorThreadId = threadId;
+    _fatalErrorContext = std::string(context);
+  }
+  requestStop();
+}
+
+void ThreadController::requestStop() {
+  _stopRequested = true;
+  _curSolutionNotified = false;
+  _curSolutionNotified.notify_one();
+}
+
+bool ThreadController::stopRequested() const { return _stopRequested.load(); }
+
+bool ThreadController::hasFatalError() const {
+  std::lock_guard lock(_lock);
+  return _fatalError != nullptr;
+}
+
+void ThreadController::rethrowFatalErrorIfAny() const {
+  std::exception_ptr fatalError;
+  std::optional<Int> threadId;
+  std::optional<std::string> context;
+  {
+    std::lock_guard lock(_lock);
+    fatalError = _fatalError;
+    threadId = _fatalErrorThreadId;
+    context = _fatalErrorContext;
+  }
+  if (fatalError == nullptr) {
+    return;
+  }
+
+  try {
+    std::rethrow_exception(fatalError);
+  } catch (const std::exception& e) {
+    std::ostringstream output;
+    output << "Thread "
+           << (threadId.has_value() ? std::to_string(threadId.value()) : "?");
+    if (context.has_value() && !context->empty()) {
+      output << " (" << context.value() << ")";
+    }
+    output << ": " << e.what();
+    throw std::runtime_error(output.str());
+  } catch (...) {
+    std::ostringstream output;
+    output << "Thread "
+           << (threadId.has_value() ? std::to_string(threadId.value()) : "?");
+    if (context.has_value() && !context->empty()) {
+      output << " (" << context.value() << ")";
+    }
+    output << ": unknown non-standard exception";
+    throw std::runtime_error(output.str());
+  }
 }
 
 void ThreadController::threadIsDone() {

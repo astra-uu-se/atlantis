@@ -13,24 +13,24 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y variable of rhs
  */
-NotEqual::NotEqual(SolverBase& solver, VarId violationId, VarViewId x,
-                   VarViewId y)
+NotEqual::NotEqual(SolverBase& solver, const VarId violationId,
+                   const VarViewId x, const VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
-NotEqual::NotEqual(SolverBase& solver, VarViewId violationId, VarViewId x,
-                   VarViewId y)
-    : NotEqual(solver, VarId(violationId), x, y) {
+NotEqual::NotEqual(SolverBase& solver, const VarViewId violationId,
+                   const VarViewId x, const VarViewId y)
+    : NotEqual(solver, VarId{violationId}, x, y) {
   assert(violationId.isVar());
 }
 
 void NotEqual::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, LocalId(0), false);
-  _solver.registerInvariantInput(_id, _y, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _x, LocalId{0}, false);
+  _solver.registerInvariantInput(_id, _y, LocalId{1}, false);
   registerDefinedVar(_violationId);
 }
 
-void NotEqual::updateBounds(bool widenOnly) {
+void NotEqual::updateBounds(const bool widenOnly) {
   const Int xLb = _solver.lowerBound(_x);
   const Int xUb = _solver.upperBound(_x);
   const Int yLb = _solver.lowerBound(_y);
@@ -49,13 +49,15 @@ void NotEqual::updateBounds(bool widenOnly) {
   _solver.updateBounds(_violationId, 1, 1, widenOnly);
 }
 
-void NotEqual::recompute(Timestamp ts) {
+void NotEqual::recompute(const Timestamp ts) {
   updateValue(ts, _violationId, _solver.value(ts, _x) == _solver.value(ts, _y));
 }
 
-void NotEqual::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void NotEqual::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 
-VarViewId NotEqual::nextInput(Timestamp ts) {
+VarViewId NotEqual::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -66,5 +68,5 @@ VarViewId NotEqual::nextInput(Timestamp ts) {
   }
 }
 
-void NotEqual::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void NotEqual::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 }  // namespace atlantis::propagation

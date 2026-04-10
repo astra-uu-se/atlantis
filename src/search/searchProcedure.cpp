@@ -24,7 +24,8 @@ SavedAssignment SearchProcedure::saveAssignment() const {
 }
 
 bool SearchProcedure::onAccepted(
-    const std::shared_ptr<CounterStatistic>& improvingSolutions, std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
+    const std::shared_ptr<CounterStatistic>& improvingSolutions,
+    std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
   _pullResults.submitCost(_assignment.getCost());
 
   // If a worsening move was accepted, there's no need to communicate
@@ -44,8 +45,12 @@ bool SearchProcedure::onAccepted(
     _localBestAssignment = _threadController->solution();
 
     switch (_searchType) {
-      case SearchType::BESTCOST: { metaHeuristic->setCost(_localBestAssignment.value().cost()); }
-      case SearchType::BEAMSEARCH: { _assignment.setAssignment(_localBestAssignment.value()); }
+      case SearchType::BESTCOST: {
+        metaHeuristic->setCost(_localBestAssignment.value().cost());
+      }
+      case SearchType::BEAMSEARCH: {
+        _assignment.setAssignment(_localBestAssignment.value());
+      }
       default:;
     }
   }
@@ -79,7 +84,8 @@ Int SearchProcedure::run(SearchController& searchController) {
 
     // TODO: handle this case: this should call some separate version
     if (_assignment.satisfiesConstraints()) {
-      if (onAccepted(improvingSolutions, std::move(metaHeuristic))) communications->increment();
+      if (onAccepted(improvingSolutions, std::move(metaHeuristic)))
+        communications->increment();
     }
 
     metaHeuristic->start();
@@ -93,7 +99,8 @@ Int SearchProcedure::run(SearchController& searchController) {
         _assignment.commitLastProbe();
 
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
-          if (onAccepted(improvingSolutions, std::move(metaHeuristic))) communications->increment();
+          if (onAccepted(improvingSolutions, std::move(metaHeuristic)))
+            communications->increment();
         }
       }
     }

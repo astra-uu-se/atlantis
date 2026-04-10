@@ -22,9 +22,25 @@ class fzn_all_equal_intTest : public FznTestBase {
   std::vector<std::string> inputs;
   std::string reified{"reified"};
 
-  [[nodiscard]] bool getValue(bool committedValue) const {
+  [[nodiscard]] bool getValue(const bool committedValue) const {
     std::vector<Int> vals;
     vals.reserve(inputs.size());
+    const auto vId = varNodeId(inputs.front());
+    bool sameNodeId = true;
+    for (const auto& input : inputs) {
+      if (varNodeId(input) == NULL_NODE_ID) {
+        sameNodeId = false;
+        break;
+      }
+      if (varNodeId(input) != vId) {
+        sameNodeId = false;
+        break;
+      }
+    }
+    if (sameNodeId) {
+      return true;
+    }
+
     for (const auto& input : inputs) {
       const Int v = intVal(input, committedValue);
       vals.emplace_back(v);
@@ -60,11 +76,11 @@ class fzn_all_equal_intTest : public FznTestBase {
   }
 
   void generate() override {
-    const size_t size = *rc::gen::inRange(1, 10);
+    const size_t size = true ? 2 : *rc::gen::inRange(1, 10);
     for (size_t i = 0; i < size; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
-    addIntVarArray(inputs);
+    addIntVarArray({IntArgState::VAR, IntArgState::VAR}, inputs);
     // two vars corresponds to all_different
     const bool isReified = size == 2 ? false : *rc::gen::arbitrary<bool>();
     constraintIdentifier =

@@ -26,6 +26,31 @@ class int_lin_eqTest : public FznTestBase {
   Int bound{0};
   Int definedIndex{-1};
 
+  [[nodiscard]] Int getFixedLHS() const {
+    Int total = 0;
+    for (size_t i = 0; i < coeffs.size(); ++i) {
+      if (isFixed(inputs.at(i))) {
+        total += coeffs.at(i) * intVal(inputs.at(i));
+      }
+    }
+    return total;
+  }
+
+  [[nodiscard]] bool sameCoeff(Int& coeff) const {
+    bool initialized = false;
+    for (size_t i = 0; i < coeffs.size(); ++i) {
+      if (isFixed(inputs.at(i)) || coeffs.at(i) == 0) {
+        continue;
+      }
+      if (initialized && coeff != std::abs(coeffs.at(i))) {
+        return false;
+      }
+      initialized = true;
+      coeff = std::abs(coeffs.at(i));
+    }
+    return initialized;
+  }
+
   [[nodiscard]] std::pair<Int, Int> getBounds() const {
     Int lb = 0;
     Int ub = 0;
@@ -82,6 +107,11 @@ class int_lin_eqTest : public FznTestBase {
     if (alwaysUnsat) {
       return isFixedTo(reified, bool{false});
     }
+    const Int total = bound - getFixedLHS();
+    Int coeff;
+    if (sameCoeff(coeff) && total % coeff != 0) {
+      return isFixedTo(reified, bool{false});
+    }
     return false;
   }
 
@@ -98,7 +128,11 @@ class int_lin_eqTest : public FznTestBase {
     if (alwaysUnsat) {
       return isFixedTo(reified, bool{true});
     }
-
+    const Int total = bound - getFixedLHS();
+    Int coeff;
+    if (sameCoeff(coeff) && total % coeff != 0) {
+      return isFixedTo(reified, bool{true});
+    }
     return false;
   }
 
@@ -178,5 +212,105 @@ class int_lin_eqTest : public FznTestBase {
 };
 
 RC_GTEST_FIXTURE_PROP(int_lin_eqTest, RapidCheck, ()) { rapidCheck(); }
+
+TEST(IntLinEqRegression, DefinedIntVarKeepsDeclaredDomainOnImport) {
+  auto model = std::make_shared<fznparser::Model>();
+
+  auto out = std::make_shared<fznparser::IntVar>(1, 4, "out");
+  out->addAnnotation("is_defined_var");
+  model->addVar(out);
+
+  auto x = std::make_shared<fznparser::IntVar>(0, 10, "x");
+  model->addVar(x);
+
+  fznparser::Constraint constraint{
+      "int_eq", std::vector<fznparser::Arg>{fznparser::IntArg(out),
+                                            fznparser::IntArg(x)}};
+  constraint.addAnnotation("defines_var", fznparser::AnnotationExpression(
+                                              fznparser::Annotation("out")));
+  model->addConstraint(std::move(constraint));
+
+  auto graph = std::make_shared<FznInvariantGraph>(true);
+  graph->open();
+  ASSERT_NO_THROW(graph->build(*model));
+
+  ASSERT_TRUE(graph->containsVarNode("out"));
+  const auto& outNode = graph->varNodeConst("out");
+  EXPECT_EQ(outNode.lowerBound(), 1);
+  EXPECT_EQ(outNode.upperBound(), 4);
+}
+
+TEST(IntLinEqRegression, DefinedVarDomainDoesNotConflictWithDefinition) {
+  auto model = std::make_shared<fznparser::Model>();
+
+  auto out = std::make_shared<fznparser::IntVar>(1, 4, "out");
+  out->addAnnotation("is_defined_var");
+  model->addVar(out);
+
+  auto a = std::make_shared<fznparser::IntVar>(1, "a");
+  auto b = std::make_shared<fznparser::IntVar>(1, "b");
+  auto c = std::make_shared<fznparser::IntVar>(1, "c");
+  auto d = std::make_shared<fznparser::IntVar>(1, "d");
+  model->addVar(a);
+  model->addVar(b);
+  model->addVar(c);
+  model->addVar(d);
+
+  auto coeffs = std::make_shared<fznparser::IntVarArray>("coeffs");
+  coeffs->append(Int{1});
+  coeffs->append(Int{-1});
+  coeffs->append(Int{-1});
+  coeffs->append(Int{-1});
+  coeffs->append(Int{-1});
+
+  auto vars = std::make_shared<fznparser::IntVarArray>("vars");
+  vars->append(out);
+  vars->append(a);
+  vars->append(b);
+  vars->append(c);
+  vars->append(d);
+
+  fznparser::Constraint constraint{
+      "int_lin_eq",
+      std::vector<fznparser::Arg>{coeffs, vars, fznparser::IntArg(Int{-2})}};
+  constraint.addAnnotation("defines_var", fznparser::AnnotationExpression(
+                                              fznparser::Annotation("out")));
+  model->addConstraint(std::move(constraint));
+
+  auto graph = std::make_shared<FznInvariantGraph>(true);
+  graph->open();
+  ASSERT_NO_THROW(graph->build(*model));
+  graph->close();
+
+  auto solver = std::make_shared<propagation::Solver>();
+  EXPECT_NO_THROW(static_cast<void>(graph->construct(*solver)));
+}
+
+TEST(IntLinEqRegression, NonLinearDefinedIntVarDoesNotGetFullIntRange) {
+  auto model = std::make_shared<fznparser::Model>();
+
+  auto out = std::make_shared<fznparser::IntVar>(2, 5, "out");
+  out->addAnnotation("is_defined_var");
+  model->addVar(out);
+
+  auto x = std::make_shared<fznparser::IntVar>(0, 10, "x");
+  model->addVar(x);
+
+  fznparser::Constraint constraint{
+      "int_eq", std::vector<fznparser::Arg>{fznparser::IntArg(out),
+                                            fznparser::IntArg(x)}};
+  constraint.addAnnotation("defines_var", fznparser::AnnotationExpression(
+                                              fznparser::Annotation("out")));
+  model->addConstraint(std::move(constraint));
+
+  auto graph = std::make_shared<FznInvariantGraph>(true);
+  graph->open();
+  ASSERT_NO_THROW(graph->build(*model));
+
+  ASSERT_TRUE(graph->containsVarNode("out"));
+  const auto& outNode = graph->varNodeConst("out");
+  EXPECT_EQ(outNode.lowerBound(), 2);
+  EXPECT_EQ(outNode.upperBound(), 5);
+}
 
 }  // namespace atlantis::testing

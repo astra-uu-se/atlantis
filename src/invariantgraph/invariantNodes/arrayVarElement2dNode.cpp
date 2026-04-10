@@ -97,10 +97,29 @@ void ArrayVarElement2dNode::updateState() {
     return;
   }
 
-  _numRows = rowIdxNode.upperBound() - _rowOffset + 1;
+  const size_t oldNumRows = _numRows;
+  const size_t oldNumCols = numCols();
+  const Int oldRowOffset = _rowOffset;
+  const Int oldColOffset = _colOffset;
+
+  const Int newRowOffset = rowIdxNode.lowerBound();
+  const Int newColOffset = colIdxNode.lowerBound();
+  const size_t newNumRows =
+      static_cast<size_t>(rowIdxNode.upperBound() - newRowOffset + 1);
+  const size_t newNumCols =
+      static_cast<size_t>(colIdxNode.upperBound() - newColOffset + 1);
+
+  auto oldAt = [&](const Int row, const Int col) {
+    const auto r = static_cast<size_t>(row - oldRowOffset);
+    const auto c = static_cast<size_t>(col - oldColOffset);
+    assert(r < oldNumRows);
+    assert(c < oldNumCols);
+    return dynamicInputVarNodeIds().at(r * oldNumCols + c);
+  };
+
   std::vector<VarNodeId> varNodeIdsToRemove;
-  varNodeIdsToRemove.reserve(
-      static_cast<Int>(dynamicInputVarNodeIds().size() - _numRows * numCols()));
+  varNodeIdsToRemove.reserve(static_cast<Int>(dynamicInputVarNodeIds().size() -
+                                              newNumRows * newNumCols));
 
   Int index = 0;
   for (Int row = rowIdxNode.lowerBound(); row <= rowIdxNode.upperBound();
@@ -108,7 +127,7 @@ void ArrayVarElement2dNode::updateState() {
     for (Int col = colIdxNode.lowerBound(); col <= colIdxNode.upperBound();
          ++col) {
       varNodeIdsToRemove.emplace_back(_dynamicInputVarNodeIds.at(index));
-      _dynamicInputVarNodeIds.at(index) = at(row, col);
+      _dynamicInputVarNodeIds.at(index) = oldAt(row, col);
       ++index;
     }
   }
@@ -127,6 +146,9 @@ void ArrayVarElement2dNode::updateState() {
     }
   }
   _dynamicInputVarNodeIds.resize(index);
+  _numRows = newNumRows;
+  _rowOffset = newRowOffset;
+  _colOffset = newColOffset;
   assert(index == static_cast<Int>(_numRows * numCols()));
 }
 

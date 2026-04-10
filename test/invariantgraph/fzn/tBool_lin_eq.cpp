@@ -9,6 +9,7 @@
 
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/bool_lin_eq.hpp"
+#include "atlantis/invariantgraph/invariantNodes/boolLinearNode.hpp"
 
 namespace atlantis::testing {
 
@@ -24,6 +25,31 @@ class bool_lin_eqTest : public FznTestBase {
   std::vector<Int> coeffs{};
   std::string reified{"reified"};
   Int bound{0};
+
+  [[nodiscard]] Int getFixedLHS() const {
+    Int total = 0;
+    for (size_t i = 0; i < coeffs.size(); ++i) {
+      if (isFixed(inputs.at(i)) && boolVal(inputs.at(i))) {
+        total += coeffs.at(i);
+      }
+    }
+    return total;
+  }
+
+  [[nodiscard]] bool sameCoeff(Int& coeff) const {
+    bool initialized = false;
+    for (size_t i = 0; i < coeffs.size(); ++i) {
+      if (isFixed(inputs.at(i)) || coeffs.at(i) == 0) {
+        continue;
+      }
+      if (initialized && coeff != std::abs(coeffs.at(i))) {
+        return false;
+      }
+      initialized = true;
+      coeff = std::abs(coeffs.at(i));
+    }
+    return initialized;
+  }
 
   [[nodiscard]] std::pair<Int, Int> getBounds() const {
     Int lb = 0;
@@ -70,6 +96,12 @@ class bool_lin_eqTest : public FznTestBase {
     if (alwaysUnsat) {
       return isFixedTo(reified, bool{false});
     }
+    const Int total = bound - getFixedLHS();
+    Int coeff;
+    if (sameCoeff(coeff) && total % coeff != 0) {
+      return isFixedTo(reified, bool{false});
+    }
+
     return false;
   }
 
@@ -86,6 +118,12 @@ class bool_lin_eqTest : public FznTestBase {
     const bool alwaysUnsat = bound < lb || ub < bound;
 
     if (alwaysUnsat) {
+      return isFixedTo(reified, bool{true});
+    }
+
+    const Int total = bound - getFixedLHS();
+    Int coeff;
+    if (sameCoeff(coeff) && total % coeff != 0) {
       return isFixedTo(reified, bool{true});
     }
 
@@ -125,10 +163,34 @@ class bool_lin_eqTest : public FznTestBase {
   }
 
   void move(bool committedValue) override {
-    for (const auto& input : inputs) {
-      if (varId(input) != propagation::NULL_ID && randBool()) {
-        changeValue(input, committedValue);
+    std::unordered_set<InvariantNodeId, InvariantNodeIdHash>
+        implicitConstraints;
+    std::vector<bool> hasImplicitConstraints(inputs.size(), false);
+    implicitConstraints.reserve(inputs.size());
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      if (!isFixed(inputs.at(i))) {
+        const auto& defNodes = varNodeConst(inputs.at(i)).definingNodes();
+        if (!defNodes.empty()) {
+          RC_ASSERT(defNodes.size() == size_t{1});
+          const InvariantNodeId implId = *defNodes.begin();
+          RC_ASSERT(implId.isImplicitConstraint());
+          implicitConstraints.emplace(implId);
+          hasImplicitConstraints.at(i) = true;
+        }
       }
+    }
+
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      if (!hasImplicitConstraints.at(i) &&
+          varId(inputs.at(i)) != propagation::NULL_ID && randBool()) {
+        changeValue(inputs.at(i), committedValue);
+      }
+    }
+
+    for (const InvariantNodeId implId : implicitConstraints) {
+      auto implNode = _solverMapping->neighborhood(implId);
+      RC_ASSERT(implNode != nullptr);
+      implNode->randomMove(*_randomProvider, *_assignment);
     }
   }
 
@@ -142,5 +204,27 @@ class bool_lin_eqTest : public FznTestBase {
 };
 
 RC_GTEST_FIXTURE_PROP(bool_lin_eqTest, RapidCheck, ()) { rapidCheck(); }
+
+TEST_F(bool_lin_eqTest, SupportsVariableBoundOutput) {
+  coeffs = {1, 1, 1};
+  addArg(coeffs);
+
+  inputs = {"b_0", "b_1", "b_2"};
+  addBoolVarArray({BoolArgState::VAR, BoolArgState::VAR, BoolArgState::VAR},
+                  inputs);
+
+  const std::string sum{"sum"};
+  addIntArg(IntArgState::VAR, 0, 3, sum);
+
+  constraintIdentifier = "bool_lin_eq";
+  generateConstraint();
+
+  ASSERT_NE(varNodeId(sum), NULL_NODE_ID);
+  ASSERT_EQ(varNodeConst(sum).definingNodes().size(), 1U);
+  const auto invId = *varNodeConst(sum).definingNodes().begin();
+  EXPECT_NE(dynamic_cast<const BoolLinearNode*>(
+                &_invariantGraph->invariantNodeConst(invId)),
+            nullptr);
+}
 
 }  // namespace atlantis::testing

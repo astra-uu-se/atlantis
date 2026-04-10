@@ -31,6 +31,7 @@ bool bool_not(FznInvariantGraph& graph,
   if (constraint.definedVar().has_value() &&
       std::holds_alternative<std::shared_ptr<fznparser::BoolVar>>(
           constraint.definedVar().value()) &&
+      std::holds_alternative<std::shared_ptr<const fznparser::BoolVar>>(b) &&
       std::get<std::shared_ptr<fznparser::BoolVar>>(
           constraint.definedVar().value()) ==
           std::get<std::shared_ptr<const fznparser::BoolVar>>(b)) {

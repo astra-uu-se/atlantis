@@ -20,6 +20,10 @@ class BoolLinEqNode : public ViolationInvariantNode {
 
   void updateState() override;
 
+  [[nodiscard]] bool canBeMadeImplicit() const override;
+
+  [[nodiscard]] bool makeImplicit() override;
+
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 

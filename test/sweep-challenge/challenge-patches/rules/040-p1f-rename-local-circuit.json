@@ -1,0 +1,21 @@
+{
+  "description": "Rename p1f's local circuit predicate so it no longer collides with the modern stdlib predicate.",
+  "id": "p1f-rename-local-circuit",
+  "path_globs": [
+    "2009/p1f/p1f.mzn"
+  ],
+  "rationale": "The 2009 model ships a local decomposition of `circuit`, but current MiniZinc already provides that predicate in the standard library.",
+  "replacements": [
+    {
+      "kind": "literal",
+      "pattern": "predicate circuit(array[int] of var int: x) =",
+      "replacement": "predicate p1f_circuit(array[int] of var int: x) ="
+    },
+    {
+      "kind": "literal",
+      "pattern": "circuit(c) /\\",
+      "replacement": "p1f_circuit(c) /\\"
+    }
+  ],
+  "semantics_note": "This preserves the model's custom decomposition and only avoids the name collision."
+}

@@ -7,6 +7,7 @@
 
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/int_div.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::testing {
 
@@ -130,7 +131,7 @@ class int_divTest : public FznTestBase {
       Int expectedUb = std::numeric_limits<Int>::min();
       for (const auto& [q, d] : arr) {
         Int prod;
-        if (__builtin_smull_overflow(q, d, &prod)) {
+        if (overflow::mulOverflow(q, d, &prod)) {
           if ((q >= 0) == (d >= 0)) {
             expectedUb = std::numeric_limits<Int>::max();
           } else {

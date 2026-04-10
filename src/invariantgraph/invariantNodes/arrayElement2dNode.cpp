@@ -162,7 +162,7 @@ bool ArrayElement2dNode::replace() {
 
     invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
         invariantGraph(), std::move(_parMatrix.at(rowIndex)), colIdx(),
-        outputVarNodeIds().front(), _colOffset, _isIntMatrix));
+        outputVarNodeIds().front(), _colOffset));
     _parMatrix.clear();
     return true;
   }
@@ -178,7 +178,7 @@ bool ArrayElement2dNode::replace() {
   _parMatrix.clear();
   invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
       invariantGraph(), std::move(parMatrixCol), rowIdx(),
-      outputVarNodeIds().front(), _rowOffset, _isIntMatrix));
+      outputVarNodeIds().front(), _rowOffset));
   return true;
 }
 

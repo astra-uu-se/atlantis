@@ -1,0 +1,41 @@
+{
+  "description": "Align 2016/cryptanalysis predicate signatures with the model's actual round-column-byte array layout.",
+  "id": "cryptanalysis-array-signatures",
+  "path_globs": [
+    "2016/cryptanalysis/step1_aes.mzn"
+  ],
+  "rationale": "Modern MiniZinc rejects the old predicate declarations because the top-level arrays are indexed as [round, column, byte] while several local predicate signatures still declare them as [round, byte, column] or truncate the round range.",
+  "replacements": [
+    {
+      "kind": "literal",
+      "pattern": "predicate ARK(array[0..n-2,0..3,0..BC-1] of var 0..1: DY, array[0..n-1,0..3,0..BC-1] of var 0..1: DK, array[0..n-1,0..3,0..BC-1] of var 0..1: DX ) =",
+      "replacement": "predicate ARK(array[0..n-2,0..BC-1,0..3] of var 0..1: DY, array[0..n-1,0..BC-1,0..3] of var 0..1: DK, array[0..n-1,0..BC-1,0..3] of var 0..1: DX ) ="
+    },
+    {
+      "kind": "literal",
+      "pattern": "predicate SR(array[0..n-1,0..3,0..BC-1] of var 0..1: DX,array[0..n-2,0..3,0..BC-1] of var 0..1: DSR) =",
+      "replacement": "predicate SR(array[0..n-1,0..BC-1,0..3] of var 0..1: DX,array[0..n-1,0..BC-1,0..3] of var 0..1: DSR) ="
+    },
+    {
+      "kind": "literal",
+      "pattern": "predicate MC(array[0..n-1,0..BC-1] of var 0..4: CSRX,array[0..n-2,0..3,0..BC-1] of var 0..1: DY) =",
+      "replacement": "predicate MC(array[0..n-1,0..BC-1] of var 0..4: CSRX,array[0..n-2,0..BC-1,0..3] of var 0..1: DY) ="
+    },
+    {
+      "kind": "literal",
+      "pattern": "predicate KS(array[0..n-1,0..3,0..BC-1] of var 0..1: DK, array[0..n-1,0..BC-1,0..3, 0..NBK-1] of var 0..1: Kcomp, array[0..3,0..n-1,0..BC-1,0..n-1,0..BC-1] of var 0..1: EQ ",
+      "replacement": "predicate KS(array[0..n-1,0..BC-1,0..3] of var 0..1: DK, array[0..n-1,0..BC-1,0..3, 0..NBK-1] of var 0..1: Kcomp, array[0..3,0..n-1,0..BC-1,0..n-1,0..BC-1] of var 0..1: EQ "
+    },
+    {
+      "kind": "literal",
+      "pattern": "    array[0..n-1,0..3,0..BC-1] of var 0..1: DK, ",
+      "replacement": "    array[0..n-1,0..BC-1,0..3] of var 0..1: DK, "
+    },
+    {
+      "kind": "literal",
+      "pattern": "predicate linearMC(array[0..n-2,0..3,0..BC-1] of var 0..1: DY, array[0..n-1,0..3,0..BC-1] of var 0..1: DK, array[0..n-1,0..3,0..BC-1] of var 0..1: DX, array[0..n-1,0..3,0..BC-1] of var 0..1: DSR, array[0..3,0..n-1,0..BC-1,0..n-1,0..BC-1] of var 0..1: EQ, array[0..n-1,0..BC-1] of var 0..4: CSRX) =",
+      "replacement": "predicate linearMC(array[0..n-2,0..BC-1,0..3] of var 0..1: DY, array[0..n-1,0..BC-1,0..3] of var 0..1: DK, array[0..n-1,0..BC-1,0..3] of var 0..1: DX, array[0..n-1,0..BC-1,0..3] of var 0..1: DSR, array[0..3,0..n-1,0..BC-1,0..n-1,0..BC-1] of var 0..1: EQ, array[0..n-1,0..BC-1] of var 0..4: CSRX) ="
+    }
+  ],
+  "semantics_note": "This patch does not change the model equations; it only makes local predicate signatures consistent with the arrays they are called with."
+}

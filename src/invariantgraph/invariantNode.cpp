@@ -255,11 +255,11 @@ InvariantNode::splitOutputVarNodes() {
   std::vector<std::pair<VarNodeId, VarNodeId>> replaced;
   replaced.reserve(_outputVarNodeIds.size());
   for (size_t i = 0; i < _outputVarNodeIds.size(); ++i) {
-    VarNode& varNode = _invariantGraph.varNode(_outputVarNodeIds[i]);
     for (size_t j = i + 1; j < _outputVarNodeIds.size(); ++j) {
       if (_outputVarNodeIds[i] != _outputVarNodeIds[j]) {
         continue;
       }
+      VarNode& varNode = _invariantGraph.varNode(_outputVarNodeIds[i]);
       if (varNode.isFixed()) {
         if (varNode.isIntVar()) {
           _outputVarNodeIds[j] =

@@ -110,6 +110,48 @@ TEST_P(ArrayVarElementNodeTestFixture, propagation) {
   }
 }
 
+TEST(ArrayVarElementNodeRegression, FixedBoolOutputPrunesIncompatibleIndices) {
+  InvariantGraph graph;
+  graph.open();
+
+  const auto idx = graph.retrieveIntVarNode(
+      std::make_shared<SearchDomain>(std::vector<Int>{1, 2}), "idx");
+  const auto x1 = graph.retrieveBoolVarNode(false, true);
+  const auto x2 = graph.retrieveBoolVarNode(true, true);
+  const auto output = graph.retrieveBoolVarNode("output");
+  graph.varNode(output).fixToValue(bool{true});
+
+  const auto nodeId =
+      graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+          graph, idx, std::vector<VarNodeId>{x1, x2}, output, 1));
+  auto& node = dynamic_cast<ArrayVarElementNode&>(graph.invariantNode(nodeId));
+
+  EXPECT_NO_THROW(node.updateState());
+  EXPECT_TRUE(graph.varNode(idx).isFixed());
+  EXPECT_EQ(graph.varNode(idx).lowerBound(), 2);
+}
+
+TEST(ArrayVarElementNodeRegression, FixedIndexAndOutputPruneSelectedChild) {
+  InvariantGraph graph;
+  graph.open();
+
+  const auto idx = graph.retrieveIntVarNode(
+      std::make_shared<SearchDomain>(std::vector<Int>{1}), "idx");
+  const auto x1 = graph.retrieveBoolVarNode("x1");
+  const auto x2 = graph.retrieveBoolVarNode("x2");
+  const auto output = graph.retrieveBoolVarNode("output");
+  graph.varNode(output).fixToValue(bool{true});
+
+  const auto nodeId =
+      graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+          graph, idx, std::vector<VarNodeId>{x1, x2}, output, 1));
+  auto& node = dynamic_cast<ArrayVarElementNode&>(graph.invariantNode(nodeId));
+
+  EXPECT_NO_THROW(node.updateState());
+  EXPECT_TRUE(graph.varNode(x1).isFixed());
+  EXPECT_TRUE(graph.varNode(x1).inDomain(bool{true}));
+}
+
 INSTANTIATE_TEST_CASE_P(
     ArrayVarElementNodeTest, ArrayVarElementNodeTestFixture,
     ::testing::Values(ParamData{0}, ParamData{InvariantNodeAction::REPLACE, 0},

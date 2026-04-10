@@ -1,5 +1,6 @@
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 
+#include <numeric>
 #include <queue>
 #include <ranges>
 #include <unordered_map>
@@ -185,50 +186,50 @@ static std::vector<VarNodeId> findDynamicCycle(
 static std::pair<VarNodeId, InvariantNodeId> findPivotInCycle(
     const InvariantGraph& graph, const std::vector<VarNodeId>& cycle) {
   assert(cycle.size() > 1);
-  size_t index = 0;
-  size_t domSize = graph.varNodeConst(cycle.front()).constDomain()->size();
-  for (size_t i = 1; i < cycle.size(); ++i) {
-    const size_t ds = graph.varNodeConst(cycle[i]).constDomain()->size();
-    if (ds < domSize) {
-      domSize = ds;
-      index = i;
-    }
-  }
-  assert(index < cycle.size());
-  assert(domSize > 1);
-
-  const VarNodeId pivot = cycle[index];
-
-  assert(!graph.varNodeConst(pivot).isFixed());
-
   assert(std::ranges::all_of(cycle, [&](const VarNodeId vId) {
     return graph.varNodeConst(vId).definingNodes().size() == 1;
   }));
 
-  const size_t outputIndex = (index + 1) % cycle.size();
-  const auto& outputNode = graph.varNodeConst(cycle[outputIndex]);
+  std::vector<size_t> candidateIndices(cycle.size());
+  std::iota(candidateIndices.begin(), candidateIndices.end(), 0);
+  std::ranges::sort(candidateIndices, [&](const size_t lhs, const size_t rhs) {
+    return graph.varNodeConst(cycle[lhs]).constDomain()->size() <
+           graph.varNodeConst(cycle[rhs]).constDomain()->size();
+  });
 
-  assert(outputNode.definingNodes().size() == 1);
-  const InvariantNodeId invId = *outputNode.definingNodes().begin();
+  for (const size_t index : candidateIndices) {
+    const VarNodeId pivot = cycle[index];
+    const size_t domSize = graph.varNodeConst(pivot).constDomain()->size();
+    if (domSize <= 1) {
+      continue;
+    }
+    assert(!graph.varNodeConst(pivot).isFixed());
 
-  assert(std::ranges::any_of(
-      graph.invariantNodeConst(invId).outputVarNodeIds(),
-      [&](const VarNodeId vId) { return vId == outputNode.varNodeId(); }));
+    for (const auto outputId : cycle) {
+      const auto& outputNode = graph.varNodeConst(outputId);
+      assert(outputNode.definingNodes().size() == 1);
+      const InvariantNodeId invId = *outputNode.definingNodes().begin();
+      const auto& invNode = graph.invariantNodeConst(invId);
 
-  assert(std::ranges::any_of(
-             graph.invariantNodeConst(invId).staticInputVarNodeIds(),
-             [&](const VarNodeId vId) { return vId == pivot; }) ||
-         std::ranges::any_of(
-             graph.invariantNodeConst(invId).dynamicInputVarNodeIds(),
-             [&](const VarNodeId vId) { return vId == pivot; }));
+      const bool definesOutput = std::ranges::any_of(
+          invNode.outputVarNodeIds(),
+          [&](const VarNodeId vId) { return vId == outputNode.varNodeId(); });
+      const bool usesPivot =
+          std::ranges::any_of(
+              invNode.staticInputVarNodeIds(),
+              [&](const VarNodeId vId) { return vId == pivot; }) ||
+          std::ranges::any_of(
+              invNode.dynamicInputVarNodeIds(),
+              [&](const VarNodeId vId) { return vId == pivot; });
+      if (definesOutput && usesPivot) {
+        return {pivot, invId};
+      }
+    }
+  }
 
-  assert(pivot != NULL_NODE_ID);
-
-  // Dont create a VarNode& reference to pivot, since the _varNodes vector is
-  // modified, this reference could be invalidated!
-  assert(!graph.varNodeConst(pivot).isFixed());
-
-  return {pivot, invId};
+  assert(false);
+  return std::pair<VarNodeId, InvariantNodeId>{cycle.front(),
+                                               InvariantNodeId{NULL_NODE_ID}};
 }
 
 InvariantGraphRoot& InvariantGraph::root() const {
@@ -1096,12 +1097,12 @@ SolverMapping InvariantGraph::construct(SolverBase& solver) const {
   mapping.setTotalViolationId(createViolations(solver, mapping));
   mapping.setObjectiveDirection(_objectiveDirection);
   if (_objectiveDirection != ObjectiveDirection::NONE &&
-    _objectiveVarNodeId != NULL_NODE_ID) {
+      _objectiveVarNodeId != NULL_NODE_ID) {
     mapping.setObjectiveId(mapping.solverId(_objectiveVarNodeId));
-    mapping.setObjectiveOptimalValue(
-      _objectiveDirection == ObjectiveDirection::MINIMIZE
-          ? objectiveVarNode().lowerBound()
-          : objectiveVarNode().upperBound());
+    mapping.setObjectiveOptimalValue(_objectiveDirection ==
+                                             ObjectiveDirection::MINIMIZE
+                                         ? objectiveVarNode().lowerBound()
+                                         : objectiveVarNode().upperBound());
   } else {
     mapping.setObjectiveOptimalValue(0);
   }

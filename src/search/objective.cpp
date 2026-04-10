@@ -21,10 +21,11 @@ propagation::VarViewId Objective::registerNode(
     return totalViolationVarId;
   }
 
-  const Int initialBound = _problemType == ObjectiveDirection::NONE ? 0 :
-  (_problemType == ObjectiveDirection::MINIMIZE
-                               ? _solver.upperBound(objectiveVarId)
-                               : _solver.lowerBound(objectiveVarId));
+  const Int initialBound = _problemType == ObjectiveDirection::NONE
+                               ? 0
+                               : (_problemType == ObjectiveDirection::MINIMIZE
+                                      ? _solver.upperBound(objectiveVarId)
+                                      : _solver.lowerBound(objectiveVarId));
 
   _bound = _solver.makeIntVar(initialBound, _solver.lowerBound(objectiveVarId),
                               _solver.upperBound(objectiveVarId));

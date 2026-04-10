@@ -29,7 +29,9 @@ VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(domain),
-      _identifier(identifier) {}
+      _identifier(identifier) {
+  assert(_domain != nullptr);
+}
 
 VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
                  bool isIntVar, DomainType domainType)
@@ -57,7 +59,9 @@ VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(domain),
-      _identifier(std::nullopt) {}
+      _identifier(std::nullopt) {
+  assert(_domain != nullptr);
+}
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
@@ -112,12 +116,6 @@ propagation::VarViewId VarNode::postDomainConstraint(
     if (!isFixed()) {
       return propagation::VarViewId{propagation::NULL_ID};
     }
-    if ((inDomain(bool{true}) && !holdsTrue) ||
-        (inDomain(bool{false}) && !holdsFalse)) {
-      throw InconsistencyException(
-          "VarNode::postDomainConstraint: Solver domain and invariant graph "
-          "domain do not overlap");
-    }
     if ((inDomain(bool{true}) && !holdsFalse) ||
         (inDomain(bool{false}) && !holdsTrue)) {
       return propagation::VarViewId{propagation::NULL_ID};
@@ -135,80 +133,62 @@ propagation::VarViewId VarNode::postDomainConstraint(
   }
 
   if (_domainType == DomainType::DOM_FIXED || _domain->isFixed()) {
-    if (lowerBound() < solverLb || solverUb < lowerBound()) {
-      throw std::runtime_error("Solver var domain range is " +
-                               std::to_string(solverLb) + ".." +
-                               std::to_string(solverUb) +
-                               " but invariant graph var node is fixed to " +
-                               std::to_string(lowerBound()));
+    if (solverLb == lowerBound() && solverUb == lowerBound()) {
+      return mapping.domainViolationId(varNodeId());
     }
-    if (solverLb != solverUb) {
-      mapping.setDomainViolationId(
-          varNodeId(),
-          solver.makeIntView<propagation::EqualConst>(
-              solver, mapping.solverId(varNodeId()), lowerBound()));
-    }
+    mapping.setDomainViolationId(
+        varNodeId(), solver.makeIntView<propagation::EqualConst>(
+                         solver, mapping.solverId(varNodeId()), lowerBound()));
     return mapping.domainViolationId(varNodeId());
   }
 
   if (_domainType == DomainType::DOM_LOWER_BOUND) {
-    if (solverUb < lowerBound()) {
-      throw std::runtime_error(
-          "Solver var max value is " + std::to_string(solverUb) +
-          " but invariant graph var node is bounded below from " +
-          std::to_string(lowerBound()));
+    if (solverLb >= lowerBound()) {
+      return mapping.domainViolationId(varNodeId());
     }
-    if (solverLb < lowerBound()) {
-      mapping.setDomainViolationId(
-          varNodeId(),
-          solver.makeIntView<propagation::GreaterEqualConst>(
-              solver, mapping.solverId(varNodeId()), lowerBound()));
-    }
+    mapping.setDomainViolationId(
+        varNodeId(), solver.makeIntView<propagation::GreaterEqualConst>(
+                         solver, mapping.solverId(varNodeId()), lowerBound()));
     return mapping.domainViolationId(varNodeId());
   }
 
   if (_domainType == DomainType::DOM_UPPER_BOUND) {
-    if (solverLb > upperBound()) {
-      throw std::runtime_error(
-          "Solver var min value is " + std::to_string(solverLb) +
-          " but invariant graph var node is bounded above from " +
-          std::to_string(upperBound()));
+    if (solverUb <= upperBound()) {
+      return mapping.domainViolationId(varNodeId());
     }
-    if (solverUb > upperBound()) {
-      mapping.setDomainViolationId(
-          varNodeId(),
-          solver.makeIntView<propagation::LessEqualConst>(
-              solver, mapping.solverId(varNodeId()), upperBound()));
-    }
+    mapping.setDomainViolationId(
+        varNodeId(), solver.makeIntView<propagation::LessEqualConst>(
+                         solver, mapping.solverId(varNodeId()), upperBound()));
     return mapping.domainViolationId(varNodeId());
   }
 
   if (_domainType == DomainType::DOM_RANGE) {
-    if (solverUb < lowerBound() || solverLb > upperBound()) {
-      throw std::runtime_error(
-          "Solver var domain range is " + std::to_string(solverLb) + ".." +
-          std::to_string(solverUb) +
-          " but invariant graph var node domain range is " +
-          std::to_string(lowerBound()) + ".." + std::to_string(upperBound()));
+    if (lowerBound() <= solverLb && solverUb <= upperBound()) {
+      return mapping.domainViolationId(varNodeId());
     }
-    if (lowerBound() < solverLb || solverUb < upperBound()) {
-      mapping.setDomainViolationId(
-          varNodeId(), solver.makeIntView<propagation::InIntervalConst>(
-                           solver, mapping.solverId(varNodeId()), lowerBound(),
-                           upperBound()));
-    }
+    mapping.setDomainViolationId(
+        varNodeId(),
+        solver.makeIntView<propagation::InIntervalConst>(
+            solver, mapping.solverId(varNodeId()), lowerBound(), upperBound()));
     return mapping.domainViolationId(varNodeId());
   }
   assert(_domainType == DomainType::DOM_DOMAIN);
 
-  std::vector<DomainEntry> domain =
-      _domain->createDomainEntries(solverLb, solverUb);
-
-  if (domain.empty()) {
-    // The node domain contains the solver domain:
-    assert(lowerBound() <= solverLb && solverUb <= upperBound());
+  if (_domain->contains(solverLb, solverUb)) {
     return mapping.domainViolationId(varNodeId());
   }
+
+  if (_domain->isInterval()) {
+    mapping.setDomainViolationId(
+        varNodeId(),
+        solver.makeIntView<propagation::InIntervalConst>(
+            solver, mapping.solverId(varNodeId()), lowerBound(), upperBound()));
+    return mapping.domainViolationId(varNodeId());
+  }
+
+  std::vector<DomainEntry> domain =
+      _domain->createDomainEntries(lowerBound(), upperBound());
+  assert(!domain.empty());
 
   const size_t interval =
       domain.back().upperBound - domain.front().lowerBound + 1;

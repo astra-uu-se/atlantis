@@ -194,7 +194,7 @@ TEST_P(BoolAllEqualNodeTestFixture, propagation) {
     const bool expected = isViolating();
     if (isReified()) {
       EXPECT_TRUE(varNode(reifiedVar).isFixed());
-      const bool actual = varNode(reifiedVar).inDomain({false});
+      const bool actual = varNode(reifiedVar).inDomain(false);
       EXPECT_EQ(expected, actual);
     }
     if (shouldHold()) {
@@ -248,7 +248,9 @@ TEST_P(BoolAllEqualNodeTestFixture, propagation) {
 
     expectVarVals(inputVarIds, inputVals);
 
-    const bool actual = violVarId == propagation::NULL_ID ? true : _solver->currentValue(violVarId) > 0;
+    const bool actual = violVarId == propagation::NULL_ID
+                            ? true
+                            : _solver->currentValue(violVarId) > 0;
     const bool expected = isViolating(true);
 
     if (!shouldFail()) {

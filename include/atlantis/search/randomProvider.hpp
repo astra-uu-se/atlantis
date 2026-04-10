@@ -23,6 +23,8 @@ class RandomProvider {
 
   Int element(const std::vector<Int>& collection);
 
+  bool boolean();
+
   Int intInRange(Int lowerBound, Int upperBound);
 
   Int intInRange(Int lowerBound, Int upperBound, Int ignoredValue);

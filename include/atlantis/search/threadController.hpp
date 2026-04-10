@@ -1,7 +1,11 @@
 #pragma once
 #include <atomic>
+#include <exception>
+#include <iostream>
 #include <mutex>
 #include <optional>
+#include <string>
+#include <string_view>
 
 #include "annealing/annealingSchedule.hpp"
 #include "bandits/armSelector.hpp"
@@ -17,6 +21,7 @@ class ThreadController {
   size_t _threadCount;
   std::atomic<bool> _hasSolution = false;
   std::atomic<bool> _hasNoViolations = false;
+  std::atomic<bool> _stopRequested = false;
   std::atomic<bool> _curSolutionNotified = true;
   std::atomic<size_t> _curSolutionId = 0;
   std::atomic<size_t> _numFinishedThreads = 0;
@@ -24,13 +29,16 @@ class ThreadController {
   std::optional<Cost> _bestCost;
   std::optional<SavedAssignment> _solution;
   std::vector<std::shared_ptr<SearchStatistics>> _threadStatistics;
+  std::exception_ptr _fatalError;
+  std::optional<Int> _fatalErrorThreadId;
+  std::optional<std::string> _fatalErrorContext;
   std::unique_ptr<ArmSelector> _armSelector;
   std::vector<size_t> _currentArm;
 
   // These are just for statistical tracking purposes
-  Int _counter = 0;
-  Int _counterSet = 0;
-  Int _counterSetSolutions = 0;
+  [[maybe_unused]] Int _counter = 0;
+  [[maybe_unused]] Int _counterSet = 0;
+  [[maybe_unused]] Int _counterSetSolutions = 0;
 
   void setBestSolution(Int threadId, const SavedAssignment& solution);
 
@@ -54,6 +62,17 @@ class ThreadController {
 
   [[nodiscard]] std::optional<std::pair<size_t, SavedAssignment>> loadSolution(
       size_t solutionId) const;
+
+  void recordFatalError(std::exception_ptr error, Int threadId,
+                        std::string_view context);
+
+  void requestStop();
+
+  [[nodiscard]] bool stopRequested() const;
+
+  [[nodiscard]] bool hasFatalError() const;
+
+  void rethrowFatalErrorIfAny() const;
 
   [[gnu::always_inline]] [[nodiscard]] bool hasSolution() const {
     return _hasSolution.load();

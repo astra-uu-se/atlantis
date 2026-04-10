@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/countImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/countConst.hpp"
@@ -126,6 +127,37 @@ void IntCountNode::registerNode(propagation::SolverBase& solver,
           ? mapping.solverId(outputVarNodeIds().front())
           : mapping.intermediateId(id()),
       needle(), std::move(solverVars));
+}
+
+bool IntCountNode::canBeMadeImplicit() const {
+  return state() == InvariantNodeState::ACTIVE && !isReified() &&
+         std::ranges::all_of(staticInputVarNodeIds(),
+                             [&](const auto& id) {
+                               return invariantGraphConst()
+                                   .varNodeConst(id)
+                                   .definingNodes()
+                                   .empty();
+                             }) &&
+         invariantGraphConst()
+             .varNodeConst(outputVarNodeIds().front())
+             .isFixed();
+}
+
+bool IntCountNode::makeImplicit() {
+  if (!canBeMadeImplicit()) {
+    return false;
+  }
+
+  const size_t amount = invariantGraphConst()
+                            .varNodeConst(outputVarNodeIds().front())
+                            .lowerBound() -
+                        _offset;
+
+  invariantGraph().addImplicitConstraintNode(
+      std::make_shared<CountImplicitNode>(
+          invariantGraph(), std::vector<VarNodeId>(staticInputVarNodeIds()),
+          needle(), amount));
+  return true;
 }
 
 std::string IntCountNode::dotLangIdentifier() const {

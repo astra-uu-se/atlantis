@@ -15,7 +15,11 @@ IntLinEqImplicitNode::IntLinEqImplicitNode(InvariantGraph& graph,
                                            Int offset)
     : ImplicitConstraintNode(graph, std::move(inputVars)),
       _coeffs(std::move(coeffs)),
-      _offset(offset) {}
+      _offset(offset) {
+  assert(_coeffs.size() == outputVarNodeIds().size());
+  assert(std::ranges::all_of(_coeffs,
+                             [&](const Int c) { return std::abs(c) == 1; }));
+}
 
 void IntLinEqImplicitNode::init(InvariantNodeId id) {
   ImplicitConstraintNode::init(id);

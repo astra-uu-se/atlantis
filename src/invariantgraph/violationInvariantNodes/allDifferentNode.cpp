@@ -15,6 +15,7 @@
 #include "atlantis/propagation/violationInvariants/allDifferent.hpp"
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -73,8 +74,8 @@ void AllDifferentNode::updateState() {
     unionUb =
         std::max(unionUb, invariantGraph().varNodeConst(vId).upperBound());
   }
-  const Int numVals = unionUb - unionLb + 1;
-  if (numVals < static_cast<Int>(staticInputVarNodeIds().size())) {
+  if (overflow::saturatingIntervalSize(unionLb, unionUb) <
+      staticInputVarNodeIds().size()) {
     if (isReified()) {
       fixReified(false);
     } else if (shouldHold()) {
@@ -112,14 +113,12 @@ void AllDifferentNode::updateState() {
 bool AllDifferentNode::canBeMadeImplicit() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
          shouldHold() &&
-         std::ranges::all_of(staticInputVarNodeIds().begin(),
-                             staticInputVarNodeIds().end(),
-                             [&](const auto& id) {
-                               return invariantGraphConst()
-                                   .varNodeConst(id)
-                                   .definingNodes()
-                                   .empty();
-                             });
+         std::ranges::all_of(staticInputVarNodeIds(), [&](const auto& id) {
+           return invariantGraphConst()
+               .varNodeConst(id)
+               .definingNodes()
+               .empty();
+         });
 }
 
 bool AllDifferentNode::makeImplicit() {

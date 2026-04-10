@@ -14,7 +14,6 @@ class SortedUniqueVector {
   SortedUniqueVector(const SortedUniqueVector&) = default;
   SortedUniqueVector(SortedUniqueVector&&) = default;
   explicit SortedUniqueVector(std::vector<Int>&& vec);
-
   [[nodiscard]] bool isInterval() const noexcept;
   const std::vector<Int>& operator*() const;
 };

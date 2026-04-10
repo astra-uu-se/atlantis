@@ -3,6 +3,7 @@
 #include <fznparser/parser.hpp>
 #include <thread>
 
+#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealing/annealer.hpp"
@@ -12,6 +13,7 @@
 #include "atlantis/search/bandits/ThompsonSampling.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/savedAssignment.hpp"
+#include "atlantis/search/searchController.hpp"
 #include "atlantis/search/threadController.hpp"
 #include "atlantis/solverThread.hpp"
 #include "atlantis/utils/fznOutput.hpp"
@@ -26,9 +28,15 @@ void FznBackend::onSolutionDefault(
   std::cout << "----------" << std::endl;
 }
 
-void FznBackend::onFinishDefault(const bool hasSatisfyingSolution) {
-  if (!hasSatisfyingSolution) {
-    std::cout << "=====UNKNOWN=====\n";
+void FznBackend::onFinishDefault(const SolveOutcome outcome) {
+  switch (outcome) {
+    case SolveOutcome::SATISFIABLE:
+      return;
+    case SolveOutcome::UNSATISFIABLE:
+      std::cout << "=====UNSATISFIABLE=====\n";
+      return;
+    case SolveOutcome::UNKNOWN:
+      std::cout << "=====UNKNOWN=====\n";
   }
 }
 
@@ -38,19 +46,28 @@ void FznBackend::handleSolverNotifications(
 
   while (threadController->numFinishedThreads() < _threadCount) {
     threadController->awaitChanges();
+    if (threadController->hasFatalError()) {
+      threadController->rethrowFatalErrorIfAny();
+    }
+
+#ifndef MORE_STATS
+    if (!threadController->hasNoViolations()) continue;
+#endif
 
     auto result = threadController->loadSolution(solutionId);
-    if (!result.has_value()) {
-      continue;
-    }
+
+    if (!result.has_value()) continue;
 
     solutionId = result.value().first;
     _onSolution(result.value().second, threadController->getStats());
   }
 
+  threadController->rethrowFatalErrorIfAny();
+
   // Ensure the final solution is printed
   // When this runs all search threads have terminated.
-  if (solutionId < threadController->solutionId()) {
+  if (solutionId < threadController->solutionId() &&
+      threadController->hasNoViolations()) {
     std::cout << "printing final solution! (previously printed " << solutionId
               << ", final is " << threadController->solutionId() << ")."
               << std::endl;
@@ -58,7 +75,9 @@ void FznBackend::handleSolverNotifications(
   }
 
   _onFinish(threadController->hasSolution() &&
-            threadController->hasNoViolations());
+                    threadController->hasNoViolations()
+                ? SolveOutcome::SATISFIABLE
+                : SolveOutcome::UNKNOWN);
 }
 
 FznBackend::FznBackend(fznparser::Model&& model,
@@ -121,9 +140,16 @@ void FznBackend::solve(logging::Logger& logger) {
   logger.info("Thread count is {}", _threadCount);
 
   _invariantGraph->open();
-  logger.timedProcedure("building invariant graph",
-                        [&] { _invariantGraph->build(*_model); });
-  _invariantGraph->close();
+  try {
+    logger.timedProcedure("building invariant graph",
+                          [&] { _invariantGraph->build(*_model); });
+    _invariantGraph->close();
+  } catch (const InconsistencyException& e) {
+    logger.warn("Invariant graph construction detected infeasibility: {}",
+                e.what());
+    _onFinish(SolveOutcome::UNSATISFIABLE);
+    return;
+  }
   _fznOutput =
       std::make_unique<FznOutput>(_invariantGraph->generateFznOutput());
 

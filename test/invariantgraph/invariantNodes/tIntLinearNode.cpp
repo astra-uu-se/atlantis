@@ -146,4 +146,37 @@ INSTANTIATE_TEST_CASE_P(
     IntLinearNodeTest, IntLinearNodeTestFixture,
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME}));
 
+TEST(IntLinearNodeRegression, MultiInputOffsetUsesOffsetViewForOutput) {
+  auto solver = std::make_shared<propagation::Solver>();
+  auto graph = std::make_shared<InvariantGraph>();
+  graph->open();
+
+  const auto a =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2), "a");
+  const auto b =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2), "b");
+  const auto out =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 3), "out");
+
+  graph->addInvariantNode(std::make_shared<IntLinearNode>(
+      *graph, std::vector<Int>{1, 1}, std::vector<VarNodeId>{a, b}, out, -1));
+
+  graph->close();
+  auto mapping = std::make_shared<SolverMapping>(graph->construct(*solver));
+
+  const auto outId = mapping->solverId(out);
+  ASSERT_NE(outId, propagation::NULL_ID);
+
+  solver->beginMove();
+  solver->setValue(mapping->solverId(a), 1);
+  solver->setValue(mapping->solverId(b), 2);
+  solver->endMove();
+
+  solver->beginProbe();
+  solver->query(outId);
+  solver->endProbe();
+
+  EXPECT_EQ(solver->currentValue(outId), 2);
+}
+
 }  // namespace atlantis::testing

@@ -18,41 +18,40 @@ static Int getVal(const std::vector<Int>& parVector, Int idx, Int offset) {
 }
 
 static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
-  std::vector<Int> intVec;
-  intVec.reserve(boolVec.size());
-  for (const bool par : boolVec) {
-    intVec.emplace_back(par ? 0 : 1);
+  std::vector<Int> intVec(boolVec.size());
+  for (size_t i = 0; i < boolVec.size(); ++i) {
+    intVec[i] = boolVec[i] ? 0 : 1;
   }
   return intVec;
 }
 
 ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
                                    std::vector<Int>&& parVector, VarNodeId idx,
-                                   VarNodeId output, Int offset,
-                                   bool isIntVector)
+                                   VarNodeId output, Int offset)
     : InvariantNode(graph, {output}, {idx}),
       _parVector(std::move(parVector)),
-      _offset(offset),
-      _isIntVector(isIntVector) {}
+      _offset(offset) {}
 
 ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
                                    std::vector<bool>&& parVector, VarNodeId idx,
                                    VarNodeId output, Int offset)
     : InvariantNode(graph, {output}, {idx}),
       _parVector(toIntVec(std::move(parVector))),
-      _offset(offset),
-      _isIntVector(false) {}
+      _offset(offset) {}
 
 void ArrayElementNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(_isIntVector == invariantGraphConst()
-                             .varNodeConst(outputVarNodeIds().front())
-                             .isIntVar());
+  assert(invariantGraphConst()
+             .varNodeConst(staticInputVarNodeIds().front())
+             .isIntVar());
 }
 
 void ArrayElementNode::updateState() {
   auto& idxNode = invariantGraph().varNode(idx());
   auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
+
+  idxNode.removeValuesBelow(_offset);
+  idxNode.removeValuesAbove(_offset + static_cast<Int>(_parVector.size()) - 1);
 
   if (idxNode.isFixed()) {
     if (outputNode.isIntVar()) {

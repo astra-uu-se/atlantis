@@ -12,6 +12,7 @@
 #include "atlantis/propagation/invariants/intDiv.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -69,19 +70,11 @@ bool IntDivNode::updateNumerator() {
       continue;
     }
     const bool nIsPos = (q >= 0) == (d >= 0);
-    Int prod;
-    if (__builtin_smull_overflow(q, d, &prod)) {
-      if (nIsPos) {
-        prod = std::numeric_limits<Int>::max();
-      } else {
-        prod = std::numeric_limits<Int>::min();
-      }
-    }
+    Int prod = overflow::saturatingMul(q, d);
     assert(prod != 0);
     const Int remainder = std::abs(d) - 1;
     Int sum;
-    if (__builtin_saddl_overflow(prod, prod > 0 ? remainder : -remainder,
-                                 &sum)) {
+    if (overflow::addOverflow(prod, prod > 0 ? remainder : -remainder, &sum)) {
       if (nIsPos) {
         sum = std::numeric_limits<Int>::max();
       } else {
@@ -288,9 +281,9 @@ bool IntDivNode::replace() {
     return true;
   }
   auto& nNode = invariantGraph().varNode(numerator());
-  const auto& qNode = invariantGraph().varNode(quotient());
-  assert((!nNode.isFixed() || !dNode.isFixed()) && qNode.isFixed() &&
-         qNode.lowerBound() == 0);
+  assert((!nNode.isFixed() || !dNode.isFixed()) &&
+         invariantGraph().varNode(quotient()).isFixed() &&
+         invariantGraph().varNode(quotient()).lowerBound() == 0);
   if (!nNode.isFixed() && !dNode.isFixed()) {
     if (nNode.lowerBound() >= 0 && dNode.lowerBound() >= 0) {
       invariantGraph().addInvariantNode(std::make_shared<IntLtNode>(

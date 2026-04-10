@@ -22,24 +22,35 @@ AllDifferent::AllDifferent(SolverBase& solver, VarViewId violationId,
   assert(violationId.isVar());
 }
 
-signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
-  if (value < _offset || static_cast<Int>(_counts.size()) <= value - _offset) {
-    return 0;
+std::optional<size_t> AllDifferent::countIndex(const Int value) const {
+  if (value < _offset) {
+    return std::nullopt;
   }
-  assert(_counts[value - _offset].value(ts) + 1 >= 0);
-  assert(_counts[value - _offset].value(ts) + 1 <=
-         static_cast<Int>(_vars.size()));
-  return _counts[value - _offset].incValue(ts, 1) >= 2 ? 1 : 0;
+  const UInt delta = static_cast<UInt>(value) - static_cast<UInt>(_offset);
+  if (delta >= _counts.size()) {
+    return std::nullopt;
+  }
+  return {delta};
+}
+
+signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
+  const auto index = countIndex(value);
+  if (index.has_value()) {
+    assert(_counts[*index].value(ts) + 1 >= 0);
+    assert(_counts[*index].value(ts) + 1 <= static_cast<Int>(_vars.size()));
+    return _counts[*index].incValue(ts, 1) >= 2 ? 1 : 0;
+  }
+  return 0;
 }
 
 signed char AllDifferent::decreaseCount(Timestamp ts, Int value) {
-  if (value < _offset || static_cast<Int>(_counts.size()) <= value - _offset) {
-    return 0;
+  const auto index = countIndex(value);
+  if (index.has_value()) {
+    assert(_counts[*index].value(ts) - 1 >= 0);
+    assert(_counts[*index].value(ts) - 1 <= static_cast<Int>(_vars.size()));
+    return _counts[*index].incValue(ts, -1) >= 1 ? -1 : 0;
   }
-  assert(_counts[value - _offset].value(ts) - 1 >= 0);
-  assert(_counts[value - _offset].value(ts) - 1 <=
-         static_cast<Int>(_vars.size()));
-  return _counts[value - _offset].incValue(ts, -1) >= 1 ? -1 : 0;
+  return 0;
 }
 
 void AllDifferent::registerVars() {
@@ -81,7 +92,7 @@ void AllDifferent::close(Timestamp ts) {
   if (overlapUb < overlapLb) {
     _counts.clear();
   } else {
-    _counts.resize(static_cast<unsigned long>(overlapUb - overlapLb + 1),
+    _counts.resize(static_cast<size_t>(overlapUb - overlapLb + 1),
                    CommittableInt(ts, 0));
   }
   _offset = overlapLb;

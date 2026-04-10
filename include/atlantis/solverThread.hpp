@@ -34,8 +34,7 @@ class SolverThread {
       fznparser::ProblemType problemType,
       size_t threadId,
       const std::shared_ptr<search::ThreadController>& controller,
-      search::SearchType searchType,
-      std::uint_fast32_t seed,
+      search::SearchType searchType, std::uint_fast32_t seed,
       std::optional<std::chrono::milliseconds> timeLimit,
       const std::shared_ptr<const bool>& shouldStop);
 

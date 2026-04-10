@@ -1,0 +1,36 @@
+{
+  "description": "Guard 2022/yumi-static against empty ordering arrays that modern MiniZinc rejects during evaluation.",
+  "id": "yumi-static-empty-max",
+  "path_globs": [
+    "2022/yumi-static/yumi-static.mzn"
+  ],
+  "rationale": "Some challenge instances leave suction, gripper, or fixture ordering tables empty. Older MiniZinc accepted the model shape, but current MiniZinc errors on max(empty).",
+  "replacements": [
+    {
+      "kind": "literal",
+      "pattern": "int: no_suction_picks = max(index_set_1of2(suction_pick_tasks_orders));",
+      "replacement": "int: no_suction_picks = if card(index_set_1of2(suction_pick_tasks_orders)) = 0 then 0 else max(index_set_1of2(suction_pick_tasks_orders)) endif;"
+    },
+    {
+      "kind": "literal",
+      "pattern": "int: suction_order_lengths = max(index_set_2of2(suction_pick_tasks_orders));",
+      "replacement": "int: suction_order_lengths = if card(index_set_2of2(suction_pick_tasks_orders)) = 0 then 0 else max(index_set_2of2(suction_pick_tasks_orders)) endif;"
+    },
+    {
+      "kind": "literal",
+      "pattern": "int: gripper_order_lengths = max(index_set_2of2(gripper_pick_tasks_orders));",
+      "replacement": "int: gripper_order_lengths = if card(index_set_2of2(gripper_pick_tasks_orders)) = 0 then 0 else max(index_set_2of2(gripper_pick_tasks_orders)) endif;"
+    },
+    {
+      "kind": "literal",
+      "pattern": "int: no_fixtures = max(index_set_1of2(fixture_task_orders));",
+      "replacement": "int: no_fixtures = if card(index_set_1of2(fixture_task_orders)) = 0 then 0 else max(index_set_1of2(fixture_task_orders)) endif;"
+    },
+    {
+      "kind": "literal",
+      "pattern": "int: fixture_order_lengths = max(index_set_2of2(fixture_task_orders));",
+      "replacement": "int: fixture_order_lengths = if card(index_set_2of2(fixture_task_orders)) = 0 then 0 else max(index_set_2of2(fixture_task_orders)) endif;"
+    }
+  ],
+  "semantics_note": "The guards preserve the original maxima when order tables are non-empty and use 0 only for degenerate empty tables that otherwise abort compilation."
+}

@@ -70,8 +70,6 @@ class SolverBase {
 
   [[nodiscard]] inline bool hasChanged(Timestamp, VarId) const;
 
-  [[nodiscard]] bool isPostponed(InvariantId) const;
-
   void recompute(InvariantId);
   void recompute(Timestamp, InvariantId);
 
@@ -223,10 +221,6 @@ inline Int SolverBase::committedValue(VarViewId id) {
 inline Timestamp SolverBase::tmpTimestamp(VarViewId id) const {
   return _store.constIntVar(id.isView() ? sourceId(id) : VarId(id))
       .tmpTimestamp();
-}
-
-inline bool SolverBase::isPostponed(InvariantId invariantId) const {
-  return _store.constInvariant(invariantId).isPostponed();
 }
 
 inline void SolverBase::recompute(InvariantId invariantId) {
