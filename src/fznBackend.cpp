@@ -62,7 +62,8 @@ void FznBackend::handleSolverNotifications(
 
   // Ensure the final solution is printed
   // When this runs all search threads have terminated.
-  if (solutionId < threadController->solutionId()) {
+  if (solutionId < threadController->solutionId() &&
+      threadController->hasNoViolations()) {
     std::cout << "printing final solution! (previously printed " << solutionId
               << ", final is " << threadController->solutionId() << ")."
               << std::endl;
