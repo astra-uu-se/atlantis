@@ -53,7 +53,8 @@ VarNode& FznTestBase::varNode(const std::string& identifier) {
     RC_LOG() << "varNode(\"" << identifier << "\")" << std::endl;
     RC_ASSERT(_invariantGraph->containsVarNode(identifier));
   } else {
-    EXPECT_TRUE(_invariantGraph->containsVarNode(identifier)) << "varNode(\"" << identifier << "\")" << std::endl;
+    EXPECT_TRUE(_invariantGraph->containsVarNode(identifier))
+        << "varNode(\"" << identifier << "\")" << std::endl;
   }
   return _invariantGraph->varNode(identifier);
 }
@@ -62,7 +63,8 @@ const VarNode& FznTestBase::varNodeConst(const std::string& identifier) const {
     RC_LOG() << "varNodeConst(\"" << identifier << "\")" << std::endl;
     RC_ASSERT(_invariantGraph->containsVarNode(identifier));
   } else {
-    EXPECT_TRUE(_invariantGraph->containsVarNode(identifier)) << "varNodeConst(\"" << identifier << "\")" << std::endl;
+    EXPECT_TRUE(_invariantGraph->containsVarNode(identifier))
+        << "varNodeConst(\"" << identifier << "\")" << std::endl;
   }
   return _invariantGraph->varNodeConst(identifier);
 }
@@ -202,20 +204,20 @@ bool FznTestBase::boolVal(const std::string& identifier,
   }
   if (rapidcheck) {
     RC_LOG() << "boolVal(\"" << identifier
-           << "\", committedValue=" << to_string(committedValue)
-           << ") unhandled argument type" << std::endl;
+             << "\", committedValue=" << to_string(committedValue)
+             << ") unhandled argument type" << std::endl;
     RC_FAIL();
   } else {
     ADD_FAILURE() << "boolVal(\"" << identifier
-           << "\", committedValue=" << to_string(committedValue)
-           << ") unhandled argument type" << std::endl;
+                  << "\", committedValue=" << to_string(committedValue)
+                  << ") unhandled argument type" << std::endl;
     return false;
   }
 }
 bool FznTestBase::inDomain(const std::string& identifier, bool val) const {
   if (rapidcheck) {
     RC_LOG() << "inDomain(\"" << identifier << "\", " << to_string(val) << ')'
-           << std::endl;
+             << std::endl;
   }
   if (_invariantGraph->containsVarNode(identifier)) {
     const auto& vNode = varNodeConst(identifier);
@@ -233,8 +235,9 @@ bool FznTestBase::inDomain(const std::string& identifier, bool val) const {
     RC_LOG() << "unhandled argument type" << std::endl;
     RC_FAIL();
   } else {
-    ADD_FAILURE() << "inDomain(\"" << identifier << "\", " << to_string(val) << ')'
-           << std::endl << "unhandled argument type" << std::endl;
+    ADD_FAILURE() << "inDomain(\"" << identifier << "\", " << to_string(val)
+                  << ')' << std::endl
+                  << "unhandled argument type" << std::endl;
     return false;
   }
 }
@@ -292,15 +295,16 @@ Int FznTestBase::intVal(const std::string& identifier,
     RC_FAIL();
   } else {
     ADD_FAILURE() << "intVal(\"" << identifier
-             << "\", committedValue=" << to_string(committedValue)
-             << ") unhandled argument type" << std::endl;
+                  << "\", committedValue=" << to_string(committedValue)
+                  << ") unhandled argument type" << std::endl;
     return 0;
   }
 }
 
 bool FznTestBase::inDomain(const std::string& identifier, Int val) const {
   if (rapidcheck) {
-    RC_LOG() << "inDomain(\"" << identifier << "\", " << val << ')' << std::endl;
+    RC_LOG() << "inDomain(\"" << identifier << "\", " << val << ')'
+             << std::endl;
   }
   if (_invariantGraph->containsVarNode(identifier)) {
     const auto& vNode = varNodeConst(identifier);
@@ -318,7 +322,9 @@ bool FznTestBase::inDomain(const std::string& identifier, Int val) const {
     RC_LOG() << "unhandled argument type" << std::endl;
     RC_FAIL();
   } else {
-    ADD_FAILURE() << "inDomain(\"" << identifier << "\", " << val << ')' << std::endl << "unhandled argument type" << std::endl;
+    ADD_FAILURE() << "inDomain(\"" << identifier << "\", " << val << ')'
+                  << std::endl
+                  << "unhandled argument type" << std::endl;
     return false;
   }
 }
@@ -335,7 +341,8 @@ const std::vector<Int>& FznTestBase::intSetVal(
     RC_LOG() << "unhandled argument type" << std::endl;
     RC_FAIL();
   } else {
-    ADD_FAILURE() << "intSetVal(\"" << identifier << ')' << std::endl << "unhandled argument type" << std::endl;
+    ADD_FAILURE() << "intSetVal(\"" << identifier << ')' << std::endl
+                  << "unhandled argument type" << std::endl;
     throw std::runtime_error("");
   }
 }
@@ -405,36 +412,44 @@ std::shared_ptr<IntVar> FznTestBase::genIntVar(IntArgState state, Int lb,
 void FznTestBase::addBoolPar(const std::string& identifier, bool val) {
   if (rapidcheck) {
     RC_LOG() << "addBoolPar(\"" << identifier << "\", " << to_string(val) << ')'
-           << std::endl;
+             << std::endl;
     RC_ASSERT_FALSE(identifier.empty());
     RC_ASSERT_FALSE(boolPars.contains(identifier));
     RC_ASSERT_FALSE(intPars.contains(identifier));
     RC_ASSERT_FALSE(intSetPars.contains(identifier));
   } else {
-    EXPECT_FALSE(identifier.empty()) << "addBoolPar(\"" << identifier << "\", " << to_string(val) << ')'
-               << std::endl;
-    EXPECT_FALSE(boolPars.contains(identifier)) << "addBoolPar(\"" << identifier << "\", " << to_string(val) << ')'
-               << std::endl;
-    EXPECT_FALSE(intPars.contains(identifier)) << "addBoolPar(\"" << identifier << "\", " << to_string(val) << ')'
-               << std::endl;
-    EXPECT_FALSE(intSetPars.contains(identifier)) << "addBoolPar(\"" << identifier << "\", " << to_string(val) << ')'
-               << std::endl;
+    EXPECT_FALSE(identifier.empty()) << "addBoolPar(\"" << identifier << "\", "
+                                     << to_string(val) << ')' << std::endl;
+    EXPECT_FALSE(boolPars.contains(identifier))
+        << "addBoolPar(\"" << identifier << "\", " << to_string(val) << ')'
+        << std::endl;
+    EXPECT_FALSE(intPars.contains(identifier))
+        << "addBoolPar(\"" << identifier << "\", " << to_string(val) << ')'
+        << std::endl;
+    EXPECT_FALSE(intSetPars.contains(identifier))
+        << "addBoolPar(\"" << identifier << "\", " << to_string(val) << ')'
+        << std::endl;
   }
   boolPars.emplace(identifier, val);
 }
 
 void FznTestBase::addIntPar(const std::string& identifier, Int val) {
   if (rapidcheck) {
-    RC_LOG() << "addIntPar(\"" << identifier << "\", " << val << ')' << std::endl;
+    RC_LOG() << "addIntPar(\"" << identifier << "\", " << val << ')'
+             << std::endl;
     RC_ASSERT_FALSE(identifier.empty());
     RC_ASSERT_FALSE(boolPars.contains(identifier));
     RC_ASSERT_FALSE(intPars.contains(identifier));
     RC_ASSERT_FALSE(intSetPars.contains(identifier));
   } else {
-    EXPECT_FALSE(identifier.empty())  << "addIntPar(\"" << identifier << "\", " << val << ')' << std::endl;
-    EXPECT_FALSE(boolPars.contains(identifier))  << "addIntPar(\"" << identifier << "\", " << val << ')' << std::endl;
-    EXPECT_FALSE(intPars.contains(identifier))  << "addIntPar(\"" << identifier << "\", " << val << ')' << std::endl;
-    EXPECT_FALSE(intSetPars.contains(identifier))  << "addIntPar(\"" << identifier << "\", " << val << ')' << std::endl;
+    EXPECT_FALSE(identifier.empty())
+        << "addIntPar(\"" << identifier << "\", " << val << ')' << std::endl;
+    EXPECT_FALSE(boolPars.contains(identifier))
+        << "addIntPar(\"" << identifier << "\", " << val << ')' << std::endl;
+    EXPECT_FALSE(intPars.contains(identifier))
+        << "addIntPar(\"" << identifier << "\", " << val << ')' << std::endl;
+    EXPECT_FALSE(intSetPars.contains(identifier))
+        << "addIntPar(\"" << identifier << "\", " << val << ')' << std::endl;
   }
   intPars.emplace(identifier, val);
 }
@@ -525,7 +540,7 @@ IntArg FznTestBase::addIntArg(IntArgState state, const std::vector<Int>& dom,
       args.emplace_back(var);
       return var;
     }
-    default:{
+    default: {
       if (rapidcheck) {
         RC_LOG() << "Invalid IntArgState" << std::endl;
         RC_FAIL();
@@ -582,7 +597,7 @@ std::shared_ptr<IntVarArray> FznTestBase::genIntVarArray(
       case IntArgState::VAR:
         vars->append(genIntVar(lb, ub, varPrefix + std::to_string(i)));
         break;
-      default:{
+      default: {
         if (rapidcheck) {
           RC_LOG() << "Invalid IntArgState" << std::endl;
           RC_FAIL();
@@ -620,7 +635,7 @@ std::shared_ptr<BoolVar> FznTestBase::genBoolVar(
       _model->addVar(var);
       return var;
     }
-    default:{
+    default: {
       if (rapidcheck) {
         RC_LOG() << "Invalid BoolArgState" << std::endl;
         RC_FAIL();

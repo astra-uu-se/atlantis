@@ -15,9 +15,9 @@ namespace atlantis::testing {
 
 using namespace atlantis::propagation;
 
+using ::testing::_;
 using ::testing::AtLeast;
 using ::testing::Return;
-using ::testing::_;
 
 class MockInvariantSimple : public Invariant {
  public:
@@ -417,8 +417,7 @@ TEST_F(SolverTest, SimplePropagation) {
 
   for (size_t id = 0; id < 3; ++id) {
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, notifyInputChanged(_, LocalId(id)))
-          .Times(1);
+      EXPECT_CALL(*invariant, notifyInputChanged(_, LocalId(id))).Times(1);
     }
   }
 
@@ -465,8 +464,7 @@ TEST_F(SolverTest, SimpleCommit) {
 
   for (size_t id = 0; id < 3; ++id) {
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, notifyInputChanged(_, LocalId(id)))
-          .Times(1);
+      EXPECT_CALL(*invariant, notifyInputChanged(_, LocalId(id))).Times(1);
     }
   }
 
@@ -475,8 +473,7 @@ TEST_F(SolverTest, SimpleCommit) {
   solver->endProbe();
 
   if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, notifyInputChanged(_, LocalId(0)))
-        .Times(1);
+    EXPECT_CALL(*invariant, notifyInputChanged(_, LocalId(0))).Times(1);
 
     EXPECT_CALL(*invariant, nextInput(_)).Times(0);
 

@@ -156,8 +156,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return ids;
   }
 
-  VarNodeId retrieveIntVarNode(Int lb, Int ub,
-                               const std::string& identifier) {
+  VarNodeId retrieveIntVarNode(Int lb, Int ub, const std::string& identifier) {
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(lb, ub), identifier);
   }
