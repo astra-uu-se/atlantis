@@ -168,7 +168,9 @@ class fzn_table_boolTest : public FznTestBase {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(fzn_table_boolTest, RapidCheck, ()) { rapidCheck(); }
+RC_GTEST_FIXTURE_PROP(fzn_table_boolTest, RapidCheck, ()) {
+  rapidCheck();
+}
 
 class fzn_table_boolRegressionTest : public FznTestBase {
  public:
@@ -203,7 +205,8 @@ class fzn_table_boolRegressionTest : public FznTestBase {
     closeInvariantGraph();
   }
 
-  void SetUp() override { FznTestBase::SetUp(); }
+  void SetUp() override { FznTestBase::SetUp();
+    rapidcheck = false; }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     std::vector<bool> vals(inputs.size());

@@ -157,27 +157,27 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   VarNodeId retrieveIntVarNode(Int lb, Int ub,
-                               const std::string& identifier) const {
+                               const std::string& identifier) {
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(lb, ub), identifier);
   }
 
   VarNodeId retrieveIntVarNode(std::vector<Int>&& vals,
-                               const std::string& identifier) const {
+                               const std::string& identifier) {
     assert(!vals.empty());
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(std::move(vals)), identifier);
   }
 
-  VarNodeId retrieveIntVarNode(Int val) const {
+  VarNodeId retrieveIntVarNode(Int val) {
     return _invariantGraph->retrieveIntVarNode(val);
   }
 
-  VarNodeId retrieveBoolVarNode(const std::string& identifier) const {
+  VarNodeId retrieveBoolVarNode(const std::string& identifier) {
     return _invariantGraph->retrieveBoolVarNode(identifier);
   }
 
-  VarNodeId retrieveBoolVarNode(bool val, const std::string& identifier) const {
+  VarNodeId retrieveBoolVarNode(bool val, const std::string& identifier) {
     return _invariantGraph->retrieveBoolVarNode(val, identifier);
   }
 
@@ -185,7 +185,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->varNodeId(identifier);
   }
 
-  VarNode& varNode(const std::string& identifier) {
+  [[nodiscard]] VarNode& varNode(const std::string& identifier) {
     return _invariantGraph->varNode(identifier);
   }
 

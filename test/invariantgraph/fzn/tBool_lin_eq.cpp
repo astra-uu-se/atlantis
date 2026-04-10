@@ -206,6 +206,8 @@ class bool_lin_eqTest : public FznTestBase {
 RC_GTEST_FIXTURE_PROP(bool_lin_eqTest, RapidCheck, ()) { rapidCheck(); }
 
 TEST_F(bool_lin_eqTest, SupportsVariableBoundOutput) {
+  rapidcheck = false;
+
   coeffs = {1, 1, 1};
   addArg(coeffs);
 

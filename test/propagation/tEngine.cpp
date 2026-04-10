@@ -17,6 +17,7 @@ using namespace atlantis::propagation;
 
 using ::testing::AtLeast;
 using ::testing::Return;
+using ::testing::_;
 
 class MockInvariantSimple : public Invariant {
  public:
@@ -205,8 +206,8 @@ class SolverTest : public ::testing::Test {
     }
 
     for (MockSimplePlus* invariant : invariants) {
-      EXPECT_CALL(*invariant, recompute(::testing::_)).Times(1);
-      EXPECT_CALL(*invariant, commit(::testing::_)).Times(1);
+      EXPECT_CALL(*invariant, recompute(_)).Times(1);
+      EXPECT_CALL(*invariant, commit(_)).Times(1);
     }
 
     solver->close();
@@ -274,9 +275,9 @@ TEST_F(SolverTest, CreateVarsAndInvariant) {
   const auto invariant =
       &solver->makeInvariant<MockInvariantSimple>(*solver, outputVar, inputVar);
 
-  EXPECT_CALL(*invariant, recompute(::testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(*invariant, recompute(_)).Times(AtLeast(1));
 
-  EXPECT_CALL(*invariant, commit(::testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(*invariant, commit(_)).Times(AtLeast(1));
 
   ASSERT_TRUE(invariant->isRegistered);
 
@@ -364,9 +365,9 @@ TEST_F(SolverTest, RecomputeAndCommit) {
   const auto invariant =
       &solver->makeInvariant<MockInvariantSimple>(*solver, outputVar, inputVar);
 
-  EXPECT_CALL(*invariant, recompute(::testing::_)).Times(1);
+  EXPECT_CALL(*invariant, recompute(_)).Times(1);
 
-  EXPECT_CALL(*invariant, commit(::testing::_)).Times(1);
+  EXPECT_CALL(*invariant, commit(_)).Times(1);
 
   ASSERT_TRUE(invariant->isRegistered);
 
@@ -387,9 +388,9 @@ TEST_F(SolverTest, SimplePropagation) {
   const auto invariant = &solver->makeInvariant<MockInvariantAdvanced>(
       *solver, output, std::vector<VarViewId>({a, b, c}));
 
-  EXPECT_CALL(*invariant, recompute(::testing::_)).Times(1);
+  EXPECT_CALL(*invariant, recompute(_)).Times(1);
 
-  EXPECT_CALL(*invariant, commit(::testing::_)).Times(1);
+  EXPECT_CALL(*invariant, commit(_)).Times(1);
 
   solver->close();
 
@@ -416,7 +417,7 @@ TEST_F(SolverTest, SimplePropagation) {
 
   for (size_t id = 0; id < 3; ++id) {
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, LocalId(id)))
+      EXPECT_CALL(*invariant, notifyInputChanged(_, LocalId(id)))
           .Times(1);
     }
   }
@@ -437,23 +438,23 @@ TEST_F(SolverTest, SimpleCommit) {
   const auto invariant = &solver->makeInvariant<MockInvariantAdvanced>(
       *solver, output, std::vector<VarViewId>({a, b, c}));
 
-  EXPECT_CALL(*invariant, recompute(::testing::_)).Times(AtLeast(1));
-  EXPECT_CALL(*invariant, commit(::testing::_)).Times(AtLeast(1));
+  EXPECT_CALL(*invariant, recompute(_)).Times(AtLeast(1));
+  EXPECT_CALL(*invariant, commit(_)).Times(AtLeast(1));
 
   solver->close();
 
   if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, nextInput(::testing::_)).Times(0);
+    EXPECT_CALL(*invariant, nextInput(_)).Times(0);
 
-    EXPECT_CALL(*invariant, notifyCurrentInputChanged(::testing::_)).Times(0);
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(_)).Times(0);
   } else {
-    EXPECT_CALL(*invariant, nextInput(::testing::_))
+    EXPECT_CALL(*invariant, nextInput(_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
         .WillRepeatedly(Return(NULL_ID));
 
-    EXPECT_CALL(*invariant, notifyCurrentInputChanged(::testing::_)).Times(3);
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(_)).Times(3);
   }
 
   solver->beginMove();
@@ -464,7 +465,7 @@ TEST_F(SolverTest, SimpleCommit) {
 
   for (size_t id = 0; id < 3; ++id) {
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, LocalId(id)))
+      EXPECT_CALL(*invariant, notifyInputChanged(_, LocalId(id)))
           .Times(1);
     }
   }
@@ -474,20 +475,20 @@ TEST_F(SolverTest, SimpleCommit) {
   solver->endProbe();
 
   if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, LocalId(0)))
+    EXPECT_CALL(*invariant, notifyInputChanged(_, LocalId(0)))
         .Times(1);
 
-    EXPECT_CALL(*invariant, nextInput(::testing::_)).Times(0);
+    EXPECT_CALL(*invariant, nextInput(_)).Times(0);
 
-    EXPECT_CALL(*invariant, notifyCurrentInputChanged(::testing::_)).Times(0);
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(_)).Times(0);
   } else if (solver->propagationMode() == PropagationMode::OUTPUT_TO_INPUT) {
-    EXPECT_CALL(*invariant, nextInput(::testing::_))
+    EXPECT_CALL(*invariant, nextInput(_))
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
         .WillRepeatedly(Return(NULL_ID));
 
-    EXPECT_CALL(*invariant, notifyCurrentInputChanged(::testing::_)).Times(1);
+    EXPECT_CALL(*invariant, notifyCurrentInputChanged(_)).Times(1);
   }
 
   solver->beginMove();
@@ -890,12 +891,17 @@ TEST_F(SolverTest, CloseHandlesSccMembersWithDifferentExternalInputs) {
   const VarViewId a = solver->makeIntVar(0, 0, 30);
   const VarViewId b = solver->makeIntVar(0, 0, 30);
 
-  solver->makeInvariant<MockSimplePlus>(*solver, layer1, x, x);
-  solver->makeInvariant<MockSimplePlus>(*solver, layer2, layer1, x);
+  auto& i1 = solver->makeInvariant<MockSimplePlus>(*solver, layer1, x, x);
+  auto& i2 = solver->makeInvariant<MockSimplePlus>(*solver, layer2, layer1, x);
   solver->makeInvariant<ElementVar>(*solver, a, idx,
                                     std::vector<VarViewId>{x, b}, 0);
   solver->makeInvariant<ElementVar>(*solver, b, idx,
                                     std::vector<VarViewId>{layer2, a}, 0);
+
+  EXPECT_CALL(i1, recompute(_)).Times(1);
+  EXPECT_CALL(i1, commit(_)).Times(1);
+  EXPECT_CALL(i2, recompute(_)).Times(1);
+  EXPECT_CALL(i2, commit(_)).Times(1);
 
   EXPECT_NO_THROW(solver->close());
 }
@@ -910,12 +916,19 @@ TEST_F(SolverTest, DynamicSccOrderingDoesNotThrowTopologicalOrderError) {
   const VarViewId a = solver->makeIntVar(0, 0, 30);
   const VarViewId b = solver->makeIntVar(0, 0, 30);
 
-  solver->makeInvariant<MockSimplePlus>(*solver, layer1, x, x);
-  solver->makeInvariant<MockSimplePlus>(*solver, layer2, layer1, x);
+  auto& i1 = solver->makeInvariant<MockSimplePlus>(*solver, layer1, x, x);
+  auto& i2 = solver->makeInvariant<MockSimplePlus>(*solver, layer2, layer1, x);
   solver->makeInvariant<ElementVar>(*solver, a, idx,
                                     std::vector<VarViewId>{x, b}, 0);
   solver->makeInvariant<ElementVar>(*solver, b, idx,
                                     std::vector<VarViewId>{layer2, a}, 0);
+
+  EXPECT_CALL(i1, recompute(_)).Times(1);
+  EXPECT_CALL(i1, commit(_)).Times(1);
+  EXPECT_CALL(i1, notifyInputChanged(_, _)).Times(2);
+  EXPECT_CALL(i2, recompute(_)).Times(1);
+  EXPECT_CALL(i2, commit(_)).Times(1);
+  EXPECT_CALL(i2, notifyInputChanged(_, _)).Times(2);
 
   ASSERT_NO_THROW(solver->close());
 

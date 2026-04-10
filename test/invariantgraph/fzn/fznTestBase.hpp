@@ -101,6 +101,7 @@ class FznTestBase : public ::testing::Test {
   std::unordered_map<std::string, Int> intPars;
   std::unordered_map<std::string, bool> boolPars;
   std::unordered_map<std::string, std::vector<Int>> intSetPars;
+  bool rapidcheck{true};
 
   const Int defaultLb = -3;
   const Int defaultUb = 3;

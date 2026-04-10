@@ -176,6 +176,11 @@ class fzn_table_intRegressionTest : public FznTestBase {
   std::string reified{"reified"};
   std::vector<std::vector<Int>> table{{1, 2}, {0, 1}};
 
+  void SetUp() override {
+    FznTestBase::SetUp();
+    rapidcheck = false;
+  }
+
   void generate() override {}
 
   void buildConstraint(const std::string& identifier, bool reifiedConstraint) {
