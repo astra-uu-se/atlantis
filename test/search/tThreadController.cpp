@@ -9,7 +9,7 @@ namespace atlantis::testing {
 using namespace atlantis::search;
 
 TEST(ThreadControllerTest, RethrowsRecordedFatalError) {
-  ThreadController controller(1);
+  ThreadController controller(1, nullptr);
 
   controller.recordFatalError(
       std::make_exception_ptr(std::runtime_error("boom")), 7, "solver thread");
@@ -26,7 +26,7 @@ TEST(ThreadControllerTest, RethrowsRecordedFatalError) {
 }
 
 TEST(ThreadControllerTest, KeepsFirstFatalError) {
-  ThreadController controller(1);
+  ThreadController controller(1, nullptr);
 
   controller.recordFatalError(
       std::make_exception_ptr(std::runtime_error("first")), 1, "first");
@@ -43,7 +43,7 @@ TEST(ThreadControllerTest, KeepsFirstFatalError) {
 }
 
 TEST(ThreadControllerTest, RequestStopMarksControllerStopped) {
-  ThreadController controller(1);
+  ThreadController controller(1, nullptr);
 
   EXPECT_FALSE(controller.stopRequested());
   controller.requestStop();

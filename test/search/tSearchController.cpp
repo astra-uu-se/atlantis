@@ -22,7 +22,7 @@ TEST(SearchControllerTest, StopsWhenThreadControllerRequestsStop) {
 
   Assignment assignment(solver, neighborhood, propagation::NULL_ID,
                         propagation::NULL_ID, ObjectiveDirection::NONE, 0);
-  auto controllerState = std::make_shared<ThreadController>(1);
+  auto controllerState = std::make_shared<ThreadController>(1, nullptr);
   std::shared_ptr<const bool> shouldStop{nullptr};
   SearchController controller(false, std::optional<std::chrono::milliseconds>{},
                               shouldStop, controllerState);
