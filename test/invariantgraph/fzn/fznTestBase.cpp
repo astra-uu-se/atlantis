@@ -949,7 +949,7 @@ void FznTestBase::rapidCheck(bool reachesFixpoint) {
     RC_SUCCEED_IF(!neverSatisfied());
     RC_FAIL();
   }
-  RC_ASSERT(!neverSat);
+  RC_ASSERT_FALSE(neverSat);
   if (alwaysSatisfied()) {
     return;
   }
