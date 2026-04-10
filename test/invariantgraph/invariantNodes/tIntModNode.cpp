@@ -86,7 +86,7 @@ TEST_P(IntModNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(IntModNodeTest, IntModNodeTestFixture,
+INSTANTIATE_TEST_SUITE_P(IntModNodeTest, IntModNodeTestFixture,
                         ::testing::Values(ParamData{
                             InvariantNodeAction::NONE}));
 

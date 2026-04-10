@@ -106,7 +106,7 @@ TEST_P(IntDivNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntDivNodeTest, IntDivNodeTestFixture,
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::REPLACE}));
 

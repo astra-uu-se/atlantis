@@ -139,7 +139,7 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     GlobalCardinalityLowUpNodeTest, GlobalCardinalityLowUpNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},

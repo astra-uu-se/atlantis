@@ -290,7 +290,7 @@ TEST_P(TableInNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TableInNodeTest, TableInNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::REIFIED},
                       ParamData{ViolationInvariantType::CONSTANT_TRUE},

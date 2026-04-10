@@ -263,7 +263,7 @@ TEST_P(TableNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TableNodeTest, TableNodeTestFixture,
     ::testing::Values(ParamData{0}, ParamData{1}, ParamData{2}, ParamData{4},
                       ParamData{5}, ParamData{6},

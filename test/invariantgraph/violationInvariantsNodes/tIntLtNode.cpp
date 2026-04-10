@@ -118,7 +118,7 @@ TEST_P(IntLtNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntLtNodeTest, IntLtNodeTestFixture,
     ::testing::Values(ParamData{},
                       ParamData{InvariantNodeAction::SUBSUME,

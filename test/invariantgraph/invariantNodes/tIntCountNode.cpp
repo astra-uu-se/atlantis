@@ -172,7 +172,7 @@ TEST_P(IntCountNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntCountNodeTest, IntCountNodeTestFixture,
     ::testing::Values(ParamData{int{0}}, ParamData{int{1}},
                       ParamData{InvariantNodeAction::SUBSUME, 0}));

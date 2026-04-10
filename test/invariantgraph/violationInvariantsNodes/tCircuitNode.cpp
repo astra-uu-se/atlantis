@@ -141,7 +141,7 @@ TEST(CircuitNodeRegression, UpdateStateRespectsZeroOffsetForTwoNodeCircuit) {
   EXPECT_EQ(node.state(), InvariantNodeState::SUBSUMED);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CircuitNodeTest, CircuitNodeTestFixture,
     ::testing::Values(ParamData{InvariantNodeAction::MAKE_IMPLICIT},
                       ParamData{InvariantNodeAction::REPLACE}));

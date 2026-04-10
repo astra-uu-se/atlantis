@@ -152,7 +152,7 @@ TEST(ArrayVarElementNodeRegression, FixedIndexAndOutputPruneSelectedChild) {
   EXPECT_TRUE(graph.varNode(x1).inDomain(bool{true}));
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ArrayVarElementNodeTest, ArrayVarElementNodeTestFixture,
     ::testing::Values(ParamData{0}, ParamData{InvariantNodeAction::REPLACE, 0},
                       ParamData{1},

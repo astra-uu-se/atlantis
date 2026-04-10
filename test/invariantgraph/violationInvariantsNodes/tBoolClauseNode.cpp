@@ -218,7 +218,7 @@ TEST_P(BoolClauseNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BoolClauseNodeTest, BoolClauseNodeTestFixture,
     ::testing::Values(ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_TRUE, int{0}},

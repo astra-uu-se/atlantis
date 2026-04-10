@@ -105,7 +105,7 @@ TEST_P(IntPowNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(IntPowNodeTest, IntPowNodeTestFixture,
+INSTANTIATE_TEST_SUITE_P(IntPowNodeTest, IntPowNodeTestFixture,
                         ::testing::Values(ParamData{
                             InvariantNodeAction::NONE}));
 

@@ -169,7 +169,7 @@ TEST_P(BoolLtNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BoolLtNodeTest, BoolLtNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED},
