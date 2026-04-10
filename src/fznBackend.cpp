@@ -46,13 +46,13 @@ void FznBackend::handleSolverNotifications(
       threadController->rethrowFatalErrorIfAny();
     }
 
+#ifndef MORE_STATS
+    if (!threadController->hasNoViolations()) continue;
+#endif
+
     auto result = threadController->loadSolution(solutionId);
 
     if (!result.has_value()) continue;
-
-#ifndef MORE_STATS
-    if (result.value().second.cost().violation() != 0) continue;
-#endif
 
     solutionId = result.value().first;
     _onSolution(result.value().second, threadController->getStats());
