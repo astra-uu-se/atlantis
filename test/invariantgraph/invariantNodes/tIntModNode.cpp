@@ -87,7 +87,7 @@ TEST_P(IntModNodeTestFixture, propagation) {
 }
 
 INSTANTIATE_TEST_SUITE_P(IntModNodeTest, IntModNodeTestFixture,
-                        ::testing::Values(ParamData{
-                            InvariantNodeAction::NONE}));
+                         ::testing::Values(ParamData{
+                             InvariantNodeAction::NONE}));
 
 }  // namespace atlantis::testing

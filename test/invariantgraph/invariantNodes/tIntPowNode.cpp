@@ -106,7 +106,7 @@ TEST_P(IntPowNodeTestFixture, propagation) {
 }
 
 INSTANTIATE_TEST_SUITE_P(IntPowNodeTest, IntPowNodeTestFixture,
-                        ::testing::Values(ParamData{
-                            InvariantNodeAction::NONE}));
+                         ::testing::Values(ParamData{
+                             InvariantNodeAction::NONE}));
 
 }  // namespace atlantis::testing
