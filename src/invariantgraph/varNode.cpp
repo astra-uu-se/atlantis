@@ -22,10 +22,12 @@ std::string toString(VarNodeId varNodeId) {
   return "ATLANTIS_INTRODUCED_" + std::to_string(varNodeId);
 }
 
-VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
-                 bool isIntVar, const std::shared_ptr<SearchDomain>& domain,
-                 DomainType domainType)
+VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
+                 const bool isIntVar, const std::shared_ptr<SearchDomain>& domain,
+                 const ConstraintVarId constraintVarId,
+                 const DomainType domainType)
     : _varNodeId(varNodeId),
+      _constraintSolverId(constraintVarId),
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(domain),
@@ -33,9 +35,11 @@ VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
   assert(_domain != nullptr);
 }
 
-VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
-                 bool isIntVar, DomainType domainType)
+VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
+                 const bool isIntVar, const ConstraintVarId constraintVarId,
+                 const DomainType domainType)
     : _varNodeId(varNodeId),
+      _constraintSolverId(constraintVarId),
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(std::make_shared<SearchDomain>(0, 1)),
@@ -43,8 +47,9 @@ VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
   assert(!isIntVar);
 }
 
-VarNode::VarNode(VarNodeId varNodeId, bool isIntVar, DomainType domainType)
+VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar, const ConstraintVarId constraintVarId, const DomainType domainType)
     : _varNodeId(varNodeId),
+      _constraintSolverId(constraintVarId),
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(std::make_shared<SearchDomain>(0, 1)),
@@ -52,10 +57,12 @@ VarNode::VarNode(VarNodeId varNodeId, bool isIntVar, DomainType domainType)
   assert(!isIntVar);
 }
 
-VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
+VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar,
                  const std::shared_ptr<SearchDomain>& domain,
-                 DomainType domainType)
+                 const ConstraintVarId constraintVarId,
+                 const DomainType domainType)
     : _varNodeId(varNodeId),
+      _constraintSolverId(constraintVarId),
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(domain),
@@ -64,6 +71,8 @@ VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
 }
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
+
+ConstraintVarId VarNode::constraintVarId() const noexcept { return _constraintSolverId; }
 
 std::shared_ptr<const SearchDomain> VarNode::constDomain() const noexcept {
   return _domain;

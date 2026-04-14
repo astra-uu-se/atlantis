@@ -3,8 +3,9 @@
 #include <array>
 #include <memory>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
+#include "atlantis/utils/gecode_compat.hpp"
+#include <gecode/kernel.hh>
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/solverMapping.hpp"
@@ -22,6 +23,7 @@ class NeighborhoodCombinator;
 }
 
 namespace atlantis::invariantgraph {
+class ConstraintSolver;
 class InvariantGraphRoot;
 class VarNode;
 class InvariantNode;
@@ -32,9 +34,11 @@ class InvariantGraph {
   std::unordered_map<std::string, VarNodeId> _namedVarNodeIndices;
   std::unordered_map<Int, VarNodeId> _intVarNodeIndices;
   std::array<VarNodeId, 2> _boolVarNodeIndices;
+  std::shared_ptr<ConstraintSolver> _constraintSolver;
 
   std::vector<std::shared_ptr<InvariantNode>> _invariantNodes;
   std::vector<std::shared_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
+
   bool _breakDynamicCycles;
   bool _isOpen{false};
 

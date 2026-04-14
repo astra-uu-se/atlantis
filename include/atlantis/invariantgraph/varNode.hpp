@@ -24,6 +24,7 @@ namespace atlantis::invariantgraph {
 
 class VarNode {
   VarNodeId _varNodeId;
+  ConstraintVarId _constraintSolverId{NULL_NODE_ID};
   bool _isIntVar;
   DomainType _domainType{DomainType::DOM_DOMAIN};
   std::shared_ptr<SearchDomain> _domain;
@@ -36,20 +37,26 @@ class VarNode {
 
  public:
   explicit VarNode(VarNodeId, bool isIntVar,
+                   ConstraintVarId constraintVarId = NULL_NODE_ID,
                    DomainType = DomainType::DOM_RANGE);
 
   explicit VarNode(VarNodeId, bool isIntVar,
                    const std::shared_ptr<SearchDomain>& domain,
+                   ConstraintVarId constraintVarId = NULL_NODE_ID,
                    DomainType = DomainType::DOM_DOMAIN);
 
   explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
+  ConstraintVarId constraintVarId = NULL_NODE_ID,
                    DomainType = DomainType::DOM_RANGE);
 
   explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
                    const std::shared_ptr<SearchDomain>& domain,
+                   ConstraintVarId constraintVarId = NULL_NODE_ID,
                    DomainType = DomainType::DOM_DOMAIN);
 
   VarNodeId varNodeId() const noexcept;
+
+  ConstraintVarId constraintVarId() const noexcept;
 
   [[nodiscard]] std::shared_ptr<const SearchDomain> constDomain()
       const noexcept;

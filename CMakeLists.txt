@@ -177,6 +177,65 @@ option(FMT_INSTALL "Enable install for fmt project" ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(Gecode 6.0 REQUIRED COMPONENTS Driver Int Kernel Search)
+
+if(NOT GECODE_LIBRARIES)
+  message("Gecode not found, installing.")
+  set(_atlantis_gecode_source_dir "${CPM_SOURCE_CACHE}/gecode-6.2.0")
+  file(MAKE_DIRECTORY "${_atlantis_gecode_source_dir}/build")
+
+  set(GECODE_INCLUDE "${CPM_SOURCE_CACHE}/gecode")
+  file(MAKE_DIRECTORY "${GECODE_INCLUDE}")
+
+  execute_process(COMMAND ${CMAKE_COMMAND} -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ${CMAKE_CXX_FLAGS} -S ${_atlantis_gecode_source_dir} -B ${_atlantis_gecode_source_dir}/build
+          WORKING_DIRECTORY "${_atlantis_gecode_source_dir}"
+          RESULT_VARIABLE _atlantis_gecode_generate_result)
+  if(NOT _atlantis_gecode_generate_result EQUAL 0)
+    message(FATAL_ERROR "Failed to generate Gecode cmake: ${_atlantis_gecode_generate_result}")
+  endif()
+  include(ProcessorCount)
+  ProcessorCount(NUM_PROCESSORS)
+  if(NUM_PROCESSORS LESS 0)
+    set(NUM_PROCESSORS 1)
+    elif(NUM_PROCESSORS GREATER 16)
+    set(NUM_PROCESSORS 16)
+  endif()
+
+  execute_process(COMMAND ${CMAKE_COMMAND} --build "${_atlantis_gecode_source_dir}/build" --target fzn-gecode -j ${NUM_PROCESSORS}
+          WORKING_DIRECTORY "${_atlantis_gecode_source_dir}"
+          RESULT_VARIABLE _atlantis_gecode_build_result)
+  if(NOT _atlantis_gecode_build_result EQUAL 0)
+    message(FATAL_ERROR "Failed to build Gecode: ${_atlantis_gecode_build_result}")
+  endif()
+
+  set(_atlantis_gecode_install_result 0)
+  foreach(NUM_TRIES RANGE 1 5)
+    execute_process(COMMAND ${CMAKE_COMMAND} --install "${_atlantis_gecode_source_dir}/build" --prefix "${GECODE_LIBRARIES}"
+            WORKING_DIRECTORY "${_atlantis_gecode_source_dir}"
+            OUTPUT_QUIET
+            RESULT_VARIABLE _atlantis_gecode_install_result)
+    if(NOT _atlantis_gecode_install_result EQUAL 0)
+      message(WARNING "Failed to install Gecode: ${_atlantis_gecode_install_result}, attempt ${NUM_TRIES}.")
+    else()
+      break()
+    endif()
+  endforeach()
+  if(NOT _atlantis_gecode_install_result EQUAL 0)
+    message(FATAL_ERROR "Failed to install Gecode: ${_atlantis_gecode_install_result}")
+  else()
+    message("Successfully installed Gecode")
+  endif()
+  find_package(Gecode 6.2 REQUIRED COMPONENTS Driver Int Kernel Search)
+endif()
+
+# Link Gecode to target test
+message("GECODE_FOUND: ${GECODE_FOUND}")
+message("GECODE_INCLUDE_DIRS: ${GECODE_INCLUDE_DIRS}")
+message("GECODE_LIBRARIES: ${GECODE_LIBRARIES}")
+message("GECODE_TARGETS: ${GECODE_TARGETS}")
+target_link_libraries(${PROJECT_LIB} Gecode::Driver Gecode::Int Gecode::Kernel Gecode::Search)
+
 include(FetchContent)
 FetchContent_Declare(
   fznparser
