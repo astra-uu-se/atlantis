@@ -24,13 +24,21 @@ InvariantNode::InvariantNode(InvariantGraph& invariantGraph,
 
 InvariantGraph& InvariantNode::invariantGraph() { return _invariantGraph; }
 
+ConstraintSolver& InvariantNode::constraintSolver() const { return _invariantGraph.constraintSolver(); }
+
 void InvariantNode::setState(const InvariantNodeState state) { _state = state; }
 
 const InvariantGraph& InvariantNode::invariantGraphConst() const {
   return _invariantGraph;
 }
 
+const ConstraintSolver& InvariantNode::constraintSolverConst() const {
+  return _invariantGraph.constraintSolverConst();
+}
+
 InvariantNodeId InvariantNode::id() const { return _id; }
+
+void InvariantNode::postConstraint() {}
 
 bool InvariantNode::isReified() const { return false; }
 

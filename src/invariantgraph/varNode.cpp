@@ -74,6 +74,15 @@ VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
 ConstraintVarId VarNode::constraintVarId() const noexcept { return _constraintSolverId; }
 
+void VarNode::setConstraintVarId(const ConstraintVarId constraintVarId) {
+  assert(_constraintSolverId == NULL_NODE_ID);
+  _constraintSolverId = constraintVarId;
+}
+
+void VarNode::replaceDomain(SearchDomain&& newDomain) {
+  _domain = std::make_shared<SearchDomain>(std::move(newDomain));
+}
+
 std::shared_ptr<const SearchDomain> VarNode::constDomain() const noexcept {
   return _domain;
 }

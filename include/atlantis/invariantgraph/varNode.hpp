@@ -27,7 +27,7 @@ class VarNode {
   ConstraintVarId _constraintSolverId{NULL_NODE_ID};
   bool _isIntVar;
   DomainType _domainType{DomainType::DOM_DOMAIN};
-  std::shared_ptr<SearchDomain> _domain;
+  std::shared_ptr<SearchDomain> _domain{nullptr};
 
   std::vector<InvariantNodeId> _staticInputTo;
   std::vector<InvariantNodeId> _dynamicInputTo;
@@ -46,7 +46,7 @@ class VarNode {
                    DomainType = DomainType::DOM_DOMAIN);
 
   explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
-  ConstraintVarId constraintVarId = NULL_NODE_ID,
+                   ConstraintVarId constraintVarId = NULL_NODE_ID,
                    DomainType = DomainType::DOM_RANGE);
 
   explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
@@ -57,6 +57,10 @@ class VarNode {
   VarNodeId varNodeId() const noexcept;
 
   ConstraintVarId constraintVarId() const noexcept;
+
+  void setConstraintVarId(ConstraintVarId constraintVarId);
+
+  void replaceDomain(SearchDomain&&);
 
   [[nodiscard]] std::shared_ptr<const SearchDomain> constDomain()
       const noexcept;

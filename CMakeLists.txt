@@ -234,6 +234,7 @@ message("GECODE_FOUND: ${GECODE_FOUND}")
 message("GECODE_INCLUDE_DIRS: ${GECODE_INCLUDE_DIRS}")
 message("GECODE_LIBRARIES: ${GECODE_LIBRARIES}")
 message("GECODE_TARGETS: ${GECODE_TARGETS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}-Wl,--copy-dt-needed-entries")
 target_link_libraries(${PROJECT_LIB} Gecode::Driver Gecode::Int Gecode::Kernel Gecode::Search)
 
 include(FetchContent)

@@ -246,8 +246,15 @@ InvariantGraph::InvariantGraph(const bool breakDynamicCycles)
       _constraintSolver(std::make_shared<ConstraintSolver>()),
       _breakDynamicCycles(breakDynamicCycles),
       _objectiveVarNodeId{NULL_NODE_ID}{
+  for (const VarNodeId bVarId : _boolVarNodeIndices) {
+    varNode(bVarId).setConstraintVarId(_constraintSolver->newBoolVar(varNode(bVarId).inDomain(true)));
+  }
   addImplicitConstraintNode(std::make_shared<InvariantGraphRoot>(*this));
 }
+
+ConstraintSolver& InvariantGraph::constraintSolver() { return *_constraintSolver; }
+
+const ConstraintSolver& InvariantGraph::constraintSolverConst() const { return *_constraintSolver; }
 
 VarNodeId InvariantGraph::nextVarNodeId() const {
   return VarNodeId{_varNodes.size()};
@@ -612,6 +619,7 @@ InvariantNodeId InvariantGraph::addInvariantNode(
   const InvariantNodeId id = nextInvariantNodeId();
   const auto& invNode = _invariantNodes.emplace_back(std::move(node));
   invNode->init(id);
+  invNode->postConstraint();
   return invNode->id();
 }
 
@@ -712,6 +720,7 @@ InvariantNodeId InvariantGraph::addImplicitConstraintNode(
   const InvariantNodeId id = nextImplicitNodeId();
   const auto& implNode = _implicitConstraintNodes.emplace_back(std::move(node));
   implNode->init(id);
+  implNode->postConstraint();
   return implNode->id();
 }
 
@@ -1126,6 +1135,9 @@ void InvariantGraph::close() {
   if (!isOpen()) {
     return;
   }
+  _constraintSolver->fixPoint();
+  sanity(false);
+  updateDomains();
   sanity(false);
   replaceInvariantNodes();
   sanity(false);
@@ -1139,6 +1151,16 @@ void InvariantGraph::close() {
   sanity(true);
   breakCycles();
   sanity(true);
+}
+
+void InvariantGraph::updateDomains() {
+  for (auto& varNode : _varNodes) {
+    if (varNode.isIntVar()) {
+      varNode.replaceDomain(_constraintSolver->intVarDomain(varNode.constraintVarId()));
+    } else {
+      varNode.replaceDomain(_constraintSolver->boolVarDomain(varNode.constraintVarId()));
+    }
+  }
 }
 
 void InvariantGraph::sanity([[maybe_unused]] bool oneDefInv) {

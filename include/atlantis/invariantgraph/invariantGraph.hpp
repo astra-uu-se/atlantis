@@ -54,6 +54,9 @@ class InvariantGraph {
 
   propagation::VarViewId createViolations(propagation::SolverBase&,
                                           SolverMapping&) const;
+
+  void updateDomains();
+
   void sanity(bool);
 
  protected:
@@ -67,6 +70,10 @@ class InvariantGraph {
 
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
+
+  [[nodiscard]] ConstraintSolver& constraintSolver();
+
+  [[nodiscard]] const ConstraintSolver& constraintSolverConst() const;
 
   [[nodiscard]] virtual VarNodeId nextVarNodeId() const;
 

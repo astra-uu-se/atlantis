@@ -5,6 +5,7 @@
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/types.hpp"
+#include "constraintSolver.hpp"
 #include "solverMapping.hpp"
 
 namespace atlantis::propagation {
@@ -41,9 +42,17 @@ class InvariantNode {
 
   [[nodiscard]] InvariantGraph& invariantGraph();
 
+  [[nodiscard]] ConstraintSolver& constraintSolver() const;
+
   [[nodiscard]] const InvariantGraph& invariantGraphConst() const;
 
+  [[nodiscard]] const ConstraintSolver& constraintSolverConst() const;
+
   [[nodiscard]] InvariantNodeId id() const;
+
+  virtual void init(InvariantNodeId);
+
+  virtual void postConstraint();
 
   [[nodiscard]] virtual bool isReified() const;
 
@@ -77,8 +86,6 @@ class InvariantNode {
   [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds() const;
 
   void setState(InvariantNodeState);
-
-  virtual void init(InvariantNodeId);
 
   void deactivate();
 

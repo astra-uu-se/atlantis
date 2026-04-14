@@ -43,51 +43,52 @@ void ArrayBoolAndNode::init(InvariantNodeId id) {
       }));
 }
 
+void ArrayBoolAndNode::postConstraint() {
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size());
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
+    inputs[i] = invariantGraphConst().varNodeConst(staticInputVarNodeIds()[i]).constraintVarId();
+  }
+  if (isReified()) {
+    constraintSolver().array_bool_and(inputs, invariantGraphConst().varNodeConst(outputVarNodeIds().front()).constraintVarId());
+  } else {
+    constraintSolver().array_bool_and(inputs, shouldHold());
+  }
+}
+
 void ArrayBoolAndNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (!isReified() && shouldHold()) {
-    for (const auto& vId : staticInputVarNodeIds()) {
-      invariantGraph().varNode(vId).fixToValue(bool{true});
+
+  // Constraint has subsumed:
+  if (!isReified()) {
+    bool alwaysHolds = false;;
+    if (shouldHold()) {
+      alwaysHolds = std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isFixed() && invariantGraphConst().varNodeConst(vId).inDomain(true);
+      });
+    } else {
+      alwaysHolds = std::ranges::any_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isFixed() && invariantGraphConst().varNodeConst(vId).inDomain(false);
+      });
     }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
+    if (alwaysHolds) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
   }
 
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
-  // remove fixed inputs that are true:
   for (const auto& id : staticInputVarNodeIds()) {
     if (invariantGraphConst().varNodeConst(id).isFixed()) {
-      if (invariantGraphConst().varNodeConst(id).inDomain(bool{true})) {
-        varsToRemove.emplace_back(id);
-      } else if (isReified()) {
-        fixReified(false);
-      } else if (shouldHold()) {
-        throw InconsistencyException(
-            "ArrayBoolAndNode::updateState constraint is violated");
-      } else {
-        setState(InvariantNodeState::SUBSUMED);
-        return;
-      }
+      varsToRemove.emplace_back(id);
     }
   }
-
   for (const auto& id : varsToRemove) {
     removeStaticInputVarNode(id);
   }
+  assert(!staticInputVarNodeIds().empty());
 
   if (staticInputVarNodeIds().empty()) {
-    if (isReified()) {
-      fixReified(true);
-    } else if (!shouldHold()) {
-      throw InconsistencyException(
-          "ArrayBoolAndNode::updateState constraint is violated");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-  } else if (staticInputVarNodeIds().size() == 1 && !isReified()) {
-    auto& inputNode = invariantGraph().varNode(staticInputVarNodeIds().front());
-    inputNode.fixToValue(shouldHold());
-    removeStaticInputVarNode(inputNode.varNodeId());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
