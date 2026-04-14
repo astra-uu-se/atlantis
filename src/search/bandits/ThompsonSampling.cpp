@@ -15,7 +15,11 @@ ThompsonSampling::ThompsonSampling(
   _meanMoves = std::vector(_numArms, 0.0);
   _meanImprovingMoves = std::vector(_numArms, 0.0);
   _meanRounds = std::vector(_numArms, 0.0);
-  _meanRewards = std::vector(_numArms, 0.0);
+
+  _meanRewards = std::vector<std::shared_ptr<Reward>>(_numArms);
+  for (size_t i = 0; i < _numArms; ++i) {
+    _meanRewards[i] = _rewardFactory->initAverageReward();
+  }
 }
 
 
@@ -29,8 +33,8 @@ void ThompsonSampling::recordArmStats(const size_t arm,
   printf("Arm %ld got result %ld and cost %s.\n", arm, stats.improvingSolutions, stats._pullBestCost.value().toString().c_str());
 
   std::lock_guard lock(_lock);
-  const double reward = _armStats[arm].addResult(stats);
-  _alpha[arm] += reward;
+  const std::shared_ptr<Reward> reward = _armStats[arm].addResult(stats);
+  _alpha[arm] += reward->getDouble().value();
   _beta[arm]++;
   _totalRecordedPulls++;
 
@@ -40,7 +44,7 @@ void ThompsonSampling::recordArmStats(const size_t arm,
   _meanMoves[arm] = calcNewMean(_meanMoves[arm], stats._roundStatistics.value()->acceptedMoves, n);
   _meanImprovingMoves[arm] = calcNewMean(_meanImprovingMoves[arm], stats._roundStatistics.value()->improvingMoves, n);
   _meanRounds[arm] = calcNewMean(_meanRounds[arm], stats._roundStatistics.value()->rounds, n);
-  _meanRewards[arm] = calcNewMean(_meanRewards[arm], reward, n);
+  _meanRewards[arm]->updateAverage(reward, n);
 }
 
 
@@ -74,9 +78,9 @@ void ThompsonSampling::printStats() const {
   for (size_t arm = 0; arm < _numArms; arm++) {
     const auto a = _armStats[arm];
     printf("Arm %ld was chosen %ld times with %.1f avg time (ms).\n"
-           "\tAverages: probes %.f, moves %.f, improving moves %.f, rounds %.f, rewards %.f. \n",
+           "\tAverages: probes %.f, moves %.f, improving moves %.f, rounds %.f, rewards %s. \n",
            arm, a.timesChosen, a.runTime / a.timesChosen / 1000,
-           _meanProbes[arm], _meanMoves[arm], _meanImprovingMoves[arm], _meanRounds[arm], _meanRewards[arm]);
+           _meanProbes[arm], _meanMoves[arm], _meanImprovingMoves[arm], _meanRounds[arm], _meanRewards[arm]->toString().c_str());
   }
 }
 

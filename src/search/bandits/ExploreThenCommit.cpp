@@ -7,7 +7,10 @@ namespace atlantis::search {
 ExploreThenCommit::ExploreThenCommit(
     const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory)
     : ArmSelector(annealingScheduleFactory) {
-  _means = std::vector<double>(_numArms, 0);
+  _means = std::vector<std::shared_ptr<Reward>>(_numArms);
+  for (size_t i = 0; i < _numArms; ++i) {
+    _means[i] = _rewardFactory->initAverageReward();
+  }
 }
 
 
@@ -15,10 +18,8 @@ void ExploreThenCommit::recordArmStats(const size_t arm,
                     const PullResults& stats) {
   printf("Arm %ld got result %ld and cost %s.\n", arm, stats.improvingSolutions, stats._pullBestCost.value().toString().c_str());
   std::lock_guard lock(_lock);
-  double reward = _armStats[arm].addResult(stats);
-
-  double newMean = (_means[arm] * (size(_armStats[arm].rewards) - 1) + reward) / size(_armStats[arm].rewards) ;
-  _means[arm] = newMean;
+  const std::shared_ptr<Reward> reward = _armStats[arm].addResult(stats);
+  _means[arm]->updateAverage(reward, size(_armStats[arm].rewards));
 }
 
 
@@ -49,7 +50,9 @@ std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> ExploreThenCommit::choose
   _armStats[arm].timesChosen++;
   _lock.unlock();
 
-  printf("  Choosing arm %ld. Arm means [%.4f, %.4f], times chosen [%ld, %ld].\n", arm, _means[0], _means[1], _armStats[0].timesChosen, _armStats[1].timesChosen);
+  // printf("  Choosing arm %ld. Arm means [%s, %s], times chosen [%ld, %ld].\n",
+  //   arm, _means[0]->toString().c_str(), _means[1]->toString().c_str(),
+  //   _armStats[0].timesChosen, _armStats[1].timesChosen);
   return std::make_tuple(_annealingScheduleFactory->create(arm), arm);
 }
 

@@ -13,7 +13,7 @@ class ThompsonSampling : public ArmSelector {
   std::vector<double> _meanMoves;
   std::vector<double> _meanImprovingMoves;
   std::vector<double> _meanRounds;
-  std::vector<double> _meanRewards;
+  std::vector<std::shared_ptr<Reward>> _meanRewards;
 
   size_t _totalRecordedPulls = 0;
 

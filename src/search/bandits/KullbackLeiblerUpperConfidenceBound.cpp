@@ -63,23 +63,26 @@ void KullbackLeiblerUpperConfidenceBound::recordArmStats(const size_t arm, const
   std::lock_guard lock(_lock);
   _totalRecordedPulls++;
 
-  double reward = _armStats[arm].addResult(stats);
+  // TODO: Temp fix: This needs to be refactored completely, moving things into the reward structure.
+
+  std::shared_ptr<Reward> reward = _armStats[arm].addResult(stats);
 
   // Really bad solution to make a Bernoulli-ish reward
   // TODO: Come up with something better
+  double rewardValue;
   if (stats._pullBestCost.value().objective() < _bestCost) {
     printf("Arm %ld found new best solution with cost %ld. Previous best %ld.\n", arm, stats._pullBestCost.value().objective(), _bestCost);
     _bestCost = stats._pullBestCost.value().objective();
-    reward = 1;
+    rewardValue = 1;
   }
   else {
-    reward = 0;
+    rewardValue = 0;
   }
 
   _armStats[arm].timesChosen++;
   const size_t n = _armStats[arm].timesChosen;
 
-  _meanRewards[arm] = calcNewMean(_meanRewards[arm], reward, n);
+  _meanRewards[arm] = calcNewMean(_meanRewards[arm], rewardValue, n);
 
   // Stats stuff - not necessary for the solver.
   _meanProbes[arm] = calcNewMean(_meanProbes[arm], stats._roundStatistics.value()->attemptedMoves, n);
@@ -88,7 +91,7 @@ void KullbackLeiblerUpperConfidenceBound::recordArmStats(const size_t arm, const
   _meanRounds[arm] = calcNewMean(_meanRounds[arm], stats._roundStatistics.value()->rounds, n);
 
   printf("Arm %ld got reward %0.2f and cost %s. Mean reward %f for %ld recorded pulls.\n",
-    arm, reward, stats._pullBestCost.value().toString().c_str(),
+    arm, rewardValue, stats._pullBestCost.value().toString().c_str(),
     _meanRewards[arm], _armStats[arm].timesChosen);
 }
 
