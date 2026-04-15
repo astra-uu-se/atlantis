@@ -129,20 +129,18 @@ Gecode::Space* ConstraintSolver::copy() {
 void ConstraintSolver::array_bool_rel(const std::vector<ConstraintVarId>& inputs,
                                       const ConstraintVarId reified,
                                       const Gecode::BoolOpType op) {
-  rel(*this, op, boolVarArgs(inputs), boolVar(reified));
+  rel(*this, op, boolVarArgs(inputs), boolVar(reified), Gecode::IPL_BND);
 }
 
 void ConstraintSolver::array_bool_rel(const std::vector<ConstraintVarId>& inputs,
                                       const bool shouldHold,
                                       const Gecode::BoolOpType op) {
-  rel(*this, op, boolVarArgs(inputs), shouldHold ? 1 : 0);
+  rel(*this, op, boolVarArgs(inputs), shouldHold ? 1 : 0, Gecode::IPL_BND);
 }
 
 void ConstraintSolver::array_bool_and(const std::vector<ConstraintVarId>& inputs,
                                       const ConstraintVarId reified) {
-  for (const ConstraintVarId& vId : inputs) {
-    rel(*this, boolVar(vId), Gecode::BOT_IMP, boolVar(reified), 1, Gecode::IPL_VAL);
-  }
+  array_bool_rel(inputs, reified, Gecode::BOT_AND);
 }
 
 void ConstraintSolver::array_bool_and(const std::vector<ConstraintVarId>& inputs,
@@ -180,7 +178,7 @@ void ConstraintSolver::array_bool_element2d(const ConstraintVarId& rowIndex, con
 
 void ConstraintSolver::array_bool_or(const std::vector<ConstraintVarId>& inputs,
                                       const ConstraintVarId reified) {
-  clause(*this, Gecode::BOT_OR, boolVarArgs(inputs), Gecode::BoolVarArgs()<<boolVar(reified), 1, Gecode::IPL_VAL);
+  array_bool_rel(inputs, reified, Gecode::BOT_OR);
 }
 
 void ConstraintSolver::array_bool_or(const std::vector<ConstraintVarId>& inputs,
@@ -190,9 +188,7 @@ void ConstraintSolver::array_bool_or(const std::vector<ConstraintVarId>& inputs,
 
 void ConstraintSolver::array_bool_xor(const std::vector<ConstraintVarId>& inputs,
                                       const ConstraintVarId reified) {
-  Gecode::BoolVar tmp(*this, 0, 1);
-  rel(*this, Gecode::BOT_XOR, boolVarArgs(inputs), tmp, Gecode::IPL_VAL);
-  rel(*this, boolVar(reified), Gecode::BOT_IMP, tmp, 1);
+  array_bool_rel(inputs, reified, Gecode::BOT_XOR);
 }
 
 void ConstraintSolver::array_bool_xor(const std::vector<ConstraintVarId>& inputs,

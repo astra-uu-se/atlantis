@@ -55,8 +55,6 @@ class InvariantGraph {
   propagation::VarViewId createViolations(propagation::SolverBase&,
                                           SolverMapping&) const;
 
-  void updateDomains();
-
   void sanity(bool);
 
  protected:
@@ -163,6 +161,8 @@ class InvariantGraph {
   [[nodiscard]] InvariantNodeId nextImplicitNodeId() const;
 
   InvariantNodeId addInvariantNode(std::shared_ptr<InvariantNode>&&);
+
+  void updateDomains();
 
   /**
    * @brief replaces the given old VarNode with the new VarNode in

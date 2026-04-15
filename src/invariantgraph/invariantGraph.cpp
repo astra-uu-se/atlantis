@@ -1154,11 +1154,19 @@ void InvariantGraph::close() {
 }
 
 void InvariantGraph::updateDomains() {
+  std::array<std::vector<std::shared_ptr<SearchDomain>>, 2> domains{std::vector<std::shared_ptr<SearchDomain>>(_constraintSolver->numIntVars(), nullptr), std::vector<std::shared_ptr<SearchDomain>>(_constraintSolver->numBoolVars(), nullptr)};
+  for (size_t i = 0; i < _constraintSolver->numIntVars(); i++) {
+    domains[0][i] = std::make_shared<SearchDomain>(_constraintSolver->intVarDomain(i));
+  }
+  for (size_t i = 0; i < _constraintSolver->numBoolVars(); i++) {
+    domains[1][i] = std::make_shared<SearchDomain>(_constraintSolver->boolVarDomain(i));
+  }
+
   for (auto& varNode : _varNodes) {
     if (varNode.isIntVar()) {
-      varNode.replaceDomain(_constraintSolver->intVarDomain(varNode.constraintVarId()));
+      varNode.replaceDomain(domains[0][varNode.constraintVarId()]);
     } else {
-      varNode.replaceDomain(_constraintSolver->boolVarDomain(varNode.constraintVarId()));
+      varNode.replaceDomain(domains[1][varNode.constraintVarId()]);
     }
   }
 }

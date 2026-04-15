@@ -67,6 +67,8 @@ class ViolationInvariantNode : public InvariantNode {
 
   [[nodiscard]] VarNodeId reifiedViolationNodeId() const;
 
+  void postConstraint() override;
+
   void updateState() override;
 };
 

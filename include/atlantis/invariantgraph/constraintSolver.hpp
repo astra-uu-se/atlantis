@@ -40,6 +40,9 @@ class ConstraintSolver : public Gecode::Space {
     /// Destructor
     ~ConstraintSolver() override = default;
 
+    [[nodiscard]] size_t numIntVars() const noexcept { return _iv.size(); }
+    [[nodiscard]] size_t numBoolVars() const noexcept { return _bv.size(); }
+
     ConstraintVarId newIntVar(Int);
     ConstraintVarId newIntVar(const SearchDomain&);
 

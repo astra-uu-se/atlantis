@@ -1,5 +1,6 @@
 #include <gmock/gmock.h>
 
+#include "../../../build-release/_deps/fznparser-src/include/fznparser/parser.hpp"
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 
@@ -10,10 +11,10 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 
 class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
- public:
-  std::vector<std::string> inputVars;
+ protected:
+  std::vector<Var> inputVars;
 
-  std::string reifiedVar{"reified"};
+  Var reifiedVar = Var::BoolVar("reified");
 
   Int numInputs = 4;
 
@@ -46,28 +47,32 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
     inputVars.clear();
     inputVars.reserve(numInputs);
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
-      retrieveBoolVarNode(inputVars.back());
+      inputVars.emplace_back(Var::BoolVar("input_" + std::to_string(i)));
     }
 
     if (shouldBeSubsumed()) {
       if (isReified()) {
-        for (const auto& var : inputVars) {
-          varNode(var).fixToValue(true);
+        for (auto& var : inputVars) {
+          var.fixToValue(true);
         }
       } else if (!shouldHold()) {
-        varNode(inputVars.front()).fixToValue(false);
+        inputVars.front().fixToValue(false);
       }
     } else if (shouldBeReplaced()) {
       for (size_t i = 1; i < inputVars.size(); ++i) {
-        varNode(inputVars.at(i)).fixToValue(!shouldFail());
+        inputVars.at(i).fixToValue(!shouldFail());
       }
     }
 
+    for (auto& var : inputVars) {
+      retrieveBoolVarNode(var);
+    }
+
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          varNodeId(reifiedVar));
+                          varNodeId(reifiedVar.identifier));
     } else {
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           shouldHold());
@@ -77,6 +82,8 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
 
 TEST_P(ArrayBoolAndNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -96,6 +103,8 @@ TEST_P(ArrayBoolAndNodeTestFixture, updateState) {
 
 TEST_P(ArrayBoolAndNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);

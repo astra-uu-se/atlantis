@@ -110,6 +110,8 @@ VarNodeId ViolationInvariantNode::reifiedViolationNodeId() const {
   return isReified() ? outputVarNodeIds().front() : VarNodeId{NULL_NODE_ID};
 }
 
+void ViolationInvariantNode::postConstraint() { updateReified(); }
+
 void ViolationInvariantNode::updateState() { updateReified(); }
 
 propagation::VarViewId ViolationInvariantNode::setViolationVarId(

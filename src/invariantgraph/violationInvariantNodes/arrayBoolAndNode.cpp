@@ -44,12 +44,13 @@ void ArrayBoolAndNode::init(InvariantNodeId id) {
 }
 
 void ArrayBoolAndNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
   std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size());
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
     inputs[i] = invariantGraphConst().varNodeConst(staticInputVarNodeIds()[i]).constraintVarId();
   }
   if (isReified()) {
-    constraintSolver().array_bool_and(inputs, invariantGraphConst().varNodeConst(outputVarNodeIds().front()).constraintVarId());
+    constraintSolver().array_bool_and(inputs, invariantGraphConst().varNodeConst(reifiedViolationNodeId()).constraintVarId());
   } else {
     constraintSolver().array_bool_and(inputs, shouldHold());
   }
@@ -60,7 +61,7 @@ void ArrayBoolAndNode::updateState() {
 
   // Constraint has subsumed:
   if (!isReified()) {
-    bool alwaysHolds = false;;
+    bool alwaysHolds = false;
     if (shouldHold()) {
       alwaysHolds = std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
         return invariantGraphConst().varNodeConst(vId).isFixed() && invariantGraphConst().varNodeConst(vId).inDomain(true);
