@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/constraintSolver.hpp"
+#include "atlantis/invariantgraph/gecodeSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
@@ -243,7 +244,7 @@ InvariantGraph::InvariantGraph(const bool breakDynamicCycles)
                 VarNode{VarNodeId{1}, false,
                         std::make_shared<SearchDomain>(std::vector<Int>{0})}},
       _boolVarNodeIndices{VarNodeId{0}, VarNodeId{1}},
-      _constraintSolver(std::make_shared<ConstraintSolver>()),
+      _constraintSolver(std::make_shared<GecodeSolver>()),
       _breakDynamicCycles(breakDynamicCycles),
       _objectiveVarNodeId{NULL_NODE_ID}{
   for (const VarNodeId bVarId : _boolVarNodeIndices) {
@@ -285,7 +286,7 @@ VarNodeId InvariantGraph::retrieveBoolVarNode(const bool value, const bool force
       .emplace_back(
           nextVarNodeId(), false,
           std::make_shared<SearchDomain>(std::vector<Int>{value ? 0 : 1}),
-          NULL_NODE_ID, DomainType::DOM_FIXED)
+          ConstraintVarId{NULL_NODE_ID}, DomainType::DOM_FIXED)
       .varNodeId();
 }
 
@@ -1156,17 +1157,17 @@ void InvariantGraph::close() {
 void InvariantGraph::updateDomains() {
   std::array<std::vector<std::shared_ptr<SearchDomain>>, 2> domains{std::vector<std::shared_ptr<SearchDomain>>(_constraintSolver->numIntVars(), nullptr), std::vector<std::shared_ptr<SearchDomain>>(_constraintSolver->numBoolVars(), nullptr)};
   for (size_t i = 0; i < _constraintSolver->numIntVars(); i++) {
-    domains[0][i] = std::make_shared<SearchDomain>(_constraintSolver->intVarDomain(i));
+    domains[0][i] = std::make_shared<SearchDomain>(_constraintSolver->intVarDomain({i, true}));
   }
   for (size_t i = 0; i < _constraintSolver->numBoolVars(); i++) {
-    domains[1][i] = std::make_shared<SearchDomain>(_constraintSolver->boolVarDomain(i));
+    domains[1][i] = std::make_shared<SearchDomain>(_constraintSolver->boolVarDomain({i, false}));
   }
 
   for (auto& varNode : _varNodes) {
     if (varNode.isIntVar()) {
-      varNode.replaceDomain(domains[0][varNode.constraintVarId()]);
+      varNode.replaceDomain(domains[0][size_t{varNode.constraintVarId()}]);
     } else {
-      varNode.replaceDomain(domains[1][varNode.constraintVarId()]);
+      varNode.replaceDomain(domains[1][size_t{varNode.constraintVarId()}]);
     }
   }
 }

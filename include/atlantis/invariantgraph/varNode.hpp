@@ -37,21 +37,21 @@ class VarNode {
 
  public:
   explicit VarNode(VarNodeId, bool isIntVar,
-                   ConstraintVarId constraintVarId = NULL_NODE_ID,
+                   ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
                    DomainType = DomainType::DOM_RANGE);
 
   explicit VarNode(VarNodeId, bool isIntVar,
                    const std::shared_ptr<SearchDomain>& domain,
-                   ConstraintVarId constraintVarId = NULL_NODE_ID,
+                   ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
                    DomainType = DomainType::DOM_DOMAIN);
 
   explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
-                   ConstraintVarId constraintVarId = NULL_NODE_ID,
+                   ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
                    DomainType = DomainType::DOM_RANGE);
 
   explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
                    const std::shared_ptr<SearchDomain>& domain,
-                   ConstraintVarId constraintVarId = NULL_NODE_ID,
+                   ConstraintVarId constraintVarId = {NULL_NODE_ID, false},
                    DomainType = DomainType::DOM_DOMAIN);
 
   VarNodeId varNodeId() const noexcept;
