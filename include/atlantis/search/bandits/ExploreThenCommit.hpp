@@ -9,7 +9,7 @@ class ExploreThenCommit : public ArmSelector {
   // Values specifically for the ETC algorithm
   const size_t _ETC_limit = 4;
   Int _ETC_bestArm = -1;
-  std::vector<std::shared_ptr<Reward>> _means;
+  std::vector<double> _means;
 
 public:
 

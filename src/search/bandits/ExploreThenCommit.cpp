@@ -1,25 +1,27 @@
 #include "atlantis/search/bandits/ExploreThenCommit.hpp"
 
 #include "../../../include/atlantis/search/bandits/armSelector.hpp"
+#include "atlantis/search/bandits/costRewardController.hpp"
+#include "atlantis/search/bandits/numImprovementsRewardController.hpp"
 
 namespace atlantis::search {
 
 ExploreThenCommit::ExploreThenCommit(
     const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory)
     : ArmSelector(annealingScheduleFactory) {
-  _means = std::vector<std::shared_ptr<Reward>>(_numArms);
-  for (size_t i = 0; i < _numArms; ++i) {
-    _means[i] = _rewardFactory->initAverageReward();
-  }
+  _rewardController = std::make_unique<NumImprovementsRewardController>(_armStats);
+  _means = std::vector(_numArms, 0.0);
 }
 
 
 void ExploreThenCommit::recordArmStats(const size_t arm,
                     const PullResults& stats) {
-  printf("Arm %ld got result %ld and cost %s.\n", arm, stats.improvingSolutions, stats._pullBestCost.value().toString().c_str());
   std::lock_guard lock(_lock);
-  const std::shared_ptr<Reward> reward = _armStats[arm].addResult(stats);
-  _means[arm]->updateAverage(reward, size(_armStats[arm].rewards));
+
+  const double points = _rewardController->getReward(arm, stats);
+
+  _means[arm] = (_means[arm] * (_armStats[arm]->timesRecorded - 1) + points) /
+                _armStats[arm]->timesRecorded;
 }
 
 
@@ -31,7 +33,7 @@ std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> ExploreThenCommit::choose
   if (_ETC_bestArm < 0) {
     size_t bestArm = 0;
     for (size_t i = 0; i < _numArms; ++i) {
-      if (_armStats[i].timesChosen < _ETC_limit) {
+      if (_armStats[i]->timesChosen < _ETC_limit) {
         arm = i;
         break;
       }
@@ -47,7 +49,7 @@ std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> ExploreThenCommit::choose
   }
   else { arm = _ETC_bestArm;}
 
-  _armStats[arm].timesChosen++;
+  _armStats[arm]->timesChosen++;
   _lock.unlock();
 
   // printf("  Choosing arm %ld. Arm means [%s, %s], times chosen [%ld, %ld].\n",

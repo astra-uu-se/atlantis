@@ -6,16 +6,9 @@ namespace atlantis::search {
 
 class ThompsonSampling : public ArmSelector {
   size_t _totalPulls = 0;
+  size_t _totalRecordedPulls = 0;
   std::vector<double> _alpha;
   std::vector<double> _beta;
-
-  std::vector<double> _meanProbes;
-  std::vector<double> _meanMoves;
-  std::vector<double> _meanImprovingMoves;
-  std::vector<double> _meanRounds;
-  std::vector<std::shared_ptr<Reward>> _meanRewards;
-
-  size_t _totalRecordedPulls = 0;
 
 public:
 

@@ -1,20 +1,19 @@
 #include "atlantis/search/bandits/KullbackLeiblerUpperConfidenceBound.hpp"
 
 // #include "atlantis/search/bandits/armSelector.hpp"
+#include <iostream>
+
 #include "atlantis/search/annealing/types.hpp"
+#include "atlantis/search/bandits/costRewardController.hpp"
 
 namespace atlantis::search {
 
 KullbackLeiblerUpperConfidenceBound::KullbackLeiblerUpperConfidenceBound(
     const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory)
     : ArmSelector(annealingScheduleFactory) {
-  _meanRewards = std::vector(_numArms, 0.0);
+  _rewardController = std::make_unique<CostRewardController>(_armStats);
 
-  // Stats stuff - not necessary for the solver.
-  _meanProbes = std::vector(_numArms, 0.0);
-  _meanMoves = std::vector(_numArms, 0.0);
-  _meanImprovingMoves = std::vector(_numArms, 0.0);
-  _meanRounds = std::vector(_numArms, 0.0);
+  _meanPoints = std::vector(_numArms, 0.0);
 }
 
 static double calcNewMean(const double oldMean, const double newValue, const double newN) {
@@ -59,40 +58,18 @@ static double findMaxQ(const size_t n, const double p, const size_t t) {
 }
 
 void KullbackLeiblerUpperConfidenceBound::recordArmStats(const size_t arm, const PullResults& stats) {
-
   std::lock_guard lock(_lock);
   _totalRecordedPulls++;
 
-  // TODO: Temp fix: This needs to be refactored completely, moving things into the reward structure.
+  const double points = _rewardController->getReward(arm, stats);
 
-  std::shared_ptr<Reward> reward = _armStats[arm].addResult(stats);
+  const size_t n = _armStats[arm]->timesRecorded;
+  // _meanPoints[arm] *= 0.99;
+  _meanPoints[arm] = calcNewMean(_meanPoints[arm], points, n);
 
-  // Really bad solution to make a Bernoulli-ish reward
-  // TODO: Come up with something better
-  double rewardValue;
-  if (stats._pullBestCost.value().objective() < _bestCost) {
-    printf("Arm %ld found new best solution with cost %ld. Previous best %ld.\n", arm, stats._pullBestCost.value().objective(), _bestCost);
-    _bestCost = stats._pullBestCost.value().objective();
-    rewardValue = 1;
-  }
-  else {
-    rewardValue = 0;
-  }
-
-  _armStats[arm].timesChosen++;
-  const size_t n = _armStats[arm].timesChosen;
-
-  _meanRewards[arm] = calcNewMean(_meanRewards[arm], rewardValue, n);
-
-  // Stats stuff - not necessary for the solver.
-  _meanProbes[arm] = calcNewMean(_meanProbes[arm], stats._roundStatistics.value()->attemptedMoves, n);
-  _meanMoves[arm] = calcNewMean(_meanMoves[arm], stats._roundStatistics.value()->acceptedMoves, n);
-  _meanImprovingMoves[arm] = calcNewMean(_meanImprovingMoves[arm], stats._roundStatistics.value()->improvingMoves, n);
-  _meanRounds[arm] = calcNewMean(_meanRounds[arm], stats._roundStatistics.value()->rounds, n);
-
-  printf("Arm %ld got reward %0.2f and cost %s. Mean reward %f for %ld recorded pulls.\n",
-    arm, rewardValue, stats._pullBestCost.value().toString().c_str(),
-    _meanRewards[arm], _armStats[arm].timesChosen);
+  printf("Arm %ld got %0.2f points and cost %s. Mean reward %f for %ld recorded pulls.\n",
+    arm, points, stats._pullBestCost.value().toString().c_str(),
+    _meanPoints[arm], _armStats[arm]->timesChosen);
 }
 
 std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> KullbackLeiblerUpperConfidenceBound::chooseArm(RandomProvider& random) {
@@ -103,9 +80,8 @@ std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> KullbackLeiblerUpperConfi
 
     double largestUCB = 0;
     for (size_t arm = 0; arm < _numArms; ++arm) {
-      // const double ucb = _UCBs[arm];
-      const double p = _meanRewards[arm];
-      const double ucb = findMaxQ(_armStats[arm].timesChosen, p, _totalRecordedPulls);
+      const double p = _meanPoints[arm];
+      const double ucb = findMaxQ(_armStats[arm]->timesChosen, p, _totalRecordedPulls);
       if (ucb > largestUCB) {
         largestUCB = ucb;
         goodArms.clear();
@@ -120,6 +96,7 @@ std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> KullbackLeiblerUpperConfi
       std::uniform_int_distribution<>(0, goodArms.size()-1));
   const size_t arm = goodArms[i];
 
+  _armStats[arm]->isChosen();
   _lock.unlock();
 
   return std::make_tuple(_annealingScheduleFactory->create(arm), arm);
@@ -128,11 +105,8 @@ std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> KullbackLeiblerUpperConfi
 void KullbackLeiblerUpperConfidenceBound::printStats() const {
   printf("\n");
   for (size_t arm = 0; arm < _numArms; arm++) {
-    const auto a = _armStats[arm];
-    printf("Arm %ld was chosen %ld times with %.1f avg time (ms). Total reward %f.\n"
-           "\tAverages: probes %.f, moves %.f, improving moves %.f, rounds %.f, rewards %f. \n",
-           arm, a.timesChosen, a.runTime / a.timesChosen / 1000, _meanRewards[arm] * a.timesChosen,
-           _meanProbes[arm], _meanMoves[arm], _meanImprovingMoves[arm], _meanRounds[arm], _meanRewards[arm]);
+    std::cout << "Arm " << arm << ": " << _armStats[arm]->toString() <<
+      "\n\tMean points: " << _meanPoints[arm] << std::endl;
   }
 }
 
