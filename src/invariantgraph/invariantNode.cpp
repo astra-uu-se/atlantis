@@ -22,6 +22,32 @@ InvariantNode::InvariantNode(InvariantGraph& invariantGraph,
       _staticInputVarNodeIds(std::move(staticInputIds)),
       _dynamicInputVarNodeIds(std::move(dynamicInputIds)) {}
 
+VarNode& InvariantNode::outputVarNode(const size_t index) {
+  return _invariantGraph.varNode(_outputVarNodeIds[index]);
+}
+
+const VarNode& InvariantNode::outputVarNodeConst(const size_t index) const {
+  return _invariantGraph.varNode(_outputVarNodeIds[index]);
+}
+
+VarNode& InvariantNode::staticInputVarNode(const size_t index) {
+  return _invariantGraph.varNode(_staticInputVarNodeIds[index]);
+}
+
+const VarNode& InvariantNode::staticInputVarNodeConst(
+    const size_t index) const {
+  return _invariantGraph.varNode(_staticInputVarNodeIds[index]);
+}
+
+VarNode& InvariantNode::dynamicInputVarNode(const size_t index) {
+  return _invariantGraph.varNode(_dynamicInputVarNodeIds[index]);
+}
+
+const VarNode& InvariantNode::dynamicInputVarNodeConst(
+    const size_t index) const {
+  return _invariantGraph.varNode(_dynamicInputVarNodeIds[index]);
+}
+
 InvariantGraph& InvariantNode::invariantGraph() { return _invariantGraph; }
 
 ConstraintSolver& InvariantNode::constraintSolver() const {

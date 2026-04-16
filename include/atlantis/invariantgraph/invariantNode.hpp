@@ -32,6 +32,13 @@ class InvariantNode {
   std::vector<VarNodeId> _staticInputVarNodeIds;
   std::vector<VarNodeId> _dynamicInputVarNodeIds;
 
+  [[nodiscard]] VarNode& outputVarNode(size_t index);
+  [[nodiscard]] const VarNode& outputVarNodeConst(size_t index) const;
+  [[nodiscard]] VarNode& staticInputVarNode(size_t index);
+  [[nodiscard]] const VarNode& staticInputVarNodeConst(size_t index) const;
+  [[nodiscard]] VarNode& dynamicInputVarNode(size_t index);
+  [[nodiscard]] const VarNode& dynamicInputVarNodeConst(size_t index) const;
+
  public:
   explicit InvariantNode(InvariantGraph& invariantGraph,
                          std::vector<VarNodeId>&& outputIds,

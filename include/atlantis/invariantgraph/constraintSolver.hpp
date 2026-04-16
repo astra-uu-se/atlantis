@@ -30,6 +30,13 @@ class ConstraintSolver {
                               ConstraintVarId reified) = 0;
   virtual void array_bool_and(const std::vector<ConstraintVarId>& inputs,
                               bool shouldHold) = 0;
+  virtual void array_bool_element(const ConstraintVarId& index,
+                                  const std::vector<Int>& parameters,
+                                  ConstraintVarId output, Int offset) = 0;
+  virtual void array_bool_element2d(
+      const ConstraintVarId& index1, const ConstraintVarId& index2,
+      const std::vector<std::vector<Int>>& parameters, ConstraintVarId output,
+      Int rowOffset, Int colOffset) = 0;
   virtual void array_bool_or(const std::vector<ConstraintVarId>& inputs,
                              ConstraintVarId reified) = 0;
   virtual void array_bool_or(const std::vector<ConstraintVarId>& inputs,
@@ -40,10 +47,10 @@ class ConstraintSolver {
                               bool shouldHold) = 0;
   virtual void bool2int(ConstraintVarId boolVarId,
                         ConstraintVarId intVarId) = 0;
-  virtual void array_bool_element(const ConstraintVarId& index,
-                                  const std::vector<Int>& parameters,
-                                  ConstraintVarId output, Int offset) = 0;
-  virtual void array_bool_element2d(
+  virtual void array_int_element(const ConstraintVarId& index,
+                                 const std::vector<Int>& parameters,
+                                 ConstraintVarId output, Int offset) = 0;
+  virtual void array_int_element2d(
       const ConstraintVarId& index1, const ConstraintVarId& index2,
       const std::vector<std::vector<Int>>& parameters, ConstraintVarId output,
       Int rowOffset, Int colOffset) = 0;

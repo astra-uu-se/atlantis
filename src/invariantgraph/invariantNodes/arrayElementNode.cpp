@@ -11,7 +11,8 @@
 
 namespace atlantis::invariantgraph {
 
-static Int getVal(const std::vector<Int>& parVector, Int idx, Int offset) {
+static Int getVal(const std::vector<Int>& parVector, const Int idx,
+                  const Int offset) {
   assert(0 <= idx - offset &&
          idx - offset < static_cast<Int>(parVector.size()));
   return parVector.at(idx - offset);
@@ -26,65 +27,73 @@ static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
 }
 
 ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
-                                   std::vector<Int>&& parVector, VarNodeId idx,
-                                   VarNodeId output, Int offset)
+                                   std::vector<Int>&& parVector,
+                                   const VarNodeId idx, const VarNodeId output,
+                                   const Int offset)
     : InvariantNode(graph, {output}, {idx}),
       _parVector(std::move(parVector)),
       _offset(offset) {}
 
 ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
-                                   std::vector<bool>&& parVector, VarNodeId idx,
-                                   VarNodeId output, Int offset)
+                                   std::vector<bool>&& parVector,
+                                   const VarNodeId idx, const VarNodeId output,
+                                   Int offset)
     : InvariantNode(graph, {output}, {idx}),
       _parVector(toIntVec(std::move(parVector))),
       _offset(offset) {}
 
-void ArrayElementNode::init(InvariantNodeId id) {
+void ArrayElementNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(invariantGraphConst()
              .varNodeConst(staticInputVarNodeIds().front())
              .isIntVar());
 }
 
+void ArrayElementNode::postConstraint() {
+  InvariantNode::postConstraint();
+  const auto& outputNode =
+      invariantGraphConst().varNodeConst(outputVarNodeIds().front());
+  if (outputNode.isIntVar()) {
+    invariantGraph().constraintSolver().array_int_element(
+        invariantGraphConst()
+            .varNodeConst(staticInputVarNodeIds().front())
+            .constraintVarId(),
+        _parVector, outputNode.constraintVarId(), _offset);
+  } else {
+    invariantGraph().constraintSolver().array_bool_element(
+        invariantGraphConst()
+            .varNodeConst(staticInputVarNodeIds().front())
+            .constraintVarId(),
+        _parVector, outputNode.constraintVarId(), _offset);
+  }
+}
+
 void ArrayElementNode::updateState() {
   auto& idxNode = invariantGraph().varNode(idx());
-  auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
-
-  idxNode.removeValuesBelow(_offset);
-  idxNode.removeValuesAbove(_offset + static_cast<Int>(_parVector.size()) - 1);
+  const auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
 
   if (idxNode.isFixed()) {
-    if (outputNode.isIntVar()) {
-      outputNode.fixToValue(getVal(_parVector, idxNode.lowerBound(), _offset));
-    } else {
-      outputNode.fixToValue(getVal(_parVector, idxNode.lowerBound(), _offset) ==
-                            0);
-    }
-    setState(InvariantNodeState::SUBSUMED);
-  }
-  if (outputNode.isFixed()) {
-    const Int val = outputNode.lowerBound();
-    std::vector<Int> valsToRemove;
-    valsToRemove.reserve(idxNode.domain()->size());
-    for (const Int index : *idxNode.constDomain()) {
-      if (getVal(_parVector, index, _offset) != val) {
-        valsToRemove.emplace_back(index);
-      }
-    }
-    idxNode.domain()->remove(SortedUniqueVector(std::move(valsToRemove)));
+    assert(outputNode.isFixed());
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  const Int val = getVal(_parVector, idxNode.lowerBound(), _offset);
-  const bool allSameVal = std::all_of(
-      idxNode.domain()->begin(), idxNode.domain()->end(), [&](const Int index) {
-        return getVal(_parVector, index, _offset) == val;
-      });
-  if (allSameVal) {
-    if (outputNode.isIntVar()) {
-      outputNode.fixToValue(val);
+  if (outputNode.isFixed()) {
+    const Int val = outputNode.lowerBound();
+    std::vector<Int> validIndices;
+    validIndices.reserve(_parVector.size());
+    for (Int i = 0; i < static_cast<Int>(_parVector.size()); ++i) {
+      if (_parVector[i] == val) {
+        validIndices.emplace_back(i + _offset);
+      }
+    }
+    idxNode.domain()->removeAllValuesExcept(
+        SortedUniqueVector(std::move(validIndices)));
+    if (idxNode.isFixed()) {
+      idxNode.setDomainType(DomainType::DOM_FIXED);
+    } else if (idxNode.domain()->isInterval()) {
+      idxNode.setDomainType(DomainType::DOM_RANGE);
     } else {
-      outputNode.fixToValue(bool{val == 0});
+      idxNode.setDomainType(DomainType::DOM_DOMAIN);
     }
     setState(InvariantNodeState::SUBSUMED);
   }

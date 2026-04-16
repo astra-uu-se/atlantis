@@ -17,25 +17,25 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayBoolXorNode::ArrayBoolXorNode(InvariantGraph& graph, VarNodeId a,
-                                   VarNodeId b, VarNodeId reified)
+ArrayBoolXorNode::ArrayBoolXorNode(InvariantGraph& graph, const VarNodeId a,
+                                   const VarNodeId b, const VarNodeId reified)
     : ArrayBoolXorNode(graph, std::vector<VarNodeId>{a, b}, reified) {}
 
-ArrayBoolXorNode::ArrayBoolXorNode(InvariantGraph& graph, VarNodeId a,
-                                   VarNodeId b, bool shouldHold)
+ArrayBoolXorNode::ArrayBoolXorNode(InvariantGraph& graph, const VarNodeId a,
+                                   const VarNodeId b, const bool shouldHold)
     : ArrayBoolXorNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
 ArrayBoolXorNode::ArrayBoolXorNode(InvariantGraph& graph,
                                    std::vector<VarNodeId>&& inputs,
-                                   VarNodeId reified)
+                                   const VarNodeId reified)
     : ViolationInvariantNode(graph, std::move(inputs), reified) {}
 
 ArrayBoolXorNode::ArrayBoolXorNode(InvariantGraph& graph,
                                    std::vector<VarNodeId>&& inputs,
-                                   bool shouldHold)
+                                   const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(inputs), shouldHold) {}
 
-void ArrayBoolXorNode::init(InvariantNodeId id) {
+void ArrayBoolXorNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -47,78 +47,65 @@ void ArrayBoolXorNode::init(InvariantNodeId id) {
       }));
 }
 
+void ArrayBoolXorNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (staticInputVarNodeIds().size() < 2) {
+    return;
+  }
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
+                                      ConstraintVarId{NULL_NODE_ID});
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
+    inputs[i] = invariantGraphConst()
+                    .varNodeConst(staticInputVarNodeIds()[i])
+                    .constraintVarId();
+  }
+  if (isReified()) {
+    constraintSolver().array_bool_xor(
+        inputs, invariantGraphConst()
+                    .varNodeConst(reifiedViolationNodeId())
+                    .constraintVarId());
+  } else {
+    constraintSolver().array_bool_xor(inputs, shouldHold());
+  }
+}
+
 void ArrayBoolXorNode::updateState() {
   ViolationInvariantNode::updateState();
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
-  // keep track of index of fixed input that is true:
-  size_t trueIndex = staticInputVarNodeIds().size();
-  // remove fixed inputs that are false:
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    VarNode& iNode = invariantGraph().varNode(staticInputVarNodeIds().at(i));
-    if (!iNode.isFixed()) {
-      continue;
-    }
-    if (iNode.inDomain(bool{false})) {
-      varsToRemove.emplace_back(staticInputVarNodeIds().at(i));
-    } else if (trueIndex >= staticInputVarNodeIds().size()) {
-      trueIndex = i;
-    } else {
-      // Two or more inputs are fixed to true
-      if (isReified()) {
-        // this violation invariant is no longer reified:
-        fixReified(false);
-        assert(!isReified() && !shouldHold());
-      } else if (shouldHold()) {
-        throw InconsistencyException(
-            "ArrayBoolOrNode::updateState constraint is violated");
-      }
+  if (!isReified()) {
+    const size_t numFixedTrue = std::ranges::count_if(
+        staticInputVarNodeIds(), [&](const VarNodeId vId) {
+          return invariantGraphConst().varNodeConst(vId).isFixed() &&
+                 invariantGraphConst().varNodeConst(vId).inDomain(true);
+        });
+    const size_t numFixedFalse = std::ranges::count_if(
+        staticInputVarNodeIds(), [&](const VarNodeId vId) {
+          return invariantGraphConst().varNodeConst(vId).isFixed() &&
+                 invariantGraphConst().varNodeConst(vId).inDomain(false);
+        });
+    if (shouldHold() ? (numFixedTrue == 1 &&
+                        numFixedFalse == staticInputVarNodeIds().size() - 1)
+                     : (numFixedTrue > 1 ||
+                        numFixedFalse == staticInputVarNodeIds().size())) {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
   }
-  if (trueIndex < staticInputVarNodeIds().size() && !isReified() &&
-      shouldHold()) {
-    // fix all inputs beside the true input to false:
-    for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-      if (i == trueIndex) {
-        continue;
-      }
-      invariantGraph()
-          .varNode(staticInputVarNodeIds().at(i))
-          .fixToValue(bool{false});
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
 
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
+  for (const auto& id : staticInputVarNodeIds()) {
+    if (invariantGraphConst().varNodeConst(id).isFixed()) {
+      varsToRemove.emplace_back(id);
+    }
+  }
   for (const auto& id : varsToRemove) {
     removeStaticInputVarNode(id);
   }
 
+  assert(!staticInputVarNodeIds().empty());
+
   if (staticInputVarNodeIds().empty()) {
-    // array_bool_xor([]) == false
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException(
-          "ArrayBoolOrNode::updateState constraint is violated");
-    }
     setState(InvariantNodeState::SUBSUMED);
-  }
-  if (staticInputVarNodeIds().size() <= 2 && !isReified()) {
-    if (staticInputVarNodeIds().size() == 1) {
-      invariantGraph()
-          .varNode(staticInputVarNodeIds().front())
-          .fixToValue(shouldHold());
-      setState(InvariantNodeState::SUBSUMED);
-    } else if (trueIndex < staticInputVarNodeIds().size()) {
-      const size_t fixIndex = trueIndex == 0 ? 1 : 0;
-      invariantGraph()
-          .varNode(staticInputVarNodeIds().at(fixIndex))
-          .fixToValue(!shouldHold());
-      setState(InvariantNodeState::SUBSUMED);
-    }
   }
 }
 

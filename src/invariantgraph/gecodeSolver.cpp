@@ -173,7 +173,7 @@ void GecodeSolver::array_bool_element(const ConstraintVarId& index,
                                       const Int offset) {
   Gecode::IntSharedArray sia(static_cast<int>(parameters.size()));
   for (int i = 0; i < static_cast<int>(parameters.size()); ++i) {
-    sia[i] = static_cast<int>(parameters[i]);
+    sia[i] = static_cast<int>(parameters[i] == 1 ? 0 : 1);
   }
   element(_space, sia, intVar(index), -static_cast<int>(offset),
           boolVar(output));
@@ -188,7 +188,7 @@ void GecodeSolver::array_bool_element2d(
   int i = 0;
   for (const auto& row : parameters) {
     for (const Int val : row) {
-      sia[i++] = static_cast<int>(val);
+      sia[i++] = static_cast<int>(val == 1 ? 0 : 1);
     }
   }
   element(_space, sia, intVar(colIndex), -static_cast<int>(colOffset),
@@ -220,6 +220,35 @@ void GecodeSolver::array_bool_xor(const std::vector<ConstraintVarId>& inputs,
 void GecodeSolver::bool2int(const ConstraintVarId boolVarId,
                             const ConstraintVarId intVarId) {
   channel(_space, boolVar(boolVarId), intVar(intVarId));
+}
+void GecodeSolver::array_int_element(const ConstraintVarId& index,
+                                     const std::vector<Int>& parameters,
+                                     const ConstraintVarId output,
+                                     const Int offset) {
+  Gecode::IntSharedArray sia(static_cast<int>(parameters.size()));
+  for (int i = 0; i < static_cast<int>(parameters.size()); ++i) {
+    sia[i] = static_cast<int>(parameters[i]);
+  }
+  element(_space, sia, intVar(index), -static_cast<int>(offset),
+          intVar(output));
+}
+
+void GecodeSolver::array_int_element2d(
+    const ConstraintVarId& rowIndex, const ConstraintVarId& colIndex,
+    const std::vector<std::vector<Int>>& parameters,
+    const ConstraintVarId output, const Int rowOffset, const Int colOffset) {
+  Gecode::IntSharedArray sia(
+      static_cast<int>(parameters.size() * parameters.front().size()));
+  int i = 0;
+  for (const auto& row : parameters) {
+    for (const Int val : row) {
+      sia[i++] = static_cast<int>(val);
+    }
+  }
+  element(_space, sia, intVar(colIndex), -static_cast<int>(colOffset),
+          static_cast<int>(parameters.front().size()), intVar(rowIndex),
+          -static_cast<int>(rowOffset), static_cast<int>(parameters.size()),
+          boolVar(output), Gecode::IPL_DOM);
 }
 
 }  // namespace atlantis::invariantgraph
