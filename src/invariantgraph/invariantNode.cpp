@@ -22,6 +22,14 @@ InvariantNode::InvariantNode(InvariantGraph& invariantGraph,
       _staticInputVarNodeIds(std::move(staticInputIds)),
       _dynamicInputVarNodeIds(std::move(dynamicInputIds)) {}
 
+VarNode& InvariantNode::varNode(const VarNodeId vId) {
+  return _invariantGraph.varNode(vId);
+}
+
+const VarNode& InvariantNode::varNodeConst(const VarNodeId vId) const {
+  return _invariantGraph.varNode(vId);
+}
+
 VarNode& InvariantNode::outputVarNode(const size_t index) {
   return _invariantGraph.varNode(_outputVarNodeIds[index]);
 }

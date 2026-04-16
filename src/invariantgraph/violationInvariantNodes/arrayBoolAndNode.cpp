@@ -35,11 +35,11 @@ void ArrayBoolAndNode::init(InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+      !reifiedVarNodeConst().isIntVar());
   assert(std::ranges::none_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      staticInputVarNodeIds(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
+        return varNodeConst(vId).isIntVar();
       }));
 }
 
@@ -57,9 +57,7 @@ void ArrayBoolAndNode::postConstraint() {
   }
   if (isReified()) {
     constraintSolver().array_bool_and(
-        inputs, invariantGraphConst()
-                    .varNodeConst(reifiedViolationNodeId())
-                    .constraintVarId());
+        inputs, reifiedVarNodeConst().constraintVarId());
   } else {
     constraintSolver().array_bool_and(inputs, shouldHold());
   }
@@ -74,14 +72,14 @@ void ArrayBoolAndNode::updateState() {
     if (shouldHold()) {
       alwaysHolds = std::ranges::all_of(
           staticInputVarNodeIds(), [&](const VarNodeId vId) {
-            return invariantGraphConst().varNodeConst(vId).isFixed() &&
-                   invariantGraphConst().varNodeConst(vId).inDomain(true);
+            return varNodeConst(vId).isFixed() &&
+                   varNodeConst(vId).inDomain(true);
           });
     } else {
       alwaysHolds = std::ranges::any_of(
           staticInputVarNodeIds(), [&](const VarNodeId vId) {
-            return invariantGraphConst().varNodeConst(vId).isFixed() &&
-                   invariantGraphConst().varNodeConst(vId).inDomain(false);
+            return varNodeConst(vId).isFixed() &&
+                   varNodeConst(vId).inDomain(false);
           });
     }
     if (alwaysHolds) {
@@ -93,7 +91,7 @@ void ArrayBoolAndNode::updateState() {
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
   for (const auto& id : staticInputVarNodeIds()) {
-    if (invariantGraphConst().varNodeConst(id).isFixed()) {
+    if (varNodeConst(id).isFixed()) {
       varsToRemove.emplace_back(id);
     }
   }

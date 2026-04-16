@@ -39,11 +39,11 @@ void ArrayBoolXorNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+      !reifiedVarNodeConst().isIntVar());
   assert(std::ranges::none_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
+        return varNodeConst(vId).isIntVar();
       }));
 }
 
@@ -55,14 +55,12 @@ void ArrayBoolXorNode::postConstraint() {
   std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
                                       ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = invariantGraphConst()
-                    .varNodeConst(staticInputVarNodeIds()[i])
+    inputs[i] = staticInputVarNode(i)
                     .constraintVarId();
   }
   if (isReified()) {
     constraintSolver().array_bool_xor(
-        inputs, invariantGraphConst()
-                    .varNodeConst(reifiedViolationNodeId())
+        inputs, reifiedVarNodeConst()
                     .constraintVarId());
   } else {
     constraintSolver().array_bool_xor(inputs, shouldHold());
@@ -74,13 +72,13 @@ void ArrayBoolXorNode::updateState() {
   if (!isReified()) {
     const size_t numFixedTrue = std::ranges::count_if(
         staticInputVarNodeIds(), [&](const VarNodeId vId) {
-          return invariantGraphConst().varNodeConst(vId).isFixed() &&
-                 invariantGraphConst().varNodeConst(vId).inDomain(true);
+          return varNodeConst(vId).isFixed() &&
+                 varNodeConst(vId).inDomain(true);
         });
     const size_t numFixedFalse = std::ranges::count_if(
         staticInputVarNodeIds(), [&](const VarNodeId vId) {
-          return invariantGraphConst().varNodeConst(vId).isFixed() &&
-                 invariantGraphConst().varNodeConst(vId).inDomain(false);
+          return varNodeConst(vId).isFixed() &&
+                 varNodeConst(vId).inDomain(false);
         });
     if (shouldHold() ? (numFixedTrue == 1 &&
                         numFixedFalse == staticInputVarNodeIds().size() - 1)
@@ -94,7 +92,7 @@ void ArrayBoolXorNode::updateState() {
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
   for (const auto& id : staticInputVarNodeIds()) {
-    if (invariantGraphConst().varNodeConst(id).isFixed()) {
+    if (varNodeConst(id).isFixed()) {
       varsToRemove.emplace_back(id);
     }
   }
@@ -122,8 +120,8 @@ bool ArrayBoolXorNode::canBeReplaced() const {
     }
     return std::ranges::count_if(
                staticInputVarNodeIds(), [&](const VarNodeId vId) {
-                 return invariantGraphConst().varNodeConst(vId).isFixed() &&
-                        invariantGraphConst().varNodeConst(vId).inDomain(
+                 return varNodeConst(vId).isFixed() &&
+                        varNodeConst(vId).inDomain(
                             bool{true});
                }) == 1;
   }
@@ -148,16 +146,14 @@ bool ArrayBoolXorNode::replace() {
       assert(isReified());
       assert(std::ranges::count_if(
                  staticInputVarNodeIds(), [&](const VarNodeId vId) {
-                   return invariantGraphConst().varNodeConst(vId).isFixed() &&
-                          invariantGraphConst().varNodeConst(vId).inDomain(
+                   return varNodeConst(vId).isFixed() &&
+                          varNodeConst(vId).inDomain(
                               bool{true});
                  }) == 1);
       const VarNodeId vId =
-          invariantGraphConst()
-                      .varNodeConst(staticInputVarNodeIds().front())
+          varNodeConst(staticInputVarNodeIds().front())
                       .isFixed() &&
-                  invariantGraphConst()
-                      .varNodeConst(staticInputVarNodeIds().front())
+                  varNodeConst(staticInputVarNodeIds().front())
                       .inDomain(bool{true})
               ? staticInputVarNodeIds().back()
               : staticInputVarNodeIds().front();

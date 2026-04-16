@@ -35,6 +35,9 @@ class ViolationInvariantNode : public InvariantNode {
   propagation::VarViewId registerViolation(propagation::SolverBase&,
                                            SolverMapping&) const;
 
+  [[nodiscard]] VarNode& reifiedVarNode();
+  [[nodiscard]] const VarNode& reifiedVarNodeConst() const;
+
   [[nodiscard]] bool shouldHold() const noexcept;
 
   void fixReified(bool);

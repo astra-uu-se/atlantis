@@ -69,6 +69,14 @@ void ViolationInvariantNode::init(InvariantNodeId id) {
 
 bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
 
+VarNode& ViolationInvariantNode::reifiedVarNode() {
+  return varNode(reifiedViolationNodeId());
+}
+
+const VarNode& ViolationInvariantNode::reifiedVarNodeConst() const {
+  return varNodeConst(reifiedViolationNodeId());
+}
+
 void ViolationInvariantNode::fixReified(bool shouldHold) {
   if (isReified()) {
     invariantGraph().varNode(reifiedViolationNodeId()).fixToValue(shouldHold);

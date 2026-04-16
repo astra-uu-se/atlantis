@@ -32,6 +32,8 @@ class InvariantNode {
   std::vector<VarNodeId> _staticInputVarNodeIds;
   std::vector<VarNodeId> _dynamicInputVarNodeIds;
 
+  [[nodiscard]] VarNode& varNode(VarNodeId);
+  [[nodiscard]] const VarNode& varNodeConst(VarNodeId) const;
   [[nodiscard]] VarNode& outputVarNode(size_t index);
   [[nodiscard]] const VarNode& outputVarNodeConst(size_t index) const;
   [[nodiscard]] VarNode& staticInputVarNode(size_t index);

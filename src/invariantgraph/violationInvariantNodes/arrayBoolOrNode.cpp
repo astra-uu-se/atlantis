@@ -36,11 +36,11 @@ void ArrayBoolOrNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+      !reifiedVarNodeConst().isIntVar());
   assert(std::ranges::none_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
+        return varNodeConst(vId).isIntVar();
       }));
 }
 
@@ -52,15 +52,12 @@ void ArrayBoolOrNode::postConstraint() {
   std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
                                       ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = invariantGraphConst()
-                    .varNodeConst(staticInputVarNodeIds()[i])
+    inputs[i] = staticInputVarNode(i)
                     .constraintVarId();
   }
   if (isReified()) {
     constraintSolver().array_bool_or(inputs,
-                                     invariantGraphConst()
-                                         .varNodeConst(reifiedViolationNodeId())
-                                         .constraintVarId());
+                                     reifiedVarNodeConst().constraintVarId());
   } else {
     constraintSolver().array_bool_or(inputs, shouldHold());
   }
@@ -73,14 +70,14 @@ void ArrayBoolOrNode::updateState() {
     if (shouldHold()) {
       alwaysHolds = std::ranges::any_of(
           staticInputVarNodeIds(), [&](const VarNodeId vId) {
-            return invariantGraphConst().varNodeConst(vId).isFixed() &&
-                   invariantGraphConst().varNodeConst(vId).inDomain(true);
+            return varNodeConst(vId).isFixed() &&
+                   varNodeConst(vId).inDomain(true);
           });
     } else {
       alwaysHolds = std::ranges::all_of(
           staticInputVarNodeIds(), [&](const VarNodeId vId) {
-            return invariantGraphConst().varNodeConst(vId).isFixed() &&
-                   invariantGraphConst().varNodeConst(vId).inDomain(false);
+            return varNodeConst(vId).isFixed() &&
+                   varNodeConst(vId).inDomain(false);
           });
     }
     if (alwaysHolds) {
@@ -92,7 +89,7 @@ void ArrayBoolOrNode::updateState() {
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
   for (const auto& id : staticInputVarNodeIds()) {
-    if (invariantGraphConst().varNodeConst(id).isFixed()) {
+    if (varNodeConst(id).isFixed()) {
       varsToRemove.emplace_back(id);
     }
   }
