@@ -36,18 +36,20 @@ class VarNode {
   std::optional<std::string> _identifier;
 
  public:
-  explicit VarNode(VarNodeId, bool isIntVar,
-                   ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
-                   DomainType = DomainType::DOM_RANGE);
+  explicit VarNode(
+      VarNodeId, bool isIntVar,
+      ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
+      DomainType = DomainType::DOM_RANGE);
 
-  explicit VarNode(VarNodeId, bool isIntVar,
-                   const std::shared_ptr<SearchDomain>& domain,
-                   ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
-                   DomainType = DomainType::DOM_DOMAIN);
+  explicit VarNode(
+      VarNodeId, bool isIntVar, const std::shared_ptr<SearchDomain>& domain,
+      ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
+      DomainType = DomainType::DOM_DOMAIN);
 
-  explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
-                   ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
-                   DomainType = DomainType::DOM_RANGE);
+  explicit VarNode(
+      const std::string& identifier, VarNodeId, bool isIntVar,
+      ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
+      DomainType = DomainType::DOM_RANGE);
 
   explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
                    const std::shared_ptr<SearchDomain>& domain,

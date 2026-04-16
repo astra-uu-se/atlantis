@@ -1,17 +1,17 @@
 #pragma once
 
 #include <array>
+#include <gecode/kernel.hh>
 #include <memory>
 #include <unordered_map>
 #include <vector>
-#include "atlantis/utils/gecode_compat.hpp"
-#include <gecode/kernel.hh>
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/solverMapping.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
+#include "atlantis/utils/gecode_compat.hpp"
 #include "implicitConstraintNode.hpp"
 
 namespace atlantis {

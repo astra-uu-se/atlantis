@@ -16,6 +16,7 @@ using ConstraintId = size_t;
 
 struct InvariantNodeId {
   friend struct InvariantNodeIdHash;
+
  private:
   size_t _id;
   static constexpr size_t IMPLICIT_CONSTRAINT_MASK =
@@ -73,12 +74,12 @@ struct InvariantNodeIdHash {
 };
 
 struct ConstraintVarId {
-private:
+ private:
   size_t _id;
   static constexpr size_t BOOL_VAR_MASK =
       (size_t{1} << (sizeof(size_t) * CHAR_BIT - 1));
 
-public:
+ public:
   ConstraintVarId(const ConstraintVarId&) = default;
 
   ConstraintVarId(const size_t id, const bool isIntVar)

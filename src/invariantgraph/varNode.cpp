@@ -23,7 +23,8 @@ std::string toString(VarNodeId varNodeId) {
 }
 
 VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
-                 const bool isIntVar, const std::shared_ptr<SearchDomain>& domain,
+                 const bool isIntVar,
+                 const std::shared_ptr<SearchDomain>& domain,
                  const ConstraintVarId constraintVarId,
                  const DomainType domainType)
     : _varNodeId(varNodeId),
@@ -47,7 +48,9 @@ VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
   assert(!isIntVar);
 }
 
-VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar, const ConstraintVarId constraintVarId, const DomainType domainType)
+VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar,
+                 const ConstraintVarId constraintVarId,
+                 const DomainType domainType)
     : _varNodeId(varNodeId),
       _constraintSolverId(constraintVarId),
       _isIntVar(isIntVar),
@@ -72,7 +75,9 @@ VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar,
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
-ConstraintVarId VarNode::constraintVarId() const noexcept { return _constraintSolverId; }
+ConstraintVarId VarNode::constraintVarId() const noexcept {
+  return _constraintSolverId;
+}
 
 void VarNode::setConstraintVarId(const ConstraintVarId constraintVarId) {
   assert(_constraintSolverId == NULL_NODE_ID);

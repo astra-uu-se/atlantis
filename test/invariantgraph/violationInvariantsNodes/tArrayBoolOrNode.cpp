@@ -43,7 +43,7 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
 
     if (shouldBeSubsumed()) {
       if (isReified()) {
-        for (auto & var : inputVars) {
+        for (auto& var : inputVars) {
           var.fixToValue(false);
         }
       } else if (shouldHold()) {
@@ -146,7 +146,7 @@ TEST_P(ArrayBoolOrNodeTestFixture, propagation) {
   }
 
   EXPECT_EQ(inputVarIds.empty(), shouldBeSubsumed());
-  
+
   const propagation::VarViewId violVarId =
       isReified() ? varId(reifiedVar) : _solverMapping->totalViolationId();
 

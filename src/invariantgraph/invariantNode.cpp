@@ -24,7 +24,9 @@ InvariantNode::InvariantNode(InvariantGraph& invariantGraph,
 
 InvariantGraph& InvariantNode::invariantGraph() { return _invariantGraph; }
 
-ConstraintSolver& InvariantNode::constraintSolver() const { return _invariantGraph.constraintSolver(); }
+ConstraintSolver& InvariantNode::constraintSolver() const {
+  return _invariantGraph.constraintSolver();
+}
 
 void InvariantNode::setState(const InvariantNodeState state) { _state = state; }
 

@@ -1,12 +1,12 @@
 #include "atlantis/invariantgraph/gecodeSolver.hpp"
 
-#include "atlantis/utils/gecode_compat.hpp"
 #include <ranges>
 #include <vector>
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/utils/gecode_compat.hpp"
 
 using atlantis::propagation::SolverBase;
 
@@ -53,7 +53,8 @@ Gecode::BoolVar& GecodeSolver::boolVar(const ConstraintVarId varId) {
   return boolVar(size_t{varId});
 }
 
-Gecode::IntVarArgs GecodeSolver::intVarArgs(const std::vector<ConstraintVarId>& varIds) {
+Gecode::IntVarArgs GecodeSolver::intVarArgs(
+    const std::vector<ConstraintVarId>& varIds) {
   Gecode::IntVarArgs args(static_cast<int>(varIds.size()));
   for (int i = 0; i < static_cast<int>(varIds.size()); ++i) {
     assert(varIds.at(i).isIntVar());
@@ -62,7 +63,8 @@ Gecode::IntVarArgs GecodeSolver::intVarArgs(const std::vector<ConstraintVarId>& 
   return args;
 }
 
-Gecode::BoolVarArgs GecodeSolver::boolVarArgs(const std::vector<ConstraintVarId>& varIds) {
+Gecode::BoolVarArgs GecodeSolver::boolVarArgs(
+    const std::vector<ConstraintVarId>& varIds) {
   Gecode::BoolVarArgs args(static_cast<int>(varIds.size()));
   for (int i = 0; i < static_cast<int>(varIds.size()); ++i) {
     assert(varIds.at(i).isBoolVar());
@@ -87,7 +89,8 @@ ConstraintVarId GecodeSolver::newIntVar(const SearchDomain& dom) {
     for (auto iter = dom.begin(); iter != dom.end(); ++iter) {
       values[i++] = static_cast<int>(*iter);
     }
-    _space._iv.emplace_back(_space, Gecode::IntSet(values.data(), static_cast<int>(values.size())));
+    _space._iv.emplace_back(
+        _space, Gecode::IntSet(values.data(), static_cast<int>(values.size())));
   }
   return {ret, true};
 }
@@ -115,11 +118,13 @@ void GecodeSolver::fixPoint() {
 SearchDomain GecodeSolver::intVarDomain(const ConstraintVarId varId) const {
   assert(varId.isIntVar());
   if (_space._iv[size_t{varId}].range()) {
-    return SearchDomain(_space._iv[size_t{varId}].min(), _space._iv[size_t{varId}].max());
+    return SearchDomain(_space._iv[size_t{varId}].min(),
+                        _space._iv[size_t{varId}].max());
   }
   std::vector<Int> values(_space._iv[size_t{varId}].size());
   size_t i = 0;
-  for (int v = _space._iv[size_t{varId}].min(); v <= _space._iv[size_t{varId}].max(); ++v) {
+  for (int v = _space._iv[size_t{varId}].min();
+       v <= _space._iv[size_t{varId}].max(); ++v) {
     if (_space._iv[size_t{varId}].in(v)) {
       values[i++] = v;
     }
@@ -141,78 +146,80 @@ SearchDomain GecodeSolver::varDomain(const ConstraintVarId varId) const {
 }
 
 void GecodeSolver::array_bool_rel(const std::vector<ConstraintVarId>& inputs,
-                                      const ConstraintVarId reified,
-                                      const Gecode::BoolOpType op) {
+                                  const ConstraintVarId reified,
+                                  const Gecode::BoolOpType op) {
   rel(_space, op, boolVarArgs(inputs), boolVar(reified), Gecode::IPL_BND);
 }
 
 void GecodeSolver::array_bool_rel(const std::vector<ConstraintVarId>& inputs,
-                                      const bool shouldHold,
-                                      const Gecode::BoolOpType op) {
+                                  const bool shouldHold,
+                                  const Gecode::BoolOpType op) {
   rel(_space, op, boolVarArgs(inputs), shouldHold ? 1 : 0, Gecode::IPL_BND);
 }
 
 void GecodeSolver::array_bool_and(const std::vector<ConstraintVarId>& inputs,
-                                      const ConstraintVarId reified) {
+                                  const ConstraintVarId reified) {
   array_bool_rel(inputs, reified, Gecode::BOT_AND);
 }
 
 void GecodeSolver::array_bool_and(const std::vector<ConstraintVarId>& inputs,
-                                      const bool shouldHold) {
+                                  const bool shouldHold) {
   array_bool_rel(inputs, shouldHold, Gecode::BOT_AND);
 }
 
 void GecodeSolver::array_bool_element(const ConstraintVarId& index,
-  const std::vector<Int>& parameters,
-  const ConstraintVarId output,
-  const Int offset) {
+                                      const std::vector<Int>& parameters,
+                                      const ConstraintVarId output,
+                                      const Int offset) {
   Gecode::IntSharedArray sia(static_cast<int>(parameters.size()));
   for (int i = 0; i < static_cast<int>(parameters.size()); ++i) {
     sia[i] = static_cast<int>(parameters[i]);
   }
-  element(_space, sia, intVar(index), -static_cast<int>(offset), boolVar(output));
+  element(_space, sia, intVar(index), -static_cast<int>(offset),
+          boolVar(output));
 }
 
-void GecodeSolver::array_bool_element2d(const ConstraintVarId& rowIndex, const ConstraintVarId& colIndex,
-  const std::vector<std::vector<Int>>& parameters,
-  const ConstraintVarId output,
-  const Int rowOffset,
-  const Int colOffset) {
-  Gecode::IntSharedArray sia(static_cast<int>(parameters.size() * parameters.front().size()));
+void GecodeSolver::array_bool_element2d(
+    const ConstraintVarId& rowIndex, const ConstraintVarId& colIndex,
+    const std::vector<std::vector<Int>>& parameters,
+    const ConstraintVarId output, const Int rowOffset, const Int colOffset) {
+  Gecode::IntSharedArray sia(
+      static_cast<int>(parameters.size() * parameters.front().size()));
   int i = 0;
   for (const auto& row : parameters) {
     for (const Int val : row) {
       sia[i++] = static_cast<int>(val);
     }
   }
-  element(_space, sia, intVar(colIndex), -static_cast<int>(colOffset), static_cast<int>(parameters.front().size()),
-    intVar(rowIndex), -static_cast<int>(rowOffset), static_cast<int>(parameters.size()),
-    boolVar(output), Gecode::IPL_DOM);
+  element(_space, sia, intVar(colIndex), -static_cast<int>(colOffset),
+          static_cast<int>(parameters.front().size()), intVar(rowIndex),
+          -static_cast<int>(rowOffset), static_cast<int>(parameters.size()),
+          boolVar(output), Gecode::IPL_DOM);
 }
 
 void GecodeSolver::array_bool_or(const std::vector<ConstraintVarId>& inputs,
-                                      const ConstraintVarId reified) {
+                                 const ConstraintVarId reified) {
   array_bool_rel(inputs, reified, Gecode::BOT_OR);
 }
 
 void GecodeSolver::array_bool_or(const std::vector<ConstraintVarId>& inputs,
-                                      const bool shouldHold) {
+                                 const bool shouldHold) {
   array_bool_rel(inputs, shouldHold, Gecode::BOT_OR);
 }
 
 void GecodeSolver::array_bool_xor(const std::vector<ConstraintVarId>& inputs,
-                                      const ConstraintVarId reified) {
+                                  const ConstraintVarId reified) {
   array_bool_rel(inputs, reified, Gecode::BOT_XOR);
 }
 
 void GecodeSolver::array_bool_xor(const std::vector<ConstraintVarId>& inputs,
-                                      const bool shouldHold) {
+                                  const bool shouldHold) {
   array_bool_rel(inputs, shouldHold, Gecode::BOT_XOR);
 }
 
-void GecodeSolver::bool2int(const ConstraintVarId boolVarId, const ConstraintVarId intVarId) {
+void GecodeSolver::bool2int(const ConstraintVarId boolVarId,
+                            const ConstraintVarId intVarId) {
   channel(_space, boolVar(boolVarId), intVar(intVarId));
 }
-
 
 }  // namespace atlantis::invariantgraph

@@ -49,11 +49,19 @@ enum class ViolationInvariantType : unsigned char {
 };
 
 class Var {
-  explicit Var(const std::string& i, std::vector<Int>&& d, const bool iv) : identifier(i), domain(std::move(d)), isIntVar(iv) {}
+  explicit Var(const std::string& i, std::vector<Int>&& d, const bool iv)
+      : identifier(i), domain(std::move(d)), isIntVar(iv) {}
+
  public:
-  static Var IntVar(const std::string& identifier, std::vector<Int>&& d) {return Var(identifier, std::move(d), true);}
-  static Var BoolVar(const std::string& identifier) {return Var(identifier, std::vector<Int>{0, 1}, false);}
-  static Var BoolVar(const std::string& identifier, const bool val) {return Var(identifier, std::vector<Int>{val == true ? 1 : 0}, false);}
+  static Var IntVar(const std::string& identifier, std::vector<Int>&& d) {
+    return Var(identifier, std::move(d), true);
+  }
+  static Var BoolVar(const std::string& identifier) {
+    return Var(identifier, std::vector<Int>{0, 1}, false);
+  }
+  static Var BoolVar(const std::string& identifier, const bool val) {
+    return Var(identifier, std::vector<Int>{val == true ? 1 : 0}, false);
+  }
 
   std::string identifier;
   std::vector<Int> domain;
@@ -63,9 +71,7 @@ class Var {
     domain.front() = value;
   }
 
-  void fixToValue(const bool value) {
-    fixToValue(Int{value ? 1 : 0});
-  }
+  void fixToValue(const bool value) { fixToValue(Int{value ? 1 : 0}); }
 };
 
 struct ParamData {
@@ -156,7 +162,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
         _invariantGraph->implicitConstraintNode(_invNodeId));
   }
 
-  [[nodiscard]] std::vector<VarNodeId> varNodeIds(const std::vector<std::string>& vars) const {
+  [[nodiscard]] std::vector<VarNodeId> varNodeIds(
+      const std::vector<std::string>& vars) const {
     std::vector<VarNodeId> ids(vars.size());
     for (size_t i = 0; i < vars.size(); ++i) {
       ids[i] = varNodeId(vars[i]);
@@ -176,7 +183,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return ids;
   }
 
-  [[nodiscard]] std::vector<VarNodeId> varNodeIds(const std::vector<Var>& vars) const {
+  [[nodiscard]] std::vector<VarNodeId> varNodeIds(
+      const std::vector<Var>& vars) const {
     std::vector<VarNodeId> ids(vars.size());
     for (size_t i = 0; i < vars.size(); ++i) {
       ids[i] = varNodeId(vars.at(i));

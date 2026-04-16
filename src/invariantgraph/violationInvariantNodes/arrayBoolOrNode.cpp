@@ -49,12 +49,18 @@ void ArrayBoolOrNode::postConstraint() {
   if (staticInputVarNodeIds().size() < 2) {
     return;
   }
-  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(), ConstraintVarId{NULL_NODE_ID});
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
+                                      ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = invariantGraphConst().varNodeConst(staticInputVarNodeIds()[i]).constraintVarId();
+    inputs[i] = invariantGraphConst()
+                    .varNodeConst(staticInputVarNodeIds()[i])
+                    .constraintVarId();
   }
   if (isReified()) {
-    constraintSolver().array_bool_or(inputs, invariantGraphConst().varNodeConst(reifiedViolationNodeId()).constraintVarId());
+    constraintSolver().array_bool_or(inputs,
+                                     invariantGraphConst()
+                                         .varNodeConst(reifiedViolationNodeId())
+                                         .constraintVarId());
   } else {
     constraintSolver().array_bool_or(inputs, shouldHold());
   }
@@ -65,13 +71,17 @@ void ArrayBoolOrNode::updateState() {
   if (!isReified()) {
     bool alwaysHolds = false;
     if (shouldHold()) {
-      alwaysHolds = std::ranges::any_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isFixed() && invariantGraphConst().varNodeConst(vId).inDomain(true);
-      });
+      alwaysHolds = std::ranges::any_of(
+          staticInputVarNodeIds(), [&](const VarNodeId vId) {
+            return invariantGraphConst().varNodeConst(vId).isFixed() &&
+                   invariantGraphConst().varNodeConst(vId).inDomain(true);
+          });
     } else {
-      alwaysHolds = std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isFixed() && invariantGraphConst().varNodeConst(vId).inDomain(false);
-      });
+      alwaysHolds = std::ranges::all_of(
+          staticInputVarNodeIds(), [&](const VarNodeId vId) {
+            return invariantGraphConst().varNodeConst(vId).isFixed() &&
+                   invariantGraphConst().varNodeConst(vId).inDomain(false);
+          });
     }
     if (alwaysHolds) {
       setState(InvariantNodeState::SUBSUMED);

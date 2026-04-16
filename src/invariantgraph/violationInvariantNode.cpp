@@ -88,7 +88,9 @@ void ViolationInvariantNode::updateReified() {
       assert(outputVarNodeIds().front() == reifiedViolationNodeId());
       const bool isAlsoOutput = std::ranges::any_of(
           outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-          [this](const VarNodeId oId) { return oId == reifiedViolationNodeId(); });
+          [this](const VarNodeId oId) {
+            return oId == reifiedViolationNodeId();
+          });
       if (!isAlsoOutput) {
         removeOutputVarNode(reifiedViolationNodeId());
       }
