@@ -11,13 +11,6 @@
 
 namespace atlantis::invariantgraph {
 
-static Int getVal(const std::vector<Int>& parVector, const Int idx,
-                  const Int offset) {
-  assert(0 <= idx - offset &&
-         idx - offset < static_cast<Int>(parVector.size()));
-  return parVector.at(idx - offset);
-}
-
 static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
   std::vector<Int> intVec(boolVec.size());
   for (size_t i = 0; i < boolVec.size(); ++i) {
@@ -37,7 +30,7 @@ ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
 ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
                                    std::vector<bool>&& parVector,
                                    const VarNodeId idx, const VarNodeId output,
-                                   Int offset)
+                                   const Int offset)
     : InvariantNode(graph, {output}, {idx}),
       _parVector(toIntVec(std::move(parVector))),
       _offset(offset) {}
@@ -66,16 +59,13 @@ void ArrayElementNode::postConstraint() {
 }
 
 void ArrayElementNode::updateState() {
-  auto& idxNode = varNode(idx());
-  const auto& outputNode = outputVarNode(0);
-
-  if (idxNode.isFixed()) {
-    assert(outputNode.isFixed());
+  if (staticInputVarNodeConst(0).isFixed()) {
+    assert(outputVarNodeConst(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (outputNode.isFixed()) {
-    const Int val = outputNode.lowerBound();
+  if (outputVarNodeConst(0).isFixed()) {
+    const Int val = outputVarNodeConst(0).lowerBound();
     std::vector<Int> validIndices;
     validIndices.reserve(_parVector.size());
     for (Int i = 0; i < static_cast<Int>(_parVector.size()); ++i) {
@@ -83,14 +73,14 @@ void ArrayElementNode::updateState() {
         validIndices.emplace_back(i + _offset);
       }
     }
-    idxNode.domain()->removeAllValuesExcept(
+    staticInputVarNode(0).domain()->removeAllValuesExcept(
         SortedUniqueVector(std::move(validIndices)));
-    if (idxNode.isFixed()) {
-      idxNode.setDomainType(DomainType::DOM_FIXED);
-    } else if (idxNode.domain()->isInterval()) {
-      idxNode.setDomainType(DomainType::DOM_RANGE);
+    if (staticInputVarNodeConst(0).isFixed()) {
+      staticInputVarNode(0).setDomainType(DomainType::DOM_FIXED);
+    } else if (staticInputVarNode(0).domain()->isInterval()) {
+      staticInputVarNode(0).setDomainType(DomainType::DOM_RANGE);
     } else {
-      idxNode.setDomainType(DomainType::DOM_DOMAIN);
+      staticInputVarNode(0).setDomainType(DomainType::DOM_DOMAIN);
     }
     setState(InvariantNodeState::SUBSUMED);
   }
@@ -99,10 +89,10 @@ void ArrayElementNode::updateState() {
 void ArrayElementNode::registerOutputVars(propagation::SolverBase& solver,
                                           SolverMapping& mapping) const {
   if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
-    assert(mapping.solverId(idx()) != propagation::NULL_ID);
+    assert(mapping.solverId(staticInputVarNodeIds().front()) != propagation::NULL_ID);
     mapping.setSolverId(outputVarNodeIds().front(),
                         solver.makeIntView<propagation::ElementConst>(
-                            solver, mapping.solverId(idx()),
+                            solver, mapping.solverId(staticInputVarNodeIds().front()),
                             std::vector<Int>(_parVector), _offset));
   }
   assert(std::ranges::all_of(

@@ -30,9 +30,6 @@ class ArrayElementNode : public InvariantNode {
   [[nodiscard]] const std::vector<Int>& as() const noexcept {
     return _parVector;
   }
-  [[nodiscard]] VarNodeId idx() const noexcept {
-    return staticInputVarNodeIds().back();
-  }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

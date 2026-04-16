@@ -16,11 +16,10 @@
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::testing {
-
 using namespace atlantis::invariantgraph;
 
 class UnitInvariantNode : public InvariantNode {
- public:
+public:
   explicit UnitInvariantNode(InvariantGraph& graph,
                              std::vector<VarNodeId>&& defVarNodes)
       : InvariantNode(graph, std::move(defVarNodes)) {}
@@ -48,11 +47,13 @@ enum class ViolationInvariantType : unsigned char {
   REIFIED = 2
 };
 
-class Var {
-  explicit Var(const std::string& i, std::vector<Int>&& d, const bool iv)
-      : identifier(i), domain(std::move(d)), isIntVar(iv) {}
-
- public:
+struct Var {
+  explicit Var(std::string i, std::vector<Int>&& d, const bool iv)
+      : identifier(std::move(i)), domain(std::move(d)), isIntVar(iv) {}
+  explicit Var(std::string i, Int lb, Int ub, const bool iv)
+      : identifier(std::move(i)), domain(std::pair{lb, ub}), isIntVar(iv) {
+    EXPECT_LE(lb, ub);
+  }
   static Var IntVar(const std::string& identifier, std::vector<Int>&& d) {
     return Var(identifier, std::move(d), true);
   }
@@ -64,11 +65,31 @@ class Var {
   }
 
   std::string identifier;
-  std::vector<Int> domain;
+  std::variant<std::vector<Int>, std::pair<Int, Int>> domain;
   bool isIntVar;
   void fixToValue(const Int value) {
-    domain.resize(1);
-    domain.front() = value;
+    domain = std::vector<Int>{value};
+  }
+
+  [[nodiscard]] size_t size() const {
+    if (std::holds_alternative<std::vector<Int>>(domain)) {
+      return std::get<std::vector<Int>>(domain).size();
+    }
+    const auto [lb, ub] = std::get<std::pair<Int, Int>>(domain);
+    EXPECT_LE(lb, ub);
+    return static_cast<size_t>(ub - lb + 1);
+  }
+
+  [[nodiscard]] bool empty() const {
+    return size() == 0;
+  }
+
+  [[nodiscard]] Int val() const {
+    EXPECT_EQ(size(), 1);
+    if (std::holds_alternative<std::vector<Int>>(domain)) {
+      return std::get<std::vector<Int>>(domain).front();
+    }
+    return std::get<std::pair<Int, Int>>(domain).first;
   }
 
   void fixToValue(const bool value) { fixToValue(Int{value ? 1 : 0}); }
@@ -205,13 +226,13 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   VarNodeId retrieveIntVarNode(Int lb, Int ub,
-                               const std::string& identifier) const {
+                               const std::string& identifier) {
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(lb, ub), identifier);
   }
 
   VarNodeId retrieveIntVarNode(std::vector<Int>&& vals,
-                               const std::string& identifier) const {
+                               const std::string& identifier) {
     assert(!vals.empty());
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(std::move(vals)), identifier);
@@ -219,6 +240,13 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
 
   VarNodeId retrieveIntVarNode(const Int val) {
     return _invariantGraph->retrieveIntVarNode(val);
+  }
+
+  VarNodeId retrieveIntVarNode(const Var& var) {
+    if (std::holds_alternative<std::vector<Int>>(var.domain)) {
+      return retrieveIntVarNode(std::vector<Int>{std::get<std::vector<Int>>(var.domain)}, var.identifier);
+    }
+    return retrieveIntVarNode(std::get<std::pair<Int, Int>>(var.domain).first, std::get<std::pair<Int, Int>>(var.domain).second, var.identifier);
   }
 
   VarNodeId retrieveBoolVarNode(const std::string& identifier) {
@@ -230,10 +258,10 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   VarNodeId retrieveBoolVarNode(const Var& var) {
-    EXPECT_FALSE(var.domain.empty());
-    EXPECT_LE(var.domain.size(), 2);
-    if (var.domain.size() == 1) {
-      return retrieveBoolVarNode(var.domain.front(), var.identifier);
+    EXPECT_FALSE(var.empty());
+    EXPECT_LE(var.size(), 2);
+    if (var.size() == 1) {
+      return retrieveBoolVarNode(var.val(), var.identifier);
     }
     return retrieveBoolVarNode(var.identifier);
   }
