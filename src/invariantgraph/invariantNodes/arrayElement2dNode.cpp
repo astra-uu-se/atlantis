@@ -54,9 +54,7 @@ ArrayElement2dNode::ArrayElement2dNode(
 
 void ArrayElement2dNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(_isIntMatrix == invariantGraphConst()
-                             .varNodeConst(outputVarNodeIds().front())
-                             .isIntVar());
+  assert(_isIntMatrix == outputVarNode(0).isIntVar());
 }
 
 void ArrayElement2dNode::updateState() {
@@ -70,7 +68,7 @@ void ArrayElement2dNode::updateState() {
   colNode.domain()->removeAbove(
       _colOffset + static_cast<Int>(_parMatrix.front().size()) - 1);
 
-  auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
+  auto& outputNode = outputVarNode(0);
 
   std::unordered_set<Int> rowIndices;
   rowIndices.reserve(rowNode.constDomain()->size());
@@ -188,7 +186,7 @@ void ArrayElement2dNode::registerOutputVars(propagation::SolverBase& solver,
     makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }
   assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      outputVarNodeIds(),
       [&](const VarNodeId vId) {
         return mapping.solverId(vId) != propagation::NULL_ID;
       }));

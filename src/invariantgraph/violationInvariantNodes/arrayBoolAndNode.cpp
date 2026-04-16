@@ -14,24 +14,24 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, VarNodeId a,
-                                   VarNodeId b, VarNodeId output)
+ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, const VarNodeId a,
+                                   const VarNodeId b, const VarNodeId output)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, output) {}
 
-ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, VarNodeId a,
-                                   VarNodeId b, bool shouldHold)
+ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, const VarNodeId a,
+                                   const VarNodeId b, const bool shouldHold)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
 ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph,
                                    std::vector<VarNodeId>&& as,
-                                   VarNodeId output)
+                                   const VarNodeId output)
     : ViolationInvariantNode(graph, std::move(as), output) {}
 
 ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph,
-                                   std::vector<VarNodeId>&& as, bool shouldHold)
+                                   std::vector<VarNodeId>&& as, const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(as), shouldHold) {}
 
-void ArrayBoolAndNode::init(InvariantNodeId id) {
+void ArrayBoolAndNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(!isReified() || !reifiedVarNodeConst().isIntVar());
   assert(std::ranges::none_of(
@@ -47,8 +47,7 @@ void ArrayBoolAndNode::postConstraint() {
   std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
                                       {NULL_NODE_ID, false});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = invariantGraphConst()
-                    .varNodeConst(staticInputVarNodeIds()[i])
+    inputs[i] = staticInputVarNodeConst(i)
                     .constraintVarId();
   }
   if (isReified()) {
@@ -132,7 +131,7 @@ void ArrayBoolAndNode::registerOutputVars(propagation::SolverBase& solver,
     }
   }
   assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      outputVarNodeIds(),
       [&](const VarNodeId vId) {
         return mapping.solverId(vId) != propagation::NULL_ID;
       }));
@@ -151,7 +150,7 @@ void ArrayBoolAndNode::registerNode(propagation::SolverBase& solver,
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      staticInputVarNodeIds(),
       std::back_inserter(solverVars),
       [&](const auto& node) { return mapping.solverId(node); });
   if (solverVars.size() == 2) {

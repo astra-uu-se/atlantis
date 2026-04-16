@@ -44,33 +44,30 @@ ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
 
 void ArrayElementNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(invariantGraphConst()
-             .varNodeConst(staticInputVarNodeIds().front())
+  assert(staticInputVarNode(0)
              .isIntVar());
 }
 
 void ArrayElementNode::postConstraint() {
   InvariantNode::postConstraint();
   const auto& outputNode =
-      invariantGraphConst().varNodeConst(outputVarNodeIds().front());
+      outputVarNodeConst(0);
   if (outputNode.isIntVar()) {
     invariantGraph().constraintSolver().array_int_element(
-        invariantGraphConst()
-            .varNodeConst(staticInputVarNodeIds().front())
+        staticInputVarNode(0)
             .constraintVarId(),
         _parVector, outputNode.constraintVarId(), _offset);
   } else {
     invariantGraph().constraintSolver().array_bool_element(
-        invariantGraphConst()
-            .varNodeConst(staticInputVarNodeIds().front())
+        staticInputVarNode(0)
             .constraintVarId(),
         _parVector, outputNode.constraintVarId(), _offset);
   }
 }
 
 void ArrayElementNode::updateState() {
-  auto& idxNode = invariantGraph().varNode(idx());
-  const auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
+  auto& idxNode = varNode(idx());
+  const auto& outputNode = outputVarNode(0);
 
   if (idxNode.isFixed()) {
     assert(outputNode.isFixed());
@@ -109,7 +106,7 @@ void ArrayElementNode::registerOutputVars(propagation::SolverBase& solver,
                             std::vector<Int>(_parVector), _offset));
   }
   assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      outputVarNodeIds(),
       [&](const VarNodeId vId) {
         return mapping.solverId(vId) != propagation::NULL_ID;
       }));

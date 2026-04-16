@@ -31,28 +31,34 @@ const VarNode& InvariantNode::varNodeConst(const VarNodeId vId) const {
 }
 
 VarNode& InvariantNode::outputVarNode(const size_t index) {
+  assert(index < _outputVarNodeIds.size());
   return _invariantGraph.varNode(_outputVarNodeIds[index]);
 }
 
 const VarNode& InvariantNode::outputVarNodeConst(const size_t index) const {
+  assert(index < _outputVarNodeIds.size());
   return _invariantGraph.varNode(_outputVarNodeIds[index]);
 }
 
 VarNode& InvariantNode::staticInputVarNode(const size_t index) {
+  assert(index < _staticInputVarNodeIds.size());
   return _invariantGraph.varNode(_staticInputVarNodeIds[index]);
 }
 
 const VarNode& InvariantNode::staticInputVarNodeConst(
     const size_t index) const {
+  assert(index < _staticInputVarNodeIds.size());
   return _invariantGraph.varNode(_staticInputVarNodeIds[index]);
 }
 
 VarNode& InvariantNode::dynamicInputVarNode(const size_t index) {
+  assert(index < _dynamicInputVarNodeIds.size());
   return _invariantGraph.varNode(_dynamicInputVarNodeIds[index]);
 }
 
 const VarNode& InvariantNode::dynamicInputVarNodeConst(
     const size_t index) const {
+  assert(index < _dynamicInputVarNodeIds.size());
   return _invariantGraph.varNode(_dynamicInputVarNodeIds[index]);
 }
 

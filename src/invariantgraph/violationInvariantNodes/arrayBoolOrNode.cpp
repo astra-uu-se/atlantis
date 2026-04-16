@@ -36,7 +36,7 @@ void ArrayBoolOrNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(!isReified() || !reifiedVarNodeConst().isIntVar());
   assert(std::ranges::none_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      staticInputVarNodeIds(),
       [&](const VarNodeId vId) { return varNodeConst(vId).isIntVar(); }));
 }
 
@@ -122,7 +122,7 @@ void ArrayBoolOrNode::registerOutputVars(propagation::SolverBase& solver,
     registerViolation(solver, mapping);
   }
   assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      outputVarNodeIds(),
       [&](const VarNodeId vId) {
         return mapping.solverId(vId) != propagation::NULL_ID;
       }));
@@ -139,7 +139,7 @@ void ArrayBoolOrNode::registerNode(propagation::SolverBase& solver,
 
   std::vector<propagation::VarViewId> solverVars;
   std::ranges::transform(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      staticInputVarNodeIds(),
       std::back_inserter(solverVars),
       [&](const auto& node) { return mapping.solverId(node); });
 
