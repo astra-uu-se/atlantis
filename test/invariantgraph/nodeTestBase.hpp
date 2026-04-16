@@ -19,7 +19,7 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class UnitInvariantNode : public InvariantNode {
-public:
+ public:
   explicit UnitInvariantNode(InvariantGraph& graph,
                              std::vector<VarNodeId>&& defVarNodes)
       : InvariantNode(graph, std::move(defVarNodes)) {}
@@ -67,9 +67,7 @@ struct Var {
   std::string identifier;
   std::variant<std::vector<Int>, std::pair<Int, Int>> domain;
   bool isIntVar;
-  void fixToValue(const Int value) {
-    domain = std::vector<Int>{value};
-  }
+  void fixToValue(const Int value) { domain = std::vector<Int>{value}; }
 
   [[nodiscard]] size_t size() const {
     if (std::holds_alternative<std::vector<Int>>(domain)) {
@@ -80,9 +78,7 @@ struct Var {
     return static_cast<size_t>(ub - lb + 1);
   }
 
-  [[nodiscard]] bool empty() const {
-    return size() == 0;
-  }
+  [[nodiscard]] bool empty() const { return size() == 0; }
 
   [[nodiscard]] Int val() const {
     EXPECT_EQ(size(), 1);
@@ -225,8 +221,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return ids;
   }
 
-  VarNodeId retrieveIntVarNode(Int lb, Int ub,
-                               const std::string& identifier) {
+  VarNodeId retrieveIntVarNode(Int lb, Int ub, const std::string& identifier) {
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(lb, ub), identifier);
   }
@@ -244,9 +239,13 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
 
   VarNodeId retrieveIntVarNode(const Var& var) {
     if (std::holds_alternative<std::vector<Int>>(var.domain)) {
-      return retrieveIntVarNode(std::vector<Int>{std::get<std::vector<Int>>(var.domain)}, var.identifier);
+      return retrieveIntVarNode(
+          std::vector<Int>{std::get<std::vector<Int>>(var.domain)},
+          var.identifier);
     }
-    return retrieveIntVarNode(std::get<std::pair<Int, Int>>(var.domain).first, std::get<std::pair<Int, Int>>(var.domain).second, var.identifier);
+    return retrieveIntVarNode(std::get<std::pair<Int, Int>>(var.domain).first,
+                              std::get<std::pair<Int, Int>>(var.domain).second,
+                              var.identifier);
   }
 
   VarNodeId retrieveBoolVarNode(const std::string& identifier) {

@@ -37,24 +37,20 @@ ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
 
 void ArrayElementNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(staticInputVarNode(0)
-             .isIntVar());
+  assert(staticInputVarNode(0).isIntVar());
 }
 
 void ArrayElementNode::postConstraint() {
   InvariantNode::postConstraint();
-  const auto& outputNode =
-      outputVarNodeConst(0);
+  const auto& outputNode = outputVarNodeConst(0);
   if (outputNode.isIntVar()) {
     invariantGraph().constraintSolver().array_int_element(
-        staticInputVarNode(0)
-            .constraintVarId(),
-        _parVector, outputNode.constraintVarId(), _offset);
+        staticInputVarNode(0).constraintVarId(), _parVector,
+        outputNode.constraintVarId(), _offset);
   } else {
     invariantGraph().constraintSolver().array_bool_element(
-        staticInputVarNode(0)
-            .constraintVarId(),
-        _parVector, outputNode.constraintVarId(), _offset);
+        staticInputVarNode(0).constraintVarId(), _parVector,
+        outputNode.constraintVarId(), _offset);
   }
 }
 
@@ -89,17 +85,17 @@ void ArrayElementNode::updateState() {
 void ArrayElementNode::registerOutputVars(propagation::SolverBase& solver,
                                           SolverMapping& mapping) const {
   if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
-    assert(mapping.solverId(staticInputVarNodeIds().front()) != propagation::NULL_ID);
-    mapping.setSolverId(outputVarNodeIds().front(),
-                        solver.makeIntView<propagation::ElementConst>(
-                            solver, mapping.solverId(staticInputVarNodeIds().front()),
-                            std::vector<Int>(_parVector), _offset));
+    assert(mapping.solverId(staticInputVarNodeIds().front()) !=
+           propagation::NULL_ID);
+    mapping.setSolverId(
+        outputVarNodeIds().front(),
+        solver.makeIntView<propagation::ElementConst>(
+            solver, mapping.solverId(staticInputVarNodeIds().front()),
+            std::vector<Int>(_parVector), _offset));
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return mapping.solverId(vId) != propagation::NULL_ID;
+  }));
 }
 
 void ArrayElementNode::registerNode(propagation::SolverBase&,

@@ -121,11 +121,9 @@ void ArrayBoolOrNode::registerOutputVars(propagation::SolverBase& solver,
       violationVarId(mapping) == propagation::NULL_ID) {
     registerViolation(solver, mapping);
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return mapping.solverId(vId) != propagation::NULL_ID;
+  }));
 }
 
 void ArrayBoolOrNode::registerNode(propagation::SolverBase& solver,
@@ -139,8 +137,7 @@ void ArrayBoolOrNode::registerNode(propagation::SolverBase& solver,
 
   std::vector<propagation::VarViewId> solverVars;
   std::ranges::transform(
-      staticInputVarNodeIds(),
-      std::back_inserter(solverVars),
+      staticInputVarNodeIds(), std::back_inserter(solverVars),
       [&](const auto& node) { return mapping.solverId(node); });
 
   if (solverVars.size() == 2) {

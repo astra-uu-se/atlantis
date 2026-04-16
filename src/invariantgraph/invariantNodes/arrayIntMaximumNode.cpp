@@ -25,8 +25,7 @@ ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph,
 
 void ArrayIntMaximumNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(outputVarNode(0)
-             .isIntVar());
+  assert(outputVarNode(0).isIntVar());
   assert(std::ranges::all_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       [&](const VarNodeId vId) {
@@ -66,8 +65,7 @@ void ArrayIntMaximumNode::updateState() {
 bool ArrayIntMaximumNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
          staticInputVarNodeIds().size() == 1 &&
-         _lb <= staticInputVarNodeConst(0)
-                    .lowerBound();
+         _lb <= staticInputVarNodeConst(0).lowerBound();
 }
 
 bool ArrayIntMaximumNode::replace() {
@@ -89,11 +87,9 @@ void ArrayIntMaximumNode::registerOutputVars(propagation::SolverBase& solver,
   } else if (!staticInputVarNodeIds().empty()) {
     makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return mapping.solverId(vId) != propagation::NULL_ID;
+  }));
 }
 
 void ArrayIntMaximumNode::registerNode(propagation::SolverBase& solver,

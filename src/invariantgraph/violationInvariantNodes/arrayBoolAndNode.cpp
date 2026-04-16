@@ -28,7 +28,8 @@ ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph,
     : ViolationInvariantNode(graph, std::move(as), output) {}
 
 ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph,
-                                   std::vector<VarNodeId>&& as, const bool shouldHold)
+                                   std::vector<VarNodeId>&& as,
+                                   const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(as), shouldHold) {}
 
 void ArrayBoolAndNode::init(const InvariantNodeId id) {
@@ -47,8 +48,7 @@ void ArrayBoolAndNode::postConstraint() {
   std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
                                       {NULL_NODE_ID, false});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = staticInputVarNodeConst(i)
-                    .constraintVarId();
+    inputs[i] = staticInputVarNodeConst(i).constraintVarId();
   }
   if (isReified()) {
     constraintSolver().array_bool_and(inputs,
@@ -130,11 +130,9 @@ void ArrayBoolAndNode::registerOutputVars(propagation::SolverBase& solver,
                         mapping);
     }
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return mapping.solverId(vId) != propagation::NULL_ID;
+  }));
 }
 
 void ArrayBoolAndNode::registerNode(propagation::SolverBase& solver,
@@ -150,8 +148,7 @@ void ArrayBoolAndNode::registerNode(propagation::SolverBase& solver,
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
-      staticInputVarNodeIds(),
-      std::back_inserter(solverVars),
+      staticInputVarNodeIds(), std::back_inserter(solverVars),
       [&](const auto& node) { return mapping.solverId(node); });
   if (solverVars.size() == 2) {
     solver.makeInvariant<propagation::BoolAnd>(

@@ -45,7 +45,8 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
     if (shouldBeSubsumed()) {
       idxVar.fixToValue(offsetIdx);
     } else {
-      idxVar.domain = std::pair{offsetIdx, offsetIdx + static_cast<Int>(parArray.size()) - 1};
+      idxVar.domain = std::pair{
+          offsetIdx, offsetIdx + static_cast<Int>(parArray.size()) - 1};
     }
 
     outputVar.isIntVar = isIntElement();
@@ -54,7 +55,7 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
 
     if (isIntElement()) {
       // int version of element
-      outputVar.domain = std::pair<Int,Int>{-2, 1};
+      outputVar.domain = std::pair<Int, Int>{-2, 1};
       retrieveIntVarNode(outputVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>{parArray},
                           varNodeId(idxVar), varNodeId(outputVar), offsetIdx);

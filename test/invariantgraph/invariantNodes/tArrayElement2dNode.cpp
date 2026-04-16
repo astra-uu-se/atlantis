@@ -35,14 +35,14 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
 
   Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
-      const Int row =
-          (varNode(rowIdxVar).isFixed() ? varNode(rowIdxVar).lowerBound()
-                                      : _solver->currentValue(varId(rowIdxVar))) -
-          rowOffset;
-      const Int col =
-          (varNode(colIdxVar).isFixed() ? varNode(colIdxVar).lowerBound()
-                                      : _solver->currentValue(varId(colIdxVar))) -
-          colOffset;
+      const Int row = (varNode(rowIdxVar).isFixed()
+                           ? varNode(rowIdxVar).lowerBound()
+                           : _solver->currentValue(varId(rowIdxVar))) -
+                      rowOffset;
+      const Int col = (varNode(colIdxVar).isFixed()
+                           ? varNode(colIdxVar).lowerBound()
+                           : _solver->currentValue(varId(colIdxVar))) -
+                      colOffset;
       return parVal(parMatrix.at(row).at(col));
     }
     const Int row = varNode(rowIdxVar).lowerBound() - rowOffset;
@@ -55,14 +55,17 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
     if (shouldBeSubsumed() || rowIndexShouldBeReplaced()) {
       rowIdxVar.domain = std::vector<Int>{rowOffset};
     } else {
-      rowIdxVar.domain = std::pair<Int,Int>{rowOffset, rowOffset + static_cast<Int>(parMatrix.size()) - 1};
+      rowIdxVar.domain = std::pair<Int, Int>{
+          rowOffset, rowOffset + static_cast<Int>(parMatrix.size()) - 1};
     }
     retrieveIntVarNode(rowIdxVar);
 
     if (shouldBeSubsumed() || colIndexShouldBeReplaced()) {
       colIdxVar.domain = std::vector<Int>{colOffset};
     } else {
-      colIdxVar.domain = std::pair<Int,Int>{colOffset, colOffset + static_cast<Int>(parMatrix.front().size()) - 1};
+      colIdxVar.domain = std::pair<Int, Int>{
+          colOffset,
+          colOffset + static_cast<Int>(parMatrix.front().size()) - 1};
     }
     retrieveIntVarNode(colIdxVar);
 
@@ -154,7 +157,8 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   const propagation::VarViewId outputId = varId(outputVar);
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& idx : std::array<std::string, 2>{rowIdxVar.identifier, colIdxVar.identifier}) {
+  for (const auto& idx :
+       std::array<std::string, 2>{rowIdxVar.identifier, colIdxVar.identifier}) {
     if (!varNode(idx).isFixed()) {
       EXPECT_NE(varId(idx), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(idx));
