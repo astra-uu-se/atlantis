@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #ifndef _LIBCPP_STD_VER
 #if __cplusplus <= 201103L
 #define _LIBCPP_STD_VER 11
