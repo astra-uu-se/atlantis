@@ -34,14 +34,10 @@ ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph,
 
 void ArrayBoolOrNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
-  assert(
-      !isReified() ||
-      !reifiedVarNodeConst().isIntVar());
+  assert(!isReified() || !reifiedVarNodeConst().isIntVar());
   assert(std::ranges::none_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return varNodeConst(vId).isIntVar();
-      }));
+      [&](const VarNodeId vId) { return varNodeConst(vId).isIntVar(); }));
 }
 
 void ArrayBoolOrNode::postConstraint() {
@@ -52,8 +48,7 @@ void ArrayBoolOrNode::postConstraint() {
   std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
                                       ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = staticInputVarNode(i)
-                    .constraintVarId();
+    inputs[i] = staticInputVarNode(i).constraintVarId();
   }
   if (isReified()) {
     constraintSolver().array_bool_or(inputs,

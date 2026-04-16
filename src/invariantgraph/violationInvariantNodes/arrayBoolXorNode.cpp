@@ -37,14 +37,10 @@ ArrayBoolXorNode::ArrayBoolXorNode(InvariantGraph& graph,
 
 void ArrayBoolXorNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
-  assert(
-      !isReified() ||
-      !reifiedVarNodeConst().isIntVar());
+  assert(!isReified() || !reifiedVarNodeConst().isIntVar());
   assert(std::ranges::none_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return varNodeConst(vId).isIntVar();
-      }));
+      [&](const VarNodeId vId) { return varNodeConst(vId).isIntVar(); }));
 }
 
 void ArrayBoolXorNode::postConstraint() {
@@ -55,13 +51,11 @@ void ArrayBoolXorNode::postConstraint() {
   std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
                                       ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = staticInputVarNode(i)
-                    .constraintVarId();
+    inputs[i] = staticInputVarNode(i).constraintVarId();
   }
   if (isReified()) {
-    constraintSolver().array_bool_xor(
-        inputs, reifiedVarNodeConst()
-                    .constraintVarId());
+    constraintSolver().array_bool_xor(inputs,
+                                      reifiedVarNodeConst().constraintVarId());
   } else {
     constraintSolver().array_bool_xor(inputs, shouldHold());
   }
@@ -121,8 +115,7 @@ bool ArrayBoolXorNode::canBeReplaced() const {
     return std::ranges::count_if(
                staticInputVarNodeIds(), [&](const VarNodeId vId) {
                  return varNodeConst(vId).isFixed() &&
-                        varNodeConst(vId).inDomain(
-                            bool{true});
+                        varNodeConst(vId).inDomain(bool{true});
                }) == 1;
   }
   return false;
@@ -147,12 +140,10 @@ bool ArrayBoolXorNode::replace() {
       assert(std::ranges::count_if(
                  staticInputVarNodeIds(), [&](const VarNodeId vId) {
                    return varNodeConst(vId).isFixed() &&
-                          varNodeConst(vId).inDomain(
-                              bool{true});
+                          varNodeConst(vId).inDomain(bool{true});
                  }) == 1);
       const VarNodeId vId =
-          varNodeConst(staticInputVarNodeIds().front())
-                      .isFixed() &&
+          varNodeConst(staticInputVarNodeIds().front()).isFixed() &&
                   varNodeConst(staticInputVarNodeIds().front())
                       .inDomain(bool{true})
               ? staticInputVarNodeIds().back()
