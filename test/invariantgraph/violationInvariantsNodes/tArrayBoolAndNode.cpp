@@ -64,7 +64,7 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
       }
     }
 
-    for (auto& var : inputVars) {
+    for (const auto& var : inputVars) {
       retrieveBoolVarNode(var);
     }
 
@@ -187,7 +187,7 @@ TEST_P(ArrayBoolAndNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ArrayBoolAndNodeTest, ArrayBoolAndNodeTestFixture,
     ::testing::Values(ParamData{InvariantNodeAction::REPLACE,
                                 ViolationInvariantType::REIFIED},

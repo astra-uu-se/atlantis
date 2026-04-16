@@ -45,7 +45,10 @@ void ArrayBoolAndNode::init(InvariantNodeId id) {
 
 void ArrayBoolAndNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
-  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size());
+  if (staticInputVarNodeIds().size() < 2) {
+    return;
+  }
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(), {NULL_NODE_ID, false});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
     inputs[i] = invariantGraphConst().varNodeConst(staticInputVarNodeIds()[i]).constraintVarId();
   }

@@ -14,25 +14,25 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, VarNodeId a,
-                                 VarNodeId b, VarNodeId reified)
+ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, const VarNodeId a,
+                                 const VarNodeId b, const VarNodeId reified)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, reified) {}
 
-ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, VarNodeId a,
-                                 VarNodeId b, bool shouldHold)
+ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, const VarNodeId a,
+                                 const VarNodeId b, const bool shouldHold)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
 ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph,
                                  std::vector<VarNodeId>&& inputs,
-                                 VarNodeId reified)
+                                 const VarNodeId reified)
     : ViolationInvariantNode(graph, std::move(inputs), reified) {}
 
 ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph,
                                  std::vector<VarNodeId>&& inputs,
-                                 bool shouldHold)
+                                 const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(inputs), shouldHold) {}
 
-void ArrayBoolOrNode::init(InvariantNodeId id) {
+void ArrayBoolOrNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -44,52 +44,55 @@ void ArrayBoolOrNode::init(InvariantNodeId id) {
       }));
 }
 
+void ArrayBoolOrNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (staticInputVarNodeIds().size() < 2) {
+    return;
+  }
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(), ConstraintVarId{NULL_NODE_ID});
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
+    inputs[i] = invariantGraphConst().varNodeConst(staticInputVarNodeIds()[i]).constraintVarId();
+  }
+  if (isReified()) {
+    constraintSolver().array_bool_or(inputs, invariantGraphConst().varNodeConst(reifiedViolationNodeId()).constraintVarId());
+  } else {
+    constraintSolver().array_bool_or(inputs, shouldHold());
+  }
+}
+
 void ArrayBoolOrNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (!isReified() && !shouldHold()) {
-    for (const auto& id : staticInputVarNodeIds()) {
-      invariantGraph().varNode(id).fixToValue(bool{false});
+  if (!isReified()) {
+    bool alwaysHolds = false;
+    if (shouldHold()) {
+      alwaysHolds = std::ranges::any_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isFixed() && invariantGraphConst().varNodeConst(vId).inDomain(true);
+      });
+    } else {
+      alwaysHolds = std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+        return invariantGraphConst().varNodeConst(vId).isFixed() && invariantGraphConst().varNodeConst(vId).inDomain(false);
+      });
     }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
+    if (alwaysHolds) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
   }
 
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
-  // remove fixed inputs that are false:
   for (const auto& id : staticInputVarNodeIds()) {
     if (invariantGraphConst().varNodeConst(id).isFixed()) {
-      if (invariantGraphConst().varNodeConst(id).inDomain(bool{false})) {
-        varsToRemove.emplace_back(id);
-      } else {
-        if (isReified()) {
-          fixReified(true);
-        } else if (!shouldHold()) {
-          throw InconsistencyException(
-              "ArrayBoolOrNode::updateState constraint is violated");
-        }
-        setState(InvariantNodeState::SUBSUMED);
-        return;
-      }
+      varsToRemove.emplace_back(id);
     }
   }
-
   for (const auto& id : varsToRemove) {
     removeStaticInputVarNode(id);
   }
 
+  assert(!staticInputVarNodeIds().empty());
+
   if (staticInputVarNodeIds().empty()) {
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException(
-          "ArrayBoolOrNode::updateState constraint is violated");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-  } else if (staticInputVarNodeIds().size() == 1 && !isReified()) {
-    auto& inputNode = invariantGraph().varNode(staticInputVarNodeIds().front());
-    inputNode.fixToValue(shouldHold());
-    removeStaticInputVarNode(inputNode.varNodeId());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
