@@ -248,7 +248,7 @@ void GecodeSolver::array_int_element2d(
   element(_space, sia, intVar(colIndex), -static_cast<int>(colOffset),
           static_cast<int>(parameters.front().size()), intVar(rowIndex),
           -static_cast<int>(rowOffset), static_cast<int>(parameters.size()),
-          boolVar(output), Gecode::IPL_DOM);
+          intVar(output), Gecode::IPL_DOM);
 }
 
 }  // namespace atlantis::invariantgraph

@@ -6,16 +6,16 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
- public:
+ protected:
   std::vector<std::vector<Int>> parMatrix{std::vector<Int>{-2, -1},
                                           std::vector<Int>{1, 0}};
 
-  std::string idx1Var{"idx1"};
-  std::string idx2Var{"idx2"};
-  std::string outputVar{"output"};
+  Var rowIdxVar{"idx1", std::vector<Int>{}, true};
+  Var colIdxVar{"idx2", std::vector<Int>{}, true};
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int idx1Offset{1};
-  Int idx2Offset{1};
+  Int rowOffset{1};
+  Int colOffset{1};
 
   [[nodiscard]] static bool intParToBool(const Int val) {
     return std::abs(val) % 2 == 0;
@@ -26,63 +26,65 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
   }
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data <= 1; }
-  [[nodiscard]] bool idx1ShouldBeReplaced() const {
+  [[nodiscard]] bool rowIndexShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 0 || _paramData.data == 2);
   }
-  [[nodiscard]] bool idx2ShouldBeReplaced() const {
+  [[nodiscard]] bool colIndexShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 1 || _paramData.data == 3);
   }
 
-  Int computeOutput(bool isRegistered = false) {
+  Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
       const Int row =
-          (varNode(idx1Var).isFixed() ? varNode(idx1Var).lowerBound()
-                                      : _solver->currentValue(varId(idx1Var))) -
-          idx1Offset;
+          (varNode(rowIdxVar).isFixed() ? varNode(rowIdxVar).lowerBound()
+                                      : _solver->currentValue(varId(rowIdxVar))) -
+          rowOffset;
       const Int col =
-          (varNode(idx2Var).isFixed() ? varNode(idx2Var).lowerBound()
-                                      : _solver->currentValue(varId(idx2Var))) -
-          idx2Offset;
+          (varNode(colIdxVar).isFixed() ? varNode(colIdxVar).lowerBound()
+                                      : _solver->currentValue(varId(colIdxVar))) -
+          colOffset;
       return parVal(parMatrix.at(row).at(col));
     }
-    const Int row = varNode(idx1Var).lowerBound() - idx1Offset;
-    const Int col = varNode(idx2Var).lowerBound() - idx2Offset;
+    const Int row = varNode(rowIdxVar).lowerBound() - rowOffset;
+    const Int col = varNode(colIdxVar).lowerBound() - colOffset;
     return parVal(parMatrix.at(row).at(col));
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    retrieveIntVarNode(
-        idx1Offset,
-        shouldBeSubsumed() || idx1ShouldBeReplaced()
-            ? idx1Offset
-            : (idx1Offset + static_cast<Int>(parMatrix.size()) - 1),
-        idx1Var);
-    retrieveIntVarNode(
-        idx2Offset,
-        shouldBeSubsumed() || idx2ShouldBeReplaced()
-            ? idx2Offset
-            : (idx1Offset + static_cast<Int>(parMatrix.front().size()) - 1),
-        idx2Var);
+    if (shouldBeSubsumed() || rowIndexShouldBeReplaced()) {
+      rowIdxVar.domain = std::vector<Int>{rowOffset};
+    } else {
+      rowIdxVar.domain = std::pair<Int,Int>{rowOffset, rowOffset + static_cast<Int>(parMatrix.size()) - 1};
+    }
+    retrieveIntVarNode(rowIdxVar);
+
+    if (shouldBeSubsumed() || colIndexShouldBeReplaced()) {
+      colIdxVar.domain = std::vector<Int>{colOffset};
+    } else {
+      colIdxVar.domain = std::pair<Int,Int>{colOffset, colOffset + static_cast<Int>(parMatrix.front().size()) - 1};
+    }
+    retrieveIntVarNode(colIdxVar);
 
     if (isIntElement()) {
       // int version of element
       Int lb = std::numeric_limits<Int>::max();
-      Int ub = std::numeric_limits<Int>::max();
+      Int ub = std::numeric_limits<Int>::min();
       for (const auto& row : parMatrix) {
         const Int mn = std::ranges::min(row);
         const Int mx = std::ranges::max(row);
         lb = std::min(lb, mn);
         ub = std::max(ub, mx);
       }
-
-      retrieveIntVarNode(lb, ub, outputVar);
-      createInvariantNode(*_invariantGraph, varNodeId(idx1Var),
-                          varNodeId(idx2Var),
+      outputVar.domain = std::pair<Int, Int>{lb - 1, ub + 1};
+      retrieveIntVarNode(outputVar);
+      createInvariantNode(*_invariantGraph, varNodeId(rowIdxVar),
+                          varNodeId(colIdxVar),
                           std::vector<std::vector<Int>>{parMatrix},
-                          varNodeId(outputVar), idx1Offset, idx2Offset);
+                          varNodeId(outputVar), rowOffset, colOffset);
     } else {
       // bool version of element
+      outputVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(outputVar);
       std::vector<std::vector<bool>> boolMatrix;
       boolMatrix.reserve(parMatrix.size());
@@ -92,15 +94,17 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
           boolMatrix.back().emplace_back(intParToBool(val));
         }
       }
-      createInvariantNode(*_invariantGraph, varNodeId(idx1Var),
-                          varNodeId(idx2Var), std::move(boolMatrix),
-                          varNodeId(outputVar), idx1Offset, idx2Offset);
+      createInvariantNode(*_invariantGraph, varNodeId(rowIdxVar),
+                          varNodeId(colIdxVar), std::move(boolMatrix),
+                          varNodeId(outputVar), rowOffset, colOffset);
     }
   }
 };
 
 TEST_P(ArrayElement2dNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -116,6 +120,8 @@ TEST_P(ArrayElement2dNodeTestFixture, updateState) {
 
 TEST_P(ArrayElement2dNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -138,8 +144,8 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   if (outputNode.isFixed()) {
     const Int expected = outputNode.lowerBound();
     const Int actual =
-        parVal(parMatrix.at(varNode(idx1Var).lowerBound() - idx1Offset)
-                   .at(varNode(idx2Var).lowerBound() - idx2Offset));
+        parVal(parMatrix.at(varNode(rowIdxVar).lowerBound() - rowOffset)
+                   .at(varNode(colIdxVar).lowerBound() - colOffset));
     EXPECT_EQ(expected, actual);
     return;
   }
@@ -148,7 +154,7 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   const propagation::VarViewId outputId = varId(outputVar);
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& idx : std::array<std::string, 2>{idx1Var, idx2Var}) {
+  for (const auto& idx : std::array<std::string, 2>{rowIdxVar.identifier, colIdxVar.identifier}) {
     if (!varNode(idx).isFixed()) {
       EXPECT_NE(varId(idx), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(idx));
@@ -176,7 +182,7 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ArrayElement2dNodeTest, ArrayElement2dNodeTestFixture,
     ::testing::Values(ParamData{0}, ParamData{InvariantNodeAction::SUBSUME, 0},
                       ParamData{InvariantNodeAction::REPLACE, 0},

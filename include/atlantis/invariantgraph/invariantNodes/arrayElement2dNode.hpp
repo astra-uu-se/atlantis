@@ -20,6 +20,8 @@ class ArrayElement2dNode : public InvariantNode {
                      std::vector<std::vector<bool>>&& parMatrix,
                      VarNodeId output, Int rowOffset, Int colOffset);
 
+  void postConstraint() override;
+
   void init(InvariantNodeId) override;
 
   void updateState() override;
