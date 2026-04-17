@@ -23,7 +23,7 @@ static void testModelFile(
       (std::string(FZN_DIR) + "/" + modelFile).c_str());
   logging::Logger logger(stdout, logLvl);
   FznBackend backend(logger, std::move(modelFilePath), 4,
-                     search::SearchType::BEAMSEARCH);
+                     search::SearchType::PARALLEL);
   if (seed.has_value()) {
     backend.setRandomSeed(seed.value());
   }

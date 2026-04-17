@@ -82,7 +82,7 @@ class Assignment {
 
   [[nodiscard]] bool hasObjective() const;
 
-  void setAssignment(const SavedAssignment& saved) const;
+  void setAssignment(const SavedAssignment& saved);
 };
 
 }  // namespace atlantis::search
