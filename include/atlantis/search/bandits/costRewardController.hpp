@@ -17,11 +17,11 @@ class CostAverage {
   size_t _size;
   std::queue<Cost> _history;
 
-public:
-  explicit CostAverage(const Cost& initialCost, const size_t size) :
-    _hasViolation(initialCost.hasViolation()),
-    _hasObjective(initialCost.hasObjective()),
-    _size(size) {
+ public:
+  explicit CostAverage(const Cost& initialCost, const size_t size)
+      : _hasViolation(initialCost.hasViolation()),
+        _hasObjective(initialCost.hasObjective()),
+        _size(size) {
     if (_hasViolation) _violation = initialCost.violation();
     if (_hasObjective) _objective = initialCost.objective();
 
@@ -31,10 +31,12 @@ public:
   void addCost(const Cost& newCost) {
     if (_history.size() <= _size) {
       if (_hasObjective) {
-        _objective = (_objective * _history.size() + newCost.objective())/ (_history.size() + 1);
+        _objective = (_objective * _history.size() + newCost.objective()) /
+                     (_history.size() + 1);
       }
       if (_hasViolation) {
-        _violation = (_violation * _history.size() + newCost.violation()) / (_history.size() + 1);
+        _violation = (_violation * _history.size() + newCost.violation()) /
+                     (_history.size() + 1);
       }
 
       _history.push(newCost);
@@ -44,12 +46,14 @@ public:
     const auto remove = _history.front();
 
     if (_hasObjective) {
-      printf("Updating average:\n\tobjective is %f, removing %ld and adding %ld.\n", _objective, remove.objective(), newCost.objective());
-      _objective = (_objective * _size - remove.objective() + newCost.objective()) / _size;
-      printf("\tobjective is %f\n", _objective);
+      _objective =
+          (_objective * _size - remove.objective() + newCost.objective()) /
+          _size;
     }
     if (_hasViolation) {
-      _violation = (_violation * _size - remove.violation() + newCost.violation()) / _size;
+      _violation =
+          (_violation * _size - remove.violation() + newCost.violation()) /
+          _size;
     }
 
     _history.pop();
@@ -59,7 +63,8 @@ public:
   Cost cost() const {
     if (!_hasObjective) return Cost(static_cast<Int>(_violation));
     if (!_hasViolation) return Cost(static_cast<Int>(_objective), true);
-    return Cost(static_cast<Int>(_violation), static_cast<Int>(_objective), true);
+    return Cost(static_cast<Int>(_violation), static_cast<Int>(_objective),
+                true);
   }
 };
 
@@ -67,12 +72,13 @@ class CostRewardController : public RewardController {
   std::optional<CostAverage> _costAverage;
   std::vector<std::shared_ptr<ArmStats>> _armStats;
 
-public:
+ public:
+  explicit CostRewardController(
+      const std::vector<std::shared_ptr<ArmStats>>& armStats)
+      : _armStats(armStats) {}
 
-  explicit CostRewardController(const std::vector<std::shared_ptr<ArmStats>>& armStats) :
-    _armStats(armStats) {}
-
-  [[nodiscard]] double getReward(const size_t arm, const PullResults& results) override {
+  [[nodiscard]] double getReward(const size_t arm,
+                                 const PullResults& results) override {
     if (!results._pullBestCost.has_value()) {
       throw std::runtime_error("Results doesn't contain reward value!");
     }
@@ -88,16 +94,16 @@ public:
     } else {
       if (reward <= _costAverage->cost()) {
         points = 1;
-      }
-      else {
+      } else {
         points = 0;
       }
 
       _costAverage->addCost(reward);
     }
 
-    printf("Arm %ld got cost %s. Global is %s, so it gets %.0f point.\n",
-      arm, reward.toString().c_str(), _costAverage->cost().toString().c_str(), points);
+    printf("Arm %ld got cost %s. Global is %s, so it gets %.0f point.\n", arm,
+           reward.toString().c_str(), _costAverage->cost().toString().c_str(),
+           points);
 
     return points;
   }

@@ -4,13 +4,13 @@
 
 namespace atlantis::search {
 
-class KullbackLeiblerUpperConfidenceBound : public ArmSelector {
+class UpperConfidenceBound : public ArmSelector {
   std::vector<double> _meanPoints;
+  std::vector<double> _cumulativePoints;
 
  public:
-  explicit KullbackLeiblerUpperConfidenceBound(
-      const std::shared_ptr<AnnealingScheduleFactory>&
-          annealingScheduleFactory);
+  explicit UpperConfidenceBound(const std::shared_ptr<AnnealingScheduleFactory>&
+                                    annealingScheduleFactory);
 
   void recordArmStats(size_t arm, const PullResults& stats) override;
 

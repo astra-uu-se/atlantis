@@ -5,21 +5,19 @@
 namespace atlantis::search {
 
 class ThompsonSampling : public ArmSelector {
-  size_t _totalPulls = 0;
-  size_t _totalRecordedPulls = 0;
   std::vector<double> _alpha;
   std::vector<double> _beta;
 
-public:
-
-  explicit ThompsonSampling(
-    const std::shared_ptr<AnnealingScheduleFactory> &annealingScheduleFactory);
+ public:
+  explicit ThompsonSampling(const std::shared_ptr<AnnealingScheduleFactory>&
+                                annealingScheduleFactory);
 
   void recordArmStats(size_t arm, const PullResults& stats) override;
 
-  std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> chooseArm(RandomProvider& random) override;
+  std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> chooseArm(
+      RandomProvider& random) override;
 
   void printStats() const override;
 };
 
-} // namespace atlantis::search
+}  // namespace atlantis::search

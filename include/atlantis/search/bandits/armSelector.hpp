@@ -13,25 +13,25 @@
 
 namespace atlantis::search {
 
-enum class BanditAlgorithm: unsigned char { ETC, UCB, Thompson };
-constexpr std::array<std::string_view, 3> banditAlgorithmNames = {"explore-then-commit", "UCB", "Thompson sampling"};
+enum class BanditAlgorithm : unsigned char { ETC, Thompson, UCB, KLUCB };
+constexpr std::array<std::string_view, 4> banditAlgorithmNames = {
+    "explore-then-commit", "Thompson sampling", "UCB", "KL-UCB"};
 
 class ArmSelector {
-protected:
+ protected:
   mutable std::mutex _lock;
   size_t _numArms = 0;
+  size_t _totalPulls = 0;
+  size_t _totalRecordedPulls = 0;
   std::vector<std::shared_ptr<ArmStats>> _armStats;
-  std::shared_ptr<AnnealingScheduleFactory>
-      _annealingScheduleFactory;
+  std::shared_ptr<AnnealingScheduleFactory> _annealingScheduleFactory;
   std::unique_ptr<RewardController> _rewardController;
 
-public:
-
+ public:
   explicit ArmSelector(
-     const std::shared_ptr<AnnealingScheduleFactory> &annealingScheduleFactory) :
-    _numArms(annealingScheduleFactory->armCount()),
-    _annealingScheduleFactory(annealingScheduleFactory)
-  {
+      const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory)
+      : _numArms(annealingScheduleFactory->armCount()),
+        _annealingScheduleFactory(annealingScheduleFactory) {
     _armStats = std::vector<std::shared_ptr<ArmStats>>();
     for (size_t arm = 0; arm < _numArms; arm++) {
       _armStats.push_back(std::make_shared<ArmStats>());
@@ -40,9 +40,10 @@ public:
 
   virtual ~ArmSelector() = default;
 
-  virtual void recordArmStats(size_t arm, const PullResults &stats) = 0;
+  virtual void recordArmStats(size_t arm, const PullResults& stats) = 0;
 
-  virtual std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> chooseArm(RandomProvider& random) = 0;
+  virtual std::tuple<std::unique_ptr<AnnealingSchedule>, size_t> chooseArm(
+      RandomProvider& random) = 0;
 
   virtual void printStats() const {
     printf("\n");

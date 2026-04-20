@@ -11,6 +11,7 @@
 #include "atlantis/search/bandits/ExploreThenCommit.hpp"
 #include "atlantis/search/bandits/KullbackLeiblerUpperConfidenceBound.hpp"
 #include "atlantis/search/bandits/ThompsonSampling.hpp"
+#include "atlantis/search/bandits/upperConfidenceBound.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
@@ -121,18 +122,29 @@ void FznBackend::solve(logging::Logger& logger) {
   std::unique_ptr<search::ArmSelector> selector;
   switch (_banditAlgorithm) {
     case search::BanditAlgorithm::UCB:
-      printf("Using bandit algorithm upper confidence bound (KL-UCB).\n");
-      selector = std::make_unique<search::KullbackLeiblerUpperConfidenceBound>(_annealingScheduleFactory);
+      printf("Using bandit algorithm upper confidence bound (UCB).\n");
+      selector = std::make_unique<search::UpperConfidenceBound>(
+          _annealingScheduleFactory);
+      break;
+    case search::BanditAlgorithm::KLUCB:
+      printf(
+          "Using bandit algorithm Kullback-Leibler upper confidence bound "
+          "(KL-UCB).\n");
+      selector = std::make_unique<search::KullbackLeiblerUpperConfidenceBound>(
+          _annealingScheduleFactory);
       break;
     case search::BanditAlgorithm::Thompson:
       printf("Using bandit algorithm Thompson sampling.\n");
-      selector = std::make_unique<search::ThompsonSampling>(_annealingScheduleFactory);
+      selector =
+          std::make_unique<search::ThompsonSampling>(_annealingScheduleFactory);
       break;
     default:
       printf("Using bandit algorithm explore-then-commit.\n");
-      selector = std::make_unique<search::ExploreThenCommit>(_annealingScheduleFactory);
+      selector = std::make_unique<search::ExploreThenCommit>(
+          _annealingScheduleFactory);
   }
-  _threadController = std::make_shared<search::ThreadController>(_threadCount, std::move(selector));
+  _threadController = std::make_shared<search::ThreadController>(
+      _threadCount, std::move(selector));
 
   // TODO: refactor everywhere to use the shared pointer
   assert(_threads.empty());

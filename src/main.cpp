@@ -98,27 +98,35 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    atlantis::search::SearchType searchType = atlantis::search::SearchType::BEAMSEARCH;
+    atlantis::search::SearchType searchType =
+        atlantis::search::SearchType::BEAMSEARCH;
     if (result.count("communication-type") == 1) {
-      size_t searchTypeNumber = result["communication-type"].as<uint_fast32_t>();
+      size_t searchTypeNumber =
+          result["communication-type"].as<uint_fast32_t>();
       if (searchTypeNumber > 2) {
-        std::cout << "Error: Invalid search type. Must be in the range 0-2." << std::endl;
+        std::cout << "Error: Invalid search type. Must be in the range 0-2."
+                  << std::endl;
         return 0;
       }
       searchType = static_cast<atlantis::search::SearchType>(searchTypeNumber);
     }
 
-    atlantis::search::BanditAlgorithm banditAlgorithm = atlantis::search::BanditAlgorithm::ETC;
+    atlantis::search::BanditAlgorithm banditAlgorithm =
+        atlantis::search::BanditAlgorithm::ETC;
     if (result.count("bandit-algorithm") == 1) {
       size_t algorithmNumber = result["bandit-algorithm"].as<uint_fast32_t>();
-      if (algorithmNumber > 2) {
-        std::cout << "Error: Invalid bandit algorithm. Must be in the range 0-2." << std::endl;
+      if (algorithmNumber > 3) {
+        std::cout
+            << "Error: Invalid bandit algorithm. Must be in the range 0-3."
+            << std::endl;
         return 0;
       }
-      banditAlgorithm = static_cast<atlantis::search::BanditAlgorithm>(algorithmNumber);
+      banditAlgorithm =
+          static_cast<atlantis::search::BanditAlgorithm>(algorithmNumber);
     }
 
-    atlantis::FznBackend backend(logger, std::move(modelFilePath), threadCount, searchType, banditAlgorithm);
+    atlantis::FznBackend backend(logger, std::move(modelFilePath), threadCount,
+                                 searchType, banditAlgorithm);
 
     if (long givenSeed; (givenSeed = result["seed"].as<long>()) >= 0) {
       backend.setRandomSeed(static_cast<std::uint_fast32_t>(givenSeed));
