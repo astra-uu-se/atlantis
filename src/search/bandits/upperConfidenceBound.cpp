@@ -4,13 +4,14 @@
 
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 #include "atlantis/search/bandits/costRewardController.hpp"
+#include "atlantis/search/bandits/isImprovementsRewardController.hpp"
 
 namespace atlantis::search {
 
 UpperConfidenceBound::UpperConfidenceBound(
     const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory)
     : ArmSelector(annealingScheduleFactory) {
-  _rewardController = std::make_unique<CostRewardController>(_armStats);
+  _rewardController = std::make_unique<IsImprovementsRewardController>(_armStats);
 
   _meanPoints = std::vector(_numArms, 0.0);
   _cumulativePoints = std::vector(_numArms, 0.1);
