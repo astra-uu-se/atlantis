@@ -10,6 +10,7 @@
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/bandits/ExploreThenCommit.hpp"
 #include "atlantis/search/bandits/KullbackLeiblerUpperConfidenceBound.hpp"
+#include "atlantis/search/bandits/OCUCBn.hpp"
 #include "atlantis/search/bandits/ThompsonSampling.hpp"
 #include "atlantis/search/bandits/upperConfidenceBound.hpp"
 #include "atlantis/search/objective.hpp"
@@ -131,6 +132,13 @@ void FznBackend::solve(logging::Logger& logger) {
           "Using bandit algorithm Kullback-Leibler upper confidence bound "
           "(KL-UCB).\n");
       selector = std::make_unique<search::KullbackLeiblerUpperConfidenceBound>(
+          _annealingScheduleFactory);
+      break;
+    case search::BanditAlgorithm::OCUCBn:
+      printf(
+          "Using bandit algorithm anytime optimally confident upper confidence bound "
+          "(OCUCB-n).\n");
+      selector = std::make_unique<search::OCUCBn>(
           _annealingScheduleFactory);
       break;
     case search::BanditAlgorithm::Thompson:

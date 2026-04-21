@@ -4,12 +4,20 @@
 
 namespace atlantis::search {
 
-class UpperConfidenceBound : public ArmSelector {
+class OCUCBn : public ArmSelector {
   std::vector<double> _meanPoints;
 
- public:
-  explicit UpperConfidenceBound(const std::shared_ptr<AnnealingScheduleFactory>&
-                                    annealingScheduleFactory);
+  // For OCUCB-n
+  double _eta = 1.1; // Must be > 1
+  double _rho = 1/2; // Must be in [1/2, 1]
+
+  double b(size_t i, size_t t) const;
+  double gamma(size_t i, size_t t) const;
+
+public:
+  explicit OCUCBn(
+      const std::shared_ptr<AnnealingScheduleFactory>&
+          annealingScheduleFactory);
 
   void recordArmStats(size_t arm, const PullResults& stats) override;
 

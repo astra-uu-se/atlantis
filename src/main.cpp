@@ -115,9 +115,9 @@ int main(int argc, char* argv[]) {
         atlantis::search::BanditAlgorithm::ETC;
     if (result.count("bandit-algorithm") == 1) {
       size_t algorithmNumber = result["bandit-algorithm"].as<uint_fast32_t>();
-      if (algorithmNumber > 3) {
+      if (algorithmNumber > 4) {
         std::cout
-            << "Error: Invalid bandit algorithm. Must be in the range 0-3."
+            << "Error: Invalid bandit algorithm. Must be in the range 0-4."
             << std::endl;
         return 0;
       }
