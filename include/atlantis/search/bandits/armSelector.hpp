@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <functional>
 
 #include "armStats.hpp"
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
@@ -26,12 +27,15 @@ class ArmSelector {
   std::vector<std::shared_ptr<ArmStats>> _armStats;
   std::shared_ptr<AnnealingScheduleFactory> _annealingScheduleFactory;
   std::unique_ptr<RewardController> _rewardController;
+  std::function<void(std::shared_ptr<ArmStats>, size_t)> _onArmRecording;
 
  public:
   explicit ArmSelector(
-      const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory)
+      const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory,
+      const std::function<void(std::shared_ptr<ArmStats>, size_t)>& onArmRecording)
       : _numArms(annealingScheduleFactory->armCount()),
-        _annealingScheduleFactory(annealingScheduleFactory) {
+        _annealingScheduleFactory(annealingScheduleFactory),
+        _onArmRecording(onArmRecording) {
     _armStats = std::vector<std::shared_ptr<ArmStats>>();
     for (size_t arm = 0; arm < _numArms; arm++) {
       _armStats.push_back(std::make_shared<ArmStats>());

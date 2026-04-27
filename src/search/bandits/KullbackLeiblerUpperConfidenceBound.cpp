@@ -9,8 +9,9 @@
 namespace atlantis::search {
 
 KullbackLeiblerUpperConfidenceBound::KullbackLeiblerUpperConfidenceBound(
-    const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory)
-    : ArmSelector(annealingScheduleFactory) {
+const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory,
+const std::function<void(std::shared_ptr<ArmStats>, size_t)>& onArmRecording)
+    : ArmSelector(annealingScheduleFactory, onArmRecording) {
   _rewardController = std::make_unique<CostRewardController>(_armStats);
 
   _meanPoints = std::vector(_numArms, 0.0);
@@ -75,6 +76,8 @@ void KullbackLeiblerUpperConfidenceBound::recordArmStats(
   const size_t n = _armStats[arm]->timesRecorded;
   // _meanPoints[arm] *= 0.99;
   _meanPoints[arm] = calcNewMean(_meanPoints[arm], points, n);
+
+  _onArmRecording(_armStats[arm], arm);
 
   printf(
       "Arm %ld got %0.2f points and cost %s. Mean reward %f for %ld recorded "

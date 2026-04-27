@@ -8,8 +8,9 @@ class UpperConfidenceBound : public ArmSelector {
   std::vector<double> _meanPoints;
 
  public:
-  explicit UpperConfidenceBound(const std::shared_ptr<AnnealingScheduleFactory>&
-                                    annealingScheduleFactory);
+  explicit UpperConfidenceBound(
+    const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory,
+    const std::function<void(std::shared_ptr<ArmStats>, size_t)>& onArmRecording);
 
   void recordArmStats(size_t arm, const PullResults& stats) override;
 

@@ -43,6 +43,8 @@ class FznBackend {
       const std::optional<
           std::vector<std::shared_ptr<search::SearchStatistics>>>&) const;
 
+  static void onArmSolutionDefault(std::shared_ptr<search::ArmStats>, size_t){}
+
  private:
   std::shared_ptr<invariantgraph::FznInvariantGraph> _invariantGraph;
   std::shared_ptr<fznparser::Model> _model;
@@ -61,6 +63,7 @@ class FznBackend {
                          std::shared_ptr<search::SearchStatistics>>>&)>
       _onSolution;
   std::function<void(SolveOutcome)> _onFinish = onFinishDefault;
+  std::function<void(std::shared_ptr<search::ArmStats>, size_t)> _onArmRecording = onArmSolutionDefault;
   std::vector<std::thread> _threads{};
   std::shared_ptr<search::ThreadController> _threadController{nullptr};
 
@@ -156,6 +159,10 @@ class FznBackend {
 
   void setOnFinish(const std::function<void(SolveOutcome)>& onFinish) {
     _onFinish = onFinish;
+  }
+
+  void setOnArmRecording(const std::function<void(std::shared_ptr<search::ArmStats>, size_t)>& onArmRecording) {
+    _onArmRecording = onArmRecording;
   }
 };
 

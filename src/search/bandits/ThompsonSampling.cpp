@@ -6,8 +6,9 @@
 namespace atlantis::search {
 
 ThompsonSampling::ThompsonSampling(
-    const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory)
-    : ArmSelector(annealingScheduleFactory) {
+const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory,
+  const std::function<void(std::shared_ptr<ArmStats>, size_t)>& onArmRecording)
+    : ArmSelector(annealingScheduleFactory, onArmRecording) {
   _rewardController = std::make_unique<CostRewardController>(_armStats);
   _alpha = std::vector(_numArms, 1.0);
   _beta = std::vector(_numArms, 0.001);
@@ -19,6 +20,8 @@ void ThompsonSampling::recordArmStats(const size_t arm, const PullResults& stats
   _alpha[arm] += points;
   _beta[arm]++;
   _totalRecordedPulls++;
+
+  _onArmRecording(_armStats[arm], arm);
 }
 
 

@@ -9,8 +9,8 @@ class KullbackLeiblerUpperConfidenceBound : public ArmSelector {
 
  public:
   explicit KullbackLeiblerUpperConfidenceBound(
-      const std::shared_ptr<AnnealingScheduleFactory>&
-          annealingScheduleFactory);
+      const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory,
+      const std::function<void(std::shared_ptr<ArmStats>, size_t)>& onArmRecording);
 
   void recordArmStats(size_t arm, const PullResults& stats) override;
 

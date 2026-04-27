@@ -7,8 +7,9 @@
 namespace atlantis::search {
 
 ExploreThenCommit::ExploreThenCommit(
-    const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory)
-    : ArmSelector(annealingScheduleFactory) {
+const std::shared_ptr<AnnealingScheduleFactory>& annealingScheduleFactory,
+const std::function<void(std::shared_ptr<ArmStats>, size_t)>& onArmRecording)
+    : ArmSelector(annealingScheduleFactory, onArmRecording) {
   _rewardController = std::make_unique<NumImprovementsRewardController>(_armStats);
   _means = std::vector(_numArms, 0.0);
 }
@@ -22,6 +23,8 @@ void ExploreThenCommit::recordArmStats(const size_t arm,
 
   _means[arm] = (_means[arm] * (_armStats[arm]->timesRecorded - 1) + points) /
                 _armStats[arm]->timesRecorded;
+
+  _onArmRecording(_armStats[arm], arm);
 }
 
 
