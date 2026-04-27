@@ -144,9 +144,20 @@ bool Assignment::hasViolation() const {
   return _violation != propagation::NULL_ID;
 }
 
-void Assignment::setAssignment(const SavedAssignment& saved) const {
+void Assignment::setAssignment(const SavedAssignment& saved) {
+  const Timestamp ts = _solver.currentTimestamp();
   _solver.beginMove();
-  _solver.updateSearchValues(saved.getSearchValues());
+  for (auto& [varId, value] : saved.getSearchValues()) {
+    set(varId, value);
+  }
+
+  for (const auto varId : searchVars()) {
+    // if (_solver.hasChanged(ts, varId)) {
+    _solver.setValue(varId, _solver.value(ts, varId));
+    // }
+  }
+  _solver.endMove();
+
   _solver.endMove();
 
   _solver.beginCommit();

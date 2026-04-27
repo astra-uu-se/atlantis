@@ -53,35 +53,44 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
   // Run only a small subset of instances
   const std::vector<std::string> fileSet = {
       // Knapsack
-      "f10_l-d_kp_20_879.fzn",
-      "knapPI_1_100_1000_1.fzn",
-      "knapPI_1_500_1000_1.fzn",
-      "knapPI_1_1000_1000_1.fzn",
-      "knapPI_1_5000_1000_1.fzn",
-      "knapPI_1_10000_1000_1.fzn",
+      "/knapsack/f10_l-d_kp_20_879.fzn",
+      "/knapsack/knapPI_1_100_1000_1.fzn",
+      "/knapsack/knapPI_1_500_1000_1.fzn",
+      "/knapsack/knapPI_1_1000_1000_1.fzn",
+      "/knapsack/knapPI_1_5000_1000_1.fzn",
+      "/knapsack/knapPI_1_10000_1000_1.fzn",
       // n-Queens
-      "16.fzn",
-      "48.fzn",
-      "64.fzn",
-      "128.fzn",
-      "256.fzn",
-      "512.fzn",
-      "768.fzn",
-      "1024.fzn",
-      "2048.fzn",
-      // TSP / TSPTW
-      "n100w140.001.fzn",
-      "n100w140.002.fzn",
-      "n100w140.003.fzn",
-      "n100w140.004.fzn",
-      "n100w140.005.fzn",
-  };
+      "/n_queens/16.fzn",
+      "/n_queens/48.fzn",
+      "/n_queens/64.fzn",
+      "/n_queens/128.fzn",
+      "/n_queens/256.fzn",
+      "/n_queens/512.fzn",
+      "/n_queens/768.fzn",
+      "/n_queens/1024.fzn",
+      "/n_queens/2048.fzn",
+      // TSP
+      "/tsp/n100w140.001.fzn",
+      "/tsp/n100w140.002.fzn",
+      "/tsp/n100w140.003.fzn",
+      "/tsp/n100w140.004.fzn",
+      "/tsp/n100w140.005.fzn",
+      // tsptw
+      "/tsptw/n20w140.001.fzn",
+      "/tsptw/n40w140.001.fzn",
+      "/tsptw/n60w140.001.fzn",
+      "/tsptw/n80w140.001.fzn",
+      "/tsptw/n100w140.001.fzn",
+};
   for (const auto& entry : std::filesystem::directory_iterator(relDir)) {
     if (entry.is_regular_file() && entry.path().extension() == ".fzn") {
-      if (std::string file = entry.path().filename().string();
-          std::ranges::find(fileSet, file) != fileSet.end()) {
-        const std::string dirPath = entry.path().parent_path().string();
-        instances.emplace_back(entry.path().string());
+      for (const auto& model : fileSet) {
+        if (std::string file = entry.path().string();
+            file.ends_with(model)) {
+          printf("Adding instance %s\n", file.c_str());
+          instances.emplace_back(file);
+          break;
+            }
       }
     }
   }

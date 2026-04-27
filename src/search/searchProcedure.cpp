@@ -88,6 +88,10 @@ Int SearchProcedure::run(SearchController& searchController) {
         communications->increment();
     }
 
+    if (_searchType == SearchType::BEAMSEARCH && _localBestAssignment.has_value()) {
+      _assignment.setAssignment(_localBestAssignment.value());
+    }
+
     metaHeuristic->start();
 
     while (searchController.shouldRun(_assignment) &&
