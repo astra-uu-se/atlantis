@@ -24,6 +24,9 @@ class ParTSP : public ::benchmark::Fixture {
   long instance{-1};
   size_t numThreads{0};
   search::SearchType searchType{search::SearchType::BESTCOST};
+  search::BanditAlgorithm banditAlgorithm{search::BanditAlgorithm::ETC};
+  std::filesystem::path annealingSchedulePath =
+    "benchmark/parallell/banditTestSchedule.json";
 
   std::vector<std::chrono::milliseconds> timelimits;
 
@@ -39,6 +42,7 @@ class ParTSP : public ::benchmark::Fixture {
     instance = state.range(0);
     numThreads = state.range(1);
     searchType = intToSearchType(state.range(2));
+    banditAlgorithm = intToBanditAlgorithm(state.range(3));
 
     timelimits = defaultTimelimits();
 
@@ -46,7 +50,10 @@ class ParTSP : public ::benchmark::Fixture {
 
     std::filesystem::path modelFilePath(instances.at(instance).c_str());
     backend = std::make_shared<FznBackend>(logger, std::move(modelFilePath),
-                                           numThreads, searchType);
+                                           numThreads, searchType, banditAlgorithm);
+
+    backend->setAnnealingScheduleFactory(
+      std::make_shared<search::AnnealingScheduleFactory>(annealingSchedulePath));
   }
 
   void TearDown(const ::benchmark::State&) override { backend = nullptr; }
@@ -59,14 +66,14 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
   std::vector<size_t> numSolutions(timelimits.size(), 0);
   std::vector<Int> bestObjective(timelimits.size(), 0);
   std::vector<Int> bestViolation(timelimits.size(), 0);
+  std::vector<double> totalObjective(timelimits.size(), 0.0);
 
-  const size_t numArms = 4;
-  auto pulls = std::vector<std::vector<Int>>();
+  const size_t numArms = backend->annealingScheduleFactory()->armCount();
+  auto armRecordings = std::vector<std::vector<Int>>();
   for (size_t _ = 0; _ < numArms; _++) {
-    pulls.push_back(std::vector<Int>(timelimits.size(), 0));
+    armRecordings.push_back(std::vector<Int>(timelimits.size(), 0));
   }
 
-  std::vector<double> totalObjective(timelimits.size(), 0.0);
   backend->setOnFinish([](FznBackend::SolveOutcome) {});
   backend->setTimelimit(timelimits.back());
 
@@ -91,18 +98,15 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
         }
       });
 
-  // static void onArmSolutionDefault(std::shared_ptr<search::ArmStats>, size_t){}
   backend->setOnArmRecording(
-    [&](std::shared_ptr<search::ArmStats> stats, const size_t arm) {
+    [&](const std::shared_ptr<search::ArmStats>& stats, const size_t arm) {
 
       for (size_t i = 0; i < timelimits.size(); i++) {
         if (deadlines[i] < std::chrono::steady_clock::now()) {
-          // TODO: Consider replacing this with break;
           continue;
         }
-        pulls[arm][i] = stats->timesRecorded;
+        armRecordings[arm][i] = stats->timesRecorded;
       }
-      printf("Recorded arm %ld.\n", arm);
     });
 
   for ([[maybe_unused]] const auto& _ : st) {
@@ -121,8 +125,8 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
     st.counters[prefix + "/objective_average"] =
         totalObjective[i] / static_cast<double>(numSolutions[i]);
     for (size_t arm = 0; arm < numArms; arm++) {
-      st.counters[prefix + "/pulls/" + std::to_string(arm)] =
-        static_cast<double>(pulls[arm][i]);
+      st.counters[prefix + "/armRecordings/" + std::to_string(arm)] =
+        static_cast<double>(armRecordings[arm][i]);
     }
   }
 }

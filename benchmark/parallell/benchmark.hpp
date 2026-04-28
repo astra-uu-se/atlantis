@@ -10,15 +10,21 @@ inline search::SearchType intToSearchType(Int state) {
   return static_cast<search::SearchType>(state);
 }
 
+inline search::BanditAlgorithm intToBanditAlgorithm(Int state) {
+  return static_cast<search::BanditAlgorithm>(state);
+}
+
 template <class F>
 void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
   F::populateInstances();
   for (size_t instance = 0; instance < F::size(); ++instance) {
-    for (Int numThreads = 1; numThreads <= 8; numThreads *= 2) {
-      for (Int searchType = 0; searchType <= 2; ++searchType) {
-        benchmark->Args({static_cast<long>(instance), numThreads, searchType});
-        if (numThreads == 1) {
-          break;
+    for (Int numThreads = 2; numThreads <= 2; numThreads *= 2) {
+      for (Int searchType = 0; searchType <= 0; ++searchType) {
+        for (Int banditAlgorithm = 0; banditAlgorithm <= 1; ++banditAlgorithm) {
+          benchmark->Args({static_cast<long>(instance), numThreads, searchType, banditAlgorithm});
+          if (numThreads == 1) {
+            break;
+          }
         }
       }
 #ifndef NDEBUG

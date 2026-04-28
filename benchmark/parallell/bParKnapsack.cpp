@@ -24,6 +24,9 @@ class ParKnapsack : public ::benchmark::Fixture {
   long instance{-1};
   long numThreads{0};
   search::SearchType searchType{search::SearchType::BESTCOST};
+  search::BanditAlgorithm banditAlgorithm{search::BanditAlgorithm::ETC};
+  std::filesystem::path annealingSchedulePath =
+    "benchmark/parallell/banditTestSchedule.json";
 
   std::vector<std::chrono::milliseconds> timelimits;
 
@@ -39,6 +42,7 @@ class ParKnapsack : public ::benchmark::Fixture {
     instance = state.range(0);
     numThreads = state.range(1);
     searchType = intToSearchType(state.range(2));
+    banditAlgorithm = intToBanditAlgorithm(state.range(3));
 
     timelimits = defaultTimelimits();
 
@@ -47,6 +51,9 @@ class ParKnapsack : public ::benchmark::Fixture {
     std::filesystem::path modelFilePath(instances.at(instance).c_str());
     backend = std::make_shared<FznBackend>(logger, std::move(modelFilePath),
                                            numThreads, searchType);
+
+    backend->setAnnealingScheduleFactory(
+      std::make_shared<search::AnnealingScheduleFactory>(annealingSchedulePath));
   }
 
   void TearDown(const ::benchmark::State&) override { backend = nullptr; }
@@ -60,6 +67,13 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
   std::vector<Int> bestObjective(timelimits.size(), 0);
   std::vector<Int> bestViolation(timelimits.size(), 0);
   std::vector<double> totalObjective(timelimits.size(), 0.0);
+
+  const size_t numArms = backend->annealingScheduleFactory()->armCount();
+  auto armRecordings = std::vector<std::vector<Int>>();
+  for (size_t _ = 0; _ < numArms; _++) {
+    armRecordings.push_back(std::vector<Int>(timelimits.size(), 0));
+  }
+
   backend->setOnFinish([](FznBackend::SolveOutcome) {});
   backend->setTimelimit(timelimits.back());
 
@@ -85,6 +99,17 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
         }
       });
 
+  backend->setOnArmRecording(
+    [&](const std::shared_ptr<search::ArmStats>& stats, const size_t arm) {
+
+      for (size_t i = 0; i < timelimits.size(); i++) {
+        if (deadlines[i] < std::chrono::steady_clock::now()) {
+          continue;
+        }
+        armRecordings[arm][i] = stats->timesRecorded;
+      }
+    });
+
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);
     backend->join(logger);
@@ -100,6 +125,10 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
         static_cast<double>(bestViolation[i]);
     st.counters[prefix + "/objective_average"] =
         totalObjective[i] / static_cast<double>(numSolutions[i]);
+    for (size_t arm = 0; arm < numArms; arm++) {
+      st.counters[prefix + "/armRecordings/" + std::to_string(arm)] =
+        static_cast<double>(armRecordings[arm][i]);
+    }
   }
 }
 

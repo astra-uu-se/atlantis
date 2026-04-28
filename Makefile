@@ -21,7 +21,7 @@ BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
 NUM_BENCHMARK_REPETITIONS=3
 BENCHMARK_FILTER="^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|NQueens|TSPTW|VesselLoading)\/[A-Za-z]"
 BENCHMARK_FILTER_SYNTH="^(ElementVarTree|LinearTree|TSP|TSPTWAllDiff)\/[A-Za-z]"
-BENCHMARK_FILTER_PAR="^Par(TSP|TSPTW|NQueens|Knapsack)"
+BENCHMARK_FILTER_PAR='^Par(TSP[^T]|TSPTW|NQueens|Knapsack)'
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 
 DZN_DIR=${MKFILE_PATH}dzn
