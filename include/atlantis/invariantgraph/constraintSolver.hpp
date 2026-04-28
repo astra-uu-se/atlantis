@@ -54,6 +54,10 @@ class ConstraintSolver {
       const ConstraintVarId& index1, const ConstraintVarId& index2,
       const std::vector<std::vector<Int>>& parameters, ConstraintVarId output,
       Int rowOffset, Int colOffset) = 0;
+  virtual void array_int_maximum(
+      const std::vector<ConstraintVarId>& inputs, ConstraintVarId output) = 0;
+  virtual void array_int_minimum(
+      const std::vector<ConstraintVarId>& inputs, ConstraintVarId output) = 0;
 };
 
 }  // namespace atlantis::invariantgraph

@@ -33,31 +33,32 @@ void ArrayIntMaximumNode::init(InvariantNodeId id) {
       }));
 }
 
-void ArrayIntMaximumNode::updateState() {
-  auto& outNode = outputVarNode(0);
-
-  Int ub = _lb;
-  for (const auto& input : staticInputVarNodeIds()) {
-    auto& vNode = invariantGraph().varNode(input);
-    vNode.removeValuesAbove(outNode.upperBound());
-    _lb = std::max(_lb, vNode.lowerBound());
-    ub = std::max(ub, vNode.upperBound());
+void ArrayIntMaximumNode::postConstraint() {
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(), ConstraintVarId{NULL_NODE_ID});
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+    inputs[i] = staticInputVarNode(i).constraintVarId();
   }
-  outNode.removeValuesBelow(_lb);
-  outNode.removeValuesAbove(ub);
+  constraintSolver().array_int_maximum(inputs, outputVarNode(0).constraintVarId());
+}
 
+void ArrayIntMaximumNode::updateState() {
+  _lb = outputVarNodeConst(0).lowerBound();
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
-
-  for (const auto& input : staticInputVarNodeIds()) {
-    if (invariantGraphConst().varNodeConst(input).upperBound() <= _lb) {
-      varsToRemove.emplace_back(input);
+  for (const auto& vId : staticInputVarNodeIds()) {
+    if (varNodeConst(vId).isFixed() || varNodeConst(vId).upperBound() <= _lb) {
+      varsToRemove.emplace_back(vId);
     }
   }
-  for (const auto& input : varsToRemove) {
-    removeStaticInputVarNode(input);
+
+  for (const VarNodeId vId : varsToRemove) {
+    removeStaticInputVarNode(vId);
   }
-  if (staticInputVarNodeIds().empty()) {
+
+  if (outputVarNodeConst(0).isFixed()) {
+    for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+      staticInputVarNode(i).tightenDomainType(DomainType::DOM_UPPER_BOUND);
+    }
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -100,7 +101,7 @@ void ArrayIntMaximumNode::registerNode(propagation::SolverBase& solver,
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      staticInputVarNodeIds(),
       std::back_inserter(solverVars),
       [&](const auto& node) { return mapping.solverId(node); });
 

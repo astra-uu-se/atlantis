@@ -19,7 +19,6 @@ using namespace atlantis::invariantgraph::fzn;
 
 class array_int_maximumTest : public FznTestBase {
  public:
-  std::vector<VarNodeId> inputVarNodeIds{};
   std::vector<std::string> inputs;
   std::string output{"output"};
 

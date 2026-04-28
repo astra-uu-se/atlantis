@@ -15,6 +15,7 @@ class ArrayIntMaximumNode : public InvariantNode {
                                std::vector<VarNodeId>&& vars, VarNodeId output);
 
   void init(InvariantNodeId) override;
+  void postConstraint();
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

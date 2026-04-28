@@ -202,7 +202,7 @@ if(NOT GECODE_LIBRARIES)
     set(NUM_PROCESSORS 16)
   endif()
 
-  execute_process(COMMAND ${CMAKE_COMMAND} --build "${_atlantis_gecode_source_dir}/build" --target fzn-gecode -j ${NUM_PROCESSORS}
+  execute_process(COMMAND ${CMAKE_COMMAND} --build   "${_atlantis_gecode_source_dir}/build" --target fzn-gecode -j ${NUM_PROCESSORS}
           WORKING_DIRECTORY "${_atlantis_gecode_source_dir}"
           RESULT_VARIABLE _atlantis_gecode_build_result)
   if(NOT _atlantis_gecode_build_result EQUAL 0)

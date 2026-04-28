@@ -251,4 +251,14 @@ void GecodeSolver::array_int_element2d(
           intVar(output), Gecode::IPL_DOM);
 }
 
+void GecodeSolver::array_int_maximum(const std::vector<ConstraintVarId>& inputs,
+                                 const ConstraintVarId output) {
+  max(_space, intVarArgs(inputs), intVar(output), Gecode::IPL_BND);
+}
+
+void GecodeSolver::array_int_minimum(const std::vector<ConstraintVarId>& inputs,
+                                 const ConstraintVarId output) {
+  min(_space, intVarArgs(inputs), intVar(output), Gecode::IPL_BND);
+}
+
 }  // namespace atlantis::invariantgraph

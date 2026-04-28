@@ -107,6 +107,10 @@ class GecodeSolver : public ConstraintSolver {
                            const std::vector<std::vector<Int>>& parameters,
                            ConstraintVarId output, Int rowOffset,
                            Int colOffset) override;
+  void array_int_maximum(const std::vector<ConstraintVarId>& inputs,
+                         ConstraintVarId output) override;
+  void array_int_minimum(const std::vector<ConstraintVarId>& inputs,
+                         ConstraintVarId output) override;
 };
 
 }  // namespace atlantis::invariantgraph
