@@ -43,16 +43,12 @@ void ArrayIntMaximumNode::postConstraint() {
 
 void ArrayIntMaximumNode::updateState() {
   _lb = outputVarNodeConst(0).lowerBound();
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
-  for (const auto& vId : staticInputVarNodeIds()) {
-    if (varNodeConst(vId).isFixed() || varNodeConst(vId).upperBound() <= _lb) {
-      varsToRemove.emplace_back(vId);
+  for (size_t i = 0; i < staticInputVarNodeIds().size();) {
+    if (staticInputVarNodeConst(i).isFixed() || staticInputVarNodeConst(i).upperBound() <= _lb) {
+      removeStaticInputVarNode(staticInputVarNodeIds().at(i));
+    } else {
+      ++i;
     }
-  }
-
-  for (const VarNodeId vId : varsToRemove) {
-    removeStaticInputVarNode(vId);
   }
 
   if (outputVarNodeConst(0).isFixed()) {
