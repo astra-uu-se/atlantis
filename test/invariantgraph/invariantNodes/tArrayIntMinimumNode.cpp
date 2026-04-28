@@ -1,5 +1,6 @@
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayIntMinimumNode.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 
 namespace atlantis::testing {
 
@@ -7,12 +8,11 @@ using namespace atlantis::invariantgraph;
 
 class ArrayIntMinimumNodeTestFixture
     : public NodeTestBase<ArrayIntMinimumNode> {
- public:
-  Int numInputs = 3;
-  std::vector<std::string> inputVars;
-  std::string outputVar{"output"};
+ protected:
+  std::vector<Var> inputVars;
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(bool isRegistered = false) {
+  Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
       Int val = std::numeric_limits<Int>::max();
       for (const auto& var : inputVars) {
@@ -31,23 +31,23 @@ class ArrayIntMinimumNodeTestFixture
     return val;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     std::vector<std::pair<Int, Int>> bounds;
 
     if (shouldBeSubsumed()) {
       bounds = {{-2, 5}, {-5, 2}, {-5, -5}};
-
     } else if (shouldBeReplaced()) {
       bounds = {{-5, 2}, {2, 5}, {2, 2}};
     } else {
       bounds = {{-5, 0}, {-2, -2}, {0, 5}};
     }
     for (const auto& [lb, ub] : bounds) {
-      inputVars.emplace_back("input_" + std::to_string(inputVars.size()));
-      retrieveIntVarNode(lb, ub, inputVars.back());
+      inputVars.emplace_back("input_" + std::to_string(inputVars.size()), lb, ub, true);
+      retrieveIntVarNode(inputVars.back());
     }
-    retrieveIntVarNode(-5, 5, outputVar);
+    outputVar.domain = std::pair<Int, Int>(-5, 5);
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                         varNodeId(outputVar));
@@ -62,6 +62,8 @@ TEST_P(ArrayIntMinimumNodeTestFixture, updateState) {
     maxVal = std::max(maxVal, varNode(var).upperBound());
   }
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -80,6 +82,8 @@ TEST_P(ArrayIntMinimumNodeTestFixture, updateState) {
 
 TEST_P(ArrayIntMinimumNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_TRUE(invNode().canBeReplaced());
@@ -130,6 +134,7 @@ TEST_P(ArrayIntMinimumNodeTestFixture, propagation) {
     EXPECT_EQ(expected, actual);
     return;
   }
+
   EXPECT_NE(varId(outputVar), propagation::NULL_ID);
 
   const propagation::VarViewId outputId = varId(outputVar);
@@ -153,7 +158,7 @@ TEST_P(ArrayIntMinimumNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ArrayIntMinimumNodeTest, ArrayIntMinimumNodeTestFixture,
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME},
                       ParamData{InvariantNodeAction::REPLACE}));

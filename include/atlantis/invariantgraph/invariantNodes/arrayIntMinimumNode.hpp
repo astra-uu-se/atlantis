@@ -16,6 +16,8 @@ class ArrayIntMinimumNode : public InvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void postConstraint() override;
+
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 

@@ -107,14 +107,9 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
       std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
-    [[maybe_unused]] const Int expected = computeOutput(true);
-    [[maybe_unused]] const Int actual = varNode(outputVar).lowerBound();
-    // TODO: disabled for the MZN challenge. This should be computed by Gecode.
-    /*
     const Int expected = computeOutput(true);
     const Int actual = varNode(outputVar).lowerBound();
     EXPECT_EQ(expected, actual);
-    */
     return;
   }
   if (shouldBeReplaced()) {

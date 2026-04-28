@@ -35,31 +35,28 @@ void ArrayIntMinimumNode::init(InvariantNodeId id) {
       }));
 }
 
-void ArrayIntMinimumNode::updateState() {
-  auto& outNode = invariantGraph().varNode(outputVarNodeIds().front());
-
-  Int lb = _ub;
-  for (const auto& input : staticInputVarNodeIds()) {
-    auto& vNode = invariantGraph().varNode(input);
-    vNode.removeValuesBelow(outNode.lowerBound());
-    lb = std::min(lb, vNode.lowerBound());
-    _ub = std::min(_ub, vNode.upperBound());
+void ArrayIntMinimumNode::postConstraint() {
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(), ConstraintVarId{NULL_NODE_ID});
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+    inputs[i] = staticInputVarNode(i).constraintVarId();
   }
-  outNode.removeValuesBelow(lb);
-  outNode.removeValuesAbove(_ub);
+  constraintSolver().array_int_minimum(inputs, outputVarNode(0).constraintVarId());
+}
 
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
-
-  for (const auto& input : staticInputVarNodeIds()) {
-    if (invariantGraphConst().varNodeConst(input).lowerBound() >= _ub) {
-      varsToRemove.emplace_back(input);
+void ArrayIntMinimumNode::updateState() {
+  _ub = outputVarNodeConst(0).upperBound();
+  for (size_t i = 0; i < staticInputVarNodeIds().size();) {
+    if (staticInputVarNodeConst(i).isFixed() || _ub <= staticInputVarNodeConst(i).lowerBound()) {
+      removeStaticInputVarNode(staticInputVarNodeIds().at(i));
+    } else {
+      ++i;
     }
   }
-  for (const auto& input : varsToRemove) {
-    removeStaticInputVarNode(input);
-  }
-  if (staticInputVarNodeIds().empty()) {
+
+  if (outputVarNodeConst(0).isFixed()) {
+    for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+      staticInputVarNode(i).tightenDomainType(DomainType::DOM_LOWER_BOUND);
+    }
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -67,9 +64,7 @@ void ArrayIntMinimumNode::updateState() {
 bool ArrayIntMinimumNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
          staticInputVarNodeIds().size() == 1 &&
-         _ub >= invariantGraphConst()
-                    .varNodeConst(staticInputVarNodeIds().front())
-                    .upperBound();
+         staticInputVarNodeConst(0).upperBound() <= _ub;
 }
 
 bool ArrayIntMinimumNode::replace() {
