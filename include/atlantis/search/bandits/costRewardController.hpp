@@ -101,9 +101,9 @@ class CostRewardController : public RewardController {
       _costAverage->addCost(reward);
     }
 
-    printf("Arm %ld got cost %s. Global is %s, so it gets %.0f point.\n", arm,
-           reward.toString().c_str(), _costAverage->cost().toString().c_str(),
-           points);
+    // printf("Arm %ld got cost %s. Global is %s, so it gets %.0f point.\n", arm,
+    //        reward.toString().c_str(), _costAverage->cost().toString().c_str(),
+    //        points);
 
     return points;
   }

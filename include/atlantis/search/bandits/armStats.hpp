@@ -32,10 +32,8 @@ public:
 
     if (bestCost.has_value() && result._pullBestCost.has_value()) {
       if (!(result._pullBestCost.value() < bestCost.value())) {
-        printf("This is somehow better %s.\n", bestCost.value().toString().c_str());
       } else {
         bestCost = result._pullBestCost.value();
-        printf("Arm found new best cost %s.\n", bestCost.value().toString().c_str());
       }
     } else if (!bestCost.has_value()) {
       bestCost = result._pullBestCost;
@@ -52,12 +50,15 @@ public:
   }
 
   [[nodiscard]] std::string toString() const {
+    auto c = bestCost.has_value() ? bestCost.value().toString() : "-";
     return "Chosen " + std::to_string(timesChosen) + " times and recorded " +
-           std::to_string(timesRecorded) +
-           " times with averages: \n\tRuntime: " + std::to_string(_runTime / timesRecorded / 1000) +
+           std::to_string(timesRecorded) + " times with best cost " + c +
+           " and averages: \n\tRuntime: " +
+           std::to_string(_runTime / timesRecorded / 1000) +
            "ms\n\tProbes:  " + std::to_string(static_cast<Int>(_meanProbes)) +
            "\n\tMoves:   " + std::to_string(static_cast<Int>(_meanMoves)) +
-           "\n\tImproving moves: " + std::to_string(static_cast<Int>(_meanImprovingMoves)) +
+           "\n\tImproving moves: " +
+           std::to_string(static_cast<Int>(_meanImprovingMoves)) +
            "\n\tRounds:  " + std::to_string(static_cast<Int>(_meanRounds));
   }
 };

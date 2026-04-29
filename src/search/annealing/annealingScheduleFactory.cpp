@@ -132,8 +132,6 @@ static std::unique_ptr<AnnealingScheduleContainerFactory> parseSchedule(const st
 void AnnealingScheduleFactory::SetAnnealingSchedule(
     const std::filesystem::path& scheduleDefinition) {
 
-  printf("\nMaking non-default annealing schedule:\n");
-
   _scheduleDefinition = scheduleDefinition;
 
   auto contents = readFileToString(*_scheduleDefinition);

@@ -79,11 +79,11 @@ void KullbackLeiblerUpperConfidenceBound::recordArmStats(
 
   _onArmRecording(_armStats[arm], arm);
 
-  printf(
-      "Arm %ld got %0.2f points and cost %s. Mean reward %f for %ld recorded "
-      "pulls.\n",
-      arm, points, stats._pullBestCost.value().toString().c_str(),
-      _meanPoints[arm], _armStats[arm]->timesChosen);
+  // printf(
+  //     "Arm %ld got %0.2f points and cost %s. Mean reward %f for %ld recorded "
+  //     "pulls.\n",
+  //     arm, points, stats._pullBestCost.value().toString().c_str(),
+  //     _meanPoints[arm], _armStats[arm]->timesChosen);
 }
 
 std::tuple<std::unique_ptr<AnnealingSchedule>, size_t>
@@ -105,11 +105,11 @@ KullbackLeiblerUpperConfidenceBound::chooseArm(RandomProvider& random) {
     if (ucb >= largestUCB) {
       goodArms.push_back(arm);
     }
-    printf(
-        "Pull %ld: Arm %ld has KL-UCB q=%f for p=%f for %ld/%ld recorded "
-        "pulls.\n",
-        _totalPulls, arm, ucb, p, _armStats[arm]->timesChosen,
-        _totalRecordedPulls);
+    // printf(
+    //     "Pull %ld: Arm %ld has KL-UCB q=%f for p=%f for %ld/%ld recorded "
+    //     "pulls.\n",
+    //     _totalPulls, arm, ucb, p, _armStats[arm]->timesChosen,
+    //     _totalRecordedPulls);
   }
 
   const size_t i =

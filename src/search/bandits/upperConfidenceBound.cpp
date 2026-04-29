@@ -34,12 +34,12 @@ void UpperConfidenceBound::recordArmStats(const size_t arm,
 
   _onArmRecording(_armStats[arm], arm);
 
-  printf(
-      "Arm %ld got %0.2f points and cost %s. Mean reward %f for %ld "
-      "recorded "
-      "pulls.\n",
-      arm, points, stats._pullBestCost.value().toString().c_str(),
-      _meanPoints[arm], _armStats[arm]->timesChosen);
+  // printf(
+  //     "Arm %ld got %0.2f points and cost %s. Mean reward %f for %ld "
+  //     "recorded "
+  //     "pulls.\n",
+  //     arm, points, stats._pullBestCost.value().toString().c_str(),
+  //     _meanPoints[arm], _armStats[arm]->timesChosen);
 }
 
 std::tuple<std::unique_ptr<AnnealingSchedule>, size_t>
@@ -64,11 +64,11 @@ UpperConfidenceBound::chooseArm(RandomProvider& random) {
     if (ucb >= largestUCB) {
       goodArms.push_back(arm);
     }
-    printf(
-        "Pull %ld: Arm %ld has UCB %f for %ld/%ld recorded "
-        "pulls.\n",
-        _totalPulls, arm, ucb, _armStats[arm]->timesChosen,
-        _totalRecordedPulls);
+    // printf(
+    //     "Pull %ld: Arm %ld has UCB %f for %ld/%ld recorded "
+    //     "pulls.\n",
+    //     _totalPulls, arm, ucb, _armStats[arm]->timesChosen,
+    //     _totalRecordedPulls);
   }
 
   const size_t i =

@@ -123,32 +123,30 @@ void FznBackend::solve(logging::Logger& logger) {
   std::unique_ptr<search::ArmSelector> selector;
   switch (_banditAlgorithm) {
     case search::BanditAlgorithm::UCB:
-      printf("Using bandit algorithm upper confidence bound (UCB).\n");
+      // printf("Using bandit algorithm upper confidence bound (UCB).\n");
       selector = std::make_unique<search::UpperConfidenceBound>(
           _annealingScheduleFactory, _onArmRecording);
       break;
     case search::BanditAlgorithm::KLUCB:
-      printf(
-          "Using bandit algorithm Kullback-Leibler upper confidence bound "
-          "(KL-UCB).\n");
+      // printf("Using bandit algorithm Kullback-Leibler upper confidence bound "
+      //     "(KL-UCB).\n");
       selector = std::make_unique<search::KullbackLeiblerUpperConfidenceBound>(
           _annealingScheduleFactory, _onArmRecording);
       break;
     case search::BanditAlgorithm::OCUCBn:
-      printf(
-          "Using bandit algorithm anytime optimally confident upper confidence bound "
-          "(OCUCB-n).\n");
+      // printf("Using bandit algorithm anytime optimally confident upper "
+      //        "confidence bound (OCUCB-n).\n");
       selector = std::make_unique<search::OCUCBn>(
           _annealingScheduleFactory, _onArmRecording);
       break;
     case search::BanditAlgorithm::Thompson:
-      printf("Using bandit algorithm Thompson sampling.\n");
+      // printf("Using bandit algorithm Thompson sampling.\n");
       selector =
           std::make_unique<search::ThompsonSampling>(
             _annealingScheduleFactory, _onArmRecording);
       break;
     default:
-      printf("Using bandit algorithm explore-then-commit.\n");
+      // printf("Using bandit algorithm explore-then-commit.\n");
       selector = std::make_unique<search::ExploreThenCommit>(
           _annealingScheduleFactory, _onArmRecording);
   }

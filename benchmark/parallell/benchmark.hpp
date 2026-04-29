@@ -18,9 +18,9 @@ template <class F>
 void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
   F::populateInstances();
   for (size_t instance = 0; instance < F::size(); ++instance) {
-    for (Int numThreads = 2; numThreads <= 2; numThreads *= 2) {
-      for (Int searchType = 0; searchType <= 0; ++searchType) {
-        for (Int banditAlgorithm = 0; banditAlgorithm <= 1; ++banditAlgorithm) {
+    for (Int numThreads = 1; numThreads <= 8; numThreads *= 2) {
+      for (Int searchType = 0; searchType <= 2; ++searchType) {
+        for (Int banditAlgorithm = 0; banditAlgorithm <= 4; ++banditAlgorithm) {
           benchmark->Args({static_cast<long>(instance), numThreads, searchType, banditAlgorithm});
           if (numThreads == 1) {
             break;
@@ -42,7 +42,7 @@ inline std::vector<std::chrono::milliseconds> defaultTimelimits() {
 #else
   std::vector<std::chrono::milliseconds> result;
   for (constexpr int times_ms[] = {1, 2, 5, 10, 15, 20, 25, 30, 45, 60, 90, 120,
-                                   150, 180, 210, 240, 270, 300};
+                                   150, 180};
        const int ms : times_ms) {
     result.emplace_back(ms * 1000);
   }
@@ -93,7 +93,6 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
       for (const auto& model : fileSet) {
         if (std::string file = entry.path().string();
             file.ends_with(model)) {
-          printf("Adding instance %s\n", file.c_str());
           instances.emplace_back(file);
           break;
             }

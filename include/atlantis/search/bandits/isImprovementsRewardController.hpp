@@ -30,9 +30,9 @@ public:
       points = 1;
     }
 
-    printf("Arm %ld got cost %s and best is %s, so it gets %.0f point.\n",
-      arm, results._pullBestCost.value().toString().c_str(),
-      _bestCost.value().toString().c_str(), points);
+    // printf("Arm %ld got cost %s and best is %s, so it gets %.0f point.\n",
+    //   arm, results._pullBestCost.value().toString().c_str(),
+    //   _bestCost.value().toString().c_str(), points);
 
     return points;
   }
