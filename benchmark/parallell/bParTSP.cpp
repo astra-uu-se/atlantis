@@ -70,8 +70,12 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
 
   const size_t numArms = backend->annealingScheduleFactory()->armCount();
   auto armRecordings = std::vector<std::vector<Int>>();
+  auto armBestViolation = std::vector<std::vector<Int>>();
+  auto armBestObjective = std::vector<std::vector<Int>>();
   for (size_t _ = 0; _ < numArms; _++) {
     armRecordings.push_back(std::vector<Int>(timelimits.size(), 0));
+    armBestViolation.push_back(std::vector<Int>(timelimits.size(), 0));
+    armBestObjective.push_back(std::vector<Int>(timelimits.size(), 0));
   }
 
   backend->setOnFinish([](FznBackend::SolveOutcome) {});
@@ -106,6 +110,8 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
           continue;
         }
         armRecordings[arm][i] = stats->timesRecorded;
+        armBestViolation[arm][i] = stats->bestCost.value().violation();
+        armBestObjective[arm][i] = stats->bestCost.value().objective();
       }
     });
 
@@ -127,6 +133,10 @@ BENCHMARK_DEFINE_F(ParTSP, run)(::benchmark::State& st) {
     for (size_t arm = 0; arm < numArms; arm++) {
       st.counters[prefix + "/armRecordings/" + std::to_string(arm)] =
         static_cast<double>(armRecordings[arm][i]);
+      st.counters[prefix + "/armBestViolation/" + std::to_string(arm)] =
+        static_cast<double>(armBestViolation[arm][i]);
+      st.counters[prefix + "/armBestObjective/" + std::to_string(arm)] =
+        static_cast<double>(armBestObjective[arm][i]);
     }
   }
 }

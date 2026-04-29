@@ -17,6 +17,8 @@ class ArmStats {
 public:
   size_t timesChosen = 0;
   size_t timesRecorded = 0;
+  // Initialized as the worst possible cost
+  std::optional<Cost> bestCost;
 
   explicit ArmStats() {}
 
@@ -27,6 +29,17 @@ public:
       std::chrono::duration_cast<std::chrono::microseconds>(
           std::chrono::high_resolution_clock::now() - result.startTime)
           .count();
+
+    if (bestCost.has_value() && result._pullBestCost.has_value()) {
+      if (!(result._pullBestCost.value() < bestCost.value())) {
+        printf("This is somehow better %s.\n", bestCost.value().toString().c_str());
+      } else {
+        bestCost = result._pullBestCost.value();
+        printf("Arm found new best cost %s.\n", bestCost.value().toString().c_str());
+      }
+    } else if (!bestCost.has_value()) {
+      bestCost = result._pullBestCost;
+    }
 
     _meanProbes = (_meanProbes * (timesRecorded - 1) + result._roundStatistics.value()->attemptedMoves) / timesRecorded;
     _meanMoves = (_meanMoves * (timesRecorded - 1) + result._roundStatistics.value()->acceptedMoves) / timesRecorded;
