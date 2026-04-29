@@ -38,9 +38,9 @@ bool fzn_count_eq(FznInvariantGraph& graph,
   const bool isReified = constraintIdentifierIsReified(constraint);
 
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true);
   if (!isReified) {
     return fzn_count_eq(
         graph,
@@ -48,7 +48,7 @@ bool fzn_count_eq(FznInvariantGraph& graph,
         std::get<fznparser::IntArg>(constraint.arguments().at(1)),
         std::get<fznparser::IntArg>(constraint.arguments().at(2)));
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true);
   return fzn_count_eq_reif(
       graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),

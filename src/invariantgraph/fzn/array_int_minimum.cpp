@@ -21,8 +21,8 @@ bool array_int_minimum(FznInvariantGraph& graph,
   if (constraint.identifier() != "array_int_minimum") {
     return false;
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
 
   return array_int_minimum(
       graph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),

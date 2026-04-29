@@ -54,9 +54,9 @@ bool fzn_circuit(FznInvariantGraph& graph,
   const bool hasOffset = constraint.identifier() == "fzn_circuit_offset";
 
   verifyNumArguments(constraint, hasOffset ? 2 : 1);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
   if (hasOffset) {
-    FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, false)
+    FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, false);
     return fzn_circuit(
         graph,
         getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),

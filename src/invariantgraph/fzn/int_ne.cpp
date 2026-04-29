@@ -30,8 +30,8 @@ bool int_ne(FznInvariantGraph& graph, const fznparser::Constraint& constraint) {
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 3 : 2);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
 
   if (!isReified) {
     return int_ne(graph,

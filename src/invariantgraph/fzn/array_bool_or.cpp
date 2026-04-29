@@ -24,8 +24,8 @@ bool array_bool_or(FznInvariantGraph& graph,
   if (constraint.identifier() != "array_bool_or") {
     return false;
   }
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true);
   return array_bool_or(
       graph, getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::BoolArg>(constraint.arguments().at(1)));
