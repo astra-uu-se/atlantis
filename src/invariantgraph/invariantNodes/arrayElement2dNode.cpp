@@ -65,9 +65,15 @@ void ArrayElement2dNode::postConstraint() {
         varNodeConst(colIdx()).constraintVarId(), _parMatrix,
         outputNode.constraintVarId(), _rowOffset, _colOffset);
   } else {
+    std::vector<std::vector<bool>> boolMatrix(_parMatrix.size(), std::vector<bool>(_parMatrix.front().size()));
+    for (size_t r = 0; r < _parMatrix.size(); ++r) {
+      for (size_t c = 0; c < _parMatrix[r].size(); ++c) {
+        boolMatrix[r][c] = _parMatrix[r][c] == 0;
+      }
+    }
     invariantGraph().constraintSolver().array_bool_element2d(
         varNodeConst(rowIdx()).constraintVarId(),
-        varNodeConst(colIdx()).constraintVarId(), _parMatrix,
+        varNodeConst(colIdx()).constraintVarId(), boolMatrix,
         outputNode.constraintVarId(), _rowOffset, _colOffset);
   }
 }

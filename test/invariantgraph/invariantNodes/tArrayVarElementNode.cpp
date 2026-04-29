@@ -7,36 +7,54 @@ using namespace atlantis::invariantgraph;
 
 class ArrayVarElementNodeTestFixture
     : public NodeTestBase<ArrayVarElementNode> {
- public:
-  std::vector<std::string> varArray;
-
-  std::string idxVar{"idx"};
-  std::string outputVar{"output"};
+ protected:
+  Var idxVar{"idx", std::vector<Int>{}, true};
+  std::vector<Var> varArray;
+  Var outputVar{"output", std::vector<Int>{}, true};
 
   Int offsetIdx = 1;
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data == 0; }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    varArray = {"x1", "x2", "x3"};
+
     if (isIntElement()) {
-      retrieveIntVarNode(-2, 0, varArray.at(0));
-      retrieveIntVarNode(-1, 1, varArray.at(1));
-      retrieveIntVarNode(0, 2, varArray.at(2));
-      retrieveIntVarNode(-2, 2, outputVar);
+      varArray = std::vector<Var>{
+        Var{"x1", -2, 0, true},
+        Var{"x2", -1, 1, true},
+        Var{"x3", 0, 2, true}};
+      outputVar.domain = std::pair<Int,Int>{-2, 2};
+      outputVar.isIntVar = true;
     } else {
-      for (const auto& identifier : varArray) {
-        retrieveBoolVarNode(identifier);
-      }
-      retrieveBoolVarNode(outputVar);
+      varArray = std::vector<Var>{
+        Var{"x1", 0, 1, false},
+        Var{"x2", 0, 1, false},
+        Var{"x3", 0, 1, false}};
+      outputVar.domain = std::pair<Int,Int>{0, 1};
+      outputVar.isIntVar = false;
     }
 
-    retrieveIntVarNode(offsetIdx,
-                       shouldBeReplaced() ? offsetIdx
-                                          : (static_cast<Int>(varArray.size()) -
-                                             1 + offsetIdx),
-                       idxVar);
+    if (shouldBeReplaced()) {
+      idxVar.domain = std::vector<Int>{offsetIdx};
+    } else {
+      idxVar.domain = std::pair<Int,Int>{offsetIdx, static_cast<Int>(varArray.size()) + offsetIdx - 1};
+    }
+    retrieveIntVarNode(idxVar);
+
+    for (const auto& var : varArray) {
+      if (isIntElement()) {
+        retrieveIntVarNode(var);
+      } else {
+        retrieveBoolVarNode(var);
+      }
+    }
+
+    if (isIntElement()) {
+      retrieveIntVarNode(outputVar);
+    } else {
+      retrieveBoolVarNode(outputVar);
+    }
 
     createInvariantNode(*_invariantGraph, varNodeId(idxVar),
                         varNodeIds(varArray), varNodeId(outputVar), offsetIdx);
@@ -45,6 +63,8 @@ class ArrayVarElementNodeTestFixture
 
 TEST_P(ArrayVarElementNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -115,17 +135,17 @@ TEST(ArrayVarElementNodeRegression, FixedBoolOutputPrunesIncompatibleIndices) {
   graph.open();
 
   const auto idx = graph.retrieveIntVarNode(
-      std::make_shared<SearchDomain>(std::vector<Int>{1, 2}), "idx");
-  const auto x1 = graph.retrieveBoolVarNode(false, true);
-  const auto x2 = graph.retrieveBoolVarNode(true, true);
-  const auto output = graph.retrieveBoolVarNode("output");
-  graph.varNode(output).fixToValue(bool{true});
+      std::make_shared<SearchDomain>(std::vector<Int>{1, 2}));
+  const auto x1 = graph.retrieveBoolVarNode(false, false);
+  const auto x2 = graph.retrieveBoolVarNode(true, false);
+  const auto output = graph.retrieveBoolVarNode(true, false);
 
   const auto nodeId =
       graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
           graph, idx, std::vector<VarNodeId>{x1, x2}, output, 1));
   auto& node = dynamic_cast<ArrayVarElementNode&>(graph.invariantNode(nodeId));
-
+  graph.constraintSolver().fixPoint();
+  graph.updateDomains();
   EXPECT_NO_THROW(node.updateState());
   EXPECT_TRUE(graph.varNode(idx).isFixed());
   EXPECT_EQ(graph.varNode(idx).lowerBound(), 2);
@@ -135,24 +155,45 @@ TEST(ArrayVarElementNodeRegression, FixedIndexAndOutputPruneSelectedChild) {
   InvariantGraph graph;
   graph.open();
 
-  const auto idx = graph.retrieveIntVarNode(
-      std::make_shared<SearchDomain>(std::vector<Int>{1}), "idx");
-  const auto x1 = graph.retrieveBoolVarNode("x1");
-  const auto x2 = graph.retrieveBoolVarNode("x2");
-  const auto output = graph.retrieveBoolVarNode("output");
-  graph.varNode(output).fixToValue(bool{true});
+  const auto idx = graph.retrieveIntVarNode(std::make_shared<SearchDomain>(std::vector<Int>{1}));
+  const auto x1 = graph.retrieveBoolVarNode();
+  const auto x2 = graph.retrieveBoolVarNode();
+  const auto output = graph.retrieveBoolVarNode(true, true);
 
   const auto nodeId =
       graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
           graph, idx, std::vector<VarNodeId>{x1, x2}, output, 1));
   auto& node = dynamic_cast<ArrayVarElementNode&>(graph.invariantNode(nodeId));
-
+  graph.constraintSolver().fixPoint();
+  graph.updateDomains();
   EXPECT_NO_THROW(node.updateState());
   EXPECT_TRUE(graph.varNode(x1).isFixed());
   EXPECT_TRUE(graph.varNode(x1).inDomain(bool{true}));
 }
 
-INSTANTIATE_TEST_CASE_P(
+TEST(ArrayVarElementNodeRegression, SameDynamicVars) {
+  InvariantGraph graph;
+  graph.open();
+
+  const std::string x{"x"};
+  const std::string output{"output"};
+  const auto idx = graph.retrieveIntVarNode(std::make_shared<SearchDomain>(1, 3));
+  const auto xId = graph.retrieveBoolVarNode(x);
+  const auto outputId = graph.retrieveBoolVarNode(output);
+
+  const auto nodeId =
+      graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
+          graph, idx, std::vector<VarNodeId>{xId, xId, xId}, outputId, 1));
+  auto& node = dynamic_cast<ArrayVarElementNode&>(graph.invariantNode(nodeId));
+  graph.constraintSolver().fixPoint();
+  graph.updateDomains();
+  EXPECT_NO_THROW(node.updateState());
+  EXPECT_TRUE(node.canBeReplaced());
+  EXPECT_TRUE(node.replace());
+  EXPECT_EQ(graph.varNodeId(x), graph.varNodeId(output));
+}
+
+INSTANTIATE_TEST_SUITE_P(
     ArrayVarElementNodeTest, ArrayVarElementNodeTestFixture,
     ::testing::Values(ParamData{0}, ParamData{InvariantNodeAction::REPLACE, 0},
                       ParamData{1},

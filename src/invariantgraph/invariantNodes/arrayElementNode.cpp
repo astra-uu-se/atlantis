@@ -48,8 +48,12 @@ void ArrayElementNode::postConstraint() {
         staticInputVarNode(0).constraintVarId(), _parVector,
         outputNode.constraintVarId(), _offset);
   } else {
+    std::vector<bool> boolVector(_parVector.size());
+    for (size_t i = 0; i < boolVector.size(); ++i) {
+      boolVector[i] = _parVector[i] == 0;
+    }
     invariantGraph().constraintSolver().array_bool_element(
-        staticInputVarNode(0).constraintVarId(), _parVector,
+        staticInputVarNode(0).constraintVarId(), boolVector,
         outputNode.constraintVarId(), _offset);
   }
 }

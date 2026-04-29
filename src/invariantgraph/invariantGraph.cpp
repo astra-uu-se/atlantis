@@ -292,7 +292,7 @@ VarNodeId InvariantGraph::retrieveBoolVarNode(const bool value,
       .emplace_back(
           nextVarNodeId(), false,
           std::make_shared<SearchDomain>(std::vector<Int>{value ? 0 : 1}),
-          ConstraintVarId{NULL_NODE_ID}, DomainType::DOM_FIXED)
+          _constraintSolver->newBoolVar(value), DomainType::DOM_FIXED)
       .varNodeId();
 }
 

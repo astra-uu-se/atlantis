@@ -45,10 +45,12 @@ class GecodeSolver : public ConstraintSolver {
   GecodeSpace _space;
 
   Gecode::BoolVarArgs boolVarArgs(const std::vector<ConstraintVarId>&);
+  Gecode::BoolVarArgs boolVarArgs(const std::vector<std::vector<ConstraintVarId>>&);
   Gecode::BoolVar& boolVar(size_t);
   Gecode::BoolVar& boolVar(ConstraintVarId);
 
   Gecode::IntVarArgs intVarArgs(const std::vector<ConstraintVarId>&);
+  Gecode::IntVarArgs intVarArgs(const std::vector<std::vector<ConstraintVarId>>&);
   Gecode::IntVar& intVar(size_t);
   Gecode::IntVar& intVar(ConstraintVarId);
 
@@ -82,12 +84,12 @@ class GecodeSolver : public ConstraintSolver {
                       ConstraintVarId reified) override;
   void array_bool_and(const std::vector<ConstraintVarId>& inputs,
                       bool shouldHold) override;
-  void array_bool_element(const ConstraintVarId& index,
-                          const std::vector<Int>& parameters,
+  void array_bool_element(ConstraintVarId index,
+                          const std::vector<bool>& parameters,
                           ConstraintVarId output, Int offset) override;
-  void array_bool_element2d(const ConstraintVarId& rowIndex,
-                            const ConstraintVarId& colIndex,
-                            const std::vector<std::vector<Int>>& parameters,
+  void array_bool_element2d(ConstraintVarId rowIndex,
+                            ConstraintVarId colIndex,
+                            const std::vector<std::vector<bool>>& parameters,
                             ConstraintVarId output, Int rowOffset,
                             Int colOffset) override;
   void array_bool_or(const std::vector<ConstraintVarId>& inputs,
@@ -99,11 +101,11 @@ class GecodeSolver : public ConstraintSolver {
   void array_bool_xor(const std::vector<ConstraintVarId>& inputs,
                       bool shouldHold) override;
   void bool2int(ConstraintVarId boolVarId, ConstraintVarId intVarId) override;
-  void array_int_element(const ConstraintVarId& index,
+  void array_int_element(ConstraintVarId index,
                          const std::vector<Int>& parameters,
                          ConstraintVarId output, Int offset) override;
-  void array_int_element2d(const ConstraintVarId& rowIndex,
-                           const ConstraintVarId& colIndex,
+  void array_int_element2d(ConstraintVarId rowIndex,
+                           ConstraintVarId colIndex,
                            const std::vector<std::vector<Int>>& parameters,
                            ConstraintVarId output, Int rowOffset,
                            Int colOffset) override;
@@ -111,6 +113,20 @@ class GecodeSolver : public ConstraintSolver {
                          ConstraintVarId output) override;
   void array_int_minimum(const std::vector<ConstraintVarId>& inputs,
                          ConstraintVarId output) override;
+  void array_var_bool_element(ConstraintVarId index,
+                              const std::vector<ConstraintVarId>& inputs,
+                              ConstraintVarId output, Int offset) override;
+  void array_var_bool_element2d(
+      ConstraintVarId rowIndex, ConstraintVarId colIndex,
+      const std::vector<std::vector<ConstraintVarId>>& inputs,
+      ConstraintVarId output, Int rowOffset, Int colOffset) override;
+  void array_var_int_element(ConstraintVarId index,
+                             const std::vector<ConstraintVarId>& inputs,
+                             ConstraintVarId output, Int offset) override;
+  void array_var_int_element2d(
+      ConstraintVarId rowIndex, ConstraintVarId colIndex,
+      const std::vector<std::vector<ConstraintVarId>>& inputs,
+      ConstraintVarId output, Int rowOffset, Int colOffset) override;
 };
 
 }  // namespace atlantis::invariantgraph
