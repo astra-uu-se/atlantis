@@ -64,16 +64,20 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   for (const auto& tl : timelimits) {
     deadlines.emplace_back(std::chrono::steady_clock::now() + tl);
   }
-  backend->setOnSolution(
-      [&](const search::SavedAssignment&,
-          const std::optional<
-              std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
+  backend->setOnFinish(
+      [&](FznBackend::SolveOutcome) {
+        const auto time = std::chrono::steady_clock::now();
         for (size_t i = 0; i < timelimits.size(); i++) {
-          if (deadlines[i] < std::chrono::steady_clock::now()) {
+          if (deadlines[i] < time) {
             continue;
           }
           solved[i] = 1;
         }
+      });
+  backend->setOnSolution(
+      [&](const search::SavedAssignment&,
+          const std::optional<
+              std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
       });
 
   for ([[maybe_unused]] const auto& _ : st) {
