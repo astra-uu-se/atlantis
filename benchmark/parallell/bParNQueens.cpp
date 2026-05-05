@@ -56,7 +56,7 @@ std::vector<std::string> ParNQueens::instances;
 BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   st.SetLabel(instances.at(instance));
   std::vector<size_t> solved(timelimits.size(), 0);
-  backend->setOnFinish([](FznBackend::SolveOutcome) {});
+  std::vector<size_t> bestViolation(timelimits.size(), 0);
   backend->setTimelimit(timelimits.back());
 
   std::vector<std::chrono::time_point<std::chrono::steady_clock>> deadlines;
@@ -75,10 +75,17 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
         }
       });
   backend->setOnSolution(
-      [&](const search::SavedAssignment&,
+      [&](const search::SavedAssignment& solution,
           const std::optional<
               std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
-      });
+                const auto time = std::chrono::steady_clock::now();
+                for (size_t i = 0; i < timelimits.size(); i++) {
+                  if (deadlines[i] < time) {
+                    continue;
+                  }
+                  bestViolation[i] = solution.cost().violation();
+                }
+              });
 
   for ([[maybe_unused]] const auto& _ : st) {
     backend->solve(logger);
@@ -87,6 +94,8 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   for (size_t i = 0; i < timelimits.size(); i++) {
     const std::string prefix = std::to_string(timelimits[i].count());
     st.counters[prefix + "/solved"] = static_cast<double>(solved[i]);
+    st.counters[prefix + "/violation_best"] =
+        static_cast<double>(bestViolation[i]);
   }
 }
 
