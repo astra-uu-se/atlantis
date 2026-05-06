@@ -50,7 +50,7 @@ class ParTSPTW : public ::benchmark::Fixture {
 
     std::filesystem::path modelFilePath(instances.at(instance).c_str());
     backend = std::make_shared<FznBackend>(logger, std::move(modelFilePath),
-                                           numThreads, searchType);
+                                           numThreads, searchType, banditAlgorithm);
 
     backend->setAnnealingScheduleFactory(
       std::make_shared<search::AnnealingScheduleFactory>(annealingSchedulePath));

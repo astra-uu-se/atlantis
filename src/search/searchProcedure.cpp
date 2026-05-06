@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-#include "../../include/atlantis/search/bandits/pullResults.hpp"
+#include "atlantis/search/bandits/pullResults.hpp"
 #include "atlantis/search/annealing/annealer.hpp"
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/metaheuristic.hpp"
@@ -76,7 +76,7 @@ Int SearchProcedure::run(SearchController& searchController) {
 
   do {
     std::unique_ptr<MetaHeuristic>&& metaHeuristic = std::make_unique<Annealer>(
-      _random, _threadController->chooseArm(_threadId, _pullResults, _random), _assignment);
+      _random, _threadController->chooseArm(_threadId, _random), _assignment);
 
     auto roundStats = metaHeuristic->currentRoundStatistics();
     _assignment.initialize(_random);
@@ -114,6 +114,8 @@ Int SearchProcedure::run(SearchController& searchController) {
     moves->setValue(moves->value() + roundStats.value()->acceptedMoves);
     improvingMoves->setValue(improvingMoves->value() + roundStats.value()->improvingMoves);
     rounds->setValue(rounds->value() + roundStats.value()->rounds);
+
+    _threadController->recordArm(_threadId, _pullResults);
 
   } while (searchController.shouldRun(_assignment));
 

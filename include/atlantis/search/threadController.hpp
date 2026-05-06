@@ -114,7 +114,9 @@ class ThreadController {
     _numThreadsWithReportedStats.operator++();
   }
 
-  [[nodiscard]] std::unique_ptr<AnnealingSchedule> chooseArm(Int threadId, const PullResults& results, RandomProvider& random);
+  void recordArm(Int threadId, const PullResults& results);
+
+  [[nodiscard]] std::unique_ptr<AnnealingSchedule> chooseArm(Int threadId, RandomProvider& random);
 
   void showArmStats() const {
     _armSelector->printStats();

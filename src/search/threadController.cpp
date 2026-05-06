@@ -151,9 +151,12 @@ void ThreadController::threadIsDone() {
   }
 }
 
-// TODO: consider moving all of this into the armSelector
-std::unique_ptr<AnnealingSchedule> ThreadController::chooseArm(const Int threadId, const PullResults& results, RandomProvider& random) {
-  if (_currentArm[threadId] < SIZE_MAX) _armSelector->recordArmStats(_currentArm[threadId], results);
+void ThreadController::recordArm(const Int threadId, const PullResults& results) {
+  if (_currentArm[threadId] < SIZE_MAX)
+    _armSelector->recordArmStats(_currentArm[threadId], results);
+}
+
+std::unique_ptr<AnnealingSchedule> ThreadController::chooseArm(const Int threadId, RandomProvider& random) {
   auto [arm, choice] = _armSelector->chooseArm(random);
   _currentArm[threadId] = choice;
   // printf("Thread %ld pulling arm %ld.\n", threadId, choice);
