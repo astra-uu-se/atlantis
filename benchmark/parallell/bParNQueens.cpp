@@ -74,7 +74,6 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
     armBestObjective.push_back(std::vector<Int>(timelimits.size(), 0));
   }
 
-  backend->setOnFinish([](FznBackend::SolveOutcome) {});
   backend->setTimelimit(timelimits.back());
 
   std::vector<std::chrono::time_point<std::chrono::steady_clock>> deadlines;
@@ -82,23 +81,28 @@ BENCHMARK_DEFINE_F(ParNQueens, run)(::benchmark::State& st) {
   for (const auto& tl : timelimits) {
     deadlines.emplace_back(std::chrono::steady_clock::now() + tl);
   }
-  backend->setOnSolution(
-      [&](const search::SavedAssignment&,
-          const std::optional<
-              std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
+  backend->setOnFinish(
+      [&](FznBackend::SolveOutcome) {
+        const auto time = std::chrono::steady_clock::now();
         for (size_t i = 0; i < timelimits.size(); i++) {
-          if (deadlines[i] < std::chrono::steady_clock::now()) {
+          if (deadlines[i] < time) {
             continue;
           }
           solved[i] = 1;
         }
       });
+  backend->setOnSolution(
+      [&](const search::SavedAssignment&,
+          const std::optional<
+              std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
+      });
 
   backend->setOnArmRecording(
     [&](const std::shared_ptr<search::ArmStats>& stats, const size_t arm) {
 
+      const auto time = std::chrono::steady_clock::now();
       for (size_t i = 0; i < timelimits.size(); i++) {
-        if (deadlines[i] < std::chrono::steady_clock::now()) {
+        if (deadlines[i] < time) {
           continue;
         }
         armRecordings[arm][i] = stats->timesRecorded;
