@@ -18,8 +18,8 @@ template <class F>
 void defaultArguments(::benchmark::internal::Benchmark* benchmark) {
   F::populateInstances();
   for (size_t instance = 0; instance < F::size(); ++instance) {
-    for (Int numThreads = 1; numThreads <= 8; numThreads *= 2) {
-      for (Int searchType = 0; searchType <= 2; ++searchType) {
+    for (Int numThreads = 8; numThreads <= 8; numThreads *= 2) {
+      for (Int searchType = 0; searchType <= 0; ++searchType) {
         for (Int banditAlgorithm = 0; banditAlgorithm <= 4; ++banditAlgorithm) {
           benchmark->Args({static_cast<long>(instance), numThreads, searchType, banditAlgorithm});
           if (numThreads == 1) {
@@ -75,6 +75,9 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
       "/n_queens/768.fzn",
       "/n_queens/1024.fzn",
       "/n_queens/2048.fzn",
+      "/n_queens/4196.fzn",
+      "/n_queens/8192.fzn",
+      "/n_queens/16384.fzn",
       // TSP
       "/tsp/n100w140.001.fzn",
       "/tsp/n100w140.002.fzn",
