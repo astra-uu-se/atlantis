@@ -63,6 +63,9 @@ static double findMaxQ(const size_t n, const double p, const size_t t) {
     if (std::abs(step) < 1e-10) break;
   }
 
+  // This happens if there are more threads than arms.
+  if (std::isnan(q)) return 0;
+
   return q;
 }
 
