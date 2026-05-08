@@ -25,6 +25,8 @@ class ArrayVarElement2dNode : public InvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void postConstraint() override;
+
   void updateState() override;
 
   [[nodiscard]] bool canBeReplaced() const override;
@@ -36,7 +38,9 @@ class ArrayVarElement2dNode : public InvariantNode {
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] VarNodeId at(Int row, Int col) const;
+  [[nodiscard]] VarNodeId at(Int row, Int col, bool useOffset = true) const;
+
+  [[nodiscard]] size_t index(Int row, Int col, bool useOffset = true) const;
 
   [[nodiscard]] VarNodeId rowIdx() const noexcept {
     return staticInputVarNodeIds().front();
