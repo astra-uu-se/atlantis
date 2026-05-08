@@ -181,7 +181,7 @@ include(FetchContent)
 FetchContent_Declare(
   fznparser
   GIT_REPOSITORY https://github.com/astra-uu-se/fznparser
-  GIT_TAG v1.2.2
+  GIT_TAG v1.2.3
 )
 FetchContent_Declare(
   cxxopts
@@ -197,17 +197,6 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(cxxopts fmt fznparser)
 
-if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" AND TARGET fznparser)
-  # Boost Spirit warnings originate in vendored fznparser/Boost code on Apple
-  # Clang. Keep the suppression scoped to that external target.
-  target_compile_options(
-    fznparser PRIVATE
-    -Wno-deprecated-builtins
-    -Wno-deprecated-copy
-    -Wno-deprecated-copy-with-user-provided-copy
-  )
-endif()
-
 # includes (hpp/h) files are in ./include
 target_include_directories(${PROJECT_LIB}
   PRIVATE
@@ -216,10 +205,6 @@ target_include_directories(${PROJECT_LIB}
   PUBLIC
   $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${COMMON_INCLUDES}>)
-
-if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-  target_include_directories(${PROJECT_LIB} SYSTEM PRIVATE "${_atlantis_boost_source_dir}")
-endif()
 
 target_link_libraries(${PROJECT_LIB} fznparser::fznparser fmt::fmt)
 
@@ -369,5 +354,5 @@ packageProject(
   INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include
   INCLUDE_DESTINATION include/
   VERSION_HEADER "${VERSION_HEADER_LOCATION}"
-  DEPENDENCIES "fmt 8.1.1;fznparser v1.1.1"
+  DEPENDENCIES "fmt 8.1.1;fznparser v1.2.3"
 )
