@@ -21,7 +21,7 @@ BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
 NUM_BENCHMARK_REPETITIONS=3
 BENCHMARK_FILTER="^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|NQueens|TSPTW|VesselLoading)\/[A-Za-z]"
 BENCHMARK_FILTER_SYNTH="^(ElementVarTree|LinearTree|TSP|TSPTWAllDiff)\/[A-Za-z]"
-BENCHMARK_FILTER_PAR="^Par(TSP|NQueens)"
+BENCHMARK_FILTER_PAR="^Par(TSP|TSPTW|NQueens|Knapsack)"
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 
 DZN_DIR=${MKFILE_PATH}dzn
@@ -81,6 +81,7 @@ clean:
 build:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
+											   -DMORE_STATS=OFF \
 	                                           -DBUILD_TESTS:BOOL=OFF \
 	                                           -DBUILD_BENCHMARKS:BOOL=OFF ..
 	cd ${BUILD_DIR}; $(MAKE) -j 8
@@ -89,6 +90,7 @@ build:
 build-tests:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
+											   -DMORE_STATS=OFF \
 	                                           -DBUILD_TESTS:BOOL=ON \
 	                                           -DBUILD_BENCHMARKS:BOOL=OFF ..
 	cd ${BUILD_DIR}; $(MAKE) -j 8
@@ -127,6 +129,7 @@ build-tests-tsan:
 build-benchmarks:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
+											   -DMORE_STATS=ON \
 	                                           -DBUILD_TESTS:BOOL=OFF \
 	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
 	cd ${BUILD_DIR}; $(MAKE) -j 8
@@ -135,6 +138,7 @@ build-benchmarks:
 build-benchmarks-debug:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
+											   -DMORE_STATS=OFF \
 	                                           -DBUILD_TESTS:BOOL=OFF \
 	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
 	cd ${BUILD_DIR}; $(MAKE) -j 8
@@ -187,16 +191,18 @@ benchmark-synth: build-benchmarks
 									--benchmark_filter=${BENCHMARK_FILTER_SYNTH}
 	python3 ${MKFILE_PATH}plot-formatter.py -v --input=${$@_JSON_FILE} --file-suffix=${$@_TIMESTAMP} --output-dir=${BENCHMARK_PLOT_DIR}
 
-.PHONY: benchmark-par
-benchmark-par: build-benchmarks fzn-benchmark
+.PHONY: run-benchmark-par
+run-benchmark-par:
 	mkdir -p ${BENCHMARK_JSON_DIR}
-	mkdir -p ${BENCHMARK_PLOT_DIR}
 	$(eval $@_TIMESTAMP := $(shell date +"%Y-%m-%d-%H-%M-%S-%3N"))
 	$(eval $@_JSON_FILE := ${BENCHMARK_JSON_DIR}/${$@_TIMESTAMP}.json)
 	exec ${BUILD_DIR}/runBenchmarks --benchmark_format=json \
 	                                --benchmark_out=${$@_JSON_FILE} \
 									--benchmark_repetitions=${NUM_BENCHMARK_REPETITIONS} \
 									--benchmark_filter=${BENCHMARK_FILTER_PAR}
+
+.PHONY: benchmark-par
+benchmark-par: build-benchmarks run-benchmark-par
 
 .PHONY: all
 all: clean build build-tests build-benchmarks
@@ -223,6 +229,12 @@ fzn-benchmark:
 			${dzn_file} \
 			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
+	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/n100w140.*.*), \
+		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+			${MZN_MODEL_DIR}/tsp.mzn \
+			${dzn_file} \
+			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
+			--no-output-ozn;)
 	mkdir -p ${FZN_MODEL_DIR}/tsptw
 	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/*001.*), \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
@@ -230,8 +242,14 @@ fzn-benchmark:
 			${dzn_file} \
 			--fzn ${FZN_MODEL_DIR}/tsptw/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
+	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/n100w140.*.*), \
+		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
+			${MZN_MODEL_DIR}/tsptw_alldiff.mzn \
+			${dzn_file} \
+			--fzn ${FZN_MODEL_DIR}/tsptw/$$(basename ${dzn_file} .dzn).fzn \
+			--no-output-ozn;)
 	mkdir -p ${FZN_MODEL_DIR}/n_queens
-	$(foreach queens, 8 16 24 32 48 64 128 192 256 512 768 1024, \
+	$(foreach queens, 8 16 20 24 32 48 64 128 192 256 512 768 1024 2048, \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/n_queens.mzn \
 			-D n=${queens} \

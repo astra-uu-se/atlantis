@@ -8,24 +8,20 @@ namespace atlantis::search {
 void ThreadController::setBestSolution(const Int threadId,
                                        const SavedAssignment& solution) {
   _bestThread = threadId;
-  _bestCost = solution.getCost();
+  _bestCost = solution.cost();
   _solution = solution;
-
-  if (!_hasNoViolations) {
-    if (_bestCost->getViolation() == 0) {
-      _hasNoViolations = true;
-    } else {
-      return;
-    }
-  }
-
   ++_curSolutionId;
+
+  if (!_hasNoViolations && _bestCost->violation() == 0) _hasNoViolations = true;
+
   _curSolutionNotified = false;
   _curSolutionNotified.notify_one();
 }
 
-bool ThreadController::trySolution(const Int threadId,
-                                   const SavedAssignment& solution) {
+bool ThreadController::trySolution(
+    const Int threadId, const SavedAssignment& solution,
+    const std::optional<std::shared_ptr<CounterStatistic>>&
+        improvingSolutions) {
   std::lock_guard lock(_lock);
 
   ++_counter;
@@ -33,12 +29,15 @@ bool ThreadController::trySolution(const Int threadId,
   if (!_hasSolution) {
     setBestSolution(threadId, solution);
     _hasSolution = true;
+    if (improvingSolutions.has_value()) {
+      improvingSolutions.value()->increment();
+    }
     return true;
   }
 
-  if (solution.getCost().isBetterThan(_bestCost.value()) &&
-      solution.getCost().isStrictlyBetterThan(_bestCost.value())) {
+  if (solution.cost() < _bestCost.value()) {
     setBestSolution(threadId, solution);
+    if (improvingSolutions.has_value()) improvingSolutions.value()->increment();
     return true;
   }
   return false;

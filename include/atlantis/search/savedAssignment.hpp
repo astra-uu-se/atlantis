@@ -31,7 +31,7 @@ class SavedAssignment {
     }
   }
 
-  [[gnu::always_inline]] [[nodiscard]] Cost getCost() const { return _cost; }
+  [[gnu::always_inline]] [[nodiscard]] Cost cost() const { return _cost; }
 
   [[nodiscard]] const std::vector<Int>& getOutputValues() const {
     return _outputValues;

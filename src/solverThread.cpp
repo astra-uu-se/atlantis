@@ -33,7 +33,7 @@ SolverThread::SolverThread(
     const std::shared_ptr<const invariantgraph::FznInvariantGraph>&
         invariantGraph,
     std::vector<invariantgraph::VarNodeId>&& outputVarNodeIds,
-    fznparser::ProblemType problemType,
+    const fznparser::ProblemType problemType,
     const std::shared_ptr<const search::AnnealingScheduleFactory>&
         annealingScheduleFactory,
     const size_t threadId,
@@ -48,7 +48,7 @@ SolverThread::SolverThread(
       _threadId(threadId),
       _threadController(controller),
       _searchType(searchType),
-      _seed(seed),
+      _seed(seed + threadId),
       _timelimit(timeLimit),
       _shouldStop(shouldStop) {}
 
@@ -67,11 +67,6 @@ void SolverThread::solve() {
 
     invariantgraph::SolverMapping mapping = _invariantGraph->construct(solver);
 
-    // Might be changed to shared later
-    search::Objective searchObjective(solver, mapping.objectiveDirection());
-
-    const auto violationId = searchObjective.registerNode(
-        mapping.totalViolationId(), mapping.objectiveId());
     solver.close();
 
     // retrieve the variables that are to be outputted
@@ -81,21 +76,21 @@ void SolverThread::solve() {
       outputVarIds.emplace_back(mapping.solverId(oId));
     }
 
-    search::Assignment assignment(solver, mapping.globalNeighborhood(),
-                                  violationId, mapping.objectiveId(),
-                                  mapping.objectiveDirection(),
-                                  mapping.objectiveOptimalValue());
+    search::Assignment assignment(
+        solver, mapping.globalNeighborhood(), mapping.totalViolationId(),
+        mapping.objectiveId(), mapping.objectiveDirection(),
+        mapping.objectiveOptimalValue());
 
     // TODO: This can possibly be extracted, or restricted to one thread
     if (mapping.globalNeighborhood()->coveredVars().empty()) {
       _threadController->trySolution(
-          _threadId, search::SavedAssignment(assignment, outputVarIds));
+          _threadId, search::SavedAssignment(assignment, outputVarIds),
+          nullptr);
     } else {
       search::RandomProvider randomProvider(_seed);
       search::SearchProcedure search(
-          randomProvider, assignment, mapping.globalNeighborhood(),
-          searchObjective, _searchType, _threadController, outputVarIds,
-          _threadId);
+          randomProvider, assignment, mapping.globalNeighborhood(), _searchType,
+          _threadController, outputVarIds, _threadId);
 
       search::SearchController searchController(
           mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,

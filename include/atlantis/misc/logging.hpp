@@ -28,32 +28,32 @@ struct LogData {
 };
 
 template <typename Begin, typename Value>
-LogData<Pair<Begin, const Value &>> operator<<(LogData<Begin> begin,
-                                               const Value &value) {
+LogData<Pair<Begin, const Value&>> operator<<(LogData<Begin> begin,
+                                              const Value& value) {
   return {{begin.list, value}};
 }
 
 template <typename Begin, size_t n>
-LogData<Pair<Begin, const char *>> operator<<(LogData<Begin> begin,
-                                              const char (&value)[n]) {
+LogData<Pair<Begin, const char*>> operator<<(LogData<Begin> begin,
+                                             const char (&value)[n]) {
   return {{begin.list, value}};
 }
 
-inline void printList(std::ostream &, None) {}
+inline void printList(std::ostream&, None) {}
 
 template <typename Begin, typename Last>
-void printList(std::ostream &os, const Pair<Begin, Last> &data) {
+void printList(std::ostream& os, const Pair<Begin, Last>& data) {
   printList(os, data.first);
   os << data.second;
 }
 
 template <typename List>
-void log(LogLevel logLevel, const char *file, int line,
-         const LogData<List> &data) {
+void log(LogLevel logLevel, const char* file, int line,
+         const LogData<List>& data) {
   if (globalLogLevel > logLevel) {
     return;
   }
-  const char *level;
+  const char* level;
   switch (logLevel) {
     case error:
       level = "[error] ";

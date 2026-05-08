@@ -2,9 +2,11 @@
 
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <string_view>
-#include <vector>
+
+#include "annealing/types.hpp"
 
 namespace atlantis::search {
 
@@ -27,6 +29,7 @@ class CounterStatistic : public Statistic {
   explicit CounterStatistic(std::string name) : _name(std::move(name)) {}
 
   void increment() { _count++; }
+
   [[nodiscard]] std::string_view name() const noexcept override {
     return _name;
   }
@@ -42,25 +45,34 @@ class CounterStatistic : public Statistic {
 };
 
 class SearchStatistics {
-  std::vector<std::unique_ptr<Statistic>> _statistics;
+  std::unordered_map<std::string, std::shared_ptr<Statistic>> _statistics;
+  std::optional<std::shared_ptr<RoundStatistics>> _roundStatistics;
 
  public:
-  using const_iterator =
-      std::vector<std::unique_ptr<Statistic>>::const_iterator;
-
-  SearchStatistics() = default;
-  explicit SearchStatistics(std::vector<std::unique_ptr<Statistic>> statistics)
-      : _statistics(std::move(statistics)) {}
-
   void display(std::ostream& output) const noexcept {
-    for (const auto& statistic : _statistics) {
+    for (const auto& statistic : _statistics | std::views::values) {
       statistic->display(output);
       output << std::endl;
     }
   }
 
-  const_iterator begin() { return _statistics.begin(); }
-  const_iterator end() { return _statistics.end(); }
+  void insert(const std::shared_ptr<Statistic>& statistic) {
+    const std::string name{statistic->name()};
+    _statistics[name] = statistic;
+  }
+
+  std::string getValue(const std::string& name) {
+    return _statistics[name]->value();
+  }
+
+  std::optional<std::shared_ptr<RoundStatistics>> getRoundStatistics() const {
+    return _roundStatistics;
+  }
+
+  void setRoundStatistics(
+      const std::optional<std::shared_ptr<RoundStatistics>>& roundStatistics) {
+    _roundStatistics = roundStatistics;
+  }
 };
 
 }  // namespace atlantis::search

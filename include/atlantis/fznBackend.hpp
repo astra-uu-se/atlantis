@@ -40,7 +40,10 @@ class FznBackend {
 
   static void onFinishDefault(SolveOutcome outcome);
 
-  void onSolutionDefault(const search::SavedAssignment&) const;
+  void onSolutionDefault(
+      const search::SavedAssignment&,
+      const std::optional<
+          std::vector<std::shared_ptr<search::SearchStatistics>>>&) const;
 
  private:
   std::shared_ptr<invariantgraph::FznInvariantGraph> _invariantGraph;
@@ -54,7 +57,10 @@ class FznBackend {
   std::unique_ptr<FznOutput> _fznOutput{nullptr};
   std::shared_ptr<const bool> _shouldStop{nullptr};
 
-  std::function<void(const search::SavedAssignment&)> _onSolution;
+  std::function<void(const search::SavedAssignment&,
+                     const std::optional<std::vector<
+                         std::shared_ptr<search::SearchStatistics>>>&)>
+      _onSolution;
   std::function<void(SolveOutcome)> _onFinish = onFinishDefault;
   std::vector<std::thread> _threads{};
   std::shared_ptr<search::ThreadController> _threadController{nullptr};
@@ -117,7 +123,10 @@ class FznBackend {
     return _shouldStop;
   }
 
-  [[nodiscard]] const std::function<void(const search::SavedAssignment&)>&
+  [[nodiscard]] std::function<
+      void(const search::SavedAssignment&,
+           const std::optional<
+               std::vector<std::shared_ptr<search::SearchStatistics>>>&)>
   onSolution() const {
     return _onSolution;
   }
@@ -134,7 +143,9 @@ class FznBackend {
   void setRandomSeed(std::uint_fast32_t seed) { _seed = seed; }
 
   void setOnSolution(
-      const std::function<void(const search::SavedAssignment&)>& onSolution) {
+      const std::function<void(const search::SavedAssignment&,
+                               const std::optional<std::vector<std::shared_ptr<
+                                   search::SearchStatistics>>>&)>& onSolution) {
     _onSolution = onSolution;
   }
 

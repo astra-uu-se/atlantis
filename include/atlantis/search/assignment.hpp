@@ -56,6 +56,10 @@ class Assignment {
    */
   [[nodiscard]] Int committedValue(propagation::VarViewId) const;
 
+  [[nodiscard]] Int currentViolation() const;
+
+  [[nodiscard]] Int currentObjective() const;
+
   /**
    * @return True if the current assignment satisfies all the constraints, false
    * otherwise.
@@ -74,7 +78,11 @@ class Assignment {
 
   [[nodiscard]] Cost getCost() const;
 
-  void setAssignment(const SavedAssignment& saved) const;
+  [[nodiscard]] bool hasViolation() const;
+
+  [[nodiscard]] bool hasObjective() const;
+
+  void setAssignment(const SavedAssignment& saved);
 };
 
 }  // namespace atlantis::search

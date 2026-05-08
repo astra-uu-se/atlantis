@@ -126,8 +126,7 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
   // a, b, c, d, output
   // x_copy
   // violation for equal constraint (x == x_copy)
-  // dummy objective
-  EXPECT_EQ(solver.numVars(), 5 + 1 + 1 + 1);
+  EXPECT_EQ(solver.numVars(), 5 + 1 + 1);
   // 2 Linear
   // 1 equal
   EXPECT_EQ(solver.numInvariants(), 3);
@@ -186,7 +185,7 @@ TEST(InvariantGraphTest, SplitGraph) {
   // Each invariant has 1 output
   // There is one violation for the AllDiff
   // One view for the AllDiff
-  EXPECT_EQ(solver.numVars(), numInvariants * (numInputs + 1) + 2);
+  EXPECT_EQ(solver.numVars(), numInvariants * (numInputs + 1) + 1);
   EXPECT_EQ(solver.numInvariants(), numInvariants + 1);
 }
 
@@ -283,8 +282,7 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
   // x11, x12, x21, x22, output1, output1
   // the pivot
   // The Equality violation
-  // dummy objective
-  EXPECT_EQ(solver.numVars(), 6 + 1 + 1 + 1);
+  EXPECT_EQ(solver.numVars(), 6 + 1 + 1);
   // 2 Element
   // 1 Total Violation
   // 1 from breaking the cycle

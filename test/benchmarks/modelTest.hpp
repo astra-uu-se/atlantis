@@ -23,19 +23,22 @@ static void testModelFile(
       (std::string(FZN_DIR) + "/" + modelFile).c_str());
   logging::Logger logger(stdout, logLvl);
   FznBackend backend(logger, std::move(modelFilePath), 4,
-                     search::SearchType::BEAMSEARCH);
+                     search::SearchType::PARALLEL);
   if (seed.has_value()) {
     backend.setRandomSeed(seed.value());
   }
   backend.setTimelimit(std::chrono::seconds(2));
   std::optional<search::SavedAssignment> solution{};
   backend.setOnSolution(
-      [&solution, &validObjectives](const search::SavedAssignment& sol) {
+      [&solution, &validObjectives](
+          const search::SavedAssignment& sol,
+          const std::optional<
+              std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
         solution = sol;
-        EXPECT_EQ(sol.getCost().getViolation(), 0);
+        EXPECT_EQ(sol.cost().violation(), 0);
         if (!validObjectives.empty()) {
-          EXPECT_TRUE(validObjectives.contains(sol.getCost().getObjective()))
-              << "Objective: " << sol.getCost().getObjective();
+          EXPECT_TRUE(validObjectives.contains(sol.cost().objective()))
+              << "Objective: " << sol.cost().objective();
         }
       });
   backend.setOnFinish([&](const FznBackend::SolveOutcome outcome) {

@@ -1095,37 +1095,17 @@ SolverMapping InvariantGraph::construct(SolverBase& solver) const {
   createNeighborhood(solver, mapping);
   solver.computeBounds();
   mapping.setTotalViolationId(createViolations(solver, mapping));
-  if (mapping.totalViolationId() == propagation::NULL_ID ||
-      _objectiveVarNodeId == NULL_NODE_ID ||
-      mapping.solverId(_objectiveVarNodeId) == propagation::NULL_ID) {
-    const auto trueBoolVarNodeId = varNodeId(true);
-    if (mapping.solverId(trueBoolVarNodeId) == propagation::NULL_ID) {
-      mapping.setSolverId(trueBoolVarNodeId, solver.makeIntVar(0, 0, 0));
-    }
-  }
-  if (mapping.totalViolationId() == propagation::NULL_ID) {
-    // We use the true Boolean fixed variable (any fixed variable will do):
-    mapping.setTotalViolationId(mapping.solverId(varNodeId(true)));
-  }
-  if (_objectiveVarNodeId == NULL_NODE_ID) {
-    // We use the true Boolean fixed variable (any fixed variable will do):
-    mapping.setObjectiveId(mapping.solverId(varNodeId(true)));
-  } else if (mapping.solverId(_objectiveVarNodeId) == propagation::NULL_ID) {
-    mapping.setSolverId(_objectiveVarNodeId, mapping.solverId(varNodeId(true)));
-    mapping.setObjectiveId(mapping.solverId(varNodeId(true)));
-  } else {
-    mapping.setObjectiveId(mapping.solverId(_objectiveVarNodeId));
-  }
-  assert(mapping.totalViolationId() != propagation::NULL_ID);
-  assert(mapping.objectiveId() != propagation::NULL_ID);
-
-  mapping.setObjectiveOptimalValue(
-      _objectiveDirection == ObjectiveDirection::NONE ? 0
-      : _objectiveDirection == ObjectiveDirection::MINIMIZE
-          ? objectiveVarNode().lowerBound()
-          : objectiveVarNode().upperBound());
-
   mapping.setObjectiveDirection(_objectiveDirection);
+  if (_objectiveDirection != ObjectiveDirection::NONE &&
+      _objectiveVarNodeId != NULL_NODE_ID) {
+    mapping.setObjectiveId(mapping.solverId(_objectiveVarNodeId));
+    mapping.setObjectiveOptimalValue(_objectiveDirection ==
+                                             ObjectiveDirection::MINIMIZE
+                                         ? objectiveVarNode().lowerBound()
+                                         : objectiveVarNode().upperBound());
+  } else {
+    mapping.setObjectiveOptimalValue(0);
+  }
 
   if (wasClosed) {
     solver.close();

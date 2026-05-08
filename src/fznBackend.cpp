@@ -8,7 +8,6 @@
 #include "atlantis/logging/logger.hpp"
 #include "atlantis/search/annealing/annealer.hpp"
 #include "atlantis/search/assignment.hpp"
-#include "atlantis/search/objective.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
 #include "atlantis/search/threadController.hpp"
@@ -18,7 +17,9 @@
 namespace atlantis {
 
 void FznBackend::onSolutionDefault(
-    const search::SavedAssignment& assignment) const {
+    const search::SavedAssignment& assignment,
+    const std::optional<
+        std::vector<std::shared_ptr<search::SearchStatistics>>>&) const {
   _fznOutput->displaySolution(std::cout, assignment.getOutputValues());
   std::cout << "----------" << std::endl;
 }
@@ -32,7 +33,6 @@ void FznBackend::onFinishDefault(const SolveOutcome outcome) {
       return;
     case SolveOutcome::UNKNOWN:
       std::cout << "=====UNKNOWN=====\n";
-      return;
   }
 }
 
@@ -46,24 +46,28 @@ void FznBackend::handleSolverNotifications(
       threadController->rethrowFatalErrorIfAny();
     }
 
+#ifndef MORE_STATS
+    if (!threadController->hasNoViolations()) continue;
+#endif
+
     auto result = threadController->loadSolution(solutionId);
-    if (!result.has_value()) {
-      continue;
-    }
+
+    if (!result.has_value()) continue;
 
     solutionId = result.value().first;
-    _onSolution(result.value().second);
+    _onSolution(result.value().second, threadController->getStats());
   }
 
   threadController->rethrowFatalErrorIfAny();
 
   // Ensure the final solution is printed
   // When this runs all search threads have terminated.
-  if (solutionId < threadController->solutionId()) {
+  if (solutionId < threadController->solutionId() &&
+      threadController->hasNoViolations()) {
     std::cout << "printing final solution! (previously printed " << solutionId
               << ", final is " << threadController->solutionId() << ")."
               << std::endl;
-    _onSolution(threadController->solution());
+    _onSolution(threadController->solution(), threadController->getStats());
   }
 
   _onFinish(threadController->hasSolution() &&
@@ -83,8 +87,10 @@ FznBackend::FznBackend(fznparser::Model&& model,
       _seed(std::time(nullptr)),
       _threadCount(threadCount),
       _searchType(searchType),
-      _onSolution([&](const search::SavedAssignment& assignment) {
-        onSolutionDefault(assignment);
+      _onSolution([&](const search::SavedAssignment& assignment,
+                      const std::optional<std::vector<
+                          std::shared_ptr<search::SearchStatistics>>>& stats) {
+        onSolutionDefault(assignment, stats);
       }) {}
 
 FznBackend::FznBackend(logging::Logger& logger,

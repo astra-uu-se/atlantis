@@ -9,12 +9,12 @@
 
 #include "cost.hpp"
 #include "savedAssignment.hpp"
+#include "searchStatistics.hpp"
 
 namespace atlantis::search {
 
 class ThreadController {
   mutable std::mutex _lock;
-  mutable std::mutex _printLock;
   Int _bestThread = -1;
   size_t _threadCount;
   std::atomic<bool> _hasSolution = false;
@@ -23,8 +23,10 @@ class ThreadController {
   std::atomic<bool> _curSolutionNotified = true;
   std::atomic<size_t> _curSolutionId = 0;
   std::atomic<size_t> _numFinishedThreads = 0;
+  std::atomic<size_t> _numThreadsWithReportedStats = 0;
   std::optional<Cost> _bestCost;
   std::optional<SavedAssignment> _solution;
+  std::vector<std::shared_ptr<SearchStatistics>> _threadStatistics;
   std::exception_ptr _fatalError;
   std::optional<Int> _fatalErrorThreadId;
   std::optional<std::string> _fatalErrorContext;
@@ -38,10 +40,14 @@ class ThreadController {
 
  public:
   explicit ThreadController(const size_t threadCount)
-      : _threadCount(threadCount) {}
+      : _threadCount(threadCount) {
+    _threadStatistics.resize(threadCount);
+  }
 
   // Returns true iff the new solution is >= the best saved solution.
-  bool trySolution(Int threadId, const SavedAssignment& solution);
+  bool trySolution(Int threadId, const SavedAssignment& solution,
+                   const std::optional<std::shared_ptr<CounterStatistic>>&
+                       improvingSolutions);
 
   [[nodiscard]] Int bestThreadId() const;
 
@@ -87,6 +93,20 @@ class ThreadController {
 
   [[gnu::always_inline]] void markCurSolutionNotified() {
     _curSolutionNotified = true;
+  }
+
+  [[gnu::always_inline]] [[nodiscard]] std::optional<
+      std::vector<std::shared_ptr<SearchStatistics>>>
+  getStats() const {
+    if (_numThreadsWithReportedStats.load() >= _threadCount)
+      return _threadStatistics;
+    return std::nullopt;
+  }
+
+  [[gnu::always_inline]] void setThreadStats(
+      const size_t threadId, const std::shared_ptr<SearchStatistics>& stats) {
+    _threadStatistics[threadId] = stats;
+    _numThreadsWithReportedStats.operator++();
   }
 };
 

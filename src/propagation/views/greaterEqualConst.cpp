@@ -6,7 +6,7 @@ namespace atlantis::propagation {
 
 static Int compute(Int var, Int val) { return std::max<Int>(0, val - var); }
 
-GreaterEqualConst::GreaterEqualConst(SolverBase &solver, VarViewId parentId,
+GreaterEqualConst::GreaterEqualConst(SolverBase& solver, VarViewId parentId,
                                      Int val)
     : IntView(solver, parentId), _val(val) {}
 

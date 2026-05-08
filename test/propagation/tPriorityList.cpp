@@ -18,20 +18,20 @@ class PriorityListTest : public ::testing::Test {
   }
   std::mt19937 gen;
 
-  static void updateForward(Timestamp ts, PriorityList &priorityList) {
+  static void updateForward(Timestamp ts, PriorityList& priorityList) {
     updateForward(ts, priorityList, 0);
   }
-  static void updateForward(Timestamp ts, PriorityList &priorityList,
+  static void updateForward(Timestamp ts, PriorityList& priorityList,
                             Int offset) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
       priorityList.updatePriority(ts, idx, static_cast<Int>(idx) + 1 + offset);
     }
   }
 
-  static void updateBackwards(Timestamp ts, PriorityList &priorityList) {
+  static void updateBackwards(Timestamp ts, PriorityList& priorityList) {
     updateBackwards(ts, priorityList, 0);
   }
-  static void updateBackwards(Timestamp ts, PriorityList &priorityList,
+  static void updateBackwards(Timestamp ts, PriorityList& priorityList,
                               Int offset) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
       priorityList.updatePriority(
@@ -39,7 +39,7 @@ class PriorityListTest : public ::testing::Test {
     }
   }
 
-  static void updateUniform(Timestamp ts, PriorityList &priorityList) {
+  static void updateUniform(Timestamp ts, PriorityList& priorityList) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
       priorityList.updatePriority(ts, idx, Int(ts));
     }

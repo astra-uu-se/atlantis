@@ -17,7 +17,7 @@ class ScheduleLoop : public AnnealingSchedule {
   UInt _maximumConsecutiveFutileRounds;
 
   UInt _consecutiveFutileIterations{0};
-  std::optional<RoundStatistics> _lastRoundStatistics;
+  std::optional<std::shared_ptr<RoundStatistics>> _lastRoundStatistics;
 
  public:
   explicit ScheduleLoop(std::unique_ptr<AnnealingSchedule>&& schedule,
@@ -26,7 +26,7 @@ class ScheduleLoop : public AnnealingSchedule {
         _maximumConsecutiveFutileRounds(maximumConsecutiveFutileRounds) {}
 
   void start(double initialTemperature) override;
-  void nextRound(const RoundStatistics& statistics) override;
+  void nextRound(const std::shared_ptr<RoundStatistics>& statistics) override;
   double temperature() override;
   bool frozen() override;
   [[nodiscard]] AnnealingSchedule& inner() { return *_schedule; }

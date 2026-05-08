@@ -20,6 +20,8 @@ class Neighborhood;
 }
 
 enum class SearchType : unsigned char { PARALLEL, BESTCOST, BEAMSEARCH };
+constexpr std::array<std::string_view, 3> searchTypeNames = {
+    "parallel", "cost-sharing", "beam"};
 
 /**
  * Search procedure based on chapter 12 of:
@@ -31,8 +33,7 @@ class SearchProcedure {
   RandomProvider& _random;
   Assignment& _assignment;
   std::shared_ptr<neighborhoods::Neighborhood> _neighborhood;
-  Objective _objective;
-  std::optional<SavedAssignment> _savedAssignment;
+  std::optional<SavedAssignment> _localBestAssignment;
   bool _hasSolution = false;
   const SearchType _searchType;
 
@@ -43,22 +44,21 @@ class SearchProcedure {
 
   [[nodiscard]] SavedAssignment saveAssignment() const;
 
-  void tightenSearch();
-
-  void onAccepted();
+  // Returns true iff the was communication to other threads.
+  bool onAccepted(const std::shared_ptr<CounterStatistic>& improvingSolutions,
+                  std::unique_ptr<MetaHeuristic>&& metaHeuristic);
 
  public:
   SearchProcedure(
       RandomProvider& random, Assignment& assignment,
       const std::shared_ptr<neighborhoods::Neighborhood>& neighborhood,
-      const Objective& objective, const SearchType searchType,
+      const SearchType searchType,
       const std::shared_ptr<ThreadController>& threadController,
       const std::vector<propagation::VarViewId>& outputVarIds,
       const Int threadId)
       : _random(random),
         _assignment(assignment),
         _neighborhood(neighborhood),
-        _objective(objective),
         _searchType(searchType),
         _threadController(threadController),
         _outputVarIds(outputVarIds),

@@ -11,7 +11,8 @@ void ScheduleSequence::start(double initialTemperature) {
   currentSchedule().start(initialTemperature);
 }
 
-void ScheduleSequence::nextRound(const RoundStatistics& statistics) {
+void ScheduleSequence::nextRound(
+    const std::shared_ptr<RoundStatistics>& statistics) {
   assert(!frozen());
 
   const auto temp = temperature();

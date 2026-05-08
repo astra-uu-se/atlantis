@@ -36,9 +36,9 @@ TEST_F(GeometricCoolingScheduleTest, temperature_decreases_geometrically) {
   schedule->start(initialTemp);
   EXPECT_EQ(schedule->temperature(), initialTemp);
 
-  RoundStatistics stats;
-  stats.attemptedMoves = 100;
-  stats.acceptedMoves = 10;
+  const auto stats = std::make_shared<RoundStatistics>();
+  stats->attemptedMoves = 100;
+  stats->acceptedMoves = 10;
   schedule->nextRound(stats);
   EXPECT_EQ(schedule->temperature(), initialTemp * cooling);
 
@@ -49,9 +49,9 @@ TEST_F(GeometricCoolingScheduleTest, temperature_decreases_geometrically) {
 TEST_F(GeometricCoolingScheduleTest, frozen_if_rounds_no_longer_improve) {
   EXPECT_FALSE(schedule->frozen());
 
-  RoundStatistics stats;
-  stats.bestCostOfThisRound = 5;
-  stats.bestCostOfPreviousRound = 5;
+  const auto stats = std::make_shared<RoundStatistics>();
+  stats->bestCostOfThisRound = Cost(5);
+  stats->bestCostOfPreviousRound = Cost(5);
   schedule->nextRound(stats);
   EXPECT_FALSE(schedule->frozen());
 
@@ -62,9 +62,9 @@ TEST_F(GeometricCoolingScheduleTest, frozen_if_rounds_no_longer_improve) {
 TEST_F(GeometricCoolingScheduleTest, restarting_frozen_schedule_is_unfrozen) {
   EXPECT_FALSE(schedule->frozen());
 
-  RoundStatistics stats;
-  stats.bestCostOfThisRound = 5;
-  stats.bestCostOfPreviousRound = 5;
+  const auto stats = std::make_shared<RoundStatistics>();
+  stats->bestCostOfThisRound = Cost(5);
+  stats->bestCostOfPreviousRound = Cost(5);
   schedule->nextRound(stats);
   schedule->nextRound(stats);
   EXPECT_TRUE(schedule->frozen());
