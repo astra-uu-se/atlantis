@@ -1,10 +1,6 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayElement2dNode.hpp"
 
 #include <algorithm>
-#include <boost/fusion/sequence/intrinsic/at.hpp>
-#include <boost/mpl/at.hpp>
-#include <boost/xpressive/detail/core/access.hpp>
-
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
@@ -15,13 +11,8 @@
 
 namespace atlantis::invariantgraph {
 
-Int getValue(const std::vector<std::vector<Int>>& matrix, Int row, Int col,
-             Int rowOffset, Int colOffset) {
-  return matrix.at(row - rowOffset).at(col - colOffset);
-}
-
 static std::vector<std::vector<Int>> toIntMatrix(
-    std::vector<std::vector<bool>>&& boolMatrix) {
+    const std::vector<std::vector<bool>>& boolMatrix) {
   std::vector<std::vector<Int>> intMatrix;
   intMatrix.reserve(boolMatrix.size());
   for (auto& row : boolMatrix) {
@@ -46,10 +37,10 @@ ArrayElement2dNode::ArrayElement2dNode(
 
 ArrayElement2dNode::ArrayElement2dNode(
     InvariantGraph& graph, const VarNodeId rowIdx, const VarNodeId colIdx,
-    std::vector<std::vector<bool>>&& parMatrix, const VarNodeId output,
+    const std::vector<std::vector<bool>>& parMatrix, const VarNodeId output,
     const Int rowOffset, const Int colOffset)
     : ArrayElement2dNode(graph, rowIdx, colIdx,
-                         toIntMatrix(std::move(parMatrix)), output, rowOffset,
+                         toIntMatrix(parMatrix), output, rowOffset,
                          colOffset, false) {}
 void ArrayElement2dNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);

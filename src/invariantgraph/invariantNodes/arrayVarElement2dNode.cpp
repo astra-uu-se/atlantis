@@ -9,6 +9,7 @@
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayElement2dNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElementNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/element2dVar.hpp"
@@ -209,69 +210,86 @@ bool ArrayVarElement2dNode::canBeReplaced() const {
   if (allSameVar) {
     return true;
   }
+  return false;
 }
 
 bool ArrayVarElement2dNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  const auto& rowNode = invariantGraph().varNode(rowIdx());
-  const auto& colNode = invariantGraph().varNode(colIdx());
-  if (invariantGraphConst().varNodeConst(rowIdx()).isFixed() ||
-      invariantGraphConst().varNodeConst(colIdx()).isFixed()) {
-    if (rowNode.isFixed() && colNode.isFixed()) {
-      const VarNodeId input = at(rowNode.lowerBound(), colNode.lowerBound());
-      invariantGraph().replaceVarNode(outputVarNodeIds().front(), input);
-      return true;
-    }
-    if (rowNode.isFixed()) {
-      std::vector<VarNodeId> column;
-      assert(dynamicInputVarNodeIds().size() % _numRows == 0);
-      column.reserve(numCols());
-      for (size_t c = 0; c < numCols(); ++c) {
-        column.emplace_back(
-            at(rowNode.lowerBound(), static_cast<Int>(c) + _colOffset));
+  const bool rowNodeIsFixed = varNodeConst(rowIdx()).isFixed();
+  const bool colNodeIsFixed = varNodeConst(colIdx()).isFixed();
+  if (rowNodeIsFixed && colNodeIsFixed) {
+    const size_t i = index(varNodeConst(rowIdx()).lowerBound(), varNodeConst(colIdx()).lowerBound(), true);
+    invariantGraph().replaceVarNode(outputVarNodeIds().front(), dynamicInputVarNodeIds()[i]);
+    return true;
+  }
+  const bool allSameVar = std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId vId) {
+    return vId == dynamicInputVarNodeIds().front();
+  });
+  if (allSameVar) {
+    const size_t i = index(varNodeConst(rowIdx()).lowerBound(), varNodeConst(colIdx()).lowerBound(), true);
+    invariantGraph().replaceVarNode(outputVarNodeIds().front(), dynamicInputVarNodeIds()[i]);
+    for (const VarNodeId vId : std::array{rowIdx(), colIdx()}) {
+      if (!varNodeConst(vId).isFixed()) {
+        varNode(vId).tightenDomainType(varNodeConst(vId).constDomain()->isInterval() ? DomainType::DOM_RANGE : DomainType::DOM_DOMAIN);
       }
-      invariantGraph().addInvariantNode(std::make_shared<ArrayVarElementNode>(
-          invariantGraph(), colIdx(), std::move(column),
+    }
+    return true;
+  }
+  const bool allFixed = std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId vId) {
+    return varNodeConst(vId).isFixed();
+  });
+  if (rowNodeIsFixed) {
+    if (allFixed) {
+      std::vector<Int> colPars;
+      assert(dynamicInputVarNodeIds().size() % _numRows == 0);
+      colPars.reserve(numCols());
+      for (size_t c = 0; c < numCols(); ++c) {
+        colPars.emplace_back(varNodeConst(at(0, static_cast<Int>(c), false)).lowerBound());
+      }
+      invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
+          invariantGraph(), std::move(colPars), colIdx(),
           outputVarNodeIds().front(), _colOffset));
       return true;
     }
-    assert(colNode.isFixed());
-    std::vector<VarNodeId> row;
-    row.reserve(_numRows);
-    for (size_t r = 0; r < _numRows; ++r) {
-      row.emplace_back(
-          at(static_cast<Int>(r) + _rowOffset, colNode.lowerBound()));
+    std::vector<VarNodeId> colVars;
+    assert(dynamicInputVarNodeIds().size() % _numRows == 0);
+    colVars.reserve(numCols());
+    for (size_t c = 0; c < numCols(); ++c) {
+      colVars.emplace_back(
+          at(0, static_cast<Int>(c), false));
     }
     invariantGraph().addInvariantNode(std::make_shared<ArrayVarElementNode>(
-        invariantGraph(), rowIdx(), std::move(row), outputVarNodeIds().front(),
-        _rowOffset));
+        invariantGraph(), colIdx(), std::move(colVars),
+        outputVarNodeIds().front(), _colOffset));
     return true;
   }
-  assert(dynamicInputVarNodeIds().size() % _numRows == 0);
-  const Int defVal =
-      invariantGraph()
-          .varNodeConst(at(rowNode.lowerBound(), colNode.lowerBound()))
-          .lowerBound();
-  std::vector<std::vector<Int>> parMatrix(_numRows,
-                                          std::vector<Int>(numCols(), defVal));
-  for (const Int row : *rowNode.constDomain()) {
-    const Int r = row - _rowOffset;
-    for (const Int col : *colNode.constDomain()) {
-      const Int c = col - _colOffset;
-      assert(invariantGraphConst().varNodeConst(at(row, col)).isFixed());
-      parMatrix.at(r).at(c) =
-          invariantGraphConst().varNodeConst(at(row, col)).lowerBound();
+  if (colNodeIsFixed) {
+    if (allFixed) {
+      std::vector<Int> rowPars;
+      rowPars.reserve(_numRows);
+      for (size_t r = 0; r < _numRows; ++r) {
+        rowPars.emplace_back(varNodeConst(at(static_cast<Int>(r), 0, false)).lowerBound());
+      }
+      invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
+          invariantGraph(), std::move(rowPars), rowIdx(),
+          outputVarNodeIds().front(), _rowOffset));
+      return true;
     }
+    std::vector<VarNodeId> rowVars;
+    rowVars.reserve(_numRows);
+    for (size_t r = 0; r < _numRows; ++r) {
+      rowVars.emplace_back(
+          at(0, static_cast<Int>(r), false));
+    }
+    invariantGraph().addInvariantNode(std::make_shared<ArrayVarElementNode>(
+        invariantGraph(), colIdx(), std::move(rowVars),
+        outputVarNodeIds().front(), _rowOffset));
+    return true;
   }
-  invariantGraph().addInvariantNode(std::make_shared<ArrayElement2dNode>(
-      invariantGraph(), rowIdx(), colIdx(), std::move(parMatrix),
-      outputVarNodeIds().front(), _rowOffset, _colOffset,
-      invariantGraphConst()
-          .varNodeConst(outputVarNodeIds().front())
-          .isIntVar()));
-  return true;
+  assert(false);
+  return false;
 }
 
 void ArrayVarElement2dNode::registerNode(propagation::SolverBase& solver,

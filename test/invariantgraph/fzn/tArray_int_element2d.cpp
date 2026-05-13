@@ -26,7 +26,7 @@ class array_int_element2dTest : public FznTestBase {
   Int rowOffset{1};
   Int colOffset{1};
 
-  Int getValue(Int rowValue, Int colValue) const {
+  Int getValue(const Int rowValue, const Int colValue) const {
     return parameters.at(rowValue - rowOffset).at(colValue - colOffset);
   }
 

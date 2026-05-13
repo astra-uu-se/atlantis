@@ -17,7 +17,7 @@ class ArrayElement2dNode : public InvariantNode {
                      bool isIntMatrix = true);
 
   ArrayElement2dNode(InvariantGraph& graph, VarNodeId rowIdx, VarNodeId colIdx,
-                     std::vector<std::vector<bool>>&& parMatrix,
+                     const std::vector<std::vector<bool>>& parMatrix,
                      VarNodeId output, Int rowOffset, Int colOffset);
 
   void postConstraint() override;

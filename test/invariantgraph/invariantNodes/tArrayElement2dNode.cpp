@@ -7,22 +7,20 @@ using namespace atlantis::invariantgraph;
 
 class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
  protected:
-  std::vector<std::vector<Int>> parMatrix{std::vector<Int>{-2, -1},
-                                          std::vector<Int>{1, 0}};
+  std::vector<std::vector<Int>> intMatrix{std::vector<Int>{-2, -1, 0},
+                                          std::vector<Int>{1, 2, 0}};
+  std::vector<std::vector<bool>> boolMatrix{{true, false, true},
+  {false, true, false}};
 
   Var rowIdxVar{"idx1", std::vector<Int>{}, true};
   Var colIdxVar{"idx2", std::vector<Int>{}, true};
   Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int rowOffset{1};
-  Int colOffset{1};
+  Int rowOffset{-5};
+  Int colOffset{5};
 
-  [[nodiscard]] static bool intParToBool(const Int val) {
-    return std::abs(val) % 2 == 0;
-  }
-
-  [[nodiscard]] Int parVal(const Int val) const {
-    return isIntElement() ? val : intParToBool(val) ? 0 : 1;
+  [[nodiscard]] Int computeOutput(const Int rowIdx, const Int colIdx) const {
+    return isIntElement() ? intMatrix.at(rowIdx - rowOffset).at(colIdx - colOffset) : boolMatrix.at(rowIdx - rowOffset).at(colIdx - colOffset) ? 0 : 1;
   }
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data <= 1; }
@@ -35,19 +33,17 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
 
   Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
-      const Int row = (varNode(rowIdxVar).isFixed()
+      const Int row = varNode(rowIdxVar).isFixed()
                            ? varNode(rowIdxVar).lowerBound()
-                           : _solver->currentValue(varId(rowIdxVar))) -
-                      rowOffset;
-      const Int col = (varNode(colIdxVar).isFixed()
+                           : _solver->currentValue(varId(rowIdxVar));
+      const Int col = varNode(colIdxVar).isFixed()
                            ? varNode(colIdxVar).lowerBound()
-                           : _solver->currentValue(varId(colIdxVar))) -
-                      colOffset;
-      return parVal(parMatrix.at(row).at(col));
+                           : _solver->currentValue(varId(colIdxVar));
+      return computeOutput(row, col);
     }
-    const Int row = varNode(rowIdxVar).lowerBound() - rowOffset;
-    const Int col = varNode(colIdxVar).lowerBound() - colOffset;
-    return parVal(parMatrix.at(row).at(col));
+    const Int row = varNode(rowIdxVar).lowerBound();
+    const Int col = varNode(colIdxVar).lowerBound();
+    return computeOutput(row, col);
   }
 
   void SetUp() override {
@@ -56,7 +52,7 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
       rowIdxVar.domain = std::vector<Int>{rowOffset};
     } else {
       rowIdxVar.domain = std::pair<Int, Int>{
-          rowOffset, rowOffset + static_cast<Int>(parMatrix.size()) - 1};
+          rowOffset, rowOffset + static_cast<Int>(intMatrix.size()) - 1};
     }
     retrieveIntVarNode(rowIdxVar);
 
@@ -65,7 +61,7 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
     } else {
       colIdxVar.domain = std::pair<Int, Int>{
           colOffset,
-          colOffset + static_cast<Int>(parMatrix.front().size()) - 1};
+          colOffset + static_cast<Int>(intMatrix.front().size()) - 1};
     }
     retrieveIntVarNode(colIdxVar);
 
@@ -73,7 +69,7 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
       // int version of element
       Int lb = std::numeric_limits<Int>::max();
       Int ub = std::numeric_limits<Int>::min();
-      for (const auto& row : parMatrix) {
+      for (const auto& row : intMatrix) {
         const Int mn = std::ranges::min(row);
         const Int mx = std::ranges::max(row);
         lb = std::min(lb, mn);
@@ -83,22 +79,14 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
       retrieveIntVarNode(outputVar);
       createInvariantNode(*_invariantGraph, varNodeId(rowIdxVar),
                           varNodeId(colIdxVar),
-                          std::vector<std::vector<Int>>{parMatrix},
+                          std::vector<std::vector<Int>>{intMatrix},
                           varNodeId(outputVar), rowOffset, colOffset);
     } else {
       // bool version of element
       outputVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(outputVar);
-      std::vector<std::vector<bool>> boolMatrix;
-      boolMatrix.reserve(parMatrix.size());
-      for (const auto& row : parMatrix) {
-        boolMatrix.emplace_back();
-        for (const auto val : row) {
-          boolMatrix.back().emplace_back(intParToBool(val));
-        }
-      }
       createInvariantNode(*_invariantGraph, varNodeId(rowIdxVar),
-                          varNodeId(colIdxVar), std::move(boolMatrix),
+                          varNodeId(colIdxVar), std::vector<std::vector<bool>>(boolMatrix),
                           varNodeId(outputVar), rowOffset, colOffset);
     }
   }
@@ -142,13 +130,12 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
   _solverMapping =
       std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
-  VarNode outputNode = varNode(outputVar);
+  const VarNode outputNode = varNode(outputVar);
 
   if (outputNode.isFixed()) {
     const Int expected = outputNode.lowerBound();
     const Int actual =
-        parVal(parMatrix.at(varNode(rowIdxVar).lowerBound() - rowOffset)
-                   .at(varNode(colIdxVar).lowerBound() - colOffset));
+        computeOutput(varNode(rowIdxVar).lowerBound(), varNode(colIdxVar).lowerBound());
     EXPECT_EQ(expected, actual);
     return;
   }

@@ -206,7 +206,7 @@ void GecodeSolver::array_bool_element(const ConstraintVarId index,
                                       const Int offset) {
   Gecode::IntSharedArray sia(static_cast<int>(parameters.size()));
   for (int i = 0; i < static_cast<int>(parameters.size()); ++i) {
-    sia[i] = parameters[i] ? 1 : 0;
+    sia[i] = int{parameters[i] ? 1 : 0};
   }
   element(_space, sia, intVar(index), -static_cast<int>(offset),
           boolVar(output), Gecode::IPL_DOM);
@@ -221,7 +221,7 @@ void GecodeSolver::array_bool_element2d(
   int i = 0;
   for (const auto& row : parameters) {
     for (const bool val : row) {
-      sia[i++] = static_cast<int>(val ? 0 : 1);
+      sia[i++] = int{val ? 1 : 0};
     }
   }
   element(_space, sia, intVar(colIndex), -static_cast<int>(colOffset),
