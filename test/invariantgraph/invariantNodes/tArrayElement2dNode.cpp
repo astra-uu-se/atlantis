@@ -10,7 +10,7 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
   std::vector<std::vector<Int>> intMatrix{std::vector<Int>{-2, -1, 0},
                                           std::vector<Int>{1, 2, 0}};
   std::vector<std::vector<bool>> boolMatrix{{true, false, true},
-  {false, true, false}};
+                                            {false, true, false}};
 
   Var rowIdxVar{"idx1", std::vector<Int>{}, true};
   Var colIdxVar{"idx2", std::vector<Int>{}, true};
@@ -20,7 +20,10 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
   Int colOffset{5};
 
   [[nodiscard]] Int computeOutput(const Int rowIdx, const Int colIdx) const {
-    return isIntElement() ? intMatrix.at(rowIdx - rowOffset).at(colIdx - colOffset) : boolMatrix.at(rowIdx - rowOffset).at(colIdx - colOffset) ? 0 : 1;
+    return isIntElement()
+               ? intMatrix.at(rowIdx - rowOffset).at(colIdx - colOffset)
+           : boolMatrix.at(rowIdx - rowOffset).at(colIdx - colOffset) ? 0
+                                                                      : 1;
   }
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data <= 1; }
@@ -34,11 +37,11 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
   Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
       const Int row = varNode(rowIdxVar).isFixed()
-                           ? varNode(rowIdxVar).lowerBound()
-                           : _solver->currentValue(varId(rowIdxVar));
+                          ? varNode(rowIdxVar).lowerBound()
+                          : _solver->currentValue(varId(rowIdxVar));
       const Int col = varNode(colIdxVar).isFixed()
-                           ? varNode(colIdxVar).lowerBound()
-                           : _solver->currentValue(varId(colIdxVar));
+                          ? varNode(colIdxVar).lowerBound()
+                          : _solver->currentValue(varId(colIdxVar));
       return computeOutput(row, col);
     }
     const Int row = varNode(rowIdxVar).lowerBound();
@@ -86,7 +89,8 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
       outputVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(outputVar);
       createInvariantNode(*_invariantGraph, varNodeId(rowIdxVar),
-                          varNodeId(colIdxVar), std::vector<std::vector<bool>>(boolMatrix),
+                          varNodeId(colIdxVar),
+                          std::vector<std::vector<bool>>(boolMatrix),
                           varNodeId(outputVar), rowOffset, colOffset);
     }
   }
@@ -134,8 +138,8 @@ TEST_P(ArrayElement2dNodeTestFixture, propagation) {
 
   if (outputNode.isFixed()) {
     const Int expected = outputNode.lowerBound();
-    const Int actual =
-        computeOutput(varNode(rowIdxVar).lowerBound(), varNode(colIdxVar).lowerBound());
+    const Int actual = computeOutput(varNode(rowIdxVar).lowerBound(),
+                                     varNode(colIdxVar).lowerBound());
     EXPECT_EQ(expected, actual);
     return;
   }

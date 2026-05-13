@@ -66,12 +66,14 @@ Gecode::IntVarArgs GecodeSolver::intVarArgs(
 
 Gecode::IntVarArgs GecodeSolver::intVarArgs(
     const std::vector<std::vector<ConstraintVarId>>& varIds) {
-  const int numIntVars = std::accumulate(varIds.begin(), varIds.end(), int{0}, [&](const int size, const std::vector<ConstraintVarId>& row) {
-    return size + static_cast<int>(row.size());
-  });
+  const int numIntVars = std::accumulate(
+      varIds.begin(), varIds.end(), int{0},
+      [&](const int size, const std::vector<ConstraintVarId>& row) {
+        return size + static_cast<int>(row.size());
+      });
   Gecode::IntVarArgs args(static_cast<int>(numIntVars));
   int i = 0;
-  for (const auto & row : varIds) {
+  for (const auto& row : varIds) {
     for (auto varId : row) {
       assert(varId.isIntVar());
       args[i++] = intVar(size_t{varId});
@@ -92,12 +94,14 @@ Gecode::BoolVarArgs GecodeSolver::boolVarArgs(
 
 Gecode::BoolVarArgs GecodeSolver::boolVarArgs(
     const std::vector<std::vector<ConstraintVarId>>& varIds) {
-  const int numIntVars = std::accumulate(varIds.begin(), varIds.end(), int{0}, [&](const int size, const std::vector<ConstraintVarId>& row) {
-    return size + static_cast<int>(row.size());
-  });
+  const int numIntVars = std::accumulate(
+      varIds.begin(), varIds.end(), int{0},
+      [&](const int size, const std::vector<ConstraintVarId>& row) {
+        return size + static_cast<int>(row.size());
+      });
   Gecode::BoolVarArgs args(static_cast<int>(numIntVars));
   int i = 0;
-  for (const auto & row : varIds) {
+  for (const auto& row : varIds) {
     for (auto varId : row) {
       assert(varId.isBoolVar());
       args[i++] = boolVar(size_t{varId});
@@ -285,22 +289,21 @@ void GecodeSolver::array_int_element2d(
 }
 
 void GecodeSolver::array_int_maximum(const std::vector<ConstraintVarId>& inputs,
-                                 const ConstraintVarId output) {
+                                     const ConstraintVarId output) {
   max(_space, intVarArgs(inputs), intVar(output), Gecode::IPL_BND);
 }
 
 void GecodeSolver::array_int_minimum(const std::vector<ConstraintVarId>& inputs,
-                                 const ConstraintVarId output) {
+                                     const ConstraintVarId output) {
   min(_space, intVarArgs(inputs), intVar(output), Gecode::IPL_BND);
 }
 
 void GecodeSolver::array_var_bool_element(
-      const ConstraintVarId index,
-      const std::vector<ConstraintVarId>& inputs, const ConstraintVarId output,
-      const Int offset) {
-  const bool allParams = std::ranges::all_of(inputs, [&](const ConstraintVarId varId) {
-    return boolVar(varId).one();
-  });
+    const ConstraintVarId index, const std::vector<ConstraintVarId>& inputs,
+    const ConstraintVarId output, const Int offset) {
+  const bool allParams = std::ranges::all_of(
+      inputs,
+      [&](const ConstraintVarId varId) { return boolVar(varId).one(); });
   if (allParams) {
     std::vector<bool> params(inputs.size());
     for (size_t i = 0; i < inputs.size(); ++i) {
@@ -309,40 +312,43 @@ void GecodeSolver::array_var_bool_element(
     array_bool_element(index, params, output, offset);
     return;
   }
-  element(_space, boolVarArgs(inputs), intVar(index), -static_cast<int>(offset), boolVar(output), Gecode::IPL_DOM);
+  element(_space, boolVarArgs(inputs), intVar(index), -static_cast<int>(offset),
+          boolVar(output), Gecode::IPL_DOM);
 }
 
 void GecodeSolver::array_var_bool_element2d(
-    const ConstraintVarId rowIndex,
-    const ConstraintVarId colIndex,
-    const std::vector<std::vector<ConstraintVarId>>& inputs, const ConstraintVarId output,
-    const Int rowOffset,
-    const Int colOffset) {
-  const bool allParams = std::ranges::all_of(inputs, [&](const std::vector<ConstraintVarId>& row) {
-    return std::ranges::all_of(row, [&](const ConstraintVarId varId) {
-      return boolVar(varId).one();
-    });
-  });
+    const ConstraintVarId rowIndex, const ConstraintVarId colIndex,
+    const std::vector<std::vector<ConstraintVarId>>& inputs,
+    const ConstraintVarId output, const Int rowOffset, const Int colOffset) {
+  const bool allParams =
+      std::ranges::all_of(inputs, [&](const std::vector<ConstraintVarId>& row) {
+        return std::ranges::all_of(row, [&](const ConstraintVarId varId) {
+          return boolVar(varId).one();
+        });
+      });
   if (allParams) {
-    std::vector<std::vector<bool>> params(inputs.size(), std::vector<bool>(inputs.front().size()));
+    std::vector<std::vector<bool>> params(
+        inputs.size(), std::vector<bool>(inputs.front().size()));
     for (size_t r = 0; r < inputs.size(); ++r) {
       for (size_t c = 0; c < inputs.front().size(); ++c) {
         params[r][c] = boolVar(inputs[r][c]).val() == 1;
       }
     }
-    array_bool_element2d(rowIndex, colIndex, params, output, rowOffset, colOffset);
+    array_bool_element2d(rowIndex, colIndex, params, output, rowOffset,
+                         colOffset);
     return;
   }
-  element(_space, boolVarArgs(inputs), intVar(colIndex), -static_cast<int>(colOffset), intVar(rowIndex), -static_cast<int>(rowOffset), boolVar(output));
+  element(_space, boolVarArgs(inputs), intVar(colIndex),
+          -static_cast<int>(colOffset), intVar(rowIndex),
+          -static_cast<int>(rowOffset), boolVar(output));
 }
 
 void GecodeSolver::array_var_int_element(
-    const ConstraintVarId index,
-    const std::vector<ConstraintVarId>& inputs, const ConstraintVarId output,
-    const Int offset) {
-  const bool allParams = std::ranges::all_of(inputs, [&](const ConstraintVarId varId) {
-    return intVar(varId).assigned();
-  });
+    const ConstraintVarId index, const std::vector<ConstraintVarId>& inputs,
+    const ConstraintVarId output, const Int offset) {
+  const bool allParams = std::ranges::all_of(
+      inputs,
+      [&](const ConstraintVarId varId) { return intVar(varId).assigned(); });
   if (allParams) {
     std::vector<Int> params(inputs.size());
     for (size_t i = 0; i < inputs.size(); ++i) {
@@ -351,31 +357,37 @@ void GecodeSolver::array_var_int_element(
     array_int_element(index, params, output, offset);
     return;
   }
-  element(_space, intVarArgs(inputs), intVar(index), -static_cast<int>(offset), intVar(output));
+  element(_space, intVarArgs(inputs), intVar(index), -static_cast<int>(offset),
+          intVar(output));
 }
 
 void GecodeSolver::array_var_int_element2d(
-    const ConstraintVarId rowIndex,
-    const ConstraintVarId colIndex,
-    const std::vector<std::vector<ConstraintVarId>>& inputs, const ConstraintVarId output,
-    const Int rowOffset,
-    const Int colOffset) {
-  const bool allParams = std::ranges::all_of(inputs, [&](const std::vector<ConstraintVarId>& row) {
-    return std::ranges::all_of(row, [&](const ConstraintVarId varId) {
-      return intVar(varId).assigned();
-    });
-  });
+    const ConstraintVarId rowIndex, const ConstraintVarId colIndex,
+    const std::vector<std::vector<ConstraintVarId>>& inputs,
+    const ConstraintVarId output, const Int rowOffset, const Int colOffset) {
+  const bool allParams =
+      std::ranges::all_of(inputs, [&](const std::vector<ConstraintVarId>& row) {
+        return std::ranges::all_of(row, [&](const ConstraintVarId varId) {
+          return intVar(varId).assigned();
+        });
+      });
   if (allParams) {
-    std::vector<std::vector<Int>> params(inputs.size(), std::vector<Int>(inputs.front().size()));
+    std::vector<std::vector<Int>> params(
+        inputs.size(), std::vector<Int>(inputs.front().size()));
     for (size_t r = 0; r < inputs.size(); ++r) {
       for (size_t c = 0; c < inputs.front().size(); ++c) {
         params[r][c] = static_cast<Int>(intVar(inputs[r][c]).val());
       }
     }
-    array_int_element2d(rowIndex, colIndex, params, output, rowOffset, colOffset);
+    array_int_element2d(rowIndex, colIndex, params, output, rowOffset,
+                        colOffset);
     return;
   }
-  element(_space, intVarArgs(inputs), intVar(colIndex), -static_cast<int>(colOffset), intVar(rowIndex), -static_cast<int>(rowOffset), intVar(output));
+  element(_space, intVarArgs(inputs), intVar(colIndex),
+          -static_cast<int>(colOffset),
+          -static_cast<int>(inputs.front().size()), intVar(rowIndex),
+          -static_cast<int>(rowOffset), -static_cast<int>(inputs.size()),
+          intVar(output));
 }
 
 }  // namespace atlantis::invariantgraph

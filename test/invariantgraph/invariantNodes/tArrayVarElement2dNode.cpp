@@ -7,15 +7,15 @@ using namespace atlantis::invariantgraph;
 
 class ArrayVarElement2dNodeTestFixture
     : public NodeTestBase<ArrayVarElement2dNode> {
- public:
+ protected:
   std::vector<std::vector<std::string>> varMatrix;
 
   std::string idx1Var{"idx1"};
   std::string idx2Var{"idx2"};
   std::string outputVar{"output"};
 
-  Int offsetIdx1 = 1;
-  Int offsetIdx2 = 1;
+  Int offsetIdx1 = -5;
+  Int offsetIdx2 = 5;
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data <= 2; }
 
@@ -27,7 +27,7 @@ class ArrayVarElement2dNodeTestFixture
     return shouldBeReplaced() && (_paramData.data == 1 || _paramData.data == 3);
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     varMatrix = {{"x00", "x01"}, {"x10", "x11"}};
     if (isIntElement()) {
@@ -66,6 +66,8 @@ class ArrayVarElement2dNodeTestFixture
 
 TEST_P(ArrayVarElement2dNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -128,7 +130,7 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ArrayVarElement2dNodeTest, ArrayVarElement2dNodeTestFixture,
     ::testing::Values(ParamData{0}, ParamData{InvariantNodeAction::REPLACE, 0},
                       ParamData{InvariantNodeAction::REPLACE, 1}, ParamData{2},

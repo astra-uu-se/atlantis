@@ -38,7 +38,8 @@ bool fzn_table_bool(FznInvariantGraph& graph,
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 3 : 2);
   FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray,
+                                  false);
 
   const auto& vars =
       getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0));

@@ -6,10 +6,12 @@ namespace atlantis::testing {
 
 static std::unordered_set<Int> solutions() {
   const Int capacity = 269;
-  const std::vector<Int> weights{95,4,60,32,23,72,80,62,65,46};
+  const std::vector<Int> weights{95, 4, 60, 32, 23, 72, 80, 62, 65, 46};
   // we are maximizing, the objective has its sign inverted:
-  const std::vector<Int> gains{-55,-10,-47,-5,-4,-50,-8,-61,-85,-87};
-  std::vector<std::vector<std::vector<Int>>> matrix(weights.size(), std::vector<std::vector<Int>>(capacity + 1, std::vector<Int>()));
+  const std::vector<Int> gains{-55, -10, -47, -5, -4, -50, -8, -61, -85, -87};
+  std::vector<std::vector<std::vector<Int>>> matrix(
+      weights.size(),
+      std::vector<std::vector<Int>>(capacity + 1, std::vector<Int>()));
   for (size_t i = 0; i < weights.size(); ++i) {
     matrix.at(i).at(0).emplace_back(0);
   }

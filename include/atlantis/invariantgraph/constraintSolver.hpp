@@ -54,31 +54,24 @@ class ConstraintSolver {
       ConstraintVarId index1, ConstraintVarId index2,
       const std::vector<std::vector<Int>>& parameters, ConstraintVarId output,
       Int rowOffset, Int colOffset) = 0;
-  virtual void array_int_maximum(
-      const std::vector<ConstraintVarId>& inputs, ConstraintVarId output) = 0;
-  virtual void array_int_minimum(
-      const std::vector<ConstraintVarId>& inputs, ConstraintVarId output) = 0;
+  virtual void array_int_maximum(const std::vector<ConstraintVarId>& inputs,
+                                 ConstraintVarId output) = 0;
+  virtual void array_int_minimum(const std::vector<ConstraintVarId>& inputs,
+                                 ConstraintVarId output) = 0;
   virtual void array_var_bool_element(
-      ConstraintVarId index,
-      const std::vector<ConstraintVarId>& inputs, ConstraintVarId output,
-      Int offset) = 0;
+      ConstraintVarId index, const std::vector<ConstraintVarId>& inputs,
+      ConstraintVarId output, Int offset) = 0;
   virtual void array_var_bool_element2d(
-      ConstraintVarId rowIndex,
-      ConstraintVarId colIndex,
-      const std::vector<std::vector<ConstraintVarId>>& inputs, ConstraintVarId output,
-      Int rowOffset,
-      Int colOffset) = 0;
-  virtual void array_var_int_element(
-      ConstraintVarId index,
-      const std::vector<ConstraintVarId>& inputs, ConstraintVarId output,
-      Int offset) = 0;
+      ConstraintVarId rowIndex, ConstraintVarId colIndex,
+      const std::vector<std::vector<ConstraintVarId>>& inputs,
+      ConstraintVarId output, Int rowOffset, Int colOffset) = 0;
+  virtual void array_var_int_element(ConstraintVarId index,
+                                     const std::vector<ConstraintVarId>& inputs,
+                                     ConstraintVarId output, Int offset) = 0;
   virtual void array_var_int_element2d(
-      ConstraintVarId rowIndex,
-      ConstraintVarId colIndex,
-      const std::vector<std::vector<ConstraintVarId>>& inputs, ConstraintVarId output,
-      Int rowOffset,
-      Int colOffset) = 0;
-
+      ConstraintVarId rowIndex, ConstraintVarId colIndex,
+      const std::vector<std::vector<ConstraintVarId>>& inputs,
+      ConstraintVarId output, Int rowOffset, Int colOffset) = 0;
 };
 
 }  // namespace atlantis::invariantgraph

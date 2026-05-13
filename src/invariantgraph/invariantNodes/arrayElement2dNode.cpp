@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayElement2dNode.hpp"
 
 #include <algorithm>
+
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
@@ -39,9 +40,8 @@ ArrayElement2dNode::ArrayElement2dNode(
     InvariantGraph& graph, const VarNodeId rowIdx, const VarNodeId colIdx,
     const std::vector<std::vector<bool>>& parMatrix, const VarNodeId output,
     const Int rowOffset, const Int colOffset)
-    : ArrayElement2dNode(graph, rowIdx, colIdx,
-                         toIntMatrix(parMatrix), output, rowOffset,
-                         colOffset, false) {}
+    : ArrayElement2dNode(graph, rowIdx, colIdx, toIntMatrix(parMatrix), output,
+                         rowOffset, colOffset, false) {}
 void ArrayElement2dNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(_isIntMatrix == outputVarNode(0).isIntVar());
@@ -56,7 +56,8 @@ void ArrayElement2dNode::postConstraint() {
         varNodeConst(colIdx()).constraintVarId(), _parMatrix,
         outputNode.constraintVarId(), _rowOffset, _colOffset);
   } else {
-    std::vector<std::vector<bool>> boolMatrix(_parMatrix.size(), std::vector<bool>(_parMatrix.front().size()));
+    std::vector<std::vector<bool>> boolMatrix(
+        _parMatrix.size(), std::vector<bool>(_parMatrix.front().size()));
     for (size_t r = 0; r < _parMatrix.size(); ++r) {
       for (size_t c = 0; c < _parMatrix[r].size(); ++c) {
         boolMatrix[r][c] = _parMatrix[r][c] == 0;

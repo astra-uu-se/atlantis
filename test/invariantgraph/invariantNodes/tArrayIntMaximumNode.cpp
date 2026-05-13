@@ -43,7 +43,8 @@ class ArrayIntMaximumNodeTestFixture
       bounds = {{0, 5}, {2, 2}, {-5, 0}};
     }
     for (const auto& [lb, ub] : bounds) {
-      inputVars.emplace_back("input_" + std::to_string(inputVars.size()), lb, ub, true);
+      inputVars.emplace_back("input_" + std::to_string(inputVars.size()), lb,
+                             ub, true);
       retrieveIntVarNode(inputVars.back());
     }
     outputVar.domain = std::pair<Int, Int>(-5, 5);

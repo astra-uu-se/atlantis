@@ -34,17 +34,20 @@ void ArrayIntMaximumNode::init(InvariantNodeId id) {
 }
 
 void ArrayIntMaximumNode::postConstraint() {
-  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(), ConstraintVarId{NULL_NODE_ID});
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
+                                      ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
     inputs[i] = staticInputVarNode(i).constraintVarId();
   }
-  constraintSolver().array_int_maximum(inputs, outputVarNode(0).constraintVarId());
+  constraintSolver().array_int_maximum(inputs,
+                                       outputVarNode(0).constraintVarId());
 }
 
 void ArrayIntMaximumNode::updateState() {
   _lb = outputVarNodeConst(0).lowerBound();
   for (size_t i = 0; i < staticInputVarNodeIds().size();) {
-    if (staticInputVarNodeConst(i).isFixed() || staticInputVarNodeConst(i).upperBound() <= _lb) {
+    if (staticInputVarNodeConst(i).isFixed() ||
+        staticInputVarNodeConst(i).upperBound() <= _lb) {
       removeStaticInputVarNode(staticInputVarNodeIds().at(i));
     } else {
       ++i;
@@ -97,8 +100,7 @@ void ArrayIntMaximumNode::registerNode(propagation::SolverBase& solver,
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
-      staticInputVarNodeIds(),
-      std::back_inserter(solverVars),
+      staticInputVarNodeIds(), std::back_inserter(solverVars),
       [&](const auto& node) { return mapping.solverId(node); });
 
   assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);

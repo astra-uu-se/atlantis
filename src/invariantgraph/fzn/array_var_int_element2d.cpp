@@ -12,7 +12,8 @@ bool array_var_int_element2d(
     FznInvariantGraph& graph, const fznparser::IntArg& idx1,
     const fznparser::IntArg& idx2,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
-    const fznparser::IntArg& output, const Int numRows, const Int offset1, const Int offset2) {
+    const fznparser::IntArg& output, const Int numRows, const Int offset1,
+    const Int offset2) {
   if (numRows <= 0 || inputs->size() % numRows != 0) {
     throw FznArgumentException(
         "Constraint array_var_int_element2d the number of rows must be "

@@ -12,9 +12,11 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayVarElementNode::ArrayVarElementNode(InvariantGraph& graph, const VarNodeId idx,
+ArrayVarElementNode::ArrayVarElementNode(InvariantGraph& graph,
+                                         const VarNodeId idx,
                                          std::vector<VarNodeId>&& varVector,
-                                         const VarNodeId output, const Int offset)
+                                         const VarNodeId output,
+                                         const Int offset)
     : InvariantNode(graph, {output}, {idx}, std::move(varVector)),
       _offset(offset) {}
 
@@ -22,28 +24,30 @@ void ArrayVarElementNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(std::ranges::all_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId node) {
-        return varNodeConst(node).isIntVar();
-      }));
+      [&](const VarNodeId node) { return varNodeConst(node).isIntVar(); }));
   assert(std::ranges::all_of(
       dynamicInputVarNodeIds().begin(), dynamicInputVarNodeIds().end(),
       [&](const VarNodeId node) {
         return invariantGraph()
                    .varNodeConst(outputVarNodeIds().front())
-                   .isIntVar() ==
-               varNodeConst(node).isIntVar();
+                   .isIntVar() == varNodeConst(node).isIntVar();
       }));
 }
 
 void ArrayVarElementNode::postConstraint() {
-  std::vector<ConstraintVarId> inputs(dynamicInputVarNodeIds().size(), ConstraintVarId{NULL_NODE_ID});
+  std::vector<ConstraintVarId> inputs(dynamicInputVarNodeIds().size(),
+                                      ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < dynamicInputVarNodeIds().size(); ++i) {
     inputs[i] = dynamicInputVarNode(i).constraintVarId();
   }
   if (outputVarNodeConst(0).isIntVar()) {
-    constraintSolver().array_var_int_element(staticInputVarNode(0).constraintVarId(), inputs, outputVarNode(0).constraintVarId(), _offset);
+    constraintSolver().array_var_int_element(
+        staticInputVarNode(0).constraintVarId(), inputs,
+        outputVarNode(0).constraintVarId(), _offset);
   } else {
-    constraintSolver().array_var_bool_element(staticInputVarNode(0).constraintVarId(), inputs, outputVarNode(0).constraintVarId(), _offset);
+    constraintSolver().array_var_bool_element(
+        staticInputVarNode(0).constraintVarId(), inputs,
+        outputVarNode(0).constraintVarId(), _offset);
   }
 }
 
@@ -59,9 +63,11 @@ void ArrayVarElementNode::updateState() {
   _offset = lb;
 
   // Remove invalid vars from end:
-  const Int size = staticInputVarNodeConst(0).upperBound() - staticInputVarNodeConst(0).lowerBound() + 1;
+  const Int size = staticInputVarNodeConst(0).upperBound() -
+                   staticInputVarNodeConst(0).lowerBound() + 1;
   assert(size <= static_cast<Int>(dynamicInputVarNodeIds().size()));
-  for (Int i = static_cast<Int>(dynamicInputVarNodeIds().size()); i > size; --i) {
+  for (Int i = static_cast<Int>(dynamicInputVarNodeIds().size()); i > size;
+       --i) {
     removeDynamicInputAtIndex(dynamicInputVarNodeIds().size() - 1);
   }
   assert(size == static_cast<Int>(dynamicInputVarNodeIds().size()));
@@ -70,7 +76,8 @@ void ArrayVarElementNode::updateState() {
   }
 
   std::vector<bool> indexIsSupported(dynamicInputVarNodeIds().size(), false);
-  for (auto iter = staticInputVarNodeConst(0).constDomain()->begin(); iter != staticInputVarNodeConst(0).constDomain()->end(); ++iter) {
+  for (auto iter = staticInputVarNodeConst(0).constDomain()->begin();
+       iter != staticInputVarNodeConst(0).constDomain()->end(); ++iter) {
     const Int index = *iter - _offset;
     assert(0 <= index);
     assert(index < static_cast<Int>(dynamicInputVarNodeIds().size()));
@@ -81,7 +88,8 @@ void ArrayVarElementNode::updateState() {
       continue;
     }
     for (size_t j = i + 1; j < dynamicInputVarNodeIds().size(); ++j) {
-      if (indexIsSupported[j] && dynamicInputVarNodeIds()[i] == dynamicInputVarNodeIds()[j]) {
+      if (indexIsSupported[j] &&
+          dynamicInputVarNodeIds()[i] == dynamicInputVarNodeIds()[j]) {
         indexIsSupported[i] = true;
         break;
       }
@@ -96,7 +104,8 @@ void ArrayVarElementNode::updateState() {
       continue;
     }
     for (size_t j = i + 1; j < dynamicInputVarNodeIds().size(); ++j) {
-      if (!indexIsSupported[j] && dynamicInputVarNodeIds()[i] == dynamicInputVarNodeIds()[j]) {
+      if (!indexIsSupported[j] &&
+          dynamicInputVarNodeIds()[i] == dynamicInputVarNodeIds()[j]) {
         indexIsSupported[j] = true;
       }
     }
@@ -109,16 +118,17 @@ bool ArrayVarElementNode::canBeReplaced() const {
     return false;
   }
 
-  const bool allSameVar = std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId vId) {
-    return dynamicInputVarNodeIds().front() == vId;
-  });
+  const bool allSameVar =
+      std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId vId) {
+        return dynamicInputVarNodeIds().front() == vId;
+      });
 
   if (varNodeConst(idx()).isFixed() || allSameVar) {
     return true;
   }
-  return std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId vId) {
-    return varNodeConst(vId).isFixed();
-  });
+  return std::ranges::all_of(
+      dynamicInputVarNodeIds(),
+      [&](const VarNodeId vId) { return varNodeConst(vId).isFixed(); });
 }
 
 bool ArrayVarElementNode::replace() {
@@ -126,31 +136,35 @@ bool ArrayVarElementNode::replace() {
     return false;
   }
 
-  const bool allSameVar = std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId vId) {
-    return dynamicInputVarNodeIds().front() == vId;
-  });
+  const bool allSameVar =
+      std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId vId) {
+        return dynamicInputVarNodeIds().front() == vId;
+      });
 
   if (varNodeConst(idx()).isFixed() || allSameVar) {
     assert(allSameVar || dynamicInputVarNodeIds().size() == 1);
     if (dynamicInputVarNodeIds().size() > 1) {
       staticInputVarNode(0).tightenDomainType(
-      staticInputVarNodeConst(0).constDomain()->isInterval() ? DomainType::DOM_RANGE : DomainType::DOM_DOMAIN);
+          staticInputVarNodeConst(0).constDomain()->isInterval()
+              ? DomainType::DOM_RANGE
+              : DomainType::DOM_DOMAIN);
     }
-    invariantGraph().replaceVarNode(outputVarNodeIds().front(), dynamicInputVarNodeIds().front());
+    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
+                                    dynamicInputVarNodeIds().front());
     return true;
   }
 
-  assert(std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId vId) {
-    return varNodeConst(vId).isFixed();
-  }));
+  assert(std::ranges::all_of(
+      dynamicInputVarNodeIds(),
+      [&](const VarNodeId vId) { return varNodeConst(vId).isFixed(); }));
 
   std::vector<Int> parVector(dynamicInputVarNodeIds().size());
   for (size_t i = 0; i < dynamicInputVarNodeIds().size(); ++i) {
     parVector[i] = dynamicInputVarNodeConst(i).lowerBound();
   }
   invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
-    invariantGraph(), std::move(parVector), idx(),
-    outputVarNodeIds().front(), _offset));
+      invariantGraph(), std::move(parVector), idx(), outputVarNodeIds().front(),
+      _offset));
   return true;
 }
 

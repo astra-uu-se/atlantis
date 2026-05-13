@@ -28,7 +28,8 @@ bool array_bool_element(FznInvariantGraph& graph,
   verifyNumArguments(constraint, hasOffsetSuffix ? 4 : 3);
 
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray,
+                                  false);
   FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true);
 
   const auto& idx = std::get<fznparser::IntArg>(constraint.arguments().at(0));

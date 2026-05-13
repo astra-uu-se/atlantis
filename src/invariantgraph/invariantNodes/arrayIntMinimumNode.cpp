@@ -36,17 +36,20 @@ void ArrayIntMinimumNode::init(InvariantNodeId id) {
 }
 
 void ArrayIntMinimumNode::postConstraint() {
-  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(), ConstraintVarId{NULL_NODE_ID});
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
+                                      ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
     inputs[i] = staticInputVarNode(i).constraintVarId();
   }
-  constraintSolver().array_int_minimum(inputs, outputVarNode(0).constraintVarId());
+  constraintSolver().array_int_minimum(inputs,
+                                       outputVarNode(0).constraintVarId());
 }
 
 void ArrayIntMinimumNode::updateState() {
   _ub = outputVarNodeConst(0).upperBound();
   for (size_t i = 0; i < staticInputVarNodeIds().size();) {
-    if (staticInputVarNodeConst(i).isFixed() || _ub <= staticInputVarNodeConst(i).lowerBound()) {
+    if (staticInputVarNodeConst(i).isFixed() ||
+        _ub <= staticInputVarNodeConst(i).lowerBound()) {
       removeStaticInputVarNode(staticInputVarNodeIds().at(i));
     } else {
       ++i;

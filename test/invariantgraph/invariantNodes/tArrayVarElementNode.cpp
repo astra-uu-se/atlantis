@@ -20,25 +20,24 @@ class ArrayVarElementNodeTestFixture
     NodeTestBase::SetUp();
 
     if (isIntElement()) {
-      varArray = std::vector<Var>{
-        Var{"x1", -2, 0, true},
-        Var{"x2", -1, 1, true},
-        Var{"x3", 0, 2, true}};
-      outputVar.domain = std::pair<Int,Int>{-2, 2};
+      varArray =
+          std::vector<Var>{Var{"x1", -2, 0, true}, Var{"x2", -1, 1, true},
+                           Var{"x3", 0, 2, true}};
+      outputVar.domain = std::pair<Int, Int>{-2, 2};
       outputVar.isIntVar = true;
     } else {
-      varArray = std::vector<Var>{
-        Var{"x1", 0, 1, false},
-        Var{"x2", 0, 1, false},
-        Var{"x3", 0, 1, false}};
-      outputVar.domain = std::pair<Int,Int>{0, 1};
+      varArray =
+          std::vector<Var>{Var{"x1", 0, 1, false}, Var{"x2", 0, 1, false},
+                           Var{"x3", 0, 1, false}};
+      outputVar.domain = std::pair<Int, Int>{0, 1};
       outputVar.isIntVar = false;
     }
 
     if (shouldBeReplaced()) {
       idxVar.domain = std::vector<Int>{offsetIdx};
     } else {
-      idxVar.domain = std::pair<Int,Int>{offsetIdx, static_cast<Int>(varArray.size()) + offsetIdx - 1};
+      idxVar.domain = std::pair<Int, Int>{
+          offsetIdx, static_cast<Int>(varArray.size()) + offsetIdx - 1};
     }
     retrieveIntVarNode(idxVar);
 
@@ -155,7 +154,8 @@ TEST(ArrayVarElementNodeRegression, FixedIndexAndOutputPruneSelectedChild) {
   InvariantGraph graph;
   graph.open();
 
-  const auto idx = graph.retrieveIntVarNode(std::make_shared<SearchDomain>(std::vector<Int>{1}));
+  const auto idx = graph.retrieveIntVarNode(
+      std::make_shared<SearchDomain>(std::vector<Int>{1}));
   const auto x1 = graph.retrieveBoolVarNode();
   const auto x2 = graph.retrieveBoolVarNode();
   const auto output = graph.retrieveBoolVarNode(true, true);
@@ -177,7 +177,8 @@ TEST(ArrayVarElementNodeRegression, SameDynamicVars) {
 
   const std::string x{"x"};
   const std::string output{"output"};
-  const auto idx = graph.retrieveIntVarNode(std::make_shared<SearchDomain>(1, 3));
+  const auto idx =
+      graph.retrieveIntVarNode(std::make_shared<SearchDomain>(1, 3));
   const auto xId = graph.retrieveBoolVarNode(x);
   const auto outputId = graph.retrieveBoolVarNode(output);
 
