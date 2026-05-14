@@ -26,7 +26,7 @@ class ParTSPTW : public ::benchmark::Fixture {
   search::SearchType searchType{search::SearchType::BESTCOST};
   search::BanditAlgorithm banditAlgorithm{search::BanditAlgorithm::ETC};
   std::filesystem::path annealingSchedulePath =
-    "benchmark/parallell/banditTestSchedule.json";
+    "benchmark/parallell/banditTestSchedule2.json";
 
   std::vector<std::chrono::milliseconds> timelimits;
 

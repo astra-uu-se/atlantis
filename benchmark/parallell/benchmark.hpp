@@ -75,7 +75,7 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
       "/n_queens/768.fzn",
       "/n_queens/1024.fzn",
       "/n_queens/2048.fzn",
-      "/n_queens/4196.fzn",
+      "/n_queens/4096.fzn",
       "/n_queens/8192.fzn",
       "/n_queens/16384.fzn",
       // TSP

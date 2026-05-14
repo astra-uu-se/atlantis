@@ -119,14 +119,14 @@ Int SearchProcedure::run(SearchController& searchController) {
 
   } while (searchController.shouldRun(_assignment));
 
-  if (_localBestAssignment.has_value())
-    printf(
-        "Thread %ld: SearchController stopped search at cost %s with %ld "
-        "probes and %ld moves (%ld improving, %ld comms, %ld actual improvements, %ld rounds, %ld pulls). \n\t Using %s search. \n",
-        _threadId, _localBestAssignment.value().cost().toString().c_str(),
-        probes->value(), moves->value(),
-        improvingMoves->value(), communications->value(), improvingSolutions->value(),
-        rounds->value(), restarts->value(), searchTypeNames[static_cast<size_t>(_searchType)].data());
+  // if (_localBestAssignment.has_value())
+  //   printf(
+  //       "Thread %ld: SearchController stopped search at cost %s with %ld "
+  //       "probes and %ld moves (%ld improving, %ld comms, %ld actual improvements, %ld rounds, %ld pulls). \n\t Using %s search. \n",
+  //       _threadId, _localBestAssignment.value().cost().toString().c_str(),
+  //       probes->value(), moves->value(),
+  //       improvingMoves->value(), communications->value(), improvingSolutions->value(),
+  //       rounds->value(), restarts->value(), searchTypeNames[static_cast<size_t>(_searchType)].data());
 
   return 1;
 }
