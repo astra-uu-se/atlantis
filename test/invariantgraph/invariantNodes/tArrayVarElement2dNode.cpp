@@ -19,42 +19,39 @@ class ArrayVarElement2dNodeTestFixture
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data <= 2; }
 
-  [[nodiscard]] bool idx1ShouldBeReplaced() const {
+  [[nodiscard]] bool rowIdxShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 0 || _paramData.data == 2);
   }
 
-  [[nodiscard]] bool idx2ShouldBeReplaced() const {
+  [[nodiscard]] bool colIdxShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 1 || _paramData.data == 3);
   }
 
   void SetUp() override {
     NodeTestBase::SetUp();
+
     if (isIntElement()) {
-      varMatrix = std::vector<std::vector<Var>>{
-        {Var{"x00", -2, 1, true}, Var{"x01", -1, 0, true}},
-        {Var{"x10", 0, 1, true}, Var{"x11", 1, 2, true}}};
-      outputVar.isIntVar = true;
-      outputVar.domain = std::pair<Int, Int>(-2, 2);
-      retrieveIntVarNode(outputVar);
-    } else {
       varMatrix = std::vector<std::vector<Var>>{
           {Var{"x00", -2, 1, true}, Var{"x01", -1, 0, true}},
           {Var{"x10", 0, 1, true}, Var{"x11", 1, 2, true}}};
-      outputVar.isIntVar = true;
-      outputVar.domain = std::pair<Int, Int>(0, 1);
-      retrieveBoolVarNode(outputVar);
+    } else {
+      varMatrix = std::vector<std::vector<Var>>{
+          {Var{"x00", 0, 1, false}, Var{"x01", 0, 1, false}},
+          {Var{"x10", 0, 1, false}, Var{"x11", 0, 1, false}}};
     }
 
     rowIdx.domain = std::pair<Int, Int>{
-        rowOffset,
-        idx1ShouldBeReplaced()
-            ? rowOffset
-            : (rowOffset + static_cast<Int>(varMatrix.size()) - 1)};
+        rowOffset, rowIdxShouldBeReplaced()
+                       ? rowOffset
+                       : (rowOffset + static_cast<Int>(varMatrix.size()) - 1)};
+    retrieveIntVarNode(rowIdx);
+
     colIdx.domain = std::pair<Int, Int>{
         colOffset,
-        idx2ShouldBeReplaced()
+        colIdxShouldBeReplaced()
             ? colOffset
             : (colOffset + static_cast<Int>(varMatrix.front().size()) - 1)};
+    retrieveIntVarNode(colIdx);
 
     for (const auto& row : varMatrix) {
       for (const auto& v : row) {
@@ -65,12 +62,19 @@ class ArrayVarElement2dNodeTestFixture
         }
       }
     }
-    retrieveIntVarNode(rowIdx);
-    retrieveIntVarNode(colIdx);
 
-    createInvariantNode(*_invariantGraph, varNodeId(rowIdx),
-                        varNodeId(colIdx), varNodeIds(varMatrix),
-                        varNodeId(outputVar), rowOffset, colOffset);
+    outputVar.isIntVar = isIntElement();
+    if (isIntElement()) {
+      outputVar.domain = std::pair<Int, Int>(-2, 2);
+      retrieveIntVarNode(outputVar);
+    } else {
+      outputVar.domain = std::pair<Int, Int>(0, 1);
+      retrieveBoolVarNode(outputVar);
+    }
+
+    createInvariantNode(*_invariantGraph, varNodeId(rowIdx), varNodeId(colIdx),
+                        varNodeIds(varMatrix), varNodeId(outputVar), rowOffset,
+                        colOffset);
   }
 };
 
@@ -101,7 +105,8 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   std::vector<propagation::VarViewId> inputVarIds;
   std::vector<Int> inputVals;
 
-  for (const auto& idx : std::array<std::string, 2>{rowIdx.identifier, colIdx.identifier}) {
+  for (const auto& idx :
+       std::array<std::string, 2>{rowIdx.identifier, colIdx.identifier}) {
     inputVarIds.emplace_back(varNode(idx).isFixed() ? propagation::NULL_ID
                                                     : varId(idx));
     inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID

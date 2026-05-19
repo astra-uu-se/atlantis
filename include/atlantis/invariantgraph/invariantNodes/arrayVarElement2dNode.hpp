@@ -17,9 +17,8 @@ class ArrayVarElement2dNode : public InvariantNode {
                         VarNodeId output, size_t numRows, Int rowOffset,
                         Int colOffset);
 
-  ArrayVarElement2dNode(InvariantGraph& graph,
-
-                        VarNodeId rowIdx, VarNodeId colIdx,
+  ArrayVarElement2dNode(InvariantGraph& graph, VarNodeId rowIdx,
+                        VarNodeId colIdx,
                         std::vector<std::vector<VarNodeId>>&& varMatrix,
                         VarNodeId output, Int rowOffset, Int colOffset);
 

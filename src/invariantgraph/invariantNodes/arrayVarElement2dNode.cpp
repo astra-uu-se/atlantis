@@ -90,7 +90,9 @@ void ArrayVarElement2dNode::postConstraint() {
   for (size_t r = 0; r < _numRows; ++r) {
     matrix[r].reserve(numCols());
     for (size_t c = 0; c < numCols(); ++c) {
-      matrix[r].emplace_back(varNodeConst(at(r, c, false)).constraintVarId());
+      matrix[r].emplace_back(
+          varNodeConst(at(static_cast<Int>(r), static_cast<Int>(c), false))
+              .constraintVarId());
     }
   }
   if (outputVarNodeConst(0).isIntVar()) {
@@ -109,8 +111,8 @@ void ArrayVarElement2dNode::postConstraint() {
 void ArrayVarElement2dNode::updateState() {
   InvariantNode::updateState();
 
-  const Int rowLb = staticInputVarNodeConst(rowIdx()).lowerBound();
-  const Int colLb = staticInputVarNodeConst(colIdx()).lowerBound();
+  const Int rowLb = varNodeConst(rowIdx()).lowerBound();
+  const Int colLb = varNodeConst(colIdx()).lowerBound();
 
   std::vector<size_t> indicesToRemove;
   indicesToRemove.reserve((rowLb - _rowOffset) * (colLb - _colOffset));
@@ -123,27 +125,27 @@ void ArrayVarElement2dNode::updateState() {
   }
 
   // Find invalid end rows:
-  const Int rowSize = staticInputVarNodeConst(rowIdx()).upperBound() -
-                      staticInputVarNodeConst(rowIdx()).lowerBound() + 1;
+  const Int rowSize = varNodeConst(rowIdx()).upperBound() -
+                      varNodeConst(rowIdx()).lowerBound() + 1;
   assert(rowSize <= static_cast<Int>(_numRows));
-  for (Int r = static_cast<Int>(_numRows); r > rowSize; --r) {
+  for (Int r = static_cast<Int>(_numRows) - 1; r >= rowSize; --r) {
     for (Int c = 0; c < static_cast<Int>(numCols()); ++c) {
       indicesToRemove.emplace_back(index(r, c, false));
     }
   }
 
   // Find invalid start columns:
-  for (Int c = _colOffset; c < rowLb; ++c) {
+  for (Int c = _colOffset; c < colLb; ++c) {
     for (Int r = 0; r < static_cast<Int>(_numRows); ++r) {
       indicesToRemove.emplace_back(index(r, c, false));
     }
   }
 
   // Find invalid end columns:
-  const Int colSize = staticInputVarNodeConst(colIdx()).upperBound() -
-                      staticInputVarNodeConst(colIdx()).lowerBound() + 1;
+  const Int colSize = varNodeConst(colIdx()).upperBound() -
+                      varNodeConst(colIdx()).lowerBound() + 1;
   assert(colSize <= static_cast<Int>(numCols()));
-  for (Int c = static_cast<Int>(numCols()); c > rowSize; --c) {
+  for (Int c = static_cast<Int>(numCols()) - 1; c >= colSize; --c) {
     for (Int r = 0; r < static_cast<Int>(_numRows); ++r) {
       indicesToRemove.emplace_back(index(r, c, false));
     }
@@ -153,9 +155,14 @@ void ArrayVarElement2dNode::updateState() {
   const auto [first, last] = std::ranges::unique(indicesToRemove);
   indicesToRemove.erase(first, last);
 
-  for (Int i = static_cast<Int>(indicesToRemove.size()) - 1; i > 0; --i) {
+  for (Int i = static_cast<Int>(indicesToRemove.size()) - 1; i >= 0; --i) {
     removeDynamicInputAtIndex(indicesToRemove[i]);
   }
+
+  _numRows = rowSize;
+  _rowOffset = rowLb;
+  _colOffset = colLb;
+
   if (varNodeConst(rowIdx()).constDomain()->isInterval() &&
       varNodeConst(colIdx()).constDomain()->isInterval()) {
     return;
@@ -303,10 +310,10 @@ bool ArrayVarElement2dNode::replace() {
     std::vector<VarNodeId> rowVars;
     rowVars.reserve(_numRows);
     for (size_t r = 0; r < _numRows; ++r) {
-      rowVars.emplace_back(at(0, static_cast<Int>(r), false));
+      rowVars.emplace_back(at(static_cast<Int>(r), 0, false));
     }
     invariantGraph().addInvariantNode(std::make_shared<ArrayVarElementNode>(
-        invariantGraph(), colIdx(), std::move(rowVars),
+        invariantGraph(), rowIdx(), std::move(rowVars),
         outputVarNodeIds().front(), _rowOffset));
     return true;
   }

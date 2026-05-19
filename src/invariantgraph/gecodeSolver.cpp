@@ -339,8 +339,9 @@ void GecodeSolver::array_var_bool_element2d(
     return;
   }
   element(_space, boolVarArgs(inputs), intVar(colIndex),
-          -static_cast<int>(colOffset), intVar(rowIndex),
-          -static_cast<int>(rowOffset), boolVar(output));
+          -static_cast<int>(colOffset), static_cast<int>(inputs.front().size()),
+          intVar(rowIndex), -static_cast<int>(rowOffset),
+          static_cast<int>(inputs.size()), boolVar(output));
 }
 
 void GecodeSolver::array_var_int_element(
@@ -384,10 +385,9 @@ void GecodeSolver::array_var_int_element2d(
     return;
   }
   element(_space, intVarArgs(inputs), intVar(colIndex),
-          -static_cast<int>(colOffset),
-          -static_cast<int>(inputs.front().size()), intVar(rowIndex),
-          -static_cast<int>(rowOffset), -static_cast<int>(inputs.size()),
-          intVar(output));
+          -static_cast<int>(colOffset), static_cast<int>(inputs.front().size()),
+          intVar(rowIndex), -static_cast<int>(rowOffset),
+          static_cast<int>(inputs.size()), intVar(output));
 }
 
 }  // namespace atlantis::invariantgraph
