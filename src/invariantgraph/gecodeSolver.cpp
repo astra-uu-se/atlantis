@@ -504,7 +504,7 @@ void GecodeSolver::bool_eq_reif(const ConstraintVarId b1,
 }
 
 void GecodeSolver::bool_le(const ConstraintVarId b1, const ConstraintVarId b2,
-                           bool shouldHold) {
+                           const bool shouldHold) {
   bool_rel(b1, b2, shouldHold, Gecode::IRT_LQ);
 }
 

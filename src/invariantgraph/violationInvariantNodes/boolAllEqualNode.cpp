@@ -84,18 +84,19 @@ void BoolAllEqualNode::postConstraint() {
     }
     return;
   }
-  const std::vector<Int> coeffs(staticInputVarNodeIds().size(), 1);
+  std::vector<Int> coeffs(staticInputVarNodeIds().size(), -1);
+  coeffs.front() = static_cast<Int>(staticInputVarNodeIds().size()) - 1;
+
   std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
                                       ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
     inputs[i] = staticInputVarNode(i).constraintVarId();
   }
-  const Int rhs = static_cast<Int>(staticInputVarNodeIds().size());
   if (isReified()) {
     constraintSolver().bool_lin_eq_reif(
-        coeffs, inputs, rhs, reifiedVarNodeConst().constraintVarId());
+        coeffs, inputs, 0, reifiedVarNodeConst().constraintVarId());
   } else {
-    constraintSolver().bool_lin_eq(coeffs, inputs, rhs, shouldHold());
+    constraintSolver().bool_lin_eq(coeffs, inputs, 0, shouldHold());
   }
 }
 
