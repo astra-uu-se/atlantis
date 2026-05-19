@@ -1,4 +1,5 @@
 #include "../nodeTestBase.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElement2dNode.hpp"
 
 namespace atlantis::testing {
@@ -180,6 +181,29 @@ TEST(ArrayVarElement2dNodeRegression, ReplaceHandlesReducedMatrixOffsets) {
   node.updateState();
   EXPECT_TRUE(node.canBeReplaced());
   EXPECT_TRUE(node.replace());
+}
+
+TEST(ArrayVarElement2dNodeRegression, ReplaceUniformInputMatrix) {
+  auto graph = std::make_shared<FznInvariantGraph>();
+  graph->open();
+
+  const auto input = graph->retrieveIntVarNode(std::make_shared<SearchDomain>(-5, 5));
+  const auto rowIdx = graph->retrieveIntVarNode(std::make_shared<SearchDomain>(0, 9));
+  const auto colIdx = graph->retrieveIntVarNode(std::make_shared<SearchDomain>(0, 9));
+  const auto output = graph->retrieveIntVarNode(std::make_shared<SearchDomain>(-5, 5));
+
+  std::vector<std::vector<VarNodeId>> varMatrix(10, std::vector<VarNodeId>(10, input));
+
+  const auto invId =
+      graph->addInvariantNode(std::make_shared<ArrayVarElement2dNode>(
+          *graph, rowIdx, colIdx, std::move(varMatrix), output, 0, 0));
+  const auto& node =
+      dynamic_cast<ArrayVarElement2dNode&>(graph->invariantNode(invId));
+  EXPECT_TRUE(node.canBeReplaced());
+  EXPECT_EQ(node.state(), InvariantNodeState::ACTIVE);
+  graph->close();
+
+  EXPECT_EQ(node.state(), InvariantNodeState::SUBSUMED);
 }
 
 }  // namespace atlantis::testing
