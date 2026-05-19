@@ -16,6 +16,7 @@ MKFILE_PATH=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BUILD_DIR?=${MKFILE_PATH}build
 
 CMAKE=$(shell which cmake)
+GIT=$(shell which git)
 
 BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
 NUM_BENCHMARK_REPETITIONS=3
@@ -23,6 +24,9 @@ BENCHMARK_FILTER="^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|NQueens
 BENCHMARK_FILTER_SYNTH="^(ElementVarTree|LinearTree|TSP|TSPTWAllDiff)\/[A-Za-z]"
 BENCHMARK_FILTER_PAR="^Par(TSP|TSPTW|NQueens|Knapsack)"
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
+
+CPM_CACHE_DIR=${MKFILE_PATH}.cpm-cache
+export CPM_SOURCE_CACHE=${CPM_CACHE_DIR}
 
 DZN_DIR=${MKFILE_PATH}dzn
 MZN_MODEL_DIR=${MKFILE_PATH}mzn-models
@@ -76,6 +80,17 @@ endef
 .PHONY: clean
 clean:
 	rm -rf ${BUILD_DIR}
+
+.PHONY: gecode
+gecode:
+	mkdir -p ${CPM_CACHE_DIR}/gecode
+	mkdir -p ${CPM_CACHE_DIR}/gecode-6.2.0
+	cd ${CPM_CACHE_DIR}; $(GIT) clone --depth 1 --branch release-6.2.0 https://github.com/Gecode/gecode.git ${CPM_CACHE_DIR}/gecode-6.2.0
+	mkdir -p ${CPM_CACHE_DIR}/gecode-6.2.0/build
+	cd ${CPM_CACHE_DIR}; $(CMAKE) -S ${CPM_CACHE_DIR}/gecode-6.2.0 -B ${CPM_CACHE_DIR}/gecode-6.2.0/build
+	cd ${CPM_CACHE_DIR}; $(CMAKE) --build ${CPM_CACHE_DIR}/gecode-6.2.0/build --target fzn-gecode -j 8
+	cd ${CPM_CACHE_DIR}; $(CMAKE) --install ${CPM_CACHE_DIR}/gecode-6.2.0/build --prefix ${CPM_CACHE_DIR}/gecode
+	rm -rf ${CPM_CACHE_DIR}/gecode-6.2.0
 
 .PHONY: build
 build:

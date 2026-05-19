@@ -36,16 +36,36 @@ jobs:
           if_true: "ON"
           if_false: "OFF"
 
-      - name: Create build Folder
+      - name: Create build Folders
         id: buildFolder
         working-directory: ${{github.workspace}}
         shell: bash
-        run: mkdir -p build
+        run: |
+          mkdir -p build
+          mkdir -p .cpm_cache
+
+      - name: Build Gecode
+        id: gecode
+        working-directory: ${{github.workspace}}/.cpm-cache
+        env:
+          CPM_SOURCE_CACHE: ${{github.workspace}}/.cpm-cache
+          CMAKE_FLAGS: >
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+            -D
+        run: |
+          mkdir -p gecode
+          mkdir -p gecode-6.2.0
+          mkdir -p gecode-6.2.0/build
+          cmake -S gecode-6.2.0 -B gecode-6.2.0/build
+          cmake --build gecode-6.2.0/build --target fzn-gecode -j 8
+          cmake --install gecode-6.2.0/build --prefix gecode
+          rm -r gecode-6.2.0
 
       - name: Build
         id: build
         working-directory: ${{github.workspace}}/build
         env:
+          CPM_SOURCE_CACHE: ${{github.workspace}}/.cpm-cache
           CMAKE_FLAGS: >
             -DBUILD_TESTS:BOOL=ON
             -DBUILD_BENCHMARKS:BOOL=${{steps.buildBenchmarksFlag.outputs.value}}

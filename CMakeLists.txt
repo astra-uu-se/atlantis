@@ -178,6 +178,9 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+if(EXISTS "${CPM_SOURCE_CACHE}/gecode")
+  set(GECODE_INCLUDE "${CPM_SOURCE_CACHE}/gecode")
+endif()
 find_package(Gecode 6.0 REQUIRED COMPONENTS Driver Int Kernel Search)
 
 if(NOT GECODE_LIBRARIES)
@@ -211,7 +214,7 @@ if(NOT GECODE_LIBRARIES)
 
   set(_atlantis_gecode_install_result 0)
   foreach(NUM_TRIES RANGE 1 5)
-    execute_process(COMMAND ${CMAKE_COMMAND} --install "${_atlantis_gecode_source_dir}/build" --prefix "${GECODE_LIBRARIES}"
+    execute_process(COMMAND ${CMAKE_COMMAND} --install "${_atlantis_gecode_source_dir}/build" --prefix "${GECODE_INCLUDE}"
             WORKING_DIRECTORY "${_atlantis_gecode_source_dir}"
             OUTPUT_QUIET
             RESULT_VARIABLE _atlantis_gecode_install_result)
