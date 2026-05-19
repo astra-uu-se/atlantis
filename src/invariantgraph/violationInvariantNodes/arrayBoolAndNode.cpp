@@ -45,6 +45,18 @@ void ArrayBoolAndNode::postConstraint() {
   if (staticInputVarNodeIds().size() < 2) {
     return;
   }
+  if (staticInputVarNodeIds().size() == 2) {
+    if (isReified()) {
+      constraintSolver().bool_and_reif(staticInputVarNode(0).constraintVarId(),
+                                       staticInputVarNode(1).constraintVarId(),
+                                       reifiedVarNodeConst().constraintVarId());
+    } else {
+      constraintSolver().bool_and(staticInputVarNode(0).constraintVarId(),
+                                  staticInputVarNode(1).constraintVarId(),
+                                  shouldHold());
+    }
+    return;
+  }
   std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
                                       {NULL_NODE_ID, false});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {

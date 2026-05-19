@@ -14,16 +14,19 @@
 namespace atlantis::invariantgraph {
 
 BoolClauseNode::BoolClauseNode(InvariantGraph& graph,
-                               std::vector<VarNodeId>&& as,
-                               std::vector<VarNodeId>&& bs, VarNodeId r)
-    : ViolationInvariantNode(graph, concat(as, bs), r), _numAs(as.size()) {}
+                               std::vector<VarNodeId>&& posVars,
+                               std::vector<VarNodeId>&& negVars,
+                               const VarNodeId r)
+    : ViolationInvariantNode(graph, concat(posVars, negVars), r),
+      _numPosVars(posVars.size()) {}
 BoolClauseNode::BoolClauseNode(InvariantGraph& graph,
-                               std::vector<VarNodeId>&& as,
-                               std::vector<VarNodeId>&& bs, bool shouldHold)
-    : ViolationInvariantNode(graph, concat(as, bs), shouldHold),
-      _numAs(as.size()) {}
+                               std::vector<VarNodeId>&& posVars,
+                               std::vector<VarNodeId>&& negVars,
+                               const bool shouldHold)
+    : ViolationInvariantNode(graph, concat(posVars, negVars), shouldHold),
+      _numPosVars(posVars.size()) {}
 
-void BoolClauseNode::init(InvariantNodeId id) {
+void BoolClauseNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -35,25 +38,31 @@ void BoolClauseNode::init(InvariantNodeId id) {
       }));
 }
 
+void BoolClauseNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  std::vector<ConstraintVarId> posVars(_numPosVars,
+                                       ConstraintVarId{NULL_NODE_ID});
+  std::vector<ConstraintVarId> negVars(
+      staticInputVarNodeIds().size() - _numPosVars,
+      ConstraintVarId{NULL_NODE_ID});
+  for (size_t i = 0; i < _numPosVars; i++) {
+    posVars[i] = staticInputVarNodeConst(i).constraintVarId();
+  }
+  for (size_t i = _numPosVars; i < staticInputVarNodeIds().size(); ++i) {
+    negVars[i - _numPosVars] = staticInputVarNodeConst(i).constraintVarId();
+  }
+  if (isReified()) {
+    constraintSolver().bool_clause_reif(
+        posVars, negVars, reifiedVarNodeConst().constraintVarId());
+  } else {
+    constraintSolver().bool_clause(posVars, negVars, shouldHold());
+  }
+}
+
 void BoolClauseNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (!isReified() && !shouldHold()) {
-    for (size_t i = 0; i < _numAs; ++i) {
-      invariantGraph()
-          .varNode(staticInputVarNodeIds().at(i))
-          .fixToValue(bool{false});
-    }
-    for (size_t i = _numAs; i < staticInputVarNodeIds().size(); ++i) {
-      invariantGraph()
-          .varNode(staticInputVarNodeIds().at(i))
-          .fixToValue(bool{true});
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-
-  for (size_t i = 0; i < _numAs; ++i) {
-    for (size_t j = _numAs; j < staticInputVarNodeIds().size(); ++j) {
+  for (size_t i = 0; i < _numPosVars; ++i) {
+    for (size_t j = _numPosVars; j < staticInputVarNodeIds().size(); ++j) {
       if (staticInputVarNodeIds().at(i) == staticInputVarNodeIds().at(j)) {
         if (isReified()) {
           fixReified(true);
@@ -69,42 +78,24 @@ void BoolClauseNode::updateState() {
 
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
-  size_t numAsRemoved = 0;
+  size_t numPosRemoved = 0;
 
-  for (size_t i = 0; i < _numAs; ++i) {
-    if (invariantGraph()
-            .varNodeConst(staticInputVarNodeIds().at(i))
-            .isFixed()) {
-      if (invariantGraph()
-              .varNodeConst(staticInputVarNodeIds().at(i))
-              .inDomain(bool{true})) {
-        if (isReified()) {
-          fixReified(true);
-        } else if (!shouldHold()) {
-          throw InconsistencyException(
-              "BoolClauseNode::updateState constraint is violated");
-        }
+  for (size_t i = 0; i < _numPosVars; ++i) {
+    if (staticInputVarNodeConst(i).isFixed()) {
+      if (staticInputVarNodeConst(i).inDomain(bool{true})) {
+        assert(!isReified());
         setState(InvariantNodeState::SUBSUMED);
         return;
       }
       varsToRemove.emplace_back(staticInputVarNodeIds().at(i));
-      ++numAsRemoved;
+      ++numPosRemoved;
     }
   }
 
-  for (size_t i = _numAs; i < staticInputVarNodeIds().size(); ++i) {
-    if (invariantGraph()
-            .varNodeConst(staticInputVarNodeIds().at(i))
-            .isFixed()) {
-      if (invariantGraph()
-              .varNodeConst(staticInputVarNodeIds().at(i))
-              .inDomain(bool{false})) {
-        if (isReified()) {
-          fixReified(true);
-        } else if (!shouldHold()) {
-          throw InconsistencyException(
-              "BoolClauseNode::updateState constraint is violated");
-        }
+  for (size_t i = _numPosVars; i < staticInputVarNodeIds().size(); ++i) {
+    if (staticInputVarNodeConst(i).isFixed()) {
+      if (staticInputVarNodeConst(i).inDomain(bool{false})) {
+        assert(!isReified());
         setState(InvariantNodeState::SUBSUMED);
         return;
       }
@@ -114,20 +105,9 @@ void BoolClauseNode::updateState() {
   for (const auto& input : varsToRemove) {
     removeStaticInputVarNode(input);
   }
-  _numAs -= numAsRemoved;
+  _numPosVars -= numPosRemoved;
   if (staticInputVarNodeIds().empty()) {
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException(
-          "BoolClauseNode::updateState constraint is violated");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-  }
-  if (staticInputVarNodeIds().size() == 1 && !isReified()) {
-    auto& inputNode = invariantGraph().varNode(staticInputVarNodeIds().front());
-    inputNode.fixToValue(_numAs > 0 ? shouldHold() : !shouldHold());
-    removeStaticInputVarNode(inputNode.varNodeId());
+    assert(!isReified());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -145,7 +125,7 @@ bool BoolClauseNode::replace() {
   }
   if (staticInputVarNodeIds().size() == 1) {
     if (isReified()) {
-      if (_numAs > 0) {
+      if (_numPosVars > 0) {
         invariantGraph().replaceVarNode(reifiedViolationNodeId(),
                                         staticInputVarNodeIds().front());
       } else {
@@ -156,17 +136,17 @@ bool BoolClauseNode::replace() {
     } else {
       invariantGraph()
           .varNode(staticInputVarNodeIds().front())
-          .fixToValue(_numAs > 0 ? shouldHold() : !shouldHold());
+          .fixToValue(_numPosVars > 0 ? shouldHold() : !shouldHold());
     }
     return true;
   }
 
   std::vector<VarNodeId> boolOrInputs;
   boolOrInputs.reserve(staticInputVarNodeIds().size());
-  for (size_t i = 0; i < _numAs; ++i) {
+  for (size_t i = 0; i < _numPosVars; ++i) {
     boolOrInputs.emplace_back(staticInputVarNodeIds().at(i));
   }
-  for (size_t i = _numAs; i < staticInputVarNodeIds().size(); ++i) {
+  for (size_t i = _numPosVars; i < staticInputVarNodeIds().size(); ++i) {
     boolOrInputs.emplace_back(invariantGraph().retrieveBoolVarNode());
     invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(
         invariantGraph(), staticInputVarNodeIds().at(i), boolOrInputs.back()));

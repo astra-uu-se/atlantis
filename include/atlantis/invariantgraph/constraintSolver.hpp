@@ -72,6 +72,72 @@ class ConstraintSolver {
       ConstraintVarId rowIndex, ConstraintVarId colIndex,
       const std::vector<std::vector<ConstraintVarId>>& inputs,
       ConstraintVarId output, Int rowOffset, Int colOffset) = 0;
+
+  virtual void bool_and(ConstraintVarId b1, ConstraintVarId b2,
+                        bool shouldHold) = 0;
+
+  virtual void bool_and_reif(ConstraintVarId b1, ConstraintVarId b2,
+                             ConstraintVarId reified) = 0;
+
+  virtual void bool_clause(const std::vector<ConstraintVarId>& posInputs,
+                           const std::vector<ConstraintVarId>& negInputs,
+                           bool shouldHold) = 0;
+
+  virtual void bool_clause_reif(const std::vector<ConstraintVarId>& posInputs,
+                                const std::vector<ConstraintVarId>& negInputs,
+                                ConstraintVarId reif) = 0;
+
+  virtual void bool_eq(ConstraintVarId b1, ConstraintVarId b2,
+                       bool shouldHold) = 0;
+
+  virtual void bool_eq_reif(ConstraintVarId b1, ConstraintVarId b2,
+                            ConstraintVarId reif) = 0;
+
+  virtual void bool_le(ConstraintVarId b1, ConstraintVarId b2,
+                       bool shouldHold) = 0;
+
+  virtual void bool_le_reif(ConstraintVarId b1, ConstraintVarId b2,
+                            ConstraintVarId reif) = 0;
+
+  virtual void bool_lin_eq(const std::vector<Int>& coeffs,
+                           const std::vector<ConstraintVarId>& inputs, Int rhs,
+                           bool shouldHold) = 0;
+
+  virtual void bool_lin_eq_reif(const std::vector<Int>& coeffs,
+                                const std::vector<ConstraintVarId>& inputs,
+                                Int rhs, ConstraintVarId reif) = 0;
+
+  virtual void bool_lin_le(const std::vector<Int>& coeffs,
+                           const std::vector<ConstraintVarId>& inputs, Int rhs,
+                           bool shouldHold) = 0;
+
+  virtual void bool_lin_le_reif(const std::vector<Int>& coeffs,
+                                const std::vector<ConstraintVarId>& inputs,
+                                Int rhs, ConstraintVarId reif) = 0;
+
+  virtual void bool_lt(ConstraintVarId b1, ConstraintVarId b2,
+                       bool shouldHold) = 0;
+
+  virtual void bool_lt_reif(ConstraintVarId b1, ConstraintVarId b2,
+                            ConstraintVarId reif) = 0;
+
+  virtual void bool_not(ConstraintVarId b1, ConstraintVarId b2,
+                        bool shouldHold) = 0;
+
+  virtual void bool_not_reif(ConstraintVarId b1, ConstraintVarId b2,
+                             ConstraintVarId reif) = 0;
+
+  virtual void bool_or(ConstraintVarId b1, ConstraintVarId b2,
+                       bool shouldHold) = 0;
+
+  virtual void bool_or_reif(ConstraintVarId b1, ConstraintVarId b2,
+                            ConstraintVarId reif) = 0;
+
+  virtual void bool_xor(ConstraintVarId b1, ConstraintVarId b2,
+                        bool shouldHold) = 0;
+
+  virtual void bool_xor_reif(ConstraintVarId b1, ConstraintVarId b2,
+                             ConstraintVarId reif) = 0;
 };
 
 }  // namespace atlantis::invariantgraph

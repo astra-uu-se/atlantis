@@ -56,10 +56,35 @@ class GecodeSolver : public ConstraintSolver {
   Gecode::IntVar& intVar(size_t);
   Gecode::IntVar& intVar(ConstraintVarId);
 
-  void array_bool_rel(const std::vector<ConstraintVarId>& inputs,
-                      ConstraintVarId reified, Gecode::BoolOpType);
-  void array_bool_rel(const std::vector<ConstraintVarId>& inputs,
-                      bool shouldHold, Gecode::BoolOpType);
+  static Gecode::IntSharedArray intSharedArray(const std::vector<Int>&);
+  static Gecode::IntSharedArray intSharedArray(const std::vector<bool>&);
+
+  static Gecode::IntSharedArray intSharedArray(
+      const std::vector<std::vector<Int>>&);
+  static Gecode::IntSharedArray intSharedArray(
+      const std::vector<std::vector<bool>>&);
+
+  void array_bool_op(const std::vector<ConstraintVarId>& inputs,
+                     ConstraintVarId reified, Gecode::BoolOpType);
+  void array_bool_op(const std::vector<ConstraintVarId>& inputs,
+                     bool shouldHold, Gecode::BoolOpType);
+
+  void bool_op(ConstraintVarId b1, ConstraintVarId b2, ConstraintVarId reified,
+               Gecode::BoolOpType);
+  void bool_op(ConstraintVarId b1, ConstraintVarId b2, bool shouldHold,
+               Gecode::BoolOpType);
+
+  void bool_rel(ConstraintVarId b1, ConstraintVarId b2, ConstraintVarId reified,
+                Gecode::IntRelType);
+  void bool_rel(ConstraintVarId b1, ConstraintVarId b2, bool shouldHold,
+                Gecode::IntRelType);
+
+  void bool_lin_rel(const std::vector<Int>& coeffs,
+                    const std::vector<ConstraintVarId>& inputs, Int rhs,
+                    ConstraintVarId reified, Gecode::IntRelType);
+  void bool_lin_rel(const std::vector<Int>& coeffs,
+                    const std::vector<ConstraintVarId>& inputs, Int rhs,
+                    bool shouldHold, Gecode::IntRelType);
 
  public:
   /// Construct empty space
@@ -127,6 +152,72 @@ class GecodeSolver : public ConstraintSolver {
       ConstraintVarId rowIndex, ConstraintVarId colIndex,
       const std::vector<std::vector<ConstraintVarId>>& inputs,
       ConstraintVarId output, Int rowOffset, Int colOffset) override;
+
+  void bool_and(ConstraintVarId b1, ConstraintVarId b2,
+                bool shouldHold) override;
+
+  void bool_and_reif(ConstraintVarId b1, ConstraintVarId b2,
+                     ConstraintVarId reified) override;
+
+  void bool_clause(const std::vector<ConstraintVarId>& posInputs,
+                   const std::vector<ConstraintVarId>& negInputs,
+                   bool shouldHold) override;
+
+  void bool_clause_reif(const std::vector<ConstraintVarId>& posInputs,
+                        const std::vector<ConstraintVarId>& negInputs,
+                        ConstraintVarId reified) override;
+
+  void bool_eq(ConstraintVarId b1, ConstraintVarId b2,
+               bool shouldHold) override;
+
+  void bool_eq_reif(ConstraintVarId b1, ConstraintVarId b2,
+                    ConstraintVarId reified) override;
+
+  void bool_le(ConstraintVarId b1, ConstraintVarId b2,
+               bool shouldHold) override;
+
+  void bool_le_reif(ConstraintVarId b1, ConstraintVarId b2,
+                    ConstraintVarId reified) override;
+
+  void bool_lin_eq(const std::vector<Int>& coeffs,
+                   const std::vector<ConstraintVarId>& inputs, Int rhs,
+                   bool shouldHold) override;
+
+  void bool_lin_eq_reif(const std::vector<Int>& coeffs,
+                        const std::vector<ConstraintVarId>& inputs, Int rhs,
+                        ConstraintVarId reified) override;
+
+  void bool_lin_le(const std::vector<Int>& coeffs,
+                   const std::vector<ConstraintVarId>& inputs, Int rhs,
+                   bool shouldHold) override;
+
+  void bool_lin_le_reif(const std::vector<Int>& coeffs,
+                        const std::vector<ConstraintVarId>& inputs, Int rhs,
+                        ConstraintVarId reified) override;
+
+  void bool_lt(ConstraintVarId b1, ConstraintVarId b2,
+               bool shouldHold) override;
+
+  void bool_lt_reif(ConstraintVarId b1, ConstraintVarId b2,
+                    ConstraintVarId reified) override;
+
+  void bool_not(ConstraintVarId b1, ConstraintVarId b2,
+                bool shouldHold) override;
+
+  void bool_not_reif(ConstraintVarId b1, ConstraintVarId b2,
+                     ConstraintVarId reified) override;
+
+  void bool_or(ConstraintVarId b1, ConstraintVarId b2,
+               bool shouldHold) override;
+
+  void bool_or_reif(ConstraintVarId b1, ConstraintVarId b2,
+                    ConstraintVarId reified) override;
+
+  void bool_xor(ConstraintVarId b1, ConstraintVarId b2,
+                bool shouldHold) override;
+
+  void bool_xor_reif(ConstraintVarId b1, ConstraintVarId b2,
+                     ConstraintVarId reified) override;
 };
 
 }  // namespace atlantis::invariantgraph

@@ -32,6 +32,16 @@ void BoolLinearNode::init(InvariantNodeId id) {
       }));
 }
 
+void BoolLinearNode::postConstraint() {
+  InvariantNode::postConstraint();
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
+                                      ConstraintVarId{NULL_NODE_ID});
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
+    inputs[i] = staticInputVarNode(i).constraintVarId();
+  }
+  constraintSolver().bool_lin_eq(_coeffs, inputs, _offset, true);
+}
+
 void BoolLinearNode::updateState() {
   // Remove duplicates:
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {

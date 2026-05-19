@@ -48,6 +48,18 @@ void ArrayBoolXorNode::postConstraint() {
   if (staticInputVarNodeIds().size() < 2) {
     return;
   }
+  if (staticInputVarNodeIds().size() == 2) {
+    if (isReified()) {
+      constraintSolver().bool_xor_reif(staticInputVarNode(0).constraintVarId(),
+                                       staticInputVarNode(1).constraintVarId(),
+                                       reifiedVarNodeConst().constraintVarId());
+    } else {
+      constraintSolver().bool_xor(staticInputVarNode(0).constraintVarId(),
+                                  staticInputVarNode(1).constraintVarId(),
+                                  shouldHold());
+    }
+    return;
+  }
   std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
                                       ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {

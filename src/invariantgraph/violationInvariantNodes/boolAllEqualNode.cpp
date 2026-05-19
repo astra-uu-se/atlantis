@@ -19,31 +19,33 @@
 
 namespace atlantis::invariantgraph {
 
-BoolAllEqualNode::BoolAllEqualNode(InvariantGraph& graph, VarNodeId a,
-                                   VarNodeId b, VarNodeId r, bool breaksCycle)
+BoolAllEqualNode::BoolAllEqualNode(InvariantGraph& graph, const VarNodeId a,
+                                   const VarNodeId b, const VarNodeId r,
+                                   const bool breaksCycle)
     : BoolAllEqualNode(graph, std::vector<VarNodeId>{a, b}, r, breaksCycle) {}
 
-BoolAllEqualNode::BoolAllEqualNode(InvariantGraph& graph, VarNodeId a,
-                                   VarNodeId b, bool shouldHold,
-                                   bool breaksCycle)
+BoolAllEqualNode::BoolAllEqualNode(InvariantGraph& graph, const VarNodeId a,
+                                   const VarNodeId b, const bool shouldHold,
+                                   const bool breaksCycle)
     : BoolAllEqualNode(graph, std::vector<VarNodeId>{a, b}, shouldHold,
                        breaksCycle) {}
 
 BoolAllEqualNode::BoolAllEqualNode(InvariantGraph& graph,
-                                   std::vector<VarNodeId>&& vars, VarNodeId r,
-                                   bool breaksCycle)
+                                   std::vector<VarNodeId>&& vars,
+                                   const VarNodeId r, const bool breaksCycle)
     : ViolationInvariantNode(graph, std::move(vars), r),
       _breaksCycle(breaksCycle) {}
 
 BoolAllEqualNode::BoolAllEqualNode(InvariantGraph& graph,
                                    std::vector<VarNodeId>&& vars,
-                                   bool shouldHold, bool breaksCycle)
+                                   const bool shouldHold,
+                                   const bool breaksCycle)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
       _breaksCycle(breaksCycle) {}
 
 bool BoolAllEqualNode::isFixed() const { return _dom < 2; }
 
-bool BoolAllEqualNode::inDomain(bool val) const {
+bool BoolAllEqualNode::inDomain(const bool val) const {
   return val ? holdsTrue() : holdsFalse();
 }
 
@@ -51,9 +53,9 @@ bool BoolAllEqualNode::holdsTrue() const { return _dom > 0; }
 
 bool BoolAllEqualNode::holdsFalse() const { return _dom != 1; }
 
-void BoolAllEqualNode::fixToVal(bool val) { _dom = val ? 1 : 0; }
+void BoolAllEqualNode::fixToVal(const bool val) { _dom = val ? 1 : 0; }
 
-void BoolAllEqualNode::init(InvariantNodeId id) {
+void BoolAllEqualNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -65,6 +67,38 @@ void BoolAllEqualNode::init(InvariantNodeId id) {
       }));
 }
 
+void BoolAllEqualNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (staticInputVarNodeIds().size() < 2) {
+    return;
+  }
+  if (staticInputVarNodeIds().size() == 2) {
+    if (isReified()) {
+      constraintSolver().bool_eq_reif(staticInputVarNode(0).constraintVarId(),
+                                      staticInputVarNode(1).constraintVarId(),
+                                      reifiedVarNodeConst().constraintVarId());
+    } else {
+      constraintSolver().bool_eq(staticInputVarNode(0).constraintVarId(),
+                                 staticInputVarNode(1).constraintVarId(),
+                                 shouldHold());
+    }
+    return;
+  }
+  const std::vector<Int> coeffs(staticInputVarNodeIds().size(), 1);
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
+                                      ConstraintVarId{NULL_NODE_ID});
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
+    inputs[i] = staticInputVarNode(i).constraintVarId();
+  }
+  const Int rhs = static_cast<Int>(staticInputVarNodeIds().size());
+  if (isReified()) {
+    constraintSolver().bool_lin_eq_reif(
+        coeffs, inputs, rhs, reifiedVarNodeConst().constraintVarId());
+  } else {
+    constraintSolver().bool_lin_eq(coeffs, inputs, rhs, shouldHold());
+  }
+}
+
 void BoolAllEqualNode::updateState() {
   ViolationInvariantNode::updateState();
 
@@ -72,29 +106,16 @@ void BoolAllEqualNode::updateState() {
   varsToRemove.reserve(staticInputVarNodeIds().size());
 
   for (const auto vId : staticInputVarNodeIds()) {
-    VarNode& vNode = invariantGraph().varNode(vId);
-    if (!vNode.isFixed()) {
-      if (!isReified() && shouldHold() && isFixed()) {
-        vNode.fixToValue(holdsTrue());
-        varsToRemove.emplace_back(vId);
-      }
-    } else {
+    VarNode& vNode = varNode(vId);
+    if (vNode.isFixed()) {
+      assert(!isReified());
       const bool val = vNode.inDomain(bool{true});
       if (inDomain(val)) {
         if (!isFixed()) {
           fixToVal(val);
         }
-      } else if (isReified()) {
-        fixReified(false);
-        setState(InvariantNodeState::SUBSUMED);
-        return;
-      } else if (!shouldHold()) {
-        setState(InvariantNodeState::SUBSUMED);
-        return;
-      } else {
-        throw InconsistencyException(
-            "BoolAllEqualNode::updateState constraint is violated");
       }
+      setState(InvariantNodeState::SUBSUMED);
       varsToRemove.emplace_back(vId);
     }
   }
@@ -104,34 +125,8 @@ void BoolAllEqualNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
-    if (isReified()) {
-      fixReified(true);
-      setState(InvariantNodeState::SUBSUMED);
-    } else if (shouldHold()) {
-      setState(InvariantNodeState::SUBSUMED);
-    } else {
-      throw InconsistencyException(
-          "BoolAllEqualNode::updateState constraint is Violated");
-    }
-  } else if (staticInputVarNodeIds().size() == 1) {
-    auto& vNode = invariantGraph().varNode(staticInputVarNodeIds().front());
-    if (!isReified() && !shouldHold()) {
-      if (isFixed()) {
-        vNode.fixToValue(!holdsTrue());
-        setState(InvariantNodeState::SUBSUMED);
-      } else {
-        throw InconsistencyException(
-            "BoolAllEqualNode::updateState constraint is violated");
-      }
-    } else if (!isReified()) {
-      if (isFixed()) {
-        vNode.fixToValue(holdsTrue());
-      }
-      setState(InvariantNodeState::SUBSUMED);
-    } else if (!isFixed()) {
-      fixReified(true);
-      setState(InvariantNodeState::SUBSUMED);
-    }
+    assert(!isReified());
+    setState(InvariantNodeState::SUBSUMED);
   }
 }
 

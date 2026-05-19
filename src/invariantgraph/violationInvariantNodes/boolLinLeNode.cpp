@@ -15,20 +15,20 @@
 namespace atlantis::invariantgraph {
 
 BoolLinLeNode::BoolLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                             std::vector<VarNodeId>&& vars, Int bound,
-                             VarNodeId reified)
+                             std::vector<VarNodeId>&& vars, const Int bound,
+                             const VarNodeId reified)
     : ViolationInvariantNode(graph, std::move(vars), reified),
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
 BoolLinLeNode::BoolLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                             std::vector<VarNodeId>&& vars, Int bound,
-                             bool shouldHold)
+                             std::vector<VarNodeId>&& vars, const Int bound,
+                             const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
-void BoolLinLeNode::init(InvariantNodeId id) {
+void BoolLinLeNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -38,6 +38,21 @@ void BoolLinLeNode::init(InvariantNodeId id) {
       [&](const VarNodeId vId) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
+}
+
+void BoolLinLeNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
+                                      ConstraintVarId{NULL_NODE_ID});
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
+    inputs[i] = staticInputVarNode(i).constraintVarId();
+  }
+  if (isReified()) {
+    constraintSolver().bool_lin_le_reif(
+        _coeffs, inputs, _bound, reifiedVarNodeConst().constraintVarId());
+  } else {
+    constraintSolver().bool_lin_le(_coeffs, inputs, _bound, shouldHold());
+  }
 }
 
 void BoolLinLeNode::updateState() {
@@ -60,8 +75,7 @@ void BoolLinLeNode::updateState() {
   indicesToRemove.reserve(staticInputVarNodeIds().size());
 
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
-    const auto& inputNode =
-        invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
+    const auto& inputNode = staticInputVarNodeConst(i);
     if (inputNode.isFixed() || _coeffs.at(i) == 0) {
       _bound -= inputNode.inDomain(bool{true}) ? _coeffs.at(i) : 0;
       indicesToRemove.emplace_back(i);
@@ -81,23 +95,12 @@ void BoolLinLeNode::updateState() {
   }
 
   if (ub <= _bound) {
-    if (isReified()) {
-      fixReified(true);
-    }
-    if (!shouldHold()) {
-      throw InconsistencyException("BoolLinLeNode: Invariant is always false");
-    }
+    assert(!isReified());
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
   if (_bound < lb) {
-    if (isReified()) {
-      fixReified(false);
-    }
-    if (shouldHold()) {
-      throw InconsistencyException(
-          "BoolLinLeNode neg: Invariant is always false");
-    }
+    assert(!isReified());
     setState(InvariantNodeState::SUBSUMED);
   }
 }

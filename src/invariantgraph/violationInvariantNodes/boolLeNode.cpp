@@ -14,15 +14,15 @@
 namespace atlantis::invariantgraph {
 class VarNode;
 
-BoolLeNode::BoolLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-                       VarNodeId r)
+BoolLeNode::BoolLeNode(InvariantGraph& graph, const VarNodeId a,
+                       const VarNodeId b, const VarNodeId r)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, r) {}
 
-BoolLeNode::BoolLeNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-                       bool shouldHold)
+BoolLeNode::BoolLeNode(InvariantGraph& graph, const VarNodeId a,
+                       const VarNodeId b, const bool shouldHold)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
-void BoolLeNode::init(InvariantNodeId id) {
+void BoolLeNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -34,14 +34,25 @@ void BoolLeNode::init(InvariantNodeId id) {
       }));
 }
 
+void BoolLeNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (isReified()) {
+    constraintSolver().bool_le_reif(staticInputVarNode(0).constraintVarId(),
+                                    staticInputVarNode(1).constraintVarId(),
+                                    reifiedVarNodeConst().constraintVarId());
+  } else {
+    constraintSolver().bool_le(staticInputVarNode(0).constraintVarId(),
+                               staticInputVarNode(1).constraintVarId(),
+                               shouldHold());
+  }
+}
+
 void BoolLeNode::updateState() {
   ViolationInvariantNode::updateState();
   if (staticInputVarNodeIds().size() < 2) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  VarNode& aNode = invariantGraph().varNode(a());
-  VarNode& bNode = invariantGraph().varNode(b());
   if (a() == b()) {
     if (isReified()) {
       fixReified(true);
@@ -51,44 +62,9 @@ void BoolLeNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (!isReified() && !shouldHold()) {
-    aNode.fixToValue(bool{true});
-    bNode.fixToValue(bool{false});
+  if ((varNode(a()).isFixed() && varNode(b()).isFixed()) ||
+      ((varNode(a()).isFixed() || varNode(b()).isFixed()) && !isReified())) {
     setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (aNode.isFixed() && bNode.isFixed()) {
-    const bool isViolated =
-        aNode.inDomain(bool{true}) && bNode.inDomain(bool{false});
-    if (isReified()) {
-      fixReified(!isViolated);
-    } else if (isViolated == shouldHold()) {
-      throw InconsistencyException(shouldHold() ? "BoolLeNode: a > b"
-                                                : "BoolLeNode neg: a <= b");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (aNode.isFixed() || bNode.isFixed()) {
-    assert(aNode.isFixed() != bNode.isFixed());
-    assert(shouldHold());
-    if ((aNode.isFixed() && aNode.inDomain(bool{false})) ||
-        (bNode.isFixed() && bNode.inDomain(bool{true}))) {
-      fixReified(true);
-      setState(InvariantNodeState::SUBSUMED);
-      return;
-    }
-    if (!isReified()) {
-      assert(shouldHold());
-      if (aNode.isFixed()) {
-        if (aNode.inDomain(bool{true})) {
-          bNode.fixToValue(bool{true});
-        }
-      } else if (bNode.inDomain(bool{false})) {
-        aNode.fixToValue(bool{false});
-      }
-      setState(InvariantNodeState::SUBSUMED);
-    }
   }
 }
 
