@@ -14,9 +14,9 @@
 
 namespace atlantis::search {
 
-enum class BanditAlgorithm : unsigned char { ETC, Thompson, UCB, KLUCB, OCUCBn };
-constexpr std::array<std::string_view, 5> banditAlgorithmNames = {
-    "explore-then-commit", "Thompson sampling", "UCB", "KL-UCB", "OCUCB-n"};
+enum class BanditAlgorithm : unsigned char { ETC, Thompson, UCB, KLUCB, OCUCBn, ThompsonBernoulli };
+constexpr std::array<std::string_view, 6> banditAlgorithmNames = {
+    "explore-then-commit", "Thompson sampling", "UCB", "KL-UCB", "OCUCB-n", "Thompson sampling (Bernoulli)"};
 
 class ArmSelector {
  protected:

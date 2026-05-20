@@ -12,6 +12,7 @@
 #include "atlantis/search/bandits/KullbackLeiblerUpperConfidenceBound.hpp"
 #include "atlantis/search/bandits/OCUCBn.hpp"
 #include "atlantis/search/bandits/ThompsonSampling.hpp"
+#include "atlantis/search/bandits/ThompsonSamplingBernoulli.hpp"
 #include "atlantis/search/bandits/upperConfidenceBound.hpp"
 #include "atlantis/search/objective.hpp"
 #include "atlantis/search/savedAssignment.hpp"
@@ -143,6 +144,12 @@ void FznBackend::solve(logging::Logger& logger) {
       // printf("Using bandit algorithm Thompson sampling.\n");
       selector =
           std::make_unique<search::ThompsonSampling>(
+            _annealingScheduleFactory, _onArmRecording);
+      break;
+    case search::BanditAlgorithm::ThompsonBernoulli:
+      // printf("Using bandit algorithm Thompson sampling with Bernoulli.\n");
+      selector =
+          std::make_unique<search::ThompsonSamplingBernoulli>(
             _annealingScheduleFactory, _onArmRecording);
       break;
     default:
