@@ -20,7 +20,6 @@
 #include <gecode/kernel.hh>
 #include <vector>
 
-#include "atlantis/utils/gecode_compat.hpp"
 #include "constraintSolver.hpp"
 #include "varNode.hpp"
 
@@ -47,14 +46,14 @@ class GecodeSolver : public ConstraintSolver {
   Gecode::BoolVarArgs boolVarArgs(const std::vector<ConstraintVarId>&);
   Gecode::BoolVarArgs boolVarArgs(
       const std::vector<std::vector<ConstraintVarId>>&);
-  Gecode::BoolVar& boolVar(size_t);
-  Gecode::BoolVar& boolVar(ConstraintVarId);
+  Gecode::BoolVar boolVar(size_t);
+  Gecode::BoolVar boolVar(ConstraintVarId);
 
   Gecode::IntVarArgs intVarArgs(const std::vector<ConstraintVarId>&);
   Gecode::IntVarArgs intVarArgs(
       const std::vector<std::vector<ConstraintVarId>>&);
-  Gecode::IntVar& intVar(size_t);
-  Gecode::IntVar& intVar(ConstraintVarId);
+  Gecode::IntVar intVar(size_t);
+  Gecode::IntVar intVar(ConstraintVarId);
 
   static Gecode::IntSharedArray intSharedArray(const std::vector<Int>&);
   static Gecode::IntSharedArray intSharedArray(const std::vector<bool>&);

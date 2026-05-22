@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/gecodeSolver.hpp"
 
 #include <gecode/minimodel.hh>
+
 #include <numeric>
 #include <ranges>
 #include <vector>
@@ -34,22 +35,22 @@ size_t GecodeSolver::numIntVars() const { return _space._iv.size(); }
 
 size_t GecodeSolver::numBoolVars() const { return _space._bv.size(); }
 
-Gecode::IntVar& GecodeSolver::intVar(const size_t varId) {
+Gecode::IntVar GecodeSolver::intVar(const size_t varId) {
   assert(varId < _space._iv.size());
   return _space._iv[varId];
 }
 
-Gecode::IntVar& GecodeSolver::intVar(const ConstraintVarId varId) {
+Gecode::IntVar GecodeSolver::intVar(const ConstraintVarId varId) {
   assert(varId.isIntVar());
   return intVar(size_t{varId});
 }
 
-Gecode::BoolVar& GecodeSolver::boolVar(const size_t varId) {
+Gecode::BoolVar GecodeSolver::boolVar(const size_t varId) {
   assert(varId < _space._bv.size());
   return _space._bv[size_t{varId}];
 }
 
-Gecode::BoolVar& GecodeSolver::boolVar(const ConstraintVarId varId) {
+Gecode::BoolVar GecodeSolver::boolVar(const ConstraintVarId varId) {
   assert(varId.isBoolVar());
   return boolVar(size_t{varId});
 }
@@ -306,18 +307,20 @@ void GecodeSolver::array_bool_element(const ConstraintVarId index,
                                       const std::vector<bool>& parameters,
                                       const ConstraintVarId output,
                                       const Int offset) {
-  element(_space, intSharedArray(parameters), intVar(index),
-          -static_cast<int>(offset), boolVar(output), Gecode::IPL_DOM);
+  const auto indexVar = Gecode::expr(_space, intVar(index) - static_cast<int>(offset));
+  Gecode::element(_space, intSharedArray(parameters), indexVar,
+          boolVar(output));
 }
 
 void GecodeSolver::array_bool_element2d(
     const ConstraintVarId rowIndex, const ConstraintVarId colIndex,
     const std::vector<std::vector<bool>>& parameters,
     const ConstraintVarId output, const Int rowOffset, const Int colOffset) {
-  element(_space, intSharedArray(parameters), intVar(colIndex),
-          -static_cast<int>(colOffset),
-          static_cast<int>(parameters.front().size()), intVar(rowIndex),
-          -static_cast<int>(rowOffset), static_cast<int>(parameters.size()),
+  const auto rowIndexVar = Gecode::expr(_space, intVar(rowIndex) - static_cast<int>(rowOffset));
+  const auto colIndexVar = Gecode::expr(_space, intVar(colIndex) - static_cast<int>(colOffset));
+  Gecode::element(_space, intSharedArray(parameters), colIndexVar,
+          static_cast<int>(parameters.front().size()), rowIndexVar,
+          static_cast<int>(parameters.size()),
           boolVar(output), Gecode::IPL_DOM);
 }
 
@@ -349,18 +352,20 @@ void GecodeSolver::array_int_element(const ConstraintVarId index,
                                      const std::vector<Int>& parameters,
                                      const ConstraintVarId output,
                                      const Int offset) {
-  element(_space, intSharedArray(parameters), intVar(index),
-          -static_cast<int>(offset), intVar(output));
+  const auto indexVar = Gecode::expr(_space, intVar(index) - static_cast<int>(offset));
+  Gecode::element(_space, intSharedArray(parameters), indexVar,
+          intVar(output));
 }
 
 void GecodeSolver::array_int_element2d(
     const ConstraintVarId rowIndex, const ConstraintVarId colIndex,
     const std::vector<std::vector<Int>>& parameters,
     const ConstraintVarId output, const Int rowOffset, const Int colOffset) {
-  element(_space, intSharedArray(parameters), intVar(colIndex),
-          -static_cast<int>(colOffset),
-          static_cast<int>(parameters.front().size()), intVar(rowIndex),
-          -static_cast<int>(rowOffset), static_cast<int>(parameters.size()),
+  const auto rowIndexVar = Gecode::expr(_space, intVar(rowIndex) - static_cast<int>(rowOffset));
+  const auto colIndexVar = Gecode::expr(_space, intVar(colIndex) - static_cast<int>(colOffset));
+  Gecode::element(_space, intSharedArray(parameters), colIndexVar,
+          static_cast<int>(parameters.front().size()), rowIndexVar,
+           static_cast<int>(parameters.size()),
           intVar(output), Gecode::IPL_DOM);
 }
 
@@ -388,7 +393,8 @@ void GecodeSolver::array_var_bool_element(
     array_bool_element(index, params, output, offset);
     return;
   }
-  element(_space, boolVarArgs(inputs), intVar(index), -static_cast<int>(offset),
+  const auto indexVar = Gecode::expr(_space, intVar(index) - static_cast<int>(offset));
+  Gecode::element(_space, boolVarArgs(inputs), indexVar,
           boolVar(output), Gecode::IPL_DOM);
 }
 
@@ -414,9 +420,11 @@ void GecodeSolver::array_var_bool_element2d(
                          colOffset);
     return;
   }
-  element(_space, boolVarArgs(inputs), intVar(colIndex),
-          -static_cast<int>(colOffset), static_cast<int>(inputs.front().size()),
-          intVar(rowIndex), -static_cast<int>(rowOffset),
+  const auto rowIndexVar = Gecode::expr(_space, intVar(rowIndex) - static_cast<int>(rowOffset));
+  const auto colIndexVar = Gecode::expr(_space, intVar(colIndex) - static_cast<int>(colOffset));
+  Gecode::element(_space, boolVarArgs(inputs), colIndexVar,
+          static_cast<int>(inputs.front().size()),
+          rowIndexVar,
           static_cast<int>(inputs.size()), boolVar(output));
 }
 
@@ -434,7 +442,8 @@ void GecodeSolver::array_var_int_element(
     array_int_element(index, params, output, offset);
     return;
   }
-  element(_space, intVarArgs(inputs), intVar(index), -static_cast<int>(offset),
+  const auto indexVar = Gecode::expr(_space, intVar(index) - static_cast<int>(offset));
+  Gecode::element(_space, intVarArgs(inputs), indexVar,
           intVar(output));
 }
 
@@ -460,9 +469,10 @@ void GecodeSolver::array_var_int_element2d(
                         colOffset);
     return;
   }
-  element(_space, intVarArgs(inputs), intVar(colIndex),
-          -static_cast<int>(colOffset), static_cast<int>(inputs.front().size()),
-          intVar(rowIndex), -static_cast<int>(rowOffset),
+  const auto rowIndexVar = Gecode::expr(_space, intVar(rowIndex) - static_cast<int>(rowOffset));
+  const auto colIndexVar = Gecode::expr(_space, intVar(colIndex) - static_cast<int>(colOffset));
+  Gecode::element(_space, intVarArgs(inputs), colIndexVar, static_cast<int>(inputs.front().size()),
+          rowIndexVar,
           static_cast<int>(inputs.size()), intVar(output));
 }
 
