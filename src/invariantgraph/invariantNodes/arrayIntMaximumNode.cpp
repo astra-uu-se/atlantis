@@ -34,12 +34,7 @@ void ArrayIntMaximumNode::init(InvariantNodeId id) {
 }
 
 void ArrayIntMaximumNode::postConstraint() {
-  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
-                                      ConstraintVarId{NULL_NODE_ID});
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    inputs[i] = staticInputVarNode(i).constraintVarId();
-  }
-  constraintSolver().array_int_maximum(inputs,
+  constraintSolver().array_int_maximum(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
                                        outputVarNode(0).constraintVarId());
 }
 

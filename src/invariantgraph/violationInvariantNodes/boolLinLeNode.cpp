@@ -42,16 +42,11 @@ void BoolLinLeNode::init(const InvariantNodeId id) {
 
 void BoolLinLeNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
-  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
-                                      ConstraintVarId{NULL_NODE_ID});
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = staticInputVarNode(i).constraintVarId();
-  }
   if (isReified()) {
     constraintSolver().bool_lin_le_reif(
-        _coeffs, inputs, _bound, reifiedVarNodeConst().constraintVarId());
+        _coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, reifiedVarNodeConst().constraintVarId());
   } else {
-    constraintSolver().bool_lin_le(_coeffs, inputs, _bound, shouldHold());
+    constraintSolver().bool_lin_le(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, shouldHold());
   }
 }
 

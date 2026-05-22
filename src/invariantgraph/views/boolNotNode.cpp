@@ -13,7 +13,7 @@ BoolNotNode::BoolNotNode(InvariantGraph& graph, VarNodeId staticInput,
                          VarNodeId output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 
-void BoolNotNode::init(InvariantNodeId id) {
+void BoolNotNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(!invariantGraphConst()
               .varNodeConst(outputVarNodeIds().front())
@@ -21,6 +21,10 @@ void BoolNotNode::init(InvariantNodeId id) {
   assert(!invariantGraph()
               .varNodeConst(staticInputVarNodeIds().front())
               .isIntVar());
+}
+void BoolNotNode::postConstraint() {
+  InvariantNode::postConstraint();
+  constraintSolver().bool_not(staticInputVarNodeConst(0).constraintVarId(), outputVarNodeConst(0).constraintVarId(), true);
 }
 
 void BoolNotNode::updateState() {

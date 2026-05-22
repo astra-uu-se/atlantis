@@ -19,24 +19,24 @@
 
 namespace atlantis::invariantgraph {
 
-AllDifferentNode::AllDifferentNode(InvariantGraph& graph, VarNodeId a,
-                                   VarNodeId b, VarNodeId r)
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph, const VarNodeId a,
+                                   const VarNodeId b, const VarNodeId r)
     : AllDifferentNode(graph, std::vector<VarNodeId>{a, b}, r) {}
 
-AllDifferentNode::AllDifferentNode(InvariantGraph& graph, VarNodeId a,
-                                   VarNodeId b, bool shouldHold)
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph, const VarNodeId a,
+                                   const VarNodeId b, const bool shouldHold)
     : AllDifferentNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
 AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
-                                   std::vector<VarNodeId>&& vars, VarNodeId r)
+                                   std::vector<VarNodeId>&& vars, const VarNodeId r)
     : ViolationInvariantNode(graph, std::move(vars), r) {}
 
 AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
                                    std::vector<VarNodeId>&& vars,
-                                   bool shouldHold)
+                                   const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold) {}
 
-void AllDifferentNode::init(InvariantNodeId id) {
+void AllDifferentNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -46,6 +46,19 @@ void AllDifferentNode::init(InvariantNodeId id) {
       [&](const VarNodeId vId) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
+}
+
+void AllDifferentNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (staticInputVarNodeIds().size() == 2) {
+    if (isReified()) {
+      return constraintSolver().int_ne_reif(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), reifiedVarNodeConst().constraintVarId());
+    }
+    return constraintSolver().int_ne(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), shouldHold());
+  }
+  if (!isReified() && shouldHold()) {
+    constraintSolver().fzn_all_different_int(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()));
+  }
 }
 
 void AllDifferentNode::updateState() {

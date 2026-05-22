@@ -10,11 +10,11 @@
 
 namespace atlantis::invariantgraph {
 
-Int2BoolNode::Int2BoolNode(InvariantGraph& graph, VarNodeId staticInput,
-                           VarNodeId output)
+Int2BoolNode::Int2BoolNode(InvariantGraph& graph, const VarNodeId staticInput,
+                           const VarNodeId output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 
-void Int2BoolNode::init(InvariantNodeId id) {
+void Int2BoolNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(!invariantGraphConst()
               .varNodeConst(outputVarNodeIds().front())
@@ -22,6 +22,10 @@ void Int2BoolNode::init(InvariantNodeId id) {
   assert(invariantGraph()
              .varNodeConst(staticInputVarNodeIds().front())
              .isIntVar());
+}
+void Int2BoolNode::postConstraint() {
+  InvariantNode::postConstraint();
+  constraintSolver().bool2int(outputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(0).constraintVarId());
 }
 
 void Int2BoolNode::updateState() {

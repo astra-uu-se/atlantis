@@ -144,6 +144,111 @@ class ConstraintSolver {
 
   virtual void bool_xor_reif(ConstraintVarId b1, ConstraintVarId b2,
                              ConstraintVarId reif) = 0;
+
+  virtual void int_abs(ConstraintVarId lhs, ConstraintVarId rhs) = 0;
+
+  virtual void int_div(ConstraintVarId numerator, ConstraintVarId denominator, ConstraintVarId quotient) = 0;
+
+  virtual void int_eq(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold) = 0;
+
+  virtual void int_eq_reif(ConstraintVarId lhs, ConstraintVarId rhs, ConstraintVarId reified) = 0;
+
+  virtual void int_le(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold) = 0;
+
+  virtual void int_le_reif(ConstraintVarId lhs, ConstraintVarId rhs, ConstraintVarId reified) = 0;
+
+  virtual void int_lin_eq(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, bool shouldHold) = 0;
+
+  virtual void int_lin_eq(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, ConstraintVarId rhs, Int rhsOffset, bool shouldHold) = 0;
+
+  virtual void int_lin_eq_reif(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, ConstraintVarId shouldHold) = 0;
+
+  virtual void int_lin_le(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, bool shouldHold) = 0;
+
+  virtual void int_lin_le_reif(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, ConstraintVarId reified) = 0;
+
+  virtual void int_lin_ne(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, bool shouldHold) = 0;
+
+  virtual void int_lin_ne_reif(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, ConstraintVarId reified) = 0;
+
+  virtual void int_lt(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold) = 0;
+
+  virtual void int_lt_reif(ConstraintVarId lhs, ConstraintVarId rhs, ConstraintVarId reified) = 0;
+
+  virtual void int_max(ConstraintVarId a, ConstraintVarId b, ConstraintVarId maximum) = 0;
+
+  virtual void int_min(ConstraintVarId a, ConstraintVarId b, ConstraintVarId minimum) = 0;
+
+  virtual void int_mod(ConstraintVarId numerator, ConstraintVarId denominator, ConstraintVarId remainder) = 0;
+
+  virtual void int_ne(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold) = 0;
+
+  virtual void int_ne_reif(ConstraintVarId lhs, ConstraintVarId rhs, ConstraintVarId reified) = 0;
+
+  virtual void int_plus(ConstraintVarId a, ConstraintVarId b, ConstraintVarId sum) = 0;
+
+  virtual void int_pow(ConstraintVarId base, ConstraintVarId exponent, ConstraintVarId power) = 0;
+
+  virtual void int_times(ConstraintVarId a, ConstraintVarId b, ConstraintVarId product) = 0;
+
+
+
+  virtual void fzn_all_different_int(const std::vector<ConstraintVarId>& inputs) = 0;
+
+  virtual void fzn_all_equal_int(const std::vector<ConstraintVarId>& inputs, bool shouldHold) = 0;
+
+  virtual void fzn_all_equal_int_reif(const std::vector<ConstraintVarId>& inputs, ConstraintVarId reified) = 0;
+
+  virtual void fzn_circuit(const std::vector<ConstraintVarId>& inputs, Int offset, bool shouldHold) = 0;
+
+  virtual void fzn_circuit_reif(const std::vector<ConstraintVarId>& inputs, Int offset, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_eq(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_eq(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_eq_reif(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_geq(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_geq(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_geq_reif(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_geq_reif(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId count, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_gt(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_gt(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_gt_reif(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_gt_reif(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId count, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_leq(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_leq(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_leq_reif(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_leq_reif(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId count, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_lt(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_lt(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_lt_reif(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_lt_reif(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId count, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_neq(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_neq(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId count, bool shouldHold) = 0;
+
+  virtual void fzn_count_neq_reif(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId count, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_neq_reif(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId count, ConstraintVarId reified) = 0;
+
 };
 
 }  // namespace atlantis::invariantgraph

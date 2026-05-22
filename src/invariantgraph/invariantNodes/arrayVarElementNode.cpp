@@ -35,18 +35,13 @@ void ArrayVarElementNode::init(const InvariantNodeId id) {
 }
 
 void ArrayVarElementNode::postConstraint() {
-  std::vector<ConstraintVarId> inputs(dynamicInputVarNodeIds().size(),
-                                      ConstraintVarId{NULL_NODE_ID});
-  for (size_t i = 0; i < dynamicInputVarNodeIds().size(); ++i) {
-    inputs[i] = dynamicInputVarNode(i).constraintVarId();
-  }
   if (outputVarNodeConst(0).isIntVar()) {
     constraintSolver().array_var_int_element(
-        staticInputVarNode(0).constraintVarId(), inputs,
+        staticInputVarNode(0).constraintVarId(), toConstraintVarIds(invariantGraphConst(), dynamicInputVarNodeIds()),
         outputVarNode(0).constraintVarId(), _offset);
   } else {
     constraintSolver().array_var_bool_element(
-        staticInputVarNode(0).constraintVarId(), inputs,
+        staticInputVarNode(0).constraintVarId(), toConstraintVarIds(invariantGraphConst(), dynamicInputVarNodeIds()),
         outputVarNode(0).constraintVarId(), _offset);
   }
 }

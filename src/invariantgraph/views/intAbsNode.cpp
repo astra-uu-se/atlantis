@@ -24,6 +24,10 @@ void IntAbsNode::init(InvariantNodeId id) {
              .varNodeConst(staticInputVarNodeIds().front())
              .isIntVar());
 }
+void IntAbsNode::postConstraint() {
+  InvariantNode::postConstraint();
+  constraintSolver().int_abs(staticInputVarNodeConst(0).constraintVarId(), outputVarNodeConst(0).constraintVarId());
+}
 
 void IntAbsNode::updateState() {
   auto& iNode = invariantGraph().varNode(staticInputVarNodeIds().front());

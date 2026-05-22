@@ -12,6 +12,7 @@ class IntLtNode : public ViolationInvariantNode {
             bool shouldHold = true);
 
   void init(InvariantNodeId) override;
+  void postConstraint();
 
   void updateState() override;
 

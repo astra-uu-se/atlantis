@@ -47,26 +47,21 @@ void ArrayBoolAndNode::postConstraint() {
   }
   if (staticInputVarNodeIds().size() == 2) {
     if (isReified()) {
-      constraintSolver().bool_and_reif(staticInputVarNode(0).constraintVarId(),
-                                       staticInputVarNode(1).constraintVarId(),
+      constraintSolver().bool_and_reif(staticInputVarNodeConst(0).constraintVarId(),
+                                       staticInputVarNodeConst(1).constraintVarId(),
                                        reifiedVarNodeConst().constraintVarId());
     } else {
-      constraintSolver().bool_and(staticInputVarNode(0).constraintVarId(),
-                                  staticInputVarNode(1).constraintVarId(),
+      constraintSolver().bool_and(staticInputVarNodeConst(0).constraintVarId(),
+                                  staticInputVarNodeConst(1).constraintVarId(),
                                   shouldHold());
     }
     return;
   }
-  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
-                                      {NULL_NODE_ID, false});
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = staticInputVarNodeConst(i).constraintVarId();
-  }
   if (isReified()) {
-    constraintSolver().array_bool_and(inputs,
+    constraintSolver().array_bool_and(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
                                       reifiedVarNodeConst().constraintVarId());
   } else {
-    constraintSolver().array_bool_and(inputs, shouldHold());
+    constraintSolver().array_bool_and(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), shouldHold());
   }
 }
 

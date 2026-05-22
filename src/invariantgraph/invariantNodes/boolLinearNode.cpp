@@ -34,12 +34,7 @@ void BoolLinearNode::init(InvariantNodeId id) {
 
 void BoolLinearNode::postConstraint() {
   InvariantNode::postConstraint();
-  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
-                                      ConstraintVarId{NULL_NODE_ID});
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = staticInputVarNode(i).constraintVarId();
-  }
-  constraintSolver().bool_lin_eq(_coeffs, inputs, outputVarNodeConst(0).constraintVarId(), _outputOffset, true);
+  constraintSolver().bool_lin_eq(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), outputVarNodeConst(0).constraintVarId(), _outputOffset, true);
 }
 
 void BoolLinearNode::updateState() {

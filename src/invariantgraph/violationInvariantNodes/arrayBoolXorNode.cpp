@@ -50,26 +50,19 @@ void ArrayBoolXorNode::postConstraint() {
   }
   if (staticInputVarNodeIds().size() == 2) {
     if (isReified()) {
-      constraintSolver().bool_xor_reif(staticInputVarNode(0).constraintVarId(),
-                                       staticInputVarNode(1).constraintVarId(),
+      return constraintSolver().bool_xor_reif(staticInputVarNodeConst(0).constraintVarId(),
+                                       staticInputVarNodeConst(1).constraintVarId(),
                                        reifiedVarNodeConst().constraintVarId());
-    } else {
-      constraintSolver().bool_xor(staticInputVarNode(0).constraintVarId(),
-                                  staticInputVarNode(1).constraintVarId(),
-                                  shouldHold());
     }
-    return;
-  }
-  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
-                                      ConstraintVarId{NULL_NODE_ID});
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = staticInputVarNode(i).constraintVarId();
+    return constraintSolver().bool_xor(staticInputVarNodeConst(0).constraintVarId(),
+                                  staticInputVarNodeConst(1).constraintVarId(),
+                                  shouldHold());
   }
   if (isReified()) {
-    constraintSolver().array_bool_xor(inputs,
+    constraintSolver().array_bool_xor(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
                                       reifiedVarNodeConst().constraintVarId());
   } else {
-    constraintSolver().array_bool_xor(inputs, shouldHold());
+    constraintSolver().array_bool_xor(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), shouldHold());
   }
 }
 

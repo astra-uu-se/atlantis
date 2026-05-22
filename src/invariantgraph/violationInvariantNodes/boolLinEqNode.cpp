@@ -44,16 +44,11 @@ void BoolLinEqNode::init(const InvariantNodeId id) {
 
 void BoolLinEqNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
-  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size(),
-                                      ConstraintVarId{NULL_NODE_ID});
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
-    inputs[i] = staticInputVarNode(i).constraintVarId();
-  }
   if (isReified()) {
     constraintSolver().bool_lin_eq_reif(
-        _coeffs, inputs, _bound, reifiedVarNodeConst().constraintVarId());
+        _coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, reifiedVarNodeConst().constraintVarId());
   } else {
-    constraintSolver().bool_lin_eq(_coeffs, inputs, _bound, shouldHold());
+    constraintSolver().bool_lin_eq(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, shouldHold());
   }
 }
 
