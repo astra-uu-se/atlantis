@@ -103,6 +103,12 @@ class ConstraintSolver {
                            const std::vector<ConstraintVarId>& inputs, Int rhs,
                            bool shouldHold) = 0;
 
+  virtual void bool_lin_eq(const std::vector<Int>& coeffs,
+                           const std::vector<ConstraintVarId>& inputs,
+                           ConstraintVarId rhs,
+                           Int rhsOffset,
+                           bool shouldHold) = 0;
+
   virtual void bool_lin_eq_reif(const std::vector<Int>& coeffs,
                                 const std::vector<ConstraintVarId>& inputs,
                                 Int rhs, ConstraintVarId reif) = 0;

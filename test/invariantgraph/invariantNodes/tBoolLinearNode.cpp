@@ -7,13 +7,13 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 
 class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
- public:
+ protected:
   size_t numInputs = 3;
-  std::vector<std::string> inputVars;
+  std::vector<Var> inputVars;
   std::vector<Int> coeffs;
-  std::string outputVar{"output"};
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(bool isRegistered = false) {
+  Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
       Int sum = 0;
       for (size_t i = 0; i < coeffs.size(); ++i) {
@@ -43,24 +43,29 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
     return sum;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     Int minSum = 0;
     Int maxSum = 0;
     for (size_t i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
-      retrieveBoolVarNode(inputVars.back());
+      std::vector<Int> dom;
       if (shouldBeSubsumed()) {
-        varNode(inputVars.back()).fixToValue(bool{i % 2 == 0});
+        dom = {i % 2 == 0 ? 1 : 0};
+      } else {
+        dom = {0, 1};
       }
+      inputVars.emplace_back("input_" + std::to_string(i), std::move(dom), false);
+      retrieveBoolVarNode(inputVars.back());
+
       coeffs.push_back((static_cast<Int>(i) + 1) * (i % 2 == 0 ? -1 : 1));
       minSum += std::min<Int>(coeffs.back(), 0);
       maxSum += std::max<Int>(coeffs.back(), 0);
     }
+    outputVar.domain = std::pair<Int, Int>{minSum, maxSum};
 
-    retrieveIntVarNode(minSum, maxSum, outputVar);
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                         varNodeIds(inputVars), varNodeId(outputVar));
@@ -127,7 +132,7 @@ TEST_P(BoolLinearNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BoolLinearNodeTest, BoolLinearNodeTestFixture,
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME}));
 

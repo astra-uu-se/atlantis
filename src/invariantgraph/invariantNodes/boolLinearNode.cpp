@@ -18,7 +18,7 @@ BoolLinearNode::BoolLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                                Int offset)
     : InvariantNode(graph, {output}, std::move(vars)),
       _coeffs(std::move(coeffs)),
-      _offset(offset) {}
+      _outputOffset(offset) {}
 
 void BoolLinearNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
@@ -39,7 +39,7 @@ void BoolLinearNode::postConstraint() {
   for (size_t i = 0; i < staticInputVarNodeIds().size(); i++) {
     inputs[i] = staticInputVarNode(i).constraintVarId();
   }
-  constraintSolver().bool_lin_eq(_coeffs, inputs, _offset, true);
+  constraintSolver().bool_lin_eq(_coeffs, inputs, outputVarNodeConst(0).constraintVarId(), _outputOffset, true);
 }
 
 void BoolLinearNode::updateState() {
@@ -64,7 +64,7 @@ void BoolLinearNode::updateState() {
     const auto& inputNode =
         invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
     if (inputNode.isFixed() || _coeffs.at(i) == 0) {
-      _offset += inputNode.inDomain(bool{true}) ? _coeffs.at(i) : 0;
+      _outputOffset += inputNode.inDomain(bool{true}) ? _coeffs.at(i) : 0;
       indicesToRemove.emplace_back(i);
     }
   }
@@ -75,7 +75,7 @@ void BoolLinearNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
-    invariantGraph().varNode(outputVarNodeIds().front()).fixToValue(_offset);
+    invariantGraph().varNode(outputVarNodeIds().front()).fixToValue(_outputOffset);
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -87,16 +87,16 @@ void BoolLinearNode::registerOutputVars(propagation::SolverBase& solver,
         outputVarNodeIds().front(),
         solver.makeIntView<propagation::IfThenElseConst>(
             solver, mapping.solverId(staticInputVarNodeIds().front()),
-            _offset + _coeffs.front(), _offset));
+            _outputOffset + _coeffs.front(), _outputOffset));
   } else if (!staticInputVarNodeIds().empty()) {
-    if (_offset != 0) {
+    if (_outputOffset != 0) {
       makeSolverVar(outputVarNodeIds().front(), solver, mapping);
     } else if (mapping.intermediateId(id(), 0) == propagation::NULL_ID) {
       mapping.setIntermediateId(id(), 0, solver.makeIntVar(0, 0, 0));
       mapping.setSolverId(
           outputVarNodeIds().front(),
           solver.makeIntView<propagation::IntOffsetView>(
-              solver, mapping.intermediateId(id(), 0), _offset));
+              solver, mapping.intermediateId(id(), 0), _outputOffset));
     }
   }
   assert(std::ranges::all_of(

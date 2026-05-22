@@ -293,6 +293,30 @@ void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
          Gecode::IPL_BND);
 }
 
+void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
+                                const std::vector<ConstraintVarId>& inputs,
+                                const ConstraintVarId rhs, const Int rhsOffset, const bool shouldHold,
+                                const Gecode::IntRelType irt) {
+  const auto rhsVar = expr(_space, intVar(rhs) + static_cast<int>(rhsOffset));
+  linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
+         shouldHold ? irt : neg(irt), rhsVar);
+}
+
+void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
+                                const std::vector<ConstraintVarId>& inputs,
+                                const ConstraintVarId rhs, const Int rhsOffset,
+                                const ConstraintVarId reified,
+                                const Gecode::IntRelType irt) {
+  const auto& reif = boolVar(reified);
+  if (reif.assigned()) {
+    return bool_lin_rel(coeffs, inputs, rhs, rhsOffset, reif.val() == 1, irt);
+  }
+  const auto rhsVar = expr(_space, intVar(rhs) + static_cast<int>(rhsOffset));
+  linear(_space, intSharedArray(coeffs), boolVarArgs(inputs), irt,
+         rhsVar, Gecode::Reify(reif, Gecode::RM_EQV),
+         Gecode::IPL_BND);
+}
+
 void GecodeSolver::array_bool_and(const std::vector<ConstraintVarId>& inputs,
                                   const ConstraintVarId reified) {
   array_bool_op(inputs, reified, Gecode::BOT_AND);
@@ -528,6 +552,14 @@ void GecodeSolver::bool_lin_eq(const std::vector<Int>& coeffs,
                                const std::vector<ConstraintVarId>& inputs,
                                const Int rhs, bool shouldHold) {
   bool_lin_rel(coeffs, inputs, rhs, shouldHold, Gecode::IRT_EQ);
+}
+
+void GecodeSolver::bool_lin_eq(const std::vector<Int>& coeffs,
+                           const std::vector<ConstraintVarId>& inputs,
+                           ConstraintVarId rhs,
+                           Int rhsOffset,
+                           bool shouldHold) {
+  bool_lin_rel(coeffs, inputs, rhs, rhsOffset, shouldHold, Gecode::IRT_EQ);
 }
 
 void GecodeSolver::bool_lin_eq_reif(const std::vector<Int>& coeffs,
