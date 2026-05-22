@@ -277,7 +277,7 @@ void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
                                 const Int rhs, const bool shouldHold,
                                 const Gecode::IntRelType irt) {
   linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
-         shouldHold ? irt : neg(irt), static_cast<int>(rhs), Gecode::IPL_BND);
+         shouldHold ? irt : neg(irt), static_cast<int>(rhs));
 }
 
 void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,

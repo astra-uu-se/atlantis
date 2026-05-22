@@ -94,13 +94,9 @@ void BoolLinLeNode::updateState() {
     ub += std::max<Int>(0, _coeffs.at(i));
   }
 
-  if (ub <= _bound) {
+  if (ub <= _bound || _bound < lb) {
     assert(!isReified());
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (_bound < lb) {
-    assert(!isReified());
+    assert((ub <= _bound) == shouldHold());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
