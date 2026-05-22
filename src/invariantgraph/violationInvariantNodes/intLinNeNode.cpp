@@ -15,20 +15,20 @@
 namespace atlantis::invariantgraph {
 
 IntLinNeNode::IntLinNeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                           std::vector<VarNodeId>&& vars, Int bound,
-                           VarNodeId reified)
+                           std::vector<VarNodeId>&& vars, const Int bound,
+                           const VarNodeId reified)
     : ViolationInvariantNode(graph, std::move(vars), reified),
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
 IntLinNeNode::IntLinNeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                           std::vector<VarNodeId>&& vars, Int bound,
-                           bool shouldHold)
+                           std::vector<VarNodeId>&& vars, const Int bound,
+                           const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
       _coeffs(std::move(coeffs)),
       _bound(bound) {}
 
-void IntLinNeNode::init(InvariantNodeId id) {
+void IntLinNeNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -38,6 +38,14 @@ void IntLinNeNode::init(InvariantNodeId id) {
       [&](const VarNodeId vId) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
+}
+
+void IntLinNeNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (isReified()) {
+    return constraintSolver().int_lin_ne_reif(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, reifiedVarNodeConst().constraintVarId());
+  }
+  constraintSolver().int_lin_ne(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, shouldHold());
 }
 
 void IntLinNeNode::updateState() {

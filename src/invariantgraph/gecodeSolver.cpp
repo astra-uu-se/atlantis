@@ -238,51 +238,51 @@ SearchDomain GecodeSolver::varDomain(const ConstraintVarId varId) const {
 void GecodeSolver::array_bool_op(const std::vector<ConstraintVarId>& inputs,
                                  const ConstraintVarId reified,
                                  const Gecode::BoolOpType op) {
-  rel(_space, op, boolVarArgs(inputs), boolVar(reified), Gecode::IPL_BND);
+  Gecode::rel(_space, op, boolVarArgs(inputs), boolVar(reified), Gecode::IPL_BND);
 }
 
 void GecodeSolver::array_bool_op(const std::vector<ConstraintVarId>& inputs,
                                  const bool shouldHold,
                                  const Gecode::BoolOpType op) {
-  rel(_space, op, boolVarArgs(inputs), shouldHold ? 1 : 0, Gecode::IPL_BND);
+  Gecode::rel(_space, op, boolVarArgs(inputs), shouldHold ? 1 : 0, Gecode::IPL_BND);
 }
 
 void GecodeSolver::bool_op(const ConstraintVarId lhs, const ConstraintVarId rhs,
                            const ConstraintVarId reified,
                            const Gecode::BoolOpType op) {
-  rel(_space, boolVar(lhs), op, boolVar(rhs), boolVar(reified), Gecode::IPL_BND);
+  Gecode::rel(_space, boolVar(lhs), op, boolVar(rhs), boolVar(reified), Gecode::IPL_BND);
 }
 
 void GecodeSolver::bool_op(const ConstraintVarId lhs, const ConstraintVarId rhs,
                            const bool shouldHold, const Gecode::BoolOpType op) {
-  rel(_space, boolVar(lhs), op, boolVar(rhs), shouldHold, Gecode::IPL_BND);
+  Gecode::rel(_space, boolVar(lhs), op, boolVar(rhs), shouldHold, Gecode::IPL_BND);
 }
 
 void GecodeSolver::bool_rel(const ConstraintVarId lhs, const ConstraintVarId rhs,
                             const ConstraintVarId reified,
                             const Gecode::IntRelType irt) {
-  rel(_space, boolVar(lhs), irt, boolVar(rhs),
+  Gecode::rel(_space, boolVar(lhs), irt, boolVar(rhs),
       Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
 }
 
 void GecodeSolver::bool_rel(const ConstraintVarId lhs, const ConstraintVarId rhs,
                             const bool shouldHold,
                             const Gecode::IntRelType irt) {
-  rel(_space, boolVar(lhs), shouldHold ? irt : neg(irt), boolVar(rhs),
+  Gecode::rel(_space, boolVar(lhs), shouldHold ? irt : neg(irt), boolVar(rhs),
       Gecode::IPL_BND);
 }
 
 void GecodeSolver::int_rel(const ConstraintVarId lhs, const ConstraintVarId rhs,
                             const ConstraintVarId reified,
                             const Gecode::IntRelType irt) {
-  rel(_space, intVar(lhs), irt, intVar(rhs),
+  Gecode::rel(_space, intVar(lhs), irt, intVar(rhs),
       Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
 }
 
 void GecodeSolver::int_rel(const ConstraintVarId lhs, const ConstraintVarId rhs,
                             const bool shouldHold,
                             const Gecode::IntRelType irt) {
-  rel(_space, intVar(lhs), shouldHold ? irt : neg(irt), intVar(rhs),
+  Gecode::rel(_space, intVar(lhs), shouldHold ? irt : neg(irt), intVar(rhs),
       Gecode::IPL_BND);
 }
 
@@ -309,26 +309,11 @@ void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
 
 void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
                                 const std::vector<ConstraintVarId>& inputs,
-                                const ConstraintVarId rhs, const Int rhsOffset, const bool shouldHold,
+                                const ConstraintVarId rhs, const Int rhsOffset,
                                 const Gecode::IntRelType irt) {
   const auto rhsVar = expr(_space, intVar(rhs) + static_cast<int>(rhsOffset));
   linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
-         shouldHold ? irt : neg(irt), rhsVar);
-}
-
-void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
-                                const std::vector<ConstraintVarId>& inputs,
-                                const ConstraintVarId rhs, const Int rhsOffset,
-                                const ConstraintVarId reified,
-                                const Gecode::IntRelType irt) {
-  const auto& reif = boolVar(reified);
-  if (reif.assigned()) {
-    return bool_lin_rel(coeffs, inputs, rhs, rhsOffset, reif.val() == 1, irt);
-  }
-  const auto rhsVar = expr(_space, intVar(rhs) + static_cast<int>(rhsOffset));
-  linear(_space, intSharedArray(coeffs), boolVarArgs(inputs), irt,
-         rhsVar, Gecode::Reify(reif, Gecode::RM_EQV),
-         Gecode::IPL_BND);
+         irt, rhsVar);
 }
 
 void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
@@ -354,26 +339,11 @@ void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
 
 void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
                                 const std::vector<ConstraintVarId>& inputs,
-                                const ConstraintVarId rhs, const Int rhsOffset, const bool shouldHold,
+                                const ConstraintVarId rhs, const Int rhsOffset,
                                 const Gecode::IntRelType irt) {
   const auto rhsVar = expr(_space, intVar(rhs) + static_cast<int>(rhsOffset));
   linear(_space, intSharedArray(coeffs), intVarArgs(inputs),
-         shouldHold ? irt : neg(irt), rhsVar);
-}
-
-void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
-                                const std::vector<ConstraintVarId>& inputs,
-                                const ConstraintVarId rhs, const Int rhsOffset,
-                                const ConstraintVarId reified,
-                                const Gecode::IntRelType irt) {
-  const auto& reif = boolVar(reified);
-  if (reif.assigned()) {
-    return bool_lin_rel(coeffs, inputs, rhs, rhsOffset, reif.val() == 1, irt);
-  }
-  const auto rhsVar = expr(_space, intVar(rhs) + static_cast<int>(rhsOffset));
-  linear(_space, intSharedArray(coeffs), intVarArgs(inputs), irt,
-         rhsVar, Gecode::Reify(reif, Gecode::RM_EQV),
-         Gecode::IPL_BND);
+         irt, rhsVar);
 }
 
 void GecodeSolver::array_bool_and(const std::vector<ConstraintVarId>& inputs,
@@ -615,10 +585,9 @@ void GecodeSolver::bool_lin_eq(const std::vector<Int>& coeffs,
 
 void GecodeSolver::bool_lin_eq(const std::vector<Int>& coeffs,
                            const std::vector<ConstraintVarId>& inputs,
-                           ConstraintVarId rhs,
-                           Int rhsOffset,
-                           bool shouldHold) {
-  bool_lin_rel(coeffs, inputs, rhs, rhsOffset, shouldHold, Gecode::IRT_EQ);
+                           const ConstraintVarId rhs,
+                           const Int rhsOffset) {
+  bool_lin_rel(coeffs, inputs, rhs, rhsOffset, Gecode::IRT_EQ);
 }
 
 void GecodeSolver::bool_lin_eq_reif(const std::vector<Int>& coeffs,
@@ -723,10 +692,9 @@ void GecodeSolver::int_lin_eq(const std::vector<Int>& coeffs,
 
 void GecodeSolver::int_lin_eq(const std::vector<Int>& coeffs,
                            const std::vector<ConstraintVarId>& inputs,
-                           ConstraintVarId rhs,
-                           Int rhsOffset,
-                           bool shouldHold) {
-  int_lin_rel(coeffs, inputs, rhs, rhsOffset, shouldHold, Gecode::IRT_EQ);
+                           const ConstraintVarId rhs,
+                           const Int rhsOffset) {
+  int_lin_rel(coeffs, inputs, rhs, rhsOffset, Gecode::IRT_EQ);
 }
 
 void GecodeSolver::int_lin_eq_reif(const std::vector<Int>& coeffs,
@@ -804,13 +772,13 @@ void GecodeSolver::int_plus(const ConstraintVarId a, const ConstraintVarId b,
   const auto bVar = intVar(b);
   const auto sumVar = intVar(sum);
   if (aVar.assigned()) {
-    rel(_space, aVar.val() + bVar == sumVar);
+    Gecode::rel(_space, expr(_space, aVar.val() + bVar), Gecode::IRT_EQ, sumVar);
   } else if (bVar.assigned()) {
-    rel(_space, aVar + bVar.val() == sumVar);
+    Gecode::rel(_space, expr(_space, aVar + bVar.val()), Gecode::IRT_EQ, sumVar);
   } else if (sumVar.assigned()) {
-    rel(_space, aVar + bVar == sumVar.val());
+    Gecode::rel(_space, expr(_space, aVar + bVar), Gecode::IRT_EQ, sumVar.val());
   } else {
-    rel(_space, aVar + bVar == sumVar);
+    Gecode::rel(_space, expr(_space, aVar + bVar), Gecode::IRT_EQ, sumVar);
   }
 }
 void GecodeSolver::int_pow(const ConstraintVarId base, const ConstraintVarId exponent,

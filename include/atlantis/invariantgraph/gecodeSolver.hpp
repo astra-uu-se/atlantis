@@ -88,11 +88,7 @@ class GecodeSolver : public ConstraintSolver {
                     ConstraintVarId reified, Gecode::IntRelType);
   void bool_lin_rel(const std::vector<Int>& coeffs,
                     const std::vector<ConstraintVarId>& inputs,
-                    ConstraintVarId rhs, Int rhsOffset, bool shouldHold,
-                    Gecode::IntRelType irt);
-  void bool_lin_rel(const std::vector<Int>& coeffs,
-                    const std::vector<ConstraintVarId>& inputs,
-                    ConstraintVarId rhs, Int rhsOffset, ConstraintVarId reified,
+                    ConstraintVarId rhs, Int rhsOffset,
                     Gecode::IntRelType irt);
   void bool_lin_rel(const std::vector<Int>& coeffs,
                     const std::vector<ConstraintVarId>& inputs, Int rhs,
@@ -103,11 +99,7 @@ class GecodeSolver : public ConstraintSolver {
                     ConstraintVarId reified, Gecode::IntRelType);
   void int_lin_rel(const std::vector<Int>& coeffs,
                     const std::vector<ConstraintVarId>& inputs,
-                    ConstraintVarId rhs, Int rhsOffset, bool shouldHold,
-                    Gecode::IntRelType irt);
-  void int_lin_rel(const std::vector<Int>& coeffs,
-                    const std::vector<ConstraintVarId>& inputs,
-                    ConstraintVarId rhs, Int rhsOffset, ConstraintVarId reified,
+                    ConstraintVarId rhs, Int rhsOffset,
                     Gecode::IntRelType irt);
   void int_lin_rel(const std::vector<Int>& coeffs,
                     const std::vector<ConstraintVarId>& inputs, Int rhs,
@@ -214,7 +206,7 @@ class GecodeSolver : public ConstraintSolver {
 
   void bool_lin_eq(const std::vector<Int>& coeffs,
                    const std::vector<ConstraintVarId>& inputs,
-                   ConstraintVarId rhs, Int rhsOffset, bool shouldHold) override;
+                   ConstraintVarId rhs, Int rhsOffset) override;
 
   void bool_lin_eq_reif(const std::vector<Int>& coeffs,
                         const std::vector<ConstraintVarId>& inputs, Int rhs,
@@ -266,7 +258,7 @@ class GecodeSolver : public ConstraintSolver {
 
   void int_lin_eq(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, bool shouldHold) override;
 
-  void int_lin_eq(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, ConstraintVarId rhs, Int rhsOffset, bool shouldHold) override;
+  void int_lin_eq(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, ConstraintVarId rhs, Int rhsOffset) override;
 
   void int_lin_eq_reif(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, ConstraintVarId shouldHold) override;
 

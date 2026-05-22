@@ -18,6 +18,8 @@ class IntLinLeNode : public ViolationInvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void postConstraint() override;
+
   void updateState() override;
   bool canBeMadeImplicit() const override;
   bool makeImplicit() override;

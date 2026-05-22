@@ -34,7 +34,7 @@ void BoolLinearNode::init(InvariantNodeId id) {
 
 void BoolLinearNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().bool_lin_eq(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), outputVarNodeConst(0).constraintVarId(), _outputOffset, true);
+  constraintSolver().bool_lin_eq(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), outputVarNodeConst(0).constraintVarId(), _outputOffset);
 }
 
 void BoolLinearNode::updateState() {

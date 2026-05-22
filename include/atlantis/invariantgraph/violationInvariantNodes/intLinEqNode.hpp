@@ -18,6 +18,8 @@ class IntLinEqNode : public ViolationInvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void postConstraint() override;
+
   void updateState() override;
 
   void registerOutputVars(propagation::SolverBase&,

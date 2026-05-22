@@ -17,13 +17,13 @@
 namespace atlantis::invariantgraph {
 
 IntLinearNode::IntLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                             std::vector<VarNodeId>&& vars, VarNodeId output,
-                             Int offset)
+                             std::vector<VarNodeId>&& vars, const VarNodeId output,
+                             const Int offset)
     : InvariantNode(graph, {output}, std::move(vars)),
       _coeffs(std::move(coeffs)),
-      _offset(offset) {}
+      _rhsOffset(offset) {}
 
-void IntLinearNode::init(InvariantNodeId id) {
+void IntLinearNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
@@ -33,6 +33,11 @@ void IntLinearNode::init(InvariantNodeId id) {
       [&](const VarNodeId vId) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
+}
+
+void IntLinearNode::postConstraint() {
+  InvariantNode::postConstraint();
+  constraintSolver().int_lin_eq(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), outputVarNodeConst(0).constraintVarId(), _rhsOffset);
 }
 
 void IntLinearNode::updateState() {
@@ -55,7 +60,7 @@ void IntLinearNode::updateState() {
     const auto& inputNode =
         invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
     if (inputNode.isFixed() || _coeffs.at(i) == 0) {
-      _offset += _coeffs.at(i) * inputNode.lowerBound();
+      _rhsOffset += _coeffs.at(i) * inputNode.lowerBound();
       indicesToRemove.emplace_back(i);
     }
   }
@@ -68,7 +73,7 @@ void IntLinearNode::updateState() {
   auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
 
   if (staticInputVarNodeIds().empty()) {
-    outputNode.fixToValue(_offset);
+    outputNode.fixToValue(_rhsOffset);
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -104,7 +109,7 @@ bool IntLinearNode::makeImplicit() {
   invariantGraph().addImplicitConstraintNode(
       std::make_shared<IntLinEqImplicitNode>(
           invariantGraph(), std::move(_coeffs), std::move(inputVarNodeIds),
-          _offset));
+          _rhsOffset));
 
   return true;
 }
@@ -116,18 +121,18 @@ void IntLinearNode::registerOutputVars(propagation::SolverBase& solver,
         outputVarNodeIds().front(),
         solver.makeIntView<propagation::ScalarView>(
             solver, mapping.solverId(staticInputVarNodeIds().front()),
-            _coeffs.front(), _offset));
+            _coeffs.front(), _rhsOffset));
     return;
   }
   if (!staticInputVarNodeIds().empty()) {
-    if (_offset != 0) {
+    if (_rhsOffset != 0) {
       if (mapping.intermediateId(id()) == propagation::NULL_ID) {
         const auto& outputNode =
             invariantGraphConst().varNodeConst(outputVarNodeIds().front());
         const Int intermediateLb =
-            overflow::saturatingSub(outputNode.lowerBound(), _offset);
+            overflow::saturatingSub(outputNode.lowerBound(), _rhsOffset);
         const Int intermediateUb =
-            overflow::saturatingSub(outputNode.upperBound(), _offset);
+            overflow::saturatingSub(outputNode.upperBound(), _rhsOffset);
         mapping.setIntermediateId(
             id(), solver.makeIntVar(std::max(intermediateLb,
                                              std::min(intermediateUb, Int{0})),
@@ -135,7 +140,7 @@ void IntLinearNode::registerOutputVars(propagation::SolverBase& solver,
       }
       mapping.setSolverId(outputVarNodeIds().front(),
                           solver.makeIntView<propagation::IntOffsetView>(
-                              solver, mapping.intermediateId(id()), _offset));
+                              solver, mapping.intermediateId(id()), _rhsOffset));
     } else {
       makeSolverVar(outputVarNodeIds().front(), solver, mapping);
       assert(mapping.solverId(outputVarNodeIds().front()).isVar());
