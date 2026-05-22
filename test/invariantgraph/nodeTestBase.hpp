@@ -18,22 +18,6 @@
 namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
-class UnitInvariantNode : public InvariantNode {
- public:
-  explicit UnitInvariantNode(InvariantGraph& graph,
-                             std::vector<VarNodeId>&& defVarNodes)
-      : InvariantNode(graph, std::move(defVarNodes)) {}
-
-  void registerOutputVars(propagation::SolverBase& solver,
-                          SolverMapping& mapping) const override {
-    for (const auto& varNodeId : outputVarNodeIds()) {
-      makeSolverVar(varNodeId, solver, mapping);
-    }
-  }
-
-  void registerNode(propagation::SolverBase&, SolverMapping&) const override {}
-};
-
 enum class InvariantNodeAction : unsigned char {
   NONE = 0,
   SUBSUME = 1,
@@ -48,76 +32,41 @@ enum class ViolationInvariantType : unsigned char {
 };
 
 struct Var {
-  explicit Var(std::string i, std::vector<Int>&& d, const bool iv)
-      : identifier(std::move(i)), domain(std::move(d)), isIntVar(iv) {}
+  explicit Var(std::string i, std::vector<Int>&& d, const bool iv);
   explicit Var(std::string i, Int lb, Int ub, const bool iv)
       : identifier(std::move(i)), domain(std::pair{lb, ub}), isIntVar(iv) {
     EXPECT_LE(lb, ub);
   }
-  static Var IntVar(const std::string& identifier, std::vector<Int>&& d) {
-    return Var(identifier, std::move(d), true);
-  }
-  static Var BoolVar(const std::string& identifier) {
-    return Var(identifier, std::vector<Int>{0, 1}, false);
-  }
-  static Var BoolVar(const std::string& identifier, const bool val) {
-    return Var(identifier, std::vector<Int>{val == true ? 1 : 0}, false);
-  }
+  static Var IntVar(const std::string& identifier, std::vector<Int>&& d);
+  static Var BoolVar(const std::string& identifier);
+  static Var BoolVar(const std::string& identifier, const bool val);
 
   std::string identifier;
   std::variant<std::vector<Int>, std::pair<Int, Int>> domain;
   bool isIntVar;
   void fixToValue(const Int value) { domain = std::vector<Int>{value}; }
 
-  [[nodiscard]] size_t size() const {
-    if (std::holds_alternative<std::vector<Int>>(domain)) {
-      return std::get<std::vector<Int>>(domain).size();
-    }
-    const auto [lb, ub] = std::get<std::pair<Int, Int>>(domain);
-    EXPECT_LE(lb, ub);
-    return static_cast<size_t>(ub - lb + 1);
-  }
+  [[nodiscard]] size_t size() const;
 
   [[nodiscard]] bool empty() const { return size() == 0; }
 
-  [[nodiscard]] Int val() const {
-    EXPECT_EQ(size(), 1);
-    if (std::holds_alternative<std::vector<Int>>(domain)) {
-      return std::get<std::vector<Int>>(domain).front();
-    }
-    return std::get<std::pair<Int, Int>>(domain).first;
-  }
+  [[nodiscard]] Int val() const;
 
-  void fixToValue(const bool value) { fixToValue(Int{value ? 1 : 0}); }
+  void fixToValue(bool value);
 };
 
 struct ParamData {
   InvariantNodeAction action;
   ViolationInvariantType violType;
   int data;
-  explicit ParamData(InvariantNodeAction a, ViolationInvariantType vt, int d)
-      : action(a), violType(vt), data(d) {}
-  explicit ParamData(InvariantNodeAction a, ViolationInvariantType vt)
-      : action(a), violType(vt), data(0) {}
-  explicit ParamData(InvariantNodeAction a, int d)
-      : action(a), violType(ViolationInvariantType::CONSTANT_TRUE), data(d) {}
-  explicit ParamData(InvariantNodeAction a)
-      : action(a), violType(ViolationInvariantType::CONSTANT_TRUE), data(0) {}
-
-  explicit ParamData(ViolationInvariantType vt, int d)
-      : action(InvariantNodeAction::NONE), violType(vt), data(d) {}
-  explicit ParamData(ViolationInvariantType vt)
-      : action(InvariantNodeAction::NONE), violType(vt), data(0) {}
-
-  explicit ParamData(int d)
-      : action(InvariantNodeAction::NONE),
-        violType(ViolationInvariantType::CONSTANT_TRUE),
-        data(d) {}
-
-  explicit ParamData()
-      : action(InvariantNodeAction::NONE),
-        violType(ViolationInvariantType::CONSTANT_TRUE),
-        data(0) {}
+  explicit ParamData(InvariantNodeAction a, ViolationInvariantType vt, int d);
+  explicit ParamData(InvariantNodeAction a, ViolationInvariantType vt);
+  explicit ParamData(InvariantNodeAction a, int d);
+  explicit ParamData(InvariantNodeAction a);
+  explicit ParamData(ViolationInvariantType vt, int d);
+  explicit ParamData(ViolationInvariantType vt);
+  explicit ParamData(int d);
+  explicit ParamData();
 };
 
 template <class InvNode>
