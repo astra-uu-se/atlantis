@@ -8,7 +8,7 @@ using namespace atlantis::invariantgraph;
 class BoolLeNodeTestFixture : public NodeTestBase<BoolLeNode> {
  protected:
   Var aVar{"a", std::vector<Int>{}, false};
-  Var bVar{"a", std::vector<Int>{}, false};
+  Var bVar{"b", std::vector<Int>{}, false};
   Var reifiedVar{"reified", std::vector<Int>{}, false};
 
   bool isViolating(const bool isRegistered = false) {
