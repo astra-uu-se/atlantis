@@ -10,14 +10,14 @@ using ::testing::ContainerEq;
 using ::testing::Contains;
 
 class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinEqNode> {
- public:
+ protected:
   size_t numInputs = 3;
-  std::vector<std::string> inputVars;
   std::vector<Int> coeffs;
-  std::string reifiedVar{"reified"};
+  std::vector<Var> inputVars;
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
   Int bound = -1;
 
-  bool isViolating(bool isRegistered = false) {
+  bool isViolating(const bool isRegistered = false) {
     if (isRegistered) {
       Int sum = 0;
       for (size_t i = 0; i < coeffs.size(); ++i) {
@@ -46,20 +46,24 @@ class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinEqNode> {
     return sum != bound;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
     for (Int i = 0; i < static_cast<Int>(numInputs); ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
-      retrieveBoolVarNode(inputVars.back());
+      std::vector<Int> dom;
       if (shouldBeSubsumed()) {
-        varNode(inputVars.back()).fixToValue(bool{i % 3 == 0});
+        dom.emplace_back(i % 3 == 0 ? 1 : 0);
+      } else {
+        dom = std::vector<Int>{0, 1};
       }
+      inputVars.emplace_back("input_" + std::to_string(i), std::move(dom), false);
+      retrieveBoolVarNode(inputVars.back());
       coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
     }
 
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                           varNodeIds(inputVars), bound, varNodeId(reifiedVar));
@@ -130,7 +134,7 @@ TEST_P(BoolLinEqNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BoolLinEqNodeTest, BoolLinEqNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
