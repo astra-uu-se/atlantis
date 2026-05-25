@@ -48,7 +48,7 @@ jobs:
 
       - name: Checkout Gecode
         id: gecode-checkout
-        uses: actions/checkout@
+        uses: actions/checkout@v6
         with:
           repository: Gecode/gecode
           ref: release-6.2.0
@@ -137,7 +137,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.9
