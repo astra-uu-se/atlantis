@@ -47,9 +47,10 @@ void ArrayBoolOrNode::postConstraint() {
   }
   if (staticInputVarNodeIds().size() == 2) {
     if (isReified()) {
-      constraintSolver().bool_or_reif(staticInputVarNodeConst(0).constraintVarId(),
-                                      staticInputVarNodeConst(1).constraintVarId(),
-                                      reifiedVarNodeConst().constraintVarId());
+      constraintSolver().bool_or_reif(
+          staticInputVarNodeConst(0).constraintVarId(),
+          staticInputVarNodeConst(1).constraintVarId(),
+          reifiedVarNodeConst().constraintVarId());
     } else {
       constraintSolver().bool_or(staticInputVarNodeConst(0).constraintVarId(),
                                  staticInputVarNodeConst(1).constraintVarId(),
@@ -58,10 +59,13 @@ void ArrayBoolOrNode::postConstraint() {
     return;
   }
   if (isReified()) {
-    constraintSolver().array_bool_or(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
-                                     reifiedVarNodeConst().constraintVarId());
+    constraintSolver().array_bool_or(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        reifiedVarNodeConst().constraintVarId());
   } else {
-    constraintSolver().array_bool_or(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), shouldHold());
+    constraintSolver().array_bool_or(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        shouldHold());
   }
 }
 

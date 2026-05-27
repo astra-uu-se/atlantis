@@ -5,9 +5,9 @@
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/propagation/invariants/times.hpp"
 #include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/invariantgraph/views/intScalarNode.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -28,7 +28,9 @@ void IntTimesNode::init(const InvariantNodeId id) {
 }
 void IntTimesNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().int_times(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), outputVarNodeConst(0).constraintVarId());
+  constraintSolver().int_times(staticInputVarNodeConst(0).constraintVarId(),
+                               staticInputVarNodeConst(1).constraintVarId(),
+                               outputVarNodeConst(0).constraintVarId());
 }
 
 void IntTimesNode::updateState() {
@@ -68,9 +70,11 @@ bool IntTimesNode::replace() {
   }
   if (_scalar == 1) {
     invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                 staticInputVarNodeIds().front());
+                                    staticInputVarNodeIds().front());
   }
-  invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(invariantGraph(), staticInputVarNodeIds().front(), outputVarNodeIds().front(), _scalar, 0));
+  invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(
+      invariantGraph(), staticInputVarNodeIds().front(),
+      outputVarNodeIds().front(), _scalar, 0));
   return true;
 }
 

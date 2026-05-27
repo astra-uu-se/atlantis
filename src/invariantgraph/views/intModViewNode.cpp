@@ -26,7 +26,9 @@ void IntModViewNode::init(InvariantNodeId id) {
 void IntModViewNode::postConstraint() {
   InvariantNode::postConstraint();
   const auto den = invariantGraph().retrieveIntVarNode(_denominator);
-  constraintSolver().int_mod(staticInputVarNodeConst(0).constraintVarId(), varNodeConst(den).constraintVarId(), outputVarNodeConst(0).constraintVarId());
+  constraintSolver().int_mod(staticInputVarNodeConst(0).constraintVarId(),
+                             varNodeConst(den).constraintVarId(),
+                             outputVarNodeConst(0).constraintVarId());
 }
 
 void IntModViewNode::updateState() {

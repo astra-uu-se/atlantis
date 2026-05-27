@@ -56,7 +56,8 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
       } else {
         dom = {0, 1};
       }
-      inputVars.emplace_back("input_" + std::to_string(i), std::move(dom), false);
+      inputVars.emplace_back("input_" + std::to_string(i), std::move(dom),
+                             false);
       retrieveBoolVarNode(inputVars.back());
 
       coeffs.push_back((static_cast<Int>(i) + 1) * (i % 2 == 0 ? -1 : 1));

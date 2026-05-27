@@ -46,9 +46,14 @@ void BoolLinEqNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
     constraintSolver().bool_lin_eq_reif(
-        _coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, reifiedVarNodeConst().constraintVarId());
+        _coeffs,
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        _bound, reifiedVarNodeConst().constraintVarId());
   } else {
-    constraintSolver().bool_lin_eq(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, shouldHold());
+    constraintSolver().bool_lin_eq(
+        _coeffs,
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        _bound, shouldHold());
   }
 }
 

@@ -36,8 +36,9 @@ void ArrayIntMinimumNode::init(InvariantNodeId id) {
 }
 
 void ArrayIntMinimumNode::postConstraint() {
-  constraintSolver().array_int_minimum(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
-                                       outputVarNode(0).constraintVarId());
+  constraintSolver().array_int_minimum(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      outputVarNode(0).constraintVarId());
 }
 
 void ArrayIntMinimumNode::updateState() {

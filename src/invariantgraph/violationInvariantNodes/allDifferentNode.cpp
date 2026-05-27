@@ -28,7 +28,8 @@ AllDifferentNode::AllDifferentNode(InvariantGraph& graph, const VarNodeId a,
     : AllDifferentNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
 AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
-                                   std::vector<VarNodeId>&& vars, const VarNodeId r)
+                                   std::vector<VarNodeId>&& vars,
+                                   const VarNodeId r)
     : ViolationInvariantNode(graph, std::move(vars), r) {}
 
 AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
@@ -52,12 +53,18 @@ void AllDifferentNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (staticInputVarNodeIds().size() == 2) {
     if (isReified()) {
-      return constraintSolver().int_ne_reif(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), reifiedVarNodeConst().constraintVarId());
+      return constraintSolver().int_ne_reif(
+          staticInputVarNodeConst(0).constraintVarId(),
+          staticInputVarNodeConst(1).constraintVarId(),
+          reifiedVarNodeConst().constraintVarId());
     }
-    return constraintSolver().int_ne(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), shouldHold());
+    return constraintSolver().int_ne(
+        staticInputVarNodeConst(0).constraintVarId(),
+        staticInputVarNodeConst(1).constraintVarId(), shouldHold());
   }
   if (!isReified() && shouldHold()) {
-    constraintSolver().fzn_all_different_int(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()));
+    constraintSolver().fzn_all_different_int(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()));
   }
 }
 

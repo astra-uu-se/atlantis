@@ -27,7 +27,9 @@ void IntPowNode::init(const InvariantNodeId id) {
 }
 void IntPowNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().int_pow(varNodeConst(base()).constraintVarId(), varNodeConst(exponent()).constraintVarId(), varNodeConst(power()).constraintVarId());
+  constraintSolver().int_pow(varNodeConst(base()).constraintVarId(),
+                             varNodeConst(exponent()).constraintVarId(),
+                             varNodeConst(power()).constraintVarId());
 }
 
 void IntPowNode::updateState() {

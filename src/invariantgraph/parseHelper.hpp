@@ -27,6 +27,7 @@ std::vector<Int> toIntVector(const std::vector<bool>& argument);
  */
 bool removeFirstOccurrence(std::vector<size_t>&, size_t);
 
-std::vector<ConstraintVarId> toConstraintVarIds(const InvariantGraph&, const std::vector<VarNodeId>&);
+std::vector<ConstraintVarId> toConstraintVarIds(const InvariantGraph&,
+                                                const std::vector<VarNodeId>&);
 
 }  // namespace atlantis::invariantgraph

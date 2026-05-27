@@ -12,12 +12,12 @@
 
 namespace atlantis::invariantgraph {
 
-IntLtNode::IntLtNode(InvariantGraph& graph, const VarNodeId a, const VarNodeId b,
-                     const VarNodeId r)
+IntLtNode::IntLtNode(InvariantGraph& graph, const VarNodeId a,
+                     const VarNodeId b, const VarNodeId r)
     : ViolationInvariantNode(graph, {a, b}, r) {}
 
-IntLtNode::IntLtNode(InvariantGraph& graph, const VarNodeId a, const VarNodeId b,
-                     const bool shouldHold)
+IntLtNode::IntLtNode(InvariantGraph& graph, const VarNodeId a,
+                     const VarNodeId b, const bool shouldHold)
     : ViolationInvariantNode(graph, {a, b}, shouldHold) {}
 
 void IntLtNode::init(const InvariantNodeId id) {
@@ -35,9 +35,14 @@ void IntLtNode::init(const InvariantNodeId id) {
 void IntLtNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
-    return constraintSolver().int_lt_reif(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), reifiedVarNode().constraintVarId());
+    return constraintSolver().int_lt_reif(
+        staticInputVarNodeConst(0).constraintVarId(),
+        staticInputVarNodeConst(1).constraintVarId(),
+        reifiedVarNode().constraintVarId());
   }
-  constraintSolver().int_lt(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), shouldHold());
+  constraintSolver().int_lt(staticInputVarNodeConst(0).constraintVarId(),
+                            staticInputVarNodeConst(1).constraintVarId(),
+                            shouldHold());
 }
 
 void IntLtNode::updateState() {

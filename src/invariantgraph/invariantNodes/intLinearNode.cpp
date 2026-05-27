@@ -17,8 +17,8 @@
 namespace atlantis::invariantgraph {
 
 IntLinearNode::IntLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                             std::vector<VarNodeId>&& vars, const VarNodeId output,
-                             const Int offset)
+                             std::vector<VarNodeId>&& vars,
+                             const VarNodeId output, const Int offset)
     : InvariantNode(graph, {output}, std::move(vars)),
       _coeffs(std::move(coeffs)),
       _rhsOffset(offset) {}
@@ -37,7 +37,10 @@ void IntLinearNode::init(const InvariantNodeId id) {
 
 void IntLinearNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().int_lin_eq(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), outputVarNodeConst(0).constraintVarId(), _rhsOffset);
+  constraintSolver().int_lin_eq(
+      _coeffs,
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      outputVarNodeConst(0).constraintVarId(), _rhsOffset);
 }
 
 void IntLinearNode::updateState() {
@@ -135,9 +138,10 @@ void IntLinearNode::registerOutputVars(propagation::SolverBase& solver,
                                              std::min(intermediateUb, Int{0})),
                                     intermediateLb, intermediateUb));
       }
-      mapping.setSolverId(outputVarNodeIds().front(),
-                          solver.makeIntView<propagation::IntOffsetView>(
-                              solver, mapping.intermediateId(id()), _rhsOffset));
+      mapping.setSolverId(
+          outputVarNodeIds().front(),
+          solver.makeIntView<propagation::IntOffsetView>(
+              solver, mapping.intermediateId(id()), _rhsOffset));
     } else {
       makeSolverVar(outputVarNodeIds().front(), solver, mapping);
       assert(mapping.solverId(outputVarNodeIds().front()).isVar());

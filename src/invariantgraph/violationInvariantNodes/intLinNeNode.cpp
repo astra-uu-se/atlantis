@@ -43,9 +43,15 @@ void IntLinNeNode::init(const InvariantNodeId id) {
 void IntLinNeNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
-    return constraintSolver().int_lin_ne_reif(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, reifiedVarNodeConst().constraintVarId());
+    return constraintSolver().int_lin_ne_reif(
+        _coeffs,
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        _bound, reifiedVarNodeConst().constraintVarId());
   }
-  constraintSolver().int_lin_ne(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, shouldHold());
+  constraintSolver().int_lin_ne(
+      _coeffs,
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      _bound, shouldHold());
 }
 
 void IntLinNeNode::updateState() {

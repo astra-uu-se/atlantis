@@ -34,8 +34,9 @@ void ArrayIntMaximumNode::init(InvariantNodeId id) {
 }
 
 void ArrayIntMaximumNode::postConstraint() {
-  constraintSolver().array_int_maximum(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
-                                       outputVarNode(0).constraintVarId());
+  constraintSolver().array_int_maximum(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      outputVarNode(0).constraintVarId());
 }
 
 void ArrayIntMaximumNode::updateState() {

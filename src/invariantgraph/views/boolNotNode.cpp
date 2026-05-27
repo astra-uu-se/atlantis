@@ -24,7 +24,8 @@ void BoolNotNode::init(const InvariantNodeId id) {
 }
 void BoolNotNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().bool_not(staticInputVarNodeConst(0).constraintVarId(), outputVarNodeConst(0).constraintVarId(), true);
+  constraintSolver().bool_not(staticInputVarNodeConst(0).constraintVarId(),
+                              outputVarNodeConst(0).constraintVarId(), true);
 }
 
 void BoolNotNode::updateState() {

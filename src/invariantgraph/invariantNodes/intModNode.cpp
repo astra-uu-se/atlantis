@@ -22,7 +22,9 @@ void IntModNode::init(const InvariantNodeId id) {
 }
 void IntModNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().int_mod(varNodeConst(numerator()).constraintVarId(), varNodeConst(denominator()).constraintVarId(), varNodeConst(remainder()).constraintVarId());
+  constraintSolver().int_mod(varNodeConst(numerator()).constraintVarId(),
+                             varNodeConst(denominator()).constraintVarId(),
+                             varNodeConst(remainder()).constraintVarId());
 }
 
 void IntModNode::updateState() {
@@ -30,12 +32,14 @@ void IntModNode::updateState() {
     auto& nNode = varNode(numerator());
     auto& dNode = varNode(denominator());
     const bool overZero = nNode.lowerBound() < 0 && 0 < nNode.upperBound() &&
-      dNode.lowerBound() < 0 && 0 < dNode.upperBound();
+                          dNode.lowerBound() < 0 && 0 < dNode.upperBound();
     if (!nNode.isFixed()) {
-      nNode.tightenDomainType(overZero ? DomainType::DOM_DOMAIN : DomainType::DOM_RANGE);
+      nNode.tightenDomainType(overZero ? DomainType::DOM_DOMAIN
+                                       : DomainType::DOM_RANGE);
     }
     if (!dNode.isFixed()) {
-      dNode.tightenDomainType(overZero ? DomainType::DOM_DOMAIN : DomainType::DOM_RANGE);
+      dNode.tightenDomainType(overZero ? DomainType::DOM_DOMAIN
+                                       : DomainType::DOM_RANGE);
     }
     setState(InvariantNodeState::SUBSUMED);
   }

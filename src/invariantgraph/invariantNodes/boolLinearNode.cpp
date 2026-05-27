@@ -34,7 +34,10 @@ void BoolLinearNode::init(InvariantNodeId id) {
 
 void BoolLinearNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().bool_lin_eq(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), outputVarNodeConst(0).constraintVarId(), _outputOffset);
+  constraintSolver().bool_lin_eq(
+      _coeffs,
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      outputVarNodeConst(0).constraintVarId(), _outputOffset);
 }
 
 void BoolLinearNode::updateState() {
@@ -70,7 +73,9 @@ void BoolLinearNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
-    invariantGraph().varNode(outputVarNodeIds().front()).fixToValue(_outputOffset);
+    invariantGraph()
+        .varNode(outputVarNodeIds().front())
+        .fixToValue(_outputOffset);
     setState(InvariantNodeState::SUBSUMED);
   }
 }

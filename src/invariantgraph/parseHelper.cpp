@@ -124,11 +124,14 @@ bool removeFirstOccurrence(std::vector<size_t>& vector, size_t val) {
   }
   return false;
 }
-std::vector<ConstraintVarId> toConstraintVarIds(const InvariantGraph& invariantGraph,
-                                                const std::vector<VarNodeId>& varNodeIds) {
-  std::vector<ConstraintVarId> constraintVarIds(varNodeIds.size(), ConstraintVarId{NULL_NODE_ID});
+std::vector<ConstraintVarId> toConstraintVarIds(
+    const InvariantGraph& invariantGraph,
+    const std::vector<VarNodeId>& varNodeIds) {
+  std::vector<ConstraintVarId> constraintVarIds(varNodeIds.size(),
+                                                ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < varNodeIds.size(); ++i) {
-    constraintVarIds[i] = invariantGraph.varNodeConst(varNodeIds[i]).constraintVarId();
+    constraintVarIds[i] =
+        invariantGraph.varNodeConst(varNodeIds[i]).constraintVarId();
   }
   return constraintVarIds;
 }

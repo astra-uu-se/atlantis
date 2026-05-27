@@ -62,7 +62,8 @@ void BoolLtNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (!isReified() && (staticInputVarNodeConst(0).isFixed() || staticInputVarNodeConst(1).isFixed())) {
+  if (!isReified() && (staticInputVarNodeConst(0).isFixed() ||
+                       staticInputVarNodeConst(1).isFixed())) {
     assert(!shouldHold() || staticInputVarNodeConst(0).isFixed());
     assert(!shouldHold() || staticInputVarNodeConst(1).isFixed());
     setState(InvariantNodeState::SUBSUMED);

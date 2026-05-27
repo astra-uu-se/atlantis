@@ -26,7 +26,8 @@ void IntAbsNode::init(InvariantNodeId id) {
 }
 void IntAbsNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().int_abs(staticInputVarNodeConst(0).constraintVarId(), outputVarNodeConst(0).constraintVarId());
+  constraintSolver().int_abs(staticInputVarNodeConst(0).constraintVarId(),
+                             outputVarNodeConst(0).constraintVarId());
 }
 
 void IntAbsNode::updateState() {

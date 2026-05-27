@@ -44,9 +44,14 @@ void BoolLinLeNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
     constraintSolver().bool_lin_le_reif(
-        _coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, reifiedVarNodeConst().constraintVarId());
+        _coeffs,
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        _bound, reifiedVarNodeConst().constraintVarId());
   } else {
-    constraintSolver().bool_lin_le(_coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _bound, shouldHold());
+    constraintSolver().bool_lin_le(
+        _coeffs,
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        _bound, shouldHold());
   }
 }
 

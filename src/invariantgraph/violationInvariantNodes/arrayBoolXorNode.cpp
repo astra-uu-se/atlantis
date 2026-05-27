@@ -50,19 +50,23 @@ void ArrayBoolXorNode::postConstraint() {
   }
   if (staticInputVarNodeIds().size() == 2) {
     if (isReified()) {
-      return constraintSolver().bool_xor_reif(staticInputVarNodeConst(0).constraintVarId(),
-                                       staticInputVarNodeConst(1).constraintVarId(),
-                                       reifiedVarNodeConst().constraintVarId());
+      return constraintSolver().bool_xor_reif(
+          staticInputVarNodeConst(0).constraintVarId(),
+          staticInputVarNodeConst(1).constraintVarId(),
+          reifiedVarNodeConst().constraintVarId());
     }
-    return constraintSolver().bool_xor(staticInputVarNodeConst(0).constraintVarId(),
-                                  staticInputVarNodeConst(1).constraintVarId(),
-                                  shouldHold());
+    return constraintSolver().bool_xor(
+        staticInputVarNodeConst(0).constraintVarId(),
+        staticInputVarNodeConst(1).constraintVarId(), shouldHold());
   }
   if (isReified()) {
-    constraintSolver().array_bool_xor(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
-                                      reifiedVarNodeConst().constraintVarId());
+    constraintSolver().array_bool_xor(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        reifiedVarNodeConst().constraintVarId());
   } else {
-    constraintSolver().array_bool_xor(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), shouldHold());
+    constraintSolver().array_bool_xor(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        shouldHold());
   }
 }
 

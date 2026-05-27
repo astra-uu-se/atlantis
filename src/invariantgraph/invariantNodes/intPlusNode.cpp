@@ -12,8 +12,8 @@
 
 namespace atlantis::invariantgraph {
 
-IntPlusNode::IntPlusNode(InvariantGraph& graph, const VarNodeId a, const VarNodeId b,
-                         const VarNodeId output)
+IntPlusNode::IntPlusNode(InvariantGraph& graph, const VarNodeId a,
+                         const VarNodeId b, const VarNodeId output)
     : InvariantNode(graph, {output}, {a, b}) {}
 
 void IntPlusNode::init(const InvariantNodeId id) {
@@ -29,7 +29,9 @@ void IntPlusNode::init(const InvariantNodeId id) {
 }
 void IntPlusNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().int_plus(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), outputVarNodeConst(0).constraintVarId());
+  constraintSolver().int_plus(staticInputVarNodeConst(0).constraintVarId(),
+                              staticInputVarNodeConst(1).constraintVarId(),
+                              outputVarNodeConst(0).constraintVarId());
 }
 
 void IntPlusNode::updateState() {
@@ -67,7 +69,9 @@ bool IntPlusNode::replace() {
                                     staticInputVarNodeIds().front());
     return true;
   }
-  invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(invariantGraph(), staticInputVarNodeIds().front(), outputVarNodeIds().front(), 1, _offset));
+  invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(
+      invariantGraph(), staticInputVarNodeIds().front(),
+      outputVarNodeIds().front(), 1, _offset));
   return true;
 }
 
@@ -76,10 +80,10 @@ void IntPlusNode::registerOutputVars(propagation::SolverBase& solver,
   assert(staticInputVarNodeIds().size() == 2);
   makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   assert(std::ranges::all_of(
-    outputVarNodeIds().begin(), outputVarNodeIds().end(),
-    [&](const VarNodeId vId) {
-      return mapping.solverId(vId) != propagation::NULL_ID;
-    }));
+      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      [&](const VarNodeId vId) {
+        return mapping.solverId(vId) != propagation::NULL_ID;
+      }));
 }
 
 void IntPlusNode::registerNode(propagation::SolverBase& solver,

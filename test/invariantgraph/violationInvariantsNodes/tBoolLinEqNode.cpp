@@ -57,7 +57,8 @@ class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinEqNode> {
       } else {
         dom = std::vector<Int>{0, 1};
       }
-      inputVars.emplace_back("input_" + std::to_string(i), std::move(dom), false);
+      inputVars.emplace_back("input_" + std::to_string(i), std::move(dom),
+                             false);
       retrieveBoolVarNode(inputVars.back());
       coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
     }

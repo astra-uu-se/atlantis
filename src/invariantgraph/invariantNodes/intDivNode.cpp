@@ -28,7 +28,9 @@ void IntDivNode::init(const InvariantNodeId id) {
 }
 void IntDivNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().int_div(varNodeConst(numerator()).constraintVarId(), varNodeConst(denominator()).constraintVarId(), varNodeConst(quotient()).constraintVarId());
+  constraintSolver().int_div(varNodeConst(numerator()).constraintVarId(),
+                             varNodeConst(denominator()).constraintVarId(),
+                             varNodeConst(quotient()).constraintVarId());
 }
 
 void IntDivNode::updateState() {
@@ -36,12 +38,14 @@ void IntDivNode::updateState() {
     auto& nNode = varNode(numerator());
     auto& dNode = varNode(denominator());
     const bool overZero = nNode.lowerBound() < 0 && 0 < nNode.upperBound() &&
-      dNode.lowerBound() < 0 && 0 < dNode.upperBound();
+                          dNode.lowerBound() < 0 && 0 < dNode.upperBound();
     if (!nNode.isFixed()) {
-      nNode.tightenDomainType(overZero ? DomainType::DOM_DOMAIN : DomainType::DOM_RANGE);
+      nNode.tightenDomainType(overZero ? DomainType::DOM_DOMAIN
+                                       : DomainType::DOM_RANGE);
     }
     if (!dNode.isFixed()) {
-      dNode.tightenDomainType(overZero ? DomainType::DOM_DOMAIN : DomainType::DOM_RANGE);
+      dNode.tightenDomainType(overZero ? DomainType::DOM_DOMAIN
+                                       : DomainType::DOM_RANGE);
     }
     setState(InvariantNodeState::SUBSUMED);
   }
@@ -121,14 +125,18 @@ bool IntDivNode::replace() {
   }
   if (!nNode.isFixed()) {
     assert(dNode.isFixed());
-    assert(dNode.lowerBound() > 0 ? -dNode.lowerBound() < nNode.lowerBound() : dNode.lowerBound() < nNode.lowerBound());
-    assert(dNode.lowerBound() < 0 ? -dNode.lowerBound() > nNode.upperBound() : dNode.lowerBound() > nNode.upperBound());
+    assert(dNode.lowerBound() > 0 ? -dNode.lowerBound() < nNode.lowerBound()
+                                  : dNode.lowerBound() < nNode.lowerBound());
+    assert(dNode.lowerBound() < 0 ? -dNode.lowerBound() > nNode.upperBound()
+                                  : dNode.lowerBound() > nNode.upperBound());
     return true;
   }
   assert(!dNode.isFixed());
   assert(nNode.isFixed());
-  assert(std::min(-nNode.lowerBound(), nNode.lowerBound()) + 1 < dNode.lowerBound());
-  assert(dNode.upperBound() < std::max(-nNode.lowerBound(), nNode.lowerBound()) - 1);
+  assert(std::min(-nNode.lowerBound(), nNode.lowerBound()) + 1 <
+         dNode.lowerBound());
+  assert(dNode.upperBound() <
+         std::max(-nNode.lowerBound(), nNode.lowerBound()) - 1);
   return true;
 }
 

@@ -68,13 +68,13 @@ class GecodeSolver : public ConstraintSolver {
   void array_bool_op(const std::vector<ConstraintVarId>& inputs,
                      bool shouldHold, Gecode::BoolOpType);
 
-  void bool_op(ConstraintVarId lhs, ConstraintVarId rhs, ConstraintVarId reified,
-               Gecode::BoolOpType);
+  void bool_op(ConstraintVarId lhs, ConstraintVarId rhs,
+               ConstraintVarId reified, Gecode::BoolOpType);
   void bool_op(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold,
                Gecode::BoolOpType);
 
-  void bool_rel(ConstraintVarId lhs, ConstraintVarId rhs, ConstraintVarId reified,
-                Gecode::IntRelType);
+  void bool_rel(ConstraintVarId lhs, ConstraintVarId rhs,
+                ConstraintVarId reified, Gecode::IntRelType);
   void bool_rel(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold,
                 Gecode::IntRelType);
 
@@ -88,22 +88,20 @@ class GecodeSolver : public ConstraintSolver {
                     ConstraintVarId reified, Gecode::IntRelType);
   void bool_lin_rel(const std::vector<Int>& coeffs,
                     const std::vector<ConstraintVarId>& inputs,
-                    ConstraintVarId rhs, Int rhsOffset,
-                    Gecode::IntRelType irt);
+                    ConstraintVarId rhs, Int rhsOffset, Gecode::IntRelType irt);
   void bool_lin_rel(const std::vector<Int>& coeffs,
                     const std::vector<ConstraintVarId>& inputs, Int rhs,
                     bool shouldHold, Gecode::IntRelType);
 
   void int_lin_rel(const std::vector<Int>& coeffs,
-                    const std::vector<ConstraintVarId>& inputs, Int rhs,
-                    ConstraintVarId reified, Gecode::IntRelType);
+                   const std::vector<ConstraintVarId>& inputs, Int rhs,
+                   ConstraintVarId reified, Gecode::IntRelType);
   void int_lin_rel(const std::vector<Int>& coeffs,
-                    const std::vector<ConstraintVarId>& inputs,
-                    ConstraintVarId rhs, Int rhsOffset,
-                    Gecode::IntRelType irt);
+                   const std::vector<ConstraintVarId>& inputs,
+                   ConstraintVarId rhs, Int rhsOffset, Gecode::IntRelType irt);
   void int_lin_rel(const std::vector<Int>& coeffs,
-                    const std::vector<ConstraintVarId>& inputs, Int rhs,
-                    bool shouldHold, Gecode::IntRelType);
+                   const std::vector<ConstraintVarId>& inputs, Int rhs,
+                   bool shouldHold, Gecode::IntRelType);
 
  public:
   /// Construct empty space
@@ -246,51 +244,81 @@ class GecodeSolver : public ConstraintSolver {
 
   void int_abs(ConstraintVarId lhs, ConstraintVarId rhs) override;
 
-  void int_div(ConstraintVarId numerator, ConstraintVarId denominator, ConstraintVarId quotient) override;
+  void int_div(ConstraintVarId numerator, ConstraintVarId denominator,
+               ConstraintVarId quotient) override;
 
-  void int_eq(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold) override;
+  void int_eq(ConstraintVarId lhs, ConstraintVarId rhs,
+              bool shouldHold) override;
 
-  void int_eq_reif(ConstraintVarId lhs, ConstraintVarId rhs, ConstraintVarId reified) override;
+  void int_eq_reif(ConstraintVarId lhs, ConstraintVarId rhs,
+                   ConstraintVarId reified) override;
 
-  void int_le(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold) override;
+  void int_le(ConstraintVarId lhs, ConstraintVarId rhs,
+              bool shouldHold) override;
 
-  void int_le_reif(ConstraintVarId lhs, ConstraintVarId rhs, ConstraintVarId reified) override;
+  void int_le_reif(ConstraintVarId lhs, ConstraintVarId rhs,
+                   ConstraintVarId reified) override;
 
-  void int_lin_eq(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, bool shouldHold) override;
+  void int_lin_eq(const std::vector<Int>& coeffs,
+                  const std::vector<ConstraintVarId>& inputs, Int rhs,
+                  bool shouldHold) override;
 
-  void int_lin_eq(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, ConstraintVarId rhs, Int rhsOffset) override;
+  void int_lin_eq(const std::vector<Int>& coeffs,
+                  const std::vector<ConstraintVarId>& inputs,
+                  ConstraintVarId rhs, Int rhsOffset) override;
 
-  void int_lin_eq_reif(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, ConstraintVarId shouldHold) override;
+  void int_lin_eq_reif(const std::vector<Int>& coeffs,
+                       const std::vector<ConstraintVarId>& inputs, Int rhs,
+                       ConstraintVarId shouldHold) override;
 
-  void int_lin_le(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, bool shouldHold) override;
+  void int_lin_le(const std::vector<Int>& coeffs,
+                  const std::vector<ConstraintVarId>& inputs, Int rhs,
+                  bool shouldHold) override;
 
-  void int_lin_le_reif(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, ConstraintVarId reified) override;
+  void int_lin_le_reif(const std::vector<Int>& coeffs,
+                       const std::vector<ConstraintVarId>& inputs, Int rhs,
+                       ConstraintVarId reified) override;
 
-  void int_lin_ne(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, bool shouldHold) override;
+  void int_lin_ne(const std::vector<Int>& coeffs,
+                  const std::vector<ConstraintVarId>& inputs, Int rhs,
+                  bool shouldHold) override;
 
-  void int_lin_ne_reif(const std::vector<Int>& coeffs, const std::vector<ConstraintVarId>& inputs, Int rhs, ConstraintVarId reified) override;
+  void int_lin_ne_reif(const std::vector<Int>& coeffs,
+                       const std::vector<ConstraintVarId>& inputs, Int rhs,
+                       ConstraintVarId reified) override;
 
-  void int_lt(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold) override;
+  void int_lt(ConstraintVarId lhs, ConstraintVarId rhs,
+              bool shouldHold) override;
 
-  void int_lt_reif(ConstraintVarId lhs, ConstraintVarId rhs, ConstraintVarId reified) override;
+  void int_lt_reif(ConstraintVarId lhs, ConstraintVarId rhs,
+                   ConstraintVarId reified) override;
 
-  void int_max(ConstraintVarId a, ConstraintVarId b, ConstraintVarId maximum) override;
+  void int_max(ConstraintVarId a, ConstraintVarId b,
+               ConstraintVarId maximum) override;
 
-  void int_min(ConstraintVarId a, ConstraintVarId b, ConstraintVarId minimum) override;
+  void int_min(ConstraintVarId a, ConstraintVarId b,
+               ConstraintVarId minimum) override;
 
-  void int_mod(ConstraintVarId numerator, ConstraintVarId denominator, ConstraintVarId remainder) override;
+  void int_mod(ConstraintVarId numerator, ConstraintVarId denominator,
+               ConstraintVarId remainder) override;
 
-  void int_ne(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold) override;
+  void int_ne(ConstraintVarId lhs, ConstraintVarId rhs,
+              bool shouldHold) override;
 
-  void int_ne_reif(ConstraintVarId lhs, ConstraintVarId rhs, ConstraintVarId reified) override;
+  void int_ne_reif(ConstraintVarId lhs, ConstraintVarId rhs,
+                   ConstraintVarId reified) override;
 
-  void int_plus(ConstraintVarId a, ConstraintVarId b, ConstraintVarId sum) override;
+  void int_plus(ConstraintVarId a, ConstraintVarId b,
+                ConstraintVarId sum) override;
 
-  void int_pow(ConstraintVarId base, ConstraintVarId exponent, ConstraintVarId power) override;
+  void int_pow(ConstraintVarId base, ConstraintVarId exponent,
+               ConstraintVarId power) override;
 
-  void int_times(ConstraintVarId a, ConstraintVarId b, ConstraintVarId product) override;
+  void int_times(ConstraintVarId a, ConstraintVarId b,
+                 ConstraintVarId product) override;
 
-  void fzn_all_different_int(const std::vector<ConstraintVarId>& inputs) override;
+  void fzn_all_different_int(
+      const std::vector<ConstraintVarId>& inputs) override;
 };
 
 }  // namespace atlantis::invariantgraph

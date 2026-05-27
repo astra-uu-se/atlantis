@@ -25,7 +25,8 @@ void Bool2IntNode::init(const InvariantNodeId id) {
 }
 void Bool2IntNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().bool2int(staticInputVarNodeConst(0).constraintVarId(), outputVarNodeConst(0).constraintVarId());
+  constraintSolver().bool2int(staticInputVarNodeConst(0).constraintVarId(),
+                              outputVarNodeConst(0).constraintVarId());
 }
 
 void Bool2IntNode::updateState() {

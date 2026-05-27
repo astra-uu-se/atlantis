@@ -37,11 +37,13 @@ void ArrayVarElementNode::init(const InvariantNodeId id) {
 void ArrayVarElementNode::postConstraint() {
   if (outputVarNodeConst(0).isIntVar()) {
     constraintSolver().array_var_int_element(
-        staticInputVarNode(0).constraintVarId(), toConstraintVarIds(invariantGraphConst(), dynamicInputVarNodeIds()),
+        staticInputVarNode(0).constraintVarId(),
+        toConstraintVarIds(invariantGraphConst(), dynamicInputVarNodeIds()),
         outputVarNode(0).constraintVarId(), _offset);
   } else {
     constraintSolver().array_var_bool_element(
-        staticInputVarNode(0).constraintVarId(), toConstraintVarIds(invariantGraphConst(), dynamicInputVarNodeIds()),
+        staticInputVarNode(0).constraintVarId(),
+        toConstraintVarIds(invariantGraphConst(), dynamicInputVarNodeIds()),
         outputVarNode(0).constraintVarId(), _offset);
   }
 }
