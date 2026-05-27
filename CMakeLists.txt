@@ -189,7 +189,7 @@ if(EXISTS "${CPM_SOURCE_CACHE}/gecode")
   set(GECODE_INCLUDE "${CPM_SOURCE_CACHE}/gecode")
 endif()
 
-find_package(Gecode 6.0 REQUIRED COMPONENTS Driver Int Kernel Search Support Minimodel)
+find_package(Gecode 6.3 REQUIRED COMPONENTS Driver Int Kernel Search Support Minimodel)
 
 # Link Gecode to target test
 message("GECODE_FOUND: ${GECODE_FOUND}")

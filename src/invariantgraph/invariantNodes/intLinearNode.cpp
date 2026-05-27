@@ -70,10 +70,7 @@ void IntLinearNode::updateState() {
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
 
-  auto& outputNode = invariantGraph().varNode(outputVarNodeIds().front());
-
   if (staticInputVarNodeIds().empty()) {
-    outputNode.fixToValue(_rhsOffset);
     setState(InvariantNodeState::SUBSUMED);
   }
 }

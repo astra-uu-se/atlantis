@@ -5,16 +5,14 @@
 namespace atlantis::invariantgraph {
 
 class IntDivNode : public InvariantNode {
-  [[nodiscard]] bool updateNumerator();
-  [[nodiscard]] bool updateDenominator();
-  [[nodiscard]] bool updateQuotient();
-
  public:
   IntDivNode(InvariantGraph& graph,
 
              VarNodeId numerator, VarNodeId denominator, VarNodeId quotient);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

@@ -5,17 +5,18 @@
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/propagation/invariants/plus.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntPlusNode::IntPlusNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-                         VarNodeId output)
+IntPlusNode::IntPlusNode(InvariantGraph& graph, const VarNodeId a, const VarNodeId b,
+                         const VarNodeId output)
     : InvariantNode(graph, {output}, {a, b}) {}
 
-void IntPlusNode::init(InvariantNodeId id) {
+void IntPlusNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
@@ -25,6 +26,10 @@ void IntPlusNode::init(InvariantNodeId id) {
       [&](const VarNodeId vId) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
+}
+void IntPlusNode::postConstraint() {
+  InvariantNode::postConstraint();
+  constraintSolver().int_plus(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), outputVarNodeConst(0).constraintVarId());
 }
 
 void IntPlusNode::updateState() {
@@ -43,51 +48,38 @@ void IntPlusNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
-    invariantGraph().varNode(outputVarNodeIds().front()).fixToValue(_offset);
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 bool IntPlusNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         staticInputVarNodeIds().size() == 1 && _offset == 0;
+         staticInputVarNodeIds().size() == 1;
 }
 
 bool IntPlusNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  assert(staticInputVarNodeIds().size() == 1 && _offset == 0);
-  invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                  staticInputVarNodeIds().front());
+  assert(staticInputVarNodeIds().size() == 1);
+  if (_offset == 0) {
+    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
+                                    staticInputVarNodeIds().front());
+    return true;
+  }
+  invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(invariantGraph(), staticInputVarNodeIds().front(), outputVarNodeIds().front(), 1, _offset));
   return true;
 }
 
 void IntPlusNode::registerOutputVars(propagation::SolverBase& solver,
                                      SolverMapping& mapping) const {
-  if (!staticInputVarNodeIds().empty()) {
-    if (_offset != 0) {
-      if (staticInputVarNodeIds().size() == 1) {
-        mapping.setSolverId(
-            outputVarNodeIds().front(),
-            solver.makeIntView<propagation::IntOffsetView>(
-                solver, mapping.solverId(staticInputVarNodeIds().front()),
-                _offset));
-      } else {
-        mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
-        mapping.setSolverId(outputVarNodeIds().front(),
-                            solver.makeIntView<propagation::IntOffsetView>(
-                                solver, mapping.intermediateId(id()), _offset));
-      }
-    } else {
-      makeSolverVar(outputVarNodeIds().front(), solver, mapping);
-    }
-  }
+  assert(staticInputVarNodeIds().size() == 2);
+  makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+    outputVarNodeIds().begin(), outputVarNodeIds().end(),
+    [&](const VarNodeId vId) {
+      return mapping.solverId(vId) != propagation::NULL_ID;
+    }));
 }
 
 void IntPlusNode::registerNode(propagation::SolverBase& solver,
@@ -95,6 +87,7 @@ void IntPlusNode::registerNode(propagation::SolverBase& solver,
   if (staticInputVarNodeIds().size() <= 1) {
     return;
   }
+  assert(_offset == 0);
   assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
   assert(mapping.solverId(outputVarNodeIds().front()).isVar());
 

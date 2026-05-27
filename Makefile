@@ -5,24 +5,17 @@ NUM_PROCS:=1
 ifeq ($(UNAME_S),Darwin)
 GCC=$(call find-first,clang)
 GPP=$(call find-first,clang++)
-GCC_GECODE=$(call find-first,clang)
-GPP_GECODE=$(call find-first,clang++)
 NUM_PROCS:=$(shell system_profiler | awk '/Number Of CPUs/{print $4}{next;}')
 else
 GCC=$(call find-first,gcc-14 gcc-13 gcc)
 GPP=$(call find-first,g++-14 g++-13 g++)
-GCC_GECODE=$(call find-first,gcc-13 gcc)
-GPP_GECODE=$(call find-first,g++-13 g++)
 NUM_PROCS:=$(shell grep -c ^processor /proc/cpuinfo)
 endif
-GECODE_VERSION="6.2.0"
+GECODE_VERSION="6.3.0"
 
 CMAKE_C_COMPILER=$(if ${GCC}, -DCMAKE_C_COMPILER=${GCC},)
 CMAKE_CXX_COMPILER=$(if ${GPP}, -DCMAKE_CXX_COMPILER=${GPP},)
 export CMAKE_OPTIONS+= ${ENV_CMAKE_OPTIONS}${CMAKE_C_COMPILER}${CMAKE_CXX_COMPILER}
-CMAKE_C_COMPILER_GECODE=$(if ${GCC_GECODE}, -DCMAKE_C_COMPILER=${GCC_GECODE},)
-CMAKE_CXX_COMPILER_GECODE=$(if ${GPP_GECODE}, -DCMAKE_CXX_COMPILER=${GPP_GECODE},)
-export CMAKE_OPTIONS_GECODE+= ${ENV_CMAKE_OPTIONS}${CMAKE_C_COMPILER_GECODE}${CMAKE_CXX_COMPILER_GECODE}
 MKFILE_PATH=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BUILD_DIR?=${MKFILE_PATH}build
 
@@ -95,11 +88,11 @@ clean:
 gecode:
 	mkdir -p ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION}
 	$(GIT) clone --depth 1 \
-           --branch release-${GECODE_VERSION} \
+           --branch release/${GECODE_VERSION} \
            https://github.com/Gecode/gecode.git ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION} \
            || true
 	mkdir -p ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION}/build
-	$(CMAKE) ${CMAKE_OPTIONS_GECODE} \
+	$(CMAKE) ${CMAKE_OPTIONS} \
              -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
              -DCMAKE_BUILD_TYPE=Release \
              -B ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION}/build \
