@@ -34,11 +34,11 @@ void IntLinEqNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+      !reifiedVarNodeConst().isIntVar());
   assert(std::ranges::all_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
+        return varNodeConst(vId).isIntVar();
       }));
 }
 
@@ -87,13 +87,18 @@ void IntLinEqNode::updateState() {
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
 
+  if (staticInputVarNodeIds().empty()) {
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+
   Int lb = 0;
   Int ub = 0;
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
     const Int varLb =
-        invariantGraph().varNode(staticInputVarNodeIds().at(i)).lowerBound();
+        staticInputVarNodeConst(i).lowerBound();
     const Int varUb =
-        invariantGraph().varNode(staticInputVarNodeIds().at(i)).upperBound();
+        staticInputVarNodeConst(i).upperBound();
     const Int prod1 = overflow::saturatingMul(_coeffs[i], varLb);
     const Int prod2 = overflow::saturatingMul(_coeffs[i], varUb);
     lb = overflow::saturatingAdd(lb, std::min(prod1, prod2));
@@ -101,24 +106,18 @@ void IntLinEqNode::updateState() {
   }
 
   if (lb == ub && lb == _bound) {
-    if (isReified()) {
-      fixReified(true);
-    } else if (!shouldHold()) {
-      throw InconsistencyException(
-          "IntLinEqNode neg: Invariant is always false");
-    }
+    assert(!isReified());
+    assert(shouldHold());
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
   if (_bound < lb || ub < _bound) {
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException("IntLinEqNode: Invariant is always false");
-    }
+    assert(!isReified());
+    assert(!shouldHold());
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
+
   bool sameCoeff = !_coeffs.empty() && std::abs(_coeffs.front()) != 1;
   for (size_t i = 1; sameCoeff && i < _coeffs.size(); ++i) {
     if (std::abs(_coeffs[i]) != std::abs(_coeffs.front())) {
@@ -128,16 +127,12 @@ void IntLinEqNode::updateState() {
   if (sameCoeff) {
     const Int c = std::abs(_coeffs.front());
     if (_bound % c != 0) {
-      fixReified(false);
-      if (shouldHold()) {
-        throw InconsistencyException(
-            "BoolLinEqNode: Invariant is always false");
-      }
+      assert(!shouldHold());
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
-    for (size_t i = 0; i < _coeffs.size(); ++i) {
-      _coeffs[i] /= c;
+    for (long & coeff : _coeffs) {
+      coeff /= c;
     }
     _bound /= c;
   }
