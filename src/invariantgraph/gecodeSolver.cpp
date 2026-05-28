@@ -876,7 +876,7 @@ void GecodeSolver::fzn_circuit_reif(const std::vector<ConstraintVarId>& inputs,
                                     const Int offset,
                                     const ConstraintVarId reified) {
   if (boolVar(reified).assigned()) {
-    return fzn_circuit_int(inputs, offset, boolVar(reified).val() == 1);
+    return fzn_circuit(inputs, offset, boolVar(reified).val() == 1);
   }
 }
 
@@ -892,7 +892,7 @@ void GecodeSolver::nvalue(const ConstraintVarId numVals,
 
 void GecodeSolver::nvalue_lt(const Int numVals,
                              const std::vector<ConstraintVarId>& inputs) {
-  return Gecode::nvalues(_space, intVarArgs(inputs), Gecode::IRT_LE, numVals);
+  return Gecode::nvalues(_space, intVarArgs(inputs), Gecode::IRT_LE, static_cast<int>(numVals));
 }
 
 }  // namespace atlantis::invariantgraph
