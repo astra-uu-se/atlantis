@@ -32,14 +32,10 @@ IntLinEqNode::IntLinEqNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
 
 void IntLinEqNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
-  assert(
-      !isReified() ||
-      !reifiedVarNodeConst().isIntVar());
+  assert(!isReified() || !reifiedVarNodeConst().isIntVar());
   assert(std::ranges::all_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return varNodeConst(vId).isIntVar();
-      }));
+      [&](const VarNodeId vId) { return varNodeConst(vId).isIntVar(); }));
 }
 
 void IntLinEqNode::postConstraint() {
@@ -95,10 +91,8 @@ void IntLinEqNode::updateState() {
   Int lb = 0;
   Int ub = 0;
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    const Int varLb =
-        staticInputVarNodeConst(i).lowerBound();
-    const Int varUb =
-        staticInputVarNodeConst(i).upperBound();
+    const Int varLb = staticInputVarNodeConst(i).lowerBound();
+    const Int varUb = staticInputVarNodeConst(i).upperBound();
     const Int prod1 = overflow::saturatingMul(_coeffs[i], varLb);
     const Int prod2 = overflow::saturatingMul(_coeffs[i], varUb);
     lb = overflow::saturatingAdd(lb, std::min(prod1, prod2));
@@ -131,7 +125,7 @@ void IntLinEqNode::updateState() {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
-    for (long & coeff : _coeffs) {
+    for (long& coeff : _coeffs) {
       coeff /= c;
     }
     _bound /= c;
