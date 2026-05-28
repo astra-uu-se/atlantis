@@ -117,7 +117,8 @@ void IntLinLeNode::updateState() {
     return;
   }
 
-  bool sameCoeff = !_coeffs.empty() && std::abs(_coeffs.front()) != 1 && _bound % std::abs(_coeffs.front()) == 0;
+  bool sameCoeff = !_coeffs.empty() && std::abs(_coeffs.front()) != 1 &&
+                   _bound % std::abs(_coeffs.front()) == 0;
   for (size_t i = 1; sameCoeff && i < _coeffs.size(); ++i) {
     if (std::abs(_coeffs[i]) != std::abs(_coeffs.front())) {
       sameCoeff = false;
