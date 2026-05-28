@@ -13,8 +13,6 @@ using atlantis::propagation::SolverBase;
 
 namespace atlantis::invariantgraph {
 
-GecodeSolver::GecodeSolver() = default;
-
 GecodeSolver::GecodeSpace::GecodeSpace(GecodeSpace& space) : Space(space) {
   _iv.resize(space._iv.size());
   for (size_t i = 0; i < space._iv.size(); ++i) {
@@ -30,18 +28,32 @@ Gecode::Space* GecodeSolver::GecodeSpace::copy() {
   return new GecodeSpace(*this);
 }
 
-size_t GecodeSolver::numIntVars() const { return _space._iv.size(); }
-
-size_t GecodeSolver::numBoolVars() const { return _space._bv.size(); }
-
-Gecode::IntVar GecodeSolver::intVar(const size_t varId) {
-  assert(varId < _space._iv.size());
-  return _space._iv[varId];
+Gecode::BoolVarArgs GecodeSolver::boolVarArgs(
+    const std::vector<ConstraintVarId>& varIds) {
+  Gecode::BoolVarArgs args(static_cast<int>(varIds.size()));
+  for (int i = 0; i < static_cast<int>(varIds.size()); ++i) {
+    assert(varIds.at(i).isBoolVar());
+    args[i] = boolVar(size_t{varIds[i]});
+  }
+  return args;
 }
 
-Gecode::IntVar GecodeSolver::intVar(const ConstraintVarId varId) {
-  assert(varId.isIntVar());
-  return intVar(size_t{varId});
+Gecode::BoolVarArgs GecodeSolver::boolVarArgs(
+    const std::vector<std::vector<ConstraintVarId>>& varIds) {
+  const int numIntVars = std::accumulate(
+      varIds.begin(), varIds.end(), int{0},
+      [&](const int size, const std::vector<ConstraintVarId>& row) {
+        return size + static_cast<int>(row.size());
+      });
+  Gecode::BoolVarArgs args(static_cast<int>(numIntVars));
+  int i = 0;
+  for (const auto& row : varIds) {
+    for (auto varId : row) {
+      assert(varId.isBoolVar());
+      args[i++] = boolVar(size_t{varId});
+    }
+  }
+  return args;
 }
 
 Gecode::BoolVar GecodeSolver::boolVar(const size_t varId) {
@@ -82,41 +94,14 @@ Gecode::IntVarArgs GecodeSolver::intVarArgs(
   return args;
 }
 
-Gecode::BoolVarArgs GecodeSolver::boolVarArgs(
-    const std::vector<ConstraintVarId>& varIds) {
-  Gecode::BoolVarArgs args(static_cast<int>(varIds.size()));
-  for (int i = 0; i < static_cast<int>(varIds.size()); ++i) {
-    assert(varIds.at(i).isBoolVar());
-    args[i] = boolVar(size_t{varIds[i]});
-  }
-  return args;
+Gecode::IntVar GecodeSolver::intVar(const size_t varId) {
+  assert(varId < _space._iv.size());
+  return _space._iv[varId];
 }
 
-Gecode::BoolVarArgs GecodeSolver::boolVarArgs(
-    const std::vector<std::vector<ConstraintVarId>>& varIds) {
-  const int numIntVars = std::accumulate(
-      varIds.begin(), varIds.end(), int{0},
-      [&](const int size, const std::vector<ConstraintVarId>& row) {
-        return size + static_cast<int>(row.size());
-      });
-  Gecode::BoolVarArgs args(static_cast<int>(numIntVars));
-  int i = 0;
-  for (const auto& row : varIds) {
-    for (auto varId : row) {
-      assert(varId.isBoolVar());
-      args[i++] = boolVar(size_t{varId});
-    }
-  }
-  return args;
-}
-
-Gecode::IntSharedArray GecodeSolver::intSharedArray(
-    const std::vector<bool>& valVector) {
-  Gecode::IntSharedArray pars(static_cast<int>(valVector.size()));
-  for (int i = 0; i < static_cast<int>(valVector.size()); ++i) {
-    pars[i] = valVector[i] ? 1 : 0;
-  }
-  return pars;
+Gecode::IntVar GecodeSolver::intVar(const ConstraintVarId varId) {
+  assert(varId.isIntVar());
+  return intVar(size_t{varId});
 }
 
 Gecode::IntSharedArray GecodeSolver::intSharedArray(
@@ -129,20 +114,12 @@ Gecode::IntSharedArray GecodeSolver::intSharedArray(
 }
 
 Gecode::IntSharedArray GecodeSolver::intSharedArray(
-    const std::vector<std::vector<bool>>& valMatrix) {
-  const int numIntVars =
-      std::accumulate(valMatrix.begin(), valMatrix.end(), int{0},
-                      [&](const int size, const std::vector<bool>& row) {
-                        return size + static_cast<int>(row.size());
-                      });
-  Gecode::IntSharedArray args(numIntVars);
-  int i = 0;
-  for (const auto& row : valMatrix) {
-    for (const auto val : row) {
-      args[i++] = val ? 1 : 0;
-    }
+    const std::vector<bool>& valVector) {
+  Gecode::IntSharedArray pars(static_cast<int>(valVector.size()));
+  for (int i = 0; i < static_cast<int>(valVector.size()); ++i) {
+    pars[i] = valVector[i] ? 1 : 0;
   }
-  return args;
+  return pars;
 }
 
 Gecode::IntSharedArray GecodeSolver::intSharedArray(
@@ -162,76 +139,21 @@ Gecode::IntSharedArray GecodeSolver::intSharedArray(
   return args;
 }
 
-ConstraintVarId GecodeSolver::newIntVar(const Int value) {
-  const size_t ret = _space._iv.size();
-  _space._iv.emplace_back(_space, value, value);
-  return {ret, true};
-}
-
-ConstraintVarId GecodeSolver::newIntVar(const SearchDomain& dom) {
-  const size_t ret = _space._iv.size();
-  if (dom.isInterval()) {
-    _space._iv.emplace_back(_space, dom.lowerBound(), dom.upperBound());
-  } else {
-    std::vector<int> values(dom.size());
-    size_t i = 0;
-    for (auto iter = dom.begin(); iter != dom.end(); ++iter) {
-      values[i++] = static_cast<int>(*iter);
-    }
-    _space._iv.emplace_back(
-        _space, Gecode::IntSet(values.data(), static_cast<int>(values.size())));
-  }
-  return {ret, true};
-}
-
-ConstraintVarId GecodeSolver::newBoolVar(const bool value) {
-  const size_t ret = _space._bv.size();
-  _space._bv.emplace_back(_space, value ? 1 : 0, value ? 1 : 0);
-  return {ret, false};
-}
-
-ConstraintVarId GecodeSolver::newBoolVar() {
-  const size_t ret = _space._bv.size();
-  _space._bv.emplace_back(_space, 0, 1);
-  return {ret, false};
-}
-
-void GecodeSolver::fixPoint() {
-  Gecode::SpaceStatus s = _space.status();
-  if (s == Gecode::SS_FAILED) {
-    throw InconsistencyException("UNSAT");
-  }
-  assert(s == Gecode::SS_SOLVED);
-}
-
-SearchDomain GecodeSolver::intVarDomain(const ConstraintVarId varId) const {
-  assert(varId.isIntVar());
-  if (_space._iv[size_t{varId}].range()) {
-    return SearchDomain(_space._iv[size_t{varId}].min(),
-                        _space._iv[size_t{varId}].max());
-  }
-  std::vector<Int> values(_space._iv[size_t{varId}].size());
-  size_t i = 0;
-  for (int v = _space._iv[size_t{varId}].min();
-       v <= _space._iv[size_t{varId}].max(); ++v) {
-    if (_space._iv[size_t{varId}].in(v)) {
-      values[i++] = v;
+Gecode::IntSharedArray GecodeSolver::intSharedArray(
+    const std::vector<std::vector<bool>>& valMatrix) {
+  const int numIntVars =
+      std::accumulate(valMatrix.begin(), valMatrix.end(), int{0},
+                      [&](const int size, const std::vector<bool>& row) {
+                        return size + static_cast<int>(row.size());
+                      });
+  Gecode::IntSharedArray args(numIntVars);
+  int i = 0;
+  for (const auto& row : valMatrix) {
+    for (const auto val : row) {
+      args[i++] = val ? 1 : 0;
     }
   }
-  return SearchDomain(std::move(values));
-}
-
-SearchDomain GecodeSolver::boolVarDomain(const ConstraintVarId varId) const {
-  assert(varId.isBoolVar());
-  if (_space._bv[size_t{varId}].assigned()) {
-    const Int viol = _space._bv[size_t{varId}].val() == 0 ? 1 : 0;
-    return SearchDomain(viol, viol);
-  }
-  return SearchDomain(0, 1);
-}
-
-SearchDomain GecodeSolver::varDomain(const ConstraintVarId varId) const {
-  return varId.isIntVar() ? intVarDomain(varId) : boolVarDomain(varId);
+  return args;
 }
 
 void GecodeSolver::array_bool_op(const std::vector<ConstraintVarId>& inputs,
@@ -283,19 +205,18 @@ void GecodeSolver::int_rel(const ConstraintVarId lhs, const ConstraintVarId rhs,
               Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
 }
 
+void GecodeSolver::int_rel(const ConstraintVarId lhs, const Int rhs,
+                           const ConstraintVarId reified,
+                           const Gecode::IntRelType irt) {
+  Gecode::rel(_space, intVar(lhs), irt, static_cast<int>(rhs),
+              Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
+}
+
 void GecodeSolver::int_rel(const ConstraintVarId lhs, const ConstraintVarId rhs,
                            const bool shouldHold,
                            const Gecode::IntRelType irt) {
   Gecode::rel(_space, intVar(lhs), shouldHold ? irt : neg(irt), intVar(rhs),
               Gecode::IPL_BND);
-}
-
-void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
-                                const std::vector<ConstraintVarId>& inputs,
-                                const Int rhs, const bool shouldHold,
-                                const Gecode::IntRelType irt) {
-  linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
-         shouldHold ? irt : neg(irt), static_cast<int>(rhs));
 }
 
 void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
@@ -319,11 +240,11 @@ void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
   linear(_space, intSharedArray(coeffs), boolVarArgs(inputs), irt, rhsVar);
 }
 
-void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
-                               const std::vector<ConstraintVarId>& inputs,
-                               const Int rhs, const bool shouldHold,
-                               const Gecode::IntRelType irt) {
-  linear(_space, intSharedArray(coeffs), intVarArgs(inputs),
+void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
+                                const std::vector<ConstraintVarId>& inputs,
+                                const Int rhs, const bool shouldHold,
+                                const Gecode::IntRelType irt) {
+  linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
          shouldHold ? irt : neg(irt), static_cast<int>(rhs));
 }
 
@@ -346,6 +267,92 @@ void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
                                const Gecode::IntRelType irt) {
   const auto rhsVar = expr(_space, intVar(rhs) + static_cast<int>(rhsOffset));
   linear(_space, intSharedArray(coeffs), intVarArgs(inputs), irt, rhsVar);
+}
+
+void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
+                               const std::vector<ConstraintVarId>& inputs,
+                               const Int rhs, const bool shouldHold,
+                               const Gecode::IntRelType irt) {
+  linear(_space, intSharedArray(coeffs), intVarArgs(inputs),
+         shouldHold ? irt : neg(irt), static_cast<int>(rhs));
+}
+
+GecodeSolver::GecodeSolver() = default;
+
+size_t GecodeSolver::numIntVars() const { return _space._iv.size(); }
+
+size_t GecodeSolver::numBoolVars() const { return _space._bv.size(); }
+
+ConstraintVarId GecodeSolver::newIntVar(const Int value) {
+  const size_t ret = _space._iv.size();
+  _space._iv.emplace_back(_space, value, value);
+  return {ret, true};
+}
+
+ConstraintVarId GecodeSolver::newIntVar(const SearchDomain& dom) {
+  const size_t ret = _space._iv.size();
+  if (dom.isInterval()) {
+    _space._iv.emplace_back(_space, dom.lowerBound(), dom.upperBound());
+  } else {
+    std::vector<int> values(dom.size());
+    size_t i = 0;
+    for (auto iter = dom.begin(); iter != dom.end(); ++iter) {
+      values[i++] = static_cast<int>(*iter);
+    }
+    _space._iv.emplace_back(
+        _space, Gecode::IntSet(values.data(), static_cast<int>(values.size())));
+  }
+  return {ret, true};
+}
+
+ConstraintVarId GecodeSolver::newBoolVar(const bool value) {
+  const size_t ret = _space._bv.size();
+  _space._bv.emplace_back(_space, value ? 1 : 0, value ? 1 : 0);
+  return {ret, false};
+}
+
+ConstraintVarId GecodeSolver::newBoolVar() {
+  const size_t ret = _space._bv.size();
+  _space._bv.emplace_back(_space, 0, 1);
+  return {ret, false};
+}
+
+SearchDomain GecodeSolver::intVarDomain(const ConstraintVarId varId) const {
+  assert(varId.isIntVar());
+  if (_space._iv[size_t{varId}].range()) {
+    return SearchDomain(_space._iv[size_t{varId}].min(),
+                        _space._iv[size_t{varId}].max());
+  }
+  std::vector<Int> values(_space._iv[size_t{varId}].size());
+  size_t i = 0;
+  for (int v = _space._iv[size_t{varId}].min();
+       v <= _space._iv[size_t{varId}].max(); ++v) {
+    if (_space._iv[size_t{varId}].in(v)) {
+      values[i++] = v;
+    }
+  }
+  return SearchDomain(std::move(values));
+}
+
+SearchDomain GecodeSolver::boolVarDomain(const ConstraintVarId varId) const {
+  assert(varId.isBoolVar());
+  if (_space._bv[size_t{varId}].assigned()) {
+    const Int viol = _space._bv[size_t{varId}].val() == 0 ? 1 : 0;
+    return SearchDomain(viol, viol);
+  }
+  return SearchDomain(0, 1);
+}
+
+SearchDomain GecodeSolver::varDomain(const ConstraintVarId varId) const {
+  return varId.isIntVar() ? intVarDomain(varId) : boolVarDomain(varId);
+}
+
+void GecodeSolver::fixPoint() {
+  Gecode::SpaceStatus s = _space.status();
+  if (s == Gecode::SS_FAILED) {
+    throw InconsistencyException("UNSAT");
+  }
+  assert(s == Gecode::SS_SOLVED);
 }
 
 void GecodeSolver::array_bool_and(const std::vector<ConstraintVarId>& inputs,
@@ -687,6 +694,11 @@ void GecodeSolver::int_eq_reif(const ConstraintVarId lhs,
   int_rel(lhs, rhs, reified, Gecode::IRT_EQ);
 }
 
+void GecodeSolver::int_eq_reif(const ConstraintVarId lhs, const Int rhs,
+                               const ConstraintVarId reified) {
+  int_rel(lhs, rhs, reified, Gecode::IRT_EQ);
+}
+
 void GecodeSolver::int_le(const ConstraintVarId lhs, const ConstraintVarId rhs,
                           const bool shouldHold) {
   int_rel(lhs, rhs, shouldHold, Gecode::IRT_LQ);
@@ -815,10 +827,38 @@ void GecodeSolver::int_times(const ConstraintVarId a, const ConstraintVarId b,
 }
 
 void GecodeSolver::fzn_all_different_int(
-    const std::vector<ConstraintVarId>& inputs) {
-  auto inputVars = intVarArgs(inputs);
-  Gecode::unshare(_space, inputVars);  // Is this really needed?
-  Gecode::distinct(_space, inputVars);
+    const std::vector<ConstraintVarId>& inputs, const bool shouldHold) {
+  if (shouldHold) {
+    auto inputVars = intVarArgs(inputs);
+    Gecode::unshare(_space, inputVars);  // Is this really needed?
+    return Gecode::distinct(_space, inputVars);
+  }
+  Gecode::nvalues(_space, intVarArgs(inputs), Gecode::IRT_LE, static_cast<int>(inputs.size()));
+}
+
+void GecodeSolver::fzn_all_different_int_reif(
+    const std::vector<ConstraintVarId>& inputs, const ConstraintVarId reified) {
+  if (boolVar(reified).assigned()) {
+    return fzn_all_different_int(inputs, boolVar(reified).val() == 1);
+  }
+  const Gecode::IntVar numVals(_space, 0, static_cast<int>(inputs.size()));
+  Gecode::nvalues(_space, intVarArgs(inputs), Gecode::IRT_EQ, numVals);
+  Gecode::rel(_space, numVals, Gecode::IRT_EQ, static_cast<int>(inputs.size()),
+              Gecode::Reify(boolVar(reified), Gecode::RM_EQV));
+}
+
+void GecodeSolver::nvalue(const ConstraintVarId numVals,
+                          const std::vector<ConstraintVarId>& inputs) {
+  const auto inputVars = intVarArgs(inputs);
+  if (intVar(numVals).assigned()) {
+    return Gecode::nvalues(_space, inputVars, Gecode::IRT_EQ, intVar(numVals).val());
+  }
+  return Gecode::nvalues(_space, inputVars, Gecode::IRT_EQ, intVar(numVals));
+}
+
+void GecodeSolver::nvalue_lt(const Int numVals,
+                             const std::vector<ConstraintVarId>& inputs) {
+  return Gecode::nvalues(_space, intVarArgs(inputs), Gecode::IRT_LE, numVals);
 }
 
 }  // namespace atlantis::invariantgraph

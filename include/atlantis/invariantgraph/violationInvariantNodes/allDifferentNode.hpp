@@ -4,6 +4,7 @@
 
 namespace atlantis::invariantgraph {
 class AllDifferentNode : public ViolationInvariantNode {
+  std::vector<Int> _seenValues;
  public:
   explicit AllDifferentNode(InvariantGraph& graph,
 

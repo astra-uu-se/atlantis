@@ -62,72 +62,50 @@ void AllDifferentNode::postConstraint() {
         staticInputVarNodeConst(0).constraintVarId(),
         staticInputVarNodeConst(1).constraintVarId(), shouldHold());
   }
-  if (!isReified() && shouldHold()) {
-    constraintSolver().fzn_all_different_int(
-        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()));
+  if (isReified()) {
+    return constraintSolver().fzn_all_different_int_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        reifiedVarNodeConst().constraintVarId());
   }
+  return constraintSolver().fzn_all_different_int(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), shouldHold());
 }
 
 void AllDifferentNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (!isReified() && shouldHold()) {
-    const std::vector<VarNodeId> varsToRemove =
-        pruneAllDifferentFixed(invariantGraph(), staticInputVarNodeIds());
-    for (const auto vId : varsToRemove) {
-      removeStaticInputVarNode(vId);
-    }
-  }
-  if (staticInputVarNodeIds().size() <= 1) {
-    if (isReified()) {
-      fixReified(true);
-    } else if (!shouldHold()) {
-      throw InconsistencyException(
-          "AllDifferentNode neg: one or less input variables");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-  }
-  Int unionLb = std::numeric_limits<Int>::max();
-  Int unionUb = std::numeric_limits<Int>::min();
-  for (const auto vId : staticInputVarNodeIds()) {
-    unionLb =
-        std::min(unionLb, invariantGraph().varNodeConst(vId).lowerBound());
-    unionUb =
-        std::max(unionUb, invariantGraph().varNodeConst(vId).upperBound());
-  }
-  if (overflow::saturatingIntervalSize(unionLb, unionUb) <
-      staticInputVarNodeIds().size()) {
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException(
-          "AllDifferentNode: the union of the domains is smaller than the "
-          "number of variables.");
-    }
-    setState(InvariantNodeState::SUBSUMED);
+  if (isReified()) {
     return;
   }
-  bool allDisjoint = true;
-  for (size_t i = 0; allDisjoint && i < staticInputVarNodeIds().size(); ++i) {
-    const auto& iNode =
-        invariantGraphConst().varNodeConst(staticInputVarNodeIds()[i]);
-    for (size_t j = i + 1; j < staticInputVarNodeIds().size(); ++j) {
-      const auto& jNode =
-          invariantGraphConst().varNodeConst(staticInputVarNodeIds()[j]);
-      if (!iNode.constDomain()->isDisjoint(*jNode.constDomain())) {
-        allDisjoint = false;
-        break;
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
+  if (!shouldHold()) {
+    for (const auto vId : staticInputVarNodeIds()) {
+      if (!varNodeConst(vId).isFixed()) {
+        continue;
+      }
+      for (const Int val : _seenValues) {
+        if (val == varNodeConst(vId).lowerBound()) {
+          setState(InvariantNodeState::SUBSUMED);
+          return;
+        }
+      }
+      _seenValues.emplace_back(varNodeConst(vId).lowerBound());
+      varsToRemove.emplace_back(vId);
+    }
+  } else {
+    for (const auto vId : staticInputVarNodeIds()) {
+      if (varNodeConst(vId).isFixed()) {
+        varsToRemove.emplace_back(vId);
       }
     }
   }
-  if (allDisjoint) {
-    if (isReified()) {
-      fixReified(true);
-    } else if (!shouldHold()) {
-      throw InconsistencyException(
-          "AllDifferentNode neg: domains do not intersect");
-    }
+
+  for (const auto vId : varsToRemove) {
+    removeStaticInputVarNode(vId);
+  }
+
+  if (staticInputVarNodeIds().size() <= 1) {
     setState(InvariantNodeState::SUBSUMED);
   }
+
 }
 
 bool AllDifferentNode::canBeMadeImplicit() const {
