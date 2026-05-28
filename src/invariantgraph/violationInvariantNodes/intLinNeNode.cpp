@@ -11,6 +11,7 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -85,38 +86,52 @@ void IntLinNeNode::updateState() {
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
 
-  Int lb = 0;
-  Int ub = 0;
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    const Int v1 =
-        _coeffs.at(i) *
-        invariantGraph().varNode(staticInputVarNodeIds().at(i)).lowerBound();
-    const Int v2 =
-        _coeffs.at(i) *
-        invariantGraph().varNode(staticInputVarNodeIds().at(i)).upperBound();
-    lb += std::min(v1, v2);
-    ub += std::max(v1, v2);
-  }
-
-  if (_bound < lb || ub < _bound) {
-    if (isReified()) {
-      fixReified(true);
-    }
-    if (!shouldHold()) {
-      throw InconsistencyException(
-          "IntLinNeNode neg: Invariant is always false");
-    }
+  if (staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
+
+  Int lb = 0;
+  Int ub = 0;
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+    const Int varLb = staticInputVarNodeConst(i).lowerBound();
+    const Int varUb = staticInputVarNodeConst(i).upperBound();
+    const Int prod1 = overflow::saturatingMul(_coeffs[i], varLb);
+    const Int prod2 = overflow::saturatingMul(_coeffs[i], varUb);
+    lb = overflow::saturatingAdd(lb, std::min(prod1, prod2));
+    ub = overflow::saturatingAdd(ub, std::max(prod1, prod2));
+  }
+
   if (lb == ub && lb == _bound) {
-    if (isReified()) {
-      fixReified(false);
-    }
-    if (shouldHold()) {
-      throw InconsistencyException("IntLinNeNode: Invariant is always false");
-    }
+    assert(!isReified());
+    assert(!shouldHold());
     setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (_bound < lb || ub < _bound) {
+    assert(!isReified());
+    assert(shouldHold());
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+
+  bool sameCoeff = !_coeffs.empty() && std::abs(_coeffs.front()) != 1;
+  for (size_t i = 1; sameCoeff && i < _coeffs.size(); ++i) {
+    if (std::abs(_coeffs[i]) != std::abs(_coeffs.front())) {
+      sameCoeff = false;
+    }
+  }
+  if (sameCoeff) {
+    const Int c = std::abs(_coeffs.front());
+    if (_bound % c != 0) {
+      assert(shouldHold());
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+    for (long& coeff : _coeffs) {
+      coeff /= c;
+    }
+    _bound /= c;
   }
 }
 

@@ -88,13 +88,16 @@ void IntLinLeNode::updateState() {
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
 
+  if (staticInputVarNodeIds().empty()) {
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+
   Int lb = 0;
   Int ub = 0;
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    const Int varLb =
-        invariantGraph().varNode(staticInputVarNodeIds().at(i)).lowerBound();
-    const Int varUb =
-        invariantGraph().varNode(staticInputVarNodeIds().at(i)).upperBound();
+    const Int varLb = staticInputVarNodeConst(i).lowerBound();
+    const Int varUb = staticInputVarNodeConst(i).upperBound();
     const Int prod1 = overflow::saturatingMul(_coeffs[i], varLb);
     const Int prod2 = overflow::saturatingMul(_coeffs[i], varUb);
     lb = overflow::saturatingAdd(lb, std::min(prod1, prod2));
@@ -102,24 +105,30 @@ void IntLinLeNode::updateState() {
   }
 
   if (ub <= _bound) {
-    if (isReified()) {
-      fixReified(true);
-    }
-    if (!shouldHold()) {
-      throw InconsistencyException("IntLinLeNode: Invariant is always false");
-    }
+    assert(!isReified());
+    assert(shouldHold());
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (_bound < lb) {
-    if (isReified()) {
-      fixReified(false);
-    }
-    if (shouldHold()) {
-      throw InconsistencyException(
-          "IntLinLeNode neg: Invariant is always false");
-    }
+  if (lb > _bound) {
+    assert(!isReified());
+    assert(!shouldHold());
     setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+
+  bool sameCoeff = !_coeffs.empty() && std::abs(_coeffs.front()) != 1 && _bound % std::abs(_coeffs.front()) == 0;
+  for (size_t i = 1; sameCoeff && i < _coeffs.size(); ++i) {
+    if (std::abs(_coeffs[i]) != std::abs(_coeffs.front())) {
+      sameCoeff = false;
+    }
+  }
+  if (sameCoeff) {
+    const Int c = std::abs(_coeffs.front());
+    for (long& coeff : _coeffs) {
+      coeff /= c;
+    }
+    _bound /= c;
   }
 }
 
