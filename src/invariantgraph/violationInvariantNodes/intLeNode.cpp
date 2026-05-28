@@ -71,7 +71,8 @@ void IntLeNode::updateState() {
   }
   const VarNode& aNode = varNodeConst(a());
   const VarNode& bNode = varNodeConst(b());
-  if (aNode.upperBound() <= bNode.lowerBound() || aNode.lowerBound() > bNode.upperBound()) {
+  if (aNode.upperBound() <= bNode.lowerBound() ||
+      aNode.lowerBound() > bNode.upperBound()) {
     assert((aNode.upperBound() <= bNode.lowerBound()) == shouldHold());
     setState(InvariantNodeState::SUBSUMED);
   }
