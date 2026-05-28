@@ -328,6 +328,12 @@ class GecodeSolver : public ConstraintSolver {
   void fzn_all_different_int_reif(const std::vector<ConstraintVarId>& inputs,
                                   ConstraintVarId reified) override;
 
+  void fzn_all_equal_int(const std::vector<ConstraintVarId>& inputs,
+                             bool shouldHold) override;
+
+  void fzn_all_equal_int_reif(const std::vector<ConstraintVarId>& inputs,
+                                  ConstraintVarId reified) override;
+
   void nvalue(ConstraintVarId numVals,
               const std::vector<ConstraintVarId>& inputs) override;
 

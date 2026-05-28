@@ -848,6 +848,22 @@ void GecodeSolver::fzn_all_different_int_reif(
               Gecode::Reify(boolVar(reified), Gecode::RM_EQV));
 }
 
+void GecodeSolver::fzn_all_equal_int(const std::vector<ConstraintVarId>& inputs,
+                                     const bool shouldHold) {
+  Gecode::rel(_space, intVarArgs(inputs), shouldHold ? Gecode::IRT_EQ : Gecode::IRT_NQ);
+}
+
+void GecodeSolver::fzn_all_equal_int_reif(
+    const std::vector<ConstraintVarId>& inputs, const ConstraintVarId reified) {
+  if (boolVar(reified).assigned()) {
+    return fzn_all_equal_int(inputs, boolVar(reified).val() == 1);
+  }
+  const Gecode::IntVar numVals(_space, 0, static_cast<int>(inputs.size()));
+  Gecode::nvalues(_space, intVarArgs(inputs), Gecode::IRT_EQ, numVals);
+  Gecode::rel(_space, numVals, Gecode::IRT_EQ, 1,
+              Gecode::Reify(boolVar(reified), Gecode::RM_EQV));
+}
+
 void GecodeSolver::nvalue(const ConstraintVarId numVals,
                           const std::vector<ConstraintVarId>& inputs) {
   const auto inputVars = intVarArgs(inputs);

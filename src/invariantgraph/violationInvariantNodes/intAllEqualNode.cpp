@@ -20,28 +20,28 @@
 
 namespace atlantis::invariantgraph {
 
-IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, VarNodeId a,
-                                 VarNodeId b, VarNodeId r, bool breaksCycle)
+IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, const VarNodeId a,
+                                 const VarNodeId b, const VarNodeId r, const bool breaksCycle)
     : IntAllEqualNode(graph, std::vector<VarNodeId>{a, b}, r, breaksCycle) {}
 
-IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, VarNodeId a,
-                                 VarNodeId b, bool shouldHold, bool breaksCycle)
+IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, const VarNodeId a,
+                                 const VarNodeId b, const bool shouldHold, const bool breaksCycle)
     : IntAllEqualNode(graph, std::vector<VarNodeId>{a, b}, shouldHold,
                       breaksCycle) {}
 
 IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph,
-                                 std::vector<VarNodeId>&& vars, VarNodeId r,
-                                 bool breaksCycle)
+                                 std::vector<VarNodeId>&& vars, const VarNodeId r,
+                                 const bool breaksCycle)
     : ViolationInvariantNode(graph, std::move(vars), r),
       _breaksCycle(breaksCycle) {}
 
 IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph,
-                                 std::vector<VarNodeId>&& vars, bool shouldHold,
-                                 bool breaksCycle)
+                                 std::vector<VarNodeId>&& vars, const bool shouldHold,
+                                 const bool breaksCycle)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
       _breaksCycle(breaksCycle) {}
 
-void IntAllEqualNode::init(InvariantNodeId id) {
+void IntAllEqualNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -53,113 +53,58 @@ void IntAllEqualNode::init(InvariantNodeId id) {
       }));
 }
 
+void IntAllEqualNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (staticInputVarNodeIds().size() == 2) {
+    if (isReified()) {
+      return constraintSolver().int_eq_reif(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), reifiedVarNodeConst().constraintVarId());
+    }
+    return constraintSolver().int_eq(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), shouldHold());
+  }
+  if (isReified()) {
+    return constraintSolver().fzn_all_equal_int_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), reifiedVarNodeConst().constraintVarId());
+  }
+  return constraintSolver().fzn_all_equal_int(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), shouldHold());
+}
+
 void IntAllEqualNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (staticInputVarNodeIds().size() < 2 && !_boundVal.has_value()) {
-    if (isReified()) {
-      fixReified(true);
-    } else if (!shouldHold()) {
-      throw InconsistencyException(
-          "IntAllEqualNode::updateState constraint is violated");
-    }
-    setState(InvariantNodeState::SUBSUMED);
+  if (isReified()) {
     return;
   }
+  if (shouldHold()) {
+    const bool anyFixed = staticInputVarNodeIds().empty() || std::ranges::any_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+      return varNodeConst(vId).isFixed();
+    });
+    if (anyFixed) {
+      assert(std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+      return varNodeConst(vId).isFixed() && varNodeConst(vId).lowerBound() == staticInputVarNodeConst(0).lowerBound();
+    }));
+      setState(InvariantNodeState::SUBSUMED);
+    }
+    return;
+  }
+
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
+
   for (const auto vId : staticInputVarNodeIds()) {
-    const VarNode& vNode = invariantGraphConst().varNodeConst(vId);
-    if (!vNode.isFixed()) {
+    if (!varNodeConst(vId).isFixed()) {
       continue;
     }
-    const Int val = vNode.lowerBound();
-    if (_boundVal.has_value() && val != _boundVal.value()) {
-      if (isReified()) {
-        fixReified(false);
-      } else if (shouldHold()) {
-        throw InconsistencyException(
-            "IntAllEqualNode::updateState constraint is violated");
-      }
-
+    if (!_boundVal.has_value()) {
+      _boundVal = varNodeConst(vId).lowerBound();
+    } else if (*_boundVal != varNodeConst(vId).lowerBound()) {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
-    _boundVal.emplace(val);
     varsToRemove.emplace_back(vId);
   }
-
-  if (_boundVal.has_value() && !isReified() && shouldHold()) {
-    for (const auto vId : staticInputVarNodeIds()) {
-      invariantGraph().varNode(vId).fixToValue(_boundVal.value());
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-
-  for (const auto& vId : varsToRemove) {
+  for (const auto vId : varsToRemove) {
     removeStaticInputVarNode(vId);
   }
-
-  if (!_boundVal.has_value()) {
-    Int overlapLb = std::numeric_limits<Int>::min();
-    Int overlapUb = std::numeric_limits<Int>::max();
-    for (const auto& vId : staticInputVarNodeIds()) {
-      const VarNode& vNode = invariantGraphConst().varNodeConst(vId);
-      overlapLb = std::max(overlapLb, vNode.lowerBound());
-      overlapUb = std::min(overlapUb, vNode.upperBound());
-    }
-    if (overlapLb > overlapUb) {
-      if (isReified()) {
-        fixReified(false);
-      } else if (shouldHold()) {
-        throw InconsistencyException(
-            "IntAllEqualNode::updateState constraint is violated");
-      }
-      setState(InvariantNodeState::SUBSUMED);
-      return;
-    }
-    if (overlapLb == overlapUb && !isReified() && shouldHold()) {
-      _boundVal.emplace(overlapLb);
-      for (const auto vId : staticInputVarNodeIds()) {
-        invariantGraph().varNode(vId).fixToValue(_boundVal.value());
-      }
-      setState(InvariantNodeState::SUBSUMED);
-      return;
-    }
-    if (overlapLb + 1 < overlapUb) {
-      SearchDomain overlap(overlapLb, overlapUb);
-      try {
-        for (const auto vId : staticInputVarNodeIds()) {
-          overlap.removeAllValuesExcept(
-              *invariantGraphConst().varNodeConst(vId).constDomain());
-        }
-      } catch (const InconsistencyException&) {
-        if (isReified()) {
-          fixReified(false);
-        } else if (shouldHold()) {
-          throw;
-        }
-        setState(InvariantNodeState::SUBSUMED);
-        return;
-      }
-    }
-  }
-
+  assert(staticInputVarNodeIds().size() != 1);
   if (staticInputVarNodeIds().empty()) {
-    if (isReified()) {
-      fixReified(true);
-    } else if (!shouldHold()) {
-      throw InconsistencyException(
-          "IntAllEqualNode::updateState constraint is violated");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (staticInputVarNodeIds().size() == 1 && _boundVal.has_value() &&
-      !isReified()) {
-    assert(!shouldHold());
-    auto& vNode = invariantGraph().varNode(staticInputVarNodeIds().front());
-    vNode.removeValue(_boundVal.value());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
