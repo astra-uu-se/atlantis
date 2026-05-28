@@ -16,10 +16,18 @@
 namespace atlantis::invariantgraph {
 
 CircuitNode::CircuitNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                         Int offset)
+                         const Int offset)
     : ViolationInvariantNode(graph, std::move(vars), true), _offset(offset) {}
 
-void CircuitNode::init(InvariantNodeId id) {
+void CircuitNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (isReified()) {
+    return constraintSolver().fzn_circuit_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _offset, reifiedVarNodeConst().constraintVarId());
+  }
+  return constraintSolver().fzn_circuit(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _offset, shouldHold());
+}
+
+void CircuitNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -32,19 +40,10 @@ void CircuitNode::init(InvariantNodeId id) {
 }
 
 void CircuitNode::updateState() {
-  if (staticInputVarNodeIds().size() == 1) {
-    invariantGraph()
-        .varNode(staticInputVarNodeIds().front())
-        .fixToValue(_offset);
-  } else if (staticInputVarNodeIds().size() == 2) {
-    invariantGraph()
-        .varNode(staticInputVarNodeIds().front())
-        .fixToValue(_offset + 1);
-    invariantGraph()
-        .varNode(staticInputVarNodeIds().back())
-        .fixToValue(_offset);
-  }
-  if (staticInputVarNodeIds().size() <= 2) {
+  const bool allFixed = staticInputVarNodeIds().empty() || std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+    return varNodeConst(vId).isFixed();
+  });
+  if (allFixed) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
