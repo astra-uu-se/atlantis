@@ -865,16 +865,16 @@ void GecodeSolver::fzn_all_equal_int_reif(
               Gecode::Reify(boolVar(reified), Gecode::RM_EQV));
 }
 void GecodeSolver::fzn_circuit(const std::vector<ConstraintVarId>& inputs,
-                                   const Int offset, const bool shouldHold) {
+                               const Int offset, const bool shouldHold) {
   if (shouldHold) {
     auto inputVars = intVarArgs(inputs);
     unshare(_space, inputVars);
     return Gecode::circuit(_space, static_cast<int>(offset), inputVars);
   }
 }
-void GecodeSolver::fzn_circuit_reif(
-    const std::vector<ConstraintVarId>& inputs, const Int offset,
-    const ConstraintVarId reified) {
+void GecodeSolver::fzn_circuit_reif(const std::vector<ConstraintVarId>& inputs,
+                                    const Int offset,
+                                    const ConstraintVarId reified) {
   if (boolVar(reified).assigned()) {
     return fzn_circuit_int(inputs, offset, boolVar(reified).val() == 1);
   }

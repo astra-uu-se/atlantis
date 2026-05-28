@@ -22,9 +22,13 @@ CircuitNode::CircuitNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
 void CircuitNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
-    return constraintSolver().fzn_circuit_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _offset, reifiedVarNodeConst().constraintVarId());
+    return constraintSolver().fzn_circuit_reif(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        _offset, reifiedVarNodeConst().constraintVarId());
   }
-  return constraintSolver().fzn_circuit(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _offset, shouldHold());
+  return constraintSolver().fzn_circuit(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      _offset, shouldHold());
 }
 
 void CircuitNode::init(const InvariantNodeId id) {
@@ -40,9 +44,11 @@ void CircuitNode::init(const InvariantNodeId id) {
 }
 
 void CircuitNode::updateState() {
-  const bool allFixed = staticInputVarNodeIds().empty() || std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
-    return varNodeConst(vId).isFixed();
-  });
+  const bool allFixed =
+      staticInputVarNodeIds().empty() ||
+      std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+        return varNodeConst(vId).isFixed();
+      });
   if (allFixed) {
     setState(InvariantNodeState::SUBSUMED);
   }
