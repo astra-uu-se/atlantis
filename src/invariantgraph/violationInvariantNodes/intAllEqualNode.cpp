@@ -21,23 +21,25 @@
 namespace atlantis::invariantgraph {
 
 IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, const VarNodeId a,
-                                 const VarNodeId b, const VarNodeId r, const bool breaksCycle)
+                                 const VarNodeId b, const VarNodeId r,
+                                 const bool breaksCycle)
     : IntAllEqualNode(graph, std::vector<VarNodeId>{a, b}, r, breaksCycle) {}
 
 IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph, const VarNodeId a,
-                                 const VarNodeId b, const bool shouldHold, const bool breaksCycle)
+                                 const VarNodeId b, const bool shouldHold,
+                                 const bool breaksCycle)
     : IntAllEqualNode(graph, std::vector<VarNodeId>{a, b}, shouldHold,
                       breaksCycle) {}
 
 IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph,
-                                 std::vector<VarNodeId>&& vars, const VarNodeId r,
-                                 const bool breaksCycle)
+                                 std::vector<VarNodeId>&& vars,
+                                 const VarNodeId r, const bool breaksCycle)
     : ViolationInvariantNode(graph, std::move(vars), r),
       _breaksCycle(breaksCycle) {}
 
 IntAllEqualNode::IntAllEqualNode(InvariantGraph& graph,
-                                 std::vector<VarNodeId>&& vars, const bool shouldHold,
-                                 const bool breaksCycle)
+                                 std::vector<VarNodeId>&& vars,
+                                 const bool shouldHold, const bool breaksCycle)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
       _breaksCycle(breaksCycle) {}
 
@@ -57,14 +59,23 @@ void IntAllEqualNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (staticInputVarNodeIds().size() == 2) {
     if (isReified()) {
-      return constraintSolver().int_eq_reif(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), reifiedVarNodeConst().constraintVarId());
+      return constraintSolver().int_eq_reif(
+          staticInputVarNodeConst(0).constraintVarId(),
+          staticInputVarNodeConst(1).constraintVarId(),
+          reifiedVarNodeConst().constraintVarId());
     }
-    return constraintSolver().int_eq(staticInputVarNodeConst(0).constraintVarId(), staticInputVarNodeConst(1).constraintVarId(), shouldHold());
+    return constraintSolver().int_eq(
+        staticInputVarNodeConst(0).constraintVarId(),
+        staticInputVarNodeConst(1).constraintVarId(), shouldHold());
   }
   if (isReified()) {
-    return constraintSolver().fzn_all_equal_int_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), reifiedVarNodeConst().constraintVarId());
+    return constraintSolver().fzn_all_equal_int_reif(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        reifiedVarNodeConst().constraintVarId());
   }
-  return constraintSolver().fzn_all_equal_int(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), shouldHold());
+  return constraintSolver().fzn_all_equal_int(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      shouldHold());
 }
 
 void IntAllEqualNode::updateState() {
@@ -73,13 +84,18 @@ void IntAllEqualNode::updateState() {
     return;
   }
   if (shouldHold()) {
-    const bool anyFixed = staticInputVarNodeIds().empty() || std::ranges::any_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
-      return varNodeConst(vId).isFixed();
-    });
+    const bool anyFixed =
+        staticInputVarNodeIds().empty() ||
+        std::ranges::any_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+          return varNodeConst(vId).isFixed();
+        });
     if (anyFixed) {
-      assert(std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
-      return varNodeConst(vId).isFixed() && varNodeConst(vId).lowerBound() == staticInputVarNodeConst(0).lowerBound();
-    }));
+      assert(std::ranges::all_of(
+          staticInputVarNodeIds(), [&](const VarNodeId vId) {
+            return varNodeConst(vId).isFixed() &&
+                   varNodeConst(vId).lowerBound() ==
+                       staticInputVarNodeConst(0).lowerBound();
+          }));
       setState(InvariantNodeState::SUBSUMED);
     }
     return;

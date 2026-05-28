@@ -228,7 +228,7 @@ class ConstraintSolver {
       const std::vector<ConstraintVarId>& inputs, ConstraintVarId reified) = 0;
 
   virtual void fzn_all_equal_int(const std::vector<ConstraintVarId>& inputs,
-                                     bool shouldHold) = 0;
+                                 bool shouldHold) = 0;
 
   virtual void fzn_all_equal_int_reif(
       const std::vector<ConstraintVarId>& inputs, ConstraintVarId reified) = 0;

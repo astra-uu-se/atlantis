@@ -850,7 +850,8 @@ void GecodeSolver::fzn_all_different_int_reif(
 
 void GecodeSolver::fzn_all_equal_int(const std::vector<ConstraintVarId>& inputs,
                                      const bool shouldHold) {
-  Gecode::rel(_space, intVarArgs(inputs), shouldHold ? Gecode::IRT_EQ : Gecode::IRT_NQ);
+  Gecode::rel(_space, intVarArgs(inputs),
+              shouldHold ? Gecode::IRT_EQ : Gecode::IRT_NQ);
 }
 
 void GecodeSolver::fzn_all_equal_int_reif(
