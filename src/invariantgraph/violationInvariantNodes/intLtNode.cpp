@@ -47,47 +47,35 @@ void IntLtNode::postConstraint() {
 
 void IntLtNode::updateState() {
   ViolationInvariantNode::updateState();
+  if (isReified()) {
+    return;
+  }
   if (staticInputVarNodeIds().size() < 2) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  const VarNode& aNode = invariantGraph().varNode(a());
-  const VarNode& bNode = invariantGraph().varNode(b());
   if (a() == b()) {
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException("IntLtNode: a == b");
-    }
+    assert(!isReified());
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (!isReified()) {
-    if (shouldHold()) {
-      // a < b
-      // aNode.removeValuesAbove(bNode.upperBound() - 1);
-      // bNode.removeValuesBelow(aNode.lowerBound() + 1);
-    } else {
-      // a >= b
-      // aNode.removeValuesBelow(bNode.lowerBound());
-      // bNode.removeValuesAbove(aNode.upperBound());
+  const VarNode& aNode = varNodeConst(a());
+  const VarNode& bNode = varNodeConst(b());
+  if (aNode.upperBound() < bNode.lowerBound() || aNode.lowerBound() >= bNode.upperBound()) {
+    assert((aNode.upperBound() <= bNode.lowerBound()) == shouldHold());
+    setState(InvariantNodeState::SUBSUMED);
+  }
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
+  for (const auto vId : staticInputVarNodeIds()) {
+    if (varNodeConst(vId).isFixed()) {
+      varsToRemove.emplace_back(vId);
     }
   }
-  if (aNode.upperBound() < bNode.lowerBound()) {
-    // always true
-    if (isReified()) {
-      fixReified(true);
-    } else if (!shouldHold()) {
-      throw InconsistencyException("IntLtNode neg: a < b");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-  } else if (aNode.lowerBound() >= bNode.upperBound()) {
-    // always false
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException("IntLtNode: a >= b");
-    }
+  for (const auto vId : varsToRemove) {
+    removeStaticInputVarNode(vId);
+  }
+  if (staticInputVarNodeIds().size() < 2) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
