@@ -221,15 +221,17 @@ class ConstraintSolver {
   virtual void int_times(ConstraintVarId a, ConstraintVarId b,
                          ConstraintVarId product) = 0;
 
-  virtual void fzn_all_different_int(
-      const std::vector<ConstraintVarId>& inputs, bool shouldHold) = 0;
+  virtual void fzn_all_different_int(const std::vector<ConstraintVarId>& inputs,
+                                     bool shouldHold) = 0;
 
   virtual void fzn_all_different_int_reif(
       const std::vector<ConstraintVarId>& inputs, ConstraintVarId reified) = 0;
 
-  virtual void nvalue(ConstraintVarId numVals, const std::vector<ConstraintVarId>& inputs) = 0;
+  virtual void nvalue(ConstraintVarId numVals,
+                      const std::vector<ConstraintVarId>& inputs) = 0;
 
-  virtual void nvalue_lt(Int numVals, const std::vector<ConstraintVarId>& inputs) = 0;
+  virtual void nvalue_lt(Int numVals,
+                         const std::vector<ConstraintVarId>& inputs) = 0;
 };
 
 }  // namespace atlantis::invariantgraph

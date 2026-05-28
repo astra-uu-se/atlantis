@@ -63,10 +63,13 @@ void AllDifferentNode::postConstraint() {
         staticInputVarNodeConst(1).constraintVarId(), shouldHold());
   }
   if (isReified()) {
-    return constraintSolver().fzn_all_different_int_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+    return constraintSolver().fzn_all_different_int_reif(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
         reifiedVarNodeConst().constraintVarId());
   }
-  return constraintSolver().fzn_all_different_int(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), shouldHold());
+  return constraintSolver().fzn_all_different_int(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      shouldHold());
 }
 
 void AllDifferentNode::updateState() {
@@ -105,7 +108,6 @@ void AllDifferentNode::updateState() {
   if (staticInputVarNodeIds().size() <= 1) {
     setState(InvariantNodeState::SUBSUMED);
   }
-
 }
 
 bool AllDifferentNode::canBeMadeImplicit() const {

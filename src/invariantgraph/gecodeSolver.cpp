@@ -833,7 +833,8 @@ void GecodeSolver::fzn_all_different_int(
     Gecode::unshare(_space, inputVars);  // Is this really needed?
     return Gecode::distinct(_space, inputVars);
   }
-  Gecode::nvalues(_space, intVarArgs(inputs), Gecode::IRT_LE, static_cast<int>(inputs.size()));
+  Gecode::nvalues(_space, intVarArgs(inputs), Gecode::IRT_LE,
+                  static_cast<int>(inputs.size()));
 }
 
 void GecodeSolver::fzn_all_different_int_reif(
@@ -851,7 +852,8 @@ void GecodeSolver::nvalue(const ConstraintVarId numVals,
                           const std::vector<ConstraintVarId>& inputs) {
   const auto inputVars = intVarArgs(inputs);
   if (intVar(numVals).assigned()) {
-    return Gecode::nvalues(_space, inputVars, Gecode::IRT_EQ, intVar(numVals).val());
+    return Gecode::nvalues(_space, inputVars, Gecode::IRT_EQ,
+                           intVar(numVals).val());
   }
   return Gecode::nvalues(_space, inputVars, Gecode::IRT_EQ, intVar(numVals));
 }

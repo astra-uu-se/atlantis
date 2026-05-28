@@ -255,7 +255,8 @@ class GecodeSolver : public ConstraintSolver {
   void int_eq_reif(ConstraintVarId lhs, ConstraintVarId rhs,
                    ConstraintVarId reified) override;
 
-  void int_eq_reif(ConstraintVarId lhs, Int rhs, ConstraintVarId reified) override;
+  void int_eq_reif(ConstraintVarId lhs, Int rhs,
+                   ConstraintVarId reified) override;
 
   void int_le(ConstraintVarId lhs, ConstraintVarId rhs,
               bool shouldHold) override;
@@ -321,15 +322,17 @@ class GecodeSolver : public ConstraintSolver {
   void int_times(ConstraintVarId a, ConstraintVarId b,
                  ConstraintVarId product) override;
 
-  void fzn_all_different_int(
-      const std::vector<ConstraintVarId>& inputs, bool shouldHold) override;
+  void fzn_all_different_int(const std::vector<ConstraintVarId>& inputs,
+                             bool shouldHold) override;
 
-  void fzn_all_different_int_reif(
-      const std::vector<ConstraintVarId>& inputs, ConstraintVarId reified) override;
+  void fzn_all_different_int_reif(const std::vector<ConstraintVarId>& inputs,
+                                  ConstraintVarId reified) override;
 
-  void nvalue(ConstraintVarId numVals, const std::vector<ConstraintVarId>& inputs) override;
+  void nvalue(ConstraintVarId numVals,
+              const std::vector<ConstraintVarId>& inputs) override;
 
-  void nvalue_lt(Int numVals, const std::vector<ConstraintVarId>& inputs) override;
+  void nvalue_lt(Int numVals,
+                 const std::vector<ConstraintVarId>& inputs) override;
 };
 
 }  // namespace atlantis::invariantgraph
