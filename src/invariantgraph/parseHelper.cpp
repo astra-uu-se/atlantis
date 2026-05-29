@@ -138,7 +138,9 @@ std::vector<ConstraintVarId> toConstraintVarIds(
   return constraintVarIds;
 }
 
-void postAllEqualOnReplacedVars(InvariantGraph& invariantGraph, std::vector<std::pair<VarNodeId, VarNodeId>>&& replacedVarNodeIds) {
+void postAllEqualOnReplacedVars(
+    InvariantGraph& invariantGraph,
+    std::vector<std::pair<VarNodeId, VarNodeId>>&& replacedVarNodeIds) {
   while (!replacedVarNodeIds.empty()) {
     const auto [oldVarNodeId, newVarNodeId] = replacedVarNodeIds.front();
     assert(oldVarNodeId != newVarNodeId);
@@ -159,16 +161,18 @@ void postAllEqualOnReplacedVars(InvariantGraph& invariantGraph, std::vector<std:
     if (!invariantGraph.varNodeConst(oldVarNodeId).isFixed()) {
       if (invariantGraph.varNodeConst(oldVarNodeId).isIntVar()) {
         invariantGraph.addInvariantNode(std::make_shared<IntAllEqualNode>(
-          invariantGraph, std::move(duplicates), true));
+            invariantGraph, std::move(duplicates), true));
       } else {
         invariantGraph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
-          invariantGraph, std::move(duplicates), true));
+            invariantGraph, std::move(duplicates), true));
       }
     }
   }
 }
 
-std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs, std::vector<Int>& cover) {
+std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph,
+                                      const std::vector<VarNodeId>& inputs,
+                                      std::vector<Int>& cover) {
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(inputs.size());
 
@@ -199,7 +203,11 @@ std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph, cons
   return varsToRemove;
 }
 
-std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs, std::vector<Int>& cover, std::vector<Int>& lowerBounds, std::vector<Int>& upperBounds) {
+std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph,
+                                      const std::vector<VarNodeId>& inputs,
+                                      std::vector<Int>& cover,
+                                      std::vector<Int>& lowerBounds,
+                                      std::vector<Int>& upperBounds) {
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(inputs.size());
 
@@ -209,7 +217,8 @@ std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph, cons
     bool domainIntersectsCover = false;
     for (size_t coverIndex = 0; coverIndex < cover.size(); ++coverIndex) {
       if (invariantGraph.varNodeConst(vId).isFixed()) {
-        if (invariantGraph.varNodeConst(vId).lowerBound() == cover[coverIndex]) {
+        if (invariantGraph.varNodeConst(vId).lowerBound() ==
+            cover[coverIndex]) {
           --lowerBounds[coverIndex];
           --upperBounds[coverIndex];
         }
@@ -235,7 +244,6 @@ std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph, cons
   }
 
   return varsToRemove;
-
 }
 
 }  // namespace atlantis::invariantgraph

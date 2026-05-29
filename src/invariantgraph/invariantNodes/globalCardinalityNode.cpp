@@ -33,7 +33,10 @@ GlobalCardinalityNode::GlobalCardinalityNode(InvariantGraph& graph,
 
 void GlobalCardinalityNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().fzn_global_cardinality(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _cover, toConstraintVarIds(invariantGraphConst(), outputVarNodeIds()), true);
+  constraintSolver().fzn_global_cardinality(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      _cover, toConstraintVarIds(invariantGraphConst(), outputVarNodeIds()),
+      true);
 }
 
 void GlobalCardinalityNode::init(const InvariantNodeId id) {

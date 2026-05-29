@@ -17,14 +17,16 @@ namespace atlantis::invariantgraph {
 
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
     InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
-    std::vector<Int>&& cover, std::vector<VarNodeId>&& counts, const bool shouldHold)
+    std::vector<Int>&& cover, std::vector<VarNodeId>&& counts,
+    const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(counts), std::move(inputs),
                              shouldHold),
       _cover(std::move(cover)) {}
 
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
     InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
-    std::vector<Int>&& cover, std::vector<VarNodeId>&& counts, const VarNodeId r)
+    std::vector<Int>&& cover, std::vector<VarNodeId>&& counts,
+    const VarNodeId r)
     : ViolationInvariantNode(graph, std::move(counts), std::move(inputs), r),
       _cover(std::move(cover)) {}
 
@@ -54,13 +56,19 @@ void GlobalCardinalityClosedNode::init(const InvariantNodeId id) {
 void GlobalCardinalityClosedNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
-    std::vector<ConstraintVarId> outputs(_cover.size(), ConstraintVarId{NULL_NODE_ID});
+    std::vector<ConstraintVarId> outputs(_cover.size(),
+                                         ConstraintVarId{NULL_NODE_ID});
     for (size_t i = 0; i < _cover.size(); i++) {
       outputs[i] = outputVarNodeConst(i + 1).constraintVarId();
     }
-    return constraintSolver().fzn_global_cardinality_closed_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _cover, outputs, reifiedVarNodeConst().constraintVarId());
+    return constraintSolver().fzn_global_cardinality_closed_reif(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        _cover, outputs, reifiedVarNodeConst().constraintVarId());
   }
-  constraintSolver().fzn_global_cardinality_closed(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _cover, toConstraintVarIds(invariantGraphConst(), outputVarNodeIds()), shouldHold());
+  constraintSolver().fzn_global_cardinality_closed(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      _cover, toConstraintVarIds(invariantGraphConst(), outputVarNodeIds()),
+      shouldHold());
 }
 
 void GlobalCardinalityClosedNode::registerOutputVars(propagation::SolverBase&,
@@ -69,51 +77,51 @@ void GlobalCardinalityClosedNode::registerOutputVars(propagation::SolverBase&,
 }
 
 void GlobalCardinalityClosedNode::updateState() {
-    // GCC can define the same output multiple times. Therefore, split all outputs
-    // that are defined multiple times:
-    postAllEqualOnReplacedVars(invariantGraph(), splitOutputVarNodes());
+  // GCC can define the same output multiple times. Therefore, split all outputs
+  // that are defined multiple times:
+  postAllEqualOnReplacedVars(invariantGraph(), splitOutputVarNodes());
 
-    ViolationInvariantNode::updateState();
-    if (!isReified() || !shouldHold()) {
-      return;
-    }
+  ViolationInvariantNode::updateState();
+  if (!isReified() || !shouldHold()) {
+    return;
+  }
 
-    std::vector<VarNodeId> varsToRemove;
-    varsToRemove.reserve(staticInputVarNodeIds().size());
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
 
-    std::vector<bool> coverIntersectsDomains(_cover.size(), false);
+  std::vector<bool> coverIntersectsDomains(_cover.size(), false);
 
-    for (const VarNodeId vId : staticInputVarNodeIds()) {
-      bool domainIntersectsCover = false;
-      for (size_t coverIndex = 0; coverIndex < _cover.size(); ++coverIndex) {
-        if (varNodeConst(vId).isFixed()) {
-          varsToRemove.emplace_back(vId);
-          break;
-        }
-        if (varNodeConst(vId).inDomain(_cover[coverIndex])) {
-          coverIntersectsDomains[coverIndex] = true;
-          domainIntersectsCover = true;
-        }
-      }
-      if (!domainIntersectsCover) {
+  for (const VarNodeId vId : staticInputVarNodeIds()) {
+    bool domainIntersectsCover = false;
+    for (size_t coverIndex = 0; coverIndex < _cover.size(); ++coverIndex) {
+      if (varNodeConst(vId).isFixed()) {
         varsToRemove.emplace_back(vId);
+        break;
+      }
+      if (varNodeConst(vId).inDomain(_cover[coverIndex])) {
+        coverIntersectsDomains[coverIndex] = true;
+        domainIntersectsCover = true;
       }
     }
-
-    for (Int i = 0; i < static_cast<Int>(_cover.size()); ++i) {
-      if (!coverIntersectsDomains[i]) {
-        _cover.erase(_cover.begin() + i);
-        removeOutputAtIndex(i);
-      }
+    if (!domainIntersectsCover) {
+      varsToRemove.emplace_back(vId);
     }
+  }
 
-    for (const VarNodeId vId : varsToRemove) {
-      removeStaticInputVarNode(vId);
+  for (Int i = 0; i < static_cast<Int>(_cover.size()); ++i) {
+    if (!coverIntersectsDomains[i]) {
+      _cover.erase(_cover.begin() + i);
+      removeOutputAtIndex(i);
     }
+  }
 
-    if (_cover.empty() || staticInputVarNodeIds().empty()) {
-      setState(InvariantNodeState::SUBSUMED);
-    }
+  for (const VarNodeId vId : varsToRemove) {
+    removeStaticInputVarNode(vId);
+  }
+
+  if (_cover.empty() || staticInputVarNodeIds().empty()) {
+    setState(InvariantNodeState::SUBSUMED);
+  }
 }
 
 bool GlobalCardinalityClosedNode::canBeReplaced() const {

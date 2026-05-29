@@ -13,7 +13,8 @@
 
 namespace atlantis::invariantgraph {
 
-void initCover(std::vector<Int>& cover, std::vector<Int>& low, std::vector<Int>& up) {
+void initCover(std::vector<Int>& cover, std::vector<Int>& low,
+               std::vector<Int>& up) {
   for (Int i = 0; i < static_cast<Int>(cover.size()); i++) {
     for (Int j = static_cast<Int>(cover.size()) - 1; j > i; --j) {
       if (cover[i] == cover[j]) {
@@ -67,9 +68,13 @@ void GlobalCardinalityLowUpNode::init(const InvariantNodeId id) {
 void GlobalCardinalityLowUpNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
-    return constraintSolver().fzn_global_cardinality_low_up_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _cover, _low, _up, reifiedVarNodeConst().constraintVarId());
+    return constraintSolver().fzn_global_cardinality_low_up_reif(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        _cover, _low, _up, reifiedVarNodeConst().constraintVarId());
   }
-  constraintSolver().fzn_global_cardinality_low_up(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _cover, _low, _up, shouldHold());
+  constraintSolver().fzn_global_cardinality_low_up(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      _cover, _low, _up, shouldHold());
 }
 
 void GlobalCardinalityLowUpNode::updateState() {
@@ -82,11 +87,12 @@ void GlobalCardinalityLowUpNode::updateState() {
     return;
   }
 
-  auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
+  auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(
+      invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
 
   std::ranges::sort(coverIndicesToRemove);
 
-  for (Int i = static_cast<Int>(coverIndicesToRemove.size()); i > 0;  --i) {
+  for (Int i = static_cast<Int>(coverIndicesToRemove.size()); i > 0; --i) {
     _cover.erase(_cover.begin() + static_cast<Int>(coverIndicesToRemove[i]));
     _low.erase(_low.begin() + static_cast<Int>(coverIndicesToRemove[i]));
     _up.erase(_up.begin() + static_cast<Int>(coverIndicesToRemove[i]));

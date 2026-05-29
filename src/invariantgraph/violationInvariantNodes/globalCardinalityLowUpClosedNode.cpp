@@ -46,9 +46,13 @@ void GlobalCardinalityLowUpClosedNode::init(const InvariantNodeId id) {
 void GlobalCardinalityLowUpClosedNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
-    return constraintSolver().fzn_global_cardinality_low_up_closed_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _cover, _low, _up, reifiedVarNodeConst().constraintVarId());
+    return constraintSolver().fzn_global_cardinality_low_up_closed_reif(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        _cover, _low, _up, reifiedVarNodeConst().constraintVarId());
   }
-  constraintSolver().fzn_global_cardinality_low_up_closed(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _cover, _low, _up, shouldHold());
+  constraintSolver().fzn_global_cardinality_low_up_closed(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      _cover, _low, _up, shouldHold());
 }
 
 void GlobalCardinalityLowUpClosedNode::updateState() {
