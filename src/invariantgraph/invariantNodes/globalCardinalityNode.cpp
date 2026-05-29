@@ -31,7 +31,12 @@ GlobalCardinalityNode::GlobalCardinalityNode(InvariantGraph& graph,
   }
 }
 
-void GlobalCardinalityNode::init(InvariantNodeId id) {
+void GlobalCardinalityNode::postConstraint() {
+  InvariantNode::postConstraint();
+  constraintSolver().fzn_global_cardinality(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _cover, toConstraintVarIds(invariantGraphConst(), outputVarNodeIds()), true);
+}
+
+void GlobalCardinalityNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
@@ -48,149 +53,44 @@ void GlobalCardinalityNode::init(InvariantNodeId id) {
 void GlobalCardinalityNode::updateState() {
   // GCC can define the same output multiple times. Therefore, split all outputs
   // that are defined multiple times:
-  std::vector<std::pair<VarNodeId, VarNodeId>> replacedOutputs =
-      splitOutputVarNodes();
-  while (!replacedOutputs.empty()) {
-    const auto [oldVarNodeId, newVarNodeId] = replacedOutputs.front();
-    assert(oldVarNodeId != newVarNodeId);
-    assert(invariantGraph()
-               .varNodeConst(oldVarNodeId)
-               .definingNodes()
-               .contains(id()));
-    assert(invariantGraph()
-               .varNodeConst(newVarNodeId)
-               .definingNodes()
-               .contains(id()));
-    std::vector<VarNodeId> duplicates;
-    duplicates.reserve(2 * replacedOutputs.size());
-    duplicates.emplace_back(oldVarNodeId);
-    duplicates.emplace_back(newVarNodeId);
-    for (size_t i = replacedOutputs.size() - 1; i > 0; i--) {
-      if (replacedOutputs[i].first != oldVarNodeId) {
-        continue;
+  postAllEqualOnReplacedVars(invariantGraph(), splitOutputVarNodes());
+
+  InvariantNode::updateState();
+
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
+
+  std::vector<bool> coverIntersectsDomains(_cover.size(), false);
+
+  for (const VarNodeId vId : staticInputVarNodeIds()) {
+    bool domainIntersectsCover = false;
+    for (size_t coverIndex = 0; coverIndex < _cover.size(); ++coverIndex) {
+      if (varNodeConst(vId).isFixed()) {
+        varsToRemove.emplace_back(vId);
+        break;
       }
-      duplicates.emplace_back(replacedOutputs[i].second);
-      std::swap(replacedOutputs[i], replacedOutputs.back());
-      replacedOutputs.pop_back();
-    }
-    std::swap(replacedOutputs.front(), replacedOutputs.back());
-    replacedOutputs.pop_back();
-    if (!invariantGraphConst().varNodeConst(oldVarNodeId).isFixed()) {
-      invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
-          invariantGraph(), std::move(duplicates), true));
-    }
-  }
-  for (Int i = 0; i < static_cast<Int>(_cover.size()); i++) {
-    for (Int j = static_cast<Int>(_cover.size()) - 1; j > i; --j) {
-      if (_cover[i] == _cover[j]) {
-        _cover.erase(_cover.begin() + j);
-        const VarNodeId duplicate = outputVarNodeIds()[j];
-        removeOutputAtIndex(j);
-        invariantGraph().replaceVarNode(duplicate, outputVarNodeIds()[i]);
+      if (varNodeConst(vId).inDomain(_cover[coverIndex])) {
+        coverIntersectsDomains[coverIndex] = true;
+        domainIntersectsCover = true;
       }
+    }
+    if (!domainIntersectsCover) {
+      varsToRemove.emplace_back(vId);
     }
   }
 
-  std::vector<std::vector<size_t>> supportedInputs(_cover.size());
-  std::vector<std::vector<size_t>> supportedCovers(
-      staticInputVarNodeIds().size());
-  for (size_t inputIndex = 0; inputIndex < staticInputVarNodeIds().size();
-       inputIndex++) {
-    const auto& var =
-        invariantGraphConst().varNodeConst(staticInputVarNodeIds()[inputIndex]);
-    if (var.isFixed()) {
-      for (size_t coverIndex = 0; coverIndex < _cover.size(); ++coverIndex) {
-        if (var.lowerBound() == _cover[coverIndex]) {
-          ++_countOffsets[coverIndex];
-        }
-      }
-    } else {
-      for (size_t coverIndex = 0; coverIndex < _cover.size(); ++coverIndex) {
-        if (var.inDomain(_cover[coverIndex])) {
-          supportedInputs[coverIndex].emplace_back(inputIndex);
-          supportedCovers[inputIndex].emplace_back(coverIndex);
-        }
-      }
-    }
-  }
-  std::vector<bool> onStack(_cover.size(), true);
-  std::stack<size_t> stack;
-  for (size_t coverIndex = 0; coverIndex < _cover.size(); ++coverIndex) {
-    stack.push(coverIndex);
-  }
-
-  while (!stack.empty()) {
-    const size_t coverIndex = stack.top();
-    stack.pop();
-    auto& outVar = invariantGraph().varNode(outputVarNodeIds()[coverIndex]);
-    const Int lb = _countOffsets[coverIndex];
-    const Int ub = _countOffsets[coverIndex] +
-                   static_cast<Int>(supportedInputs[coverIndex].size());
-    outVar.removeValuesBelow(lb);
-    outVar.removeValuesAbove(ub);
-    if (outVar.lowerBound() == ub) {
-      for (const size_t inputIndex : supportedInputs[coverIndex]) {
-        auto& vNode =
-            invariantGraph().varNode(staticInputVarNodeIds()[inputIndex]);
-        vNode.fixToValue(_cover[coverIndex]);
-        for (const size_t otherCover : supportedCovers[inputIndex]) {
-          if (otherCover != coverIndex) {
-            removeFirstOccurrence(supportedInputs[otherCover], inputIndex);
-            if (!onStack[otherCover]) {
-              stack.push(otherCover);
-              onStack[otherCover] = true;
-            }
-          }
-        }
-        supportedInputs[coverIndex].clear();
-      }
-    } else if (outVar.upperBound() == lb) {
-      for (const size_t inputIndex : supportedInputs[coverIndex]) {
-        auto& vNode =
-            invariantGraph().varNode(staticInputVarNodeIds()[inputIndex]);
-        vNode.removeValue(_cover[coverIndex]);
-        removeFirstOccurrence(supportedCovers[inputIndex], coverIndex);
-        if (vNode.isFixed() && !supportedCovers[inputIndex].empty()) {
-          assert(supportedCovers[inputIndex].size() == 1);
-          const size_t otherCover = supportedCovers[inputIndex].front();
-          assert(otherCover != coverIndex);
-          ++_countOffsets[otherCover];
-          removeFirstOccurrence(supportedInputs[otherCover], inputIndex);
-          if (!onStack[otherCover]) {
-            stack.push(otherCover);
-            onStack[otherCover] = true;
-          }
-        }
-      }
-      supportedInputs[coverIndex].clear();
-    }
-    onStack[coverIndex] = false;
-  }
-
-  std::vector<VarNodeId> outputsToRemove;
-  outputsToRemove.reserve(_cover.size());
-  for (Int i = static_cast<Int>(_cover.size()) - 1; i >= 0; --i) {
-    if (supportedInputs[i].empty()) {
-      outputsToRemove.emplace_back(outputVarNodeIds()[i]);
-      _countOffsets.erase(_countOffsets.begin() + i);
+  for (Int i = 0; i < static_cast<Int>(_cover.size()); ++i) {
+    if (!coverIntersectsDomains[i]) {
       _cover.erase(_cover.begin() + i);
+      removeOutputAtIndex(i);
     }
   }
-  for (const auto& output : outputsToRemove) {
-    removeOutputVarNode(output);
+
+  for (const VarNodeId vId : varsToRemove) {
+    removeStaticInputVarNode(vId);
   }
-  std::vector<VarNodeId> inputsToRemove;
-  inputsToRemove.reserve(_cover.size());
-  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
-       --i) {
-    if (supportedCovers[i].empty()) {
-      inputsToRemove.emplace_back(staticInputVarNodeIds()[i]);
-    }
-  }
-  for (const auto& input : inputsToRemove) {
-    removeStaticInputVarNode(input);
-  }
-  if (_cover.empty()) {
+
+  if (_cover.empty() || staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }

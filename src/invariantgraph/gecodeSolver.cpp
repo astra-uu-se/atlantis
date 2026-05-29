@@ -122,6 +122,22 @@ Gecode::IntSharedArray GecodeSolver::intSharedArray(
   return pars;
 }
 
+Gecode::IntArgs GecodeSolver::intArgs(const std::vector<Int>& valVector) {
+  Gecode::IntArgs pars(static_cast<int>(valVector.size()));
+  for (int i = 0; i < static_cast<int>(valVector.size()); ++i) {
+    pars[i] = static_cast<int>(valVector[i]);
+  }
+  return pars;
+}
+
+Gecode::IntArgs GecodeSolver::intArgs(const std::vector<bool>& valVector) {
+  Gecode::IntArgs pars(static_cast<int>(valVector.size()));
+  for (int i = 0; i < static_cast<int>(valVector.size()); ++i) {
+    pars[i] = valVector[i] ? 1 : 0;
+  }
+  return pars;
+}
+
 Gecode::IntSharedArray GecodeSolver::intSharedArray(
     const std::vector<std::vector<Int>>& valMatrix) {
   const int numIntVars =
@@ -877,6 +893,133 @@ void GecodeSolver::fzn_circuit_reif(const std::vector<ConstraintVarId>& inputs,
                                     const ConstraintVarId reified) {
   if (boolVar(reified).assigned()) {
     return fzn_circuit(inputs, offset, boolVar(reified).val() == 1);
+  }
+}
+void GecodeSolver::fzn_global_cardinality(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<ConstraintVarId>& counts, const bool shouldHold) {
+  if (!shouldHold) {
+    return;
+  }
+  Gecode::IntVarArgs iv0 = intVarArgs(inputs);
+  auto gecodeCover = intArgs(cover);
+  Gecode::IntVarArgs iv1 = intVarArgs(counts);
+
+  Gecode::Region re;
+  const Gecode::IntSet cover_s(gecodeCover);
+  Gecode::IntSetRanges cover_r(cover_s);
+  auto* iv0_ri = re.alloc<Gecode::IntVarRanges>(iv0.size());
+  for (int i=iv0.size(); i--;) {
+    iv0_ri[i] = Gecode::IntVarRanges(iv0[i]);
+  }
+  Gecode::Iter::Ranges::NaryUnion iv0_r(re,iv0_ri,iv0.size());
+  Gecode::Iter::Ranges::Diff<Gecode::Iter::Ranges::NaryUnion,Gecode::IntSetRanges>
+    extra_r(iv0_r,cover_r);
+  Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::Diff<
+    Gecode::Iter::Ranges::NaryUnion,Gecode::IntSetRanges> > extra(extra_r);
+  for (; extra(); ++extra) {
+    gecodeCover << extra.val();
+    iv1 << Gecode::IntVar(_space,0,iv0.size());
+  }
+  unshare(_space, iv0);
+  Gecode::count(_space, iv0, iv1, gecodeCover, Gecode::IPL_BND);
+}
+
+void GecodeSolver::fzn_global_cardinality_reif(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<ConstraintVarId>& counts, const ConstraintVarId reified) {
+  if (boolVar(reified).assigned()) {
+    return fzn_global_cardinality(inputs, cover, counts, boolVar(reified).val() == 1);
+  }
+}
+
+void GecodeSolver::fzn_global_cardinality_closed(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<ConstraintVarId>& counts, const bool shouldHold) {
+  if (!shouldHold) {
+    return;
+  }
+  auto iv0 = intVarArgs(inputs);
+  const auto gecodeCover = intSharedArray(cover);
+  const auto iv1 = intVarArgs(counts);
+  unshare(_space, iv0);
+  count(_space, iv0, iv1, gecodeCover, Gecode::IPL_BND);
+}
+
+void GecodeSolver::fzn_global_cardinality_closed_reif(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<ConstraintVarId>& counts, const ConstraintVarId reified) {
+  if (boolVar(reified).assigned()) {
+    return fzn_global_cardinality_closed(inputs, cover, counts, boolVar(reified).val() == 1);
+  }
+}
+void GecodeSolver::fzn_global_cardinality_low_up(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& ccover,
+    const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
+    const bool shouldHold) {
+  if (!shouldHold) {
+    return;
+  }
+  auto x = intVarArgs(inputs);
+  auto gecodeCover = intArgs(ccover);
+
+  const auto lbound = intSharedArray(lowerBounds);
+  const auto ubound = intSharedArray(upperBounds);
+  Gecode::IntSetArgs y(gecodeCover.size());
+  for (int i=gecodeCover.size(); i--;) {
+    y[i] = Gecode::IntSet(lbound[i],ubound[i]);
+  }
+
+  const Gecode::IntSet cover_s(gecodeCover);
+  Gecode::Region re;
+  auto* xrs = re.alloc<Gecode::IntVarRanges>(x.size());
+  for (int i=x.size(); i--;) {
+    xrs[i].init(x[i]);
+  }
+  Gecode::Iter::Ranges::NaryUnion u(re, xrs, x.size());
+  Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::NaryUnion> uv(u);
+  for (; uv(); ++uv) {
+    if (!cover_s.in(uv.val())) {
+      gecodeCover << uv.val();
+      y << Gecode::IntSet(0,x.size());
+    }
+  }
+  unshare(_space, x);
+  count(_space, x, y, gecodeCover, Gecode::IPL_BND);
+}
+void GecodeSolver::fzn_global_cardinality_low_up_reif(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
+    const ConstraintVarId reified) {
+  if (boolVar(reified).assigned()) {
+    return fzn_global_cardinality_low_up(inputs, cover, lowerBounds, upperBounds, boolVar(reified).val() == 1);
+  }
+}
+
+void GecodeSolver::fzn_global_cardinality_low_up_closed(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
+    const bool shouldHold) {
+  if (!shouldHold) {
+    return;
+  }
+  auto x = intVarArgs(inputs);
+  const auto gecodeCover = intArgs(cover);
+
+  const auto lbound = intArgs(lowerBounds);
+  const auto ubound = intArgs(upperBounds);
+  Gecode::IntSetArgs y(gecodeCover.size());
+  for (int i = gecodeCover.size(); i--;) y[i] = Gecode::IntSet(lbound[i], ubound[i]);
+  unshare(_space, x);
+  count(_space, x, y, gecodeCover, Gecode::IPL_BND);
+}
+
+void GecodeSolver::fzn_global_cardinality_low_up_closed_reif(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
+    const ConstraintVarId reified) {
+  if (boolVar(reified).assigned() && boolVar(reified).val()) {
+    return fzn_global_cardinality_low_up_closed(inputs, cover, lowerBounds, upperBounds, boolVar(reified).val() == 1);
   }
 }
 

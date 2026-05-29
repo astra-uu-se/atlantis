@@ -6,6 +6,8 @@
 
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -134,6 +136,106 @@ std::vector<ConstraintVarId> toConstraintVarIds(
         invariantGraph.varNodeConst(varNodeIds[i]).constraintVarId();
   }
   return constraintVarIds;
+}
+
+void postAllEqualOnReplacedVars(InvariantGraph& invariantGraph, std::vector<std::pair<VarNodeId, VarNodeId>>&& replacedVarNodeIds) {
+  while (!replacedVarNodeIds.empty()) {
+    const auto [oldVarNodeId, newVarNodeId] = replacedVarNodeIds.front();
+    assert(oldVarNodeId != newVarNodeId);
+    std::vector<VarNodeId> duplicates;
+    duplicates.reserve(2 * replacedVarNodeIds.size());
+    duplicates.emplace_back(oldVarNodeId);
+    duplicates.emplace_back(newVarNodeId);
+    for (size_t i = replacedVarNodeIds.size() - 1; i > 0; i--) {
+      if (replacedVarNodeIds[i].first != oldVarNodeId) {
+        continue;
+      }
+      duplicates.emplace_back(replacedVarNodeIds[i].second);
+      std::swap(replacedVarNodeIds[i], replacedVarNodeIds.back());
+      replacedVarNodeIds.pop_back();
+    }
+    std::swap(replacedVarNodeIds.front(), replacedVarNodeIds.back());
+    replacedVarNodeIds.pop_back();
+    if (!invariantGraph.varNodeConst(oldVarNodeId).isFixed()) {
+      if (invariantGraph.varNodeConst(oldVarNodeId).isIntVar()) {
+        invariantGraph.addInvariantNode(std::make_shared<IntAllEqualNode>(
+          invariantGraph, std::move(duplicates), true));
+      } else {
+        invariantGraph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
+          invariantGraph, std::move(duplicates), true));
+      }
+    }
+  }
+}
+
+std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs, std::vector<Int>& cover) {
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(inputs.size());
+
+  std::vector<bool> coverIntersectsDomains(cover.size(), false);
+
+  for (const VarNodeId vId : inputs) {
+    bool domainIntersectsCover = false;
+    for (size_t coverIndex = 0; coverIndex < cover.size(); ++coverIndex) {
+      if (invariantGraph.varNodeConst(vId).isFixed()) {
+        varsToRemove.emplace_back(vId);
+        break;
+      }
+      if (invariantGraph.varNodeConst(vId).inDomain(cover[coverIndex])) {
+        coverIntersectsDomains[coverIndex] = true;
+        domainIntersectsCover = true;
+      }
+    }
+    if (!domainIntersectsCover) {
+      varsToRemove.emplace_back(vId);
+    }
+  }
+  for (Int i = 0; i < static_cast<Int>(cover.size()); ++i) {
+    if (!coverIntersectsDomains[i]) {
+      cover.erase(cover.begin() + i);
+    }
+  }
+
+  return varsToRemove;
+}
+
+std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs, std::vector<Int>& cover, std::vector<Int>& lowerBounds, std::vector<Int>& upperBounds) {
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(inputs.size());
+
+  std::vector<bool> coverIntersectsDomains(cover.size(), false);
+
+  for (const VarNodeId vId : inputs) {
+    bool domainIntersectsCover = false;
+    for (size_t coverIndex = 0; coverIndex < cover.size(); ++coverIndex) {
+      if (invariantGraph.varNodeConst(vId).isFixed()) {
+        if (invariantGraph.varNodeConst(vId).lowerBound() == cover[coverIndex]) {
+          --lowerBounds[coverIndex];
+          --upperBounds[coverIndex];
+        }
+        varsToRemove.emplace_back(vId);
+        break;
+      }
+      if (invariantGraph.varNodeConst(vId).inDomain(cover[coverIndex])) {
+        coverIntersectsDomains[coverIndex] = true;
+        domainIntersectsCover = true;
+      }
+    }
+    if (!domainIntersectsCover) {
+      varsToRemove.emplace_back(vId);
+    }
+  }
+
+  for (Int i = 0; i < static_cast<Int>(cover.size()); ++i) {
+    if (!coverIntersectsDomains[i]) {
+      cover.erase(cover.begin() + i);
+      lowerBounds.erase(lowerBounds.begin() + i);
+      upperBounds.erase(upperBounds.begin() + i);
+    }
+  }
+
+  return varsToRemove;
+
 }
 
 }  // namespace atlantis::invariantgraph

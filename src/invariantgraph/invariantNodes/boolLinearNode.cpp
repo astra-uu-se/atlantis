@@ -15,12 +15,12 @@ namespace atlantis::invariantgraph {
 
 BoolLinearNode::BoolLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                                std::vector<VarNodeId>&& vars, VarNodeId output,
-                               Int offset)
+                               const Int offset)
     : InvariantNode(graph, {output}, std::move(vars)),
       _coeffs(std::move(coeffs)),
       _outputOffset(offset) {}
 
-void BoolLinearNode::init(InvariantNodeId id) {
+void BoolLinearNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())

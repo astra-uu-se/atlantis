@@ -239,6 +239,22 @@ class ConstraintSolver {
   virtual void fzn_circuit_reif(const std::vector<ConstraintVarId>& inputs,
                                 Int offset, ConstraintVarId reified) = 0;
 
+  virtual void fzn_global_cardinality(const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover, const std::vector<ConstraintVarId>& counts, bool shouldHold) = 0;
+
+  virtual void fzn_global_cardinality_reif(const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover, const std::vector<ConstraintVarId>& counts, ConstraintVarId reified) = 0;
+
+  virtual void fzn_global_cardinality_closed(const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover, const std::vector<ConstraintVarId>& counts, bool shouldHold) = 0;
+
+  virtual void fzn_global_cardinality_closed_reif(const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover, const std::vector<ConstraintVarId>& counts, ConstraintVarId reified) = 0;
+
+  virtual void fzn_global_cardinality_low_up(const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover, const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds, bool shouldHold) = 0;
+
+  virtual void fzn_global_cardinality_low_up_reif(const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover, const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds, ConstraintVarId reified) = 0;
+
+  virtual void fzn_global_cardinality_low_up_closed(const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover, const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds, bool shouldHold) = 0;
+
+  virtual void fzn_global_cardinality_low_up_closed_reif(const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover, const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds, ConstraintVarId reified) = 0;
+
   virtual void nvalue(ConstraintVarId numVals,
                       const std::vector<ConstraintVarId>& inputs) = 0;
 

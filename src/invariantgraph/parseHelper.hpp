@@ -30,4 +30,10 @@ bool removeFirstOccurrence(std::vector<size_t>&, size_t);
 std::vector<ConstraintVarId> toConstraintVarIds(const InvariantGraph&,
                                                 const std::vector<VarNodeId>&);
 
+void postAllEqualOnReplacedVars(InvariantGraph& invariantGraph, std::vector<std::pair<VarNodeId, VarNodeId>>&& replacedVarNodeIds);
+
+std::pair<std::vector<VarNodeId>, std::vector<size_t>> gccUpdateState(const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs, const std::vector<Int>& cover);
+
+std::pair<std::vector<VarNodeId>, std::vector<size_t>> gccUpdateState(const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs, const std::vector<Int>& cover, std::vector<Int>& lowerBounds, std::vector<Int>& upperBounds);
+
 }  // namespace atlantis::invariantgraph

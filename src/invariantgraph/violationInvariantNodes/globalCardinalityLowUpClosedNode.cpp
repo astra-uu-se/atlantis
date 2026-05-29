@@ -16,7 +16,7 @@ namespace atlantis::invariantgraph {
 
 GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
     InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
-    std::vector<Int>&& low, std::vector<Int>&& up, VarNodeId r)
+    std::vector<Int>&& low, std::vector<Int>&& up, const VarNodeId r)
     : ViolationInvariantNode(graph, {}, std::move(x), r),
       _cover(std::move(cover)),
       _low(std::move(low)),
@@ -24,13 +24,13 @@ GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
 
 GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
     InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
-    std::vector<Int>&& low, std::vector<Int>&& up, bool shouldHold)
+    std::vector<Int>&& low, std::vector<Int>&& up, const bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(x), shouldHold),
       _cover(std::move(cover)),
       _low(std::move(low)),
       _up(std::move(up)) {}
 
-void GlobalCardinalityLowUpClosedNode::init(InvariantNodeId id) {
+void GlobalCardinalityLowUpClosedNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -43,38 +43,65 @@ void GlobalCardinalityLowUpClosedNode::init(InvariantNodeId id) {
       }));
 }
 
-void GlobalCardinalityLowUpClosedNode::updateState() {
-  ViolationInvariantNode::updateState();
-  if (staticInputVarNodeIds().empty() && _cover.empty()) {
-    if (isReified()) {
-      fixReified(true);
-    } else if (!shouldHold()) {
-      throw InconsistencyException(
-          "GlobalCardinalityClosedNode::updateState neg: no inputs and empty "
-          "cover");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (_cover.empty()) {
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException(
-          "GlobalCardinalityClosedNode::updateState: empty cover");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
+void GlobalCardinalityLowUpClosedNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
   if (isReified()) {
+    return constraintSolver().fzn_global_cardinality_low_up_closed_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _cover, _low, _up, reifiedVarNodeConst().constraintVarId());
+  }
+  constraintSolver().fzn_global_cardinality_low_up_closed(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _cover, _low, _up, shouldHold());
+}
+
+void GlobalCardinalityLowUpClosedNode::updateState() {
+  // GCC can define the same output multiple times. Therefore, split all outputs
+  // that are defined multiple times:
+  postAllEqualOnReplacedVars(invariantGraph(), splitOutputVarNodes());
+
+  ViolationInvariantNode::updateState();
+
+  if (isReified() || !shouldHold()) {
     return;
   }
-  const SortedUniqueVector coveredVals(std::vector<Int>{_cover});
-  if (shouldHold()) {
-    for (const auto vId : staticInputVarNodeIds()) {
-      invariantGraph().varNode(vId).domain()->removeAllValuesExcept(
-          coveredVals);
+
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodeIds().size());
+
+  std::vector<bool> coverIntersectsDomains(_cover.size(), false);
+
+  for (const VarNodeId vId : staticInputVarNodeIds()) {
+    bool domainIntersectsCover = false;
+    for (size_t coverIndex = 0; coverIndex < _cover.size(); ++coverIndex) {
+      if (varNodeConst(vId).isFixed()) {
+        if (varNodeConst(vId).lowerBound() == _cover[coverIndex]) {
+          --_low[coverIndex];
+          --_up[coverIndex];
+        }
+        varsToRemove.emplace_back(vId);
+        break;
+      }
+      if (varNodeConst(vId).inDomain(_cover[coverIndex])) {
+        coverIntersectsDomains[coverIndex] = true;
+        domainIntersectsCover = true;
+      }
     }
+    if (!domainIntersectsCover) {
+      varsToRemove.emplace_back(vId);
+    }
+  }
+
+  for (Int i = 0; i < static_cast<Int>(_cover.size()); ++i) {
+    if (!coverIntersectsDomains[i]) {
+      _cover.erase(_cover.begin() + i);
+      _low.erase(_low.begin() + i);
+      _up.erase(_up.begin() + i);
+    }
+  }
+
+  for (const VarNodeId vId : varsToRemove) {
+    removeStaticInputVarNode(vId);
+  }
+
+  if (_cover.empty() || staticInputVarNodeIds().empty()) {
+    setState(InvariantNodeState::SUBSUMED);
   }
 }
 
