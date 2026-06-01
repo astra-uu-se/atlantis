@@ -66,16 +66,20 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
     return;
   }
 
-  const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
+  const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(
+      invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
 
   for (const VarNodeId vId : varsToRemove) {
     removeStaticInputVarNode(vId);
   }
 
-  const Int outputIndexOffset = reifiedViolationNodeId() == NULL_NODE_ID ? 0 : 1;
-  assert(outputIndexOffset == 0 || outputVarNodeIds().front() == reifiedViolationNodeId());
+  const Int outputIndexOffset =
+      reifiedViolationNodeId() == NULL_NODE_ID ? 0 : 1;
+  assert(outputIndexOffset == 0 ||
+         outputVarNodeIds().front() == reifiedViolationNodeId());
 
-  for (Int i = static_cast<Int>((*coverIndicesToRemove).size()) - 1; i >= 0; --i) {
+  for (Int i = static_cast<Int>((*coverIndicesToRemove).size()) - 1; i >= 0;
+       --i) {
     _cover.erase(_cover.begin() + i);
     _low.erase(_low.begin() + i);
     _up.erase(_up.begin() + i);

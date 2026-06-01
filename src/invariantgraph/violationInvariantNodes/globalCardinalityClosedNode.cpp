@@ -86,15 +86,19 @@ void GlobalCardinalityClosedNode::updateState() {
     return;
   }
 
-  const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+  const auto [varsToRemove, coverIndicesToRemove] =
+      gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover);
 
   for (const VarNodeId vId : varsToRemove) {
     removeStaticInputVarNode(vId);
   }
 
-  const Int outputIndexOffset = reifiedViolationNodeId() == NULL_NODE_ID ? 0 : 1;
-  assert(outputIndexOffset == 0 || outputVarNodeIds().front() == reifiedViolationNodeId());
-  for (Int i = static_cast<Int>((*coverIndicesToRemove).size()) - 1; i >= 0; --i) {
+  const Int outputIndexOffset =
+      reifiedViolationNodeId() == NULL_NODE_ID ? 0 : 1;
+  assert(outputIndexOffset == 0 ||
+         outputVarNodeIds().front() == reifiedViolationNodeId());
+  for (Int i = static_cast<Int>((*coverIndicesToRemove).size()) - 1; i >= 0;
+       --i) {
     _cover.erase(_cover.begin() + i);
     removeOutputAtIndex(i + outputIndexOffset);
   }

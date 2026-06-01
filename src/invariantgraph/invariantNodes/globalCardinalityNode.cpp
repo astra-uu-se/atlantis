@@ -60,13 +60,15 @@ void GlobalCardinalityNode::updateState() {
 
   InvariantNode::updateState();
 
-  const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+  const auto [varsToRemove, coverIndicesToRemove] =
+      gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover);
 
   for (const VarNodeId vId : varsToRemove) {
     removeStaticInputVarNode(vId);
   }
 
-  for (Int i = static_cast<Int>((*coverIndicesToRemove).size()) - 1; i >= 0; --i) {
+  for (Int i = static_cast<Int>((*coverIndicesToRemove).size()) - 1; i >= 0;
+       --i) {
     _cover.erase(_cover.begin() + i);
     removeOutputAtIndex(i);
   }
