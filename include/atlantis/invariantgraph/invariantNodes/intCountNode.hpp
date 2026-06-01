@@ -13,6 +13,8 @@ class IntCountNode : public InvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void postConstraint() override;
+
   void updateState() override;
 
   void registerOutputVars(propagation::SolverBase&,
@@ -23,10 +25,6 @@ class IntCountNode : public InvariantNode {
   [[nodiscard]] bool canBeMadeImplicit() const override;
 
   bool makeImplicit() override;
-
-  [[nodiscard]] const std::vector<VarNodeId>& haystack() const;
-
-  [[nodiscard]] Int needle() const;
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

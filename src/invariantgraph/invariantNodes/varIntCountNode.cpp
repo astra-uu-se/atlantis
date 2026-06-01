@@ -15,10 +15,10 @@ namespace atlantis::invariantgraph {
 
 VarIntCountNode::VarIntCountNode(InvariantGraph& graph,
                                  std::vector<VarNodeId>&& vars,
-                                 VarNodeId needle, VarNodeId count)
+                                 const VarNodeId needle, const VarNodeId count)
     : InvariantNode(graph, {count}, append(std::move(vars), needle)) {}
 
-void VarIntCountNode::init(InvariantNodeId id) {
+void VarIntCountNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
@@ -28,6 +28,15 @@ void VarIntCountNode::init(InvariantNodeId id) {
       [&](const VarNodeId vId) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
+}
+
+void VarIntCountNode::postConstraint() {
+  InvariantNode::postConstraint();
+  std::vector<ConstraintVarId> inputs(staticInputVarNodeIds().size() - 1, ConstraintVarId{NULL_NODE_ID});
+  for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()) - 1; ++i) {
+    inputs[i] = staticInputVarNodeConst(i).constraintVarId();
+  }
+  constraintSolver().fzn_count(inputs, varNodeConst(needle()).constraintVarId(), outputVarNodeConst(0).constraintVarId(), true, RelationType::REL_TYPE_EQ);
 }
 
 std::vector<VarNodeId> VarIntCountNode::haystack() const {
@@ -45,22 +54,17 @@ VarNodeId VarIntCountNode::needle() const {
 void VarIntCountNode::updateState() {
   std::vector<size_t> indicesToRemove;
   indicesToRemove.reserve(staticInputVarNodeIds().size() - 1);
-  const VarNode& needleNode = invariantGraphConst().varNodeConst(needle());
+  const VarNode& needleNode = varNodeConst(needle());
   for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 2; i >= 0;
        --i) {
-    const auto& vNode =
-        invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
-    if (vNode.constDomain()->isDisjoint(*needleNode.constDomain())) {
+    const auto& vNode = staticInputVarNodeConst(i);
+    if (vNode.isFixed() || vNode.constDomain()->isDisjoint(*needleNode.constDomain())) {
       indicesToRemove.emplace_back(i);
     }
   }
   for (const size_t index : indicesToRemove) {
     removeStaticInputAtIndex(index);
   }
-  auto& outputNode = invariantGraph().varNode(outputVarNodeIds().back());
-  const Int ub = static_cast<Int>(staticInputVarNodeIds().size()) - 1;
-  outputNode.removeValuesBelow(0);
-  outputNode.removeValuesAbove(ub);
   if (staticInputVarNodeIds().size() == 1) {
     setState(InvariantNodeState::SUBSUMED);
   }

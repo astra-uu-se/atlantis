@@ -13,6 +13,25 @@ using atlantis::propagation::SolverBase;
 
 namespace atlantis::invariantgraph {
 
+Gecode::IntRelType toGecodeIntRelType(const RelationType relType) {
+  switch (relType) {
+    case RelationType::REL_TYPE_NE:
+      return Gecode::IntRelType::IRT_NQ;
+    case RelationType::REL_TYPE_LE:
+      return Gecode::IntRelType::IRT_LQ;
+    case RelationType::REL_TYPE_LT:
+      return Gecode::IntRelType::IRT_LE;
+    case RelationType::REL_TYPE_GE:
+      return Gecode::IntRelType::IRT_GQ;
+    case RelationType::REL_TYPE_GT:
+      return Gecode::IntRelType::IRT_GR;
+    case RelationType::REL_TYPE_EQ:
+    default:
+      return Gecode::IntRelType::IRT_EQ;
+
+  }
+}
+
 GecodeSolver::GecodeSpace::GecodeSpace(GecodeSpace& space) : Space(space) {
   _iv.resize(space._iv.size());
   for (size_t i = 0; i < space._iv.size(); ++i) {
@@ -1028,6 +1047,79 @@ void GecodeSolver::fzn_global_cardinality_low_up_closed_reif(
     return fzn_global_cardinality_low_up_closed(
         inputs, cover, lowerBounds, upperBounds, boolVar(reified).val() == 1);
   }
+}
+
+void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
+                             const Int needle, const Int amount, const bool shouldHold,
+                             const RelationType relation) {
+  Gecode::count(_space, intVarArgs(inputs), static_cast<int>(needle), shouldHold ? toGecodeIntRelType(relation) : Gecode::neg(toGecodeIntRelType(relation)), static_cast<int>(amount));
+}
+
+void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
+                             const Int needle, const ConstraintVarId amount,
+                             const bool shouldHold, const RelationType relation) {
+  Gecode::count(_space, intVarArgs(inputs), static_cast<int>(needle), shouldHold ? toGecodeIntRelType(relation) : Gecode::neg(toGecodeIntRelType(relation)), intVar(amount));
+}
+
+void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
+                             const ConstraintVarId needle, const Int amount,
+                             const bool shouldHold, const RelationType relation) {
+  Gecode::count(_space, intVarArgs(inputs), intVar(needle), shouldHold ? toGecodeIntRelType(relation) : Gecode::neg(toGecodeIntRelType(relation)), static_cast<int>(amount));
+}
+
+void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
+                             const ConstraintVarId needle, const ConstraintVarId amount,
+                             const bool shouldHold, const RelationType relation) {
+  Gecode::count(_space, intVarArgs(inputs), intVar(needle), shouldHold ? toGecodeIntRelType(relation) : Gecode::neg(toGecodeIntRelType(relation)), intVar(amount));
+}
+
+void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
+                                  const Int needle, const Int amount,
+                                  const ConstraintVarId reified,
+                                  const RelationType relation) {
+  if (boolVar(reified).assigned()) {
+    return fzn_count(inputs, needle, amount, boolVar(reified).val() == 1, relation);
+  }
+  const Gecode::IntVar c(_space,0,Gecode::Int::Limits::max);
+  count(_space,intVarArgs(inputs),static_cast<int>(needle),Gecode::IRT_EQ,c);
+  rel(_space, c, toGecodeIntRelType(relation), static_cast<int>(amount), boolVar(reified));
+}
+
+void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
+                                  const Int needle, const ConstraintVarId amount,
+                                  const ConstraintVarId reified,
+                                  const RelationType relation) {
+  if (boolVar(reified).assigned()) {
+    return fzn_count(inputs, needle, amount, boolVar(reified).val() == 1, relation);
+  }
+  const Gecode::IntVar c(_space,0,Gecode::Int::Limits::max);
+  count(_space,intVarArgs(inputs),static_cast<int>(needle),Gecode::IRT_EQ,c);
+  rel(_space, c, toGecodeIntRelType(relation), intVar(amount), boolVar(reified));
+}
+
+void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
+                                  const ConstraintVarId needle, const Int amount,
+                                  const ConstraintVarId reified,
+                                  const RelationType relation) {
+  if (boolVar(reified).assigned()) {
+    return fzn_count(inputs, needle, amount, boolVar(reified).val() == 1, relation);
+  }
+  const Gecode::IntVar c(_space,0,Gecode::Int::Limits::max);
+  count(_space,intVarArgs(inputs),intVar(needle),Gecode::IRT_EQ,c);
+  rel(_space, c, toGecodeIntRelType(relation), static_cast<int>(amount), boolVar(reified));
+}
+
+void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
+                                  ConstraintVarId needle,
+                                  ConstraintVarId amount,
+                                  ConstraintVarId reified,
+                                  RelationType relation) {
+  if (boolVar(reified).assigned()) {
+    return fzn_count(inputs, needle, amount, boolVar(reified).val() == 1, relation);
+  }
+  const Gecode::IntVar c(_space,0,Gecode::Int::Limits::max);
+  count(_space,intVarArgs(inputs),intVar(needle),Gecode::IRT_EQ,c);
+  rel(_space, c, toGecodeIntRelType(relation), intVar(amount), boolVar(reified));
 }
 
 void GecodeSolver::nvalue(const ConstraintVarId numVals,
