@@ -170,9 +170,9 @@ void postAllEqualOnReplacedVars(
   }
 }
 
-std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph,
+std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(const InvariantGraph& invariantGraph,
                                       const std::vector<VarNodeId>& inputs,
-                                      std::vector<Int>& cover) {
+                                      const std::vector<Int>& cover) {
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(inputs.size());
 
@@ -194,18 +194,22 @@ std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph,
       varsToRemove.emplace_back(vId);
     }
   }
-  for (Int i = 0; i < static_cast<Int>(cover.size()); ++i) {
+
+  std::vector<Int> coverIndicesToRemove;
+  coverIndicesToRemove.reserve(cover.size());
+
+  for (Int i = static_cast<Int>(cover.size()) - 1; i >= 0; --i) {
     if (!coverIntersectsDomains[i]) {
-      cover.erase(cover.begin() + i);
+      coverIndicesToRemove.emplace_back(i);
     }
   }
 
-  return varsToRemove;
+  return std::pair<std::vector<VarNodeId>, SortedUniqueVector>{varsToRemove, SortedUniqueVector(std::move(coverIndicesToRemove))};
 }
 
-std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph,
+std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(const InvariantGraph& invariantGraph,
                                       const std::vector<VarNodeId>& inputs,
-                                      std::vector<Int>& cover,
+                                      const std::vector<Int>& cover,
                                       std::vector<Int>& lowerBounds,
                                       std::vector<Int>& upperBounds) {
   std::vector<VarNodeId> varsToRemove;
@@ -235,15 +239,16 @@ std::vector<VarNodeId> gccUpdateState(const InvariantGraph& invariantGraph,
     }
   }
 
-  for (Int i = 0; i < static_cast<Int>(cover.size()); ++i) {
+  std::vector<Int> coverIndicesToRemove;
+  coverIndicesToRemove.reserve(cover.size());
+
+  for (Int i = static_cast<Int>(cover.size()) - 1; i >= 0; --i) {
     if (!coverIntersectsDomains[i]) {
-      cover.erase(cover.begin() + i);
-      lowerBounds.erase(lowerBounds.begin() + i);
-      upperBounds.erase(upperBounds.begin() + i);
+      coverIndicesToRemove.emplace_back(i);
     }
   }
 
-  return varsToRemove;
+  return std::pair<std::vector<VarNodeId>, SortedUniqueVector>{varsToRemove, SortedUniqueVector(std::move(coverIndicesToRemove))};
 }
 
 }  // namespace atlantis::invariantgraph

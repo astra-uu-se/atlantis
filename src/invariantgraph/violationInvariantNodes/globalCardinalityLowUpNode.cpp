@@ -87,19 +87,19 @@ void GlobalCardinalityLowUpNode::updateState() {
     return;
   }
 
-  auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(
-      invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
-
-  std::ranges::sort(coverIndicesToRemove);
-
-  for (Int i = static_cast<Int>(coverIndicesToRemove.size()); i > 0; --i) {
-    _cover.erase(_cover.begin() + static_cast<Int>(coverIndicesToRemove[i]));
-    _low.erase(_low.begin() + static_cast<Int>(coverIndicesToRemove[i]));
-    _up.erase(_up.begin() + static_cast<Int>(coverIndicesToRemove[i]));
-  }
+  const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
 
   for (const VarNodeId vId : varsToRemove) {
     removeStaticInputVarNode(vId);
+  }
+
+  const Int outputIndexOffset = reifiedViolationNodeId() == NULL_NODE_ID ? 0 : 1;
+  assert(outputIndexOffset == 0 || outputVarNodeIds().front() == reifiedViolationNodeId());
+  for (Int i = static_cast<Int>((*coverIndicesToRemove).size()) - 1; i >= 0; --i) {
+    _cover.erase(_cover.begin() + i);
+    _low.erase(_low.begin() + i);
+    _up.erase(_up.begin() + i);
+    removeOutputAtIndex(i + outputIndexOffset);
   }
 
   if (_cover.empty() || staticInputVarNodeIds().empty()) {

@@ -66,42 +66,20 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
     return;
   }
 
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
-
-  std::vector<bool> coverIntersectsDomains(_cover.size(), false);
-
-  for (const VarNodeId vId : staticInputVarNodeIds()) {
-    bool domainIntersectsCover = false;
-    for (size_t coverIndex = 0; coverIndex < _cover.size(); ++coverIndex) {
-      if (varNodeConst(vId).isFixed()) {
-        if (varNodeConst(vId).lowerBound() == _cover[coverIndex]) {
-          --_low[coverIndex];
-          --_up[coverIndex];
-        }
-        varsToRemove.emplace_back(vId);
-        break;
-      }
-      if (varNodeConst(vId).inDomain(_cover[coverIndex])) {
-        coverIntersectsDomains[coverIndex] = true;
-        domainIntersectsCover = true;
-      }
-    }
-    if (!domainIntersectsCover) {
-      varsToRemove.emplace_back(vId);
-    }
-  }
-
-  for (Int i = 0; i < static_cast<Int>(_cover.size()); ++i) {
-    if (!coverIntersectsDomains[i]) {
-      _cover.erase(_cover.begin() + i);
-      _low.erase(_low.begin() + i);
-      _up.erase(_up.begin() + i);
-    }
-  }
+  const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
 
   for (const VarNodeId vId : varsToRemove) {
     removeStaticInputVarNode(vId);
+  }
+
+  const Int outputIndexOffset = reifiedViolationNodeId() == NULL_NODE_ID ? 0 : 1;
+  assert(outputIndexOffset == 0 || outputVarNodeIds().front() == reifiedViolationNodeId());
+
+  for (Int i = static_cast<Int>((*coverIndicesToRemove).size()) - 1; i >= 0; --i) {
+    _cover.erase(_cover.begin() + i);
+    _low.erase(_low.begin() + i);
+    _up.erase(_up.begin() + i);
+    removeOutputAtIndex(i + outputIndexOffset);
   }
 
   if (_cover.empty() || staticInputVarNodeIds().empty()) {

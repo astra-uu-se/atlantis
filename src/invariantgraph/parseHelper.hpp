@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/sortedUniqueVector.hpp"
 
 namespace atlantis::invariantgraph {
 class InvariantGraph;
@@ -34,13 +35,13 @@ void postAllEqualOnReplacedVars(
     InvariantGraph& invariantGraph,
     std::vector<std::pair<VarNodeId, VarNodeId>>&& replacedVarNodeIds);
 
-std::pair<std::vector<VarNodeId>, std::vector<size_t>> gccUpdateState(
+std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
     const std::vector<Int>& cover);
 
-std::pair<std::vector<VarNodeId>, std::vector<size_t>> gccUpdateState(
+std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
-    const std::vector<Int>& cover, std::vector<Int>& lowerBounds,
-    std::vector<Int>& upperBounds);
+    const std::vector<Int>& cover, const std::vector<Int>& lowerBounds,
+    const std::vector<Int>& upperBounds);
 
 }  // namespace atlantis::invariantgraph
