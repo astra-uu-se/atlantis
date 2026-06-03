@@ -9,7 +9,8 @@
 
 namespace atlantis::invariantgraph {
 
-Gecode::IntRelType toGecodeIntRelType(const RelationType relType, const bool shouldHold = true) {
+Gecode::IntRelType toGecodeIntRelType(const RelationType relType,
+                                      const bool shouldHold = true) {
   switch (shouldHold ? relType : invertRelationType(relType)) {
     case RelationType::REL_TYPE_NE:
       return Gecode::IntRelType::IRT_NQ;
@@ -24,7 +25,6 @@ Gecode::IntRelType toGecodeIntRelType(const RelationType relType, const bool sho
     case RelationType::REL_TYPE_EQ:
     default:
       return Gecode::IntRelType::IRT_EQ;
-
   }
 }
 
@@ -225,8 +225,8 @@ void GecodeSolver::bool_rel(const ConstraintVarId lhs,
 void GecodeSolver::bool_rel(const ConstraintVarId lhs,
                             const ConstraintVarId rhs, const bool shouldHold,
                             const RelationType relation) {
-  Gecode::rel(_space, boolVar(lhs), toGecodeIntRelType(relation, shouldHold), boolVar(rhs),
-              Gecode::IPL_BND);
+  Gecode::rel(_space, boolVar(lhs), toGecodeIntRelType(relation, shouldHold),
+              boolVar(rhs), Gecode::IPL_BND);
 }
 
 void GecodeSolver::int_rel(const ConstraintVarId lhs, const ConstraintVarId rhs,
@@ -239,15 +239,15 @@ void GecodeSolver::int_rel(const ConstraintVarId lhs, const ConstraintVarId rhs,
 void GecodeSolver::int_rel(const ConstraintVarId lhs, const Int rhs,
                            const ConstraintVarId reified,
                            const RelationType relation) {
-  Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation), static_cast<int>(rhs),
+  Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation),
+              static_cast<int>(rhs),
               Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
 }
 
 void GecodeSolver::int_rel(const ConstraintVarId lhs, const ConstraintVarId rhs,
-                           const bool shouldHold,
-                           const RelationType relation) {
-  Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation, shouldHold), intVar(rhs),
-              Gecode::IPL_BND);
+                           const bool shouldHold, const RelationType relation) {
+  Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation, shouldHold),
+              intVar(rhs), Gecode::IPL_BND);
 }
 
 void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
@@ -258,9 +258,9 @@ void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
   if (reif.assigned()) {
     return bool_lin_rel(coeffs, inputs, rhs, reif.val() == 1, relation);
   }
-  linear(_space, intSharedArray(coeffs), boolVarArgs(inputs), toGecodeIntRelType(relation),
-         static_cast<int>(rhs), Gecode::Reify(reif, Gecode::RM_EQV),
-         Gecode::IPL_BND);
+  linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
+         toGecodeIntRelType(relation), static_cast<int>(rhs),
+         Gecode::Reify(reif, Gecode::RM_EQV), Gecode::IPL_BND);
 }
 
 void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
@@ -268,10 +268,12 @@ void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
                                 const ConstraintVarId rhs, const Int rhsOffset,
                                 const RelationType relation) {
   if (rhsOffset == 0) {
-    return linear(_space, intSharedArray(coeffs), boolVarArgs(inputs), toGecodeIntRelType(relation), intVar(rhs));
+    return linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
+                  toGecodeIntRelType(relation), intVar(rhs));
   }
   const auto rhsVar = expr(_space, intVar(rhs) + static_cast<int>(rhsOffset));
-  linear(_space, intSharedArray(coeffs), boolVarArgs(inputs), toGecodeIntRelType(relation), rhsVar);
+  linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
+         toGecodeIntRelType(relation), rhsVar);
 }
 
 void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
@@ -290,9 +292,9 @@ void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
   if (reif.assigned()) {
     return int_lin_rel(coeffs, inputs, rhs, reif.val() == 1, relation);
   }
-  linear(_space, intSharedArray(coeffs), intVarArgs(inputs), toGecodeIntRelType(relation),
-         static_cast<int>(rhs), Gecode::Reify(reif, Gecode::RM_EQV),
-         Gecode::IPL_BND);
+  linear(_space, intSharedArray(coeffs), intVarArgs(inputs),
+         toGecodeIntRelType(relation), static_cast<int>(rhs),
+         Gecode::Reify(reif, Gecode::RM_EQV), Gecode::IPL_BND);
 }
 
 void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
@@ -300,10 +302,13 @@ void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
                                const ConstraintVarId rhs, const Int rhsOffset,
                                const RelationType relation) {
   if (rhsOffset == 0) {
-    return linear(_space, intSharedArray(coeffs), intVarArgs(inputs), toGecodeIntRelType(relation), intVar(rhs));
+    return linear(_space, intSharedArray(coeffs), intVarArgs(inputs),
+                  toGecodeIntRelType(relation), intVar(rhs));
   }
-  const auto offsetVar = expr(_space, intVar(rhs) + static_cast<int>(rhsOffset));
-  linear(_space, intSharedArray(coeffs), intVarArgs(inputs), toGecodeIntRelType(relation), offsetVar);
+  const auto offsetVar =
+      expr(_space, intVar(rhs) + static_cast<int>(rhsOffset));
+  linear(_space, intSharedArray(coeffs), intVarArgs(inputs),
+         toGecodeIntRelType(relation), offsetVar);
 }
 
 void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
@@ -635,10 +640,12 @@ void GecodeSolver::bool_lin_eq(const std::vector<Int>& coeffs,
                                const std::vector<ConstraintVarId>& inputs,
                                const ConstraintVarId rhs, const Int rhsOffset) {
   if (rhsOffset == 0) {
-    return linear(_space, intSharedArray(coeffs), boolVarArgs(inputs), Gecode::IRT_EQ, intVar(rhs));
+    return linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
+                  Gecode::IRT_EQ, intVar(rhs));
   }
   const auto rhsVar = expr(_space, intVar(rhs) + static_cast<int>(rhsOffset));
-  linear(_space, intSharedArray(coeffs), boolVarArgs(inputs), Gecode::IRT_EQ, rhsVar);
+  linear(_space, intSharedArray(coeffs), boolVarArgs(inputs), Gecode::IRT_EQ,
+         rhsVar);
 }
 
 void GecodeSolver::bool_lin(const std::vector<Int>& coeffs,
@@ -1021,21 +1028,26 @@ void GecodeSolver::fzn_global_cardinality_low_up_closed_reif(
 void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
                              const Int needle, const RelationType relation,
                              const Int amount, const bool shouldHold) {
-  Gecode::count(_space, intVarArgs(inputs), static_cast<int>(needle), toGecodeIntRelType(relation, shouldHold), static_cast<int>(amount));
+  Gecode::count(_space, intVarArgs(inputs), static_cast<int>(needle),
+                toGecodeIntRelType(relation, shouldHold),
+                static_cast<int>(amount));
 }
 
 void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
                              const Int needle, const RelationType relation,
                              const ConstraintVarId amount,
                              const bool shouldHold) {
-  Gecode::count(_space, intVarArgs(inputs), static_cast<int>(needle), toGecodeIntRelType(relation, shouldHold), intVar(amount));
+  Gecode::count(_space, intVarArgs(inputs), static_cast<int>(needle),
+                toGecodeIntRelType(relation, shouldHold), intVar(amount));
 }
 
 void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
                              const ConstraintVarId needle,
                              const RelationType relation, const Int amount,
                              const bool shouldHold) {
-  Gecode::count(_space, intVarArgs(inputs), intVar(needle), toGecodeIntRelType(relation, shouldHold), static_cast<int>(amount));
+  Gecode::count(_space, intVarArgs(inputs), intVar(needle),
+                toGecodeIntRelType(relation, shouldHold),
+                static_cast<int>(amount));
 }
 
 void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
@@ -1043,7 +1055,8 @@ void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
                              const RelationType relation,
                              const ConstraintVarId amount,
                              const bool shouldHold) {
-  Gecode::count(_space, intVarArgs(inputs), intVar(needle), toGecodeIntRelType(relation, shouldHold), intVar(amount));
+  Gecode::count(_space, intVarArgs(inputs), intVar(needle),
+                toGecodeIntRelType(relation, shouldHold), intVar(amount));
 }
 
 void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
@@ -1054,9 +1067,11 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
     return fzn_count(inputs, needle, relation, amount,
                      boolVar(reified).val() == 1);
   }
-  const Gecode::IntVar c(_space,0,Gecode::Int::Limits::max);
-  count(_space,intVarArgs(inputs),static_cast<int>(needle),Gecode::IRT_EQ,c);
-  rel(_space, c, toGecodeIntRelType(relation), static_cast<int>(amount), boolVar(reified));
+  const Gecode::IntVar c(_space, 0, Gecode::Int::Limits::max);
+  count(_space, intVarArgs(inputs), static_cast<int>(needle), Gecode::IRT_EQ,
+        c);
+  rel(_space, c, toGecodeIntRelType(relation), static_cast<int>(amount),
+      boolVar(reified));
 }
 
 void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
@@ -1067,9 +1082,11 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
     return fzn_count(inputs, needle, relation, amount,
                      boolVar(reified).val() == 1);
   }
-  const Gecode::IntVar c(_space,0,Gecode::Int::Limits::max);
-  count(_space,intVarArgs(inputs),static_cast<int>(needle),Gecode::IRT_EQ,c);
-  rel(_space, c, toGecodeIntRelType(relation), intVar(amount), boolVar(reified));
+  const Gecode::IntVar c(_space, 0, Gecode::Int::Limits::max);
+  count(_space, intVarArgs(inputs), static_cast<int>(needle), Gecode::IRT_EQ,
+        c);
+  rel(_space, c, toGecodeIntRelType(relation), intVar(amount),
+      boolVar(reified));
 }
 
 void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
@@ -1080,9 +1097,10 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
     return fzn_count(inputs, needle, relation, amount,
                      boolVar(reified).val() == 1);
   }
-  const Gecode::IntVar c(_space,0,Gecode::Int::Limits::max);
-  count(_space,intVarArgs(inputs),intVar(needle),Gecode::IRT_EQ,c);
-  rel(_space, c, toGecodeIntRelType(relation), static_cast<int>(amount), boolVar(reified));
+  const Gecode::IntVar c(_space, 0, Gecode::Int::Limits::max);
+  count(_space, intVarArgs(inputs), intVar(needle), Gecode::IRT_EQ, c);
+  rel(_space, c, toGecodeIntRelType(relation), static_cast<int>(amount),
+      boolVar(reified));
 }
 
 void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
@@ -1093,9 +1111,10 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
     return fzn_count(inputs, needle, relation, amount,
                      boolVar(reified).val() == 1);
   }
-  const Gecode::IntVar c(_space,0,Gecode::Int::Limits::max);
-  count(_space,intVarArgs(inputs),intVar(needle),Gecode::IRT_EQ,c);
-  rel(_space, c, toGecodeIntRelType(relation), intVar(amount), boolVar(reified));
+  const Gecode::IntVar c(_space, 0, Gecode::Int::Limits::max);
+  count(_space, intVarArgs(inputs), intVar(needle), Gecode::IRT_EQ, c);
+  rel(_space, c, toGecodeIntRelType(relation), intVar(amount),
+      boolVar(reified));
 }
 
 void GecodeSolver::nvalue(const ConstraintVarId numVals,

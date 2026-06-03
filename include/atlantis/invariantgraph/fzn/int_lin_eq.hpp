@@ -16,8 +16,8 @@ bool int_lin_eq(FznInvariantGraph&, std::vector<Int>&& coeffs,
                 Int bound);
 
 bool int_lin_eq_reif(FznInvariantGraph&, std::vector<Int>&& coeffs,
-                const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                Int bound, const fznparser::BoolArg& reified);
+                     const std::shared_ptr<fznparser::IntVarArray>& inputs,
+                     Int bound, const fznparser::BoolArg& reified);
 
 bool int_lin_eq(FznInvariantGraph&, const fznparser::Constraint&);
 

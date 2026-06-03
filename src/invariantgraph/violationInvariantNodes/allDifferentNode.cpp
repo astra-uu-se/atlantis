@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/allDifferentImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
@@ -16,7 +17,6 @@
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
 #include "atlantis/utils/domains.hpp"
 #include "atlantis/utils/overflow.hpp"
-#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -2,9 +2,9 @@
 
 #include <vector>
 
+#include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/types.hpp"
 #include "atlantis/utils/domains.hpp"
-#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph {
 

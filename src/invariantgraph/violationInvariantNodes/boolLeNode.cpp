@@ -4,13 +4,13 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/violationInvariants/boolLessEqual.hpp"
 #include "atlantis/propagation/violationInvariants/boolLessThan.hpp"
-#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 class VarNode;

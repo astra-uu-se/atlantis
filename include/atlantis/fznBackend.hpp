@@ -5,8 +5,8 @@
 #include <optional>
 #include <thread>
 
-#include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/search/annealing/annealingScheduleFactory.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchProcedure.hpp"
 #include "atlantis/search/threadController.hpp"

@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/circuitImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
@@ -12,7 +13,6 @@
 #include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 #include "atlantis/utils/domains.hpp"
-#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

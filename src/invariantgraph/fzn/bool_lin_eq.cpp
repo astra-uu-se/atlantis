@@ -24,7 +24,8 @@ bool bool_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                  Int bound) {
   verifyInputs(coeffs, inputs);
   graph.addInvariantNode(std::make_shared<BoolLinRelNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), RelationType::REL_TYPE_EQ, bound));
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs),
+      RelationType::REL_TYPE_EQ, bound));
   return true;
 }
 

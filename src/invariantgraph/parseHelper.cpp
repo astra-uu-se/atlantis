@@ -218,53 +218,59 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
 }
 
 propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
-                                      const propagation::VarViewId lhs, const Int rhs,
-                                      const RelationType relType, const bool shouldHold) {
+                                           const propagation::VarViewId lhs,
+                                           const Int rhs,
+                                           const RelationType relType,
+                                           const bool shouldHold) {
   switch (shouldHold ? relType : invertRelationType(relType)) {
     case RelationType::REL_TYPE_EQ:
-      return solver.makeIntView<propagation::EqualConst>(
-          solver, lhs, rhs);
+      return solver.makeIntView<propagation::EqualConst>(solver, lhs, rhs);
     case RelationType::REL_TYPE_NE:
-      return solver.makeIntView<propagation::NotEqualConst>(
-          solver, lhs, rhs);
+      return solver.makeIntView<propagation::NotEqualConst>(solver, lhs, rhs);
     case RelationType::REL_TYPE_GE:
-      return solver.makeIntView<propagation::GreaterEqualConst>(
-          solver, lhs, rhs);
+      return solver.makeIntView<propagation::GreaterEqualConst>(solver, lhs,
+                                                                rhs);
     case RelationType::REL_TYPE_GT:
-      return solver.makeIntView<propagation::GreaterEqualConst>(
-          solver, lhs, rhs + 1);
+      return solver.makeIntView<propagation::GreaterEqualConst>(solver, lhs,
+                                                                rhs + 1);
     case RelationType::REL_TYPE_LT:
-      return solver.makeIntView<propagation::LessEqualConst>(
-          solver, lhs, rhs - 1);
+      return solver.makeIntView<propagation::LessEqualConst>(solver, lhs,
+                                                             rhs - 1);
     case RelationType::REL_TYPE_LE:
-      return solver.makeIntView<propagation::LessEqualConst>(
-          solver, lhs, rhs);
+      return solver.makeIntView<propagation::LessEqualConst>(solver, lhs, rhs);
   }
   return propagation::NULL_ID;
 }
 
 void makeSolverRelation(propagation::SolverBase& solver,
-                                      const propagation::VarViewId lhs, const propagation::VarViewId rhs,
-                                      const propagation::VarViewId violation,
-                                      const RelationType relType, const bool shouldHold) {
+                        const propagation::VarViewId lhs,
+                        const propagation::VarViewId rhs,
+                        const propagation::VarViewId violation,
+                        const RelationType relType, const bool shouldHold) {
   switch (shouldHold ? relType : invertRelationType(relType)) {
     case RelationType::REL_TYPE_EQ:
-      solver.makeViolationInvariant<propagation::Equal>(solver, violation, lhs, rhs);
+      solver.makeViolationInvariant<propagation::Equal>(solver, violation, lhs,
+                                                        rhs);
       break;
     case RelationType::REL_TYPE_NE:
-      solver.makeViolationInvariant<propagation::NotEqual>(solver, violation, lhs, rhs);
+      solver.makeViolationInvariant<propagation::NotEqual>(solver, violation,
+                                                           lhs, rhs);
       break;
     case RelationType::REL_TYPE_GE:
-      solver.makeViolationInvariant<propagation::LessEqual>(solver, violation, rhs, lhs);
+      solver.makeViolationInvariant<propagation::LessEqual>(solver, violation,
+                                                            rhs, lhs);
       break;
     case RelationType::REL_TYPE_GT:
-      solver.makeViolationInvariant<propagation::LessThan>(solver, violation, rhs, lhs);
+      solver.makeViolationInvariant<propagation::LessThan>(solver, violation,
+                                                           rhs, lhs);
       break;
     case RelationType::REL_TYPE_LT:
-      solver.makeViolationInvariant<propagation::LessThan>(solver, violation, lhs, rhs);
+      solver.makeViolationInvariant<propagation::LessThan>(solver, violation,
+                                                           lhs, rhs);
       break;
     case RelationType::REL_TYPE_LE:
-      solver.makeViolationInvariant<propagation::LessEqual>(solver, violation, lhs, rhs);
+      solver.makeViolationInvariant<propagation::LessEqual>(solver, violation,
+                                                            lhs, rhs);
       break;
   }
 }

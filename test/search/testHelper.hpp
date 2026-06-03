@@ -2,13 +2,13 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "atlantis/invariantgraph/gecodeSolver.hpp"
 #include "atlantis/search/annealing/annealingSchedule.hpp"
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/metaheuristic.hpp"
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/searchVariable.hpp"
-#include "atlantis/invariantgraph/gecodeSolver.hpp"
 
 namespace atlantis::testing {
 

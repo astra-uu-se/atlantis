@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/tableImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/countNode.hpp"
@@ -17,7 +18,6 @@
 #include "atlantis/propagation/violationInvariants/boolTableIn.hpp"
 #include "atlantis/propagation/violationInvariants/tableIn.hpp"
 #include "atlantis/utils/domains.hpp"
-#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

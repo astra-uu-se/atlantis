@@ -15,26 +15,28 @@
 namespace atlantis::invariantgraph {
 
 VarNodeId CountNode::needle() const {
-  return _fixedNeedle.has_value() ? NULL_NODE_ID : staticInputVarNodeIds()[needleIndex()];;
+  return _fixedNeedle.has_value() ? NULL_NODE_ID
+                                  : staticInputVarNodeIds()[needleIndex()];
+  ;
 }
 
-size_t CountNode::needleIndex() const {
-  return numInputVars();
-}
+size_t CountNode::needleIndex() const { return numInputVars(); }
 
 size_t CountNode::numInputVars() const {
   return staticInputVarNodeIds().size() - (_fixedNeedle.has_value() ? 0 : 1);
 }
 
 CountNode::CountNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           const Int needle, const VarNodeId count, const Int offset)
+                     const Int needle, const VarNodeId count, const Int offset)
     : InvariantNode(graph, std::vector<VarNodeId>{count}, std::move(vars)),
       _fixedNeedle(needle),
       _offset(offset) {}
 
 CountNode::CountNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           const VarNodeId needle, const VarNodeId count, const Int offset)
-    : InvariantNode(graph, std::vector<VarNodeId>{count}, append(std::move(vars), needle)),
+                     const VarNodeId needle, const VarNodeId count,
+                     const Int offset)
+    : InvariantNode(graph, std::vector<VarNodeId>{count},
+                    append(std::move(vars), needle)),
       _fixedNeedle(std::nullopt),
       _offset(offset) {}
 
@@ -52,7 +54,8 @@ void CountNode::init(const InvariantNodeId id) {
 
 void CountNode::postConstraint() {
   InvariantNode::postConstraint();
-  std::vector<ConstraintVarId> inputs(numInputVars(), ConstraintVarId{NULL_NODE_ID});
+  std::vector<ConstraintVarId> inputs(numInputVars(),
+                                      ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < inputs.size(); ++i) {
     inputs[i] = staticInputVarNodeConst(i).constraintVarId();
   }
@@ -76,11 +79,14 @@ void CountNode::updateState() {
   indicesToRemove.reserve(numInputVars());
   for (Int i = static_cast<Int>(numInputVars()) - 1; i >= 0; --i) {
     if (_fixedNeedle.has_value() && staticInputVarNodeConst(i).isFixed()) {
-      _offset += (*_fixedNeedle == staticInputVarNodeConst(i).lowerBound() ? 1 : 0);
+      _offset +=
+          (*_fixedNeedle == staticInputVarNodeConst(i).lowerBound() ? 1 : 0);
       indicesToRemove.emplace_back(i);
       continue;
     }
-    if (!_fixedNeedle.has_value() && staticInputVarNodeConst(i).constDomain()->isDisjoint(*varNodeConst(needle()).constDomain())) {
+    if (!_fixedNeedle.has_value() &&
+        staticInputVarNodeConst(i).constDomain()->isDisjoint(
+            *varNodeConst(needle()).constDomain())) {
       indicesToRemove.emplace_back(i);
     }
   }
@@ -94,7 +100,7 @@ void CountNode::updateState() {
 
 bool CountNode::canBeMadeImplicit() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
-    !_fixedNeedle.has_value() &&
+         !_fixedNeedle.has_value() &&
          std::ranges::all_of(staticInputVarNodeIds(),
                              [&](const auto& id) {
                                return invariantGraphConst()
@@ -127,7 +133,7 @@ bool CountNode::makeImplicit() {
 }
 
 void CountNode::registerOutputVars(propagation::SolverBase& solver,
-                                      SolverMapping& mapping) const {
+                                   SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() == 1) {
     if (_fixedNeedle.has_value()) {
       mapping.setSolverId(
@@ -139,15 +145,13 @@ void CountNode::registerOutputVars(propagation::SolverBase& solver,
   } else {
     makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return mapping.solverId(vId) != propagation::NULL_ID;
+  }));
 }
 
 void CountNode::registerNode(propagation::SolverBase& solver,
-                                SolverMapping& mapping) const {
+                             SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1 && _fixedNeedle.has_value()) {
     return;
   }
@@ -167,20 +171,20 @@ void CountNode::registerNode(propagation::SolverBase& solver,
 
   if (_fixedNeedle.has_value()) {
     solver.makeInvariant<propagation::CountConst>(
-      solver,
-      mapping.solverId(outputVarNodeIds().front()),
-      *_fixedNeedle, std::move(solverVars), _offset);
+        solver, mapping.solverId(outputVarNodeIds().front()), *_fixedNeedle,
+        std::move(solverVars), _offset);
     return;
   }
   assert(_offset == 0);
   solver.makeInvariant<propagation::Count>(
-      solver,
-      mapping.solverId(outputVarNodeIds().front()),
+      solver, mapping.solverId(outputVarNodeIds().front()),
       mapping.solverId(needle()), std::move(solverVars));
 }
 
 std::string CountNode::dotLangIdentifier() const {
-  return _fixedNeedle.has_value() ? ("int_count " + std::to_string(*_fixedNeedle)) : "var_int_count";
+  return _fixedNeedle.has_value()
+             ? ("int_count " + std::to_string(*_fixedNeedle))
+             : "var_int_count";
 }
 
 }  // namespace atlantis::invariantgraph

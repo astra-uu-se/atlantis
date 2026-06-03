@@ -301,7 +301,7 @@ VarNodeId createCountNode(FznInvariantGraph& graph,
   if (needle.isFixed()) {
     graph.addInvariantNode(
         std::make_shared<CountNode>(graph, graph.retrieveVarNodes(inputs),
-                                       needle.toParameter(), countVarNodeId));
+                                    needle.toParameter(), countVarNodeId));
   } else {
     graph.addInvariantNode(std::make_shared<CountNode>(
         graph, graph.retrieveVarNodes(inputs),
@@ -319,7 +319,7 @@ VarNodeId createCountNode(FznInvariantGraph& graph,
   if (needle.isFixed()) {
     graph.addInvariantNode(
         std::make_shared<CountNode>(graph, graph.retrieveVarNodes(inputs),
-                                       needle.toParameter(), countVarNodeId));
+                                    needle.toParameter(), countVarNodeId));
   } else {
     graph.addInvariantNode(std::make_shared<CountNode>(
         graph, graph.retrieveVarNodes(inputs),

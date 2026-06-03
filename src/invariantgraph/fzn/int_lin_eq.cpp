@@ -85,19 +85,20 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 Int bound) {
   verifyInputs(coeffs, inputs);
   graph.addInvariantNode(std::make_shared<IntLinRelNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), RelationType::REL_TYPE_EQ, bound));
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs),
+      RelationType::REL_TYPE_EQ, bound));
 
   return true;
 }
 
 bool int_lin_eq_reif(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
-                const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                Int bound, const fznparser::BoolArg& reified) {
+                     const std::shared_ptr<fznparser::IntVarArray>& inputs,
+                     Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
 
   graph.addInvariantNode(std::make_shared<IntLinRelNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), RelationType::REL_TYPE_EQ, bound,
-      graph.retrieveVarNode(reified)));
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs),
+      RelationType::REL_TYPE_EQ, bound, graph.retrieveVarNode(reified)));
 
   return true;
 }

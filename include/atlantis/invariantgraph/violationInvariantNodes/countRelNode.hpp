@@ -17,28 +17,33 @@ class CountRelNode : public ViolationInvariantNode {
   [[nodiscard]] size_t numInputVars() const;
 
  public:
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle, Int amount, RelationType relationType,
+  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
+               Int amount, RelationType relationType, bool shouldHold = true);
+
+  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
+               Int amount, RelationType relationType, VarNodeId reified);
+
+  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
+               VarNodeId amount, RelationType relationType,
                bool shouldHold = true);
 
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle, Int amount, RelationType relationType,
+  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
+               VarNodeId amount, RelationType relationType, VarNodeId reified);
+
+  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+               VarNodeId needle, Int amount, RelationType relationType,
+               bool shouldHold = true);
+
+  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+               VarNodeId needle, Int amount, RelationType relationType,
                VarNodeId reified);
 
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle, VarNodeId amount, RelationType relationType,
+  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+               VarNodeId needle, VarNodeId amount, RelationType relationType,
                bool shouldHold = true);
 
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle, VarNodeId amount, RelationType relationType,
-               VarNodeId reified);
-
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, VarNodeId needle, Int amount, RelationType relationType,
-               bool shouldHold = true);
-
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, VarNodeId needle, Int amount, RelationType relationType,
-               VarNodeId reified);
-
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, VarNodeId needle, VarNodeId amount, RelationType relationType,
-               bool shouldHold = true);
-
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, VarNodeId needle, VarNodeId amount, RelationType relationType,
+  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+               VarNodeId needle, VarNodeId amount, RelationType relationType,
                VarNodeId reified);
 
   void init(InvariantNodeId) override;

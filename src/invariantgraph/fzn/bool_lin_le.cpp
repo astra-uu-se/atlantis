@@ -12,7 +12,8 @@ bool bool_lin_le(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                  const std::shared_ptr<fznparser::BoolVarArray>& inputs,
                  Int bound) {
   graph.addInvariantNode(std::make_shared<BoolLinRelNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), RelationType::REL_TYPE_LE, bound));
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs),
+      RelationType::REL_TYPE_LE, bound));
   return true;
 }
 

@@ -1,13 +1,13 @@
 #include "atlantis/invariantgraph/invariantNodes/intModNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/intModViewNode.hpp"
 #include "atlantis/propagation/invariants/mod.hpp"
 #include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

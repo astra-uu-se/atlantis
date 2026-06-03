@@ -23,7 +23,8 @@ bool int_lin_ne(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 Int bound) {
   verifyInputs(coeffs, inputs);
   graph.addInvariantNode(std::make_shared<IntLinRelNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), RelationType::REL_TYPE_NE, bound));
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs),
+      RelationType::REL_TYPE_NE, bound));
 
   return true;
 }
@@ -34,8 +35,8 @@ bool int_lin_ne(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   verifyInputs(coeffs, inputs);
 
   graph.addInvariantNode(std::make_shared<IntLinRelNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), RelationType::REL_TYPE_NE, bound,
-      graph.retrieveVarNode(reified)));
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs),
+      RelationType::REL_TYPE_NE, bound, graph.retrieveVarNode(reified)));
 
   return true;
 }

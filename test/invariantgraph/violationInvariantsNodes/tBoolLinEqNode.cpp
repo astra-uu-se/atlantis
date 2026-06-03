@@ -67,10 +67,12 @@ class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinRelNode> {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          varNodeIds(inputVars), RelationType::REL_TYPE_EQ, bound, varNodeId(reifiedVar));
+                          varNodeIds(inputVars), RelationType::REL_TYPE_EQ,
+                          bound, varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          varNodeIds(inputVars), RelationType::REL_TYPE_EQ, bound, shouldHold());
+                          varNodeIds(inputVars), RelationType::REL_TYPE_EQ,
+                          bound, shouldHold());
     }
   }
 };

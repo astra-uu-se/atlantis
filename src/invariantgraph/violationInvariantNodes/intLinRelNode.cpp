@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
@@ -11,7 +12,6 @@
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/utils/overflow.hpp"
-#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -19,31 +19,38 @@ void IntLinRelNode::updateRelType() {
   if (!isReified() && !shouldHold()) {
     _relType = invertRelationType(_relType);
   }
-  if (_relType == RelationType::REL_TYPE_GE || _relType == RelationType::REL_TYPE_GT) {
+  if (_relType == RelationType::REL_TYPE_GE ||
+      _relType == RelationType::REL_TYPE_GT) {
     _rhs = overflow::saturatingSub(0, _rhs);
     for (auto& c : _coeffs) {
       c = overflow::saturatingMul(c, -1);
     }
-    _relType = _relType == RelationType::REL_TYPE_GE ? RelationType::REL_TYPE_LE : RelationType::REL_TYPE_LT;
+    _relType = _relType == RelationType::REL_TYPE_GE
+                   ? RelationType::REL_TYPE_LE
+                   : RelationType::REL_TYPE_LT;
   }
   if (_relType == RelationType::REL_TYPE_LT) {
     _rhs = overflow::saturatingAdd(_rhs, 1);
     _relType = RelationType::REL_TYPE_LT;
   }
-  assert(_relType == RelationType::REL_TYPE_EQ || _relType == RelationType::REL_TYPE_NE || _relType == RelationType::REL_TYPE_LE);
+  assert(_relType == RelationType::REL_TYPE_EQ ||
+         _relType == RelationType::REL_TYPE_NE ||
+         _relType == RelationType::REL_TYPE_LE);
 }
 
 IntLinRelNode::IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                           std::vector<VarNodeId>&& vars, const RelationType relType, const Int rhs,
-                           const VarNodeId reified)
+                             std::vector<VarNodeId>&& vars,
+                             const RelationType relType, const Int rhs,
+                             const VarNodeId reified)
     : ViolationInvariantNode(graph, std::move(vars), reified),
       _relType(relType),
       _coeffs(std::move(coeffs)),
       _rhs(rhs) {}
 
 IntLinRelNode::IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                           std::vector<VarNodeId>&& vars, const RelationType relType, const Int bound,
-                           const bool shouldHold)
+                             std::vector<VarNodeId>&& vars,
+                             const RelationType relType, const Int bound,
+                             const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
       _relType(relType),
       _coeffs(std::move(coeffs)),
@@ -121,7 +128,8 @@ void IntLinRelNode::updateState() {
     ub = overflow::saturatingAdd(ub, std::max(prod1, prod2));
   }
 
-  if (_relType == RelationType::REL_TYPE_EQ || _relType == RelationType::REL_TYPE_NE) {
+  if (_relType == RelationType::REL_TYPE_EQ ||
+      _relType == RelationType::REL_TYPE_NE) {
     if ((lb == ub && lb == _rhs) || _rhs < lb || ub < _rhs) {
       setState(InvariantNodeState::SUBSUMED);
       return;
@@ -156,7 +164,7 @@ void IntLinRelNode::updateState() {
 }
 
 void IntLinRelNode::registerOutputVars(propagation::SolverBase& solver,
-                                      SolverMapping& mapping) const {
+                                       SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
     mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
     if (shouldHold()) {
@@ -178,7 +186,7 @@ void IntLinRelNode::registerOutputVars(propagation::SolverBase& solver,
 }
 
 void IntLinRelNode::registerNode(propagation::SolverBase& solver,
-                                SolverMapping& mapping) const {
+                                 SolverMapping& mapping) const {
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(violationVarId(mapping).isView());
 

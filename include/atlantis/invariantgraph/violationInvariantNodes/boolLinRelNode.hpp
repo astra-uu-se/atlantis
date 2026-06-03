@@ -13,11 +13,12 @@ class BoolLinRelNode : public ViolationInvariantNode {
 
  public:
   BoolLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                std::vector<VarNodeId>&& vars, RelationType relType, Int rhs,
-                bool shouldHold = true);
+                 std::vector<VarNodeId>&& vars, RelationType relType, Int rhs,
+                 bool shouldHold = true);
 
   BoolLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                std::vector<VarNodeId>&& vars, RelationType relType, Int rhs, VarNodeId reified);
+                 std::vector<VarNodeId>&& vars, RelationType relType, Int rhs,
+                 VarNodeId reified);
 
   void init(InvariantNodeId) override;
 

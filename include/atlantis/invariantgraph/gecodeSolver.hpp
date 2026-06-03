@@ -202,7 +202,8 @@ class GecodeSolver : public ConstraintSolver {
                     ConstraintVarId reified) override;
 
   void bool_lin_eq(const std::vector<Int>& coeffs,
-                   const std::vector<ConstraintVarId>& inputs, ConstraintVarId rhs, Int rhsOffset) override;
+                   const std::vector<ConstraintVarId>& inputs,
+                   ConstraintVarId rhs, Int rhsOffset) override;
 
   void bool_lin(const std::vector<Int>& coeffs,
                 const std::vector<ConstraintVarId>& inputs, RelationType,

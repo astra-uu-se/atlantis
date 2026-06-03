@@ -49,13 +49,14 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     const std::vector<Int>& cover, std::vector<Int>& lowerBounds,
     std::vector<Int>& upperBounds);
 
-propagation::VarViewId solverConstRelation(propagation::SolverBase& solver, propagation::VarViewId lhs, Int rhs, RelationType relType, bool shouldHold = true);
+propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
+                                           propagation::VarViewId lhs, Int rhs,
+                                           RelationType relType,
+                                           bool shouldHold = true);
 
 void makeSolverRelation(propagation::SolverBase& solver,
-                                      propagation::VarViewId lhs, propagation::VarViewId rhs,
-                                      propagation::VarViewId violation,
-                                      RelationType relType, bool shouldHold);
+                        propagation::VarViewId lhs, propagation::VarViewId rhs,
+                        propagation::VarViewId violation, RelationType relType,
+                        bool shouldHold);
 
 }  // namespace atlantis::invariantgraph
-
-

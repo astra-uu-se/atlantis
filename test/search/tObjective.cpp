@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <fznparser/model.hpp>
 
 #include "atlantis/propagation/solver.hpp"

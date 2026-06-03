@@ -6,13 +6,12 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/constraintSolver.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
 #include "atlantis/invariantgraph/solverMapping.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
-#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
 #include "atlantis/utils/domains.hpp"
-
 
 namespace atlantis::search::neighborhoods {
 class NeighborhoodCombinator;
