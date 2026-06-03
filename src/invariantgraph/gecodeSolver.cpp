@@ -409,11 +409,8 @@ SearchDomain GecodeSolver::intVarDomain(const ConstraintVarId varId) const {
   }
   std::vector<Int> values(_space._iv[size_t{varId}].size());
   size_t i = 0;
-  for (int v = _space._iv[size_t{varId}].min();
-       v <= _space._iv[size_t{varId}].max(); ++v) {
-    if (_space._iv[size_t{varId}].in(v)) {
-      values[i++] = v;
-    }
+  for (Gecode::IntVarValues vals(_space._iv[size_t{varId}]); vals(); ++vals) {
+    values[i++] = vals.val();
   }
   return SearchDomain(std::move(values));
 }
