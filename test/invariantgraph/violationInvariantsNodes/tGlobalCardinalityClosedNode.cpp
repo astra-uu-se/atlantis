@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityLowUpNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityClosedNode.hpp"
 
 namespace atlantis::testing {
 
@@ -9,13 +9,13 @@ using namespace atlantis::invariantgraph;
 
 using ::testing::ContainerEq;
 
-class GlobalCardinalityLowUpNodeTestFixture
-    : public NodeTestBase<GlobalCardinalityLowUpNode> {
+class GlobalCardinalityClosedNodeTestFixture
+    : public NodeTestBase<GlobalCardinalityClosedNode> {
  protected:
   std::vector<Var> inputVars;
   const std::vector<Int> cover{2, 6};
-  const std::vector<Int> low{0, 1};
-  const std::vector<Int> up{1, 2};
+  std::vector<Var> outputVars;
+
   Var reifiedVar{"reified", std::vector<Int>{}, true};
 
   bool isViolating(const bool isRegistered = false) {
@@ -25,15 +25,19 @@ class GlobalCardinalityLowUpNodeTestFixture
         const Int val = varNode(var).isFixed()
                             ? varNode(var).lowerBound()
                             : _solver->currentValue(varId(var));
+        bool valInCover = false;
         for (size_t i = 0; i < cover.size(); ++i) {
           if (val == cover.at(i)) {
             counts.at(i)++;
-            break;
+            valInCover = true;
           }
+        }
+        if (!valInCover) {
+          return true;
         }
       }
       for (size_t i = 0; i < counts.size(); ++i) {
-        if (counts.at(i) < low.at(i) || up.at(i) < counts.at(i)) {
+        if (counts.at(i) != _solver->currentValue(varId(outputVars.at(i)))) {
           return true;
         }
       }
@@ -42,15 +46,20 @@ class GlobalCardinalityLowUpNodeTestFixture
     std::vector<Int> counts(cover.size(), 0);
     for (const auto& var : inputVars) {
       const Int val = varNode(var).lowerBound();
+      bool valInCover = false;
       for (size_t i = 0; i < cover.size(); ++i) {
         if (val == cover.at(i)) {
           counts.at(i)++;
+          valInCover = true;
           break;
         }
       }
+      if (!valInCover) {
+        return true;
+      }
     }
     for (size_t i = 0; i < counts.size(); ++i) {
-      if (counts.at(i) < low.at(i) || up.at(i) < counts.at(i)) {
+      if (counts.at(i) != _solver->currentValue(varId(outputVars.at(i)))) {
         return true;
       }
     }
@@ -59,26 +68,42 @@ class GlobalCardinalityLowUpNodeTestFixture
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputVars = std::vector<Var>{Var("input_1", 5, 10, true), Var("input_2", 2, 7, true)};
+    inputVars = std::vector<Var>{Var{"input_1", {}, true}, Var{"input_2", {}, true}};
+    if (shouldBeSubsumed()) {
+      inputVars.at(0).domain = std::pair<Int, Int>{0, 2};
+      inputVars.at(1).domain = std::vector<Int>{1, 3, 5};
+    } else if (shouldBeReplaced()) {
+      inputVars.at(0).domain = std::pair<Int, Int>{1, 3};
+      inputVars.at(1).domain = std::pair<Int, Int>{1, 3};
+    } else {
+      inputVars.at(0).domain = std::pair<Int, Int>{1, 5};
+      inputVars.at(1).domain = std::pair<Int, Int>{1, 5};
+    }
     for (const auto& var : inputVars) {
       retrieveIntVarNode(var);
+    }
+
+    outputVars.clear();
+    for (size_t i = 0; i < cover.size(); ++i) {
+      outputVars.emplace_back("output_" + std::to_string(i + 1), 0, static_cast<Int>(inputVars.size()), true);
+      retrieveIntVarNode(outputVars.back());
     }
 
     if (isReified()) {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          std::vector<Int>{cover}, std::vector<Int>{low},
-                          std::vector<Int>{up}, varNodeId(reifiedVar));
+                          std::vector<Int>{cover}, varNodeIds(outputVars),
+                          varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
-                          std::vector<Int>{cover}, std::vector<Int>{low},
-                          std::vector<Int>{up}, shouldHold());
+                          std::vector<Int>{cover}, varNodeIds(outputVars),
+                          shouldHold());
     }
   }
 };
 
-TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
+TEST_P(GlobalCardinalityClosedNodeTestFixture, propagation) {
   if (shouldBeMadeImplicit()) {
     return;
   }
@@ -141,7 +166,7 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    GlobalCardinalityLowUpNodeTest, GlobalCardinalityLowUpNodeTestFixture,
+    GlobalCardinalityLowUpNodeTest, GlobalCardinalityClosedNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED}));

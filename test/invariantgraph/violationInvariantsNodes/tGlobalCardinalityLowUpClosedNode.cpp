@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityLowUpNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/globalCardinalityLowUpClosedNode.hpp"
 
 namespace atlantis::testing {
 
@@ -9,8 +9,8 @@ using namespace atlantis::invariantgraph;
 
 using ::testing::ContainerEq;
 
-class GlobalCardinalityLowUpNodeTestFixture
-    : public NodeTestBase<GlobalCardinalityLowUpNode> {
+class GlobalCardinalityLowUpClosedNodeTestFixture
+    : public NodeTestBase<GlobalCardinalityLowUpClosedNode> {
  protected:
   std::vector<Var> inputVars;
   const std::vector<Int> cover{2, 6};
@@ -22,14 +22,19 @@ class GlobalCardinalityLowUpNodeTestFixture
     if (isRegistered) {
       std::vector<Int> counts(cover.size(), 0);
       for (const auto& var : inputVars) {
+        bool valInCover = false;
         const Int val = varNode(var).isFixed()
                             ? varNode(var).lowerBound()
                             : _solver->currentValue(varId(var));
         for (size_t i = 0; i < cover.size(); ++i) {
           if (val == cover.at(i)) {
+            valInCover = true;
             counts.at(i)++;
             break;
           }
+        }
+        if (!valInCover) {
+          return true;
         }
       }
       for (size_t i = 0; i < counts.size(); ++i) {
@@ -42,11 +47,16 @@ class GlobalCardinalityLowUpNodeTestFixture
     std::vector<Int> counts(cover.size(), 0);
     for (const auto& var : inputVars) {
       const Int val = varNode(var).lowerBound();
-      for (size_t i = 0; i < cover.size(); ++i) {
+      bool valInCover = false;
+        for (size_t i = 0; i < cover.size(); ++i) {
         if (val == cover.at(i)) {
           counts.at(i)++;
+          valInCover = true;
           break;
         }
+      }
+      if (!valInCover) {
+        return true;
       }
     }
     for (size_t i = 0; i < counts.size(); ++i) {
@@ -78,7 +88,7 @@ class GlobalCardinalityLowUpNodeTestFixture
   }
 };
 
-TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
+TEST_P(GlobalCardinalityLowUpClosedNodeTestFixture, propagation) {
   if (shouldBeMadeImplicit()) {
     return;
   }
@@ -141,7 +151,7 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    GlobalCardinalityLowUpNodeTest, GlobalCardinalityLowUpNodeTestFixture,
+    GlobalCardinalityLowUpClosedNodeTest, GlobalCardinalityLowUpClosedNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED}));
