@@ -4,17 +4,20 @@
 
 namespace atlantis::invariantgraph {
 
-class BoolLinLeNode : public ViolationInvariantNode {
+class BoolLinRelNode : public ViolationInvariantNode {
+  RelationType _relType;
   std::vector<Int> _coeffs;
-  Int _bound;
+  Int _rhs;
+
+  void updateRelType();
 
  public:
-  BoolLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                std::vector<VarNodeId>&& vars, Int bound,
+  BoolLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+                std::vector<VarNodeId>&& vars, RelationType relType, Int rhs,
                 bool shouldHold = true);
 
-  BoolLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                std::vector<VarNodeId>&& vars, Int bound, VarNodeId reified);
+  BoolLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+                std::vector<VarNodeId>&& vars, RelationType relType, Int rhs, VarNodeId reified);
 
   void init(InvariantNodeId) override;
 
@@ -22,12 +25,14 @@ class BoolLinLeNode : public ViolationInvariantNode {
 
   void updateState() override;
 
+  [[nodiscard]] bool canBeMadeImplicit() const override;
+
+  [[nodiscard]] bool makeImplicit() override;
+
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
-
-  [[nodiscard]] const std::vector<Int>& coeffs() const;
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

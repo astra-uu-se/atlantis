@@ -10,6 +10,7 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/globalCardinalityLowUp.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -3,8 +3,7 @@
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
-#include "atlantis/invariantgraph/invariantNodes/varIntCountNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/countNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/utils/domains.hpp"
 
@@ -301,10 +300,10 @@ VarNodeId createCountNode(FznInvariantGraph& graph,
 
   if (needle.isFixed()) {
     graph.addInvariantNode(
-        std::make_shared<IntCountNode>(graph, graph.retrieveVarNodes(inputs),
+        std::make_shared<CountNode>(graph, graph.retrieveVarNodes(inputs),
                                        needle.toParameter(), countVarNodeId));
   } else {
-    graph.addInvariantNode(std::make_shared<VarIntCountNode>(
+    graph.addInvariantNode(std::make_shared<CountNode>(
         graph, graph.retrieveVarNodes(inputs),
         graph.retrieveVarNode(needle.var()), countVarNodeId));
   }
@@ -319,10 +318,10 @@ VarNodeId createCountNode(FznInvariantGraph& graph,
 
   if (needle.isFixed()) {
     graph.addInvariantNode(
-        std::make_shared<IntCountNode>(graph, graph.retrieveVarNodes(inputs),
+        std::make_shared<CountNode>(graph, graph.retrieveVarNodes(inputs),
                                        needle.toParameter(), countVarNodeId));
   } else {
-    graph.addInvariantNode(std::make_shared<VarIntCountNode>(
+    graph.addInvariantNode(std::make_shared<CountNode>(
         graph, graph.retrieveVarNodes(inputs),
         graph.retrieveVarNode(needle.var()), countVarNodeId));
   }

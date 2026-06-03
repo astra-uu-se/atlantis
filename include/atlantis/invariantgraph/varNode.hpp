@@ -7,7 +7,6 @@
 
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
-#include "solverMapping.hpp"
 
 namespace atlantis {
 class SortedUniqueVector;
@@ -21,6 +20,7 @@ class SolverBase;  // forward declaration
 }
 
 namespace atlantis::invariantgraph {
+class SolverMapping;
 
 class VarNode {
   VarNodeId _varNodeId;

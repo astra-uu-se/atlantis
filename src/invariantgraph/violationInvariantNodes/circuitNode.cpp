@@ -12,6 +12,7 @@
 #include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

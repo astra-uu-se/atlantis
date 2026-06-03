@@ -4,25 +4,26 @@
 
 namespace atlantis::invariantgraph {
 
-class IntLinLeNode : public ViolationInvariantNode {
+class IntLinRelNode : public ViolationInvariantNode {
+  RelationType _relType;
   std::vector<Int> _coeffs;
-  Int _bound;
+  Int _rhs;
+
+  void updateRelType();
 
  public:
-  IntLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-               std::vector<VarNodeId>&& vars, Int bound,
+  IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+               std::vector<VarNodeId>&& vars, RelationType relationType, Int rhs,
                bool shouldHold = true);
 
-  IntLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-               std::vector<VarNodeId>&& vars, Int bound, VarNodeId reified);
+  IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+               std::vector<VarNodeId>&& vars, RelationType relType, Int bound, VarNodeId reified);
 
   void init(InvariantNodeId) override;
 
   void postConstraint() override;
 
   void updateState() override;
-  bool canBeMadeImplicit() const override;
-  bool makeImplicit() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

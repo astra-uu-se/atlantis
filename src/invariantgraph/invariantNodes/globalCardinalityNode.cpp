@@ -8,13 +8,14 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/countNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -87,7 +88,7 @@ bool GlobalCardinalityNode::replace() {
     return false;
   }
   assert(_cover.size() == 1);
-  invariantGraph().addInvariantNode(std::make_shared<IntCountNode>(
+  invariantGraph().addInvariantNode(std::make_shared<CountNode>(
       invariantGraph(), std::vector<VarNodeId>(staticInputVarNodeIds()),
       _cover.front(), outputVarNodeIds().front(), _countOffsets.front()));
   return true;

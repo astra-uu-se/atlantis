@@ -9,6 +9,7 @@
 #include "atlantis/propagation/invariants/elementVar.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

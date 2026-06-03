@@ -12,7 +12,6 @@ namespace atlantis::invariantgraph {
 static size_t NULL_NODE_ID = ~size_t{0};
 
 using VarNodeId = size_t;
-using ConstraintId = size_t;
 
 struct InvariantNodeId {
   friend struct InvariantNodeIdHash;

@@ -16,6 +16,7 @@
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/propagation/violationInvariants/boolAllEqual.hpp"
 #include "atlantis/propagation/violationInvariants/boolEqual.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -93,10 +94,12 @@ void BoolAllEqualNode::postConstraint() {
     inputs[i] = staticInputVarNode(i).constraintVarId();
   }
   if (isReified()) {
-    constraintSolver().bool_lin_eq_reif(
-        coeffs, inputs, 0, reifiedVarNodeConst().constraintVarId());
+    constraintSolver().bool_lin_reif(coeffs, inputs, RelationType::REL_TYPE_EQ,
+                                     0,
+                                     reifiedVarNodeConst().constraintVarId());
   } else {
-    constraintSolver().bool_lin_eq(coeffs, inputs, 0, shouldHold());
+    constraintSolver().bool_lin(coeffs, inputs, RelationType::REL_TYPE_EQ, 0,
+                                shouldHold());
   }
 }
 

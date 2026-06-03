@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
+#include <fznparser/model.hpp>
 
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/search/objective.hpp"
-#include "fznparser/model.hpp"
 
 namespace atlantis::testing {
 

@@ -20,8 +20,7 @@
 #include <gecode/kernel.hh>
 #include <vector>
 
-#include "constraintSolver.hpp"
-#include "varNode.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -76,56 +75,36 @@ class GecodeSolver : public ConstraintSolver {
                Gecode::BoolOpType);
 
   void bool_rel(ConstraintVarId lhs, ConstraintVarId rhs,
-                ConstraintVarId reified, Gecode::IntRelType);
+                ConstraintVarId reified, RelationType);
   void bool_rel(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold,
-                Gecode::IntRelType);
+                RelationType);
 
   void int_rel(ConstraintVarId lhs, ConstraintVarId rhs,
-               ConstraintVarId reified, Gecode::IntRelType irt);
+               ConstraintVarId reified, RelationType);
   void int_rel(ConstraintVarId lhs, Int rhs, ConstraintVarId reified,
-               Gecode::IntRelType irt);
+               RelationType);
   void int_rel(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold,
-               Gecode::IntRelType irt);
+               RelationType);
 
   void bool_lin_rel(const std::vector<Int>& coeffs,
                     const std::vector<ConstraintVarId>& inputs, Int rhs,
-                    ConstraintVarId reified, Gecode::IntRelType);
+                    ConstraintVarId reified, RelationType);
   void bool_lin_rel(const std::vector<Int>& coeffs,
                     const std::vector<ConstraintVarId>& inputs,
-                    ConstraintVarId rhs, Int rhsOffset, Gecode::IntRelType irt);
+                    ConstraintVarId rhs, Int rhsOffset, RelationType);
   void bool_lin_rel(const std::vector<Int>& coeffs,
                     const std::vector<ConstraintVarId>& inputs, Int rhs,
-                    bool shouldHold, Gecode::IntRelType);
+                    bool shouldHold, RelationType);
 
   void int_lin_rel(const std::vector<Int>& coeffs,
                    const std::vector<ConstraintVarId>& inputs, Int rhs,
-                   ConstraintVarId reified, Gecode::IntRelType);
+                   ConstraintVarId reified, RelationType);
   void int_lin_rel(const std::vector<Int>& coeffs,
                    const std::vector<ConstraintVarId>& inputs,
-                   ConstraintVarId rhs, Int rhsOffset, Gecode::IntRelType irt);
+                   ConstraintVarId rhs, Int rhsOffset, RelationType);
   void int_lin_rel(const std::vector<Int>& coeffs,
                    const std::vector<ConstraintVarId>& inputs, Int rhs,
-                   bool shouldHold, Gecode::IntRelType);
-
-  void count_rel(const std::vector<ConstraintVarId>& inputs, Int needle, Int amount,
-             bool shouldHold, Gecode::IntRelType irl);
-  void count_rel(const std::vector<ConstraintVarId>& inputs, Int needle,
-             ConstraintVarId amount, bool shouldHold, Gecode::IntRelType irl);
-  void count_rel(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle,
-             Int amount, bool shouldHold, Gecode::IntRelType irl);
-  void count_rel(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle,
-             ConstraintVarId amount, bool shouldHold, Gecode::IntRelType irl);
-  void count_rel(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle,
-             ConstraintVarId amount, ConstraintVarId reified,
-             Gecode::IntRelType irl);
-  void count_rel(const std::vector<ConstraintVarId>& inputs, Int needle, Int amount,
-             ConstraintVarId reified, Gecode::IntRelType irl);
-  void count_rel(const std::vector<ConstraintVarId>& inputs, Int needle,
-             ConstraintVarId amount, ConstraintVarId reified,
-             Gecode::IntRelType irl);
-  void count_rel(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle,
-             Int amount, ConstraintVarId reified, Gecode::IntRelType irl);
-
+                   bool shouldHold, RelationType);
 
  public:
   /// Construct empty space
@@ -223,24 +202,15 @@ class GecodeSolver : public ConstraintSolver {
                     ConstraintVarId reified) override;
 
   void bool_lin_eq(const std::vector<Int>& coeffs,
-                   const std::vector<ConstraintVarId>& inputs, Int rhs,
-                   bool shouldHold) override;
+                   const std::vector<ConstraintVarId>& inputs, ConstraintVarId rhs, Int rhsOffset) override;
 
-  void bool_lin_eq(const std::vector<Int>& coeffs,
-                   const std::vector<ConstraintVarId>& inputs,
-                   ConstraintVarId rhs, Int rhsOffset) override;
+  void bool_lin(const std::vector<Int>& coeffs,
+                const std::vector<ConstraintVarId>& inputs, RelationType,
+                Int rhs, bool shouldHold) override;
 
-  void bool_lin_eq_reif(const std::vector<Int>& coeffs,
-                        const std::vector<ConstraintVarId>& inputs, Int rhs,
-                        ConstraintVarId reified) override;
-
-  void bool_lin_le(const std::vector<Int>& coeffs,
-                   const std::vector<ConstraintVarId>& inputs, Int rhs,
-                   bool shouldHold) override;
-
-  void bool_lin_le_reif(const std::vector<Int>& coeffs,
-                        const std::vector<ConstraintVarId>& inputs, Int rhs,
-                        ConstraintVarId reified) override;
+  void bool_lin_reif(const std::vector<Int>& coeffs,
+                     const std::vector<ConstraintVarId>& inputs, RelationType,
+                     Int rhs, ConstraintVarId reified) override;
 
   void bool_lt(ConstraintVarId b1, ConstraintVarId b2,
                bool shouldHold) override;
@@ -287,32 +257,17 @@ class GecodeSolver : public ConstraintSolver {
                    ConstraintVarId reified) override;
 
   void int_lin_eq(const std::vector<Int>& coeffs,
-                  const std::vector<ConstraintVarId>& inputs, Int rhs,
-                  bool shouldHold) override;
-
-  void int_lin_eq(const std::vector<Int>& coeffs,
                   const std::vector<ConstraintVarId>& inputs,
                   ConstraintVarId rhs, Int rhsOffset) override;
 
-  void int_lin_eq_reif(const std::vector<Int>& coeffs,
-                       const std::vector<ConstraintVarId>& inputs, Int rhs,
-                       ConstraintVarId shouldHold) override;
+  void int_lin(const std::vector<Int>& coeffs,
+               const std::vector<ConstraintVarId>& inputs,
+               RelationType relation, Int rhs, bool shouldHold) override;
 
-  void int_lin_le(const std::vector<Int>& coeffs,
-                  const std::vector<ConstraintVarId>& inputs, Int rhs,
-                  bool shouldHold) override;
-
-  void int_lin_le_reif(const std::vector<Int>& coeffs,
-                       const std::vector<ConstraintVarId>& inputs, Int rhs,
-                       ConstraintVarId reified) override;
-
-  void int_lin_ne(const std::vector<Int>& coeffs,
-                  const std::vector<ConstraintVarId>& inputs, Int rhs,
-                  bool shouldHold) override;
-
-  void int_lin_ne_reif(const std::vector<Int>& coeffs,
-                       const std::vector<ConstraintVarId>& inputs, Int rhs,
-                       ConstraintVarId reified) override;
+  void int_lin_reif(const std::vector<Int>& coeffs,
+                    const std::vector<ConstraintVarId>& inputs,
+                    RelationType relationType, Int rhs,
+                    ConstraintVarId reified) override;
 
   void int_lt(ConstraintVarId lhs, ConstraintVarId rhs,
               bool shouldHold) override;
@@ -403,21 +358,36 @@ class GecodeSolver : public ConstraintSolver {
       const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
       ConstraintVarId reified) override;
 
-  void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle, Int amount, bool shouldHold, RelationType relation) override;
+  void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle,
+                 RelationType relation, Int amount, bool shouldHold) override;
 
-  void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId amount, bool shouldHold, RelationType relation) override;
+  void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle,
+                 RelationType relation, ConstraintVarId amount,
+                 bool shouldHold) override;
 
-  void fzn_count(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, Int amount, bool shouldHold, RelationType relation) override;
+  void fzn_count(const std::vector<ConstraintVarId>& inputs,
+                 ConstraintVarId needle, RelationType relation, Int amount,
+                 bool shouldHold) override;
 
-  void fzn_count(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId amount, bool shouldHold, RelationType relation) override;
+  void fzn_count(const std::vector<ConstraintVarId>& inputs,
+                 ConstraintVarId needle, RelationType relation,
+                 ConstraintVarId amount, bool shouldHold) override;
 
-  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, Int needle, Int amount, ConstraintVarId reified, RelationType relation) override;
+  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, Int needle,
+                      RelationType relation, Int amount,
+                      ConstraintVarId reified) override;
 
-  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId amount, ConstraintVarId reified, RelationType relation) override;
+  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, Int needle,
+                      RelationType relation, ConstraintVarId amount,
+                      ConstraintVarId reified) override;
 
-  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, Int amount, ConstraintVarId reified, RelationType relation) override;
+  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
+                      ConstraintVarId needle, RelationType relation, Int amount,
+                      ConstraintVarId reified) override;
 
-  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId amount, ConstraintVarId reified, RelationType relation) override;
+  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
+                      ConstraintVarId needle, RelationType relation,
+                      ConstraintVarId amount, ConstraintVarId reified) override;
 
   void nvalue(ConstraintVarId numVals,
               const std::vector<ConstraintVarId>& inputs) override;

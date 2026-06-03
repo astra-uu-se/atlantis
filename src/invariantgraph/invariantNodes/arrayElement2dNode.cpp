@@ -4,6 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/element2dConst.hpp"

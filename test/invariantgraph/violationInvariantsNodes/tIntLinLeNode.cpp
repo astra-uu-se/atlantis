@@ -2,7 +2,7 @@
 
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/invariantGraphRoot.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLinLeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLinRelNode.hpp"
 
 namespace atlantis::testing {
 
@@ -10,7 +10,7 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 using ::testing::Contains;
 
-class IntLinLeNodeTestFixture : public NodeTestBase<IntLinLeNode> {
+class IntLinLeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
  public:
   size_t numInputs = 3;
   std::vector<std::string> inputVars;
@@ -68,10 +68,10 @@ class IntLinLeNodeTestFixture : public NodeTestBase<IntLinLeNode> {
     if (isReified()) {
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          varNodeIds(inputVars), bound, varNodeId(reifiedVar));
+                          varNodeIds(inputVars), RelationType::REL_TYPE_LE, bound, varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          varNodeIds(inputVars), bound, shouldHold());
+                          varNodeIds(inputVars), RelationType::REL_TYPE_LE, bound, shouldHold());
     }
   }
 };

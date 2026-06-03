@@ -4,7 +4,7 @@
 #include "./fznHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLinLeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLinRelNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -23,8 +23,8 @@ bool int_lin_le(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 Int bound) {
   verifyInputs(coeffs, inputs);
 
-  graph.addInvariantNode(std::make_shared<IntLinLeNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
+  graph.addInvariantNode(std::make_shared<IntLinRelNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), RelationType::REL_TYPE_LE, bound));
 
   return true;
 }
@@ -34,8 +34,8 @@ bool int_lin_le(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
 
-  graph.addInvariantNode(std::make_shared<IntLinLeNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound,
+  graph.addInvariantNode(std::make_shared<IntLinRelNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), RelationType::REL_TYPE_LE, bound,
       graph.retrieveVarNode(reified)));
 
   return true;

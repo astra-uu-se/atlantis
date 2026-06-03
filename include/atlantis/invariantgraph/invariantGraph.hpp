@@ -5,23 +5,20 @@
 #include <unordered_map>
 #include <vector>
 
-#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/solverMapping.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
-#include "implicitConstraintNode.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
+#include "atlantis/utils/domains.hpp"
 
-namespace atlantis {
-class SearchDomain;
-}
 
 namespace atlantis::search::neighborhoods {
 class NeighborhoodCombinator;
 }
 
 namespace atlantis::invariantgraph {
-class ConstraintSolver;
 class InvariantGraphRoot;
 class VarNode;
 class InvariantNode;

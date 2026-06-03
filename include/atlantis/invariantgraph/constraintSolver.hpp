@@ -2,7 +2,9 @@
 
 #include <vector>
 
-#include "varNode.hpp"
+#include "atlantis/types.hpp"
+#include "atlantis/utils/domains.hpp"
+#include "atlantis/invariantgraph/types.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -100,24 +102,16 @@ class ConstraintSolver {
                             ConstraintVarId reif) = 0;
 
   virtual void bool_lin_eq(const std::vector<Int>& coeffs,
-                           const std::vector<ConstraintVarId>& inputs, Int rhs,
-                           bool shouldHold) = 0;
-
-  virtual void bool_lin_eq(const std::vector<Int>& coeffs,
                            const std::vector<ConstraintVarId>& inputs,
                            ConstraintVarId rhs, Int rhsOffset) = 0;
 
-  virtual void bool_lin_eq_reif(const std::vector<Int>& coeffs,
-                                const std::vector<ConstraintVarId>& inputs,
-                                Int rhs, ConstraintVarId reif) = 0;
+  virtual void bool_lin(const std::vector<Int>& coeffs,
+                        const std::vector<ConstraintVarId>& inputs,
+                        RelationType, Int rhs, bool shouldHold) = 0;
 
-  virtual void bool_lin_le(const std::vector<Int>& coeffs,
-                           const std::vector<ConstraintVarId>& inputs, Int rhs,
-                           bool shouldHold) = 0;
-
-  virtual void bool_lin_le_reif(const std::vector<Int>& coeffs,
-                                const std::vector<ConstraintVarId>& inputs,
-                                Int rhs, ConstraintVarId reif) = 0;
+  virtual void bool_lin_reif(const std::vector<Int>& coeffs,
+                             const std::vector<ConstraintVarId>& inputs,
+                             RelationType, Int rhs, ConstraintVarId reif) = 0;
 
   virtual void bool_lt(ConstraintVarId b1, ConstraintVarId b2,
                        bool shouldHold) = 0;
@@ -164,32 +158,17 @@ class ConstraintSolver {
                            ConstraintVarId reified) = 0;
 
   virtual void int_lin_eq(const std::vector<Int>& coeffs,
-                          const std::vector<ConstraintVarId>& inputs, Int rhs,
-                          bool shouldHold) = 0;
-
-  virtual void int_lin_eq(const std::vector<Int>& coeffs,
                           const std::vector<ConstraintVarId>& inputs,
                           ConstraintVarId rhs, Int rhsOffset) = 0;
 
-  virtual void int_lin_eq_reif(const std::vector<Int>& coeffs,
-                               const std::vector<ConstraintVarId>& inputs,
-                               Int rhs, ConstraintVarId shouldHold) = 0;
+  virtual void int_lin(const std::vector<Int>& coeffs,
+                       const std::vector<ConstraintVarId>& inputs,
+                       RelationType relationType, Int rhs, bool shouldHold) = 0;
 
-  virtual void int_lin_le(const std::vector<Int>& coeffs,
-                          const std::vector<ConstraintVarId>& inputs, Int rhs,
-                          bool shouldHold) = 0;
-
-  virtual void int_lin_le_reif(const std::vector<Int>& coeffs,
-                               const std::vector<ConstraintVarId>& inputs,
-                               Int rhs, ConstraintVarId reified) = 0;
-
-  virtual void int_lin_ne(const std::vector<Int>& coeffs,
-                          const std::vector<ConstraintVarId>& inputs, Int rhs,
-                          bool shouldHold) = 0;
-
-  virtual void int_lin_ne_reif(const std::vector<Int>& coeffs,
-                               const std::vector<ConstraintVarId>& inputs,
-                               Int rhs, ConstraintVarId reified) = 0;
+  virtual void int_lin_reif(const std::vector<Int>& coeffs,
+                            const std::vector<ConstraintVarId>& inputs,
+                            RelationType relationType, Int rhs,
+                            ConstraintVarId reified) = 0;
 
   virtual void int_lt(ConstraintVarId lhs, ConstraintVarId rhs,
                       bool shouldHold) = 0;
@@ -275,21 +254,39 @@ class ConstraintSolver {
       const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
       ConstraintVarId reified) = 0;
 
-  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle, Int amount, bool shouldHold, RelationType relation);
+  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle,
+                         RelationType relation, Int amount,
+                         bool shouldHold) = 0;
 
-  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId amount, bool shouldHold, RelationType relation);
+  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle,
+                         RelationType relation, ConstraintVarId amount,
+                         bool shouldHold) = 0;
 
-  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, Int amount, bool shouldHold, RelationType relation);
+  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs,
+                         ConstraintVarId needle, RelationType relation,
+                         Int amount, bool shouldHold) = 0;
 
-  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId amount, bool shouldHold, RelationType relation);
+  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs,
+                         ConstraintVarId needle, RelationType relation,
+                         ConstraintVarId amount, bool shouldHold) = 0;
 
-  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, Int needle, Int amount, ConstraintVarId reified, RelationType relation);
+  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
+                              Int needle, RelationType relation, Int amount,
+                              ConstraintVarId reified) = 0;
 
-  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, Int needle, ConstraintVarId amount, ConstraintVarId reified, RelationType relation);
+  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
+                              Int needle, RelationType relation,
+                              ConstraintVarId amount,
+                              ConstraintVarId reified) = 0;
 
-  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, Int amount, ConstraintVarId reified, RelationType relation);
+  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
+                              ConstraintVarId needle, RelationType relation,
+                              Int amount, ConstraintVarId reified) = 0;
 
-  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, ConstraintVarId needle, ConstraintVarId amount, ConstraintVarId reified, RelationType relation);
+  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
+                              ConstraintVarId needle, RelationType relation,
+                              ConstraintVarId amount,
+                              ConstraintVarId reified) = 0;
 
   virtual void nvalue(ConstraintVarId numVals,
                       const std::vector<ConstraintVarId>& inputs) = 0;

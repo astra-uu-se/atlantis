@@ -10,7 +10,7 @@
 #include "search/savedAssignment.hpp"
 #include "search/searchProcedure.hpp"
 #include "search/threadController.hpp"
-#include "types.hpp"
+#include "atlantis/types.hpp"
 
 namespace atlantis {
 class FznBackend;

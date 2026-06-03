@@ -9,6 +9,7 @@
 #include "atlantis/propagation/invariants/plus.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

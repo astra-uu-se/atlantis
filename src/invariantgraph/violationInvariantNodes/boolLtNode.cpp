@@ -10,6 +10,7 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/violationInvariants/boolLessEqual.hpp"
 #include "atlantis/propagation/violationInvariants/boolLessThan.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 class VarNode;

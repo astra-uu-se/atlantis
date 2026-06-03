@@ -1,14 +1,22 @@
 #pragma once
 
 #include "atlantis/invariantgraph/invariantNode.hpp"
+#include <optional>
 
 namespace atlantis::invariantgraph {
-class IntCountNode : public InvariantNode {
-  Int _needle;
+class CountNode : public InvariantNode {
+  std::optional<Int> _fixedNeedle;
   Int _offset;
 
+  [[nodiscard]] VarNodeId needle() const;
+  [[nodiscard]] size_t needleIndex() const;
+  [[nodiscard]] size_t numInputVars() const;
+
  public:
-  IntCountNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
+  CountNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
+               VarNodeId count, Int offset = 0);
+
+  CountNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, VarNodeId needle,
                VarNodeId count, Int offset = 0);
 
   void init(InvariantNodeId) override;

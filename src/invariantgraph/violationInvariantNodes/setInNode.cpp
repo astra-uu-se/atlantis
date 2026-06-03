@@ -11,6 +11,7 @@
 #include "atlantis/propagation/views/inDomain.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

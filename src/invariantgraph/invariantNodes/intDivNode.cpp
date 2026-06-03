@@ -13,6 +13,7 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/utils/domains.hpp"
 #include "atlantis/utils/overflow.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolLinEqNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolLinRelNode.hpp"
 
 namespace atlantis::testing {
 
@@ -9,7 +9,7 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 using ::testing::Contains;
 
-class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinEqNode> {
+class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinRelNode> {
  protected:
   size_t numInputs = 3;
   std::vector<Int> coeffs;
@@ -67,10 +67,10 @@ class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinEqNode> {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          varNodeIds(inputVars), bound, varNodeId(reifiedVar));
+                          varNodeIds(inputVars), RelationType::REL_TYPE_EQ, bound, varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          varNodeIds(inputVars), bound, shouldHold());
+                          varNodeIds(inputVars), RelationType::REL_TYPE_EQ, bound, shouldHold());
     }
   }
 };

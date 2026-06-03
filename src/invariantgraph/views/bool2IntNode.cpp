@@ -7,6 +7,7 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/bool2IntView.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -40,6 +40,8 @@ class ViolationInvariantNode : public InvariantNode {
 
   [[nodiscard]] bool shouldHold() const noexcept;
 
+  void setShouldHold(bool sh) noexcept;
+
   void fixReified(bool);
 
  public:

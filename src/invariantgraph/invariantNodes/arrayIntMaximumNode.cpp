@@ -6,6 +6,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/max.hpp"
 #include "atlantis/propagation/solverBase.hpp"

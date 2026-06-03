@@ -8,6 +8,7 @@
 #include "atlantis/propagation/views/inIntervalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

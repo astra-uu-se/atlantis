@@ -16,6 +16,7 @@
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
 #include "atlantis/utils/domains.hpp"
 #include "atlantis/utils/overflow.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

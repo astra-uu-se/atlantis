@@ -4,7 +4,6 @@
 #include <gtest/gtest.h>
 #include <rapidcheck/gtest.h>
 
-#include <unordered_map>
 #include <utility>
 #include <vector>
 

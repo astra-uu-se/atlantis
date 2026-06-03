@@ -7,6 +7,7 @@
 #include "atlantis/invariantgraph/views/intModViewNode.hpp"
 #include "atlantis/propagation/invariants/mod.hpp"
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

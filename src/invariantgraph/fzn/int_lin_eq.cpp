@@ -6,7 +6,7 @@
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLinEqNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLinRelNode.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph::fzn {
@@ -84,19 +84,19 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
                 Int bound) {
   verifyInputs(coeffs, inputs);
-  graph.addInvariantNode(std::make_shared<IntLinEqNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
+  graph.addInvariantNode(std::make_shared<IntLinRelNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), RelationType::REL_TYPE_EQ, bound));
 
   return true;
 }
 
-bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
+bool int_lin_eq_reif(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
                 Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
 
-  graph.addInvariantNode(std::make_shared<IntLinEqNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound,
+  graph.addInvariantNode(std::make_shared<IntLinRelNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), RelationType::REL_TYPE_EQ, bound,
       graph.retrieveVarNode(reified)));
 
   return true;
@@ -140,7 +140,7 @@ bool int_lin_eq(FznInvariantGraph& graph,
         std::get<fznparser::IntArg>(constraint.arguments().at(2))
             .toParameter());
   }
-  return int_lin_eq(
+  return int_lin_eq_reif(
       graph, std::move(coeffs),
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter(),

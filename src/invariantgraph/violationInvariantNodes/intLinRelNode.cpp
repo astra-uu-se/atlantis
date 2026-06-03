@@ -1,64 +1,81 @@
-#include "atlantis/invariantgraph/violationInvariantNodes/intLinLeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLinRelNode.hpp"
 
-#include <limits>
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
-#include "atlantis/invariantgraph/implicitConstraintNodes/linLeImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/views/greaterEqualConst.hpp"
-#include "atlantis/propagation/views/lessEqualConst.hpp"
+#include "atlantis/propagation/views/equalConst.hpp"
+#include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/utils/overflow.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntLinLeNode::IntLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                           std::vector<VarNodeId>&& vars, const Int bound,
+void IntLinRelNode::updateRelType() {
+  if (!isReified() && !shouldHold()) {
+    _relType = invertRelationType(_relType);
+  }
+  if (_relType == RelationType::REL_TYPE_GE || _relType == RelationType::REL_TYPE_GT) {
+    _rhs = overflow::saturatingSub(0, _rhs);
+    for (auto& c : _coeffs) {
+      c = overflow::saturatingMul(c, -1);
+    }
+    _relType = _relType == RelationType::REL_TYPE_GE ? RelationType::REL_TYPE_LE : RelationType::REL_TYPE_LT;
+  }
+  if (_relType == RelationType::REL_TYPE_LT) {
+    _rhs = overflow::saturatingAdd(_rhs, 1);
+    _relType = RelationType::REL_TYPE_LT;
+  }
+  assert(_relType == RelationType::REL_TYPE_EQ || _relType == RelationType::REL_TYPE_NE || _relType == RelationType::REL_TYPE_LE);
+}
+
+IntLinRelNode::IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+                           std::vector<VarNodeId>&& vars, const RelationType relType, const Int rhs,
                            const VarNodeId reified)
     : ViolationInvariantNode(graph, std::move(vars), reified),
+      _relType(relType),
       _coeffs(std::move(coeffs)),
-      _bound(bound) {}
+      _rhs(rhs) {}
 
-IntLinLeNode::IntLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                           std::vector<VarNodeId>&& vars, const Int bound,
+IntLinRelNode::IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+                           std::vector<VarNodeId>&& vars, const RelationType relType, const Int bound,
                            const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
+      _relType(relType),
       _coeffs(std::move(coeffs)),
-      _bound(bound) {}
+      _rhs(bound) {}
 
-void IntLinLeNode::init(const InvariantNodeId id) {
+void IntLinRelNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
-  assert(
-      !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  updateRelType();
+  assert(!isReified() || !reifiedVarNodeConst().isIntVar());
   assert(std::ranges::all_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      [&](const VarNodeId vId) { return varNodeConst(vId).isIntVar(); }));
 }
 
-void IntLinLeNode::postConstraint() {
+void IntLinRelNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
-    return constraintSolver().int_lin_le_reif(
+    return constraintSolver().int_lin_reif(
         _coeffs,
         toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
-        _bound, reifiedVarNodeConst().constraintVarId());
+        _relType, _rhs, reifiedVarNodeConst().constraintVarId());
   }
-  constraintSolver().int_lin_le(
+  constraintSolver().int_lin(
       _coeffs,
       toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
-      _bound, shouldHold());
+      _relType, _rhs, shouldHold());
 }
 
-void IntLinLeNode::updateState() {
+void IntLinRelNode::updateState() {
   ViolationInvariantNode::updateState();
+  updateRelType();
+
   // Remove duplicates:
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
     for (Int j = static_cast<Int>(staticInputVarNodeIds().size()) - 1; j > i;
@@ -78,7 +95,7 @@ void IntLinLeNode::updateState() {
     const auto& inputNode =
         invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
     if (inputNode.isFixed() || _coeffs.at(i) == 0) {
-      _bound -= _coeffs.at(i) * inputNode.lowerBound();
+      _rhs -= _coeffs.at(i) * inputNode.lowerBound();
       indicesToRemove.emplace_back(i);
     }
   }
@@ -104,21 +121,21 @@ void IntLinLeNode::updateState() {
     ub = overflow::saturatingAdd(ub, std::max(prod1, prod2));
   }
 
-  if (ub <= _bound) {
-    assert(!isReified());
-    assert(shouldHold());
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (lb > _bound) {
-    assert(!isReified());
-    assert(!shouldHold());
-    setState(InvariantNodeState::SUBSUMED);
-    return;
+  if (_relType == RelationType::REL_TYPE_EQ || _relType == RelationType::REL_TYPE_NE) {
+    if ((lb == ub && lb == _rhs) || _rhs < lb || ub < _rhs) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+  } else {
+    assert(_relType == RelationType::REL_TYPE_LE);
+    if (ub <= _rhs || lb > _rhs) {
+      assert(!isReified());
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
   }
 
-  bool sameCoeff = !_coeffs.empty() && std::abs(_coeffs.front()) != 1 &&
-                   _bound % std::abs(_coeffs.front()) == 0;
+  bool sameCoeff = !_coeffs.empty() && std::abs(_coeffs.front()) != 1;
   for (size_t i = 1; sameCoeff && i < _coeffs.size(); ++i) {
     if (std::abs(_coeffs[i]) != std::abs(_coeffs.front())) {
       sameCoeff = false;
@@ -126,42 +143,30 @@ void IntLinLeNode::updateState() {
   }
   if (sameCoeff) {
     const Int c = std::abs(_coeffs.front());
+    if (_rhs % c != 0) {
+      assert(!shouldHold());
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
     for (long& coeff : _coeffs) {
       coeff /= c;
     }
-    _bound /= c;
+    _rhs /= c;
   }
 }
 
-bool IntLinLeNode::canBeMadeImplicit() const {
-  return std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
-    return invariantGraphConst().varNodeConst(vId).definingNodes().empty();
-  });
-}
-
-bool IntLinLeNode::makeImplicit() {
-  if (!canBeMadeImplicit()) {
-    return false;
-  }
-  invariantGraph().addImplicitConstraintNode(
-      std::make_shared<LinLeImplicitNode>(
-          invariantGraph(), std::move(_coeffs),
-          std::vector<VarNodeId>{staticInputVarNodeIds()}, _bound));
-  return true;
-}
-
-void IntLinLeNode::registerOutputVars(propagation::SolverBase& solver,
+void IntLinRelNode::registerOutputVars(propagation::SolverBase& solver,
                                       SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
     mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
     if (shouldHold()) {
-      setViolationVarId(solver.makeIntView<propagation::LessEqualConst>(
-                            solver, mapping.intermediateId(id()), _bound),
+      setViolationVarId(solver.makeIntView<propagation::EqualConst>(
+                            solver, mapping.intermediateId(id()), _rhs),
                         mapping);
     } else {
       assert(!isReified());
-      setViolationVarId(solver.makeIntView<propagation::GreaterEqualConst>(
-                            solver, mapping.intermediateId(id()), _bound + 1),
+      setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
+                            solver, mapping.intermediateId(id()), _rhs),
                         mapping);
     }
   }
@@ -172,7 +177,7 @@ void IntLinLeNode::registerOutputVars(propagation::SolverBase& solver,
       }));
 }
 
-void IntLinLeNode::registerNode(propagation::SolverBase& solver,
+void IntLinRelNode::registerNode(propagation::SolverBase& solver,
                                 SolverMapping& mapping) const {
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(violationVarId(mapping).isView());
@@ -181,6 +186,7 @@ void IntLinLeNode::registerNode(propagation::SolverBase& solver,
   assert(mapping.intermediateId(id()).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
+  solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
       std::back_inserter(solverVars), [&](const VarNodeId varNodeId) {
@@ -192,10 +198,10 @@ void IntLinLeNode::registerNode(propagation::SolverBase& solver,
       std::move(solverVars));
 }
 
-const std::vector<Int>& IntLinLeNode::coeffs() const { return _coeffs; }
+const std::vector<Int>& IntLinRelNode::coeffs() const { return _coeffs; }
 
-std::string IntLinLeNode::dotLangIdentifier() const {
-  return "int_lin_le_node";
+std::string IntLinRelNode::dotLangIdentifier() const {
+  return "int_lin_eq_node";
 }
 
 }  // namespace atlantis::invariantgraph

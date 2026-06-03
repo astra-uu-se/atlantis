@@ -1,10 +1,6 @@
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElement2dNode.hpp"
 
 #include <algorithm>
-#include <boost/locale/boundary/index.hpp>
-#include <boost/multi_index/detail/uintptr_type.hpp>
-#include <boost/multi_index_container.hpp>
-#include <boost/type_erasure/placeholder.hpp>
 
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
@@ -15,6 +11,7 @@
 #include "atlantis/propagation/invariants/element2dVar.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

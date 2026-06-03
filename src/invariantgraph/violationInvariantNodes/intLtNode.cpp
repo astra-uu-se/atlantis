@@ -9,6 +9,7 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 #include "atlantis/propagation/violationInvariants/lessThan.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

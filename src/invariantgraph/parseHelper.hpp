@@ -3,9 +3,14 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/propagation/propagation/propagationGraph.hpp"
 #include "atlantis/sortedUniqueVector.hpp"
 
+namespace atlantis::propagation {
+class SolverBase;
+}
 namespace atlantis::invariantgraph {
+class SolverMapping;
 class InvariantGraph;
 
 std::vector<VarNodeId>&& append(std::vector<VarNodeId>&&, VarNodeId, VarNodeId);
@@ -41,7 +46,16 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
 
 std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
-    const std::vector<Int>& cover, const std::vector<Int>& lowerBounds,
-    const std::vector<Int>& upperBounds);
+    const std::vector<Int>& cover, std::vector<Int>& lowerBounds,
+    std::vector<Int>& upperBounds);
+
+propagation::VarViewId solverConstRelation(propagation::SolverBase& solver, propagation::VarViewId lhs, Int rhs, RelationType relType, bool shouldHold = true);
+
+void makeSolverRelation(propagation::SolverBase& solver,
+                                      propagation::VarViewId lhs, propagation::VarViewId rhs,
+                                      propagation::VarViewId violation,
+                                      RelationType relType, bool shouldHold);
 
 }  // namespace atlantis::invariantgraph
+
+

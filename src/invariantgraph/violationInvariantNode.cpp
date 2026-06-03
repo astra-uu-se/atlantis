@@ -69,6 +69,10 @@ void ViolationInvariantNode::init(InvariantNodeId id) {
 
 bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
 
+void ViolationInvariantNode::setShouldHold(const bool sh) noexcept {
+  _shouldHold = sh;
+}
+
 VarNode& ViolationInvariantNode::reifiedVarNode() {
   return varNode(reifiedViolationNodeId());
 }

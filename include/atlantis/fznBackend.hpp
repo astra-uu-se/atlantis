@@ -6,14 +6,13 @@
 #include <thread>
 
 #include "atlantis/search/annealing/annealingScheduleFactory.hpp"
-#include "invariantgraph/fznInvariantGraph.hpp"
-#include "invariantgraph/solverMapping.hpp"
-#include "search/savedAssignment.hpp"
-#include "search/searchProcedure.hpp"
-#include "search/threadController.hpp"
-#include "solverThread.hpp"
-#include "types.hpp"
-#include "utils/fznOutput.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
+#include "atlantis/search/savedAssignment.hpp"
+#include "atlantis/search/searchProcedure.hpp"
+#include "atlantis/search/threadController.hpp"
+#include "atlantis/solverThread.hpp"
+#include "atlantis/types.hpp"
+#include "atlantis/utils/fznOutput.hpp"
 
 namespace atlantis {
 

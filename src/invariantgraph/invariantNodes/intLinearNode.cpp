@@ -13,6 +13,7 @@
 #include "atlantis/propagation/views/intOffsetView.hpp"
 #include "atlantis/propagation/views/scalarView.hpp"
 #include "atlantis/utils/overflow.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 
 namespace atlantis::invariantgraph {
 

@@ -5,14 +5,14 @@
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/types.hpp"
-#include "constraintSolver.hpp"
-#include "solverMapping.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 
 namespace atlantis::propagation {
 class SolverBase;  //  forward declaration;
 }
 
 namespace atlantis::invariantgraph {
+class ConstraintSolver;
 
 class InvariantGraph;  // forward declaration;
 

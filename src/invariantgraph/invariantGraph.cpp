@@ -7,7 +7,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/gecodeSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"

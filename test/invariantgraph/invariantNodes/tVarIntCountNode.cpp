@@ -1,5 +1,5 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/invariantNodes/varIntCountNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/countNode.hpp"
 
 namespace atlantis::testing {
 
@@ -7,14 +7,14 @@ using namespace atlantis::invariantgraph;
 
 using ::testing::ContainerEq;
 
-class VarIntCountNodeTestFixture : public NodeTestBase<VarIntCountNode> {
- public:
+class VarIntCountNodeTestFixture : public NodeTestBase<CountNode> {
+ protected:
   Int numInputs = 3;
   std::vector<std::string> inputVars;
   std::string needleVar{"needle"};
   std::string outputVar{"output"};
 
-  Int computeOutput(bool isRegistered = false) {
+  Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
       const Int needleVal = varNode(needleVar).isFixed()
                                 ? varNode(needleVar).lowerBound()
@@ -46,7 +46,7 @@ class VarIntCountNodeTestFixture : public NodeTestBase<VarIntCountNode> {
     return occurrences;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.reserve(3);
     inputVars = {"input_0", "input_1", "input_2"};
