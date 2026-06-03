@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::propagation {
 
@@ -18,7 +19,7 @@ CountConst::CountConst(SolverBase& solver, const VarId output, const Int needle,
 CountConst::CountConst(SolverBase& solver, const VarViewId output,
                        const Int needle, std::vector<VarViewId>&& vars,
                        const Int outputOffset)
-    : CountConst(solver, VarId(output), needle, std::move(vars), outputOffset) {
+    : CountConst(solver, VarId{output}, needle, std::move(vars), outputOffset) {
   assert(output.isVar());
 }
 
@@ -35,7 +36,7 @@ void CountConst::registerVars() {
 
 void CountConst::updateBounds(const bool widenOnly) {
   _solver.updateBounds(
-      _output, 0, static_cast<Int>(_vars.size()) + _outputOffset, widenOnly);
+      _output, _outputOffset, overflow::saturatingAdd(_outputOffset, static_cast<Int>(_vars.size())), widenOnly);
 }
 
 void CountConst::recompute(const Timestamp ts) {
