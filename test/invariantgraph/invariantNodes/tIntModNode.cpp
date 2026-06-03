@@ -6,12 +6,12 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
- public:
-  std::string numeratorVar{"numerator"};
-  std::string denominatorVar{"denominator"};
-  std::string outputVar{"output"};
+ protected:
+  Var numeratorVar{"numerator", std::vector<Int>{}, true};
+  Var denominatorVar{"denominator", std::vector<Int>{}, true};
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(bool isRegistered = false) {
+  Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
       const Int numerator = varNode(numeratorVar).isFixed()
                                 ? varNode(numeratorVar).lowerBound()
@@ -27,11 +27,11 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
     return denominator != 0 ? numerator % denominator : 0;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    retrieveIntVarNode(0, 6, numeratorVar);
-    retrieveIntVarNode(1, 10, denominatorVar);
-    retrieveIntVarNode(0, 10, outputVar);
+    numeratorVar.domain = std::pair<Int,Int>{0, 6};
+    denominatorVar.domain = std::pair<Int,Int>{1, 10};
+    outputVar.domain = std::pair<Int,Int>{0, 10};
 
     createInvariantNode(*_invariantGraph, varNodeId(numeratorVar),
                         varNodeId(denominatorVar), varNodeId(outputVar));
@@ -52,11 +52,11 @@ TEST_P(IntModNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var :
-       std::array<std::string, 2>{numeratorVar, denominatorVar}) {
-    if (!varNode(var).isFixed()) {
-      EXPECT_NE(varId(var), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(var));
+  for (const auto& vId :
+       std::array<VarNodeId, 2>{varNodeId(numeratorVar), varNodeId(denominatorVar)}) {
+    if (!varNode(vId).isFixed()) {
+      EXPECT_NE(varId(vId), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(vId));
     }
   }
 
@@ -86,7 +86,7 @@ TEST_P(IntModNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(IntModNodeTest, IntModNodeTestFixture,
+INSTANTIATE_TEST_SUITE_P(IntModNodeTest, IntModNodeTestFixture,
                         ::testing::Values(ParamData{
                             InvariantNodeAction::NONE}));
 

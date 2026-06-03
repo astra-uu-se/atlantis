@@ -10,9 +10,9 @@ using ::testing::ContainerEq;
 class VarIntCountNodeTestFixture : public NodeTestBase<CountNode> {
  protected:
   Int numInputs = 3;
-  std::vector<std::string> inputVars;
-  std::string needleVar{"needle"};
-  std::string outputVar{"output"};
+  std::vector<Var> inputVars;
+  Var needleVar{"needle", std::vector<Int>{}, true};
+  Var outputVar{"output", std::vector<Int>{}, true};
 
   Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
@@ -49,17 +49,18 @@ class VarIntCountNodeTestFixture : public NodeTestBase<CountNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.reserve(3);
-    inputVars = {"input_0", "input_1", "input_2"};
-    retrieveIntVarNode(2, 5, inputVars.at(0));
-    retrieveIntVarNode(3, 5, inputVars.at(1));
-    retrieveIntVarNode(4, 5, inputVars.at(2));
+    inputVars.emplace_back("input_0", 2, 5, true);
+    inputVars.emplace_back("input_1", 3, 5, true);
+    inputVars.emplace_back("input_2", 4, 5, true);
     if (shouldBeReplaced()) {
-      retrieveIntVarNode(2, 2, needleVar);
+      needleVar.domain = std::pair<Int, Int>(2, 2);
     } else {
-      retrieveIntVarNode(2, 5, needleVar);
+      needleVar.domain = std::pair<Int, Int>(2, 5);
     }
+    retrieveIntVarNode(needleVar);
 
-    retrieveIntVarNode(0, 2, outputVar);
+    needleVar.domain = std::pair<Int, Int>(0, 2);
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                         varNodeId(needleVar), varNodeId(outputVar));
@@ -82,6 +83,8 @@ TEST_P(VarIntCountNodeTestFixture, construction) {
 
 TEST_P(VarIntCountNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -140,7 +143,7 @@ TEST_P(VarIntCountNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     VarIntCountNodeTest, VarIntCountNodeTestFixture,
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::REPLACE}));
 

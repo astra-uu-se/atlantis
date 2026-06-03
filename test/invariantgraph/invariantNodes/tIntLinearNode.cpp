@@ -8,13 +8,13 @@ using ::testing::ContainerEq;
 using ::testing::Contains;
 
 class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
- public:
+ protected:
   size_t numInputs = 3;
-  std::vector<std::string> inputVars;
+  std::vector<Var> inputVars;
   std::vector<Int> coeffs;
-  std::string outputVar{"output"};
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(bool isRegistered = false) {
+  Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
       Int sum = 0;
       for (size_t i = 0; i < coeffs.size(); ++i) {
@@ -40,7 +40,7 @@ class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
     return sum;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
@@ -49,19 +49,22 @@ class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
     const Int lb = -2;
     const Int ub = 2;
     for (Int i = 0; i < static_cast<Int>(numInputs); ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
+      inputVars.emplace_back("input_" + std::to_string(i), std::vector<Int>{}, true);
       if (shouldBeSubsumed()) {
         const Int val = i % 3 == 0 ? lb : ub;
-        retrieveIntVarNode(val, val, inputVars.back());
+        inputVars.back().domain = std::vector<Int>(val);
       } else {
-        retrieveIntVarNode(lb, ub, inputVars.back());
+        inputVars.back().domain = std::pair<Int, Int>(lb, ub);
       }
       coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
       minSum += std::min(lb * coeffs.back(), ub * coeffs.back());
       maxSum += std::max(lb * coeffs.back(), ub * coeffs.back());
+      retrieveIntVarNode(inputVars.back());
     }
 
-    retrieveIntVarNode(minSum, maxSum, outputVar);
+    outputVar.domain = std::pair<Int, Int>(minSum, maxSum);
+
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                         varNodeIds(inputVars), varNodeId(outputVar));
@@ -84,6 +87,8 @@ TEST_P(IntLinearNodeTestFixture, construction) {
 
 TEST_P(IntLinearNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -142,7 +147,7 @@ TEST_P(IntLinearNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntLinearNodeTest, IntLinearNodeTestFixture,
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME}));
 

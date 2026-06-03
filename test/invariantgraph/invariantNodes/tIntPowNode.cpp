@@ -6,12 +6,12 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
- public:
-  std::string baseVar{"base"};
-  std::string exponentVar{"exponent"};
-  std::string outputVar{"output"};
+ protected:
+  Var baseVar{"base", std::vector<Int>{}, true};
+  Var exponentVar{"exponent", std::vector<Int>{}, true};
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  [[nodiscard]] static Int int_exp(Int baseVal, Int exponentVal) {
+  [[nodiscard]] static Int int_exp(const Int baseVal, const Int exponentVal) {
     if (exponentVal == 0) {
       return 1;
     }
@@ -35,7 +35,7 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
     return result;
   }
 
-  Int computeOutput(bool isRegistered = false) {
+  Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
       const Int baseVal = varNode(baseVar).isFixed()
                               ? varNode(baseVar).lowerBound()
@@ -50,11 +50,15 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
     return int_exp(baseVal, exponentVal);
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    retrieveIntVarNode(0, 10, baseVar);
-    retrieveIntVarNode(0, 10, exponentVar);
-    retrieveIntVarNode(0, 10, outputVar);
+    baseVar.domain = std::pair<Int, Int>{0, 10};
+    exponentVar.domain = std::pair<Int, Int>{0, 10};
+    outputVar.domain = std::pair<Int, Int>{0, 10};
+
+    retrieveIntVarNode(baseVar);
+    retrieveIntVarNode(exponentVar);
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(baseVar),
                         varNodeId(exponentVar), varNodeId(outputVar));
@@ -105,7 +109,7 @@ TEST_P(IntPowNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(IntPowNodeTest, IntPowNodeTestFixture,
+INSTANTIATE_TEST_SUITE_P(IntPowNodeTest, IntPowNodeTestFixture,
                         ::testing::Values(ParamData{
                             InvariantNodeAction::NONE}));
 
