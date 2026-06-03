@@ -42,7 +42,8 @@ class GlobalCardinalityNodeTestFixture
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputVars = std::vector<Var>{Var{"input_1", {}, true}, Var{"input_2", {}, true}};
+    inputVars =
+        std::vector<Var>{Var{"input_1", {}, true}, Var{"input_2", {}, true}};
     if (shouldBeSubsumed()) {
       inputVars.at(0).domain = std::pair<Int, Int>{0, 2};
       inputVars.at(1).domain = std::vector<Int>{1, 3, 5};
@@ -59,7 +60,8 @@ class GlobalCardinalityNodeTestFixture
 
     outputVars.clear();
     for (size_t i = 0; i < cover.size(); ++i) {
-      outputVars.emplace_back("output_" + std::to_string(i + 1), 0, static_cast<Int>(inputVars.size()), true);
+      outputVars.emplace_back("output_" + std::to_string(i + 1), 0,
+                              static_cast<Int>(inputVars.size()), true);
       retrieveIntVarNode(outputVars.back());
     }
 

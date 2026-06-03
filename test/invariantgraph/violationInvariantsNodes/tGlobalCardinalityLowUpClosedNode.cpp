@@ -48,7 +48,7 @@ class GlobalCardinalityLowUpClosedNodeTestFixture
     for (const auto& var : inputVars) {
       const Int val = varNode(var).lowerBound();
       bool valInCover = false;
-        for (size_t i = 0; i < cover.size(); ++i) {
+      for (size_t i = 0; i < cover.size(); ++i) {
         if (val == cover.at(i)) {
           counts.at(i)++;
           valInCover = true;
@@ -69,7 +69,8 @@ class GlobalCardinalityLowUpClosedNodeTestFixture
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputVars = std::vector<Var>{Var("input_1", 5, 10, true), Var("input_2", 2, 7, true)};
+    inputVars = std::vector<Var>{Var("input_1", 5, 10, true),
+                                 Var("input_2", 2, 7, true)};
     for (const auto& var : inputVars) {
       retrieveIntVarNode(var);
     }
@@ -151,7 +152,8 @@ TEST_P(GlobalCardinalityLowUpClosedNodeTestFixture, propagation) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    GlobalCardinalityLowUpClosedNodeTest, GlobalCardinalityLowUpClosedNodeTestFixture,
+    GlobalCardinalityLowUpClosedNodeTest,
+    GlobalCardinalityLowUpClosedNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED}));

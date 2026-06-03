@@ -8,17 +8,20 @@
 
 namespace atlantis::propagation {
 
-Linear::Linear(SolverBase& solver, const VarId output, std::vector<Int>&& coeffs,
-               std::vector<VarViewId>&& varArray, const Int outputOffset)
+Linear::Linear(SolverBase& solver, const VarId output,
+               std::vector<Int>&& coeffs, std::vector<VarViewId>&& varArray,
+               const Int outputOffset)
     : Invariant(solver),
       _outputOffset(outputOffset),
       _output(output),
       _coeffs(std::move(coeffs)),
       _varArray(std::move(varArray)) {}
 
-Linear::Linear(SolverBase& solver, const VarViewId output, std::vector<Int>&& coeffs,
-               std::vector<VarViewId>&& varArray, const Int outputOffset)
-    : Linear(solver, VarId{output}, std::move(coeffs), std::move(varArray), outputOffset) {
+Linear::Linear(SolverBase& solver, const VarViewId output,
+               std::vector<Int>&& coeffs, std::vector<VarViewId>&& varArray,
+               const Int outputOffset)
+    : Linear(solver, VarId{output}, std::move(coeffs), std::move(varArray),
+             outputOffset) {
   assert(output.isVar());
 }
 

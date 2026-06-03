@@ -59,7 +59,8 @@ class GlobalCardinalityLowUpNodeTestFixture
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputVars = std::vector<Var>{Var("input_1", 5, 10, true), Var("input_2", 2, 7, true)};
+    inputVars = std::vector<Var>{Var("input_1", 5, 10, true),
+                                 Var("input_2", 2, 7, true)};
     for (const auto& var : inputVars) {
       retrieveIntVarNode(var);
     }

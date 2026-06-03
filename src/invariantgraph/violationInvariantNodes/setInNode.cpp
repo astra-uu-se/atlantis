@@ -40,16 +40,22 @@ void SetInNode::init(const InvariantNodeId id) {
 void SetInNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
-    return constraintSolver().set_in_reif(staticInputVarNodeConst(0).constraintVarId(), _values, reifiedVarNodeConst().constraintVarId());
+    return constraintSolver().set_in_reif(
+        staticInputVarNodeConst(0).constraintVarId(), _values,
+        reifiedVarNodeConst().constraintVarId());
   }
-  constraintSolver().set_in(staticInputVarNodeConst(0).constraintVarId(), _values, shouldHold());
+  constraintSolver().set_in(staticInputVarNodeConst(0).constraintVarId(),
+                            _values, shouldHold());
 }
 
 void SetInNode::updateState() {
   ViolationInvariantNode::updateState();
   if (!isReified()) {
     setState(InvariantNodeState::SUBSUMED);
-    staticInputVarNode(0).tightenDomainType(staticInputVarNodeConst(0).constDomain()->isInterval() ? DomainType::DOM_RANGE : DomainType::DOM_DOMAIN);
+    staticInputVarNode(0).tightenDomainType(
+        staticInputVarNodeConst(0).constDomain()->isInterval()
+            ? DomainType::DOM_RANGE
+            : DomainType::DOM_DOMAIN);
   }
 }
 
@@ -62,23 +68,27 @@ void SetInNode::registerOutputVars(propagation::SolverBase& solver,
     if ((*_values).size() == 1) {
       if (!shouldHold()) {
         setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-        solver, input, (*_values).front()), mapping);
+                              solver, input, (*_values).front()),
+                          mapping);
       } else {
         setViolationVarId(solver.makeIntView<propagation::EqualConst>(
-        solver, input, (*_values).front()), mapping);
+                              solver, input, (*_values).front()),
+                          mapping);
       }
     } else if (_values.isInterval()) {
       if (!shouldHold()) {
-        mapping.setIntermediateId(id(),
-                                  solver.makeIntView<propagation::InIntervalConst>(
-                                      solver, input, (*_values).front(), (*_values).back()));
-        setViolationVarId(solver.makeIntView<propagation::InIntervalConst>(
-        solver, input, (*_values).front(), (*_values).back()),
-                          mapping);
+        mapping.setIntermediateId(
+            id(), solver.makeIntView<propagation::InIntervalConst>(
+                      solver, input, (*_values).front(), (*_values).back()));
+        setViolationVarId(
+            solver.makeIntView<propagation::InIntervalConst>(
+                solver, input, (*_values).front(), (*_values).back()),
+            mapping);
       } else {
-        setViolationVarId(solver.makeIntView<propagation::InIntervalConst>(
-                                      solver, input, (*_values).front(), (*_values).back()),
-                          mapping);
+        setViolationVarId(
+            solver.makeIntView<propagation::InIntervalConst>(
+                solver, input, (*_values).front(), (*_values).back()),
+            mapping);
       }
     } else {
       std::vector<DomainEntry> domainEntries;

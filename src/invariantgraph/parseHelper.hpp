@@ -63,13 +63,14 @@ bool violToBool(Int violation);
 
 std::vector<bool> violToBool(const std::vector<Int>& violations);
 
-std::vector<std::vector<bool>> violToBool(const std::vector<std::vector<Int>>& violations);
+std::vector<std::vector<bool>> violToBool(
+    const std::vector<std::vector<Int>>& violations);
 
 Int boolToViol(bool b);
 
 std::vector<Int> boolToViol(const std::vector<bool>& bools);
 
-std::vector<std::vector<Int>> boolToViol(const std::vector<std::vector<bool>>& bools);
-
+std::vector<std::vector<Int>> boolToViol(
+    const std::vector<std::vector<bool>>& bools);
 
 }  // namespace atlantis::invariantgraph

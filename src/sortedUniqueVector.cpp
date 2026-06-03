@@ -21,6 +21,8 @@ bool SortedUniqueVector::isInterval() const noexcept {
   return vec.back() - vec.front() == static_cast<int>(vec.size()) - 1;
 }
 
-const std::vector<Int>& SortedUniqueVector::operator*() const noexcept { return vec; }
+const std::vector<Int>& SortedUniqueVector::operator*() const noexcept {
+  return vec;
+}
 
 }  // namespace atlantis

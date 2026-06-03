@@ -77,14 +77,22 @@ void TableInNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
     if (_isBoolTable) {
-      return constraintSolver().fzn_table_bool_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _table, reifiedVarNodeConst().constraintVarId());
+      return constraintSolver().fzn_table_bool_reif(
+          toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+          _table, reifiedVarNodeConst().constraintVarId());
     }
-    return constraintSolver().fzn_table_int_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _table, reifiedVarNodeConst().constraintVarId());
+    return constraintSolver().fzn_table_int_reif(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        _table, reifiedVarNodeConst().constraintVarId());
   }
   if (_isBoolTable) {
-    return constraintSolver().fzn_table_bool(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), violToBool(_table), shouldHold());
+    return constraintSolver().fzn_table_bool(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        violToBool(_table), shouldHold());
   }
-  return constraintSolver().fzn_table_bool(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), violToBool(_table), shouldHold());
+  return constraintSolver().fzn_table_bool(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      violToBool(_table), shouldHold());
 }
 
 size_t TableInNode::numCols() const { return _table.front().size(); }
@@ -94,9 +102,7 @@ void TableInNode::removeInvalidRows() {
   invalidRows.reserve(_table.size());
   for (size_t r = 0; r < _table.size(); ++r) {
     for (size_t c = 0; c < numCols(); ++c) {
-      if (!staticInputVarNodeConst(c)
-               .constDomain()
-               ->contains(_table[r][c])) {
+      if (!staticInputVarNodeConst(c).constDomain()->contains(_table[r][c])) {
         invalidRows.emplace_back(r);
         break;
       }
@@ -123,12 +129,10 @@ void TableInNode::removeColumn(const size_t colIndex) {
 void TableInNode::removeInvalidColumns() {
   for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
        --i) {
-    if (!staticInputVarNodeConst(i)
-             .isFixed()) {
+    if (!staticInputVarNodeConst(i).isFixed()) {
       continue;
     }
-    const Int val = staticInputVarNodeConst(i)
-                        .lowerBound();
+    const Int val = staticInputVarNodeConst(i).lowerBound();
     for (Int r = static_cast<Int>(_table.size()) - 1; r >= 0; --r) {
       if (_table[r][i] != val) {
         std::swap(_table[r], _table.back());
@@ -193,7 +197,8 @@ void TableInNode::updateState() {
   removeInvalidRows();
   removeInvalidColumns();
 
-  if (_table.size() <= 1 || _table.front().empty() || staticInputVarNodeIds().empty()) {
+  if (_table.size() <= 1 || _table.front().empty() ||
+      staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -207,9 +212,7 @@ Int TableInNode::firstInputColIndex() const {
     inputIsDefined[i] = !staticInputVarNodeConst(i).definingNodes().empty();
   }
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    if (staticInputVarNodeConst(i)
-            .constDomain()
-            ->size() != _table.size()) {
+    if (staticInputVarNodeConst(i).constDomain()->size() != _table.size()) {
       continue;
     }
     bool replaceable = true;

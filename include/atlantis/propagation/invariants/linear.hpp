@@ -19,7 +19,8 @@ class Linear : public Invariant {
   explicit Linear(SolverBase&, VarViewId output,
                   std::vector<VarViewId>&& varArray, Int outputOffset = 0);
 
-  explicit Linear(SolverBase&, VarId output, std::vector<VarViewId>&& varArray, Int outputOffset = 0);
+  explicit Linear(SolverBase&, VarId output, std::vector<VarViewId>&& varArray,
+                  Int outputOffset = 0);
 
   explicit Linear(SolverBase&, VarViewId output, std::vector<Int>&& coeffs,
                   std::vector<VarViewId>&& varArray, Int outputOffset = 0);

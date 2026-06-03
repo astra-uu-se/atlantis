@@ -36,7 +36,9 @@ void CountConst::registerVars() {
 
 void CountConst::updateBounds(const bool widenOnly) {
   _solver.updateBounds(
-      _output, _outputOffset, overflow::saturatingAdd(_outputOffset, static_cast<Int>(_vars.size())), widenOnly);
+      _output, _outputOffset,
+      overflow::saturatingAdd(_outputOffset, static_cast<Int>(_vars.size())),
+      widenOnly);
 }
 
 void CountConst::recompute(const Timestamp ts) {
