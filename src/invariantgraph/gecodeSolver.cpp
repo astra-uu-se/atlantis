@@ -109,6 +109,48 @@ Gecode::IntVarArgs GecodeSolver::intVarArgs(
   return args;
 }
 
+Gecode::TupleSet GecodeSolver::tupleSet(const std::vector<std::vector<Int>>& table) {
+  // Build TupleSet
+  Gecode::TupleSet ts(static_cast<int>(table.size()));
+  for (const auto & row : table) {
+    Gecode::IntArgs tuple(static_cast<int>(row.size()));
+    for (size_t col = 0; col < row.size(); col++) {
+      tuple[static_cast<int>(col)] = static_cast<int>(row[col]);
+    }
+    ts.add(tuple);
+  }
+  ts.finalize();
+
+  return ts;
+}
+
+Gecode::TupleSet GecodeSolver::tupleSet(const std::vector<std::vector<bool>>& table) {
+  // Build TupleSet
+  Gecode::TupleSet ts(static_cast<int>(table.size()));
+  for (const auto & row : table) {
+    Gecode::IntArgs tuple(static_cast<int>(row.size()));
+    for (size_t col = 0; col < row.size(); col++) {
+      tuple[static_cast<int>(col)] = row[col] ? 1 : 0;
+    }
+    ts.add(tuple);
+  }
+  ts.finalize();
+
+  return ts;
+}
+
+Gecode::IntSet GecodeSolver::intSet(const SortedUniqueVector& values) {
+  if (values.isInterval()) {
+    return Gecode::IntSet(static_cast<int>((*values).front()), static_cast<int>((*values).back()));
+  }
+  Gecode::Region re;
+  int* is = re.alloc<int>((*values).size());
+  for (Int i = static_cast<Int>((*values).size()) - 1; i >= 0; --i) {
+    is[i] = static_cast<int>((*values)[i]);
+  }
+  return Gecode::IntSet(is, static_cast<int>((*values).size()));
+}
+
 Gecode::IntVar GecodeSolver::intVar(const size_t varId) {
   assert(varId < _space._iv.size());
   return _space._iv[varId];
@@ -740,6 +782,12 @@ void GecodeSolver::int_le(const ConstraintVarId lhs, const ConstraintVarId rhs,
 }
 
 void GecodeSolver::int_le_reif(const ConstraintVarId lhs,
+                               const Int rhs,
+                               const ConstraintVarId reified) {
+  int_rel(lhs, rhs, reified, RelationType::REL_TYPE_LE);
+}
+
+void GecodeSolver::int_le_reif(const ConstraintVarId lhs,
                                const ConstraintVarId rhs,
                                const ConstraintVarId reified) {
   int_rel(lhs, rhs, reified, RelationType::REL_TYPE_LE);
@@ -771,6 +819,12 @@ void GecodeSolver::int_lt(const ConstraintVarId lhs, const ConstraintVarId rhs,
 }
 
 void GecodeSolver::int_lt_reif(const ConstraintVarId lhs,
+                               const Int rhs,
+                               const ConstraintVarId reified) {
+  int_rel(lhs, rhs, reified, RelationType::REL_TYPE_LT);
+}
+
+void GecodeSolver::int_lt_reif(const ConstraintVarId lhs,
                                const ConstraintVarId rhs,
                                const ConstraintVarId reified) {
   int_rel(lhs, rhs, reified, RelationType::REL_TYPE_LT);
@@ -798,6 +852,12 @@ void GecodeSolver::int_mod(const ConstraintVarId numerator,
 void GecodeSolver::int_ne(const ConstraintVarId lhs, const ConstraintVarId rhs,
                           const bool shouldHold) {
   int_rel(lhs, rhs, shouldHold, RelationType::REL_TYPE_NE);
+}
+
+void GecodeSolver::int_ne_reif(const ConstraintVarId lhs,
+                               const Int rhs,
+                               const ConstraintVarId reified) {
+  int_rel(lhs, rhs, reified, RelationType::REL_TYPE_NE);
 }
 
 void GecodeSolver::int_ne_reif(const ConstraintVarId lhs,
@@ -1115,6 +1175,49 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
   count(_space, intVarArgs(inputs), intVar(needle), Gecode::IRT_EQ, c);
   rel(_space, c, toGecodeIntRelType(relation), intVar(amount),
       boolVar(reified));
+}
+
+void GecodeSolver::fzn_table_bool(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<bool>>& table, const bool shouldHold) {
+  auto inputVars = intVarArgs(inputs);
+  Gecode::TupleSet ts = tupleSet(table);
+  Gecode::unshare(_space, inputVars);
+  extensional(_space, inputVars, ts, shouldHold);
+}
+
+void GecodeSolver::fzn_table_bool_reif(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<Int>>& table, const ConstraintVarId reified) {
+  auto inputVars = intVarArgs(inputs);
+  Gecode::TupleSet ts = tupleSet(table);
+  Gecode::unshare(_space, inputVars);
+  extensional(_space, inputVars, ts, Gecode::Reify(boolVar(reified),Gecode::RM_EQV));
+}
+
+void GecodeSolver::fzn_table_int(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<Int>>& table, const bool shouldHold) {
+  auto inputVars = intVarArgs(inputs);
+  Gecode::TupleSet ts = tupleSet(table);
+  Gecode::unshare(_space, inputVars);
+  extensional(_space, inputVars, ts, shouldHold);
+}
+
+void GecodeSolver::fzn_table_int_reif(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<Int>>& table, const ConstraintVarId reified) {
+  auto inputVars = intVarArgs(inputs);
+  Gecode::TupleSet ts = tupleSet(table);
+  Gecode::unshare(_space, inputVars);
+  extensional(_space, inputVars, ts, Gecode::Reify(boolVar(reified),Gecode::RM_EQV));
+}
+
+void GecodeSolver::set_in(const ConstraintVarId varId, const SortedUniqueVector& values,
+                          const bool shouldHold) {
+  if (shouldHold) {
+    Gecode::dom(_space, intVar(varId), intSet(values));
+  }
+  for (const auto val : *values) {
+    Gecode::rel(_space, intVar(varId), Gecode::IRT_NQ, static_cast<int>(val));
+  }
+}
+
+void GecodeSolver::set_in_reif(const ConstraintVarId varId, const SortedUniqueVector& values,
+                          const ConstraintVarId reified) {
+  Gecode::dom(_space, intVar(varId), intSet(values), boolVar(reified));
 }
 
 void GecodeSolver::nvalue(const ConstraintVarId numVals,

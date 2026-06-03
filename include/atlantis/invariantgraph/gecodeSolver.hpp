@@ -51,6 +51,12 @@ class GecodeSolver : public ConstraintSolver {
   Gecode::IntVarArgs intVarArgs(const std::vector<ConstraintVarId>&);
   Gecode::IntVarArgs intVarArgs(
       const std::vector<std::vector<ConstraintVarId>>&);
+
+  static Gecode::TupleSet tupleSet(const std::vector<std::vector<Int>>& table);
+  static Gecode::TupleSet tupleSet(const std::vector<std::vector<bool>>& table);
+
+  static Gecode::IntSet intSet(const SortedUniqueVector& values);
+
   Gecode::IntVar intVar(size_t);
   Gecode::IntVar intVar(ConstraintVarId);
 
@@ -254,6 +260,9 @@ class GecodeSolver : public ConstraintSolver {
   void int_le(ConstraintVarId lhs, ConstraintVarId rhs,
               bool shouldHold) override;
 
+  void int_le_reif(ConstraintVarId lhs, Int rhs,
+                   ConstraintVarId reified) override;
+
   void int_le_reif(ConstraintVarId lhs, ConstraintVarId rhs,
                    ConstraintVarId reified) override;
 
@@ -273,6 +282,9 @@ class GecodeSolver : public ConstraintSolver {
   void int_lt(ConstraintVarId lhs, ConstraintVarId rhs,
               bool shouldHold) override;
 
+  void int_lt_reif(ConstraintVarId lhs, Int rhs,
+                   ConstraintVarId reified) override;
+
   void int_lt_reif(ConstraintVarId lhs, ConstraintVarId rhs,
                    ConstraintVarId reified) override;
 
@@ -287,6 +299,8 @@ class GecodeSolver : public ConstraintSolver {
 
   void int_ne(ConstraintVarId lhs, ConstraintVarId rhs,
               bool shouldHold) override;
+
+  void int_ne_reif(ConstraintVarId lhs, Int rhs, ConstraintVarId reified) override;
 
   void int_ne_reif(ConstraintVarId lhs, ConstraintVarId rhs,
                    ConstraintVarId reified) override;
@@ -389,6 +403,18 @@ class GecodeSolver : public ConstraintSolver {
   void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
                       ConstraintVarId needle, RelationType relation,
                       ConstraintVarId amount, ConstraintVarId reified) override;
+
+  void fzn_table_bool(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<bool>>& table, bool shouldHold) override;
+
+  void fzn_table_bool_reif(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<Int>>& table, ConstraintVarId reified) override;
+
+  void fzn_table_int(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<Int>>& table, bool shouldHold) override;
+
+  void fzn_table_int_reif(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<Int>>& table, ConstraintVarId reified) override;
+
+  void set_in(ConstraintVarId varId, const SortedUniqueVector& values, bool shouldHold) override;
+
+  void set_in_reif(ConstraintVarId varId, const SortedUniqueVector& values, ConstraintVarId reified) override;
 
   void nvalue(ConstraintVarId numVals,
               const std::vector<ConstraintVarId>& inputs) override;

@@ -73,18 +73,28 @@ void TableInNode::init(const InvariantNodeId id) {
   }));
 }
 
+void TableInNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (isReified()) {
+    if (_isBoolTable) {
+      return constraintSolver().fzn_table_bool_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _table, reifiedVarNodeConst().constraintVarId());
+    }
+    return constraintSolver().fzn_table_int_reif(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), _table, reifiedVarNodeConst().constraintVarId());
+  }
+  if (_isBoolTable) {
+    return constraintSolver().fzn_table_bool(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), violToBool(_table), shouldHold());
+  }
+  return constraintSolver().fzn_table_bool(toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()), violToBool(_table), shouldHold());
+}
+
 size_t TableInNode::numCols() const { return _table.front().size(); }
 
-bool TableInNode::removeInvalidRows() {
-  if (state() != InvariantNodeState::ACTIVE) {
-    return false;
-  }
+void TableInNode::removeInvalidRows() {
   std::vector<size_t> invalidRows;
   invalidRows.reserve(_table.size());
   for (size_t r = 0; r < _table.size(); ++r) {
     for (size_t c = 0; c < numCols(); ++c) {
-      if (!invariantGraphConst()
-               .varNodeConst(staticInputVarNodeIds().at(c))
+      if (!staticInputVarNodeConst(c)
                .constDomain()
                ->contains(_table[r][c])) {
         invalidRows.emplace_back(r);
@@ -99,37 +109,25 @@ bool TableInNode::removeInvalidRows() {
     _table.pop_back();
   }
   if (_table.empty()) {
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException("TableInNode: there are no valid rows");
-    }
     setState(InvariantNodeState::SUBSUMED);
   }
-  return !invalidRows.empty();
 }
 
-void TableInNode::removeColumn(const size_t index) {
+void TableInNode::removeColumn(const size_t colIndex) {
   for (auto& row : _table) {
-    assert(index < row.size());
-    row.erase(row.begin() + index);
+    assert(colIndex < row.size());
+    row.erase(row.begin() + static_cast<Int>(colIndex));
   }
 }
 
-bool TableInNode::removeFixedColumns() {
-  if (state() != InvariantNodeState::ACTIVE) {
-    return false;
-  }
-  const size_t numCuls = staticInputVarNodeIds().size();
+void TableInNode::removeInvalidColumns() {
   for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
        --i) {
-    if (!invariantGraphConst()
-             .varNodeConst(staticInputVarNodeIds().at(i))
+    if (!staticInputVarNodeConst(i)
              .isFixed()) {
       continue;
     }
-    const Int val = invariantGraphConst()
-                        .varNodeConst(staticInputVarNodeIds().at(i))
+    const Int val = staticInputVarNodeConst(i)
                         .lowerBound();
     for (Int r = static_cast<Int>(_table.size()) - 1; r >= 0; --r) {
       if (_table[r][i] != val) {
@@ -141,25 +139,8 @@ bool TableInNode::removeFixedColumns() {
     removeStaticInputAtIndex(i);
   }
   if (staticInputVarNodeIds().empty()) {
-    if (_table.empty()) {
-      // There are no valid rows
-      if (isReified()) {
-        fixReified(false);
-      } else if (shouldHold()) {
-        throw InconsistencyException("TableInNode: there are no valid rows");
-      }
-    } else {
-      // There are valid rows
-      if (isReified()) {
-        fixReified(true);
-      } else if (!shouldHold()) {
-        throw InconsistencyException(
-            "TableInNode neg: there are only valid rows");
-      }
-    }
     setState(InvariantNodeState::SUBSUMED);
   }
-  return staticInputVarNodeIds().size() < numCuls;
 }
 
 void TableInNode::removeDuplicateColumns() {
@@ -203,113 +184,30 @@ void TableInNode::removeDuplicateColumns() {
   }
 }
 
-bool TableInNode::propagate() {
-  if (state() != InvariantNodeState::ACTIVE) {
-    return false;
-  }
-  bool prunedVals = false;
-  for (Int c = static_cast<Int>(staticInputVarNodeIds().size()) - 1; c >= 0;
-       --c) {
-    std::vector<Int> values(_table.size());
-    values.reserve(_table.size());
-    for (size_t r = 0; r < _table.size(); ++r) {
-      values[r] = _table[r][c];
-    }
-    const size_t prevDomSize = invariantGraphConst()
-                                   .varNodeConst(staticInputVarNodeIds().at(c))
-                                   .constDomain()
-                                   ->size();
-    SortedUniqueVector sortedValues(std::move(values));
-    if ((*sortedValues).size() == 1) {
-      invariantGraph()
-          .varNode(staticInputVarNodeIds().at(c))
-          .domain()
-          ->fix((*sortedValues).front());
-      removeColumn(c);
-      removeStaticInputAtIndex(c);
-      prunedVals |= prevDomSize > 1;
-    } else {
-      invariantGraph()
-          .varNode(staticInputVarNodeIds().at(c))
-          .domain()
-          ->removeAllValuesExcept(sortedValues);
-      prunedVals |=
-          prevDomSize != invariantGraphConst()
-                             .varNodeConst(staticInputVarNodeIds().at(c))
-                             .constDomain()
-                             ->size();
-    }
-  }
-  if (staticInputVarNodeIds().empty()) {
-    if (_table.empty()) {
-      // There are no valid rows
-      if (isReified()) {
-        fixReified(false);
-      } else if (shouldHold()) {
-        throw InconsistencyException("TableInNode: there are no valid rows");
-      }
-    } else {
-      // There are valid rows
-      if (isReified()) {
-        fixReified(true);
-      } else if (!shouldHold()) {
-        throw InconsistencyException(
-            "TableInNode neg: there are only valid rows");
-      }
-    }
-    setState(InvariantNodeState::SUBSUMED);
-  }
-  return prunedVals;
-}
-
 void TableInNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (_table.empty()) {
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException("TableInNode: there are no valid rows");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
   if (isReified() || !shouldHold()) {
     return;
   }
   removeDuplicateColumns();
-  bool didRemoveCols;
-  bool didPruneVals;
-  bool didRemoveRows;
-  do {
-    didRemoveCols = removeFixedColumns();
-    didPruneVals = propagate();
-    didRemoveRows = removeInvalidRows();
-  } while (state() == InvariantNodeState::ACTIVE &&
-           (didRemoveCols || didPruneVals || didRemoveRows));
+  removeInvalidRows();
+  removeInvalidColumns();
 
-  if (_table.empty() || _table.front().empty()) {
-    if (isReified()) {
-      fixReified(staticInputVarNodeIds().empty());
-    } else if (shouldHold() != staticInputVarNodeIds().empty()) {
-      throw InconsistencyException(
-          "TableInNode::updateState: all rows are valid");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (_table.size() == 1 || _table.front().size() == 1) {
+  if (_table.size() <= 1 || _table.front().empty() || staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 Int TableInNode::firstInputColIndex() const {
-  if (isReified() || !shouldHold() || state() == InvariantNodeState::SUBSUMED) {
+  if (isReified() || !shouldHold() || state() != InvariantNodeState::SUBSUMED) {
     return -1;
   }
-  Int col = -1;
+  std::vector<bool> inputIsDefined(staticInputVarNodeIds().size(), false);
   for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    if (invariantGraphConst()
-            .varNodeConst(staticInputVarNodeIds().at(i))
+    inputIsDefined[i] = !staticInputVarNodeConst(i).definingNodes().empty();
+  }
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+    if (staticInputVarNodeConst(i)
             .constDomain()
             ->size() != _table.size()) {
       continue;
@@ -319,10 +217,7 @@ Int TableInNode::firstInputColIndex() const {
       if (c == i) {
         continue;
       }
-      if (!invariantGraphConst()
-               .varNodeConst(staticInputVarNodeIds().at(c))
-               .definingNodes()
-               .empty()) {
+      if (inputIsDefined[i]) {
         replaceable = false;
         break;
       }
@@ -331,7 +226,7 @@ Int TableInNode::firstInputColIndex() const {
       return static_cast<Int>(i);
     }
   }
-  return col;
+  return -1;
 }
 
 bool TableInNode::canBeReplaced() const { return firstInputColIndex() >= 0; }

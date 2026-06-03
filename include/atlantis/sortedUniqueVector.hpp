@@ -15,7 +15,7 @@ class SortedUniqueVector {
   SortedUniqueVector(SortedUniqueVector&&) = default;
   explicit SortedUniqueVector(std::vector<Int>&& vec);
   [[nodiscard]] bool isInterval() const noexcept;
-  const std::vector<Int>& operator*() const;
+  const std::vector<Int>& operator*() const noexcept;
 };
 
 }  // namespace atlantis

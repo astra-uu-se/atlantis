@@ -9,22 +9,24 @@
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/inDomain.hpp"
+#include "atlantis/propagation/views/inIntervalConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
 
-SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
-                     std::vector<Int>&& values, VarNodeId r)
+SetInNode::SetInNode(InvariantGraph& graph, const VarNodeId input,
+                     std::vector<Int>&& values, const VarNodeId r)
     : ViolationInvariantNode(graph, {input}, r), _values(std::move(values)) {}
 
-SetInNode::SetInNode(InvariantGraph& graph, VarNodeId input,
-                     std::vector<Int>&& values, bool shouldHold)
+SetInNode::SetInNode(InvariantGraph& graph, const VarNodeId input,
+                     std::vector<Int>&& values, const bool shouldHold)
     : ViolationInvariantNode(graph, {input}, shouldHold),
       _values(std::move(values)) {}
 
-void SetInNode::init(InvariantNodeId id) {
+void SetInNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -35,63 +37,68 @@ void SetInNode::init(InvariantNodeId id) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
 }
+void SetInNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (isReified()) {
+    return constraintSolver().set_in_reif(staticInputVarNodeConst(0).constraintVarId(), _values, reifiedVarNodeConst().constraintVarId());
+  }
+  constraintSolver().set_in(staticInputVarNodeConst(0).constraintVarId(), _values, shouldHold());
+}
 
 void SetInNode::updateState() {
   ViolationInvariantNode::updateState();
-  if ((*_values).empty()) {
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException("SetInNode::updateState: empty set");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  auto& vNode = invariantGraph().varNode(staticInputVarNodeIds().front());
   if (!isReified()) {
-    if (shouldHold()) {
-      vNode.removeAllValuesExcept(_values);
-    } else {
-      vNode.removeValues(_values);
-    }
     setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (vNode.constDomain()->isDisjoint(_values)) {
-    fixReified(false);
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (vNode.constDomain()->isContained(_values)) {
-    fixReified(true);
-    setState(InvariantNodeState::SUBSUMED);
-    return;
+    staticInputVarNode(0).tightenDomainType(staticInputVarNodeConst(0).constDomain()->isInterval() ? DomainType::DOM_RANGE : DomainType::DOM_DOMAIN);
   }
 }
 
 void SetInNode::registerOutputVars(propagation::SolverBase& solver,
                                    SolverMapping& mapping) const {
+  assert(isReified());
   if (violationVarId(mapping) == propagation::NULL_ID) {
     const propagation::VarViewId input =
         mapping.solverId(staticInputVarNodeIds().front());
-    std::vector<DomainEntry> domainEntries;
-    domainEntries.reserve((*_values).size());
-    std::ranges::transform(
-        *_values, std::back_inserter(domainEntries),
-        [](const auto& value) { return DomainEntry(value, value); });
-
-    if (!shouldHold()) {
-      assert(!isReified());
-      mapping.setIntermediateId(id(),
-                                solver.makeIntView<propagation::InDomain>(
-                                    solver, input, std::move(domainEntries)));
-      setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-                            solver, mapping.intermediateId(id()), 0),
-                        mapping);
+    if ((*_values).size() == 1) {
+      if (!shouldHold()) {
+        setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
+        solver, input, (*_values).front()), mapping);
+      } else {
+        setViolationVarId(solver.makeIntView<propagation::EqualConst>(
+        solver, input, (*_values).front()), mapping);
+      }
+    } else if (_values.isInterval()) {
+      if (!shouldHold()) {
+        mapping.setIntermediateId(id(),
+                                  solver.makeIntView<propagation::InIntervalConst>(
+                                      solver, input, (*_values).front(), (*_values).back()));
+        setViolationVarId(solver.makeIntView<propagation::InIntervalConst>(
+        solver, input, (*_values).front(), (*_values).back()),
+                          mapping);
+      } else {
+        setViolationVarId(solver.makeIntView<propagation::InIntervalConst>(
+                                      solver, input, (*_values).front(), (*_values).back()),
+                          mapping);
+      }
     } else {
-      setViolationVarId(solver.makeIntView<propagation::InDomain>(
-                            solver, input, std::move(domainEntries)),
-                        mapping);
+      std::vector<DomainEntry> domainEntries;
+      domainEntries.reserve((*_values).size());
+      std::ranges::transform(
+          *_values, std::back_inserter(domainEntries),
+          [](const auto& value) { return DomainEntry(value, value); });
+
+      if (!shouldHold()) {
+        mapping.setIntermediateId(id(),
+                                  solver.makeIntView<propagation::InDomain>(
+                                      solver, input, std::move(domainEntries)));
+        setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
+                              solver, mapping.intermediateId(id()), 0),
+                          mapping);
+      } else {
+        setViolationVarId(solver.makeIntView<propagation::InDomain>(
+                              solver, input, std::move(domainEntries)),
+                          mapping);
+      }
     }
   }
   assert(std::ranges::all_of(

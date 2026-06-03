@@ -275,6 +275,46 @@ void makeSolverRelation(propagation::SolverBase& solver,
   }
 }
 
+bool violToBool(const Int violation) {
+  return violation == 0;
+}
+
+std::vector<bool> violToBool(const std::vector<Int>& violations) {
+  std::vector<bool> bools(violations.size());
+  for (size_t i = 0; i < violations.size(); ++i) {
+    bools[i] = violations[i] == 0;
+  }
+  return bools;
+}
+
+std::vector<std::vector<bool>> violToBool(const std::vector<std::vector<Int>>& violations) {
+  std::vector<std::vector<bool>> bools(violations.size());
+  for (size_t i = 0; i < violations.size(); ++i) {
+    bools[i] = violToBool(violations[i]);
+  }
+  return bools;
+}
+
+Int boolToViol(const Int b) {
+  return b ? 0 : 1;
+}
+
+std::vector<Int> boolToViol(const std::vector<bool>& bools) {
+  std::vector<Int> violations(bools.size());
+  for (size_t i = 0; i < bools.size(); ++i) {
+    violations[i] = bools[i] ? 0 : 1;
+  }
+  return violations;
+}
+
+std::vector<std::vector<Int>> boolToViol(const std::vector<std::vector<bool>>& bools) {
+  std::vector<std::vector<Int>> violations(bools.size());
+  for (size_t i = 0; i < bools.size(); ++i) {
+    violations[i] = boolToViol(bools[i]);
+  }
+  return violations;
+}
+
 std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
     const std::vector<Int>& cover, std::vector<Int>& lowerBounds,

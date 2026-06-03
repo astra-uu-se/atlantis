@@ -9,13 +9,11 @@ class TableInNode : public ViolationInvariantNode {
 
   [[nodiscard]] VarNodeId numCols() const;
 
-  bool removeFixedColumns();
-  bool removeInvalidRows();
+  void removeInvalidColumns();
+  void removeInvalidRows();
 
   void removeColumn(size_t colIndex);
   void removeDuplicateColumns();
-
-  [[nodiscard]] bool propagate();
 
   [[nodiscard]] Int firstInputColIndex() const;
 
@@ -37,6 +35,8 @@ class TableInNode : public ViolationInvariantNode {
                        bool shouldHold = true);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "atlantis/sortedUniqueVector.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/types.hpp"
 #include "atlantis/utils/domains.hpp"
@@ -157,6 +158,9 @@ class ConstraintSolver {
   virtual void int_le_reif(ConstraintVarId lhs, ConstraintVarId rhs,
                            ConstraintVarId reified) = 0;
 
+  virtual void int_le_reif(ConstraintVarId lhs, Int rhs,
+                           ConstraintVarId reified) = 0;
+
   virtual void int_lin_eq(const std::vector<Int>& coeffs,
                           const std::vector<ConstraintVarId>& inputs,
                           ConstraintVarId rhs, Int rhsOffset) = 0;
@@ -176,6 +180,9 @@ class ConstraintSolver {
   virtual void int_lt_reif(ConstraintVarId lhs, ConstraintVarId rhs,
                            ConstraintVarId reified) = 0;
 
+  virtual void int_lt_reif(ConstraintVarId lhs, Int rhs,
+                           ConstraintVarId reified) = 0;
+
   virtual void int_max(ConstraintVarId a, ConstraintVarId b,
                        ConstraintVarId maximum) = 0;
 
@@ -189,6 +196,9 @@ class ConstraintSolver {
                       bool shouldHold) = 0;
 
   virtual void int_ne_reif(ConstraintVarId lhs, ConstraintVarId rhs,
+                           ConstraintVarId reified) = 0;
+
+  virtual void int_ne_reif(ConstraintVarId lhs, Int rhs,
                            ConstraintVarId reified) = 0;
 
   virtual void int_plus(ConstraintVarId a, ConstraintVarId b,
@@ -287,6 +297,18 @@ class ConstraintSolver {
                               ConstraintVarId needle, RelationType relation,
                               ConstraintVarId amount,
                               ConstraintVarId reified) = 0;
+
+  virtual void fzn_table_bool(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<bool>>& table, bool shouldHold) = 0;
+
+  virtual void fzn_table_bool_reif(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<Int>>& table, ConstraintVarId reified) = 0;
+
+  virtual void fzn_table_int(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<Int>>& table, bool shouldHold) = 0;
+
+  virtual void fzn_table_int_reif(const std::vector<ConstraintVarId>& inputs, const std::vector<std::vector<Int>>& table, ConstraintVarId reified) = 0;
+
+  virtual void set_in(ConstraintVarId varId, const SortedUniqueVector& values, bool shouldHold) = 0;
+
+  virtual void set_in_reif(ConstraintVarId varId, const SortedUniqueVector& values, ConstraintVarId reified) = 0;
 
   virtual void nvalue(ConstraintVarId numVals,
                       const std::vector<ConstraintVarId>& inputs) = 0;
