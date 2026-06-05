@@ -9,7 +9,7 @@ using namespace atlantis::invariantgraph;
 
 class BoolLinLeImplicitNodeTestFixture
     : public NodeTestBase<LinLeImplicitNode> {
- public:
+ protected:
   Int numVars = 4;
   std::vector<std::string> inputVars;
 
