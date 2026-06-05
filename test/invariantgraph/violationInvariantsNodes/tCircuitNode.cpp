@@ -33,10 +33,9 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
     return std::ranges::any_of(visited, [](const bool v) { return !v; });
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
       std::vector<Int> domain;
       domain.reserve(numInputs - 1);
       for (Int j = 0; j < numInputs; ++j) {
@@ -44,7 +43,8 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
           domain.emplace_back(j + 1);
         }
       }
-      retrieveIntVarNode(std::move(domain), inputVars.back());
+      inputVars.emplace_back("input_" + std::to_string(i), std::move(domain), true);
+      retrieveIntVarNode(inputVars.back());
     }
     if (shouldBeReplaced()) {
       for (const auto& var : inputVars) {

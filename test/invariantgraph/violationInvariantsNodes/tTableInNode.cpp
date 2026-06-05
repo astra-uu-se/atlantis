@@ -72,7 +72,7 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
     return true;
   }
 
-  [[nodiscard]] Int colLb(size_t i) const {
+  [[nodiscard]] Int colLb(const size_t i) const {
     if (isIntTable()) {
       Int lb = intTable.front().at(i);
       for (size_t j = 1; j < intTable.size(); ++j) {
@@ -102,16 +102,18 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
     for (size_t c = 0; c < inputVars.size(); ++c) {
       if (isIntTable()) {
         if (shouldBeSubsumed() && fixedColIndex() == static_cast<Int>(c)) {
-          retrieveIntVarNode(colLb(c), colLb(c), inputVars.at(c));
+          inputVars.at(c).domain = std::pair<Int, Int>{colLb(c), colLb(c)};
         } else {
-          retrieveIntVarNode(-1, 10, inputVars.at(c));
+          inputVars.at(c).domain = std::pair<Int, Int>{-1, 10};
         }
+        retrieveIntVarNode(inputVars.at(c));
       } else {
         if (shouldBeSubsumed() && fixedColIndex() == static_cast<Int>(c)) {
-          retrieveBoolVarNode(colLb(c) == 0, inputVars.at(c));
+          inputVars.at(c).domain = std::vector<Int>{colLb(c) == 0 ? 1 : 0};
         } else {
-          retrieveBoolVarNode(inputVars.at(c));
+          inputVars.at(c).domain = std::vector<Int>{0, 1};
         }
+        retrieveIntVarNode(inputVars.at(c));
       }
     }
     if (!shouldBeMadeImplicit()) {
@@ -292,7 +294,7 @@ TEST_P(TableInNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TableInNodeTest, TableInNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::REIFIED},
                       ParamData{ViolationInvariantType::CONSTANT_TRUE},

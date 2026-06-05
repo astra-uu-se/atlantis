@@ -25,10 +25,10 @@ class IntLeNodeTestFixture : public NodeTestBase<IntLeNode> {
     return varNodeConst(aVar).lowerBound() > varNodeConst(bVar).lowerBound();
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    aVar = retrieveIntVarNode(-5, 5, "a");
-    bVar = retrieveIntVarNode(-5, 5, "b");
+    aVar.domain = std::pair<Int,Int>{-5, 5};
+    bVar.domain = std::pair<Int,Int>{-5, 5};
     if (shouldBeSubsumed()) {
       if (shouldHold() || _paramData.data > 0) {
         // varNode(aVarNodeId).removeValuesAbove(0);
@@ -40,9 +40,9 @@ class IntLeNodeTestFixture : public NodeTestBase<IntLeNode> {
     }
     if (isReified()) {
       retrieveBoolVarNode(reifiedVar);
-      createInvariantNode(*_invariantGraph, aVar, bVar, varNodeId(reifiedVar));
+      createInvariantNode(*_invariantGraph, varNodeId(aVar), varNodeId(bVar), varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph, aVar, bVar, shouldHold());
+      createInvariantNode(*_invariantGraph, varNodeId(aVar), varNodeId(bVar), shouldHold());
     }
   }
 };
@@ -111,7 +111,7 @@ TEST_P(IntLeNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : std::array<VarNodeId, 2>{aVar, bVar}) {
+  for (const auto& var : std::array<VarNodeId, 2>{varNodeId(aVar), varNodeId(bVar)}) {
     if (!varNode(var).isFixed()) {
       EXPECT_NE(varId(var), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));
@@ -147,7 +147,7 @@ TEST_P(IntLeNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntLeNodeTest, IntLeNodeTestFixture,
     ::testing::Values(ParamData{},
                       ParamData{InvariantNodeAction::SUBSUME,

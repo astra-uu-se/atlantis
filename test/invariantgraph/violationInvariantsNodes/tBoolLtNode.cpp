@@ -11,7 +11,7 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolLtNode> {
   Var bVar{"b", std::vector<Int>{}, false};
   Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  [[nodiscard]] bool isViolating(bool isRegistered = false) const {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       const bool aVal = varNodeConst(aVar).isFixed()
                             ? varNodeConst(aVar).inDomain(bool{true})

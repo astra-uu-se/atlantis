@@ -44,7 +44,7 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
     return sum == bound;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);

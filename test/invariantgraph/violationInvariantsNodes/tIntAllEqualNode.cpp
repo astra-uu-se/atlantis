@@ -81,13 +81,8 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
     numInputs = 4;
 
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
-      if (shouldBeSubsumed()) {
-        const Int val = shouldHold() ? 0 : i;
-        retrieveIntVarNode(val, val, inputVars.back());
-      } else {
-        retrieveIntVarNode(-2, 2, inputVars.back());
-      }
+      inputVars.emplace_back("input_" + std::to_string(i), shouldBeSubsumed() ? (shouldHold() ? 0 : i) : -2, shouldBeSubsumed() ? (shouldHold() ? 0 : i) : 2, true);
+      retrieveIntVarNode(inputVars.back());
     }
     for (const auto& var : inputVars) {
       _invariantGraph->root().addSearchVarNode(varNodeId(var));
