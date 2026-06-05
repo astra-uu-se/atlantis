@@ -43,22 +43,6 @@ void ArrayBoolAndNode::init(const InvariantNodeId id) {
 
 void ArrayBoolAndNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
-  if (staticInputVarNodeIds().size() < 2) {
-    return;
-  }
-  if (staticInputVarNodeIds().size() == 2) {
-    if (isReified()) {
-      constraintSolver().bool_and_reif(
-          staticInputVarNodeConst(0).constraintVarId(),
-          staticInputVarNodeConst(1).constraintVarId(),
-          reifiedVarNodeConst().constraintVarId());
-    } else {
-      constraintSolver().bool_and(staticInputVarNodeConst(0).constraintVarId(),
-                                  staticInputVarNodeConst(1).constraintVarId(),
-                                  shouldHold());
-    }
-    return;
-  }
   if (isReified()) {
     constraintSolver().array_bool_and(
         toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
@@ -77,13 +61,13 @@ void ArrayBoolAndNode::updateState() {
   if (!isReified()) {
     bool alwaysHolds = false;
     if (shouldHold()) {
-      alwaysHolds = std::ranges::all_of(
+      alwaysHolds = staticInputVarNodeIds().empty() || std::ranges::all_of(
           staticInputVarNodeIds(), [&](const VarNodeId vId) {
             return varNodeConst(vId).isFixed() &&
                    varNodeConst(vId).inDomain(true);
           });
     } else {
-      alwaysHolds = std::ranges::any_of(
+      alwaysHolds = !staticInputVarNodeIds().empty() && std::ranges::any_of(
           staticInputVarNodeIds(), [&](const VarNodeId vId) {
             return varNodeConst(vId).isFixed() &&
                    varNodeConst(vId).inDomain(false);
@@ -105,8 +89,6 @@ void ArrayBoolAndNode::updateState() {
   for (const auto& id : varsToRemove) {
     removeStaticInputVarNode(id);
   }
-  assert(!staticInputVarNodeIds().empty());
-
   if (staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }

@@ -78,7 +78,7 @@ TEST_P(IntPowNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : std::array<std::string, 2>{baseVar, exponentVar}) {
+  for (const auto& var : std::array<VarNodeId, 2>{varNodeId(baseVar), varNodeId(exponentVar)}) {
     if (!varNode(var).isFixed()) {
       EXPECT_NE(varId(var), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));

@@ -12,17 +12,17 @@ namespace atlantis::invariantgraph {
 BoolLinLeImplicitNode::BoolLinLeImplicitNode(InvariantGraph& graph,
                                              std::vector<Int>&& coeffs,
                                              std::vector<VarNodeId>&& inputVars,
-                                             Int bound)
+                                             const Int bound)
     : ImplicitConstraintNode(graph, std::move(inputVars)),
       _coeffs(std::move(coeffs)),
       _bound(bound) {
   assert(_coeffs.size() == outputVarNodeIds().size());
 }
 
-void BoolLinLeImplicitNode::init(InvariantNodeId id) {
+void BoolLinLeImplicitNode::init(const InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+  assert(std::ranges::none_of(
+      outputVarNodeIds(),
       [&](const VarNodeId vId) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));

@@ -432,20 +432,42 @@ SearchDomain GecodeSolver::varDomain(const ConstraintVarId varId) const {
 }
 
 void GecodeSolver::fixPoint() {
-  Gecode::SpaceStatus s = _space.status();
+  const Gecode::SpaceStatus s = _space.status();
   if (s == Gecode::SS_FAILED) {
     throw InconsistencyException("UNSAT");
   }
   assert(s == Gecode::SS_SOLVED);
 }
+void GecodeSolver::fix_bool(const ConstraintVarId var, const bool val) {
+  Gecode::rel(_space, boolVar(var), Gecode::IRT_EQ, val ? 1 : 0);
+}
+
+void GecodeSolver::fix_int(const ConstraintVarId var, const Int val) {
+  Gecode::rel(_space, boolVar(var), Gecode::IRT_EQ, static_cast<int>(val));
+}
 
 void GecodeSolver::array_bool_and(const std::vector<ConstraintVarId>& inputs,
                                   const ConstraintVarId reified) {
+  if (inputs.empty()) {
+    return fix_bool(reified, true);
+  }
+  if (inputs.size() == 1) {
+    return bool_eq(inputs.front(), reified, true);
+  }
   array_bool_op(inputs, reified, Gecode::BOT_AND);
 }
 
 void GecodeSolver::array_bool_and(const std::vector<ConstraintVarId>& inputs,
                                   const bool shouldHold) {
+  if (inputs.empty()) {
+    if (!shouldHold) {
+      throw InconsistencyException("UNSAT");
+    }
+    return;
+  }
+  if (inputs.size() == 1) {
+    return fix_bool(inputs.front(), shouldHold);
+  }
   array_bool_op(inputs, shouldHold, Gecode::BOT_AND);
 }
 
@@ -463,23 +485,39 @@ void GecodeSolver::array_bool_element2d(
     const ConstraintVarId rowIndex, const ConstraintVarId colIndex,
     const std::vector<std::vector<bool>>& parameters,
     const ConstraintVarId output, const Int rowOffset, const Int colOffset) {
-  const auto rowIndexVar =
-      Gecode::expr(_space, intVar(rowIndex) - static_cast<int>(rowOffset));
-  const auto colIndexVar =
-      Gecode::expr(_space, intVar(colIndex) - static_cast<int>(colOffset));
-  Gecode::element(_space, intSharedArray(parameters), colIndexVar,
-                  static_cast<int>(parameters.front().size()), rowIndexVar,
-                  static_cast<int>(parameters.size()), boolVar(output),
-                  Gecode::IPL_DOM);
+  Gecode::element(_space, intSharedArray(parameters), intVar(colIndex), -static_cast<int>(colOffset),
+                  static_cast<int>(parameters.front().size()), intVar(rowIndex), -static_cast<int>(rowOffset),
+                  static_cast<int>(parameters.size()), boolVar(output));
 }
 
 void GecodeSolver::array_bool_or(const std::vector<ConstraintVarId>& inputs,
                                  const ConstraintVarId reified) {
+  if (inputs.empty()) {
+    return fix_bool(reified, false);
+  }
+  if (inputs.size() == 1) {
+    return bool_eq(inputs.front(), reified, true);
+  }
+  if (inputs.size() == 2) {
+    return bool_or_reif(inputs.front(), inputs.back(), reified);
+  }
   array_bool_op(inputs, reified, Gecode::BOT_OR);
 }
 
 void GecodeSolver::array_bool_or(const std::vector<ConstraintVarId>& inputs,
                                  const bool shouldHold) {
+  if (inputs.empty()) {
+    if (shouldHold) {
+      throw InconsistencyException("UNSAT");
+    }
+    return;
+  }
+  if (inputs.size() == 1) {
+    return fix_bool(inputs.front(), shouldHold);
+  }
+  if (inputs.size() == 2) {
+    return bool_or(inputs.front(), inputs.back(), shouldHold);
+  }
   array_bool_op(inputs, shouldHold, Gecode::BOT_OR);
 }
 

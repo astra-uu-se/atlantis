@@ -133,6 +133,10 @@ class GecodeSolver : public ConstraintSolver {
   void fixPoint() override;
 
   // Constraints
+  void fix_bool(ConstraintVarId, bool) override;
+
+  void fix_int(ConstraintVarId, Int) override;
+
   void array_bool_and(const std::vector<ConstraintVarId>& inputs,
                       ConstraintVarId reified) override;
   void array_bool_and(const std::vector<ConstraintVarId>& inputs,

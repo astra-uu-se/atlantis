@@ -29,6 +29,10 @@ class ConstraintSolver {
   [[nodiscard]] virtual SearchDomain varDomain(ConstraintVarId) const = 0;
 
   // Constraints
+  virtual void fix_bool(ConstraintVarId, bool) = 0;
+
+  virtual void fix_int(ConstraintVarId, Int) = 0;
+
   virtual void array_bool_and(const std::vector<ConstraintVarId>& inputs,
                               ConstraintVarId reified) = 0;
   virtual void array_bool_and(const std::vector<ConstraintVarId>& inputs,

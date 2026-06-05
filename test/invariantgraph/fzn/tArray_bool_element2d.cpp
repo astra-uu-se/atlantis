@@ -33,20 +33,20 @@ class array_bool_element2dTest : public FznTestBase {
   }
 
   void generate() override {
-    const Int numRows = *rc::gen::inRange(1, 3);
-    const Int numCols = *rc::gen::inRange(1, 3);
+    const Int numRows = true ? 2 : *rc::gen::inRange(1, 3);
+    const Int numCols = true ? 2 : *rc::gen::inRange(1, 3);
 
-    constraintIdentifier = *rc::gen::arbitrary<bool>()
+    constraintIdentifier = (true ? false : *rc::gen::arbitrary<bool>())
                                ? "array_bool_element2d"
                                : "array_bool_element2d_nonshifted_flat";
 
-    const Int rowLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(rowLb, numRows + rowLb - 1, rowIndex);
+    const Int rowLb = true ? -1 : *rc::gen::element(-1024, -1, 0, 1, 1024);
+    addIntArg(IntArgState::VAR, rowLb, numRows + rowLb - 1, rowIndex);
 
-    const Int colLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(colLb, numCols + colLb - 1, colIndex);
+    const Int colLb = true ? -1 : *rc::gen::element(-1024, -1, 0, 1, 1024);
+    addIntArg(IntArgState::VAR, colLb, numCols + colLb - 1, colIndex);
 
-    parameters = *rc::gen::container<std::vector<std::vector<bool>>>(
+    parameters = true ? std::vector<std::vector<bool>>{{false, true}, {true, false}} : *rc::gen::container<std::vector<std::vector<bool>>>(
         numRows, rc::gen::container<std::vector<bool>>(
                      numCols, rc::gen::arbitrary<bool>()));
 
@@ -60,7 +60,7 @@ class array_bool_element2dTest : public FznTestBase {
 
     addArg(flatPars);
 
-    addBoolArg(output);
+    addBoolArg(BoolArgState::PAR_TRUE, output);
 
     addArg(numRows);
     rowOffset = lowerBound(rowIndex);
@@ -136,7 +136,7 @@ class array_bool_element2dTest : public FznTestBase {
               return std::all_of(
                   colIdxNode.constDomain()->begin(),
                   colIdxNode.constDomain()->end(), [&](const Int colVal) {
-                    return boolVal(output) == getValue(rowVal, colVal);
+                    return getValue(rowVal, colVal) == boolVal(output);
                   });
             });
       }

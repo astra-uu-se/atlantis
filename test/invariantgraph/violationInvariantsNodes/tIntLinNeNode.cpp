@@ -48,17 +48,19 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
     NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
-    const Int lb = -2;
-    const Int ub = 2;
     for (Int i = 0; i < static_cast<Int>(numInputs); ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
+      coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
+
+      Int ub = 2;
+      Int lb = -2;
       if (shouldBeSubsumed()) {
         const Int val = i % 3 == 0 ? lb : ub;
-        retrieveIntVarNode(val, val, inputVars.back());
-      } else {
-        retrieveIntVarNode(lb, ub, inputVars.back());
+        lb = val;
+        ub = val;
       }
-      coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
+      inputVars.emplace_back("input_" + std::to_string(i), lb, ub, true);
+
+      retrieveIntVarNode(inputVars.back());
     }
 
     if (isReified()) {
@@ -157,7 +159,7 @@ TEST_P(IntLinNeNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntLinNeNodeTest, IntLinNeNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},

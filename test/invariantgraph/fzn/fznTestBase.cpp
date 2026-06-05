@@ -197,8 +197,9 @@ bool FznTestBase::isFixedTo(const std::string& identifier, Int val) const {
   }
   return false;
 }
+
 Int FznTestBase::intVal(const std::string& identifier,
-                        bool committedValue) const {
+                        const bool committedValue) const {
   std::optional<Int> ret{};
   if (_invariantGraph->containsVarNode(identifier)) {
     const auto& vNode = varNodeConst(identifier);

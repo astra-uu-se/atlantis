@@ -43,22 +43,6 @@ void ArrayBoolOrNode::init(const InvariantNodeId id) {
 
 void ArrayBoolOrNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
-  if (staticInputVarNodeIds().size() < 2) {
-    return;
-  }
-  if (staticInputVarNodeIds().size() == 2) {
-    if (isReified()) {
-      constraintSolver().bool_or_reif(
-          staticInputVarNodeConst(0).constraintVarId(),
-          staticInputVarNodeConst(1).constraintVarId(),
-          reifiedVarNodeConst().constraintVarId());
-    } else {
-      constraintSolver().bool_or(staticInputVarNodeConst(0).constraintVarId(),
-                                 staticInputVarNodeConst(1).constraintVarId(),
-                                 shouldHold());
-    }
-    return;
-  }
   if (isReified()) {
     constraintSolver().array_bool_or(
         toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
@@ -103,8 +87,6 @@ void ArrayBoolOrNode::updateState() {
   for (const auto& id : varsToRemove) {
     removeStaticInputVarNode(id);
   }
-
-  assert(!staticInputVarNodeIds().empty());
 
   if (staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);

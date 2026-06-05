@@ -57,13 +57,7 @@ void ArrayElement2dNode::postConstraint() {
         varNodeConst(colIdx()).constraintVarId(), _parMatrix,
         outputNode.constraintVarId(), _rowOffset, _colOffset);
   } else {
-    std::vector<std::vector<bool>> boolMatrix(
-        _parMatrix.size(), std::vector<bool>(_parMatrix.front().size()));
-    for (size_t r = 0; r < _parMatrix.size(); ++r) {
-      for (size_t c = 0; c < _parMatrix[r].size(); ++c) {
-        boolMatrix[r][c] = _parMatrix[r][c] == 0;
-      }
-    }
+    const std::vector<std::vector<bool>> boolMatrix = violToBool(_parMatrix);
     invariantGraph().constraintSolver().array_bool_element2d(
         varNodeConst(rowIdx()).constraintVarId(),
         varNodeConst(colIdx()).constraintVarId(), boolMatrix,
@@ -83,47 +77,34 @@ void ArrayElement2dNode::updateState() {
   }
 
   if (outputVarNodeConst(0).isFixed()) {
-    const Int val = outputVarNodeConst(0).lowerBound();
-    std::vector<bool> validRowIndices(_parMatrix.size(), false);
-    std::vector<bool> validColIndices(_parMatrix.front().size(), false);
-
-    for (size_t r = 0; r < _parMatrix.size(); ++r) {
-      for (size_t c = 0; c < _parMatrix.front().size(); ++c) {
-        if (_parMatrix[r][c] == val) {
-          validRowIndices[r] = true;
-          validColIndices[c] = true;
+    const Int outVal = outputVarNodeConst(0).lowerBound();
+    const auto& rowDom = varNodeConst(rowIdx()).constDomain();
+    const auto& colDom = varNodeConst(colIdx()).constDomain();
+    bool allSatisfying = true;
+    for (auto rowIter = rowDom->begin(); rowIter != rowDom->end(); ++rowIter) {
+      const Int row = *rowIter - _rowOffset;
+      assert(0 <= row && row < static_cast<Int>(_parMatrix.size()));
+      for (auto colIter = colDom->begin(); colIter != colDom->end(); ++colIter) {
+        const Int col = *colIter - _colOffset;
+        assert(0 <= col && col < static_cast<Int>(_parMatrix.at(row).size()));
+        if (_parMatrix[row][col] != outVal) {
+          allSatisfying = false;
+          break;
         }
       }
     }
-    std::array<std::vector<Int>, 2> validVals;
-
-    validVals[0].reserve(validRowIndices.size());
-    for (Int i = 0; i < static_cast<Int>(validRowIndices.size()); ++i) {
-      if (validRowIndices[i]) {
-        validVals[0].emplace_back(i + _rowOffset);
+    if (allSatisfying) {
+      for (const auto vId : staticInputVarNodeIds()) {
+        if (varNodeConst(vId).isFixed()) {
+          varNode(vId).setDomainType(DomainType::DOM_FIXED);
+        } else if (varNode(vId).domain()->isInterval()) {
+          varNode(vId).setDomainType(DomainType::DOM_RANGE);
+        } else {
+          varNode(vId).setDomainType(DomainType::DOM_DOMAIN);
+        }
       }
+      setState(InvariantNodeState::SUBSUMED);
     }
-    validVals[1].reserve(validColIndices.size());
-    for (Int i = 0; i < static_cast<Int>(validColIndices.size()); ++i) {
-      if (validColIndices[i]) {
-        validVals[1].emplace_back(i + _colOffset);
-      }
-    }
-    const std::array<VarNodeId, 2> indices{rowIdx(), colIdx()};
-    for (size_t i = 0; i < indices.size(); ++i) {
-      varNode(indices[i])
-          .domain()
-          ->removeAllValuesExcept(SortedUniqueVector(std::move(validVals[i])));
-      if (varNodeConst(indices[i]).isFixed()) {
-        varNode(indices[i]).setDomainType(DomainType::DOM_FIXED);
-      } else if (varNode(indices[i]).domain()->isInterval()) {
-        varNode(indices[i]).setDomainType(DomainType::DOM_RANGE);
-      } else {
-        varNode(indices[i]).setDomainType(DomainType::DOM_DOMAIN);
-      }
-    }
-
-    setState(InvariantNodeState::SUBSUMED);
   }
 }
 
