@@ -79,8 +79,8 @@ TEST_P(IntDivNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto var :
-       std::array<VarNodeId, 2>{varNodeId(numeratorVar), varNodeId(denominatorVar)}) {
+  for (const auto var : std::array<VarNodeId, 2>{varNodeId(numeratorVar),
+                                                 varNodeId(denominatorVar)}) {
     if (!varNode(var).isFixed()) {
       EXPECT_NE(varId(var), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));

@@ -36,7 +36,8 @@ class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
     for (size_t i = 0; i < 2; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i), std::vector<Int>{}, true);
+      inputVars.emplace_back("input_" + std::to_string(i), std::vector<Int>{},
+                             true);
     }
     if (shouldBeSubsumed()) {
       inputVars.at(0).domain = std::pair<Int, Int>{1, 1};

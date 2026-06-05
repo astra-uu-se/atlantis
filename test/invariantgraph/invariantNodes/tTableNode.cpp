@@ -9,8 +9,9 @@ using namespace atlantis::invariantgraph;
 class TableNodeTestFixture : public NodeTestBase<TableNode> {
  protected:
   Var inputVar{"input_col", std::vector<Int>{}, true};
-  std::vector<Var> outputVars{Var{"output_col_1", std::vector<Int>{}, true}, Var{"output_col_2", std::vector<Int>{}, true},
-                                      Var{"output_col_3", std::vector<Int>{}, true}};
+  std::vector<Var> outputVars{Var{"output_col_1", std::vector<Int>{}, true},
+                              Var{"output_col_2", std::vector<Int>{}, true},
+                              Var{"output_col_3", std::vector<Int>{}, true}};
 
   std::vector<std::vector<Int>> intTable{
       {0, 1, 2, 10}, {1, 2, 3, 10}, {2, 3, 4, 10}};
@@ -96,7 +97,9 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
     inputVar.isIntVar = isIntTable();
 
     if (isIntTable()) {
-      inputVar.domain = std::pair<Int, Int>{colLb(inputColIndex()), shouldBeSubsumed() ? colLb(inputColIndex()) : colUb(inputColIndex())};
+      inputVar.domain = std::pair<Int, Int>{
+          colLb(inputColIndex()),
+          shouldBeSubsumed() ? colLb(inputColIndex()) : colUb(inputColIndex())};
       retrieveIntVarNode(inputVar);
     } else {
       if (shouldBeSubsumed()) {

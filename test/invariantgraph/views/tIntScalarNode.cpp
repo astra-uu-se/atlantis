@@ -27,7 +27,8 @@ class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
     const Int lb = -10;
     const Int ub = 10;
     inputVar.domain = std::pair<Int, Int>{lb, ub};
-    outputVar.domain = std::pair<Int, Int>{lb * factor + offset, ub * factor + offset};
+    outputVar.domain =
+        std::pair<Int, Int>{lb * factor + offset, ub * factor + offset};
     retrieveIntVarNode(inputVar);
     retrieveIntVarNode(outputVar);
 

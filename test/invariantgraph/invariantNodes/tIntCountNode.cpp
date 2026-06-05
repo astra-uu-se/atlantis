@@ -42,7 +42,8 @@ class IntCountNodeTestFixture : public NodeTestBase<CountNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i), std::vector<Int>{}, true);
+      inputVars.emplace_back("input_" + std::to_string(i), std::vector<Int>{},
+                             true);
     }
     if (shouldBeSubsumed()) {
       if (_paramData.data == 0) {

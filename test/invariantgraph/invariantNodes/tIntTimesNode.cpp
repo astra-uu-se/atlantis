@@ -32,22 +32,23 @@ class IntTimesNodeTestFixture : public NodeTestBase<IntTimesNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
     for (size_t i = 0; i < 2; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i), std::vector<Int>{}, true);
+      inputVars.emplace_back("input_" + std::to_string(i), std::vector<Int>{},
+                             true);
     }
     if (shouldBeSubsumed()) {
       if (_paramData.data == 0) {
-        inputVars.at(0).domain = std::pair<Int,Int>{0, 0};
-        inputVars.at(1).domain = std::pair<Int,Int>{0, 10};
+        inputVars.at(0).domain = std::pair<Int, Int>{0, 0};
+        inputVars.at(1).domain = std::pair<Int, Int>{0, 10};
       } else {
-        inputVars.at(0).domain = std::pair<Int,Int>{-2, -2};
-        inputVars.at(1).domain = std::pair<Int,Int>{2, 2};
+        inputVars.at(0).domain = std::pair<Int, Int>{-2, -2};
+        inputVars.at(1).domain = std::pair<Int, Int>{2, 2};
       }
     } else if (shouldBeReplaced()) {
-      inputVars.at(0).domain = std::pair<Int,Int>{1, 1};
-      inputVars.at(1).domain = std::pair<Int,Int>{-2, 2};
+      inputVars.at(0).domain = std::pair<Int, Int>{1, 1};
+      inputVars.at(1).domain = std::pair<Int, Int>{-2, 2};
     } else {
-      inputVars.at(0).domain = std::pair<Int,Int>{-2, 2};
-      inputVars.at(1).domain = std::pair<Int,Int>{-2, 2};
+      inputVars.at(0).domain = std::pair<Int, Int>{-2, 2};
+      inputVars.at(1).domain = std::pair<Int, Int>{-2, 2};
     }
     outputVar.domain = std::pair<Int, Int>{-10, 10};
     for (const auto& var : inputVars) {

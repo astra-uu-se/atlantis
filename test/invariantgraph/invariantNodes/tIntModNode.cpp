@@ -29,9 +29,9 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    numeratorVar.domain = std::pair<Int,Int>{0, 6};
-    denominatorVar.domain = std::pair<Int,Int>{1, 10};
-    outputVar.domain = std::pair<Int,Int>{0, 10};
+    numeratorVar.domain = std::pair<Int, Int>{0, 6};
+    denominatorVar.domain = std::pair<Int, Int>{1, 10};
+    outputVar.domain = std::pair<Int, Int>{0, 10};
 
     createInvariantNode(*_invariantGraph, varNodeId(numeratorVar),
                         varNodeId(denominatorVar), varNodeId(outputVar));
@@ -52,8 +52,8 @@ TEST_P(IntModNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& vId :
-       std::array<VarNodeId, 2>{varNodeId(numeratorVar), varNodeId(denominatorVar)}) {
+  for (const auto& vId : std::array<VarNodeId, 2>{varNodeId(numeratorVar),
+                                                  varNodeId(denominatorVar)}) {
     if (!varNode(vId).isFixed()) {
       EXPECT_NE(varId(vId), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(vId));
@@ -87,7 +87,7 @@ TEST_P(IntModNodeTestFixture, propagation) {
 }
 
 INSTANTIATE_TEST_SUITE_P(IntModNodeTest, IntModNodeTestFixture,
-                        ::testing::Values(ParamData{
-                            InvariantNodeAction::NONE}));
+                         ::testing::Values(ParamData{
+                             InvariantNodeAction::NONE}));
 
 }  // namespace atlantis::testing
