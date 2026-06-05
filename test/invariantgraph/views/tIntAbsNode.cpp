@@ -8,27 +8,30 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
- public:
-  std::string outputVar{"output"};
-  std::string inputVar{"input"};
+ protected:
+  Var outputVar{"output", std::vector<Int>{}, true};
+  Var inputVar{"input", std::vector<Int>{}, true};
 
-  Int computeOutput(bool isRegistered = false) {
+  Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
       return std::abs(_solver->currentValue(varId(inputVar)));
     }
     return std::abs(varNode(inputVar).domain()->lowerBound());
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    retrieveIntVarNode(-10, 10, inputVar);
-    retrieveIntVarNode(0, 10, outputVar);
-
     if (shouldBeSubsumed()) {
-      varNode(inputVar).fixToValue(Int{-5});
+      inputVar.domain = std::vector<Int>{-5};
     } else if (shouldBeReplaced()) {
-      varNode(inputVar).domain()->removeBelow(0);
+      inputVar.domain = std::pair<Int, Int>{0, 10};
+    } else {
+      inputVar.domain = std::pair<Int, Int>{-10, 10};
     }
+    outputVar.domain = std::pair<Int, Int>{-50, 50};
+
+    retrieveIntVarNode(inputVar);
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVar),
                         varNodeId(outputVar));
@@ -37,6 +40,8 @@ class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
 
 TEST_P(IntAbsNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);

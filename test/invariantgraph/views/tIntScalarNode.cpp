@@ -8,26 +8,28 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
- public:
-  std::string outputVar{"output"};
-  std::string inputVar{"input"};
+ protected:
+  Var outputVar{"output", std::vector<Int>{}, true};
+  Var inputVar{"input", std::vector<Int>{}, true};
 
   Int factor{2};
   Int offset{5};
 
-  Int computeOutput(bool isRegistered = false) {
+  Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
       return _solver->currentValue(varId(inputVar)) * factor + offset;
     }
     return varNode(inputVar).domain()->lowerBound() * factor + offset;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     const Int lb = -10;
     const Int ub = 10;
-    retrieveIntVarNode(lb, ub, inputVar);
-    retrieveIntVarNode(lb * factor + offset, ub * factor + offset, outputVar);
+    inputVar.domain = std::pair<Int, Int>{lb, ub};
+    outputVar.domain = std::pair<Int, Int>{lb * factor + offset, ub * factor + offset};
+    retrieveIntVarNode(inputVar);
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVar),
                         varNodeId(outputVar), factor, offset);
@@ -36,6 +38,8 @@ class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
 
 TEST_P(IntScalarNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);

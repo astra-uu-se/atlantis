@@ -8,25 +8,27 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class IntModViewNodeTestFixture : public NodeTestBase<IntModViewNode> {
- public:
-  std::string outputVar{"output"};
-  std::string inputVar{"input"};
+ protected:
+  Var outputVar{"output", std::vector<Int>{}, true};
+  Var inputVar{"input", std::vector<Int>{}, true};
 
   Int denominator{5};
 
-  Int computeOutput(bool isRegistered = false) {
+  Int computeOutput(const bool isRegistered = false) {
     if (isRegistered) {
       return _solver->currentValue(varId(inputVar)) % std::abs(denominator);
     }
     return varNode(inputVar).domain()->lowerBound() % std::abs(denominator);
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     const Int lb = shouldBeSubsumed() ? 5 : -10;
     const Int ub = shouldBeSubsumed() ? 5 : 10;
-    retrieveIntVarNode(lb, ub, inputVar);
-    retrieveIntVarNode(0, 5, outputVar);
+    inputVar.domain = std::pair<Int, Int>{lb, ub};
+    outputVar.domain = std::pair<Int, Int>{0, 5};
+    retrieveIntVarNode(inputVar);
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVar),
                         varNodeId(outputVar), denominator);
@@ -35,6 +37,8 @@ class IntModViewNodeTestFixture : public NodeTestBase<IntModViewNode> {
 
 TEST_P(IntModViewNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
