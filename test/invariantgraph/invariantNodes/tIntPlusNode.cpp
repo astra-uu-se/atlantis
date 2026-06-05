@@ -13,12 +13,12 @@ class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
   std::vector<Var> inputVars;
   Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       Int sum = 0;
       for (const auto& var : inputVars) {
-        if (varNode(var).isFixed()) {
-          sum += varNode(var).lowerBound();
+        if (varNodeConst(var).isFixed()) {
+          sum += varNodeConst(var).lowerBound();
         } else {
           sum += _solver->currentValue(varId(var));
         }
@@ -27,8 +27,8 @@ class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
     }
     Int sum = 0;
     for (const auto& var : inputVars) {
-      EXPECT_TRUE(varNode(var).isFixed());
-      sum += varNode(var).lowerBound();
+      EXPECT_TRUE(varNodeConst(var).isFixed());
+      sum += varNodeConst(var).lowerBound();
     }
     return sum;
   }

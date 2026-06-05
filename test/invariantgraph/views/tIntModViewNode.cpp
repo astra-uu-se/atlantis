@@ -14,11 +14,11 @@ class IntModViewNodeTestFixture : public NodeTestBase<IntModViewNode> {
 
   Int denominator{5};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       return _solver->currentValue(varId(inputVar)) % std::abs(denominator);
     }
-    return varNode(inputVar).domain()->lowerBound() % std::abs(denominator);
+    return varNodeConst(inputVar).lowerBound() % std::abs(denominator);
   }
 
   void SetUp() override {

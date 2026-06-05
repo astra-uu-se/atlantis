@@ -27,17 +27,17 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data == 0; }
 
-  Int computeOutput(bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
-      EXPECT_TRUE(varNode(idxVar).isFixed() ||
+      EXPECT_TRUE(varNodeConst(idxVar).isFixed() ||
                   varId(idxVar) != propagation::NULL_ID);
-      return parVal(parArray.at((varNode(idxVar).isFixed()
-                                     ? varNode(idxVar).lowerBound()
+      return parVal(parArray.at((varNodeConst(idxVar).isFixed()
+                                     ? varNodeConst(idxVar).lowerBound()
                                      : _solver->currentValue(varId(idxVar))) -
                                 offsetIdx));
     }
-    EXPECT_TRUE(varNode(idxVar).isFixed());
-    return parVal(parArray.at(varNode(idxVar).lowerBound() - offsetIdx));
+    EXPECT_TRUE(varNodeConst(idxVar).isFixed());
+    return parVal(parArray.at(varNodeConst(idxVar).lowerBound() - offsetIdx));
   }
 
   void SetUp() override {

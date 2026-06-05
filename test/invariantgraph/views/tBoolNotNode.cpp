@@ -11,11 +11,11 @@ class BoolNotNodeTestFixture : public NodeTestBase<BoolNotNode> {
   Var outputVar{"output", std::vector<Int>{}, false};
   Var inputVar{"input", std::vector<Int>{}, false};
 
-  bool computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] bool computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       return _solver->currentValue(varId(inputVar)) > 0;
     }
-    return varNode(inputVar).inDomain(bool{false});
+    return varNodeConst(inputVar).inDomain(bool{false});
   }
 
   void SetUp() override {

@@ -12,11 +12,11 @@ class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
   Var outputVar{"output", std::vector<Int>{}, true};
   Var inputVar{"input", std::vector<Int>{}, true};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       return std::abs(_solver->currentValue(varId(inputVar)));
     }
-    return std::abs(varNode(inputVar).domain()->lowerBound());
+    return std::abs(varNodeConst(inputVar).lowerBound());
   }
 
   void SetUp() override {

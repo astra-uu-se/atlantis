@@ -15,11 +15,11 @@ class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
   Int factor{2};
   Int offset{5};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       return _solver->currentValue(varId(inputVar)) * factor + offset;
     }
-    return varNode(inputVar).domain()->lowerBound() * factor + offset;
+    return varNodeConst(inputVar).lowerBound() * factor + offset;
   }
 
   void SetUp() override {

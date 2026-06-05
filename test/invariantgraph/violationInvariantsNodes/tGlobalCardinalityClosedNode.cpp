@@ -15,15 +15,14 @@ class GlobalCardinalityClosedNodeTestFixture
   std::vector<Var> inputVars;
   const std::vector<Int> cover{2, 6};
   std::vector<Var> outputVars;
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  Var reifiedVar{"reified", std::vector<Int>{}, true};
-
-  bool isViolating(const bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       std::vector<Int> counts(cover.size(), 0);
       for (const auto& var : inputVars) {
-        const Int val = varNode(var).isFixed()
-                            ? varNode(var).lowerBound()
+        const Int val = varNodeConst(var).isFixed()
+                            ? varNodeConst(var).lowerBound()
                             : _solver->currentValue(varId(var));
         bool valInCover = false;
         for (size_t i = 0; i < cover.size(); ++i) {
@@ -45,7 +44,7 @@ class GlobalCardinalityClosedNodeTestFixture
     }
     std::vector<Int> counts(cover.size(), 0);
     for (const auto& var : inputVars) {
-      const Int val = varNode(var).lowerBound();
+      const Int val = varNodeConst(var).lowerBound();
       bool valInCover = false;
       for (size_t i = 0; i < cover.size(); ++i) {
         if (val == cover.at(i)) {
@@ -117,7 +116,7 @@ TEST_P(GlobalCardinalityClosedNodeTestFixture, propagation) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     const bool expected = isViolating();
     if (isReified()) {
-      EXPECT_TRUE(varNode(reifiedVar).isFixed());
+      EXPECT_TRUE(varNodeConst(reifiedVar).isFixed());
       const bool actual = varNode(reifiedVar).inDomain(false);
       EXPECT_EQ(expected, actual);
     }

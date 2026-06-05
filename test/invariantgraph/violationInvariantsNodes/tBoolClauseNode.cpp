@@ -14,7 +14,7 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
   Int numPos{2};
   Int numNeg{2};
 
-  bool isViolating(const bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       for (const auto& a : posVars) {
         for (const auto& b : negVars) {
@@ -24,8 +24,8 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
         }
       }
       for (const auto& a : posVars) {
-        if (varNode(a).isFixed()) {
-          if (varNode(a).inDomain(bool{true})) {
+        if (varNodeConst(a).isFixed()) {
+          if (varNodeConst(a).inDomain(bool{true})) {
             return false;
           }
         } else if (_solver->currentValue(varId(a)) == 0) {
@@ -33,8 +33,8 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
         }
       }
       for (const auto& b : negVars) {
-        if (varNode(b).isFixed()) {
-          if (varNode(b).inDomain(bool{false})) {
+        if (varNodeConst(b).isFixed()) {
+          if (varNodeConst(b).inDomain(bool{false})) {
             return false;
           }
         } else if (_solver->currentValue(varId(b)) > 0) {
@@ -45,19 +45,19 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
     }
     for (const auto& a : posVars) {
       for (const auto& b : negVars) {
-        if (varNode(a).varNodeId() == varNode(b).varNodeId()) {
+        if (varNodeConst(a).varNodeId() == varNodeConst(b).varNodeId()) {
           return false;
         }
       }
     }
     for (const auto& a : posVars) {
-      const auto& vNode = varNode(a);
+      const auto& vNode = varNodeConst(a);
       if (vNode.inDomain(bool{true})) {
         return false;
       }
     }
     for (const auto& b : negVars) {
-      const auto& vNode = varNode(b);
+      const auto& vNode = varNodeConst(b);
       if (vNode.inDomain(bool{false})) {
         return false;
       }
@@ -121,7 +121,7 @@ TEST_P(BoolClauseNodeTestFixture, updateState) {
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
     if (isReified()) {
-      EXPECT_TRUE(varNode(reifiedVar).isFixed());
+      EXPECT_TRUE(varNodeConst(reifiedVar).isFixed());
       const bool expected = isViolating();
       const bool actual = varNode(reifiedVar).inDomain(bool{false});
       EXPECT_EQ(expected, actual);

@@ -6,32 +6,30 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
- public:
-  VarNodeId aVarNodeId{NULL_NODE_ID};
-  std::string aIdentifier{"a"};
-  VarNodeId bVarNodeId{NULL_NODE_ID};
-  std::string bIdentifier{"b"};
-  std::string reifiedVar{"reified"};
+ protected:
+  Var aVar{"a", std::vector<Int>{}, false};
+  Var bVar{"b", std::vector<Int>{}, false};
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
-      const Int aVal = varNode(aIdentifier).isFixed()
-                           ? varNode(aIdentifier).lowerBound()
-                           : _solver->currentValue(varId(aIdentifier));
-      const Int bVal = varNode(bIdentifier).isFixed()
-                           ? varNode(bIdentifier).lowerBound()
-                           : _solver->currentValue(varId(bIdentifier));
+      const Int aVal = varNodeConst(aVar).isFixed()
+                           ? varNodeConst(aVar).lowerBound()
+                           : _solver->currentValue(varId(aVar));
+      const Int bVal = varNodeConst(bVar).isFixed()
+                           ? varNodeConst(bVar).lowerBound()
+                           : _solver->currentValue(varId(bVar));
 
       return aVal >= bVal;
     }
-    return varNode(aIdentifier).lowerBound() >=
-           varNode(bIdentifier).lowerBound();
+    return varNodeConst(aVar).lowerBound() >=
+           varNodeConst(bVar).lowerBound();
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    aVarNodeId = retrieveIntVarNode(-5, 5, aIdentifier);
-    bVarNodeId = retrieveIntVarNode(-5, 5, bIdentifier);
+    aVar = retrieveIntVarNode(-5, 5, aVar);
+    bVar = retrieveIntVarNode(-5, 5, bVar);
     if (shouldBeSubsumed()) {
       if (shouldHold() || _paramData.data > 0) {
         // varNode(aVarNodeId).removeValuesAbove(0);
@@ -43,10 +41,10 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
     }
     if (isReified()) {
       retrieveBoolVarNode(reifiedVar);
-      createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
+      createInvariantNode(*_invariantGraph, aVar, bVar,
                           varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
+      createInvariantNode(*_invariantGraph, aVar, bVar,
                           shouldHold());
     }
   }

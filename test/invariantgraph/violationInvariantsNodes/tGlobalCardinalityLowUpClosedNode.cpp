@@ -16,15 +16,15 @@ class GlobalCardinalityLowUpClosedNodeTestFixture
   const std::vector<Int> cover{2, 6};
   const std::vector<Int> low{0, 1};
   const std::vector<Int> up{1, 2};
-  Var reifiedVar{"reified", std::vector<Int>{}, true};
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  bool isViolating(const bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       std::vector<Int> counts(cover.size(), 0);
       for (const auto& var : inputVars) {
         bool valInCover = false;
-        const Int val = varNode(var).isFixed()
-                            ? varNode(var).lowerBound()
+        const Int val = varNodeConst(var).isFixed()
+                            ? varNodeConst(var).lowerBound()
                             : _solver->currentValue(varId(var));
         for (size_t i = 0; i < cover.size(); ++i) {
           if (val == cover.at(i)) {
@@ -46,7 +46,7 @@ class GlobalCardinalityLowUpClosedNodeTestFixture
     }
     std::vector<Int> counts(cover.size(), 0);
     for (const auto& var : inputVars) {
-      const Int val = varNode(var).lowerBound();
+      const Int val = varNodeConst(var).lowerBound();
       bool valInCover = false;
       for (size_t i = 0; i < cover.size(); ++i) {
         if (val == cover.at(i)) {

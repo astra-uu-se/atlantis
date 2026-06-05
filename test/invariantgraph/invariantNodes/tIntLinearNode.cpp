@@ -10,19 +10,19 @@ using ::testing::Contains;
 class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
  protected:
   size_t numInputs = 3;
-  std::vector<Var> inputVars;
   std::vector<Int> coeffs;
+  std::vector<Var> inputVars;
   Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       Int sum = 0;
       for (size_t i = 0; i < coeffs.size(); ++i) {
         if (coeffs.at(i) == 0) {
           continue;
         }
-        if (varNode(inputVars.at(i)).isFixed()) {
-          sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
+        if (varNodeConst(inputVars.at(i)).isFixed()) {
+          sum += varNodeConst(inputVars.at(i)).lowerBound() * coeffs.at(i);
         } else {
           sum += _solver->currentValue(varId(inputVars.at(i))) * coeffs.at(i);
         }
@@ -34,8 +34,8 @@ class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
       if (coeffs.at(i) == 0) {
         continue;
       }
-      EXPECT_TRUE(varNode(inputVars.at(i)).isFixed());
-      sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
+      EXPECT_TRUE(varNodeConst(inputVars.at(i)).isFixed());
+      sum += varNodeConst(inputVars.at(i)).lowerBound() * coeffs.at(i);
     }
     return sum;
   }

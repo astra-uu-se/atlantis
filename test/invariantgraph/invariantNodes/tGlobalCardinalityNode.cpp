@@ -14,12 +14,12 @@ class GlobalCardinalityNodeTestFixture
   std::vector<Int> cover{2, 4};
   std::vector<Var> outputVars;
 
-  std::vector<Int> computeOutputs(bool isRegistered = false) {
+  [[nodiscard]] std::vector<Int> computeOutputs(const bool isRegistered = false) const {
     std::vector<Int> outputVals(cover.size(), 0);
     if (isRegistered) {
       for (const auto& var : inputVars) {
-        const Int value = varNode(var).isFixed()
-                              ? varNode(var).lowerBound()
+        const Int value = varNodeConst(var).isFixed()
+                              ? varNodeConst(var).lowerBound()
                               : _solver->currentValue(varId(var));
         for (size_t j = 0; j < cover.size(); ++j) {
           if (value == cover.at(j)) {
@@ -30,7 +30,7 @@ class GlobalCardinalityNodeTestFixture
       return outputVals;
     }
     for (const auto& var : inputVars) {
-      const Int value = varNode(var).lowerBound();
+      const Int value = varNodeConst(var).lowerBound();
       for (size_t j = 0; j < cover.size(); ++j) {
         if (value == cover.at(j)) {
           outputVals.at(j)++;

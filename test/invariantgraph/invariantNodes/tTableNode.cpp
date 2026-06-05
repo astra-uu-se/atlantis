@@ -37,19 +37,19 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
     return colVals.size() == 1;
   }
 
-  std::vector<Int> computeOutputs(const bool isRegistered = false) {
+  [[nodiscard]] std::vector<Int> computeOutputs(const bool isRegistered = false) const {
     std::vector<Int> outputs;
     outputs.reserve(outputVars.size());
     EXPECT_GE(inputColIndex(), 0);
     EXPECT_LE(inputColIndex(), static_cast<Int>(outputVars.size()));
     if (isRegistered) {
-      EXPECT_TRUE(varNode(inputVar).isFixed() ||
+      EXPECT_TRUE(varNodeConst(inputVar).isFixed() ||
                   varId(inputVar) != propagation::NULL_ID);
     } else {
-      EXPECT_TRUE(varNode(inputVar).isFixed());
+      EXPECT_TRUE(varNodeConst(inputVar).isFixed());
     }
-    const Int inputColVal = varNode(inputVar).isFixed()
-                                ? varNode(inputVar).lowerBound()
+    const Int inputColVal = varNodeConst(inputVar).isFixed()
+                                ? varNodeConst(inputVar).lowerBound()
                                 : _solver->currentValue(varId(inputVar));
     Int row = -1;
     for (Int r = 0; r < static_cast<Int>(table.size()); ++r) {

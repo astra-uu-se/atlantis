@@ -11,22 +11,22 @@ using ::testing::Contains;
 
 class BoolLinLeNodeTestFixture : public NodeTestBase<BoolLinRelNode> {
  protected:
-  size_t numInputs = 3;
+  size_t numInputs{3};
   std::vector<Int> coeffs;
   std::vector<Var> inputVars;
   Var reifiedVar{"reified", std::vector<Int>{}, false};
-  Int bound = -1;
+  Int bound{-1};
 
-  bool isViolating(const bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       Int sum = 0;
       for (size_t i = 0; i < coeffs.size(); ++i) {
         if (coeffs.at(i) == 0) {
           continue;
         }
-        if (varNode(inputVars.at(i)).isFixed()) {
+        if (varNodeConst(inputVars.at(i)).isFixed()) {
           sum +=
-              varNode(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
+              varNodeConst(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
         } else {
           sum += _solver->currentValue(varId(inputVars.at(i))) == 0
                      ? coeffs.at(i)
@@ -40,8 +40,8 @@ class BoolLinLeNodeTestFixture : public NodeTestBase<BoolLinRelNode> {
       if (coeffs.at(i) == 0) {
         continue;
       }
-      EXPECT_TRUE(varNode(inputVars.at(i)).isFixed());
-      sum += varNode(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
+      EXPECT_TRUE(varNodeConst(inputVars.at(i)).isFixed());
+      sum += varNodeConst(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
     }
     return sum > bound;
   }

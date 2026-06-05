@@ -11,11 +11,11 @@ class Bool2IntNodeTestFixture : public NodeTestBase<Bool2IntNode> {
   Var outputVar{"output", std::vector<Int>{}, false};
   Var inputVar{"input", std::vector<Int>{}, false};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       return _solver->currentValue(varId(inputVar)) == 0 ? 1 : 0;
     }
-    return varNode(inputVar).inDomain(bool{true}) ? 1 : 0;
+    return varNodeConst(inputVar).inDomain(bool{true}) ? 1 : 0;
   }
 
   void SetUp() override {

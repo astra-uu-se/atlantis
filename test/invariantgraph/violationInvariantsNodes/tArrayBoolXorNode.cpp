@@ -11,18 +11,16 @@ using ::testing::ContainerEq;
 
 class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
  protected:
+  Int numInputs{4};
   std::vector<Var> inputVars;
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  Var reifiedVar = Var::BoolVar("reified");
-
-  Int numInputs = 4;
-
-  bool isViolating(const bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       bool trueFound = false;
       for (const auto& var : inputVars) {
-        if (varNode(var).isFixed()) {
-          if (varNode(var).inDomain(bool{true})) {
+        if (varNodeConst(var).isFixed()) {
+          if (varNodeConst(var).inDomain(bool{true})) {
             if (trueFound) {
               return true;
             }
@@ -41,7 +39,7 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
     }
     bool trueFound = false;
     for (const auto& var : inputVars) {
-      if (varNode(var).inDomain(bool{true})) {
+      if (varNodeConst(var).inDomain(bool{true})) {
         if (trueFound) {
           return true;
         }

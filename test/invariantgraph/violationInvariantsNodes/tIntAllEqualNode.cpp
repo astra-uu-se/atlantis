@@ -11,19 +11,18 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 
 class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
- public:
+ protected:
   Int numInputs{4};
-  std::vector<std::string> inputVars;
+  std::vector<Var> inputVars;
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  std::string reifiedVar{"reified"};
-
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       bool allSameVarNodeId = true;
       for (size_t i = 0; i < inputVars.size(); ++i) {
         for (size_t j = i + 1; j < inputVars.size(); ++j) {
-          if (varNode(inputVars.at(i)).varNodeId() !=
-              varNode(inputVars.at(j)).varNodeId()) {
+          if (varNodeConst(inputVars.at(i)).varNodeId() !=
+              varNodeConst(inputVars.at(j)).varNodeId()) {
             allSameVarNodeId = false;
             break;
           }
@@ -36,12 +35,12 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
         return false;
       }
       for (size_t i = 0; i < inputVars.size(); ++i) {
-        const Int iVal = varNode(inputVars.at(i)).isFixed()
-                             ? varNode(inputVars.at(i)).lowerBound()
+        const Int iVal = varNodeConst(inputVars.at(i)).isFixed()
+                             ? varNodeConst(inputVars.at(i)).lowerBound()
                              : _solver->currentValue(varId(inputVars.at(i)));
         for (size_t j = i + 1; j < inputVars.size(); ++j) {
-          const Int jVal = varNode(inputVars.at(j)).isFixed()
-                               ? varNode(inputVars.at(j)).lowerBound()
+          const Int jVal = varNodeConst(inputVars.at(j)).isFixed()
+                               ? varNodeConst(inputVars.at(j)).lowerBound()
                                : _solver->currentValue(varId(inputVars.at(j)));
           if (iVal != jVal) {
             return true;
@@ -53,8 +52,8 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
     bool allSameVarNodeId = true;
     for (size_t i = 0; i < inputVars.size(); ++i) {
       for (size_t j = i + 1; j < inputVars.size(); ++j) {
-        if (varNode(inputVars.at(i)).varNodeId() !=
-            varNode(inputVars.at(j)).varNodeId()) {
+        if (varNodeConst(inputVars.at(i)).varNodeId() !=
+            varNodeConst(inputVars.at(j)).varNodeId()) {
           allSameVarNodeId = false;
           break;
         }
@@ -68,8 +67,8 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
     }
     for (size_t i = 0; i < inputVars.size(); ++i) {
       for (size_t j = i + 1; j < inputVars.size(); ++j) {
-        if (varNode(inputVars.at(i)).lowerBound() !=
-            varNode(inputVars.at(j)).lowerBound()) {
+        if (varNodeConst(inputVars.at(i)).lowerBound() !=
+            varNodeConst(inputVars.at(j)).lowerBound()) {
           return true;
         }
       }

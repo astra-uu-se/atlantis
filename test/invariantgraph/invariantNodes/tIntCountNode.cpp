@@ -15,15 +15,15 @@ class IntCountNodeTestFixture : public NodeTestBase<CountNode> {
 
   Int needle{2};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       Int occurrences = 0;
       for (const auto& var : inputVars) {
-        if (!varNode(var).inDomain(needle)) {
+        if (!varNodeConst(var).inDomain(needle)) {
           continue;
         }
-        if (varNode(var).isFixed() || varId(var) == propagation::NULL_ID) {
-          EXPECT_TRUE(varNode(var).inDomain(needle));
+        if (varNodeConst(var).isFixed() || varId(var) == propagation::NULL_ID) {
+          EXPECT_TRUE(varNodeConst(var).inDomain(needle));
           ++occurrences;
         } else {
           occurrences += _solver->currentValue(varId(var)) == needle ? 1 : 0;
@@ -34,7 +34,7 @@ class IntCountNodeTestFixture : public NodeTestBase<CountNode> {
     Int occurrences = 0;
     for (const auto& var : inputVars) {
       occurrences +=
-          varNode(var).isFixed() && varNode(var).inDomain(needle) ? 1 : 0;
+          varNodeConst(var).isFixed() && varNodeConst(var).inDomain(needle) ? 1 : 0;
     }
     return occurrences;
   }

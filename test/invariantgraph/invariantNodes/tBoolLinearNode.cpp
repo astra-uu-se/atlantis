@@ -9,21 +9,21 @@ using ::testing::ContainerEq;
 class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
  protected:
   size_t numInputs = 3;
-  std::vector<Var> inputVars;
   std::vector<Int> coeffs;
+  std::vector<Var> inputVars;
   Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       Int sum = 0;
       for (size_t i = 0; i < coeffs.size(); ++i) {
         if (coeffs.at(i) == 0) {
           continue;
         }
-        if (varNode(inputVars.at(i)).isFixed() ||
+        if (varNodeConst(inputVars.at(i)).isFixed() ||
             varId(inputVars.at(i)) == propagation::NULL_ID) {
           sum +=
-              varNode(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
+              varNodeConst(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
         } else {
           sum += _solver->currentValue(varId(inputVars.at(i))) == 0
                      ? coeffs.at(i)
@@ -37,8 +37,8 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
       if (coeffs.at(i) == 0) {
         continue;
       }
-      EXPECT_TRUE(varNode(inputVars.at(i)).isFixed());
-      sum += varNode(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
+      EXPECT_TRUE(varNodeConst(inputVars.at(i)).isFixed());
+      sum += varNodeConst(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
     }
     return sum;
   }

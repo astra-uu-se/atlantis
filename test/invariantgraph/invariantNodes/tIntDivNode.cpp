@@ -11,13 +11,13 @@ class IntDivNodeTestFixture : public NodeTestBase<IntDivNode> {
   Var denominatorVar{"denominator", std::vector<Int>{}, true};
   Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int denominatorVal(const bool isRegistered = false) {
+  [[nodiscard]] Int denominatorVal(const bool isRegistered = false) const {
     if (isRegistered) {
-      return varNode(denominatorVar).isFixed()
-                 ? varNode(denominatorVar).lowerBound()
+      return varNodeConst(denominatorVar).isFixed()
+                 ? varNodeConst(denominatorVar).lowerBound()
                  : _solver->currentValue(varId(denominatorVar));
     }
-    return varNode(denominatorVar).lowerBound();
+    return varNodeConst(denominatorVar).lowerBound();
   }
 
   Int computeOutput(const bool isRegistered = false) {

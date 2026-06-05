@@ -10,12 +10,12 @@ class IntTimesNodeTestFixture : public NodeTestBase<IntTimesNode> {
   std::vector<Var> inputVars;
   Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       Int product = 1;
       for (const auto& var : inputVars) {
-        if (varNode(var).isFixed()) {
-          product *= varNode(var).lowerBound();
+        if (varNodeConst(var).isFixed()) {
+          product *= varNodeConst(var).lowerBound();
         } else {
           product *= _solver->currentValue(varId(var));
         }
@@ -24,7 +24,7 @@ class IntTimesNodeTestFixture : public NodeTestBase<IntTimesNode> {
     }
     Int product = 1;
     for (const auto& var : inputVars) {
-      product *= varNode(var).lowerBound();
+      product *= varNodeConst(var).lowerBound();
     }
     return product;
   }

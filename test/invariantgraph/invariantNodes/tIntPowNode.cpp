@@ -35,18 +35,18 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
     return result;
   }
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
-      const Int baseVal = varNode(baseVar).isFixed()
-                              ? varNode(baseVar).lowerBound()
+      const Int baseVal = varNodeConst(baseVar).isFixed()
+                              ? varNodeConst(baseVar).lowerBound()
                               : _solver->currentValue(varId(baseVar));
-      const Int exponentVal = varNode(exponentVar).isFixed()
-                                  ? varNode(exponentVar).lowerBound()
+      const Int exponentVal = varNodeConst(exponentVar).isFixed()
+                                  ? varNodeConst(exponentVar).lowerBound()
                                   : _solver->currentValue(varId(exponentVar));
       return int_exp(baseVal, exponentVal);
     }
-    const Int baseVal = varNode(baseVar).lowerBound();
-    const Int exponentVal = varNode(exponentVar).lowerBound();
+    const Int baseVal = varNodeConst(baseVar).lowerBound();
+    const Int exponentVal = varNodeConst(exponentVar).lowerBound();
     return int_exp(baseVal, exponentVal);
   }
 

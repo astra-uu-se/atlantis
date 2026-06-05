@@ -9,25 +9,24 @@ using ::testing::ContainerEq;
 
 class VarIntCountNodeTestFixture : public NodeTestBase<CountNode> {
  protected:
-  Int numInputs = 3;
   std::vector<Var> inputVars;
   Var needleVar{"needle", std::vector<Int>{}, true};
   Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
-      const Int needleVal = varNode(needleVar).isFixed()
-                                ? varNode(needleVar).lowerBound()
+      const Int needleVal = varNodeConst(needleVar).isFixed()
+                                ? varNodeConst(needleVar).lowerBound()
                                 : _solver->currentValue(varId(needleVar));
       Int occurrences = 0;
       for (const auto& var : inputVars) {
-        const VarNode& inputVarNode = varNode(var);
+        const VarNode& inputVarNode = varNodeConst(var);
         if (!inputVarNode.inDomain(needleVal)) {
           continue;
         }
         if (inputVarNode.isFixed() || varId(var) == propagation::NULL_ID) {
           EXPECT_TRUE(inputVarNode.isFixed());
-          EXPECT_TRUE(varNode(var).inDomain(needleVal));
+          EXPECT_TRUE(varNodeConst(var).inDomain(needleVal));
           ++occurrences;
         } else {
           occurrences += _solver->currentValue(varId(var)) == needleVal ? 1 : 0;
@@ -35,13 +34,13 @@ class VarIntCountNodeTestFixture : public NodeTestBase<CountNode> {
       }
       return occurrences;
     }
-    const Int needleVal = varNode(needleVar).lowerBound();
+    const Int needleVal = varNodeConst(needleVar).lowerBound();
     Int occurrences = 0;
     for (const auto& var : inputVars) {
-      EXPECT_TRUE(varNode(var).isFixed() || !varNode(var).inDomain(needleVal));
+      EXPECT_TRUE(varNodeConst(var).isFixed() || !varNodeConst(var).inDomain(needleVal));
 
       occurrences +=
-          varNode(var).isFixed() && varNode(var).inDomain(needleVal) ? 1 : 0;
+          varNodeConst(var).isFixed() && varNodeConst(var).inDomain(needleVal) ? 1 : 0;
     }
     return occurrences;
   }

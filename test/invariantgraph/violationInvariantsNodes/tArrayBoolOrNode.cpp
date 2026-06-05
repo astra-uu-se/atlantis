@@ -11,25 +11,23 @@ using ::testing::ContainerEq;
 
 class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
  protected:
-  std::vector<Var> inputVars;
-
-  Var reifiedVar = Var::BoolVar("reified");
-
   Int numInputVars{4};
+  std::vector<Var> inputVars;
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       return std::ranges::all_of(
-          inputVars.begin(), inputVars.end(), [&](const auto& identifier) {
-            if (varNode(identifier).isFixed()) {
-              return !varNode(identifier).inDomain(bool{true});
+          inputVars, [&](const auto& var) {
+            if (varNodeConst(var).isFixed()) {
+              return !varNodeConst(var).inDomain(bool{true});
             }
-            return _solver->currentValue(varId(identifier)) != 0;
+            return _solver->currentValue(varId(var)) != 0;
           });
     }
     return std::ranges::all_of(
-        inputVars.begin(), inputVars.end(), [&](const auto& identifier) {
-          return !varNode(identifier).inDomain(bool{true});
+        inputVars, [&](const auto& var) {
+          return !varNodeConst(var).inDomain(bool{true});
         });
   }
 

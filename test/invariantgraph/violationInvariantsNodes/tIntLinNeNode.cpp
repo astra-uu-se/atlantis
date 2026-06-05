@@ -10,23 +10,23 @@ using ::testing::ContainerEq;
 using ::testing::Contains;
 
 class IntLinNeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
- public:
-  size_t numInputs = 3;
-  std::vector<std::string> inputVars;
+ protected:
+  size_t numInputs{3};
   std::vector<Int> coeffs;
-  std::string reifiedVar{"reified"};
+  std::vector<Var> inputVars;
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
   Int bound = 1;
 
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const{
     if (isRegistered) {
       Int sum = 0;
       for (size_t i = 0; i < coeffs.size(); ++i) {
         if (coeffs.at(i) == 0) {
           continue;
         }
-        if (varNode(inputVars.at(i)).isFixed()) {
-          sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
+        if (varNodeConst(inputVars.at(i)).isFixed()) {
+          sum += varNodeConst(inputVars.at(i)).lowerBound() * coeffs.at(i);
         } else {
           sum += _solver->currentValue(varId(inputVars.at(i))) * coeffs.at(i);
         }
@@ -38,8 +38,8 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
       if (coeffs.at(i) == 0) {
         continue;
       }
-      EXPECT_TRUE(varNode(inputVars.at(i)).isFixed());
-      sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
+      EXPECT_TRUE(varNodeConst(inputVars.at(i)).isFixed());
+      sum += varNodeConst(inputVars.at(i)).lowerBound() * coeffs.at(i);
     }
     return sum == bound;
   }

@@ -12,17 +12,15 @@ using ::testing::ContainerEq;
 
 class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
  protected:
+  Int numInputs{4};
   std::vector<Var> inputVars;
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  Var reifiedVar = Var::BoolVar("reified");
-
-  Int numInputs = 4;
-
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       for (const auto& var : inputVars) {
-        if (varNode(var).isFixed()) {
-          if (varNode(var).inDomain(bool{false})) {
+        if (varNodeConst(var).isFixed()) {
+          if (varNodeConst(var).inDomain(bool{false})) {
             return true;
           }
         } else {
@@ -35,7 +33,7 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
       return false;
     }
     for (const auto& var : inputVars) {
-      if (varNode(var).inDomain(bool{false})) {
+      if (varNodeConst(var).inDomain(bool{false})) {
         return true;
       }
     }

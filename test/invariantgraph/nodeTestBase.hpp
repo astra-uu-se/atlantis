@@ -225,12 +225,24 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->varNode(identifier);
   }
 
+  [[nodiscard]] const VarNode& varNodeConst(const std::string& identifier) {
+    return _invariantGraph->varNodeConst(identifier);
+  }
+
   [[nodiscard]] VarNode& varNode(const Var& var) {
     return _invariantGraph->varNode(var.identifier);
   }
 
-  [[nodiscard]] VarNode& varNode(VarNodeId varNodeId) {
+  [[nodiscard]] const VarNode& varNodeConst(const Var& var) const {
+    return _invariantGraph->varNodeConst(var.identifier);
+  }
+
+  [[nodiscard]] VarNode& varNode(const VarNodeId varNodeId) {
     return _invariantGraph->varNode(varNodeId);
+  }
+
+  [[nodiscard]] const VarNode& varNodeConst(const VarNodeId varNodeId) const {
+    return _invariantGraph->varNodeConst(varNodeId);
   }
 
   [[nodiscard]] propagation::VarViewId varId(

@@ -14,16 +14,15 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
  protected:
   Int numInputs{4};
   std::vector<Var> inputVars;
-
   Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  bool isViolating(const bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       bool allSameVarNodeId = true;
       for (size_t i = 0; i < inputVars.size(); ++i) {
         for (size_t j = i + 1; j < inputVars.size(); ++j) {
-          if (varNode(inputVars.at(i)).varNodeId() !=
-              varNode(inputVars.at(j)).varNodeId()) {
+          if (varNodeConst(inputVars.at(i)).varNodeId() !=
+              varNodeConst(inputVars.at(j)).varNodeId()) {
             allSameVarNodeId = false;
             break;
           }
@@ -37,13 +36,13 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
       }
       for (size_t i = 0; i < inputVars.size(); ++i) {
         const bool iVal =
-            varNode(inputVars.at(i)).isFixed()
-                ? varNode(inputVars.at(i)).inDomain(bool{true})
+            varNodeConst(inputVars.at(i)).isFixed()
+                ? varNodeConst(inputVars.at(i)).inDomain(bool{true})
                 : _solver->currentValue(varId(inputVars.at(i))) == 0;
         for (size_t j = i + 1; j < inputVars.size(); ++j) {
           const bool jVal =
-              varNode(inputVars.at(j)).isFixed()
-                  ? varNode(inputVars.at(j)).inDomain(bool{true})
+              varNodeConst(inputVars.at(j)).isFixed()
+                  ? varNodeConst(inputVars.at(j)).inDomain(bool{true})
                   : _solver->currentValue(varId(inputVars.at(j))) == 0;
           if (iVal != jVal) {
             return true;
@@ -55,8 +54,8 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
     bool allSameVarNodeId = true;
     for (size_t i = 0; i < inputVars.size(); ++i) {
       for (size_t j = i + 1; j < inputVars.size(); ++j) {
-        if (varNode(inputVars.at(i)).varNodeId() !=
-            varNode(inputVars.at(j)).varNodeId()) {
+        if (varNodeConst(inputVars.at(i)).varNodeId() !=
+            varNodeConst(inputVars.at(j)).varNodeId()) {
           allSameVarNodeId = false;
           break;
         }
@@ -70,8 +69,8 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
     }
     for (size_t i = 0; i < inputVars.size(); ++i) {
       for (size_t j = i + 1; j < inputVars.size(); ++j) {
-        if (varNode(inputVars.at(i)).inDomain(bool{true}) !=
-            varNode(inputVars.at(j)).inDomain(bool{true})) {
+        if (varNodeConst(inputVars.at(i)).inDomain(bool{true}) !=
+            varNodeConst(inputVars.at(j)).inDomain(bool{true})) {
           return true;
         }
       }

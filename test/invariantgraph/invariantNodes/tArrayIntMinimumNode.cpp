@@ -12,12 +12,12 @@ class ArrayIntMinimumNodeTestFixture
   std::vector<Var> inputVars;
   Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       Int val = std::numeric_limits<Int>::max();
       for (const auto& var : inputVars) {
-        if (varNode(var).isFixed() || varId(var) == propagation::NULL_ID) {
-          val = std::min(val, varNode(var).upperBound());
+        if (varNodeConst(var).isFixed() || varId(var) == propagation::NULL_ID) {
+          val = std::min(val, varNodeConst(var).upperBound());
         } else {
           val = std::min(val, _solver->currentValue(varId(var)));
         }
@@ -26,7 +26,7 @@ class ArrayIntMinimumNodeTestFixture
     }
     Int val = std::numeric_limits<Int>::max();
     for (const auto& var : inputVars) {
-      val = std::min(val, varNode(var).upperBound());
+      val = std::min(val, varNodeConst(var).upperBound());
     }
     return val;
   }

@@ -11,19 +11,19 @@ class BoolLeNodeTestFixture : public NodeTestBase<BoolLeNode> {
   Var bVar{"b", std::vector<Int>{}, false};
   Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  bool isViolating(const bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
-      const bool aVal = varNode(aVar).isFixed()
-                            ? varNode(aVar).inDomain(bool{true})
+      const bool aVal = varNodeConst(aVar).isFixed()
+                            ? varNodeConst(aVar).inDomain(bool{true})
                             : _solver->currentValue(varId(aVar)) == 0;
-      const bool bVal = varNode(bVar).isFixed()
-                            ? varNode(bVar).inDomain(bool{true})
+      const bool bVal = varNodeConst(bVar).isFixed()
+                            ? varNodeConst(bVar).inDomain(bool{true})
                             : _solver->currentValue(varId(bVar)) == 0;
       // !(a <= b) <=> a > b
       return aVal && !bVal;
     }
-    const bool aVal = varNode(aVar).inDomain(bool{true});
-    const bool bVal = varNode(bVar).inDomain(bool{true});
+    const bool aVal = varNodeConst(aVar).inDomain(bool{true});
+    const bool bVal = varNodeConst(bVar).inDomain(bool{true});
     // !(a <= b) <=> a > b
     return aVal && !bVal;
   }

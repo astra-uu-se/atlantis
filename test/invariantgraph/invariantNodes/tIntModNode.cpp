@@ -11,19 +11,19 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
   Var denominatorVar{"denominator", std::vector<Int>{}, true};
   Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(const bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
-      const Int numerator = varNode(numeratorVar).isFixed()
-                                ? varNode(numeratorVar).lowerBound()
+      const Int numerator = varNodeConst(numeratorVar).isFixed()
+                                ? varNodeConst(numeratorVar).lowerBound()
                                 : _solver->currentValue(varId(numeratorVar));
       const Int denominator =
-          varNode(denominatorVar).isFixed()
-              ? varNode(denominatorVar).lowerBound()
+          varNodeConst(denominatorVar).isFixed()
+              ? varNodeConst(denominatorVar).lowerBound()
               : _solver->currentValue(varId(denominatorVar));
       return denominator != 0 ? numerator % denominator : 0;
     }
-    const Int numerator = varNode(numeratorVar).lowerBound();
-    const Int denominator = varNode(denominatorVar).lowerBound();
+    const Int numerator = varNodeConst(numeratorVar).lowerBound();
+    const Int denominator = varNodeConst(denominatorVar).lowerBound();
     return denominator != 0 ? numerator % denominator : 0;
   }
 
