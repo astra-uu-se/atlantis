@@ -18,7 +18,7 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
 
   Int bound = 1;
 
-  [[nodiscard]] bool isViolating(const bool isRegistered = false) const{
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       Int sum = 0;
       for (size_t i = 0; i < coeffs.size(); ++i) {

@@ -10,8 +10,10 @@ using namespace atlantis::invariantgraph;
 
 class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
  protected:
-  std::vector<Var> inputVars{Var{"output_col_1", std::vector<Int>{}, true}, Var{"output_col_2", std::vector<Int>{}, true},
-                                     Var{"output_col_3", std::vector<Int>{}, true}, Var{"fixed_col", std::vector<Int>{}, true}};
+  std::vector<Var> inputVars{Var{"output_col_1", std::vector<Int>{}, true},
+                             Var{"output_col_2", std::vector<Int>{}, true},
+                             Var{"output_col_3", std::vector<Int>{}, true},
+                             Var{"fixed_col", std::vector<Int>{}, true}};
   Var reifiedVar{"reified", std::vector<Int>{}, false};
 
   std::vector<std::vector<Int>> intTable{

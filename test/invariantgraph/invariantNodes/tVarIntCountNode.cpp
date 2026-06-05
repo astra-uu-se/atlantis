@@ -37,10 +37,13 @@ class VarIntCountNodeTestFixture : public NodeTestBase<CountNode> {
     const Int needleVal = varNodeConst(needleVar).lowerBound();
     Int occurrences = 0;
     for (const auto& var : inputVars) {
-      EXPECT_TRUE(varNodeConst(var).isFixed() || !varNodeConst(var).inDomain(needleVal));
+      EXPECT_TRUE(varNodeConst(var).isFixed() ||
+                  !varNodeConst(var).inDomain(needleVal));
 
       occurrences +=
-          varNodeConst(var).isFixed() && varNodeConst(var).inDomain(needleVal) ? 1 : 0;
+          varNodeConst(var).isFixed() && varNodeConst(var).inDomain(needleVal)
+              ? 1
+              : 0;
     }
     return occurrences;
   }

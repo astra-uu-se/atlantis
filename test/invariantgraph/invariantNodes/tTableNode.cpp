@@ -37,7 +37,8 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
     return colVals.size() == 1;
   }
 
-  [[nodiscard]] std::vector<Int> computeOutputs(const bool isRegistered = false) const {
+  [[nodiscard]] std::vector<Int> computeOutputs(
+      const bool isRegistered = false) const {
     std::vector<Int> outputs;
     outputs.reserve(outputVars.size());
     EXPECT_GE(inputColIndex(), 0);

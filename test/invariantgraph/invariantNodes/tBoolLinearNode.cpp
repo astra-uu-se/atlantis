@@ -22,8 +22,9 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
         }
         if (varNodeConst(inputVars.at(i)).isFixed() ||
             varId(inputVars.at(i)) == propagation::NULL_ID) {
-          sum +=
-              varNodeConst(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
+          sum += varNodeConst(inputVars.at(i)).inDomain(bool{true})
+                     ? coeffs.at(i)
+                     : 0;
         } else {
           sum += _solver->currentValue(varId(inputVars.at(i))) == 0
                      ? coeffs.at(i)
@@ -38,7 +39,8 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
         continue;
       }
       EXPECT_TRUE(varNodeConst(inputVars.at(i)).isFixed());
-      sum += varNodeConst(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
+      sum +=
+          varNodeConst(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
     }
     return sum;
   }

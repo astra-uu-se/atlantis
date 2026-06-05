@@ -25,8 +25,9 @@ class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinRelNode> {
           continue;
         }
         if (varNodeConst(inputVars.at(i)).isFixed()) {
-          sum +=
-              varNodeConst(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
+          sum += varNodeConst(inputVars.at(i)).inDomain(bool{true})
+                     ? coeffs.at(i)
+                     : 0;
         } else {
           sum += _solver->currentValue(varId(inputVars.at(i))) == 0
                      ? coeffs.at(i)
@@ -41,7 +42,8 @@ class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinRelNode> {
         continue;
       }
       EXPECT_TRUE(varNodeConst(inputVars.at(i)).isFixed());
-      sum += varNodeConst(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
+      sum +=
+          varNodeConst(inputVars.at(i)).inDomain(bool{true}) ? coeffs.at(i) : 0;
     }
     return sum != bound;
   }

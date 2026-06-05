@@ -22,8 +22,7 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
 
       return aVal >= bVal;
     }
-    return varNodeConst(aVar).lowerBound() >=
-           varNodeConst(bVar).lowerBound();
+    return varNodeConst(aVar).lowerBound() >= varNodeConst(bVar).lowerBound();
   }
 
   void SetUp() override {
@@ -41,11 +40,9 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
     }
     if (isReified()) {
       retrieveBoolVarNode(reifiedVar);
-      createInvariantNode(*_invariantGraph, aVar, bVar,
-                          varNodeId(reifiedVar));
+      createInvariantNode(*_invariantGraph, aVar, bVar, varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph, aVar, bVar,
-                          shouldHold());
+      createInvariantNode(*_invariantGraph, aVar, bVar, shouldHold());
     }
   }
 };

@@ -40,11 +40,9 @@ class IntLeNodeTestFixture : public NodeTestBase<IntLeNode> {
     }
     if (isReified()) {
       retrieveBoolVarNode(reifiedVar);
-      createInvariantNode(*_invariantGraph, aVar, bVar,
-                          varNodeId(reifiedVar));
+      createInvariantNode(*_invariantGraph, aVar, bVar, varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph, aVar, bVar,
-                          shouldHold());
+      createInvariantNode(*_invariantGraph, aVar, bVar, shouldHold());
     }
   }
 };

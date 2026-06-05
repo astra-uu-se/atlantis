@@ -14,7 +14,8 @@ class GlobalCardinalityNodeTestFixture
   std::vector<Int> cover{2, 4};
   std::vector<Var> outputVars;
 
-  [[nodiscard]] std::vector<Int> computeOutputs(const bool isRegistered = false) const {
+  [[nodiscard]] std::vector<Int> computeOutputs(
+      const bool isRegistered = false) const {
     std::vector<Int> outputVals(cover.size(), 0);
     if (isRegistered) {
       for (const auto& var : inputVars) {

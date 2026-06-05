@@ -52,7 +52,9 @@ class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i), shouldBeSubsumed() ? i : -2, shouldBeSubsumed() ? i : 2, true);
+      inputVars.emplace_back("input_" + std::to_string(i),
+                             shouldBeSubsumed() ? i : -2,
+                             shouldBeSubsumed() ? i : 2, true);
       retrieveIntVarNode(inputVars.back());
     }
     if (!shouldBeMadeImplicit()) {

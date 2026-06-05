@@ -34,7 +34,8 @@ class IntCountNodeTestFixture : public NodeTestBase<CountNode> {
     Int occurrences = 0;
     for (const auto& var : inputVars) {
       occurrences +=
-          varNodeConst(var).isFixed() && varNodeConst(var).inDomain(needle) ? 1 : 0;
+          varNodeConst(var).isFixed() && varNodeConst(var).inDomain(needle) ? 1
+                                                                            : 0;
     }
     return occurrences;
   }

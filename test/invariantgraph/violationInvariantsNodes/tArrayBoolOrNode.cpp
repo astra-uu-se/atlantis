@@ -17,18 +17,16 @@ class ArrayBoolOrNodeTestFixture : public NodeTestBase<ArrayBoolOrNode> {
 
   [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
-      return std::ranges::all_of(
-          inputVars, [&](const auto& var) {
-            if (varNodeConst(var).isFixed()) {
-              return !varNodeConst(var).inDomain(bool{true});
-            }
-            return _solver->currentValue(varId(var)) != 0;
-          });
-    }
-    return std::ranges::all_of(
-        inputVars, [&](const auto& var) {
+      return std::ranges::all_of(inputVars, [&](const auto& var) {
+        if (varNodeConst(var).isFixed()) {
           return !varNodeConst(var).inDomain(bool{true});
-        });
+        }
+        return _solver->currentValue(varId(var)) != 0;
+      });
+    }
+    return std::ranges::all_of(inputVars, [&](const auto& var) {
+      return !varNodeConst(var).inDomain(bool{true});
+    });
   }
 
   void SetUp() override {

@@ -30,8 +30,7 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
       visited.at(curNode - 1) = true;
       curNode = values.at(curNode - 1);
     }
-    return std::ranges::any_of(visited,
-                               [](const bool v) { return !v; });
+    return std::ranges::any_of(visited, [](const bool v) { return !v; });
   }
 
   void SetUp() {
