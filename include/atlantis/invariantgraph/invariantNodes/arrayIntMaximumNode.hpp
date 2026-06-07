@@ -4,8 +4,6 @@
 
 namespace atlantis::invariantgraph {
 class ArrayIntMaximumNode : public InvariantNode {
-  Int _lb;
-
  public:
   explicit ArrayIntMaximumNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                                VarNodeId output);
@@ -15,7 +13,8 @@ class ArrayIntMaximumNode : public InvariantNode {
                                std::vector<VarNodeId>&& vars, VarNodeId output);
 
   void init(InvariantNodeId) override;
-  void postConstraint();
+
+    void postConstraint() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

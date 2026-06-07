@@ -8,6 +8,7 @@
 #include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/countRelNode.hpp"
 #include "atlantis/propagation/invariants/max.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intMaxView.hpp"
@@ -21,8 +22,7 @@ ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph, VarNodeId a,
 ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph,
                                          std::vector<VarNodeId>&& vars,
                                          VarNodeId output)
-    : InvariantNode(graph, {output}, std::move(vars)),
-      _lb{std::numeric_limits<Int>::min()} {}
+    : InvariantNode(graph, {output}, std::move(vars)) {}
 
 void ArrayIntMaximumNode::init(InvariantNodeId id) {
   InvariantNode::init(id);
@@ -41,36 +41,38 @@ void ArrayIntMaximumNode::postConstraint() {
 }
 
 void ArrayIntMaximumNode::updateState() {
-  _lb = outputVarNodeConst(0).lowerBound();
   for (size_t i = 0; i < staticInputVarNodeIds().size();) {
     if (staticInputVarNodeConst(i).isFixed() ||
-        staticInputVarNodeConst(i).upperBound() <= _lb) {
+        staticInputVarNodeConst(i).upperBound() < outputVarNodeConst(0).lowerBound()) {
       removeStaticInputVarNode(staticInputVarNodeIds().at(i));
     } else {
       ++i;
     }
   }
 
-  if (outputVarNodeConst(0).isFixed()) {
-    for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-      staticInputVarNode(i).tightenDomainType(DomainType::DOM_UPPER_BOUND);
-    }
+  if (staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 bool ArrayIntMaximumNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         staticInputVarNodeIds().size() == 1 &&
-         _lb <= staticInputVarNodeConst(0).lowerBound();
+         ((staticInputVarNodeIds().size() == 1 &&
+         outputVarNodeConst(0).lowerBound() <= staticInputVarNodeConst(0).lowerBound()) || outputVarNodeConst(0).isFixed());
 }
 
 bool ArrayIntMaximumNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  invariantGraph().replaceVarNode(outputVarNodeIds().front(),
+  if (staticInputVarNodeIds().size() == 1 &&
+         outputVarNodeConst(0).lowerBound() <= staticInputVarNodeConst(0).lowerBound()) {
+    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
                                   staticInputVarNodeIds().front());
+    return true;
+  }
+  assert(outputVarNodeIds().size() == 1 && outputVarNodeConst(0).isFixed());
+  invariantGraph().addInvariantNode(std::make_shared<CountRelNode>(invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}, outputVarNodeConst(0).lowerBound(), Int{1}, RelationType::REL_TYPE_GE, true));
   return true;
 }
 
@@ -80,7 +82,7 @@ void ArrayIntMaximumNode::registerOutputVars(propagation::SolverBase& solver,
     mapping.setSolverId(
         outputVarNodeIds().front(),
         solver.makeIntView<propagation::IntMaxView>(
-            solver, mapping.solverId(staticInputVarNodeIds().front()), _lb));
+            solver, mapping.solverId(staticInputVarNodeIds().front()), outputVarNodeConst(0).lowerBound()));
   } else if (!staticInputVarNodeIds().empty()) {
     makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }

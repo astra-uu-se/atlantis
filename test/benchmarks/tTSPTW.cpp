@@ -23,14 +23,13 @@ class TSPTWTest : public ::testing::Test {
   std::vector<std::vector<Int>> dist;
   propagation::VarViewId totalDist{propagation::NULL_ID};
 
-  std::random_device rd;
-
   Int n{30};
   const int MAX_TIME = 100000;
 
   std::vector<propagation::VarViewId> violation;
   propagation::VarViewId totalViolation{propagation::NULL_ID};
 
+protected:
   void SetUp() override {
     _solver = std::make_shared<propagation::Solver>();
     n = 30;

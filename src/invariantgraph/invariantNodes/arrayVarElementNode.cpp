@@ -107,7 +107,7 @@ void ArrayVarElementNode::updateState() {
         indexIsSupported[j] = true;
       }
     }
-    replaceDynamicInputVarNode(staticInputVarNodeIds()[i], prevVarNodeId);
+    replaceDynamicInputVarNode(dynamicInputVarNodeIds()[i], prevVarNodeId);
   }
 }
 

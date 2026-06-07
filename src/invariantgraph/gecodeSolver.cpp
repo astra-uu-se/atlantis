@@ -448,26 +448,14 @@ void GecodeSolver::fix_int(const ConstraintVarId var, const Int val) {
 
 void GecodeSolver::array_bool_and(const std::vector<ConstraintVarId>& inputs,
                                   const ConstraintVarId reified) {
-  if (inputs.empty()) {
-    return fix_bool(reified, true);
-  }
-  if (inputs.size() == 1) {
-    return bool_eq(inputs.front(), reified, true);
+  if (boolVar(reified).assigned()) {
+    return array_bool_and(inputs, boolVar(reified).val() == 1);
   }
   array_bool_op(inputs, reified, Gecode::BOT_AND);
 }
 
 void GecodeSolver::array_bool_and(const std::vector<ConstraintVarId>& inputs,
                                   const bool shouldHold) {
-  if (inputs.empty()) {
-    if (!shouldHold) {
-      throw InconsistencyException("UNSAT");
-    }
-    return;
-  }
-  if (inputs.size() == 1) {
-    return fix_bool(inputs.front(), shouldHold);
-  }
   array_bool_op(inputs, shouldHold, Gecode::BOT_AND);
 }
 
@@ -492,32 +480,14 @@ void GecodeSolver::array_bool_element2d(
 
 void GecodeSolver::array_bool_or(const std::vector<ConstraintVarId>& inputs,
                                  const ConstraintVarId reified) {
-  if (inputs.empty()) {
-    return fix_bool(reified, false);
-  }
-  if (inputs.size() == 1) {
-    return bool_eq(inputs.front(), reified, true);
-  }
-  if (inputs.size() == 2) {
-    return bool_or_reif(inputs.front(), inputs.back(), reified);
+  if (boolVar(reified).assigned()) {
+    return array_bool_or(inputs, boolVar(reified).val() == 1);
   }
   array_bool_op(inputs, reified, Gecode::BOT_OR);
 }
 
 void GecodeSolver::array_bool_or(const std::vector<ConstraintVarId>& inputs,
                                  const bool shouldHold) {
-  if (inputs.empty()) {
-    if (shouldHold) {
-      throw InconsistencyException("UNSAT");
-    }
-    return;
-  }
-  if (inputs.size() == 1) {
-    return fix_bool(inputs.front(), shouldHold);
-  }
-  if (inputs.size() == 2) {
-    return bool_or(inputs.front(), inputs.back(), shouldHold);
-  }
   array_bool_op(inputs, shouldHold, Gecode::BOT_OR);
 }
 
@@ -573,18 +543,15 @@ void GecodeSolver::array_var_bool_element(
     const ConstraintVarId output, const Int offset) {
   const bool allParams = std::ranges::all_of(
       inputs,
-      [&](const ConstraintVarId varId) { return boolVar(varId).one(); });
+      [&](const ConstraintVarId varId) { return boolVar(varId).assigned(); });
   if (allParams) {
     std::vector<bool> params(inputs.size());
     for (size_t i = 0; i < inputs.size(); ++i) {
       params[i] = boolVar(inputs[i]).val() == 1;
     }
-    array_bool_element(index, params, output, offset);
-    return;
+    return array_bool_element(index, params, output, offset);
   }
-  const auto indexVar =
-      Gecode::expr(_space, intVar(index) - static_cast<int>(offset));
-  Gecode::element(_space, boolVarArgs(inputs), indexVar, boolVar(output),
+  Gecode::element(_space, boolVarArgs(inputs), intVar(index), -static_cast<int>(offset), boolVar(output),
                   Gecode::IPL_DOM);
 }
 
@@ -595,7 +562,7 @@ void GecodeSolver::array_var_bool_element2d(
   const bool allParams =
       std::ranges::all_of(inputs, [&](const std::vector<ConstraintVarId>& row) {
         return std::ranges::all_of(row, [&](const ConstraintVarId varId) {
-          return boolVar(varId).one();
+          return boolVar(varId).assigned();
         });
       });
   if (allParams) {
@@ -610,12 +577,8 @@ void GecodeSolver::array_var_bool_element2d(
                          colOffset);
     return;
   }
-  const auto rowIndexVar =
-      Gecode::expr(_space, intVar(rowIndex) - static_cast<int>(rowOffset));
-  const auto colIndexVar =
-      Gecode::expr(_space, intVar(colIndex) - static_cast<int>(colOffset));
-  Gecode::element(_space, boolVarArgs(inputs), colIndexVar,
-                  static_cast<int>(inputs.front().size()), rowIndexVar,
+  Gecode::element(_space, boolVarArgs(inputs), intVar(colIndex), -colOffset,
+                  static_cast<int>(inputs.front().size()), intVar(rowIndex), -rowOffset,
                   static_cast<int>(inputs.size()), boolVar(output));
 }
 

@@ -27,9 +27,9 @@ static std::vector<VarNodeId> flatten(
 }
 
 ArrayVarElement2dNode::ArrayVarElement2dNode(
-    InvariantGraph& graph, VarNodeId rowIdx, VarNodeId colIdx,
-    std::vector<VarNodeId>&& flatVarMatrix, VarNodeId output, size_t numRows,
-    Int rowOffset, Int colOffset)
+    InvariantGraph& graph, const VarNodeId rowIdx, const VarNodeId colIdx,
+    std::vector<VarNodeId>&& flatVarMatrix, const VarNodeId output, const size_t numRows,
+    const Int rowOffset, const Int colOffset)
     : InvariantNode(graph, {output}, {rowIdx, colIdx},
                     std::move(flatVarMatrix)),
       _numRows(numRows),
@@ -37,26 +37,24 @@ ArrayVarElement2dNode::ArrayVarElement2dNode(
       _colOffset(colOffset) {}
 
 ArrayVarElement2dNode::ArrayVarElement2dNode(
-    InvariantGraph& graph, VarNodeId rowIdx, VarNodeId colIdx,
-    std::vector<std::vector<VarNodeId>>&& varMatrix, VarNodeId output,
-    Int rowOffset, Int colOffset)
+    InvariantGraph& graph, const VarNodeId rowIdx, const VarNodeId colIdx,
+    std::vector<std::vector<VarNodeId>>&& varMatrix, const VarNodeId output,
+    const Int rowOffset, const Int colOffset)
     : ArrayVarElement2dNode(graph, rowIdx, colIdx, flatten(varMatrix), output,
                             varMatrix.size(), rowOffset, colOffset) {}
 
-void ArrayVarElement2dNode::init(InvariantNodeId id) {
+void ArrayVarElement2dNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
+      staticInputVarNodeIds(),
       [&](const VarNodeId node) {
-        return invariantGraphConst().varNodeConst(node).isIntVar();
+        return varNodeConst(node).isIntVar();
       }));
   assert(std::ranges::all_of(
-      dynamicInputVarNodeIds().begin(), dynamicInputVarNodeIds().end(),
+      dynamicInputVarNodeIds(),
       [&](const VarNodeId node) {
-        return invariantGraph()
-                   .varNodeConst(outputVarNodeIds().front())
-                   .isIntVar() ==
-               invariantGraphConst().varNodeConst(node).isIntVar();
+        return outputVarNodeConst(0).isIntVar() ==
+               varNodeConst(node).isIntVar();
       }));
 }
 
@@ -115,38 +113,40 @@ void ArrayVarElement2dNode::updateState() {
   indicesToRemove.reserve((rowLb - _rowOffset) * (colLb - _colOffset));
 
   // Find invalid start rows:
-  for (Int r = _rowOffset; r < rowLb; ++r) {
+  for (Int r = 0; r < rowLb - _rowOffset; ++r) {
     for (Int c = 0; c < static_cast<Int>(numCols()); ++c) {
       indicesToRemove.emplace_back(index(r, c, false));
     }
   }
 
   // Find invalid end rows:
-  const Int rowSize = varNodeConst(rowIdx()).upperBound() -
-                      varNodeConst(rowIdx()).lowerBound() + 1;
-  assert(rowSize <= static_cast<Int>(_numRows));
-  for (Int r = static_cast<Int>(_numRows) - 1; r >= rowSize; --r) {
+  for (Int r = varNodeConst(rowIdx()).upperBound() - _rowOffset + 1; r < static_cast<Int>(_numRows); ++r) {
     for (Int c = 0; c < static_cast<Int>(numCols()); ++c) {
       indicesToRemove.emplace_back(index(r, c, false));
     }
   }
 
   // Find invalid start columns:
-  for (Int c = _colOffset; c < colLb; ++c) {
+  for (Int c = 0; c < colLb - _colOffset; ++c) {
     for (Int r = 0; r < static_cast<Int>(_numRows); ++r) {
       indicesToRemove.emplace_back(index(r, c, false));
     }
   }
 
   // Find invalid end columns:
-  const Int colSize = varNodeConst(colIdx()).upperBound() -
-                      varNodeConst(colIdx()).lowerBound() + 1;
-  assert(colSize <= static_cast<Int>(numCols()));
-  for (Int c = static_cast<Int>(numCols()) - 1; c >= colSize; --c) {
+  for (Int c = varNodeConst(colIdx()).upperBound() - _colOffset + 1; c < static_cast<Int>(numCols()); ++c) {
     for (Int r = 0; r < static_cast<Int>(_numRows); ++r) {
       indicesToRemove.emplace_back(index(r, c, false));
     }
   }
+  const Int rowSize = varNodeConst(rowIdx()).upperBound() -
+                      varNodeConst(rowIdx()).lowerBound() + 1;
+  assert(rowSize <= static_cast<Int>(_numRows));
+
+  const Int colSize = varNodeConst(colIdx()).upperBound() -
+                      varNodeConst(colIdx()).lowerBound() + 1;
+  assert(colSize <= static_cast<Int>(numCols()));
+
 
   std::ranges::sort(indicesToRemove);
   const auto [first, last] = std::ranges::unique(indicesToRemove);
@@ -155,6 +155,8 @@ void ArrayVarElement2dNode::updateState() {
   for (Int i = static_cast<Int>(indicesToRemove.size()) - 1; i >= 0; --i) {
     removeDynamicInputAtIndex(indicesToRemove[i]);
   }
+
+  assert(!dynamicInputVarNodeIds().empty());
 
   _numRows = rowSize;
   _rowOffset = rowLb;
@@ -193,7 +195,7 @@ void ArrayVarElement2dNode::updateState() {
         indexIsSupported[j] = true;
       }
     }
-    replaceDynamicInputVarNode(staticInputVarNodeIds()[i], prevVarNodeId);
+    replaceDynamicInputVarNode(dynamicInputVarNodeIds()[i], prevVarNodeId);
   }
 }
 
@@ -211,8 +213,8 @@ bool ArrayVarElement2dNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE) {
     return false;
   }
-  if (invariantGraphConst().varNodeConst(rowIdx()).isFixed() ||
-      invariantGraphConst().varNodeConst(colIdx()).isFixed()) {
+  if (varNodeConst(rowIdx()).isFixed() ||
+      varNodeConst(colIdx()).isFixed()) {
     return true;
   }
   const bool allFixed = std::ranges::all_of(

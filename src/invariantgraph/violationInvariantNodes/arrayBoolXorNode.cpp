@@ -45,30 +45,14 @@ void ArrayBoolXorNode::init(const InvariantNodeId id) {
 }
 
 void ArrayBoolXorNode::postConstraint() {
-  ViolationInvariantNode::postConstraint();
-  if (staticInputVarNodeIds().size() < 2) {
-    return;
-  }
-  if (staticInputVarNodeIds().size() == 2) {
-    if (isReified()) {
-      return constraintSolver().bool_xor_reif(
-          staticInputVarNodeConst(0).constraintVarId(),
-          staticInputVarNodeConst(1).constraintVarId(),
-          reifiedVarNodeConst().constraintVarId());
-    }
-    return constraintSolver().bool_xor(
-        staticInputVarNodeConst(0).constraintVarId(),
-        staticInputVarNodeConst(1).constraintVarId(), shouldHold());
-  }
   if (isReified()) {
-    constraintSolver().array_bool_xor(
+    return constraintSolver().array_bool_xor(
         toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
         reifiedVarNodeConst().constraintVarId());
-  } else {
-    constraintSolver().array_bool_xor(
-        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
-        shouldHold());
   }
+  constraintSolver().array_bool_xor(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      shouldHold());
 }
 
 void ArrayBoolXorNode::updateState() {
@@ -103,8 +87,6 @@ void ArrayBoolXorNode::updateState() {
   for (const auto& id : varsToRemove) {
     removeStaticInputVarNode(id);
   }
-
-  assert(!staticInputVarNodeIds().empty());
 
   if (staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);

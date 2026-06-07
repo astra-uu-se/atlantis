@@ -1,6 +1,5 @@
 #include <gmock/gmock.h>
 
-#include "../../../build-release/_deps/fznparser-src/include/fznparser/parser.hpp"
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 
