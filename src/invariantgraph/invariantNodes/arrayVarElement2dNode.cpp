@@ -104,10 +104,13 @@ void ArrayVarElement2dNode::updateState() {
   InvariantNode::updateState();
 
   const Int rowLb = varNodeConst(rowIdx()).lowerBound();
+  const Int rowUb = varNodeConst(rowIdx()).upperBound();
   const Int colLb = varNodeConst(colIdx()).lowerBound();
+  const Int colUb = varNodeConst(colIdx()).upperBound();
 
   std::vector<size_t> indicesToRemove;
-  indicesToRemove.reserve((rowLb - _rowOffset) * (colLb - _colOffset));
+  indicesToRemove.reserve(static_cast<Int>(_numRows * numCols()) -
+                          (rowUb - rowLb + 1) * (colUb - colLb + 1));
 
   // Find invalid start rows:
   for (Int r = 0; r < rowLb - _rowOffset; ++r) {
@@ -117,8 +120,7 @@ void ArrayVarElement2dNode::updateState() {
   }
 
   // Find invalid end rows:
-  for (Int r = varNodeConst(rowIdx()).upperBound() - _rowOffset + 1;
-       r < static_cast<Int>(_numRows); ++r) {
+  for (Int r = rowUb - _rowOffset + 1; r < static_cast<Int>(_numRows); ++r) {
     for (Int c = 0; c < static_cast<Int>(numCols()); ++c) {
       indicesToRemove.emplace_back(index(r, c, false));
     }
@@ -132,19 +134,11 @@ void ArrayVarElement2dNode::updateState() {
   }
 
   // Find invalid end columns:
-  for (Int c = varNodeConst(colIdx()).upperBound() - _colOffset + 1;
-       c < static_cast<Int>(numCols()); ++c) {
+  for (Int c = colUb - _colOffset + 1; c < static_cast<Int>(numCols()); ++c) {
     for (Int r = 0; r < static_cast<Int>(_numRows); ++r) {
       indicesToRemove.emplace_back(index(r, c, false));
     }
   }
-  const Int rowSize = varNodeConst(rowIdx()).upperBound() -
-                      varNodeConst(rowIdx()).lowerBound() + 1;
-  assert(rowSize <= static_cast<Int>(_numRows));
-
-  const Int colSize = varNodeConst(colIdx()).upperBound() -
-                      varNodeConst(colIdx()).lowerBound() + 1;
-  assert(colSize <= static_cast<Int>(numCols()));
 
   std::ranges::sort(indicesToRemove);
   const auto [first, last] = std::ranges::unique(indicesToRemove);
@@ -156,7 +150,7 @@ void ArrayVarElement2dNode::updateState() {
 
   assert(!dynamicInputVarNodeIds().empty());
 
-  _numRows = rowSize;
+  _numRows = rowUb - rowLb + 1;
   _rowOffset = rowLb;
   _colOffset = colLb;
 
@@ -313,8 +307,21 @@ bool ArrayVarElement2dNode::replace() {
         outputVarNodeIds().front(), _rowOffset));
     return true;
   }
-  assert(false);
-  return false;
+  assert(allFixed);
+  std::vector<std::vector<Int>> parMatrix(_numRows,
+                                          std::vector<Int>(numCols()));
+  for (size_t r = 0; r < _numRows; ++r) {
+    for (size_t c = 0; c < numCols(); ++c) {
+      parMatrix[r][c] =
+          varNodeConst(index(static_cast<Int>(r), static_cast<Int>(c), false))
+              .lowerBound();
+    }
+  }
+  invariantGraph().addInvariantNode(std::make_shared<ArrayElement2dNode>(
+      invariantGraph(), rowIdx(), colIdx(), std::move(parMatrix),
+      outputVarNodeIds().front(), _rowOffset, _colOffset,
+      outputVarNodeConst(0).isIntVar()));
+  return true;
 }
 
 void ArrayVarElement2dNode::registerNode(propagation::SolverBase& solver,
