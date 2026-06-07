@@ -313,7 +313,7 @@ bool ArrayVarElement2dNode::replace() {
   for (size_t r = 0; r < _numRows; ++r) {
     for (size_t c = 0; c < numCols(); ++c) {
       parMatrix[r][c] =
-          varNodeConst(index(static_cast<Int>(r), static_cast<Int>(c), false))
+          varNodeConst(at(static_cast<Int>(r), static_cast<Int>(c), false))
               .lowerBound();
     }
   }
