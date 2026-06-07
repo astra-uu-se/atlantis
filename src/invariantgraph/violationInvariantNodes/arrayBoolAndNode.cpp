@@ -61,17 +61,19 @@ void ArrayBoolAndNode::updateState() {
   if (!isReified()) {
     bool alwaysHolds = false;
     if (shouldHold()) {
-      alwaysHolds = staticInputVarNodeIds().empty() || std::ranges::all_of(
-          staticInputVarNodeIds(), [&](const VarNodeId vId) {
-            return varNodeConst(vId).isFixed() &&
-                   varNodeConst(vId).inDomain(true);
-          });
+      alwaysHolds = staticInputVarNodeIds().empty() ||
+                    std::ranges::all_of(
+                        staticInputVarNodeIds(), [&](const VarNodeId vId) {
+                          return varNodeConst(vId).isFixed() &&
+                                 varNodeConst(vId).inDomain(true);
+                        });
     } else {
-      alwaysHolds = !staticInputVarNodeIds().empty() && std::ranges::any_of(
-          staticInputVarNodeIds(), [&](const VarNodeId vId) {
-            return varNodeConst(vId).isFixed() &&
-                   varNodeConst(vId).inDomain(false);
-          });
+      alwaysHolds = !staticInputVarNodeIds().empty() &&
+                    std::ranges::any_of(
+                        staticInputVarNodeIds(), [&](const VarNodeId vId) {
+                          return varNodeConst(vId).isFixed() &&
+                                 varNodeConst(vId).inDomain(false);
+                        });
     }
     if (alwaysHolds) {
       setState(InvariantNodeState::SUBSUMED);

@@ -29,7 +29,7 @@ class TSPTWTest : public ::testing::Test {
   std::vector<propagation::VarViewId> violation;
   propagation::VarViewId totalViolation{propagation::NULL_ID};
 
-protected:
+ protected:
   void SetUp() override {
     _solver = std::make_shared<propagation::Solver>();
     n = 30;

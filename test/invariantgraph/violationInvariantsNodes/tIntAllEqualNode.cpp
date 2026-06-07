@@ -81,7 +81,10 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
     numInputs = 4;
 
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i), shouldBeSubsumed() ? (shouldHold() ? 0 : i) : -2, shouldBeSubsumed() ? (shouldHold() ? 0 : i) : 2, true);
+      inputVars.emplace_back("input_" + std::to_string(i),
+                             shouldBeSubsumed() ? (shouldHold() ? 0 : i) : -2,
+                             shouldBeSubsumed() ? (shouldHold() ? 0 : i) : 2,
+                             true);
       retrieveIntVarNode(inputVars.back());
     }
     for (const auto& var : inputVars) {

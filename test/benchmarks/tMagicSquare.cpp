@@ -24,7 +24,7 @@ class MagicSquareTest : public ::testing::Test {
 
   Int magicSum = 0;
 
-protected:
+ protected:
   void SetUp() override {
     _solver = std::make_unique<propagation::Solver>();
     n = 3;

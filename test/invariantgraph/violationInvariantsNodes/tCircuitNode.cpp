@@ -43,7 +43,8 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
           domain.emplace_back(j + 1);
         }
       }
-      inputVars.emplace_back("input_" + std::to_string(i), std::move(domain), true);
+      inputVars.emplace_back("input_" + std::to_string(i), std::move(domain),
+                             true);
       retrieveIntVarNode(inputVars.back());
     }
     if (shouldBeReplaced()) {

@@ -21,11 +21,9 @@ BoolLinLeImplicitNode::BoolLinLeImplicitNode(InvariantGraph& graph,
 
 void BoolLinLeImplicitNode::init(const InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
-  assert(std::ranges::none_of(
-      outputVarNodeIds(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+  assert(std::ranges::none_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return invariantGraphConst().varNodeConst(vId).isIntVar();
+  }));
 }
 
 void BoolLinLeImplicitNode::updateDomainTypes() {

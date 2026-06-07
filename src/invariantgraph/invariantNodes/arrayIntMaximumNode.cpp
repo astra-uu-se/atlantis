@@ -43,7 +43,8 @@ void ArrayIntMaximumNode::postConstraint() {
 void ArrayIntMaximumNode::updateState() {
   for (size_t i = 0; i < staticInputVarNodeIds().size();) {
     if (staticInputVarNodeConst(i).isFixed() ||
-        staticInputVarNodeConst(i).upperBound() < outputVarNodeConst(0).lowerBound()) {
+        staticInputVarNodeConst(i).upperBound() <
+            outputVarNodeConst(0).lowerBound()) {
       removeStaticInputVarNode(staticInputVarNodeIds().at(i));
     } else {
       ++i;
@@ -58,7 +59,9 @@ void ArrayIntMaximumNode::updateState() {
 bool ArrayIntMaximumNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
          ((staticInputVarNodeIds().size() == 1 &&
-         outputVarNodeConst(0).lowerBound() <= staticInputVarNodeConst(0).lowerBound()) || outputVarNodeConst(0).isFixed());
+           outputVarNodeConst(0).lowerBound() <=
+               staticInputVarNodeConst(0).lowerBound()) ||
+          outputVarNodeConst(0).isFixed());
 }
 
 bool ArrayIntMaximumNode::replace() {
@@ -66,13 +69,17 @@ bool ArrayIntMaximumNode::replace() {
     return false;
   }
   if (staticInputVarNodeIds().size() == 1 &&
-         outputVarNodeConst(0).lowerBound() <= staticInputVarNodeConst(0).lowerBound()) {
+      outputVarNodeConst(0).lowerBound() <=
+          staticInputVarNodeConst(0).lowerBound()) {
     invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                  staticInputVarNodeIds().front());
+                                    staticInputVarNodeIds().front());
     return true;
   }
   assert(outputVarNodeIds().size() == 1 && outputVarNodeConst(0).isFixed());
-  invariantGraph().addInvariantNode(std::make_shared<CountRelNode>(invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}, outputVarNodeConst(0).lowerBound(), Int{1}, RelationType::REL_TYPE_GE, true));
+  invariantGraph().addInvariantNode(std::make_shared<CountRelNode>(
+      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
+      outputVarNodeConst(0).lowerBound(), Int{1}, RelationType::REL_TYPE_GE,
+      true));
   return true;
 }
 
@@ -82,7 +89,8 @@ void ArrayIntMaximumNode::registerOutputVars(propagation::SolverBase& solver,
     mapping.setSolverId(
         outputVarNodeIds().front(),
         solver.makeIntView<propagation::IntMaxView>(
-            solver, mapping.solverId(staticInputVarNodeIds().front()), outputVarNodeConst(0).lowerBound()));
+            solver, mapping.solverId(staticInputVarNodeIds().front()),
+            outputVarNodeConst(0).lowerBound()));
   } else if (!staticInputVarNodeIds().empty()) {
     makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }

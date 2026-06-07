@@ -84,7 +84,8 @@ void ArrayElement2dNode::updateState() {
     for (auto rowIter = rowDom->begin(); rowIter != rowDom->end(); ++rowIter) {
       const Int row = *rowIter - _rowOffset;
       assert(0 <= row && row < static_cast<Int>(_parMatrix.size()));
-      for (auto colIter = colDom->begin(); colIter != colDom->end(); ++colIter) {
+      for (auto colIter = colDom->begin(); colIter != colDom->end();
+           ++colIter) {
         const Int col = *colIter - _colOffset;
         assert(0 <= col && col < static_cast<Int>(_parMatrix.at(row).size()));
         if (_parMatrix[row][col] != outVal) {

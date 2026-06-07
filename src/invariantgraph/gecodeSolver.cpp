@@ -473,8 +473,10 @@ void GecodeSolver::array_bool_element2d(
     const ConstraintVarId rowIndex, const ConstraintVarId colIndex,
     const std::vector<std::vector<bool>>& parameters,
     const ConstraintVarId output, const Int rowOffset, const Int colOffset) {
-  Gecode::element(_space, intSharedArray(parameters), intVar(colIndex), -static_cast<int>(colOffset),
-                  static_cast<int>(parameters.front().size()), intVar(rowIndex), -static_cast<int>(rowOffset),
+  Gecode::element(_space, intSharedArray(parameters), intVar(colIndex),
+                  -static_cast<int>(colOffset),
+                  static_cast<int>(parameters.front().size()), intVar(rowIndex),
+                  -static_cast<int>(rowOffset),
                   static_cast<int>(parameters.size()), boolVar(output));
 }
 
@@ -551,8 +553,8 @@ void GecodeSolver::array_var_bool_element(
     }
     return array_bool_element(index, params, output, offset);
   }
-  Gecode::element(_space, boolVarArgs(inputs), intVar(index), -static_cast<int>(offset), boolVar(output),
-                  Gecode::IPL_DOM);
+  Gecode::element(_space, boolVarArgs(inputs), intVar(index),
+                  -static_cast<int>(offset), boolVar(output), Gecode::IPL_DOM);
 }
 
 void GecodeSolver::array_var_bool_element2d(
@@ -578,8 +580,8 @@ void GecodeSolver::array_var_bool_element2d(
     return;
   }
   Gecode::element(_space, boolVarArgs(inputs), intVar(colIndex), -colOffset,
-                  static_cast<int>(inputs.front().size()), intVar(rowIndex), -rowOffset,
-                  static_cast<int>(inputs.size()), boolVar(output));
+                  static_cast<int>(inputs.front().size()), intVar(rowIndex),
+                  -rowOffset, static_cast<int>(inputs.size()), boolVar(output));
 }
 
 void GecodeSolver::array_var_int_element(

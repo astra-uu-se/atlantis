@@ -28,8 +28,8 @@ static std::vector<VarNodeId> flatten(
 
 ArrayVarElement2dNode::ArrayVarElement2dNode(
     InvariantGraph& graph, const VarNodeId rowIdx, const VarNodeId colIdx,
-    std::vector<VarNodeId>&& flatVarMatrix, const VarNodeId output, const size_t numRows,
-    const Int rowOffset, const Int colOffset)
+    std::vector<VarNodeId>&& flatVarMatrix, const VarNodeId output,
+    const size_t numRows, const Int rowOffset, const Int colOffset)
     : InvariantNode(graph, {output}, {rowIdx, colIdx},
                     std::move(flatVarMatrix)),
       _numRows(numRows),
@@ -47,12 +47,9 @@ void ArrayVarElement2dNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(std::ranges::all_of(
       staticInputVarNodeIds(),
-      [&](const VarNodeId node) {
-        return varNodeConst(node).isIntVar();
-      }));
-  assert(std::ranges::all_of(
-      dynamicInputVarNodeIds(),
-      [&](const VarNodeId node) {
+      [&](const VarNodeId node) { return varNodeConst(node).isIntVar(); }));
+  assert(
+      std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId node) {
         return outputVarNodeConst(0).isIntVar() ==
                varNodeConst(node).isIntVar();
       }));
@@ -120,7 +117,8 @@ void ArrayVarElement2dNode::updateState() {
   }
 
   // Find invalid end rows:
-  for (Int r = varNodeConst(rowIdx()).upperBound() - _rowOffset + 1; r < static_cast<Int>(_numRows); ++r) {
+  for (Int r = varNodeConst(rowIdx()).upperBound() - _rowOffset + 1;
+       r < static_cast<Int>(_numRows); ++r) {
     for (Int c = 0; c < static_cast<Int>(numCols()); ++c) {
       indicesToRemove.emplace_back(index(r, c, false));
     }
@@ -134,7 +132,8 @@ void ArrayVarElement2dNode::updateState() {
   }
 
   // Find invalid end columns:
-  for (Int c = varNodeConst(colIdx()).upperBound() - _colOffset + 1; c < static_cast<Int>(numCols()); ++c) {
+  for (Int c = varNodeConst(colIdx()).upperBound() - _colOffset + 1;
+       c < static_cast<Int>(numCols()); ++c) {
     for (Int r = 0; r < static_cast<Int>(_numRows); ++r) {
       indicesToRemove.emplace_back(index(r, c, false));
     }
@@ -146,7 +145,6 @@ void ArrayVarElement2dNode::updateState() {
   const Int colSize = varNodeConst(colIdx()).upperBound() -
                       varNodeConst(colIdx()).lowerBound() + 1;
   assert(colSize <= static_cast<Int>(numCols()));
-
 
   std::ranges::sort(indicesToRemove);
   const auto [first, last] = std::ranges::unique(indicesToRemove);
@@ -213,8 +211,7 @@ bool ArrayVarElement2dNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE) {
     return false;
   }
-  if (varNodeConst(rowIdx()).isFixed() ||
-      varNodeConst(colIdx()).isFixed()) {
+  if (varNodeConst(rowIdx()).isFixed() || varNodeConst(colIdx()).isFixed()) {
     return true;
   }
   const bool allFixed = std::ranges::all_of(

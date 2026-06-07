@@ -15,8 +15,9 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayIntMinimumNode::ArrayIntMinimumNode(InvariantGraph& graph, const VarNodeId a,
-                                         const VarNodeId b, const VarNodeId output)
+ArrayIntMinimumNode::ArrayIntMinimumNode(InvariantGraph& graph,
+                                         const VarNodeId a, const VarNodeId b,
+                                         const VarNodeId output)
     : ArrayIntMinimumNode(graph, std::vector<VarNodeId>{a, b}, output) {}
 
 ArrayIntMinimumNode::ArrayIntMinimumNode(InvariantGraph& graph,
@@ -45,7 +46,8 @@ void ArrayIntMinimumNode::postConstraint() {
 void ArrayIntMinimumNode::updateState() {
   for (size_t i = 0; i < staticInputVarNodeIds().size();) {
     if (staticInputVarNodeConst(i).isFixed() ||
-        outputVarNodeConst(0).upperBound() < staticInputVarNodeConst(i).lowerBound()) {
+        outputVarNodeConst(0).upperBound() <
+            staticInputVarNodeConst(i).lowerBound()) {
       removeStaticInputVarNode(staticInputVarNodeIds().at(i));
     } else {
       ++i;
@@ -60,7 +62,9 @@ void ArrayIntMinimumNode::updateState() {
 bool ArrayIntMinimumNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
          ((staticInputVarNodeIds().size() == 1 &&
-         staticInputVarNodeConst(0).upperBound() <= outputVarNodeConst(0).upperBound()) || outputVarNodeConst(0).isFixed());
+           staticInputVarNodeConst(0).upperBound() <=
+               outputVarNodeConst(0).upperBound()) ||
+          outputVarNodeConst(0).isFixed());
 }
 
 bool ArrayIntMinimumNode::replace() {
@@ -68,13 +72,17 @@ bool ArrayIntMinimumNode::replace() {
     return false;
   }
   if (staticInputVarNodeIds().size() == 1 &&
-         staticInputVarNodeConst(0).lowerBound() <= outputVarNodeConst(0).upperBound()) {
+      staticInputVarNodeConst(0).lowerBound() <=
+          outputVarNodeConst(0).upperBound()) {
     invariantGraph().replaceVarNode(outputVarNodeIds().front(),
                                     staticInputVarNodeIds().front());
     return true;
   }
   assert(outputVarNodeIds().size() == 1 && outputVarNodeConst(0).isFixed());
-  invariantGraph().addInvariantNode(std::make_shared<CountRelNode>(invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}, outputVarNodeConst(0).upperBound(), Int{1}, RelationType::REL_TYPE_GE, true));
+  invariantGraph().addInvariantNode(std::make_shared<CountRelNode>(
+      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
+      outputVarNodeConst(0).upperBound(), Int{1}, RelationType::REL_TYPE_GE,
+      true));
   return true;
 }
 
@@ -84,7 +92,8 @@ void ArrayIntMinimumNode::registerOutputVars(propagation::SolverBase& solver,
     mapping.setSolverId(
         outputVarNodeIds().front(),
         solver.makeIntView<propagation::IntMinView>(
-            solver, mapping.solverId(staticInputVarNodeIds().front()), outputVarNodeConst(0).upperBound()));
+            solver, mapping.solverId(staticInputVarNodeIds().front()),
+            outputVarNodeConst(0).upperBound()));
   } else if (!staticInputVarNodeIds().empty()) {
     makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }

@@ -42,9 +42,11 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
     }
     if (isReified()) {
       retrieveBoolVarNode(reifiedVar);
-      createInvariantNode(*_invariantGraph, varNodeId(aVar), varNodeId(bVar), varNodeId(reifiedVar));
+      createInvariantNode(*_invariantGraph, varNodeId(aVar), varNodeId(bVar),
+                          varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph, varNodeId(aVar), varNodeId(bVar), shouldHold());
+      createInvariantNode(*_invariantGraph, varNodeId(aVar), varNodeId(bVar),
+                          shouldHold());
     }
   }
 };
@@ -78,7 +80,8 @@ TEST_P(IntLtNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : std::array<VarNodeId, 2>{varNodeId(aVar), varNodeId(bVar)}) {
+  for (const auto& var :
+       std::array<VarNodeId, 2>{varNodeId(aVar), varNodeId(bVar)}) {
     if (!varNode(var).isFixed()) {
       EXPECT_NE(varId(var), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));
