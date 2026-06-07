@@ -8,11 +8,15 @@
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
+#include "atlantis/propagation/invariants/boolXor.hpp"
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/greaterEqualConst.hpp"
 #include "atlantis/propagation/views/lessEqualConst.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
+#include "atlantis/propagation/violationInvariants/boolEqual.hpp"
+#include "atlantis/propagation/violationInvariants/boolLessEqual.hpp"
+#include "atlantis/propagation/violationInvariants/boolLessThan.hpp"
 #include "atlantis/propagation/violationInvariants/equal.hpp"
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 #include "atlantis/propagation/violationInvariants/lessThan.hpp"
@@ -244,9 +248,10 @@ propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
 
 void makeSolverRelation(propagation::SolverBase& solver,
                         const propagation::VarViewId lhs,
+                        const RelationType relType,
                         const propagation::VarViewId rhs,
                         const propagation::VarViewId violation,
-                        const RelationType relType, const bool shouldHold) {
+                        const bool shouldHold) {
   switch (shouldHold ? relType : invertRelationType(relType)) {
     case RelationType::REL_TYPE_EQ:
       solver.makeViolationInvariant<propagation::Equal>(solver, violation, lhs,
@@ -271,6 +276,39 @@ void makeSolverRelation(propagation::SolverBase& solver,
     case RelationType::REL_TYPE_LE:
       solver.makeViolationInvariant<propagation::LessEqual>(solver, violation,
                                                             lhs, rhs);
+      break;
+  }
+}
+
+void makeSolverBoolRelation(propagation::SolverBase& solver,
+                            const propagation::VarViewId lhs,
+                            const RelationType relType,
+                            const propagation::VarViewId rhs,
+                            const propagation::VarViewId violation,
+                            const bool shouldHold) {
+  switch (shouldHold ? relType : invertRelationType(relType)) {
+    case RelationType::REL_TYPE_EQ:
+      solver.makeViolationInvariant<propagation::BoolEqual>(solver, violation,
+                                                            lhs, rhs);
+      break;
+    case RelationType::REL_TYPE_NE:
+      solver.makeInvariant<propagation::BoolXor>(solver, violation, lhs, rhs);
+      break;
+    case RelationType::REL_TYPE_GE:
+      solver.makeViolationInvariant<propagation::BoolLessEqual>(
+          solver, violation, rhs, lhs);
+      break;
+    case RelationType::REL_TYPE_GT:
+      solver.makeViolationInvariant<propagation::BoolLessThan>(
+          solver, violation, rhs, lhs);
+      break;
+    case RelationType::REL_TYPE_LT:
+      solver.makeViolationInvariant<propagation::BoolLessThan>(
+          solver, violation, lhs, rhs);
+      break;
+    case RelationType::REL_TYPE_LE:
+      solver.makeViolationInvariant<propagation::BoolLessEqual>(
+          solver, violation, lhs, rhs);
       break;
   }
 }

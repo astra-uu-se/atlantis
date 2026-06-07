@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/types.hpp"
-#include "atlantis/sortedUniqueVector.hpp"
 #include "atlantis/types.hpp"
 #include "atlantis/utils/domains.hpp"
 
@@ -93,6 +92,18 @@ class ConstraintSolver {
   virtual void bool_clause_reif(const std::vector<ConstraintVarId>& posInputs,
                                 const std::vector<ConstraintVarId>& negInputs,
                                 ConstraintVarId reif) = 0;
+
+  virtual void bool_rel_reif(ConstraintVarId lhs, RelationType,
+                             ConstraintVarId rhs, ConstraintVarId reified) = 0;
+  virtual void bool_rel(ConstraintVarId lhs, RelationType, ConstraintVarId rhs,
+                        bool shouldHold) = 0;
+
+  virtual void int_rel_reif(ConstraintVarId lhs, RelationType,
+                            ConstraintVarId rhs, ConstraintVarId reified) = 0;
+  virtual void int_rel_reif(ConstraintVarId lhs, RelationType, Int rhs,
+                            ConstraintVarId reified) = 0;
+  virtual void int_rel(ConstraintVarId lhs, RelationType, ConstraintVarId rhs,
+                       bool shouldHold) = 0;
 
   virtual void bool_eq(ConstraintVarId b1, ConstraintVarId b2,
                        bool shouldHold) = 0;

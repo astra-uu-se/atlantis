@@ -9,7 +9,7 @@
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/intAbsNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLtNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intRelNode.hpp"
 #include "atlantis/propagation/invariants/intDiv.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/utils/domains.hpp"
@@ -77,13 +77,15 @@ bool IntDivNode::replace() {
          varNode(quotient()).lowerBound() == 0);
   if (!nNode.isFixed() && !dNode.isFixed()) {
     if (nNode.lowerBound() >= 0 && dNode.lowerBound() >= 0) {
-      invariantGraph().addInvariantNode(std::make_shared<IntLtNode>(
-          invariantGraph(), numerator(), denominator()));
+      invariantGraph().addInvariantNode(std::make_shared<IntRelNode>(
+          invariantGraph(), numerator(), RelationType::REL_TYPE_LT,
+          denominator()));
       return true;
     }
     if (nNode.upperBound() <= 0 && dNode.upperBound() <= 0) {
-      invariantGraph().addInvariantNode(std::make_shared<IntLtNode>(
-          invariantGraph(), denominator(), numerator()));
+      invariantGraph().addInvariantNode(
+          std::make_shared<IntRelNode>(invariantGraph(), denominator(),
+                                       RelationType::REL_TYPE_LT, numerator()));
       return true;
     }
     if (nNode.lowerBound() >= 0) {
@@ -93,8 +95,8 @@ bool IntDivNode::replace() {
               1, std::max(dNode.upperBound(), -dNode.lowerBound())));
       invariantGraph().addInvariantNode(
           std::make_shared<IntAbsNode>(invariantGraph(), denominator(), dAbs));
-      invariantGraph().addInvariantNode(
-          std::make_shared<IntLtNode>(invariantGraph(), numerator(), dAbs));
+      invariantGraph().addInvariantNode(std::make_shared<IntRelNode>(
+          invariantGraph(), numerator(), RelationType::REL_TYPE_LT, dAbs));
       return true;
     }
     if (dNode.lowerBound() >= 0) {
@@ -104,8 +106,8 @@ bool IntDivNode::replace() {
               0, std::max(nNode.upperBound(), -nNode.lowerBound())));
       invariantGraph().addInvariantNode(
           std::make_shared<IntAbsNode>(invariantGraph(), numerator(), nAbs));
-      invariantGraph().addInvariantNode(
-          std::make_shared<IntLtNode>(invariantGraph(), nAbs, denominator()));
+      invariantGraph().addInvariantNode(std::make_shared<IntRelNode>(
+          invariantGraph(), nAbs, RelationType::REL_TYPE_LT, denominator()));
       return true;
     }
     assert(nNode.lowerBound() < 0);
@@ -120,8 +122,8 @@ bool IntDivNode::replace() {
         std::make_shared<IntAbsNode>(invariantGraph(), numerator(), nAbs));
     invariantGraph().addInvariantNode(
         std::make_shared<IntAbsNode>(invariantGraph(), denominator(), dAbs));
-    invariantGraph().addInvariantNode(
-        std::make_shared<IntLtNode>(invariantGraph(), nAbs, dAbs));
+    invariantGraph().addInvariantNode(std::make_shared<IntRelNode>(
+        invariantGraph(), nAbs, RelationType::REL_TYPE_LT, dAbs));
     return true;
   }
   if (!nNode.isFixed()) {

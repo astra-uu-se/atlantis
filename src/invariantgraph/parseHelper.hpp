@@ -55,9 +55,14 @@ propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
                                            bool shouldHold = true);
 
 void makeSolverRelation(propagation::SolverBase& solver,
-                        propagation::VarViewId lhs, propagation::VarViewId rhs,
-                        propagation::VarViewId violation, RelationType relType,
-                        bool shouldHold);
+                        propagation::VarViewId lhs, RelationType relType,
+                        propagation::VarViewId rhs,
+                        propagation::VarViewId violation, bool shouldHold);
+
+void makeSolverBoolRelation(propagation::SolverBase& solver,
+                            propagation::VarViewId lhs, RelationType relType,
+                            propagation::VarViewId rhs,
+                            propagation::VarViewId violation, bool shouldHold);
 
 bool violToBool(Int violation);
 

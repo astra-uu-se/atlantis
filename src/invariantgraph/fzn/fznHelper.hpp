@@ -46,15 +46,6 @@ void verifyAllDifferent(
 [[nodiscard]] bool violatesAllEqual(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray);
 
-VarNodeId createCountNode(FznInvariantGraph& graph,
-                          const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                          const fznparser::IntArg& needle);
-
-VarNodeId createCountNode(FznInvariantGraph& graph,
-                          const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                          const fznparser::IntArg& needle,
-                          const fznparser::IntArg& count);
-
 void invertCoeffs(std::vector<Int>&);
 
 std::pair<Int, Int> linBounds(const std::vector<Int>&,

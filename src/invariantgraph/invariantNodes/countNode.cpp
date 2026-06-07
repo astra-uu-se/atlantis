@@ -72,8 +72,10 @@ void CountNode::postConstraint() {
 void CountNode::updateState() {
   InvariantNode::updateState();
   if (!_fixedNeedle.has_value() && varNodeConst(needle()).isFixed()) {
-    _fixedNeedle = varNodeConst(needle()).lowerBound();
+    // updating _fixedNeedle modified indices
+    const Int n = varNodeConst(needle()).lowerBound();
     removeStaticInputAtIndex(needleIndex());
+    _fixedNeedle = n;
   }
   std::vector<Int> indicesToRemove;
   indicesToRemove.reserve(numInputVars());
@@ -100,7 +102,7 @@ void CountNode::updateState() {
 
 bool CountNode::canBeMadeImplicit() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
-         !_fixedNeedle.has_value() &&
+         _fixedNeedle.has_value() &&
          std::ranges::all_of(staticInputVarNodeIds(),
                              [&](const auto& id) {
                                return invariantGraphConst()

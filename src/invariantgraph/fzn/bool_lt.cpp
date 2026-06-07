@@ -4,22 +4,23 @@
 #include "./fznHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolLtNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolRelNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_lt(FznInvariantGraph& graph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b) {
-  graph.addInvariantNode(std::make_shared<BoolLtNode>(
-      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b), true));
+  graph.addInvariantNode(std::make_shared<BoolRelNode>(
+      graph, graph.retrieveVarNode(a), RelationType::REL_TYPE_LT,
+      graph.retrieveVarNode(b), true));
   return true;
 }
 
 bool bool_lt(FznInvariantGraph& graph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_shared<BoolLtNode>(
-      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
-      graph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_shared<BoolRelNode>(
+      graph, graph.retrieveVarNode(a), RelationType::REL_TYPE_LT,
+      graph.retrieveVarNode(b), graph.retrieveVarNode(reified)));
 
   return true;
 }

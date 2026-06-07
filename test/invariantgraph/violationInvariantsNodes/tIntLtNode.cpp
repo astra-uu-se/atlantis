@@ -1,11 +1,11 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLtNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intRelNode.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
+class IntLtNodeTestFixture : public NodeTestBase<IntRelNode> {
  protected:
   Var aVar{"a", std::vector<Int>{}, false};
   Var bVar{"b", std::vector<Int>{}, false};
@@ -42,10 +42,12 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
     }
     if (isReified()) {
       retrieveBoolVarNode(reifiedVar);
-      createInvariantNode(*_invariantGraph, varNodeId(aVar), varNodeId(bVar),
+      createInvariantNode(*_invariantGraph, varNodeId(aVar),
+                          RelationType::REL_TYPE_LT, varNodeId(bVar),
                           varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph, varNodeId(aVar), varNodeId(bVar),
+      createInvariantNode(*_invariantGraph, varNodeId(aVar),
+                          RelationType::REL_TYPE_LT, varNodeId(bVar),
                           shouldHold());
     }
   }

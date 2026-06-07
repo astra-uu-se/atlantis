@@ -4,7 +4,8 @@
 #include "./fznHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/countNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/countRelNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -12,7 +13,9 @@ bool fzn_count_eq(FznInvariantGraph& graph,
                   const std::shared_ptr<fznparser::IntVarArray>& inputs,
                   const fznparser::IntArg& needle,
                   const fznparser::IntArg& count) {
-  createCountNode(graph, inputs, needle, count);
+  graph.addInvariantNode(std::make_shared<CountNode>(
+      graph, graph.retrieveVarNodes(inputs),
+      graph.retrieveVarNode(needle.var()), graph.retrieveVarNode(count)));
   return true;
 }
 
@@ -21,9 +24,9 @@ bool fzn_count_eq_reif(FznInvariantGraph& graph,
                        const fznparser::IntArg& needle,
                        const fznparser::IntArg& count,
                        const fznparser::BoolArg& reified) {
-  const VarNodeId output = createCountNode(graph, inputs, needle);
-  graph.addInvariantNode(std::make_shared<IntAllEqualNode>(
-      graph, output, graph.retrieveVarNode(count),
+  graph.addInvariantNode(std::make_shared<CountRelNode>(
+      graph, graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle),
+      graph.retrieveVarNode(count), RelationType::REL_TYPE_EQ,
       graph.retrieveVarNode(reified)));
   return true;
 }

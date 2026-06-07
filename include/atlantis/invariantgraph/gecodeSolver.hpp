@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/constraintSolver.hpp"
+#include "atlantis/sortedUniqueVector.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -79,18 +80,6 @@ class GecodeSolver : public ConstraintSolver {
                ConstraintVarId reified, Gecode::BoolOpType);
   void bool_op(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold,
                Gecode::BoolOpType);
-
-  void bool_rel(ConstraintVarId lhs, ConstraintVarId rhs,
-                ConstraintVarId reified, RelationType);
-  void bool_rel(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold,
-                RelationType);
-
-  void int_rel(ConstraintVarId lhs, ConstraintVarId rhs,
-               ConstraintVarId reified, RelationType);
-  void int_rel(ConstraintVarId lhs, Int rhs, ConstraintVarId reified,
-               RelationType);
-  void int_rel(ConstraintVarId lhs, ConstraintVarId rhs, bool shouldHold,
-               RelationType);
 
   void bool_lin_rel(const std::vector<Int>& coeffs,
                     const std::vector<ConstraintVarId>& inputs, Int rhs,
@@ -198,6 +187,18 @@ class GecodeSolver : public ConstraintSolver {
   void bool_clause_reif(const std::vector<ConstraintVarId>& posInputs,
                         const std::vector<ConstraintVarId>& negInputs,
                         ConstraintVarId reified) override;
+
+  void bool_rel_reif(ConstraintVarId lhs, RelationType, ConstraintVarId rhs,
+                     ConstraintVarId reified);
+  void bool_rel(ConstraintVarId lhs, RelationType, ConstraintVarId rhs,
+                bool shouldHold);
+
+  void int_rel_reif(ConstraintVarId lhs, RelationType, ConstraintVarId rhs,
+                    ConstraintVarId reified);
+  void int_rel_reif(ConstraintVarId lhs, RelationType, Int rhs,
+                    ConstraintVarId reified);
+  void int_rel(ConstraintVarId lhs, RelationType, ConstraintVarId rhs,
+               bool shouldHold);
 
   void bool_eq(ConstraintVarId b1, ConstraintVarId b2,
                bool shouldHold) override;

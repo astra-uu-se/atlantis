@@ -259,38 +259,40 @@ void GecodeSolver::bool_op(const ConstraintVarId lhs, const ConstraintVarId rhs,
               Gecode::IPL_BND);
 }
 
-void GecodeSolver::bool_rel(const ConstraintVarId lhs,
-                            const ConstraintVarId rhs,
-                            const ConstraintVarId reified,
-                            const RelationType relation) {
+void GecodeSolver::bool_rel_reif(const ConstraintVarId lhs,
+                                 const RelationType relation,
+                                 const ConstraintVarId rhs,
+                                 const ConstraintVarId reified) {
   Gecode::rel(_space, boolVar(lhs), toGecodeIntRelType(relation), boolVar(rhs),
               Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
 }
 
 void GecodeSolver::bool_rel(const ConstraintVarId lhs,
-                            const ConstraintVarId rhs, const bool shouldHold,
-                            const RelationType relation) {
+                            const RelationType relation,
+                            const ConstraintVarId rhs, const bool shouldHold) {
   Gecode::rel(_space, boolVar(lhs), toGecodeIntRelType(relation, shouldHold),
               boolVar(rhs), Gecode::IPL_BND);
 }
 
-void GecodeSolver::int_rel(const ConstraintVarId lhs, const ConstraintVarId rhs,
-                           const ConstraintVarId reified,
-                           const RelationType relation) {
+void GecodeSolver::int_rel_reif(const ConstraintVarId lhs,
+                                const RelationType relation,
+                                const ConstraintVarId rhs,
+                                const ConstraintVarId reified) {
   Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation), intVar(rhs),
               Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
 }
 
-void GecodeSolver::int_rel(const ConstraintVarId lhs, const Int rhs,
-                           const ConstraintVarId reified,
-                           const RelationType relation) {
+void GecodeSolver::int_rel_reif(const ConstraintVarId lhs,
+                                const RelationType relation, const Int rhs,
+                                const ConstraintVarId reified) {
   Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation),
               static_cast<int>(rhs),
               Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
 }
 
-void GecodeSolver::int_rel(const ConstraintVarId lhs, const ConstraintVarId rhs,
-                           const bool shouldHold, const RelationType relation) {
+void GecodeSolver::int_rel(const ConstraintVarId lhs,
+                           const RelationType relation,
+                           const ConstraintVarId rhs, const bool shouldHold) {
   Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation, shouldHold),
               intVar(rhs), Gecode::IPL_BND);
 }
@@ -662,24 +664,24 @@ void GecodeSolver::bool_clause_reif(
 
 void GecodeSolver::bool_eq(const ConstraintVarId b1, const ConstraintVarId b2,
                            const bool shouldHold) {
-  bool_rel(b1, b2, shouldHold, RelationType::REL_TYPE_EQ);
+  bool_rel(b1, RelationType::REL_TYPE_EQ, b2, shouldHold);
 }
 
 void GecodeSolver::bool_eq_reif(const ConstraintVarId b1,
                                 const ConstraintVarId b2,
                                 const ConstraintVarId reified) {
-  bool_rel(b1, b2, reified, RelationType::REL_TYPE_EQ);
+  bool_rel_reif(b1, RelationType::REL_TYPE_EQ, b2, reified);
 }
 
 void GecodeSolver::bool_le(const ConstraintVarId b1, const ConstraintVarId b2,
                            const bool shouldHold) {
-  bool_rel(b1, b2, shouldHold, RelationType::REL_TYPE_LE);
+  bool_rel(b1, RelationType::REL_TYPE_LE, b2, shouldHold);
 }
 
 void GecodeSolver::bool_le_reif(const ConstraintVarId b1,
                                 const ConstraintVarId b2,
                                 const ConstraintVarId reified) {
-  bool_rel(b1, b2, reified, RelationType::REL_TYPE_LE);
+  bool_rel_reif(b1, RelationType::REL_TYPE_LE, b2, reified);
 }
 void GecodeSolver::bool_lin_eq(const std::vector<Int>& coeffs,
                                const std::vector<ConstraintVarId>& inputs,
@@ -709,24 +711,24 @@ void GecodeSolver::bool_lin_reif(const std::vector<Int>& coeffs,
 
 void GecodeSolver::bool_lt(const ConstraintVarId b1, const ConstraintVarId b2,
                            const bool shouldHold) {
-  bool_rel(b1, b2, shouldHold, RelationType::REL_TYPE_LE);
+  bool_rel(b1, RelationType::REL_TYPE_LE, b2, shouldHold);
 }
 
 void GecodeSolver::bool_lt_reif(const ConstraintVarId b1,
                                 const ConstraintVarId b2,
                                 const ConstraintVarId reified) {
-  bool_rel(b1, b2, reified, RelationType::REL_TYPE_LE);
+  bool_rel_reif(b1, RelationType::REL_TYPE_LE, b2, reified);
 }
 
 void GecodeSolver::bool_not(const ConstraintVarId b1, const ConstraintVarId b2,
                             const bool shouldHold) {
-  bool_rel(b1, b2, shouldHold, RelationType::REL_TYPE_NE);
+  bool_rel(b1, RelationType::REL_TYPE_NE, b2, shouldHold);
 }
 
 void GecodeSolver::bool_not_reif(const ConstraintVarId b1,
                                  const ConstraintVarId b2,
                                  const ConstraintVarId reified) {
-  bool_rel(b1, b2, reified, RelationType::REL_TYPE_NE);
+  bool_rel_reif(b1, RelationType::REL_TYPE_NE, b2, reified);
 }
 
 void GecodeSolver::bool_or(const ConstraintVarId b1, const ConstraintVarId b2,
@@ -765,34 +767,34 @@ void GecodeSolver::int_div(const ConstraintVarId numerator,
 
 void GecodeSolver::int_eq(const ConstraintVarId lhs, const ConstraintVarId rhs,
                           const bool shouldHold) {
-  int_rel(lhs, rhs, shouldHold, RelationType::REL_TYPE_EQ);
+  int_rel(lhs, RelationType::REL_TYPE_EQ, rhs, shouldHold);
 }
 
 void GecodeSolver::int_eq_reif(const ConstraintVarId lhs,
                                const ConstraintVarId rhs,
                                const ConstraintVarId reified) {
-  int_rel(lhs, rhs, reified, RelationType::REL_TYPE_EQ);
+  int_rel_reif(lhs, RelationType::REL_TYPE_EQ, rhs, reified);
 }
 
 void GecodeSolver::int_eq_reif(const ConstraintVarId lhs, const Int rhs,
                                const ConstraintVarId reified) {
-  int_rel(lhs, rhs, reified, RelationType::REL_TYPE_EQ);
+  int_rel_reif(lhs, RelationType::REL_TYPE_EQ, rhs, reified);
 }
 
 void GecodeSolver::int_le(const ConstraintVarId lhs, const ConstraintVarId rhs,
                           const bool shouldHold) {
-  int_rel(lhs, rhs, shouldHold, RelationType::REL_TYPE_LE);
+  int_rel(lhs, RelationType::REL_TYPE_LE, rhs, shouldHold);
 }
 
 void GecodeSolver::int_le_reif(const ConstraintVarId lhs, const Int rhs,
                                const ConstraintVarId reified) {
-  int_rel(lhs, rhs, reified, RelationType::REL_TYPE_LE);
+  int_rel_reif(lhs, RelationType::REL_TYPE_LE, rhs, reified);
 }
 
 void GecodeSolver::int_le_reif(const ConstraintVarId lhs,
                                const ConstraintVarId rhs,
                                const ConstraintVarId reified) {
-  int_rel(lhs, rhs, reified, RelationType::REL_TYPE_LE);
+  int_rel_reif(lhs, RelationType::REL_TYPE_LE, rhs, reified);
 }
 
 void GecodeSolver::int_lin_eq(const std::vector<Int>& coeffs,
@@ -817,18 +819,18 @@ void GecodeSolver::int_lin_reif(const std::vector<Int>& coeffs,
 
 void GecodeSolver::int_lt(const ConstraintVarId lhs, const ConstraintVarId rhs,
                           const bool shouldHold) {
-  int_rel(lhs, rhs, shouldHold, RelationType::REL_TYPE_LT);
+  int_rel(lhs, RelationType::REL_TYPE_LT, rhs, shouldHold);
 }
 
 void GecodeSolver::int_lt_reif(const ConstraintVarId lhs, const Int rhs,
                                const ConstraintVarId reified) {
-  int_rel(lhs, rhs, reified, RelationType::REL_TYPE_LT);
+  int_rel_reif(lhs, RelationType::REL_TYPE_LT, rhs, reified);
 }
 
 void GecodeSolver::int_lt_reif(const ConstraintVarId lhs,
                                const ConstraintVarId rhs,
                                const ConstraintVarId reified) {
-  int_rel(lhs, rhs, reified, RelationType::REL_TYPE_LT);
+  int_rel_reif(lhs, RelationType::REL_TYPE_LT, rhs, reified);
 }
 
 void GecodeSolver::int_max(const ConstraintVarId a, const ConstraintVarId b,
@@ -852,18 +854,18 @@ void GecodeSolver::int_mod(const ConstraintVarId numerator,
 
 void GecodeSolver::int_ne(const ConstraintVarId lhs, const ConstraintVarId rhs,
                           const bool shouldHold) {
-  int_rel(lhs, rhs, shouldHold, RelationType::REL_TYPE_NE);
+  int_rel(lhs, RelationType::REL_TYPE_NE, rhs, shouldHold);
 }
 
 void GecodeSolver::int_ne_reif(const ConstraintVarId lhs, const Int rhs,
                                const ConstraintVarId reified) {
-  int_rel(lhs, rhs, reified, RelationType::REL_TYPE_NE);
+  int_rel_reif(lhs, RelationType::REL_TYPE_NE, rhs, reified);
 }
 
 void GecodeSolver::int_ne_reif(const ConstraintVarId lhs,
                                const ConstraintVarId rhs,
                                const ConstraintVarId reified) {
-  int_rel(lhs, rhs, reified, RelationType::REL_TYPE_NE);
+  int_rel_reif(lhs, RelationType::REL_TYPE_NE, rhs, reified);
 }
 
 void GecodeSolver::int_plus(const ConstraintVarId a, const ConstraintVarId b,

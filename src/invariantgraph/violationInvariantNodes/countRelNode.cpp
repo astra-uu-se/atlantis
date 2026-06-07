@@ -178,12 +178,16 @@ void CountRelNode::updateState() {
   ViolationInvariantNode::updateState();
   // update fixed needle and amount
   if (!_fixedNeedle.has_value() && varNodeConst(needle()).isFixed()) {
-    _fixedNeedle = varNodeConst(needle()).lowerBound();
+    // updating _fixedNeedle modified indices
+    const Int n = varNodeConst(needle()).lowerBound();
     removeStaticInputAtIndex(needleIndex());
+    _fixedNeedle = n;
   }
   if (!_fixedAmount.has_value() && varNodeConst(amount()).isFixed()) {
-    _fixedAmount = varNodeConst(amount()).lowerBound();
+    // updating _fixedAmount modified indices
+    const Int a = varNodeConst(amount()).lowerBound();
     removeStaticInputAtIndex(amountIndex());
+    _fixedAmount = a;
   }
   if (isReified() && !shouldHold()) {
     setShouldHold(true);
@@ -280,9 +284,9 @@ void CountRelNode::registerNode(propagation::SolverBase& solver,
         std::move(solverVars));
   }
   if (!_fixedAmount.has_value()) {
-    makeSolverRelation(solver, mapping.intermediateId(id()),
+    makeSolverRelation(solver, mapping.intermediateId(id()), _relType,
                        mapping.solverId(amount()), mapping.violationId(id()),
-                       _relType, shouldHold());
+                       shouldHold());
   }
 }
 

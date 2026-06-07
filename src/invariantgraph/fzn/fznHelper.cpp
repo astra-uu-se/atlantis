@@ -310,24 +310,6 @@ VarNodeId createCountNode(FznInvariantGraph& graph,
   return countVarNodeId;
 }
 
-VarNodeId createCountNode(FznInvariantGraph& graph,
-                          const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                          const fznparser::IntArg& needle,
-                          const fznparser::IntArg& count) {
-  VarNodeId countVarNodeId = graph.retrieveVarNode(count);
-
-  if (needle.isFixed()) {
-    graph.addInvariantNode(
-        std::make_shared<CountNode>(graph, graph.retrieveVarNodes(inputs),
-                                    needle.toParameter(), countVarNodeId));
-  } else {
-    graph.addInvariantNode(std::make_shared<CountNode>(
-        graph, graph.retrieveVarNodes(inputs),
-        graph.retrieveVarNode(needle.var()), countVarNodeId));
-  }
-  return countVarNodeId;
-}
-
 void invertCoeffs(std::vector<Int>& coeffs) {
   for (auto& c : coeffs) {
     c = -c;

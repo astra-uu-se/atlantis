@@ -4,15 +4,19 @@
 
 namespace atlantis::invariantgraph {
 
-class IntLtNode : public ViolationInvariantNode {
- public:
-  IntLtNode(InvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
+class IntRelNode : public ViolationInvariantNode {
+  RelationType _relType;
 
-  IntLtNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-            bool shouldHold = true);
+ public:
+  IntRelNode(InvariantGraph& graph, VarNodeId a, RelationType, VarNodeId b,
+             VarNodeId r);
+
+  IntRelNode(InvariantGraph& graph, VarNodeId a, RelationType, VarNodeId b,
+             bool shouldHold = true);
 
   void init(InvariantNodeId) override;
-  void postConstraint();
+
+  void postConstraint() override;
 
   void updateState() override;
 
