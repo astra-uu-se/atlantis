@@ -11,15 +11,16 @@ namespace atlantis::invariantgraph::fzn {
 bool bool_xor(FznInvariantGraph& graph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b) {
   graph.addInvariantNode(std::make_shared<BoolRelNode>(
-      graph, graph.retrieveVarNode(a), RelationType::REL_TYPE_NE, graph.retrieveVarNode(b)));
+      graph, graph.retrieveVarNode(a), RelationType::REL_TYPE_NE,
+      graph.retrieveVarNode(b)));
   return true;
 }
 
 bool bool_xor(FznInvariantGraph& graph, const fznparser::BoolArg& a,
               const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
   graph.addInvariantNode(std::make_shared<BoolRelNode>(
-      graph, graph.retrieveVarNode(a), RelationType::REL_TYPE_NE, graph.retrieveVarNode(b),
-      graph.retrieveVarNode(reified)));
+      graph, graph.retrieveVarNode(a), RelationType::REL_TYPE_NE,
+      graph.retrieveVarNode(b), graph.retrieveVarNode(reified)));
 
   return true;
 }

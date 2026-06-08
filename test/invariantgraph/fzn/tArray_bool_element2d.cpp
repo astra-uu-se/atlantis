@@ -45,10 +45,9 @@ class array_bool_element2dTest : public FznTestBase {
     const Int colLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
     addIntArg(IntArgState::VAR, colLb, numCols + colLb - 1, colIndex);
 
-    parameters =
-        *rc::gen::container<std::vector<std::vector<bool>>>(
-                   numRows, rc::gen::container<std::vector<bool>>(
-                                numCols, rc::gen::arbitrary<bool>()));
+    parameters = *rc::gen::container<std::vector<std::vector<bool>>>(
+        numRows, rc::gen::container<std::vector<bool>>(
+                     numCols, rc::gen::arbitrary<bool>()));
 
     std::vector<bool> flatPars;
     flatPars.reserve(numRows * numCols);

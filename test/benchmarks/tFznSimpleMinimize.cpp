@@ -4,6 +4,8 @@
 
 namespace atlantis::testing {
 
-TEST(FznSimpleMinimize, DISABLED_Solve) { testModelFile("simple_minimize.fzn"); }
+TEST(FznSimpleMinimize, DISABLED_Solve) {
+  testModelFile("simple_minimize.fzn");
+}
 
 }  // namespace atlantis::testing

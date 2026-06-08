@@ -22,7 +22,6 @@ using namespace atlantis::invariantgraph::fzn;
 
 class fzn_count_eqTest : public fzn_countTest {
  public:
-
   [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     RC_LOG() << "-----" << std::endl
              << "FznCountEqTest::isSatisfied(" << to_string(committedValue)

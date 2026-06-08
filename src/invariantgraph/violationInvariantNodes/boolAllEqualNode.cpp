@@ -105,7 +105,9 @@ void BoolAllEqualNode::updateState() {
 
   for (const auto vId : staticInputVarNodeIds()) {
     if (varNodeConst(vId).isFixed()) {
-      assert(!_fixedVal.has_value() || *_fixedVal == varNodeConst(vId).lowerBound() || (!isReified() && !shouldHold()));
+      assert(!_fixedVal.has_value() ||
+             *_fixedVal == varNodeConst(vId).lowerBound() ||
+             (!isReified() && !shouldHold()));
       _fixedVal = varNodeConst(vId).lowerBound();
       varsToRemove.emplace_back(vId);
     }
@@ -129,7 +131,8 @@ bool BoolAllEqualNode::canBeReplaced() const {
     assert(_fixedVal.has_value());
     return true;
   }
-  return !_breaksCycle && !isReified() && (shouldHold() || staticInputVarNodeIds().size() == 2);
+  return !_breaksCycle && !isReified() &&
+         (shouldHold() || staticInputVarNodeIds().size() == 2);
 }
 
 bool BoolAllEqualNode::replace() {
@@ -140,9 +143,12 @@ bool BoolAllEqualNode::replace() {
     assert(isReified());
     assert(_fixedVal.has_value());
     if (_fixedVal.has_value() && *_fixedVal) {
-      invariantGraph().replaceVarNode(reifiedViolationNodeId(), staticInputVarNodeIds().front());
+      invariantGraph().replaceVarNode(reifiedViolationNodeId(),
+                                      staticInputVarNodeIds().front());
     } else {
-      invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(invariantGraph(), staticInputVarNodeIds().front(), reifiedViolationNodeId()));
+      invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(
+          invariantGraph(), staticInputVarNodeIds().front(),
+          reifiedViolationNodeId()));
     }
     return true;
   }
@@ -159,7 +165,8 @@ bool BoolAllEqualNode::replace() {
   assert(staticInputVarNodeIds().size() == 2);
   assert(!shouldHold());
   invariantGraph().addInvariantNode(std::make_shared<BoolRelNode>(
-      invariantGraph(), staticInputVarNodeIds().front(), RelationType::REL_TYPE_NE, staticInputVarNodeIds().back(), true));
+      invariantGraph(), staticInputVarNodeIds().front(),
+      RelationType::REL_TYPE_NE, staticInputVarNodeIds().back(), true));
   return true;
 }
 

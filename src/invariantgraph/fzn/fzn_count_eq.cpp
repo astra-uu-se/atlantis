@@ -14,8 +14,8 @@ bool fzn_count_eq(FznInvariantGraph& graph,
                   const fznparser::IntArg& needle,
                   const fznparser::IntArg& count) {
   graph.addInvariantNode(std::make_shared<CountNode>(
-      graph, graph.retrieveVarNodes(inputs),
-      graph.retrieveVarNode(needle), graph.retrieveVarNode(count)));
+      graph, graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle),
+      graph.retrieveVarNode(count)));
   return true;
 }
 

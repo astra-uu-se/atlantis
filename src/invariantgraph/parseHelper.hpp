@@ -52,12 +52,14 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
 propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
                                            propagation::VarViewId lhs, Int rhs,
                                            RelationType relType,
-                                           bool shouldHold = true, bool swapSides = false);
+                                           bool shouldHold = true,
+                                           bool swapSides = false);
 
 propagation::VarViewId solverConstBoolRelation(propagation::SolverBase& solver,
-                                           propagation::VarViewId lhs, bool rhs,
-                                           RelationType relType,
-                                           bool shouldHold = true, bool swapSides = false);
+                                               propagation::VarViewId lhs,
+                                               bool rhs, RelationType relType,
+                                               bool shouldHold = true,
+                                               bool swapSides = false);
 
 void makeSolverRelation(propagation::SolverBase& solver,
                         propagation::VarViewId lhs, RelationType relType,
@@ -98,7 +100,6 @@ inline std::string relToAcronym(RelationType relType) {
     case RelationType::REL_TYPE_EQ:
     default:
       return "eq";
-
   }
 }
 

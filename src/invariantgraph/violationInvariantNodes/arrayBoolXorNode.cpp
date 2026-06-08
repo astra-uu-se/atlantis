@@ -92,7 +92,8 @@ void ArrayBoolXorNode::updateState() {
     removeStaticInputVarNode(id);
   }
 
-  if (!_containsFixedTrue.has_value() && staticInputVarNodeIds().size() == 1 && !varsToRemove.empty()) {
+  if (!_containsFixedTrue.has_value() && staticInputVarNodeIds().size() == 1 &&
+      !varsToRemove.empty()) {
     _containsFixedTrue = false;
   }
 
@@ -123,22 +124,26 @@ bool ArrayBoolXorNode::replace() {
     assert(isReified());
     assert(_containsFixedTrue.has_value());
     if (_containsFixedTrue.has_value() && *_containsFixedTrue) {
-      invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(invariantGraph(), staticInputVarNodeIds().front(), outputVarNodeIds().front()));
+      invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(
+          invariantGraph(), staticInputVarNodeIds().front(),
+          outputVarNodeIds().front()));
     } else {
       invariantGraph().replaceVarNode(reifiedViolationNodeId(),
-                                    staticInputVarNodeIds().front());
+                                      staticInputVarNodeIds().front());
     }
     return true;
   }
   assert(staticInputVarNodeIds().size() == 2);
   if (isReified()) {
     invariantGraph().addInvariantNode(std::make_shared<BoolRelNode>(
-      invariantGraph(), staticInputVarNodeIds().front(), RelationType::REL_TYPE_NE, staticInputVarNodeIds().back(),
-      reifiedViolationNodeId()));
+        invariantGraph(), staticInputVarNodeIds().front(),
+        RelationType::REL_TYPE_NE, staticInputVarNodeIds().back(),
+        reifiedViolationNodeId()));
   } else {
     invariantGraph().addInvariantNode(std::make_shared<BoolRelNode>(
-      invariantGraph(), staticInputVarNodeIds().front(), RelationType::REL_TYPE_NE, staticInputVarNodeIds().back(),
-      shouldHold()));
+        invariantGraph(), staticInputVarNodeIds().front(),
+        RelationType::REL_TYPE_NE, staticInputVarNodeIds().back(),
+        shouldHold()));
   }
   return true;
 }

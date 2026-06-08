@@ -130,8 +130,11 @@ void IntAllEqualNode::updateState() {
     } else {
       assert(!shouldHold());
       auto& vNode = staticInputVarNode(0);
-      if (_boundVal.has_value() && vNode.lowerBound() <= *_boundVal && *_boundVal <= vNode.upperBound()) {
-          vNode.tightenDomainType(vNode.constDomain()->isInterval() ? DomainType::DOM_RANGE : DomainType::DOM_DOMAIN);
+      if (_boundVal.has_value() && vNode.lowerBound() <= *_boundVal &&
+          *_boundVal <= vNode.upperBound()) {
+        vNode.tightenDomainType(vNode.constDomain()->isInterval()
+                                    ? DomainType::DOM_RANGE
+                                    : DomainType::DOM_DOMAIN);
       }
       setState(InvariantNodeState::SUBSUMED);
       return;
@@ -143,7 +146,8 @@ void IntAllEqualNode::updateState() {
 }
 
 bool IntAllEqualNode::canBeReplaced() const {
-  if (isReified() && staticInputVarNodeIds().size() == 1 && _boundVal.has_value()) {
+  if (isReified() && staticInputVarNodeIds().size() == 1 &&
+      _boundVal.has_value()) {
     return true;
   }
   if (state() != InvariantNodeState::ACTIVE || _breaksCycle) {
@@ -158,11 +162,15 @@ bool IntAllEqualNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (isReified() && staticInputVarNodeIds().size() == 1 && _boundVal.has_value()) {
+  if (isReified() && staticInputVarNodeIds().size() == 1 &&
+      _boundVal.has_value()) {
     if (*_boundVal) {
-      invariantGraph().replaceVarNode(reifiedViolationNodeId(), staticInputVarNodeIds().front());
+      invariantGraph().replaceVarNode(reifiedViolationNodeId(),
+                                      staticInputVarNodeIds().front());
     } else {
-      invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(invariantGraph(), staticInputVarNodeIds().front(), reifiedViolationNodeId()));
+      invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(
+          invariantGraph(), staticInputVarNodeIds().front(),
+          reifiedViolationNodeId()));
     }
     return true;
   }

@@ -225,8 +225,7 @@ bool CountRelNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE) {
     return false;
   }
-  return !isReified() &&
-         !_fixedAmount.has_value() &&
+  return !isReified() && !_fixedAmount.has_value() &&
          (shouldHold() ? _relType : relationTypeComplement(_relType)) ==
              RelationType::REL_TYPE_EQ;
 }
@@ -254,7 +253,9 @@ void CountRelNode::registerOutputVars(propagation::SolverBase& solver,
   if (violationVarId(mapping) == propagation::NULL_ID) {
     if (numInputVars() == 0 && isReified()) {
       assert(!_fixedAmount.has_value());
-      setViolationVarId(solverConstRelation(solver, mapping.solverId(amount()), _offset, _relType, true, true), mapping);
+      setViolationVarId(solverConstRelation(solver, mapping.solverId(amount()),
+                                            _offset, _relType, true, true),
+                        mapping);
     } else {
       assert(isReified() ||
              (shouldHold() ? _relType : relationTypeComplement(_relType)) !=
@@ -264,18 +265,18 @@ void CountRelNode::registerOutputVars(propagation::SolverBase& solver,
       if (_fixedAmount.has_value()) {
         setViolationVarId(
             solverConstRelation(solver, mapping.intermediateId(id()),
-                                *_fixedAmount + _offset, _relType, shouldHold(), true), mapping);
+                                *_fixedAmount + _offset, _relType, shouldHold(),
+                                true),
+            mapping);
       } else {
         setViolationVarId(
             solver.makeIntVar(0, 0, static_cast<Int>(numInputVars())), mapping);
       }
     }
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return mapping.solverId(vId) != propagation::NULL_ID;
+  }));
 }
 
 void CountRelNode::registerNode(propagation::SolverBase& solver,

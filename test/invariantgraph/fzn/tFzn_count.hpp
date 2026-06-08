@@ -32,7 +32,8 @@ class fzn_countTest : public FznTestBase {
     } else {
       const auto& needleDom = varNodeConst(needle).constDomain();
       bounds.reserve(needleDom->size());
-      for (auto domIter = needleDom->begin(); domIter != needleDom->end(); ++domIter) {
+      for (auto domIter = needleDom->begin(); domIter != needleDom->end();
+           ++domIter) {
         bounds.emplace(*domIter, std::pair<Int, Int>{0, 0});
       }
     }
@@ -44,7 +45,8 @@ class fzn_countTest : public FznTestBase {
         }
       } else {
         const auto& inputDom = varNodeConst(input).constDomain();
-        for (auto domIter = inputDom->begin(); domIter != inputDom->end(); ++domIter) {
+        for (auto domIter = inputDom->begin(); domIter != inputDom->end();
+             ++domIter) {
           if (bounds.contains(*domIter)) {
             ++bounds.at(*domIter).second;
           }

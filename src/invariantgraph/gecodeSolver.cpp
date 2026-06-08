@@ -1430,7 +1430,8 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
 }
 
 void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
-                                  const ConstraintVarId needle, RelationType relation,
+                                  const ConstraintVarId needle,
+                                  RelationType relation,
                                   const ConstraintVarId amount,
                                   const ConstraintVarId reified) {
   if (boolVar(reified).assigned()) {

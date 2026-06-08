@@ -99,7 +99,8 @@ void CountNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (outputVarNodeConst(0).isFixed() && _fixedNeedle.has_value() && _offset + outputVarNodeConst(0).lowerBound() <= 0) {
+  if (outputVarNodeConst(0).isFixed() && _fixedNeedle.has_value() &&
+      _offset + outputVarNodeConst(0).lowerBound() <= 0) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -117,13 +118,10 @@ bool CountNode::canBeMadeImplicit() const {
   if (outputVarNodeConst(0).lowerBound() + _offset <= 0) {
     return false;
   }
-  const bool allSourceVars = std::ranges::all_of(staticInputVarNodeIds(),
-                             [&](const auto& id) {
-                               return invariantGraphConst()
-                                   .varNodeConst(id)
-                                   .definingNodes()
-                                   .empty();
-                             });
+  const bool allSourceVars =
+      std::ranges::all_of(staticInputVarNodeIds(), [&](const auto& id) {
+        return invariantGraphConst().varNodeConst(id).definingNodes().empty();
+      });
   if (!allSourceVars) {
     return false;
   }

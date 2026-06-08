@@ -50,11 +50,14 @@ void IntRelNode::updateState() {
   if (!isReified() && !shouldHold()) {
     _relType = relationTypeComplement(_relType);
   }
-  if (staticInputVarNodeIds().empty() || (staticInputVarNodeIds().size() == 2 && staticInputVarNodeIds().front() == staticInputVarNodeIds().back())) {
+  if (staticInputVarNodeIds().empty() ||
+      (staticInputVarNodeIds().size() == 2 &&
+       staticInputVarNodeIds().front() == staticInputVarNodeIds().back())) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0; --i) {
+  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
+       --i) {
     if (staticInputVarNodeConst(i).isFixed()) {
       if (_fixedRhs.has_value()) {
         setState(InvariantNodeState::SUBSUMED);
@@ -78,8 +81,14 @@ void IntRelNode::updateState() {
   }
   const Int lhsLb = varNodeConst(staticInputVarNodeIds().front()).lowerBound();
   const Int lhsUb = varNodeConst(staticInputVarNodeIds().front()).upperBound();
-  const Int rhsLb = _fixedRhs.has_value() ? *_fixedRhs : varNodeConst(staticInputVarNodeIds().back()).lowerBound();
-  const Int rhsUb = _fixedRhs.has_value() ? *_fixedRhs : varNodeConst(staticInputVarNodeIds().back()).upperBound();
+  const Int rhsLb =
+      _fixedRhs.has_value()
+          ? *_fixedRhs
+          : varNodeConst(staticInputVarNodeIds().back()).lowerBound();
+  const Int rhsUb =
+      _fixedRhs.has_value()
+          ? *_fixedRhs
+          : varNodeConst(staticInputVarNodeIds().back()).upperBound();
 
   if (_relType == RelationType::REL_TYPE_GT) {
     if (lhsLb > rhsUb) {
@@ -100,8 +109,7 @@ void IntRelNode::updateState() {
     }
   }
   if (_relType == RelationType::REL_TYPE_NE) {
-    if (lhsUb < rhsLb ||
-        lhsLb > rhsUb) {
+    if (lhsUb < rhsLb || lhsLb > rhsUb) {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
@@ -124,7 +132,9 @@ bool IntRelNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE) {
     return false;
   }
-  return !isReified() && staticInputVarNodeIds().size() > 1 && ((_relType == RelationType::REL_TYPE_EQ && shouldHold()) || (_relType == RelationType::REL_TYPE_NE && !shouldHold()));
+  return !isReified() && staticInputVarNodeIds().size() > 1 &&
+         ((_relType == RelationType::REL_TYPE_EQ && shouldHold()) ||
+          (_relType == RelationType::REL_TYPE_NE && !shouldHold()));
 }
 
 bool IntRelNode::replace() {
@@ -134,7 +144,8 @@ bool IntRelNode::replace() {
   const VarNodeId frontVarNodeId = staticInputVarNodeIds().front();
   for (size_t i = 1; i < staticInputVarNodeIds().size(); i++) {
     if (staticInputVarNodeIds().at(i) != frontVarNodeId) {
-      invariantGraph().replaceVarNode(staticInputVarNodeIds().at(i), frontVarNodeId);
+      invariantGraph().replaceVarNode(staticInputVarNodeIds().at(i),
+                                      frontVarNodeId);
     }
   }
   return true;
@@ -147,7 +158,11 @@ void IntRelNode::registerOutputVars(propagation::SolverBase& solver,
   }
   if (staticInputVarNodeIds().size() == 1) {
     assert(_fixedRhs.has_value());
-    setViolationVarId(solverConstRelation(solver,  mapping.solverId(staticInputVarNodeIds().front()), *_fixedRhs, _relType, shouldHold()), mapping);
+    setViolationVarId(
+        solverConstRelation(solver,
+                            mapping.solverId(staticInputVarNodeIds().front()),
+                            *_fixedRhs, _relType, shouldHold()),
+        mapping);
   } else {
     assert(staticInputVarNodeIds().size() == 2);
     registerViolation(solver, mapping);
@@ -160,7 +175,8 @@ void IntRelNode::registerOutputVars(propagation::SolverBase& solver,
 void IntRelNode::registerNode(propagation::SolverBase& solver,
                               SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() <= 1) {
-    assert(staticInputVarNodeIds().empty() ? true : violationVarId(mapping).isView());
+    assert(staticInputVarNodeIds().empty() ? true
+                                           : violationVarId(mapping).isView());
     return;
   }
   assert(staticInputVarNodeIds().size() == 2);
@@ -168,11 +184,15 @@ void IntRelNode::registerNode(propagation::SolverBase& solver,
   assert(violationVarId(mapping).isVar());
   assert(shouldHold());
 
-  makeSolverBoolRelation(solver, mapping.solverId(staticInputVarNodeIds().front()), _relType,
-                         mapping.solverId(staticInputVarNodeIds().back()), violationVarId(mapping),
-                         shouldHold());
+  makeSolverBoolRelation(
+      solver, mapping.solverId(staticInputVarNodeIds().front()), _relType,
+      mapping.solverId(staticInputVarNodeIds().back()), violationVarId(mapping),
+      shouldHold());
 }
 
-std::string IntRelNode::dotLangIdentifier() const { return std::string{"int_"} + relToAcronym(_relType) + (isReified() ? "_reif" : ""); }
+std::string IntRelNode::dotLangIdentifier() const {
+  return std::string{"int_"} + relToAcronym(_relType) +
+         (isReified() ? "_reif" : "");
+}
 
 }  // namespace atlantis::invariantgraph

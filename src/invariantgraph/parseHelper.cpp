@@ -221,8 +221,10 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
       varsToRemove, SortedUniqueVector(std::move(coverIndicesToRemove))};
 }
 
-RelationType getRelType(const RelationType relType, const bool shouldHold, const bool swapSides) {
-  const RelationType rt = shouldHold ? relType : relationTypeComplement(relType);
+RelationType getRelType(const RelationType relType, const bool shouldHold,
+                        const bool swapSides) {
+  const RelationType rt =
+      shouldHold ? relType : relationTypeComplement(relType);
   return swapSides ? relationTypeConverse(rt) : rt;
 }
 
@@ -230,7 +232,8 @@ propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
                                            const propagation::VarViewId lhs,
                                            const Int rhs,
                                            const RelationType relType,
-                                           const bool shouldHold, const bool swapSides) {
+                                           const bool shouldHold,
+                                           const bool swapSides) {
   switch (getRelType(relType, shouldHold, swapSides)) {
     case RelationType::REL_TYPE_EQ:
       return solver.makeIntView<propagation::EqualConst>(solver, lhs, rhs);
@@ -252,10 +255,11 @@ propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
 }
 
 propagation::VarViewId solverConstBoolRelation(propagation::SolverBase& solver,
-                                           const propagation::VarViewId lhs,
-                                           const bool rhs,
-                                           const RelationType relType,
-                                           const bool shouldHold, const bool swapSides) {
+                                               const propagation::VarViewId lhs,
+                                               const bool rhs,
+                                               const RelationType relType,
+                                               const bool shouldHold,
+                                               const bool swapSides) {
   constexpr unsigned char isFalse = 0;
   constexpr unsigned char isTrue = 1;
   constexpr unsigned char none = 2;
