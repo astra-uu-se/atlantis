@@ -221,12 +221,17 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
       varsToRemove, SortedUniqueVector(std::move(coverIndicesToRemove))};
 }
 
+RelationType getRelType(const RelationType relType, const bool shouldHold, const bool swapSides) {
+  const RelationType rt = shouldHold ? relType : relationTypeComplement(relType);
+  return swapSides ? relationTypeConverse(rt) : rt;
+}
+
 propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
                                            const propagation::VarViewId lhs,
                                            const Int rhs,
                                            const RelationType relType,
-                                           const bool shouldHold) {
-  switch (shouldHold ? relType : invertRelationType(relType)) {
+                                           const bool shouldHold, const bool swapSides) {
+  switch (getRelType(relType, shouldHold, swapSides)) {
     case RelationType::REL_TYPE_EQ:
       return solver.makeIntView<propagation::EqualConst>(solver, lhs, rhs);
     case RelationType::REL_TYPE_NE:
@@ -246,13 +251,47 @@ propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
   return propagation::NULL_ID;
 }
 
+propagation::VarViewId solverConstBoolRelation(propagation::SolverBase& solver,
+                                           const propagation::VarViewId lhs,
+                                           const bool rhs,
+                                           const RelationType relType,
+                                           const bool shouldHold, const bool swapSides) {
+  constexpr unsigned char isFalse = 0;
+  constexpr unsigned char isTrue = 1;
+  constexpr unsigned char none = 2;
+  unsigned char viewType = none;
+  const RelationType rt = getRelType(relType, shouldHold, swapSides);
+  if (rt == RelationType::REL_TYPE_EQ) {
+    viewType = rhs ? isTrue : isFalse;
+  } else if (rt == RelationType::REL_TYPE_NE) {
+    viewType = rhs ? isFalse : isTrue;
+  } else if (rt == RelationType::REL_TYPE_GT) {
+    assert(!rhs);
+    viewType = isTrue;
+  } else if (rt == RelationType::REL_TYPE_GE && rhs) {
+    viewType = isTrue;
+  } else if (rt == RelationType::REL_TYPE_LE && !rhs) {
+    viewType = isFalse;
+  } else if (rt == RelationType::REL_TYPE_LT) {
+    assert(rhs);
+    viewType = isFalse;
+  }
+  if (viewType == isTrue) {
+    return solver.makeIntView<propagation::EqualConst>(solver, lhs, 0);
+  }
+  if (viewType == isFalse) {
+    return solver.makeIntView<propagation::NotEqualConst>(solver, lhs, 0);
+  }
+  return propagation::NULL_ID;
+}
+
 void makeSolverRelation(propagation::SolverBase& solver,
                         const propagation::VarViewId lhs,
                         const RelationType relType,
                         const propagation::VarViewId rhs,
                         const propagation::VarViewId violation,
                         const bool shouldHold) {
-  switch (shouldHold ? relType : invertRelationType(relType)) {
+  switch (shouldHold ? relType : relationTypeComplement(relType)) {
     case RelationType::REL_TYPE_EQ:
       solver.makeViolationInvariant<propagation::Equal>(solver, violation, lhs,
                                                         rhs);
@@ -286,7 +325,7 @@ void makeSolverBoolRelation(propagation::SolverBase& solver,
                             const propagation::VarViewId rhs,
                             const propagation::VarViewId violation,
                             const bool shouldHold) {
-  switch (shouldHold ? relType : invertRelationType(relType)) {
+  switch (shouldHold ? relType : relationTypeComplement(relType)) {
     case RelationType::REL_TYPE_EQ:
       solver.makeViolationInvariant<propagation::BoolEqual>(solver, violation,
                                                             lhs, rhs);

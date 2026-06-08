@@ -17,7 +17,7 @@ namespace atlantis::invariantgraph {
 
 void IntLinRelNode::updateRelType() {
   if (!isReified() && !shouldHold()) {
-    _relType = invertRelationType(_relType);
+    _relType = relationTypeComplement(_relType);
   }
   if (_relType == RelationType::REL_TYPE_GE ||
       _relType == RelationType::REL_TYPE_GT) {

@@ -12,6 +12,7 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolOrNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolXorNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolRelNode.hpp"
 #include "atlantis/propagation/invariants/boolXor.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/notEqualConst.hpp"
@@ -94,11 +95,18 @@ void BoolAllEqualNode::postConstraint() {
 void BoolAllEqualNode::updateState() {
   ViolationInvariantNode::updateState();
 
+  if (staticInputVarNodeIds().size() == 1 && !isReified()) {
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
 
   for (const auto vId : staticInputVarNodeIds()) {
     if (varNodeConst(vId).isFixed()) {
+      assert(!_fixedVal.has_value() || *_fixedVal == varNodeConst(vId).lowerBound() || (!isReified() && !shouldHold()));
+      _fixedVal = varNodeConst(vId).lowerBound();
       varsToRemove.emplace_back(vId);
     }
   }
@@ -113,19 +121,34 @@ void BoolAllEqualNode::updateState() {
 }
 
 bool BoolAllEqualNode::canBeReplaced() const {
-  if (state() != InvariantNodeState::ACTIVE || _breaksCycle) {
+  if (state() != InvariantNodeState::ACTIVE) {
     return false;
   }
-  return !isReified() && (shouldHold() || staticInputVarNodeIds().size() == 2);
+  if (staticInputVarNodeIds().size() == 1) {
+    assert(isReified());
+    assert(_fixedVal.has_value());
+    return true;
+  }
+  return !_breaksCycle && !isReified() && (shouldHold() || staticInputVarNodeIds().size() == 2);
 }
 
 bool BoolAllEqualNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
+  if (staticInputVarNodeIds().size() == 1) {
+    assert(isReified());
+    assert(_fixedVal.has_value());
+    if (_fixedVal.has_value() && *_fixedVal) {
+      invariantGraph().replaceVarNode(reifiedViolationNodeId(), staticInputVarNodeIds().front());
+    } else {
+      invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(invariantGraph(), staticInputVarNodeIds().front(), reifiedViolationNodeId()));
+    }
+    return true;
+  }
   assert(!isReified());
+  assert(!_breaksCycle);
   if (shouldHold()) {
-    assert(!_breaksCycle);
     const VarNodeId frontVarId = staticInputVarNodeIds().front();
     for (size_t i = 1; i < staticInputVarNodeIds().size(); ++i) {
       invariantGraph().replaceVarNode(staticInputVarNodeIds().at(i),
@@ -134,9 +157,9 @@ bool BoolAllEqualNode::replace() {
     return true;
   }
   assert(staticInputVarNodeIds().size() == 2);
-  assert(!isReified() && !shouldHold());
-  invariantGraph().addInvariantNode(std::make_shared<ArrayBoolXorNode>(
-      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}, true));
+  assert(!shouldHold());
+  invariantGraph().addInvariantNode(std::make_shared<BoolRelNode>(
+      invariantGraph(), staticInputVarNodeIds().front(), RelationType::REL_TYPE_NE, staticInputVarNodeIds().back(), true));
   return true;
 }
 

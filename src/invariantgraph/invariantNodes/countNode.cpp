@@ -95,24 +95,39 @@ void CountNode::updateState() {
   for (const Int index : indicesToRemove) {
     removeStaticInputAtIndex(index);
   }
-  if (staticInputVarNodeIds().empty()) {
+  if (numInputVars() == 0) {
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (outputVarNodeConst(0).isFixed() && _fixedNeedle.has_value() && _offset + outputVarNodeConst(0).lowerBound() <= 0) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 bool CountNode::canBeMadeImplicit() const {
-  return state() == InvariantNodeState::ACTIVE && !isReified() &&
-         _fixedNeedle.has_value() &&
-         std::ranges::all_of(staticInputVarNodeIds(),
+  if (state() != InvariantNodeState::ACTIVE) {
+    return false;
+  }
+  if (!_fixedNeedle.has_value()) {
+    return false;
+  }
+  if (!outputVarNodeConst(0).isFixed()) {
+    return false;
+  }
+  if (outputVarNodeConst(0).lowerBound() + _offset <= 0) {
+    return false;
+  }
+  const bool allSourceVars = std::ranges::all_of(staticInputVarNodeIds(),
                              [&](const auto& id) {
                                return invariantGraphConst()
                                    .varNodeConst(id)
                                    .definingNodes()
                                    .empty();
-                             }) &&
-         invariantGraphConst()
-             .varNodeConst(outputVarNodeIds().front())
-             .isFixed();
+                             });
+  if (!allSourceVars) {
+    return false;
+  }
+  return true;
 }
 
 bool CountNode::makeImplicit() {
@@ -136,14 +151,12 @@ bool CountNode::makeImplicit() {
 
 void CountNode::registerOutputVars(propagation::SolverBase& solver,
                                    SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().size() == 1) {
-    if (_fixedNeedle.has_value()) {
-      mapping.setSolverId(
-          outputVarNodeIds().front(),
-          solver.makeIntView<propagation::IfThenElseConst>(
-              solver, mapping.solverId(staticInputVarNodeIds().front()),
-              _offset + 1, _offset, *_fixedNeedle));
-    }
+  if (staticInputVarNodeIds().size() == 1 && _fixedNeedle.has_value()) {
+    mapping.setSolverId(
+        outputVarNodeIds().front(),
+        solver.makeIntView<propagation::IfThenElseConst>(
+            solver, mapping.solverId(staticInputVarNodeIds().front()),
+            _offset + 1, _offset, *_fixedNeedle));
   } else {
     makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }

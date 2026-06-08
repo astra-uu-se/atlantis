@@ -52,7 +52,12 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
 propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
                                            propagation::VarViewId lhs, Int rhs,
                                            RelationType relType,
-                                           bool shouldHold = true);
+                                           bool shouldHold = true, bool swapSides = false);
+
+propagation::VarViewId solverConstBoolRelation(propagation::SolverBase& solver,
+                                           propagation::VarViewId lhs, bool rhs,
+                                           RelationType relType,
+                                           bool shouldHold = true, bool swapSides = false);
 
 void makeSolverRelation(propagation::SolverBase& solver,
                         propagation::VarViewId lhs, RelationType relType,
@@ -77,5 +82,24 @@ std::vector<Int> boolToViol(const std::vector<bool>& bools);
 
 std::vector<std::vector<Int>> boolToViol(
     const std::vector<std::vector<bool>>& bools);
+
+inline std::string relToAcronym(RelationType relType) {
+  switch (relType) {
+    case RelationType::REL_TYPE_NE:
+      return "ne";
+    case RelationType::REL_TYPE_GE:
+      return "ge";
+    case RelationType::REL_TYPE_GT:
+      return "gt";
+    case RelationType::REL_TYPE_LE:
+      return "le";
+    case RelationType::REL_TYPE_LT:
+      return "lt";
+    case RelationType::REL_TYPE_EQ:
+    default:
+      return "eq";
+
+  }
+}
 
 }  // namespace atlantis::invariantgraph

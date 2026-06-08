@@ -8,6 +8,7 @@
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/countNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intRelNode.hpp"
 #include "atlantis/propagation/invariants/count.hpp"
 #include "atlantis/propagation/invariants/countConst.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -191,7 +192,7 @@ void CountRelNode::updateState() {
   }
   if (isReified() && !shouldHold()) {
     setShouldHold(true);
-    _relType = invertRelationType(_relType);
+    _relType = relationTypeComplement(_relType);
   }
   std::vector<Int> indicesToRemove;
   indicesToRemove.reserve(numInputVars());
@@ -213,13 +214,20 @@ void CountRelNode::updateState() {
   }
   if (staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+  if (numInputVars() == 0 && !isReified()) {
+    setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 bool CountRelNode::canBeReplaced() const {
-  return state() == InvariantNodeState::ACTIVE && !isReified() &&
+  if (state() != InvariantNodeState::ACTIVE) {
+    return false;
+  }
+  return !isReified() &&
          !_fixedAmount.has_value() &&
-         (shouldHold() ? _relType : invertRelationType(_relType)) ==
+         (shouldHold() ? _relType : relationTypeComplement(_relType)) ==
              RelationType::REL_TYPE_EQ;
 }
 
@@ -244,23 +252,27 @@ bool CountRelNode::replace() {
 void CountRelNode::registerOutputVars(propagation::SolverBase& solver,
                                       SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
-    assert(isReified() ||
-           (shouldHold() ? _relType : invertRelationType(_relType)) !=
-               RelationType::REL_TYPE_EQ ||
-           _fixedAmount.has_value());
-    mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
-    if (_fixedAmount.has_value() && !isReified()) {
-      mapping.setViolationId(
-          id(),
-          solverConstRelation(solver, mapping.intermediateId(id()),
-                              *_fixedAmount + _offset, _relType, shouldHold()));
+    if (numInputVars() == 0 && isReified()) {
+      assert(!_fixedAmount.has_value());
+      setViolationVarId(solverConstRelation(solver, mapping.solverId(amount()), _offset, _relType, true, true), mapping);
     } else {
-      mapping.setViolationId(
-          id(), solver.makeIntVar(0, 0, static_cast<Int>(numInputVars())));
+      assert(isReified() ||
+             (shouldHold() ? _relType : relationTypeComplement(_relType)) !=
+                 RelationType::REL_TYPE_EQ ||
+             _fixedAmount.has_value());
+      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+      if (_fixedAmount.has_value()) {
+        setViolationVarId(
+            solverConstRelation(solver, mapping.intermediateId(id()),
+                                *_fixedAmount + _offset, _relType, shouldHold(), true), mapping);
+      } else {
+        setViolationVarId(
+            solver.makeIntVar(0, 0, static_cast<Int>(numInputVars())), mapping);
+      }
     }
   }
   assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
+      outputVarNodeIds(),
       [&](const VarNodeId vId) {
         return mapping.solverId(vId) != propagation::NULL_ID;
       }));
@@ -268,6 +280,10 @@ void CountRelNode::registerOutputVars(propagation::SolverBase& solver,
 
 void CountRelNode::registerNode(propagation::SolverBase& solver,
                                 SolverMapping& mapping) const {
+  if (numInputVars() == 0 && isReified()) {
+    assert(violationVarId(mapping).isView());
+    return;
+  }
   std::vector<propagation::VarViewId> solverVars(numInputVars(),
                                                  propagation::NULL_ID);
   for (size_t i = 0; i < numInputVars(); ++i) {
@@ -285,7 +301,7 @@ void CountRelNode::registerNode(propagation::SolverBase& solver,
   }
   if (!_fixedAmount.has_value()) {
     makeSolverRelation(solver, mapping.intermediateId(id()), _relType,
-                       mapping.solverId(amount()), mapping.violationId(id()),
+                       mapping.solverId(amount()), violationVarId(mapping),
                        shouldHold());
   }
 }

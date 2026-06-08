@@ -9,6 +9,7 @@
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_lt.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "tFzn_count.hpp"
 
 namespace atlantis::testing {
 
@@ -18,39 +19,8 @@ using ::testing::AtMost;
 using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
-class fzn_count_ltTest : public FznTestBase {
+class fzn_count_ltTest : public fzn_countTest {
  public:
-  std::vector<std::string> inputs{};
-  std::string needle{"needle"};
-  std::string output{"output"};
-  std::string reified{"reified"};
-
-  [[nodiscard]] std::pair<Int, Int> getBounds() const {
-    Int lb = 0;
-    Int ub = 0;
-    for (const auto& input : inputs) {
-      if (isFixed(input)) {
-        const Int inputVal = intVal(input);
-        if (isFixed(needle)) {
-          if (inputVal == intVal(needle)) {
-            ++lb;
-            ++ub;
-          }
-        } else if (inDomain(needle, inputVal)) {
-          ++ub;
-        }
-      } else if (isFixed(needle)) {
-        if (inDomain(input, intVal(needle))) {
-          ++ub;
-        }
-      } else if (!varNodeConst(input).constDomain()->isDisjoint(
-                     *varNodeConst(needle).constDomain())) {
-        ++ub;
-      }
-    }
-    return {lb, ub};
-  }
-
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     Int count = 0;
     for (const auto& input : inputs) {

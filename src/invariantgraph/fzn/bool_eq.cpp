@@ -5,20 +5,21 @@
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolRelNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_eq(FznInvariantGraph& graph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b) {
-  graph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
-      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b)));
+  graph.addInvariantNode(std::make_shared<BoolRelNode>(
+      graph, graph.retrieveVarNode(a), RelationType::REL_TYPE_EQ, graph.retrieveVarNode(b)));
   return true;
 }
 
 bool bool_eq(FznInvariantGraph& graph, const fznparser::BoolArg& a,
              const fznparser::BoolArg& b, const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
-      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
+  graph.addInvariantNode(std::make_shared<BoolRelNode>(
+      graph, graph.retrieveVarNode(a), RelationType::REL_TYPE_EQ, graph.retrieveVarNode(b),
       graph.retrieveVarNode(reified)));
 
   return true;

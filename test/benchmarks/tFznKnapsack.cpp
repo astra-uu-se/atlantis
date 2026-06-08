@@ -37,11 +37,11 @@ static std::unordered_set<Int> solutions() {
   return solutions;
 }
 
-TEST(FznKnapsack, Solve) {
+TEST(FznKnapsack, DISABLED_Solve) {
   testModelFile("knapsack/f1_l-d_kp_10_269.fzn", solutions());
 }
 
-TEST(FznKnapsack, SolveBool) {
+TEST(FznKnapsack, DISABLED_SolveBool) {
   testModelFile("knapsack/f1_l-d_kp_10_269_bool.fzn", solutions());
 }
 

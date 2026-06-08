@@ -6,6 +6,7 @@ namespace atlantis::invariantgraph {
 
 class BoolRelNode : public ViolationInvariantNode {
   RelationType _relType;
+  std::optional<bool> _fixedRhs{std::nullopt};
 
  public:
   BoolRelNode(InvariantGraph& graph, VarNodeId a, RelationType, VarNodeId b,
@@ -20,17 +21,14 @@ class BoolRelNode : public ViolationInvariantNode {
 
   void updateState() override;
 
+  [[nodiscard]] bool canBeReplaced() const override;
+
+  bool replace() override;
+
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
-
-  [[nodiscard]] VarNodeId a() const noexcept {
-    return staticInputVarNodeIds().front();
-  }
-  [[nodiscard]] VarNodeId b() const noexcept {
-    return staticInputVarNodeIds().back();
-  }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

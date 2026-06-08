@@ -76,13 +76,13 @@ class fzn_all_equal_intTest : public FznTestBase {
   }
 
   void generate() override {
-    const size_t size = true ? 2 : *rc::gen::inRange(1, 10);
+    const size_t size = *rc::gen::inRange(1, 10);
     for (size_t i = 0; i < size; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
-    addIntVarArray({IntArgState::VAR, IntArgState::VAR}, inputs);
+    addIntVarArray(inputs);
     // two vars corresponds to all_different
-    const bool isReified = size == 2 ? false : *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_all_equal_int_reif" : "fzn_all_equal_int";
     if (isReified) {

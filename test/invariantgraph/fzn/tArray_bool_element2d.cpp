@@ -20,7 +20,6 @@ using namespace atlantis::invariantgraph::fzn;
 
 class array_bool_element2dTest : public FznTestBase {
  public:
-  std::vector<VarNodeId> inputVarNodeIds{};
   std::string rowIndex{"rowIndex"};
   std::string colIndex{"colIndex"};
   std::vector<std::vector<bool>> parameters{};
@@ -33,22 +32,21 @@ class array_bool_element2dTest : public FznTestBase {
   }
 
   void generate() override {
-    const Int numRows = true ? 2 : *rc::gen::inRange(1, 3);
-    const Int numCols = true ? 2 : *rc::gen::inRange(1, 3);
+    const Int numRows = *rc::gen::inRange(1, 3);
+    const Int numCols = *rc::gen::inRange(1, 3);
 
-    constraintIdentifier = (true ? false : *rc::gen::arbitrary<bool>())
+    constraintIdentifier = *rc::gen::arbitrary<bool>()
                                ? "array_bool_element2d"
                                : "array_bool_element2d_nonshifted_flat";
 
-    const Int rowLb = true ? -1 : *rc::gen::element(-1024, -1, 0, 1, 1024);
+    const Int rowLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
     addIntArg(IntArgState::VAR, rowLb, numRows + rowLb - 1, rowIndex);
 
-    const Int colLb = true ? -1 : *rc::gen::element(-1024, -1, 0, 1, 1024);
+    const Int colLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
     addIntArg(IntArgState::VAR, colLb, numCols + colLb - 1, colIndex);
 
     parameters =
-        true ? std::vector<std::vector<bool>>{{false, true}, {true, false}}
-             : *rc::gen::container<std::vector<std::vector<bool>>>(
+        *rc::gen::container<std::vector<std::vector<bool>>>(
                    numRows, rc::gen::container<std::vector<bool>>(
                                 numCols, rc::gen::arbitrary<bool>()));
 

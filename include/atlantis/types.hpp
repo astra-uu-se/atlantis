@@ -30,7 +30,7 @@ enum class RelationType : signed char {
   REL_TYPE_GT   // Strictly greater
 };
 
-inline RelationType invertRelationType(const RelationType relationType) {
+inline RelationType relationTypeComplement(const RelationType relationType) {
   switch (relationType) {
     case RelationType::REL_TYPE_EQ:
       return RelationType::REL_TYPE_NE;
@@ -46,6 +46,21 @@ inline RelationType invertRelationType(const RelationType relationType) {
       return RelationType::REL_TYPE_LE;
     default:
       return RelationType::REL_TYPE_EQ;
+  }
+}
+
+inline RelationType relationTypeConverse(const RelationType relationType) {
+  switch (relationType) {
+    case RelationType::REL_TYPE_GE:
+      return RelationType::REL_TYPE_LE;
+    case RelationType::REL_TYPE_GT:
+      return RelationType::REL_TYPE_LT;
+    case RelationType::REL_TYPE_LE:
+      return RelationType::REL_TYPE_GE;
+    case RelationType::REL_TYPE_LT:
+      return RelationType::REL_TYPE_GT;
+    default:
+      return relationType;
   }
 }
 

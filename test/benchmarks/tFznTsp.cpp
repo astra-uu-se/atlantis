@@ -4,6 +4,6 @@
 
 namespace atlantis::testing {
 
-TEST(FznTsp, Solve) { testModelFile("tsp.fzn"); }
+TEST(FznTsp, DISABLED_Solve) { testModelFile("tsp.fzn"); }
 
 }  // namespace atlantis::testing

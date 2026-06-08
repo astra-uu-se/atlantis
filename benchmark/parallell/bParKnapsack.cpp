@@ -73,7 +73,7 @@ BENCHMARK_DEFINE_F(ParKnapsack, run)(::benchmark::State& st) {
       [&](const search::SavedAssignment& solution,
           const std::optional<
               std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
-        assert(solution.getCost().getViolation() >= 0);
+        assert(solution.cost().violation() >= 0);
         for (size_t i = 0; i < timelimits.size(); i++) {
           if (deadlines[i] < std::chrono::steady_clock::now()) {
             continue;

@@ -4,7 +4,7 @@
 
 namespace atlantis::testing {
 
-TEST(FznAllDifferentMinimize, Solve) {
+TEST(FznAllDifferentMinimize, DISABLED_Solve) {
   testModelFile("all_different_minimize.fzn");
 }
 

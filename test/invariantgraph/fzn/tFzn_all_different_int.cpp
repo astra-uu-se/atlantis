@@ -36,7 +36,7 @@ class fzn_all_different_intTest : public FznTestBase {
   }
 
   void generate() override {
-    Int numVars = *rc::gen::inRange<Int>(0, 10);
+    const Int numVars = *rc::gen::inRange<Int>(0, 10);
     for (Int i = 0; i < numVars; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }

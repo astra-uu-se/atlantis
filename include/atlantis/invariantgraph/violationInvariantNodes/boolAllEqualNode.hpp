@@ -5,6 +5,7 @@
 namespace atlantis::invariantgraph {
 class BoolAllEqualNode : public ViolationInvariantNode {
   bool _breaksCycle;
+  std::optional<bool> _fixedVal{std::nullopt};
 
  public:
   explicit BoolAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,

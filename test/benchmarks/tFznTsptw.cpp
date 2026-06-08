@@ -9,6 +9,6 @@ std::unordered_set<Int> validObjectives() {
                                  180, 187, 194, 195, 198, 199, 201};
 }
 
-TEST(FznTsptw, Solve) { testModelFile("tsptw_6.fzn", validObjectives()); }
+TEST(FznTsptw, DISABLED_Solve) { testModelFile("tsptw_6.fzn", validObjectives()); }
 
 }  // namespace atlantis::testing

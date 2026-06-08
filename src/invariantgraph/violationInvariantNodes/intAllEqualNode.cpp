@@ -9,6 +9,7 @@
 #include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
 #include "atlantis/propagation/invariants/countConst.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -120,13 +121,31 @@ void IntAllEqualNode::updateState() {
   for (const auto vId : varsToRemove) {
     removeStaticInputVarNode(vId);
   }
-  assert(staticInputVarNodeIds().size() != 1);
+  if (staticInputVarNodeIds().size() == 1) {
+    if (isReified()) {
+      if (!_boundVal.has_value()) {
+        setState(InvariantNodeState::SUBSUMED);
+        return;
+      }
+    } else {
+      assert(!shouldHold());
+      auto& vNode = staticInputVarNode(0);
+      if (_boundVal.has_value() && vNode.lowerBound() <= *_boundVal && *_boundVal <= vNode.upperBound()) {
+          vNode.tightenDomainType(vNode.constDomain()->isInterval() ? DomainType::DOM_RANGE : DomainType::DOM_DOMAIN);
+      }
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+  }
   if (staticInputVarNodeIds().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 bool IntAllEqualNode::canBeReplaced() const {
+  if (isReified() && staticInputVarNodeIds().size() == 1 && _boundVal.has_value()) {
+    return true;
+  }
   if (state() != InvariantNodeState::ACTIVE || _breaksCycle) {
     return false;
   }
@@ -138,6 +157,14 @@ bool IntAllEqualNode::canBeReplaced() const {
 bool IntAllEqualNode::replace() {
   if (!canBeReplaced()) {
     return false;
+  }
+  if (isReified() && staticInputVarNodeIds().size() == 1 && _boundVal.has_value()) {
+    if (*_boundVal) {
+      invariantGraph().replaceVarNode(reifiedViolationNodeId(), staticInputVarNodeIds().front());
+    } else {
+      invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(invariantGraph(), staticInputVarNodeIds().front(), reifiedViolationNodeId()));
+    }
+    return true;
   }
   if (!isReified() && shouldHold()) {
     assert(!_breaksCycle);

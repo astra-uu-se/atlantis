@@ -11,7 +11,7 @@ namespace atlantis::invariantgraph {
 
 Gecode::IntRelType toGecodeIntRelType(const RelationType relType,
                                       const bool shouldHold = true) {
-  switch (shouldHold ? relType : invertRelationType(relType)) {
+  switch (shouldHold ? relType : relationTypeComplement(relType)) {
     case RelationType::REL_TYPE_NE:
       return Gecode::IntRelType::IRT_NQ;
     case RelationType::REL_TYPE_LE:
@@ -1430,9 +1430,9 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
 }
 
 void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
-                                  ConstraintVarId needle, RelationType relation,
-                                  ConstraintVarId amount,
-                                  ConstraintVarId reified) {
+                                  const ConstraintVarId needle, RelationType relation,
+                                  const ConstraintVarId amount,
+                                  const ConstraintVarId reified) {
   if (boolVar(reified).assigned()) {
     return fzn_count(inputs, needle, relation, amount,
                      boolVar(reified).val() == 1);

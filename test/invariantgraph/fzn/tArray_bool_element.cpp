@@ -19,7 +19,6 @@ using namespace atlantis::invariantgraph::fzn;
 
 class array_bool_elementTest : public FznTestBase {
  public:
-  std::vector<VarNodeId> inputVarNodeIds{};
   std::string idx{"idx"};
   Int offset{1};
   std::string output{"output"};
@@ -46,7 +45,7 @@ class array_bool_elementTest : public FznTestBase {
     generateConstraint();
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const Int idxVal = intVal(idx, committedValue);
     const bool expected = parameters.at(idxVal - offset);
     const bool actual = boolVal(output, committedValue);
