@@ -21,7 +21,7 @@ using namespace atlantis::invariantgraph::fzn;
 
 class fzn_count_geqTest : public fzn_countTest {
  public:
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     Int count = 0;
     for (const auto& input : inputs) {
       if (intVal(input, committedValue) == intVal(needle, committedValue)) {
@@ -47,7 +47,7 @@ class fzn_count_geqTest : public fzn_countTest {
     if (isFixedTo(reified, true)) {
       return ub <= lowerBound(output);
     }
-    return upperBound(output) < lb;
+    return lb > upperBound(output);
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
@@ -56,7 +56,7 @@ class fzn_count_geqTest : public fzn_countTest {
     }
     const auto [lb, ub] = getBounds();
     if (isFixedTo(reified, true)) {
-      return upperBound(output) < lb;
+      return lb > upperBound(output);
     }
     return ub <= lowerBound(output);
   }

@@ -1355,7 +1355,7 @@ void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
                              const Int needle, const RelationType relation,
                              const Int amount, const bool shouldHold) {
   Gecode::count(_space, intVarArgs(inputs), static_cast<int>(needle),
-                toGecodeIntRelType(relation, shouldHold),
+                toGecodeIntRelType(relationTypeConverse(relation), shouldHold),
                 static_cast<int>(amount));
 }
 
@@ -1364,7 +1364,7 @@ void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
                              const ConstraintVarId amount,
                              const bool shouldHold) {
   Gecode::count(_space, intVarArgs(inputs), static_cast<int>(needle),
-                toGecodeIntRelType(relation, shouldHold), intVar(amount));
+                toGecodeIntRelType(relationTypeConverse(relation), shouldHold), intVar(amount));
 }
 
 void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
@@ -1372,7 +1372,7 @@ void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
                              const RelationType relation, const Int amount,
                              const bool shouldHold) {
   Gecode::count(_space, intVarArgs(inputs), intVar(needle),
-                toGecodeIntRelType(relation, shouldHold),
+                toGecodeIntRelType(relationTypeConverse(relation), shouldHold),
                 static_cast<int>(amount));
 }
 
@@ -1382,7 +1382,7 @@ void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,
                              const ConstraintVarId amount,
                              const bool shouldHold) {
   Gecode::count(_space, intVarArgs(inputs), intVar(needle),
-                toGecodeIntRelType(relation, shouldHold), intVar(amount));
+                toGecodeIntRelType(relationTypeConverse(relation), shouldHold), intVar(amount));
 }
 
 void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
@@ -1396,7 +1396,7 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
   const Gecode::IntVar c(_space, 0, Gecode::Int::Limits::max);
   count(_space, intVarArgs(inputs), static_cast<int>(needle), Gecode::IRT_EQ,
         c);
-  rel(_space, c, toGecodeIntRelType(relation), static_cast<int>(amount),
+  rel(_space, c, toGecodeIntRelType(relationTypeConverse(relation)), static_cast<int>(amount),
       boolVar(reified));
 }
 
@@ -1411,7 +1411,7 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
   const Gecode::IntVar c(_space, 0, Gecode::Int::Limits::max);
   count(_space, intVarArgs(inputs), static_cast<int>(needle), Gecode::IRT_EQ,
         c);
-  rel(_space, c, toGecodeIntRelType(relation), intVar(amount),
+  rel(_space, c, toGecodeIntRelType(relationTypeConverse(relation)), intVar(amount),
       boolVar(reified));
 }
 
@@ -1425,7 +1425,7 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
   }
   const Gecode::IntVar c(_space, 0, Gecode::Int::Limits::max);
   count(_space, intVarArgs(inputs), intVar(needle), Gecode::IRT_EQ, c);
-  rel(_space, c, toGecodeIntRelType(relation), static_cast<int>(amount),
+  rel(_space, c, toGecodeIntRelType(relationTypeConverse(relation)), static_cast<int>(amount),
       boolVar(reified));
 }
 
@@ -1440,7 +1440,7 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
   }
   const Gecode::IntVar c(_space, 0, Gecode::Int::Limits::max);
   count(_space, intVarArgs(inputs), intVar(needle), Gecode::IRT_EQ, c);
-  rel(_space, c, toGecodeIntRelType(relation), intVar(amount),
+  rel(_space, c, toGecodeIntRelType(relationTypeConverse(relation)), intVar(amount),
       boolVar(reified));
 }
 
