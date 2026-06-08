@@ -78,7 +78,7 @@ bool ArrayIntMaximumNode::replace() {
   assert(outputVarNodeIds().size() == 1 && outputVarNodeConst(0).isFixed());
   invariantGraph().addInvariantNode(std::make_shared<CountRelNode>(
       invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
-      outputVarNodeConst(0).lowerBound(), Int{1}, RelationType::REL_TYPE_GE,
+      outputVarNodeConst(0).lowerBound(), Int{1}, RelationType::REL_TYPE_LE,
       true));
   return true;
 }

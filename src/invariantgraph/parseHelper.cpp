@@ -289,7 +289,7 @@ propagation::VarViewId solverConstBoolRelation(propagation::SolverBase& solver,
   return propagation::NULL_ID;
 }
 
-void makeSolverRelation(propagation::SolverBase& solver,
+void makeSolverIntRelation(propagation::SolverBase& solver,
                         const propagation::VarViewId lhs,
                         const RelationType relType,
                         const propagation::VarViewId rhs,
@@ -436,6 +436,34 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
 
   return std::pair<std::vector<VarNodeId>, SortedUniqueVector>{
       varsToRemove, SortedUniqueVector(std::move(coverIndicesToRemove))};
+}
+
+Int maxOverlaps(const std::vector<std::pair<Int, Int> > &intervals) {
+  // for each element {coordinate, type} in data, coordinate is a start or end coordinate, and type = false for 'start', true for 'end'
+  std::vector<std::pair<Int, bool>> data;
+  data.reserve(intervals.size() * 2);
+
+  // Store start and end coordinates:
+  for (const auto &[start, end] : intervals) {
+    data.emplace_back(start, false);
+    data.emplace_back(end, true);
+  }
+
+  // Sort increasingly by coordinate; start comes before end if coordinates are equal:
+  std::ranges::sort(data, [](const std::pair<Int, bool> &a, const std::pair<Int, bool> &b) {
+      return (a.first != b.first) ? a.first < b.first : (a.second ? 1 : 0) < (b.second ? 1 : 0);
+  });
+
+  // Count overlaps
+  size_t ans = 0;
+  size_t count = 0;
+  for (const auto &val: std::views::values(data)) {
+    // start
+    count += val ? 0 : 1;
+    ans = std::max(ans, count);
+  }
+
+  return ans;
 }
 
 }  // namespace atlantis::invariantgraph

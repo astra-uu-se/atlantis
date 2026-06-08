@@ -184,7 +184,7 @@ void IntRelNode::registerNode(propagation::SolverBase& solver,
   assert(violationVarId(mapping).isVar());
   assert(shouldHold());
 
-  makeSolverBoolRelation(
+  makeSolverIntRelation(
       solver, mapping.solverId(staticInputVarNodeIds().front()), _relType,
       mapping.solverId(staticInputVarNodeIds().back()), violationVarId(mapping),
       shouldHold());

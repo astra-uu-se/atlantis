@@ -57,7 +57,7 @@ class fzn_all_equal_intTest : public FznTestBase {
     return true;
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     RC_LOG() << "-----" << std::endl
              << "Fzn_all_equal_intTest::isSatisfied("
              << to_string(committedValue) << ')' << std::endl;
@@ -81,7 +81,7 @@ class fzn_all_equal_intTest : public FznTestBase {
       inputs.emplace_back("i_" + std::to_string(i));
     }
     addIntVarArray(inputs);
-    // two vars corresponds to all_different
+    // two vars correspond to all_different
     const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_all_equal_int_reif" : "fzn_all_equal_int";

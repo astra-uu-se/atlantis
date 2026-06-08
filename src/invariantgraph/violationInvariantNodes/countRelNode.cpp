@@ -219,6 +219,39 @@ void CountRelNode::updateState() {
   if (numInputVars() == 0 && !isReified()) {
     setState(InvariantNodeState::SUBSUMED);
   }
+
+  const Int needleLb = _fixedNeedle.has_value() ? *_fixedNeedle : varNodeConst(needle()).lowerBound();
+  const Int needleUb = _fixedNeedle.has_value() ? *_fixedNeedle : varNodeConst(needle()).upperBound();
+
+  std::vector<std::pair<Int, Int>> domIntervals(numInputVars());
+  for (size_t i = 0; i < numInputVars(); ++i) {
+    domIntervals[i] = std::pair<Int, Int>{std::max(needleLb, std::min(needleUb, staticInputVarNodeConst(i).lowerBound())),
+      std::max(needleLb, std::min(needleUb,  staticInputVarNodeConst(i).upperBound()))};
+  }
+
+  const Int actualLb = _offset;
+  const Int actualUb = _offset + maxOverlaps(domIntervals);
+
+  const Int amountLb = _fixedAmount.has_value() ? *_fixedAmount : varNodeConst(amount()).lowerBound();
+  const Int amountUb = _fixedAmount.has_value() ? *_fixedAmount : varNodeConst(amount()).upperBound();
+
+  assert(actualLb < actualUb || numInputVars() == 0);
+  if (_relType == RelationType::REL_TYPE_EQ || _relType == RelationType::REL_TYPE_NE) {
+    if ((actualLb == actualUb && amountLb == amountUb) || actualUb < amountLb || amountUb < actualLb) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+  } else if (_relType == RelationType::REL_TYPE_GE || _relType == RelationType::REL_TYPE_LT) {
+    if (amountLb >= actualUb || amountUb < actualLb) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+  } else if (_relType == RelationType::REL_TYPE_GT || _relType == RelationType::REL_TYPE_LE) {
+    if (amountLb > actualUb || amountUb <= actualLb) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+  }
 }
 
 bool CountRelNode::canBeReplaced() const {
@@ -301,8 +334,8 @@ void CountRelNode::registerNode(propagation::SolverBase& solver,
         std::move(solverVars));
   }
   if (!_fixedAmount.has_value()) {
-    makeSolverRelation(solver, mapping.intermediateId(id()), _relType,
-                       mapping.solverId(amount()), violationVarId(mapping),
+    makeSolverIntRelation(solver, mapping.solverId(amount()), _relType,
+                       mapping.intermediateId(id()), violationVarId(mapping),
                        shouldHold());
   }
 }

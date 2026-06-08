@@ -5,12 +5,12 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
-#include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intRelNode.hpp"
 #include "atlantis/propagation/invariants/countConst.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
@@ -155,7 +155,7 @@ bool IntAllEqualNode::canBeReplaced() const {
   }
   return !isReified() &&
          (shouldHold() ||
-          (staticInputVarNodeIds().size() <= 2 && !_boundVal.has_value()));
+          (staticInputVarNodeIds().size() == 2 && !_boundVal.has_value()));
 }
 
 bool IntAllEqualNode::replace() {
@@ -183,10 +183,12 @@ bool IntAllEqualNode::replace() {
     }
     return true;
   }
-  assert(staticInputVarNodeIds().size() <= 2);
+  assert(staticInputVarNodeIds().size() == 2);
   assert(!_boundVal.has_value());
-  invariantGraph().addInvariantNode(std::make_shared<AllDifferentNode>(
-      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
+  assert(!isReified());
+  assert(!shouldHold());
+  invariantGraph().addInvariantNode(std::make_shared<IntRelNode>(
+      invariantGraph(), staticInputVarNodeIds().front(), RelationType::REL_TYPE_NE, staticInputVarNodeIds().back()));
   return true;
 }
 

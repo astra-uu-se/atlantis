@@ -53,7 +53,7 @@ class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
                              true);
       if (shouldBeSubsumed()) {
         const Int val = i % 3 == 0 ? lb : ub;
-        inputVars.back().domain = std::vector<Int>(val);
+        inputVars.back().domain = std::vector<Int>{val};
       } else {
         inputVars.back().domain = std::pair<Int, Int>(lb, ub);
       }

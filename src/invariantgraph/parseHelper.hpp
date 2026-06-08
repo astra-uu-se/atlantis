@@ -61,7 +61,7 @@ propagation::VarViewId solverConstBoolRelation(propagation::SolverBase& solver,
                                                bool shouldHold = true,
                                                bool swapSides = false);
 
-void makeSolverRelation(propagation::SolverBase& solver,
+void makeSolverIntRelation(propagation::SolverBase& solver,
                         propagation::VarViewId lhs, RelationType relType,
                         propagation::VarViewId rhs,
                         propagation::VarViewId violation, bool shouldHold);
@@ -102,5 +102,7 @@ inline std::string relToAcronym(RelationType relType) {
       return "eq";
   }
 }
+
+Int maxOverlaps(const std::vector<std::pair<Int, Int> > &intervals);
 
 }  // namespace atlantis::invariantgraph
