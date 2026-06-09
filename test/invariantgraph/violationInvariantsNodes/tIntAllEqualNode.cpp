@@ -91,6 +91,7 @@ class IntAllEqualNodeTestFixture : public NodeTestBase<IntAllEqualNode> {
       _invariantGraph->root().addSearchVarNode(varNodeId(var));
     }
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           varNodeId(reifiedVar), true);
@@ -145,6 +146,8 @@ TEST_P(IntAllEqualNodeTestFixture, application) {
 
 TEST_P(IntAllEqualNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);

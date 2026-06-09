@@ -34,7 +34,6 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolRelNode> {
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    reifiedVar.domain = std::pair<Int, Int>{0, 1};
 
     aVar.domain = std::pair<Int, Int>{0, 1};
     bVar.domain = std::pair<Int, Int>{0, 1};
@@ -64,6 +63,7 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolRelNode> {
     retrieveBoolVarNode(bVar);
 
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeId(aVar),
                           RelationType::REL_TYPE_LT, varNodeId(bVar),

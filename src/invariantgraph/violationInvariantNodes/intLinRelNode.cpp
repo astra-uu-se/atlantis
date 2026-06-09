@@ -9,8 +9,6 @@
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/views/equalConst.hpp"
-#include "atlantis/propagation/views/notEqualConst.hpp"
 #include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::invariantgraph {
@@ -18,6 +16,7 @@ namespace atlantis::invariantgraph {
 void IntLinRelNode::updateRelType() {
   if (!isReified() && !shouldHold()) {
     _relType = relationTypeComplement(_relType);
+    setShouldHold(true);
   }
   if (_relType == RelationType::REL_TYPE_GE ||
       _relType == RelationType::REL_TYPE_GT) {
@@ -30,8 +29,8 @@ void IntLinRelNode::updateRelType() {
                    : RelationType::REL_TYPE_LT;
   }
   if (_relType == RelationType::REL_TYPE_LT) {
-    _rhs = overflow::saturatingAdd(_rhs, 1);
-    _relType = RelationType::REL_TYPE_LT;
+    _rhs = overflow::saturatingSub(_rhs, 1);
+    _relType = RelationType::REL_TYPE_LE;
   }
   assert(_relType == RelationType::REL_TYPE_EQ ||
          _relType == RelationType::REL_TYPE_NE ||

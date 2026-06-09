@@ -90,9 +90,9 @@ void TableInNode::postConstraint() {
         toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
         violToBool(_table), shouldHold());
   }
-  return constraintSolver().fzn_table_bool(
+  return constraintSolver().fzn_table_int(
       toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
-      violToBool(_table), shouldHold());
+      _table, shouldHold());
 }
 
 size_t TableInNode::numCols() const { return _table.front().size(); }

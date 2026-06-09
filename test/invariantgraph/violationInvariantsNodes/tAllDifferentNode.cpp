@@ -63,6 +63,7 @@ class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
       }
     }
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           varNodeId(reifiedVar));
@@ -131,6 +132,8 @@ TEST_P(AllDifferentNodeTestFixture, application) {
 
 TEST_P(AllDifferentNodeTestFixture, makeImplicit) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeMadeImplicit()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);

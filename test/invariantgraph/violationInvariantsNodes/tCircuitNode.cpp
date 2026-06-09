@@ -58,6 +58,8 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
 
 TEST_P(CircuitNodeTestFixture, makeImplicit) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeMadeImplicit()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);

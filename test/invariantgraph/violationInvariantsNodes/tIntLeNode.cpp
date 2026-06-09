@@ -29,6 +29,8 @@ class IntLeNodeTestFixture : public NodeTestBase<IntRelNode> {
     NodeTestBase::SetUp();
     aVar.domain = std::pair<Int, Int>{-5, 5};
     bVar.domain = std::pair<Int, Int>{-5, 5};
+    retrieveIntVarNode(aVar);
+    retrieveIntVarNode(bVar);
     if (shouldBeSubsumed()) {
       if (shouldHold() || _paramData.data > 0) {
         // varNode(aVarNodeId).removeValuesAbove(0);
@@ -39,6 +41,7 @@ class IntLeNodeTestFixture : public NodeTestBase<IntRelNode> {
       }
     }
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeId(aVar),
                           RelationType::REL_TYPE_LE, varNodeId(bVar),
@@ -53,6 +56,8 @@ class IntLeNodeTestFixture : public NodeTestBase<IntRelNode> {
 
 TEST_P(IntLeNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     // TODO: disabled for the MZN challenge. This should be computed by Gecode.

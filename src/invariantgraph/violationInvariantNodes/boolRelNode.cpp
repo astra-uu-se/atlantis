@@ -53,6 +53,7 @@ void BoolRelNode::updateState() {
   ViolationInvariantNode::updateState();
   if (!isReified() && !shouldHold()) {
     _relType = relationTypeComplement(_relType);
+    setShouldHold(true);
   }
   if (staticInputVarNodeIds().empty() ||
       (staticInputVarNodeIds().size() == 2 &&

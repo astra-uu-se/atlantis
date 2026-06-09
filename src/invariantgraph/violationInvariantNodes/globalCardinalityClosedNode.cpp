@@ -83,7 +83,7 @@ void GlobalCardinalityClosedNode::updateState() {
   postAllEqualOnReplacedVars(invariantGraph(), splitOutputVarNodes());
 
   ViolationInvariantNode::updateState();
-  if (!isReified() || !shouldHold()) {
+  if (isReified() || !shouldHold()) {
     return;
   }
 

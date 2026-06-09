@@ -21,16 +21,11 @@ class Bool2IntNodeTestFixture : public NodeTestBase<Bool2IntNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
 
-    if (shouldBeSubsumed()) {
-      if (_paramData.data == 0) {
-        inputVar.domain = std::vector<Int>{1};
-      } else {
-        outputVar.domain = std::vector<Int>{1};
-      }
-    }
+    inputVar.domain = shouldBeSubsumed() && _paramData.data == 0 ? std::vector<Int>{1} : std::vector<Int>{0, 1};
+    outputVar.domain = shouldBeSubsumed() && _paramData.data != 0 ? std::vector<Int>{1} : std::vector<Int>{0, 1};
 
     retrieveBoolVarNode(inputVar);
-    retrieveBoolVarNode(outputVar);
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVar),
                         varNodeId(outputVar));

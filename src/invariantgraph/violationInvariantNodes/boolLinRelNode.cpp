@@ -18,6 +18,7 @@ namespace atlantis::invariantgraph {
 void BoolLinRelNode::updateRelType() {
   if (!isReified() && !shouldHold()) {
     _relType = relationTypeComplement(_relType);
+    setShouldHold(true);
   }
   if (_relType == RelationType::REL_TYPE_GE ||
       _relType == RelationType::REL_TYPE_GT) {
@@ -30,8 +31,8 @@ void BoolLinRelNode::updateRelType() {
                    : RelationType::REL_TYPE_LT;
   }
   if (_relType == RelationType::REL_TYPE_LT) {
-    _rhs = overflow::saturatingAdd(_rhs, 1);
-    _relType = RelationType::REL_TYPE_LT;
+    _rhs = overflow::saturatingSub(_rhs, 1);
+    _relType = RelationType::REL_TYPE_LE;
   }
   assert(_relType == RelationType::REL_TYPE_EQ ||
          _relType == RelationType::REL_TYPE_NE ||
@@ -149,9 +150,9 @@ void BoolLinRelNode::updateState() {
   }
   if (sameCoeff) {
     const Int c = std::abs(_coeffs.front());
-    if (_rhs % c != 0) {
+    if ((_relType == RelationType::REL_TYPE_EQ || _relType == RelationType::REL_TYPE_NE) && _rhs % c != 0) {
       assert(!isReified());
-      assert(!shouldHold());
+      assert(_relType == RelationType::REL_TYPE_NE);
       setState(InvariantNodeState::SUBSUMED);
       return;
     }

@@ -211,7 +211,7 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
   std::vector<Int> coverIndicesToRemove;
   coverIndicesToRemove.reserve(cover.size());
 
-  for (Int i = static_cast<Int>(cover.size()) - 1; i >= 0; --i) {
+  for (size_t i = 0; i < cover.size(); ++i) {
     if (!coverIntersectsDomains[i]) {
       coverIndicesToRemove.emplace_back(i);
     }

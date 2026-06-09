@@ -112,7 +112,7 @@ Gecode::IntVarArgs GecodeSolver::intVarArgs(
 Gecode::TupleSet GecodeSolver::tupleSet(
     const std::vector<std::vector<Int>>& table) {
   // Build TupleSet
-  Gecode::TupleSet ts(static_cast<int>(table.size()));
+  Gecode::TupleSet ts(static_cast<int>(table.empty() ? 0 : table.front().size()));
   for (const auto& row : table) {
     Gecode::IntArgs tuple(static_cast<int>(row.size()));
     for (size_t col = 0; col < row.size(); col++) {
@@ -128,7 +128,7 @@ Gecode::TupleSet GecodeSolver::tupleSet(
 Gecode::TupleSet GecodeSolver::tupleSet(
     const std::vector<std::vector<bool>>& table) {
   // Build TupleSet
-  Gecode::TupleSet ts(static_cast<int>(table.size()));
+  Gecode::TupleSet ts(static_cast<int>(table.empty() ? 0 : table.front().size()));
   for (const auto& row : table) {
     Gecode::IntArgs tuple(static_cast<int>(row.size()));
     for (size_t col = 0; col < row.size(); col++) {
@@ -1461,7 +1461,7 @@ void GecodeSolver::fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
 void GecodeSolver::fzn_table_bool(const std::vector<ConstraintVarId>& inputs,
                                   const std::vector<std::vector<bool>>& table,
                                   const bool shouldHold) {
-  auto inputVars = intVarArgs(inputs);
+  auto inputVars = boolVarArgs(inputs);
   const Gecode::TupleSet ts = tupleSet(table);
   Gecode::unshare(_space, inputVars);
   extensional(_space, inputVars, ts, shouldHold);
@@ -1470,7 +1470,7 @@ void GecodeSolver::fzn_table_bool(const std::vector<ConstraintVarId>& inputs,
 void GecodeSolver::fzn_table_bool_reif(
     const std::vector<ConstraintVarId>& inputs,
     const std::vector<std::vector<Int>>& table, const ConstraintVarId reified) {
-  auto inputVars = intVarArgs(inputs);
+  auto inputVars = boolVarArgs(inputs);
   const Gecode::TupleSet ts = tupleSet(table);
   Gecode::unshare(_space, inputVars);
   extensional(_space, inputVars, ts,

@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
+#include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/boolLinRelNode.hpp"
 
 namespace atlantis::testing {
@@ -65,6 +66,12 @@ class BoolLinLeNodeTestFixture : public NodeTestBase<BoolLinRelNode> {
       coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
     }
 
+    if (!shouldBeMadeImplicit()) {
+      for (const auto& var : inputVars) {
+        _invariantGraph->root().addSearchVarNode(varNodeId(var));
+      }
+    }
+
     if (isReified()) {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
@@ -79,7 +86,24 @@ class BoolLinLeNodeTestFixture : public NodeTestBase<BoolLinRelNode> {
   }
 };
 
+TEST_P(BoolLinLeNodeTestFixture, makeImplicit) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
+  invNode().updateState();
+  if (shouldBeMadeImplicit()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+    EXPECT_TRUE(invNode().canBeMadeImplicit());
+    EXPECT_TRUE(invNode().makeImplicit());
+    invNode().deactivate();
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  }
+}
+
 TEST_P(BoolLinLeNodeTestFixture, propagation) {
+  if (shouldBeMadeImplicit()) {
+    return;
+  }
   _invariantGraph->close();
   _solverMapping =
       std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
@@ -144,6 +168,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED},
-                      ParamData{InvariantNodeAction::SUBSUME}));
+                      ParamData{InvariantNodeAction::SUBSUME},
+                      ParamData{InvariantNodeAction::MAKE_IMPLICIT}));
 
 }  // namespace atlantis::testing

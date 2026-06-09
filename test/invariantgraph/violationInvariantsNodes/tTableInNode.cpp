@@ -113,7 +113,7 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
         } else {
           inputVars.at(c).domain = std::vector<Int>{0, 1};
         }
-        retrieveIntVarNode(inputVars.at(c));
+        retrieveBoolVarNode(inputVars.at(c));
       }
     }
     if (!shouldBeMadeImplicit()) {
@@ -156,6 +156,7 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
     }
     if (isIntTable()) {
       if (isReified()) {
+        reifiedVar.domain = std::vector<Int>{0, 1};
         retrieveBoolVarNode(reifiedVar);
         createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                             std::vector<std::vector<Int>>{table},
@@ -166,6 +167,7 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
       }
     } else {
       if (isReified()) {
+        reifiedVar.domain = std::vector<Int>{0, 1};
         retrieveBoolVarNode(reifiedVar);
 
         createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
@@ -192,6 +194,8 @@ TEST_P(TableInNodeTestFixture, construction) {
 
 TEST_P(TableInNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);

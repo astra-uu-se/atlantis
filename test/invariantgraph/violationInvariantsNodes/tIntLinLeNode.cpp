@@ -67,6 +67,7 @@ class IntLinLeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
     }
 
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                           varNodeIds(inputVars), RelationType::REL_TYPE_LE,

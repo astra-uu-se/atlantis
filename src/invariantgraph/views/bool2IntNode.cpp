@@ -17,12 +17,13 @@ Bool2IntNode::Bool2IntNode(InvariantGraph& graph, const VarNodeId staticInput,
 
 void Bool2IntNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(invariantGraphConst()
-             .varNodeConst(outputVarNodeIds().front())
-             .isIntVar());
   assert(!invariantGraph()
               .varNodeConst(staticInputVarNodeIds().front())
               .isIntVar());
+  assert(invariantGraphConst()
+             .varNodeConst(outputVarNodeIds().front())
+             .isIntVar());
+
 }
 void Bool2IntNode::postConstraint() {
   InvariantNode::postConstraint();

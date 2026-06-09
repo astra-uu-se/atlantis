@@ -64,6 +64,7 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
     }
 
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                           varNodeIds(inputVars), RelationType::REL_TYPE_NE,
@@ -78,6 +79,8 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
 
 TEST_P(IntLinNeNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
