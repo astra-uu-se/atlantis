@@ -142,6 +142,9 @@ Gecode::TupleSet GecodeSolver::tupleSet(
 }
 
 Gecode::IntSet GecodeSolver::intSet(const SortedUniqueVector& values) {
+  if ((*values).empty()) {
+    return {};
+  }
   if (values.isInterval()) {
     return Gecode::IntSet(static_cast<int>((*values).front()),
                           static_cast<int>((*values).back()));
@@ -762,7 +765,16 @@ void GecodeSolver::int_div(const ConstraintVarId numerator,
   Gecode::IntVarArgs arr{intVar(numerator), intVar(denominator),
                          intVar(quotient)};
   unshare(_space, arr);
-  div(_space, arr[0], arr[1], arr[2]);
+  const Gecode::BoolVar numeratorIsZero(_space, 0, 1);
+  Gecode::rel(_space, arr[0], Gecode::IRT_EQ, 0, numeratorIsZero);
+  Gecode::rel(_space, arr[2], Gecode::IRT_EQ, 0, Gecode::Reify(numeratorIsZero, Gecode::RM_IMP));
+  const Gecode::BoolVar denominatorIsOne(_space, 0, 1);
+  Gecode::rel(_space, arr[1], Gecode::IRT_EQ, 1, denominatorIsOne);
+  Gecode::rel(_space, arr[0], Gecode::IRT_EQ, arr[2], Gecode::Reify(denominatorIsOne, Gecode::RM_IMP));
+  const Gecode::BoolVar denominatorIsNegOne(_space, 0, 1);
+  Gecode::rel(_space, arr[1], Gecode::IRT_EQ, 1, denominatorIsNegOne);
+  Gecode::rel(_space, arr[0], Gecode::IRT_EQ, expr(_space, -arr[2]), Gecode::Reify(denominatorIsNegOne, Gecode::RM_IMP));
+  Gecode::div(_space, arr[0], arr[1], arr[2]);
 }
 
 void GecodeSolver::int_eq(const ConstraintVarId lhs, const ConstraintVarId rhs,

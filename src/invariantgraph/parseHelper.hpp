@@ -49,17 +49,16 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     const std::vector<Int>& cover, std::vector<Int>& lowerBounds,
     std::vector<Int>& upperBounds);
 
-propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
-                                           propagation::VarViewId lhs, Int rhs,
-                                           RelationType relType,
+propagation::VarViewId makeSolverConstIntRelation(propagation::SolverBase& solver,
+                                           propagation::VarViewId lhs,
+                                           RelationType relType, Int rhs,
                                            bool shouldHold = true,
                                            bool swapSides = false);
 
-propagation::VarViewId solverConstBoolRelation(propagation::SolverBase& solver,
-                                               propagation::VarViewId lhs,
-                                               bool rhs, RelationType relType,
-                                               bool shouldHold = true,
-                                               bool swapSides = false);
+propagation::VarViewId makeSolverConstBoolRelation(
+    propagation::SolverBase& solver, propagation::VarViewId lhs,
+    RelationType relType, bool rhs, bool shouldHold = true,
+    bool swapSides = false);
 
 void makeSolverIntRelation(propagation::SolverBase& solver,
                         propagation::VarViewId lhs, RelationType relType,

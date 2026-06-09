@@ -151,8 +151,8 @@ void IntLinRelNode::updateState() {
   }
   if (sameCoeff) {
     const Int c = std::abs(_coeffs.front());
-    if (_rhs % c != 0) {
-      assert(!shouldHold());
+    if ((_relType == RelationType::REL_TYPE_EQ || _relType == RelationType::REL_TYPE_NE) && _rhs % c != 0) {
+      assert(_relType == RelationType::REL_TYPE_NE);
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
@@ -167,16 +167,8 @@ void IntLinRelNode::registerOutputVars(propagation::SolverBase& solver,
                                        SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
     mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
-    if (shouldHold()) {
-      setViolationVarId(solver.makeIntView<propagation::EqualConst>(
-                            solver, mapping.intermediateId(id()), _rhs),
-                        mapping);
-    } else {
-      assert(!isReified());
-      setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-                            solver, mapping.intermediateId(id()), _rhs),
-                        mapping);
-    }
+    setViolationVarId(makeSolverConstIntRelation(solver, mapping.intermediateId(id()),
+                                          _relType, _rhs, shouldHold()), mapping);
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),

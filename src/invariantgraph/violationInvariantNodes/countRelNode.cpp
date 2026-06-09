@@ -286,8 +286,8 @@ void CountRelNode::registerOutputVars(propagation::SolverBase& solver,
   if (violationVarId(mapping) == propagation::NULL_ID) {
     if (numInputVars() == 0 && isReified()) {
       assert(!_fixedAmount.has_value());
-      setViolationVarId(solverConstRelation(solver, mapping.solverId(amount()),
-                                            _offset, _relType, true, true),
+      setViolationVarId(makeSolverConstIntRelation(solver, mapping.solverId(amount()),
+                                            _relType, _offset, true, true),
                         mapping);
     } else {
       assert(isReified() ||
@@ -297,9 +297,8 @@ void CountRelNode::registerOutputVars(propagation::SolverBase& solver,
       mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
       if (_fixedAmount.has_value()) {
         setViolationVarId(
-            solverConstRelation(solver, mapping.intermediateId(id()),
-                                *_fixedAmount + _offset, _relType, shouldHold(),
-                                true),
+            makeSolverConstIntRelation(solver, mapping.intermediateId(id()), _relType,
+                                *_fixedAmount + _offset, shouldHold(), true),
             mapping);
       } else {
         setViolationVarId(

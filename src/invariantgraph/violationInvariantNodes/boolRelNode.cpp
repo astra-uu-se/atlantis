@@ -128,9 +128,9 @@ void BoolRelNode::registerOutputVars(propagation::SolverBase& solver,
   if (staticInputVarNodeIds().size() == 1) {
     assert(_fixedRhs.has_value());
     setViolationVarId(
-        solverConstBoolRelation(
-            solver, mapping.solverId(staticInputVarNodeIds().front()),
-            *_fixedRhs, _relType),
+        makeSolverConstBoolRelation(
+            solver, mapping.solverId(staticInputVarNodeIds().front()), _relType,
+            *_fixedRhs),
         mapping);
   } else {
     assert(staticInputVarNodeIds().size() == 2);

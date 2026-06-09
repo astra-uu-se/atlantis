@@ -17,9 +17,9 @@ using ::testing::AtMost;
 using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
-static Int div_ceil(Int n, Int d) { return n / d + (n % d > 0 ? 1 : 0); }
+static Int div_ceil(const Int n, const Int d) { return n / d + (n % d > 0 ? 1 : 0); }
 
-static Int div_floor(Int n, Int d) { return n / d - (n % d < 0 ? 1 : 0); }
+static Int div_floor(const Int n, const Int d) { return n / d - (n % d < 0 ? 1 : 0); }
 
 class int_divTest : public FznTestBase {
  public:
@@ -27,7 +27,7 @@ class int_divTest : public FznTestBase {
   std::string denominator{"denominator"};
   std::string quotient{"quotient"};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const bool expected =
         intVal(denominator) == 0
             ? false
@@ -38,9 +38,9 @@ class int_divTest : public FznTestBase {
   }
 
   void generate() override {
-    addIntArg(numerator);
-    addIntArg(denominator);
-    addIntArg(quotient);
+    addIntArg(IntArgState::PAR, -3, -3, numerator);
+    addIntArg(IntArgState::FIXED, 1, 1, denominator);
+    addIntArg(IntArgState::VAR, quotient);
     constraintIdentifier = "int_div";
     generateConstraint();
   }
@@ -81,6 +81,26 @@ class int_divTest : public FznTestBase {
       }
     }
 
+    if (isFixed(numerator) && isFixed(quotient)) {
+      const Int nVal = intVal(numerator);
+      const Int qVal = intVal(quotient);
+      const Int q1 = nVal / lowerBound(denominator);
+      const Int q2 = nVal / upperBound(denominator);
+      if (q1 == qVal && q2 == qVal) {
+        return true;
+      }
+    }
+
+    if (isFixed(denominator) && isFixed(quotient)) {
+      const Int dVal = intVal(denominator);
+      const Int qVal = intVal(quotient);
+      const Int q1 = lowerBound(numerator) / dVal;
+      const Int q2 = upperBound(numerator) / dVal;
+      if (q1 == qVal && q2 == qVal) {
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -117,6 +137,31 @@ class int_divTest : public FznTestBase {
       const Int expectedLb = std::ranges::min(vals);
       const Int expectedUb = std::ranges::max(vals);
       if (expectedUb < dLb || dUb < expectedLb) {
+        return true;
+      }
+    }
+    if (isFixed(numerator) && isFixed(denominator)) {
+      const Int q = intVal(numerator) / intVal(denominator);
+      const Int qLb = lowerBound(quotient);
+      const Int qUb = upperBound(quotient);
+      if (q < qLb || qUb < q) {
+        return true;
+      }
+    }
+
+
+    if (isFixed(numerator) && isFixed(quotient)) {
+      const Int nVal = intVal(numerator);
+      const Int qVal = intVal(quotient);
+      if (nVal == 0 && qVal != 0) {
+        return true;
+      }
+      if (qVal == 0 && nVal == 0) {
+        return false;
+      }
+      const Int dLb = lowerBound(denominator);
+      const Int dUb = upperBound(denominator);
+      if (nVal / dLb != qVal && nVal / dUb != qVal) {
         return true;
       }
     }
@@ -183,7 +228,7 @@ class int_divTest : public FznTestBase {
         [&](const auto vId) { return vId != propagation::NULL_ID; });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (varId(numerator) != propagation::NULL_ID && randBool()) {
       changeValue(numerator, committedValue);
     }

@@ -49,6 +49,7 @@ void IntRelNode::updateState() {
   ViolationInvariantNode::updateState();
   if (!isReified() && !shouldHold()) {
     _relType = relationTypeComplement(_relType);
+    setShouldHold(true);
   }
   if (staticInputVarNodeIds().empty() ||
       (staticInputVarNodeIds().size() == 2 &&
@@ -159,9 +160,9 @@ void IntRelNode::registerOutputVars(propagation::SolverBase& solver,
   if (staticInputVarNodeIds().size() == 1) {
     assert(_fixedRhs.has_value());
     setViolationVarId(
-        solverConstRelation(solver,
+        makeSolverConstIntRelation(solver,
                             mapping.solverId(staticInputVarNodeIds().front()),
-                            *_fixedRhs, _relType, shouldHold()),
+                            _relType, *_fixedRhs, shouldHold()),
         mapping);
   } else {
     assert(staticInputVarNodeIds().size() == 2);

@@ -228,11 +228,10 @@ RelationType getRelType(const RelationType relType, const bool shouldHold,
   return swapSides ? relationTypeConverse(rt) : rt;
 }
 
-propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
+propagation::VarViewId makeSolverConstIntRelation(propagation::SolverBase& solver,
                                            const propagation::VarViewId lhs,
-                                           const Int rhs,
                                            const RelationType relType,
-                                           const bool shouldHold,
+                                           const Int rhs, const bool shouldHold,
                                            const bool swapSides) {
   switch (getRelType(relType, shouldHold, swapSides)) {
     case RelationType::REL_TYPE_EQ:
@@ -254,12 +253,10 @@ propagation::VarViewId solverConstRelation(propagation::SolverBase& solver,
   return propagation::NULL_ID;
 }
 
-propagation::VarViewId solverConstBoolRelation(propagation::SolverBase& solver,
-                                               const propagation::VarViewId lhs,
-                                               const bool rhs,
-                                               const RelationType relType,
-                                               const bool shouldHold,
-                                               const bool swapSides) {
+propagation::VarViewId makeSolverConstBoolRelation(
+    propagation::SolverBase& solver, const propagation::VarViewId lhs,
+    const RelationType relType, const bool rhs, const bool shouldHold,
+    const bool swapSides) {
   constexpr unsigned char isFalse = 0;
   constexpr unsigned char isTrue = 1;
   constexpr unsigned char none = 2;

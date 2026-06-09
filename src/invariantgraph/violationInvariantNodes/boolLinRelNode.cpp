@@ -207,8 +207,8 @@ void BoolLinRelNode::registerOutputVars(propagation::SolverBase& solver,
   assert(shouldHold());
   if (violationVarId(mapping) == propagation::NULL_ID) {
     mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
-    setViolationVarId(solverConstRelation(solver, mapping.intermediateId(id()),
-                                          _rhs, _relType, shouldHold()),
+    setViolationVarId(makeSolverConstIntRelation(solver, mapping.intermediateId(id()),
+                                          _relType, _rhs, shouldHold()),
                       mapping);
   }
   assert(std::ranges::all_of(
