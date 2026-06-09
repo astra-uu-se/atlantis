@@ -153,6 +153,7 @@ TEST_P(VarIntCountNodeTestFixture, propagation) {
 
 INSTANTIATE_TEST_SUITE_P(
     VarIntCountNodeTest, VarIntCountNodeTestFixture,
-    ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::MAKE_IMPLICIT}));
+    ::testing::Values(ParamData{},
+                      ParamData{InvariantNodeAction::MAKE_IMPLICIT}));
 
 }  // namespace atlantis::testing

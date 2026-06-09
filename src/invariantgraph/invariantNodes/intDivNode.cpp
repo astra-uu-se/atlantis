@@ -47,7 +47,8 @@ void IntDivNode::updateState() {
     }
   }
   size_t numFixed = 0;
-  const std::array<VarNodeId, 3> varNodeIds{numerator(), denominator(), quotient()};
+  const std::array<VarNodeId, 3> varNodeIds{numerator(), denominator(),
+                                            quotient()};
   for (const auto vId : varNodeIds) {
     numFixed += varNodeConst(vId).isFixed() ? 1 : 0;
   }
@@ -59,7 +60,9 @@ void IntDivNode::updateState() {
     for (const auto vId : varNodeIds) {
       auto& vNode = varNode(vId);
       if (!vNode.isFixed()) {
-        vNode.tightenDomainType(vNode.constDomain()->isInterval() ? DomainType::DOM_RANGE : DomainType::DOM_DOMAIN);
+        vNode.tightenDomainType(vNode.constDomain()->isInterval()
+                                    ? DomainType::DOM_RANGE
+                                    : DomainType::DOM_DOMAIN);
       }
     }
   }
@@ -67,8 +70,11 @@ void IntDivNode::updateState() {
 
 bool IntDivNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         ((varNodeConst(denominator()).isFixed() && varNodeConst(denominator()).lowerBound() == 1) ||
-          ((!varNodeConst(numerator()).isFixed() || !varNodeConst(denominator()).isFixed()) && varNodeConst(quotient()).isFixed() &&
+         ((varNodeConst(denominator()).isFixed() &&
+           varNodeConst(denominator()).lowerBound() == 1) ||
+          ((!varNodeConst(numerator()).isFixed() ||
+            !varNodeConst(denominator()).isFixed()) &&
+           varNodeConst(quotient()).isFixed() &&
            varNodeConst(quotient()).lowerBound() == 0));
 }
 

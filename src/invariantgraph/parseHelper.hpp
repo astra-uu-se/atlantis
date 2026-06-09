@@ -49,11 +49,10 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     const std::vector<Int>& cover, std::vector<Int>& lowerBounds,
     std::vector<Int>& upperBounds);
 
-propagation::VarViewId makeSolverConstIntRelation(propagation::SolverBase& solver,
-                                           propagation::VarViewId lhs,
-                                           RelationType relType, Int rhs,
-                                           bool shouldHold = true,
-                                           bool swapSides = false);
+propagation::VarViewId makeSolverConstIntRelation(
+    propagation::SolverBase& solver, propagation::VarViewId lhs,
+    RelationType relType, Int rhs, bool shouldHold = true,
+    bool swapSides = false);
 
 propagation::VarViewId makeSolverConstBoolRelation(
     propagation::SolverBase& solver, propagation::VarViewId lhs,
@@ -61,9 +60,9 @@ propagation::VarViewId makeSolverConstBoolRelation(
     bool swapSides = false);
 
 void makeSolverIntRelation(propagation::SolverBase& solver,
-                        propagation::VarViewId lhs, RelationType relType,
-                        propagation::VarViewId rhs,
-                        propagation::VarViewId violation, bool shouldHold);
+                           propagation::VarViewId lhs, RelationType relType,
+                           propagation::VarViewId rhs,
+                           propagation::VarViewId violation, bool shouldHold);
 
 void makeSolverBoolRelation(propagation::SolverBase& solver,
                             propagation::VarViewId lhs, RelationType relType,
@@ -102,6 +101,6 @@ inline std::string relToAcronym(RelationType relType) {
   }
 }
 
-Int maxOverlaps(const std::vector<std::pair<Int, Int> > &intervals);
+Int maxOverlaps(const std::vector<std::pair<Int, Int>>& intervals);
 
 }  // namespace atlantis::invariantgraph

@@ -160,9 +160,9 @@ void IntRelNode::registerOutputVars(propagation::SolverBase& solver,
   if (staticInputVarNodeIds().size() == 1) {
     assert(_fixedRhs.has_value());
     setViolationVarId(
-        makeSolverConstIntRelation(solver,
-                            mapping.solverId(staticInputVarNodeIds().front()),
-                            _relType, *_fixedRhs, shouldHold()),
+        makeSolverConstIntRelation(
+            solver, mapping.solverId(staticInputVarNodeIds().front()), _relType,
+            *_fixedRhs, shouldHold()),
         mapping);
   } else {
     assert(staticInputVarNodeIds().size() == 2);

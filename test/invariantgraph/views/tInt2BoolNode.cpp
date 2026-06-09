@@ -21,8 +21,12 @@ class Int2BoolNodeTestFixture : public NodeTestBase<Int2BoolNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
 
-    inputVar.domain = shouldBeSubsumed() && _paramData.data == 0 ? std::vector<Int>{1} : std::vector<Int>{0, 1};
-    outputVar.domain = shouldBeSubsumed() && _paramData.data != 0 ? std::vector<Int>{1} : std::vector<Int>{0, 1};
+    inputVar.domain = shouldBeSubsumed() && _paramData.data == 0
+                          ? std::vector<Int>{1}
+                          : std::vector<Int>{0, 1};
+    outputVar.domain = shouldBeSubsumed() && _paramData.data != 0
+                           ? std::vector<Int>{1}
+                           : std::vector<Int>{0, 1};
 
     retrieveIntVarNode(inputVar);
     retrieveBoolVarNode(outputVar);

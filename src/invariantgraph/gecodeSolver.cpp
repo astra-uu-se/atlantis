@@ -112,7 +112,8 @@ Gecode::IntVarArgs GecodeSolver::intVarArgs(
 Gecode::TupleSet GecodeSolver::tupleSet(
     const std::vector<std::vector<Int>>& table) {
   // Build TupleSet
-  Gecode::TupleSet ts(static_cast<int>(table.empty() ? 0 : table.front().size()));
+  Gecode::TupleSet ts(
+      static_cast<int>(table.empty() ? 0 : table.front().size()));
   for (const auto& row : table) {
     Gecode::IntArgs tuple(static_cast<int>(row.size()));
     for (size_t col = 0; col < row.size(); col++) {
@@ -128,7 +129,8 @@ Gecode::TupleSet GecodeSolver::tupleSet(
 Gecode::TupleSet GecodeSolver::tupleSet(
     const std::vector<std::vector<bool>>& table) {
   // Build TupleSet
-  Gecode::TupleSet ts(static_cast<int>(table.empty() ? 0 : table.front().size()));
+  Gecode::TupleSet ts(
+      static_cast<int>(table.empty() ? 0 : table.front().size()));
   for (const auto& row : table) {
     Gecode::IntArgs tuple(static_cast<int>(row.size()));
     for (size_t col = 0; col < row.size(); col++) {
@@ -767,13 +769,16 @@ void GecodeSolver::int_div(const ConstraintVarId numerator,
   unshare(_space, arr);
   const Gecode::BoolVar numeratorIsZero(_space, 0, 1);
   Gecode::rel(_space, arr[0], Gecode::IRT_EQ, 0, numeratorIsZero);
-  Gecode::rel(_space, arr[2], Gecode::IRT_EQ, 0, Gecode::Reify(numeratorIsZero, Gecode::RM_IMP));
+  Gecode::rel(_space, arr[2], Gecode::IRT_EQ, 0,
+              Gecode::Reify(numeratorIsZero, Gecode::RM_IMP));
   const Gecode::BoolVar denominatorIsOne(_space, 0, 1);
   Gecode::rel(_space, arr[1], Gecode::IRT_EQ, 1, denominatorIsOne);
-  Gecode::rel(_space, arr[0], Gecode::IRT_EQ, arr[2], Gecode::Reify(denominatorIsOne, Gecode::RM_IMP));
+  Gecode::rel(_space, arr[0], Gecode::IRT_EQ, arr[2],
+              Gecode::Reify(denominatorIsOne, Gecode::RM_IMP));
   const Gecode::BoolVar denominatorIsNegOne(_space, 0, 1);
   Gecode::rel(_space, arr[1], Gecode::IRT_EQ, 1, denominatorIsNegOne);
-  Gecode::rel(_space, arr[0], Gecode::IRT_EQ, expr(_space, -arr[2]), Gecode::Reify(denominatorIsNegOne, Gecode::RM_IMP));
+  Gecode::rel(_space, arr[0], Gecode::IRT_EQ, expr(_space, -arr[2]),
+              Gecode::Reify(denominatorIsNegOne, Gecode::RM_IMP));
   Gecode::div(_space, arr[0], arr[1], arr[2]);
 }
 

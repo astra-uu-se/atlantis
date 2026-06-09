@@ -36,7 +36,9 @@ class GlobalCardinalityClosedNodeTestFixture
         }
       }
       for (size_t i = 0; i < counts.size(); ++i) {
-        if (counts.at(i) != varNodeConst(outputVars.at(i)).isFixed() ? varNodeConst(outputVars.at(i)).lowerBound() : _solver->currentValue(varId(outputVars.at(i)))) {
+        if (counts.at(i) != varNodeConst(outputVars.at(i)).isFixed()
+                ? varNodeConst(outputVars.at(i)).lowerBound()
+                : _solver->currentValue(varId(outputVars.at(i)))) {
           return true;
         }
       }

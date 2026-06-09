@@ -17,9 +17,13 @@ using ::testing::AtMost;
 using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
-static Int div_ceil(const Int n, const Int d) { return n / d + (n % d > 0 ? 1 : 0); }
+static Int div_ceil(const Int n, const Int d) {
+  return n / d + (n % d > 0 ? 1 : 0);
+}
 
-static Int div_floor(const Int n, const Int d) { return n / d - (n % d < 0 ? 1 : 0); }
+static Int div_floor(const Int n, const Int d) {
+  return n / d - (n % d < 0 ? 1 : 0);
+}
 
 class int_divTest : public FznTestBase {
  public:
@@ -148,7 +152,6 @@ class int_divTest : public FznTestBase {
         return true;
       }
     }
-
 
     if (isFixed(numerator) && isFixed(quotient)) {
       const Int nVal = intVal(numerator);

@@ -188,7 +188,8 @@ bool IntAllEqualNode::replace() {
   assert(!isReified());
   assert(!shouldHold());
   invariantGraph().addInvariantNode(std::make_shared<IntRelNode>(
-      invariantGraph(), staticInputVarNodeIds().front(), RelationType::REL_TYPE_NE, staticInputVarNodeIds().back()));
+      invariantGraph(), staticInputVarNodeIds().front(),
+      RelationType::REL_TYPE_NE, staticInputVarNodeIds().back()));
   return true;
 }
 

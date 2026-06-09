@@ -150,7 +150,9 @@ void BoolLinRelNode::updateState() {
   }
   if (sameCoeff) {
     const Int c = std::abs(_coeffs.front());
-    if ((_relType == RelationType::REL_TYPE_EQ || _relType == RelationType::REL_TYPE_NE) && _rhs % c != 0) {
+    if ((_relType == RelationType::REL_TYPE_EQ ||
+         _relType == RelationType::REL_TYPE_NE) &&
+        _rhs % c != 0) {
       assert(!isReified());
       assert(_relType == RelationType::REL_TYPE_NE);
       setState(InvariantNodeState::SUBSUMED);
@@ -208,9 +210,10 @@ void BoolLinRelNode::registerOutputVars(propagation::SolverBase& solver,
   assert(shouldHold());
   if (violationVarId(mapping) == propagation::NULL_ID) {
     mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
-    setViolationVarId(makeSolverConstIntRelation(solver, mapping.intermediateId(id()),
-                                          _relType, _rhs, shouldHold()),
-                      mapping);
+    setViolationVarId(
+        makeSolverConstIntRelation(solver, mapping.intermediateId(id()),
+                                   _relType, _rhs, shouldHold()),
+        mapping);
   }
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),

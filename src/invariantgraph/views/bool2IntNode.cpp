@@ -23,7 +23,6 @@ void Bool2IntNode::init(const InvariantNodeId id) {
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
              .isIntVar());
-
 }
 void Bool2IntNode::postConstraint() {
   InvariantNode::postConstraint();
