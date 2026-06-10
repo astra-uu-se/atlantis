@@ -311,11 +311,11 @@ void VarNode::removeValues(const SortedUniqueVector& values,
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  if ((*values).empty()) {
+  if (values->empty()) {
     return;
   }
-  if ((*values).size() == 1) {
-    return removeValue((*values).front(), tightenDomainState);
+  if (values->size() == 1) {
+    return removeValue(values->front(), tightenDomainState);
   }
   const size_t prevSize = _domain->size();
   _domain->remove(values);
@@ -330,8 +330,8 @@ void VarNode::removeAllValuesExcept(const SortedUniqueVector& values,
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  if ((*values).size() == 1) {
-    return fixToValue((*values).front(), tightenDomainState);
+  if (values->size() == 1) {
+    return fixToValue(values->front(), tightenDomainState);
   }
   const size_t prevSize = _domain->size();
   _domain->removeAllValuesExcept(values);

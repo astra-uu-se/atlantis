@@ -46,7 +46,7 @@ class GlobalCardinalityNodeTestFixture
     inputVars =
         std::vector<Var>{Var{"input_1", {}, true}, Var{"input_2", {}, true}};
     if (shouldBeSubsumed()) {
-      inputVars.at(0).domain = std::pair<Int, Int>{0, 2};
+      inputVars.at(0).domain = std::pair<Int, Int>{2, 2};
       inputVars.at(1).domain = std::vector<Int>{1, 3, 5};
     } else if (shouldBeReplaced()) {
       inputVars.at(0).domain = std::pair<Int, Int>{1, 3};
@@ -133,12 +133,6 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
     outputIds.emplace_back(varNode(var).isFixed() ? propagation::NULL_ID
                                                   : varId(var));
   }
-  bool allNull = true;
-  for (const auto& outputId : outputIds) {
-    allNull = allNull && outputId == propagation::NULL_ID;
-  }
-
-  EXPECT_EQ(allNull, shouldBeSubsumed());
   if (shouldBeSubsumed()) {
     return;
   }

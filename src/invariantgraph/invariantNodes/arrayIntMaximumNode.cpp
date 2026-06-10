@@ -15,16 +15,17 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph, VarNodeId a,
-                                         VarNodeId b, VarNodeId output)
+ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph,
+                                         const VarNodeId a, const VarNodeId b,
+                                         const VarNodeId output)
     : ArrayIntMaximumNode(graph, std::vector<VarNodeId>{a, b}, output) {}
 
 ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph,
                                          std::vector<VarNodeId>&& vars,
-                                         VarNodeId output)
+                                         const VarNodeId output)
     : InvariantNode(graph, {output}, std::move(vars)) {}
 
-void ArrayIntMaximumNode::init(InvariantNodeId id) {
+void ArrayIntMaximumNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(outputVarNode(0).isIntVar());
   assert(std::ranges::all_of(
@@ -41,14 +42,41 @@ void ArrayIntMaximumNode::postConstraint() {
 }
 
 void ArrayIntMaximumNode::updateState() {
-  for (size_t i = 0; i < staticInputVarNodeIds().size();) {
-    if (staticInputVarNodeConst(i).isFixed() ||
-        staticInputVarNodeConst(i).upperBound() <
-            outputVarNodeConst(0).lowerBound()) {
-      removeStaticInputVarNode(staticInputVarNodeIds().at(i));
-    } else {
-      ++i;
+  InvariantNode::updateState();
+  const auto duplicateIndices =
+      duplicateVarNodeIndices(staticInputVarNodeIds());
+  for (Int i = static_cast<Int>(duplicateIndices->size() - 1); i >= 0; --i) {
+    removeStaticInputAtIndex(i);
+  }
+
+  const Int lb = outputVarNodeConst(0).lowerBound();
+  const Int ub = outputVarNodeConst(0).upperBound();
+  std::vector<Int> indicesToRemove;
+  indicesToRemove.reserve(staticInputVarNodeIds().size());
+  std::optional<VarNodeId> equalityVarNodeId{std::nullopt};
+  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+    if (staticInputVarNodeConst(i).isFixed()) {
+      if (staticInputVarNodeConst(i).lowerBound() == ub) {
+        setState(InvariantNodeState::SUBSUMED);
+        return;
+      }
+      indicesToRemove.emplace_back(i);
+    } else if (staticInputVarNodeConst(i).upperBound() < lb) {
+      indicesToRemove.emplace_back(i);
+    } else if (staticInputVarNodeConst(i).upperBound() == lb) {
+      equalityVarNodeId = equalityVarNodeId.has_value()
+                              ? NULL_NODE_ID
+                              : staticInputVarNodeIds().at(i);
     }
+  }
+  if (equalityVarNodeId.has_value() && *equalityVarNodeId != NULL_NODE_ID) {
+    while (staticInputVarNodeIds().size() > 1) {
+      const size_t index =
+          staticInputVarNodeIds().front() == *equalityVarNodeId ? 1 : 0;
+      removeStaticInputAtIndex(index);
+    }
+  } else {
+    assert(false);
   }
 
   if (staticInputVarNodeIds().empty()) {
@@ -58,9 +86,7 @@ void ArrayIntMaximumNode::updateState() {
 
 bool ArrayIntMaximumNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         ((staticInputVarNodeIds().size() == 1 &&
-           outputVarNodeConst(0).lowerBound() <=
-               staticInputVarNodeConst(0).lowerBound()) ||
+         (staticInputVarNodeIds().size() == 1 ||
           outputVarNodeConst(0).isFixed());
 }
 
@@ -68,9 +94,7 @@ bool ArrayIntMaximumNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (staticInputVarNodeIds().size() == 1 &&
-      outputVarNodeConst(0).lowerBound() <=
-          staticInputVarNodeConst(0).lowerBound()) {
+  if (staticInputVarNodeIds().size() == 1) {
     invariantGraph().replaceVarNode(outputVarNodeIds().front(),
                                     staticInputVarNodeIds().front());
     return true;

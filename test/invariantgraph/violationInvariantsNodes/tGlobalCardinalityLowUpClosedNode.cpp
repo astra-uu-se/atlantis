@@ -69,8 +69,21 @@ class GlobalCardinalityLowUpClosedNodeTestFixture
 
   void SetUp() override {
     NodeTestBase::SetUp();
-    inputVars = std::vector<Var>{Var("input_1", 5, 10, true),
-                                 Var("input_2", 2, 7, true)};
+    inputVars = std::vector<Var>{Var{"input_1", std::vector<Int>{}, true},
+                                 Var{"input_2", std::vector<Int>{}, true}};
+    if (shouldBeSubsumed()) {
+      if (shouldHold()) {
+        inputVars.at(0).domain = std::pair<Int, Int>{5, 10};
+        inputVars.at(1).domain = std::pair<Int, Int>{2, 7};
+      } else {
+        inputVars.at(0).domain = std::pair<Int, Int>{2, 10};
+        inputVars.at(1).domain = std::pair<Int, Int>{3, 5};
+      }
+    } else {
+      inputVars.at(0).domain = std::pair<Int, Int>{2, 10};
+      inputVars.at(1).domain = std::pair<Int, Int>{2, 7};
+    }
+
     for (const auto& var : inputVars) {
       retrieveIntVarNode(var);
     }
@@ -114,33 +127,27 @@ TEST_P(GlobalCardinalityLowUpClosedNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : inputVars) {
-    if (!varNode(var).isFixed()) {
-      EXPECT_NE(varId(var), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(var));
-    }
-  }
-
   const propagation::VarViewId violVarId =
       isReified() ? varId(reifiedVar) : _solverMapping->totalViolationId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 
-  std::vector<Int> inputVals = makeInputVals(inputVarIds);
+  std::vector<Int> inputVals = makeInputVals(inputVars);
 
-  while (increaseNextVal(inputVarIds, inputVals) >= 0) {
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
     _solver->beginMove();
-    setVarVals(inputVarIds, inputVals);
+    setVarVals(inputVars, inputVals);
     _solver->endMove();
 
     _solver->beginProbe();
     _solver->query(violVarId);
     _solver->endProbe();
 
-    expectVarVals(inputVarIds, inputVals);
+    expectVarVals(inputVars, inputVals);
 
-    const bool actual = _solver->currentValue(violVarId) > 0;
+    const bool actual = violVarId == propagation::NULL_ID
+                            ? false
+                            : _solver->currentValue(violVarId) > 0;
     const bool expected = isViolating(true);
 
     if (!shouldFail()) {
@@ -156,6 +163,10 @@ INSTANTIATE_TEST_SUITE_P(
     GlobalCardinalityLowUpClosedNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
-                      ParamData{ViolationInvariantType::REIFIED}));
+                      ParamData{ViolationInvariantType::REIFIED},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_TRUE},
+                      ParamData{InvariantNodeAction::SUBSUME,
+                                ViolationInvariantType::CONSTANT_FALSE}));
 
 }  // namespace atlantis::testing

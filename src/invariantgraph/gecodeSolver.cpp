@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/gecodeSolver.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -144,19 +145,19 @@ Gecode::TupleSet GecodeSolver::tupleSet(
 }
 
 Gecode::IntSet GecodeSolver::intSet(const SortedUniqueVector& values) {
-  if ((*values).empty()) {
+  if (values->empty()) {
     return {};
   }
   if (values.isInterval()) {
-    return Gecode::IntSet(static_cast<int>((*values).front()),
-                          static_cast<int>((*values).back()));
+    return Gecode::IntSet(static_cast<int>(values->front()),
+                          static_cast<int>(values->back()));
   }
   Gecode::Region re;
-  int* is = re.alloc<int>((*values).size());
-  for (Int i = static_cast<Int>((*values).size()) - 1; i >= 0; --i) {
-    is[i] = static_cast<int>((*values)[i]);
+  int* is = re.alloc<int>(values->size());
+  for (Int i = static_cast<Int>(values->size()) - 1; i >= 0; --i) {
+    is[i] = static_cast<int>(values[i]);
   }
-  return Gecode::IntSet(is, static_cast<int>((*values).size()));
+  return Gecode::IntSet(is, static_cast<int>(values->size()));
 }
 
 Gecode::IntVar GecodeSolver::intVar(const size_t varId) {
@@ -264,51 +265,13 @@ void GecodeSolver::bool_op(const ConstraintVarId lhs, const ConstraintVarId rhs,
               Gecode::IPL_BND);
 }
 
-void GecodeSolver::bool_rel_reif(const ConstraintVarId lhs,
-                                 const RelationType relation,
-                                 const ConstraintVarId rhs,
-                                 const ConstraintVarId reified) {
-  Gecode::rel(_space, boolVar(lhs), toGecodeIntRelType(relation), boolVar(rhs),
-              Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
-}
-
-void GecodeSolver::bool_rel(const ConstraintVarId lhs,
-                            const RelationType relation,
-                            const ConstraintVarId rhs, const bool shouldHold) {
-  Gecode::rel(_space, boolVar(lhs), toGecodeIntRelType(relation, shouldHold),
-              boolVar(rhs), Gecode::IPL_BND);
-}
-
-void GecodeSolver::int_rel_reif(const ConstraintVarId lhs,
-                                const RelationType relation,
-                                const ConstraintVarId rhs,
-                                const ConstraintVarId reified) {
-  Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation), intVar(rhs),
-              Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
-}
-
-void GecodeSolver::int_rel_reif(const ConstraintVarId lhs,
-                                const RelationType relation, const Int rhs,
-                                const ConstraintVarId reified) {
-  Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation),
-              static_cast<int>(rhs),
-              Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
-}
-
-void GecodeSolver::int_rel(const ConstraintVarId lhs,
-                           const RelationType relation,
-                           const ConstraintVarId rhs, const bool shouldHold) {
-  Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation, shouldHold),
-              intVar(rhs), Gecode::IPL_BND);
-}
-
 void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
                                 const std::vector<ConstraintVarId>& inputs,
-                                const Int rhs, const ConstraintVarId reified,
-                                const RelationType relation) {
+                                const RelationType relation, const Int rhs,
+                                const ConstraintVarId reified) {
   const auto& reif = boolVar(reified);
   if (reif.assigned()) {
-    return bool_lin_rel(coeffs, inputs, rhs, reif.val() == 1, relation);
+    return bool_lin_rel(coeffs, inputs, relation, rhs, reif.val() == 1);
   }
   linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
          toGecodeIntRelType(relation), static_cast<int>(rhs),
@@ -317,8 +280,9 @@ void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
 
 void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
                                 const std::vector<ConstraintVarId>& inputs,
-                                const ConstraintVarId rhs, const Int rhsOffset,
-                                const RelationType relation) {
+                                const RelationType relation,
+                                const ConstraintVarId rhs,
+                                const Int rhsOffset) {
   if (rhsOffset == 0) {
     return linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
                   toGecodeIntRelType(relation), intVar(rhs));
@@ -330,19 +294,19 @@ void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
 
 void GecodeSolver::bool_lin_rel(const std::vector<Int>& coeffs,
                                 const std::vector<ConstraintVarId>& inputs,
-                                const Int rhs, const bool shouldHold,
-                                const RelationType relation) {
+                                const RelationType relation, const Int rhs,
+                                const bool shouldHold) {
   linear(_space, intSharedArray(coeffs), boolVarArgs(inputs),
          toGecodeIntRelType(relation, shouldHold), static_cast<int>(rhs));
 }
 
 void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
                                const std::vector<ConstraintVarId>& inputs,
-                               const Int rhs, const ConstraintVarId reified,
-                               const RelationType relation) {
+                               const RelationType relation, const Int rhs,
+                               const ConstraintVarId reified) {
   const auto& reif = boolVar(reified);
   if (reif.assigned()) {
-    return int_lin_rel(coeffs, inputs, rhs, reif.val() == 1, relation);
+    return int_lin_rel(coeffs, inputs, relation, rhs, reif.val() == 1);
   }
   linear(_space, intSharedArray(coeffs), intVarArgs(inputs),
          toGecodeIntRelType(relation), static_cast<int>(rhs),
@@ -351,8 +315,8 @@ void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
 
 void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
                                const std::vector<ConstraintVarId>& inputs,
-                               const ConstraintVarId rhs, const Int rhsOffset,
-                               const RelationType relation) {
+                               const RelationType relation,
+                               const ConstraintVarId rhs, const Int rhsOffset) {
   if (rhsOffset == 0) {
     return linear(_space, intSharedArray(coeffs), intVarArgs(inputs),
                   toGecodeIntRelType(relation), intVar(rhs));
@@ -365,10 +329,223 @@ void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
 
 void GecodeSolver::int_lin_rel(const std::vector<Int>& coeffs,
                                const std::vector<ConstraintVarId>& inputs,
-                               const Int rhs, const bool shouldHold,
-                               const RelationType relation) {
+                               const RelationType relation, const Int rhs,
+                               const bool shouldHold) {
   linear(_space, intSharedArray(coeffs), intVarArgs(inputs),
          toGecodeIntRelType(relation, shouldHold), static_cast<int>(rhs));
+}
+
+Gecode::IntArgs GecodeSolver::gcc_get_cover(const Gecode::IntVarArgs& inputVars,
+                                            const std::vector<Int>& cover,
+                                            Gecode::IntVarArgs& countVars) {
+  auto intArgCover = intArgs(cover);
+
+  Gecode::Region region;
+  const Gecode::IntSet coverSet(intArgCover);
+  Gecode::IntSetRanges coverRanges(coverSet);
+  auto* inputDomains = region.alloc<Gecode::IntVarRanges>(inputVars.size());
+  for (int i = inputVars.size(); i--;) {
+    inputDomains[i] = Gecode::IntVarRanges(inputVars[i]);
+  }
+  Gecode::Iter::Ranges::NaryUnion domainUnion(region, inputDomains,
+                                              inputVars.size());
+  Gecode::Iter::Ranges::Diff<Gecode::Iter::Ranges::NaryUnion,
+                             Gecode::IntSetRanges>
+      extraRanges(domainUnion, coverRanges);
+  Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::Diff<
+      Gecode::Iter::Ranges::NaryUnion, Gecode::IntSetRanges>>
+      extra(extraRanges);
+  for (; extra(); ++extra) {
+    intArgCover << extra.val();
+    countVars << Gecode::IntVar(_space, 0, inputVars.size());
+  }
+  return intArgCover;
+}
+
+bool GecodeSolver::fixedToTrue(ConstraintVarId b) {
+  return boolVar(b).assigned() && boolVar(b).val() == 1;
+}
+
+bool GecodeSolver::fixedToTrue(const std::variant<bool, ConstraintVarId> b) {
+  return std::holds_alternative<bool>(b)
+             ? std::get<bool>(b)
+             : fixedToTrue(std::get<ConstraintVarId>(b));
+}
+
+void GecodeSolver::gcc(const std::vector<ConstraintVarId>& inputs,
+                       const std::vector<Int>& cover,
+                       const std::vector<ConstraintVarId>& counts,
+                       const std::variant<bool, ConstraintVarId> reified) {
+  Gecode::IntVarArgs inputVars = intVarArgs(inputs);
+  Gecode::IntVarArgs countVars = intVarArgs(counts);
+  const auto intArgCover = gcc_get_cover(inputVars, cover, countVars);
+  unshare(_space, inputVars);
+  if (fixedToTrue(reified)) {
+    Gecode::count(_space, inputVars, countVars, intArgCover, Gecode::IPL_BND);
+    return;
+  }
+  Gecode::IntVarArgs reifiedCounts(intArgCover.size());
+  for (int i = 0; i < countVars.size(); i++) {
+    reifiedCounts[i] =
+        Gecode::IntVar(_space, 0, static_cast<int>(inputVars.size()));
+  }
+  Gecode::BoolVarArgs reifiedEqualities(countVars.size());
+  for (int i = 0; i < static_cast<int>(cover.size()); i++) {
+    reifiedEqualities[i] = Gecode::BoolVar(_space, 0, 1);
+    rel(_space, countVars[i], Gecode::IRT_EQ, reifiedCounts[i],
+        reifiedEqualities[i]);
+  }
+  Gecode::count(_space, inputVars, reifiedCounts, intArgCover, Gecode::IPL_BND);
+  if (std::holds_alternative<bool>(reified)) {
+    assert(!std::get<bool>(reified));
+    rel(_space, Gecode::BOT_AND, reifiedEqualities, 0);
+  } else {
+    rel(_space, Gecode::BOT_AND, reifiedEqualities,
+        boolVar(std::get<ConstraintVarId>(reified)));
+  }
+}
+
+void GecodeSolver::gcc_closed(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<ConstraintVarId>& counts,
+    const std::variant<bool, ConstraintVarId> reified) {
+  if (fixedToTrue(reified)) {
+    auto inputVars = intVarArgs(inputs);
+    const auto intArgCover = intArgs(cover);
+    const auto countVars = intVarArgs(counts);
+    unshare(_space, inputVars);
+    count(_space, inputVars, countVars, intArgCover, Gecode::IPL_BND);
+    return;
+  }
+  Gecode::IntVarArgs inputVars = intVarArgs(inputs);
+  Gecode::IntVarArgs countVars = intVarArgs(counts);
+  auto intArgCover = gcc_get_cover(inputVars, cover, countVars);
+
+  unshare(_space, inputVars);
+  Gecode::IntVarArgs reifiedCounts(intArgCover.size());
+  for (int i = 0; i < intArgCover.size(); i++) {
+    reifiedCounts[i] = Gecode::IntVar(_space, 0, inputVars.size());
+  }
+
+  Gecode::BoolVarArgs reifiedEqualities(countVars.size());
+  for (int i = 0; i < reifiedEqualities.size(); i++) {
+    reifiedEqualities[i] = Gecode::BoolVar(_space, 0, 1);
+    if (i < static_cast<int>(cover.size())) {
+      rel(_space, countVars[i], Gecode::IRT_EQ, reifiedCounts[i],
+          reifiedEqualities[i]);
+    } else {
+      rel(_space, reifiedCounts[i], Gecode::IRT_EQ, 0, reifiedEqualities[i]);
+    }
+  }
+  Gecode::count(_space, inputVars, reifiedCounts, intArgCover, Gecode::IPL_BND);
+  if (std::holds_alternative<bool>(reified)) {
+    assert(!std::get<bool>(reified));
+    rel(_space, Gecode::BOT_AND, reifiedEqualities, 0);
+  } else {
+    rel(_space, Gecode::BOT_AND, reifiedEqualities,
+        boolVar(std::get<ConstraintVarId>(reified)));
+  }
+}
+
+void GecodeSolver::gcc_low_up(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
+    const std::variant<bool, ConstraintVarId> reified) {
+  auto inputVars = intVarArgs(inputs);
+  if (fixedToTrue(reified)) {
+    auto intArgCover = intArgs(cover);
+    const auto lbound = intSharedArray(lowerBounds);
+    const auto ubound = intSharedArray(upperBounds);
+    Gecode::IntSetArgs counts(intArgCover.size());
+    for (int i = intArgCover.size(); i--;) {
+      counts[i] = Gecode::IntSet(lbound[i], ubound[i]);
+    }
+
+    const Gecode::IntSet cover_s(intArgCover);
+    Gecode::Region re;
+    auto* xrs = re.alloc<Gecode::IntVarRanges>(inputVars.size());
+    for (int i = inputVars.size(); i--;) {
+      xrs[i].init(inputVars[i]);
+    }
+    Gecode::Iter::Ranges::NaryUnion u(re, xrs, inputVars.size());
+    Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::NaryUnion> uv(u);
+    for (; uv(); ++uv) {
+      if (!cover_s.in(uv.val())) {
+        intArgCover << uv.val();
+        counts << Gecode::IntSet(0, inputVars.size());
+      }
+    }
+    Gecode::count(_space, inputVars, counts, intArgCover);
+    return;
+  }
+  Gecode::IntVarArgs countVars(static_cast<int>(cover.size()));
+  for (int i = 0; i < countVars.size(); i++) {
+    countVars[i] = Gecode::IntVar(_space, 0, inputVars.size());
+  }
+  const auto intArgCover = gcc_get_cover(inputVars, cover, countVars);
+
+  unshare(_space, inputVars);
+
+  Gecode::BoolVarArgs reifiedEqualities(static_cast<int>(cover.size()));
+  for (int i = 0; i < reifiedEqualities.size(); i++) {
+    reifiedEqualities[i] = Gecode::BoolVar(_space, 0, 1);
+    dom(_space, countVars[i], static_cast<int>(lowerBounds[i]),
+        static_cast<int>(upperBounds[i]), reifiedEqualities[i]);
+  }
+  Gecode::count(_space, inputVars, countVars, intArgCover, Gecode::IPL_BND);
+  if (std::holds_alternative<bool>(reified)) {
+    assert(!std::get<bool>(reified));
+    rel(_space, Gecode::BOT_AND, reifiedEqualities, 0);
+  } else {
+    rel(_space, Gecode::BOT_AND, reifiedEqualities,
+        boolVar(std::get<ConstraintVarId>(reified)));
+  }
+}
+
+void GecodeSolver::gcc_low_up_closed(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
+    const std::variant<bool, ConstraintVarId> reified) {
+  auto inputVars = intVarArgs(inputs);
+
+  if (fixedToTrue(reified)) {
+    auto intArgCover = intArgs(cover);
+    const auto lbound = intArgs(lowerBounds);
+    const auto ubound = intArgs(upperBounds);
+    Gecode::IntSetArgs countBounds(intArgCover.size());
+    for (int i = intArgCover.size(); i--;)
+      countBounds[i] = Gecode::IntSet(lbound[i], ubound[i]);
+    unshare(_space, inputVars);
+    count(_space, inputVars, countBounds, intArgCover, Gecode::IPL_BND);
+    return;
+  }
+
+  Gecode::IntVarArgs countVars(static_cast<int>(cover.size()));
+  for (int i = 0; i < countVars.size(); i++) {
+    countVars[i] = Gecode::IntVar(_space, 0, inputVars.size());
+  }
+  const auto intArgCover = gcc_get_cover(inputVars, cover, countVars);
+
+  unshare(_space, inputVars);
+
+  Gecode::BoolVarArgs reifiedEqualities(countVars.size());
+  for (int i = 0; i < reifiedEqualities.size(); i++) {
+    reifiedEqualities[i] = Gecode::BoolVar(_space, 0, 1);
+    if (i < static_cast<int>(cover.size())) {
+      dom(_space, countVars[i], static_cast<int>(lowerBounds[i]),
+          static_cast<int>(upperBounds[i]), reifiedEqualities[i]);
+    } else {
+      rel(_space, countVars[i], Gecode::IRT_EQ, 0, reifiedEqualities[i]);
+    }
+  }
+  Gecode::count(_space, inputVars, countVars, intArgCover, Gecode::IPL_BND);
+  if (std::holds_alternative<bool>(reified)) {
+    assert(!std::get<bool>(reified));
+    rel(_space, Gecode::BOT_AND, reifiedEqualities, 0);
+  } else {
+    rel(_space, Gecode::BOT_AND, reifiedEqualities,
+        boolVar(std::get<ConstraintVarId>(reified)));
+  }
 }
 
 GecodeSolver::GecodeSolver() = default;
@@ -445,10 +622,10 @@ void GecodeSolver::fixPoint() {
   }
   assert(s == Gecode::SS_SOLVED);
 }
+
 void GecodeSolver::fix_bool(const ConstraintVarId var, const bool val) {
   Gecode::rel(_space, boolVar(var), Gecode::IRT_EQ, val ? 1 : 0);
 }
-
 void GecodeSolver::fix_int(const ConstraintVarId var, const Int val) {
   Gecode::rel(_space, boolVar(var), Gecode::IRT_EQ, static_cast<int>(val));
 }
@@ -514,6 +691,7 @@ void GecodeSolver::bool2int(const ConstraintVarId boolVarId,
                             const ConstraintVarId intVarId) {
   channel(_space, boolVar(boolVarId), intVar(intVarId));
 }
+
 void GecodeSolver::array_int_element(const ConstraintVarId index,
                                      const std::vector<Int>& parameters,
                                      const ConstraintVarId output,
@@ -522,7 +700,6 @@ void GecodeSolver::array_int_element(const ConstraintVarId index,
       Gecode::expr(_space, intVar(index) - static_cast<int>(offset));
   Gecode::element(_space, intSharedArray(parameters), indexVar, intVar(output));
 }
-
 void GecodeSolver::array_int_element2d(
     const ConstraintVarId rowIndex, const ConstraintVarId colIndex,
     const std::vector<std::vector<Int>>& parameters,
@@ -586,9 +763,11 @@ void GecodeSolver::array_var_bool_element2d(
                          colOffset);
     return;
   }
-  Gecode::element(_space, boolVarArgs(inputs), intVar(colIndex), -colOffset,
+  Gecode::element(_space, boolVarArgs(inputs), intVar(colIndex),
+                  -static_cast<int>(colOffset),
                   static_cast<int>(inputs.front().size()), intVar(rowIndex),
-                  -rowOffset, static_cast<int>(inputs.size()), boolVar(output));
+                  -static_cast<int>(rowOffset), static_cast<int>(inputs.size()),
+                  boolVar(output));
 }
 
 void GecodeSolver::array_var_int_element(
@@ -667,6 +846,43 @@ void GecodeSolver::bool_clause_reif(
          boolVarArgs(negInputs), boolVar(reified), Gecode::IPL_BND);
 }
 
+void GecodeSolver::bool_rel_reif(const ConstraintVarId lhs,
+                                 const RelationType relation,
+                                 const ConstraintVarId rhs,
+                                 const ConstraintVarId reified) {
+  Gecode::rel(_space, boolVar(lhs), toGecodeIntRelType(relation), boolVar(rhs),
+              Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
+}
+
+void GecodeSolver::bool_rel(const ConstraintVarId lhs,
+                            const RelationType relation,
+                            const ConstraintVarId rhs, const bool shouldHold) {
+  Gecode::rel(_space, boolVar(lhs), toGecodeIntRelType(relation, shouldHold),
+              boolVar(rhs), Gecode::IPL_BND);
+}
+
+void GecodeSolver::int_rel_reif(const ConstraintVarId lhs,
+                                const RelationType relation,
+                                const ConstraintVarId rhs,
+                                const ConstraintVarId reified) {
+  Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation), intVar(rhs),
+              Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
+}
+
+void GecodeSolver::int_rel_reif(const ConstraintVarId lhs,
+                                const RelationType relation, const Int rhs,
+                                const ConstraintVarId reified) {
+  Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation),
+              static_cast<int>(rhs),
+              Gecode::Reify(boolVar(reified), Gecode::RM_EQV), Gecode::IPL_BND);
+}
+
+void GecodeSolver::int_rel(const ConstraintVarId lhs,
+                           const RelationType relation,
+                           const ConstraintVarId rhs, const bool shouldHold) {
+  Gecode::rel(_space, intVar(lhs), toGecodeIntRelType(relation, shouldHold),
+              intVar(rhs), Gecode::IPL_BND);
+}
 void GecodeSolver::bool_eq(const ConstraintVarId b1, const ConstraintVarId b2,
                            const bool shouldHold) {
   bool_rel(b1, RelationType::REL_TYPE_EQ, b2, shouldHold);
@@ -688,6 +904,7 @@ void GecodeSolver::bool_le_reif(const ConstraintVarId b1,
                                 const ConstraintVarId reified) {
   bool_rel_reif(b1, RelationType::REL_TYPE_LE, b2, reified);
 }
+
 void GecodeSolver::bool_lin_eq(const std::vector<Int>& coeffs,
                                const std::vector<ConstraintVarId>& inputs,
                                const ConstraintVarId rhs, const Int rhsOffset) {
@@ -704,14 +921,14 @@ void GecodeSolver::bool_lin(const std::vector<Int>& coeffs,
                             const std::vector<ConstraintVarId>& inputs,
                             const RelationType relation, const Int rhs,
                             const bool shouldHold) {
-  bool_lin_rel(coeffs, inputs, rhs, shouldHold, relation);
+  bool_lin_rel(coeffs, inputs, relation, rhs, shouldHold);
 }
 
 void GecodeSolver::bool_lin_reif(const std::vector<Int>& coeffs,
                                  const std::vector<ConstraintVarId>& inputs,
                                  const RelationType relation, const Int rhs,
                                  const ConstraintVarId reified) {
-  bool_lin_rel(coeffs, inputs, rhs, reified, relation);
+  bool_lin_rel(coeffs, inputs, relation, rhs, reified);
 }
 
 void GecodeSolver::bool_lt(const ConstraintVarId b1, const ConstraintVarId b2,
@@ -735,12 +952,10 @@ void GecodeSolver::bool_not_reif(const ConstraintVarId b1,
                                  const ConstraintVarId reified) {
   bool_rel_reif(b1, RelationType::REL_TYPE_NE, b2, reified);
 }
-
 void GecodeSolver::bool_or(const ConstraintVarId b1, const ConstraintVarId b2,
                            const bool shouldHold) {
   bool_op(b1, b2, shouldHold, Gecode::BOT_OR);
 }
-
 void GecodeSolver::bool_or_reif(const ConstraintVarId b1,
                                 const ConstraintVarId b2,
                                 const ConstraintVarId reified) {
@@ -757,10 +972,12 @@ void GecodeSolver::bool_xor_reif(const ConstraintVarId b1,
                                  const ConstraintVarId reified) {
   bool_op(b1, b2, reified, Gecode::BOT_OR);
 }
+
 void GecodeSolver::int_abs(const ConstraintVarId lhs,
                            const ConstraintVarId rhs) {
   abs(_space, intVar(lhs), intVar(rhs));
 }
+
 void GecodeSolver::int_div(const ConstraintVarId numerator,
                            const ConstraintVarId denominator,
                            const ConstraintVarId quotient) {
@@ -817,21 +1034,21 @@ void GecodeSolver::int_le_reif(const ConstraintVarId lhs,
 void GecodeSolver::int_lin_eq(const std::vector<Int>& coeffs,
                               const std::vector<ConstraintVarId>& inputs,
                               const ConstraintVarId rhs, const Int rhsOffset) {
-  int_lin_rel(coeffs, inputs, rhs, rhsOffset, RelationType::REL_TYPE_EQ);
+  int_lin_rel(coeffs, inputs, RelationType::REL_TYPE_EQ, rhs, rhsOffset);
 }
 
 void GecodeSolver::int_lin(const std::vector<Int>& coeffs,
                            const std::vector<ConstraintVarId>& inputs,
                            const RelationType relation, const Int rhs,
                            const bool shouldHold) {
-  int_lin_rel(coeffs, inputs, rhs, shouldHold, relation);
+  int_lin_rel(coeffs, inputs, relation, rhs, shouldHold);
 }
 
 void GecodeSolver::int_lin_reif(const std::vector<Int>& coeffs,
                                 const std::vector<ConstraintVarId>& inputs,
                                 const RelationType relation, const Int rhs,
                                 const ConstraintVarId reified) {
-  int_lin_rel(coeffs, inputs, rhs, reified, relation);
+  int_lin_rel(coeffs, inputs, relation, rhs, reified);
 }
 
 void GecodeSolver::int_lt(const ConstraintVarId lhs, const ConstraintVarId rhs,
@@ -868,12 +1085,10 @@ void GecodeSolver::int_mod(const ConstraintVarId numerator,
   unshare(_space, arr);
   mod(_space, arr[0], arr[1], arr[2]);
 }
-
 void GecodeSolver::int_ne(const ConstraintVarId lhs, const ConstraintVarId rhs,
                           const bool shouldHold) {
   int_rel(lhs, RelationType::REL_TYPE_NE, rhs, shouldHold);
 }
-
 void GecodeSolver::int_ne_reif(const ConstraintVarId lhs, const Int rhs,
                                const ConstraintVarId reified) {
   int_rel_reif(lhs, RelationType::REL_TYPE_NE, rhs, reified);
@@ -903,6 +1118,7 @@ void GecodeSolver::int_plus(const ConstraintVarId a, const ConstraintVarId b,
     Gecode::rel(_space, expr(_space, aVar + bVar), Gecode::IRT_EQ, sumVar);
   }
 }
+
 void GecodeSolver::int_pow(const ConstraintVarId base,
                            const ConstraintVarId exponent,
                            const ConstraintVarId power) {
@@ -911,11 +1127,11 @@ void GecodeSolver::int_pow(const ConstraintVarId base,
     pow(_space, intVar(base), exponentVar.val(), intVar(power));
   }
 }
+
 void GecodeSolver::int_times(const ConstraintVarId a, const ConstraintVarId b,
                              const ConstraintVarId product) {
   mult(_space, intVar(a), intVar(b), intVar(product));
 }
-
 void GecodeSolver::fzn_all_different_int(
     const std::vector<ConstraintVarId>& inputs, const bool shouldHold) {
   if (shouldHold) {
@@ -926,7 +1142,6 @@ void GecodeSolver::fzn_all_different_int(
   Gecode::nvalues(_space, intVarArgs(inputs), Gecode::IRT_LE,
                   static_cast<int>(inputs.size()));
 }
-
 void GecodeSolver::fzn_all_different_int_reif(
     const std::vector<ConstraintVarId>& inputs, const ConstraintVarId reified) {
   if (boolVar(reified).assigned()) {
@@ -954,6 +1169,7 @@ void GecodeSolver::fzn_all_equal_int_reif(
   Gecode::rel(_space, numVals, Gecode::IRT_EQ, 1,
               Gecode::Reify(boolVar(reified), Gecode::RM_EQV));
 }
+
 void GecodeSolver::fzn_circuit(const std::vector<ConstraintVarId>& inputs,
                                const Int offset, const bool shouldHold) {
   if (shouldHold) {
@@ -962,6 +1178,7 @@ void GecodeSolver::fzn_circuit(const std::vector<ConstraintVarId>& inputs,
     return Gecode::circuit(_space, static_cast<int>(offset), inputVars);
   }
 }
+
 void GecodeSolver::fzn_circuit_reif(const std::vector<ConstraintVarId>& inputs,
                                     const Int offset,
                                     const ConstraintVarId reified) {
@@ -973,399 +1190,51 @@ void GecodeSolver::fzn_circuit_reif(const std::vector<ConstraintVarId>& inputs,
 void GecodeSolver::fzn_global_cardinality(
     const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
     const std::vector<ConstraintVarId>& counts, const bool shouldHold) {
-  Gecode::IntVarArgs inputVars = intVarArgs(inputs);
-  auto intArgCover = intArgs(cover);
-  Gecode::IntVarArgs countVars = intVarArgs(counts);
-
-  Gecode::Region region;
-  const Gecode::IntSet coverSet(intArgCover);
-  Gecode::IntSetRanges coverRanges(coverSet);
-  auto* inputDomains = region.alloc<Gecode::IntVarRanges>(inputVars.size());
-  for (int i = inputVars.size(); i--;) {
-    inputDomains[i] = Gecode::IntVarRanges(inputVars[i]);
-  }
-  Gecode::Iter::Ranges::NaryUnion domainUnion(region, inputDomains,
-                                              inputVars.size());
-  Gecode::Iter::Ranges::Diff<Gecode::Iter::Ranges::NaryUnion,
-                             Gecode::IntSetRanges>
-      extraRanges(domainUnion, coverRanges);
-  Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::Diff<
-      Gecode::Iter::Ranges::NaryUnion, Gecode::IntSetRanges>>
-      extra(extraRanges);
-  for (; extra(); ++extra) {
-    intArgCover << extra.val();
-    if (shouldHold) {
-      countVars << Gecode::IntVar(_space, 0, inputVars.size());
-    }
-  }
-  unshare(_space, inputVars);
-  if (shouldHold) {
-    Gecode::count(_space, inputVars, countVars, intArgCover, Gecode::IPL_BND);
-    return;
-  }
-  Gecode::IntVarArgs actualCounts(intArgCover.size());
-  for (int i = 0; i < countVars.size(); i++) {
-    actualCounts[i] =
-        Gecode::IntVar(_space, 0, static_cast<int>(inputVars.size()));
-  }
-  Gecode::BoolVarArgs equalities(countVars.size());
-  for (int i = 0; i < countVars.size(); i++) {
-    equalities[i] = Gecode::BoolVar(_space, 0, 1);
-    rel(_space, countVars[i], Gecode::IRT_EQ, actualCounts[i], equalities[i]);
-  }
-  rel(_space, Gecode::BOT_AND, equalities, 0);
-  Gecode::count(_space, inputVars, actualCounts, intArgCover, Gecode::IPL_BND);
+  return gcc(inputs, cover, counts, shouldHold);
 }
 
 void GecodeSolver::fzn_global_cardinality_reif(
     const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
     const std::vector<ConstraintVarId>& counts, const ConstraintVarId reified) {
-  if (boolVar(reified).assigned()) {
-    return fzn_global_cardinality(inputs, cover, counts,
-                                  boolVar(reified).val() == 1);
-  }
-  Gecode::IntVarArgs inputVars = intVarArgs(inputs);
-  auto intArgCover = intArgs(cover);
-  Gecode::IntVarArgs countVars = intVarArgs(counts);
-
-  Gecode::Region re;
-  const Gecode::IntSet coverSet(intArgCover);
-  Gecode::IntSetRanges coverRegion(coverSet);
-  auto* iv0_ri = re.alloc<Gecode::IntVarRanges>(inputVars.size());
-  for (int i = inputVars.size(); i--;) {
-    iv0_ri[i] = Gecode::IntVarRanges(inputVars[i]);
-  }
-  Gecode::Iter::Ranges::NaryUnion domainUnion(re, iv0_ri, inputVars.size());
-  Gecode::Iter::Ranges::Diff<Gecode::Iter::Ranges::NaryUnion,
-                             Gecode::IntSetRanges>
-      extraRanges(domainUnion, coverRegion);
-  Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::Diff<
-      Gecode::Iter::Ranges::NaryUnion, Gecode::IntSetRanges>>
-      extra(extraRanges);
-  for (; extra(); ++extra) {
-    intArgCover << extra.val();
-  }
-  unshare(_space, inputVars);
-  Gecode::IntVarArgs actualCounts(intArgCover.size());
-  for (int i = 0; i < countVars.size(); i++) {
-    actualCounts[i] =
-        Gecode::IntVar(_space, 0, static_cast<int>(inputs.size()));
-  }
-  Gecode::BoolVarArgs equalities(countVars.size());
-  for (int i = 0; i < countVars.size(); i++) {
-    equalities[i] = Gecode::BoolVar(_space, 0, 1);
-    rel(_space, countVars[i], Gecode::IRT_EQ, actualCounts[i], equalities[i]);
-  }
-  rel(_space, Gecode::BOT_AND, equalities, boolVar(reified));
-  Gecode::count(_space, inputVars, actualCounts, intArgCover, Gecode::IPL_BND);
+  return gcc(inputs, cover, counts, reified);
 }
-
 void GecodeSolver::fzn_global_cardinality_closed(
     const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
     const std::vector<ConstraintVarId>& counts, const bool shouldHold) {
-  if (shouldHold) {
-    auto inputVars = intVarArgs(inputs);
-    const auto intArgCover = intArgs(cover);
-    const auto countVars = intVarArgs(counts);
-    unshare(_space, inputVars);
-    count(_space, inputVars, countVars, intArgCover, Gecode::IPL_BND);
-    return;
-  }
-  Gecode::IntVarArgs inputVars = intVarArgs(inputs);
-  auto intArgCover = intArgs(cover);
-  Gecode::IntVarArgs countVars = intVarArgs(counts);
-
-  Gecode::Region region;
-  const Gecode::IntSet coverSet(intArgCover);
-  Gecode::IntSetRanges coverRanges(coverSet);
-  auto* inputDomains = region.alloc<Gecode::IntVarRanges>(inputVars.size());
-  for (int i = inputVars.size(); i--;) {
-    inputDomains[i] = Gecode::IntVarRanges(inputVars[i]);
-  }
-  Gecode::Iter::Ranges::NaryUnion domainUnion(region, inputDomains,
-                                              inputVars.size());
-  Gecode::Iter::Ranges::Diff<Gecode::Iter::Ranges::NaryUnion,
-                             Gecode::IntSetRanges>
-      extraRanges(domainUnion, coverRanges);
-  Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::Diff<
-      Gecode::Iter::Ranges::NaryUnion, Gecode::IntSetRanges>>
-      extra(extraRanges);
-  for (; extra(); ++extra) {
-    intArgCover << extra.val();
-  }
-  Gecode::IntVarArgs actualCounts(intArgCover.size());
-  for (int i = 0; i < intArgCover.size(); i++) {
-    actualCounts[i] = Gecode::IntVar(_space, 0, inputVars.size());
-  }
-
-  unshare(_space, inputVars);
-  Gecode::BoolVarArgs equalities(countVars.size() + inputVars.size());
-  for (int i = 0; i < equalities.size(); i++) {
-    equalities[i] = Gecode::BoolVar(_space, 0, 1);
-    if (i < countVars.size()) {
-      rel(_space, countVars[i], Gecode::IRT_EQ, actualCounts[i], equalities[i]);
-    } else {
-      rel(_space, actualCounts[i], Gecode::IRT_EQ, 0, equalities[i]);
-    }
-  }
-  Gecode::count(_space, inputVars, actualCounts, intArgCover, Gecode::IPL_BND);
-  rel(_space, Gecode::BOT_AND, equalities, 0);
+  return gcc_closed(inputs, cover, counts, shouldHold);
 }
 
 void GecodeSolver::fzn_global_cardinality_closed_reif(
     const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
     const std::vector<ConstraintVarId>& counts, const ConstraintVarId reified) {
-  if (boolVar(reified).assigned()) {
-    return fzn_global_cardinality_closed(inputs, cover, counts,
-                                         boolVar(reified).val() == 1);
-  }
-  auto inputVars = intVarArgs(inputs);
-  auto intArgCover = intArgs(cover);
-  auto countVars = intVarArgs(counts);
-
-  Gecode::Region re;
-  const Gecode::IntSet coverSet(intArgCover);
-  Gecode::IntSetRanges coverRanges(coverSet);
-  auto* inputDomains = re.alloc<Gecode::IntVarRanges>(inputVars.size());
-  for (int i = inputVars.size(); i--;) {
-    inputDomains[i] = Gecode::IntVarRanges(inputVars[i]);
-  }
-  Gecode::Iter::Ranges::NaryUnion domainUnion(re, inputDomains,
-                                              inputVars.size());
-  Gecode::Iter::Ranges::Diff<Gecode::Iter::Ranges::NaryUnion,
-                             Gecode::IntSetRanges>
-      extraRanges(domainUnion, coverRanges);
-  Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::Diff<
-      Gecode::Iter::Ranges::NaryUnion, Gecode::IntSetRanges>>
-      extra(extraRanges);
-  for (; extra(); ++extra) {
-    intArgCover << extra.val();
-  }
-  Gecode::IntVarArgs actualCounts(intArgCover.size());
-  for (int i = 0; i < intArgCover.size(); i++) {
-    actualCounts[i] = Gecode::IntVar(_space, 0, inputVars.size());
-  }
-
-  unshare(_space, inputVars);
-  Gecode::BoolVarArgs equalities(countVars.size() + inputVars.size());
-  for (int i = 0; i < equalities.size(); i++) {
-    equalities[i] = Gecode::BoolVar(_space, 0, 1);
-    if (i < countVars.size()) {
-      rel(_space, countVars[i], Gecode::IRT_EQ, actualCounts[i], equalities[i]);
-    } else {
-      rel(_space, actualCounts[i], Gecode::IRT_EQ, 0, equalities[i]);
-    }
-  }
-  Gecode::count(_space, inputVars, actualCounts, intArgCover, Gecode::IPL_BND);
-  rel(_space, Gecode::BOT_AND, equalities, boolVar(reified));
+  return gcc_closed(inputs, cover, counts, reified);
 }
+
 void GecodeSolver::fzn_global_cardinality_low_up(
     const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
     const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
     const bool shouldHold) {
-  auto inputVars = intVarArgs(inputs);
-  auto intArgCover = intArgs(cover);
-  if (shouldHold) {
-    const auto lbound = intSharedArray(lowerBounds);
-    const auto ubound = intSharedArray(upperBounds);
-    Gecode::IntSetArgs counts(intArgCover.size());
-    for (int i = intArgCover.size(); i--;) {
-      counts[i] = Gecode::IntSet(lbound[i], ubound[i]);
-    }
-
-    const Gecode::IntSet cover_s(intArgCover);
-    Gecode::Region re;
-    auto* xrs = re.alloc<Gecode::IntVarRanges>(inputVars.size());
-    for (int i = inputVars.size(); i--;) {
-      xrs[i].init(inputVars[i]);
-    }
-    Gecode::Iter::Ranges::NaryUnion u(re, xrs, inputVars.size());
-    Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::NaryUnion> uv(u);
-    for (; uv(); ++uv) {
-      if (!cover_s.in(uv.val())) {
-        intArgCover << uv.val();
-        counts << Gecode::IntSet(0, inputVars.size());
-      }
-    }
-    return;
-  }
-
-  Gecode::Region re;
-  const Gecode::IntSet coverSet(intArgCover);
-  Gecode::IntSetRanges coverRanges(coverSet);
-  auto* iv0_ri = re.alloc<Gecode::IntVarRanges>(inputVars.size());
-  for (int i = inputVars.size(); i--;) {
-    iv0_ri[i] = Gecode::IntVarRanges(inputVars[i]);
-  }
-  Gecode::Iter::Ranges::NaryUnion inputDomains(re, iv0_ri, inputVars.size());
-  Gecode::Iter::Ranges::Diff<Gecode::Iter::Ranges::NaryUnion,
-                             Gecode::IntSetRanges>
-      domainUnion(inputDomains, coverRanges);
-  Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::Diff<
-      Gecode::Iter::Ranges::NaryUnion, Gecode::IntSetRanges>>
-      extra(domainUnion);
-  for (; extra(); ++extra) {
-    intArgCover << extra.val();
-  }
-  Gecode::IntVarArgs extendedCounts(intArgCover.size());
-  for (int i = 0; i < extendedCounts.size(); i++) {
-    extendedCounts[i] = Gecode::IntVar(_space, 0, inputVars.size());
-  }
-  unshare(_space, inputVars);
-  Gecode::BoolVarArgs equalities(static_cast<int>(cover.size()));
-  for (int i = 0; i < extendedCounts.size(); i++) {
-    equalities[i] = Gecode::BoolVar(_space, 0, 1);
-    dom(_space, extendedCounts[i], static_cast<int>(lowerBounds[i]),
-        static_cast<int>(upperBounds[i]), equalities[i]);
-  }
-  rel(_space, Gecode::BOT_AND, equalities, 0);
-  Gecode::count(_space, inputVars, extendedCounts, intArgCover,
-                Gecode::IPL_BND);
+  return gcc_low_up(inputs, cover, lowerBounds, upperBounds, shouldHold);
 }
 void GecodeSolver::fzn_global_cardinality_low_up_reif(
     const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
     const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
     const ConstraintVarId reified) {
-  if (boolVar(reified).assigned()) {
-    return fzn_global_cardinality_low_up(
-        inputs, cover, lowerBounds, upperBounds, boolVar(reified).val() == 1);
-  }
-  auto inputVars = intVarArgs(inputs);
-  auto intArgCover = intArgs(cover);
-
-  Gecode::Region re;
-  const Gecode::IntSet coverSet(intArgCover);
-  Gecode::IntSetRanges cover_r(coverSet);
-  auto* inputDomains = re.alloc<Gecode::IntVarRanges>(inputVars.size());
-  for (int i = inputVars.size(); i--;) {
-    inputDomains[i] = Gecode::IntVarRanges(inputVars[i]);
-  }
-  Gecode::Iter::Ranges::NaryUnion domainUnion(re, inputDomains,
-                                              inputVars.size());
-  Gecode::Iter::Ranges::Diff<Gecode::Iter::Ranges::NaryUnion,
-                             Gecode::IntSetRanges>
-      extraRanges(domainUnion, cover_r);
-  Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::Diff<
-      Gecode::Iter::Ranges::NaryUnion, Gecode::IntSetRanges>>
-      extra(extraRanges);
-  for (; extra(); ++extra) {
-    intArgCover << extra.val();
-  }
-  Gecode::IntVarArgs countVars(intArgCover.size());
-  for (int i = 0; i < countVars.size(); i++) {
-    countVars[i] = Gecode::IntVar(_space, 0, inputVars.size());
-  }
-  unshare(_space, inputVars);
-  Gecode::BoolVarArgs equalities(static_cast<int>(cover.size()));
-  for (int i = 0; i < countVars.size(); i++) {
-    equalities[i] = Gecode::BoolVar(_space, 0, 1);
-    dom(_space, countVars[i], static_cast<int>(lowerBounds[i]),
-        static_cast<int>(upperBounds[i]), equalities[i]);
-  }
-  rel(_space, Gecode::BOT_AND, equalities, boolVar(reified));
-  Gecode::count(_space, inputVars, countVars, intArgCover, Gecode::IPL_BND);
+  return gcc_low_up(inputs, cover, lowerBounds, upperBounds, reified);
 }
 
 void GecodeSolver::fzn_global_cardinality_low_up_closed(
     const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
     const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
     const bool shouldHold) {
-  auto inputVars = intVarArgs(inputs);
-  auto intArgCover = intArgs(cover);
-
-  if (shouldHold) {
-    const auto lbound = intArgs(lowerBounds);
-    const auto ubound = intArgs(upperBounds);
-    Gecode::IntSetArgs countBounds(intArgCover.size());
-    for (int i = intArgCover.size(); i--;)
-      countBounds[i] = Gecode::IntSet(lbound[i], ubound[i]);
-    unshare(_space, inputVars);
-    count(_space, inputVars, countBounds, intArgCover, Gecode::IPL_BND);
-    return;
-  }
-
-  Gecode::Region re;
-  const Gecode::IntSet coverSet(intArgCover);
-  Gecode::IntSetRanges coverRanges(coverSet);
-  auto* iv0_ri = re.alloc<Gecode::IntVarRanges>(inputVars.size());
-  for (int i = inputVars.size(); i--;) {
-    iv0_ri[i] = Gecode::IntVarRanges(inputVars[i]);
-  }
-  Gecode::Iter::Ranges::NaryUnion inputDomains(re, iv0_ri, inputVars.size());
-  Gecode::Iter::Ranges::Diff<Gecode::Iter::Ranges::NaryUnion,
-                             Gecode::IntSetRanges>
-      domainUnion(inputDomains, coverRanges);
-  Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::Diff<
-      Gecode::Iter::Ranges::NaryUnion, Gecode::IntSetRanges>>
-      extra(domainUnion);
-  for (; extra(); ++extra) {
-    intArgCover << extra.val();
-  }
-  Gecode::IntVarArgs countVars(intArgCover.size());
-  for (int i = 0; i < countVars.size(); i++) {
-    countVars[i] = Gecode::IntVar(_space, 0, inputVars.size());
-  }
-  unshare(_space, inputVars);
-  Gecode::BoolVarArgs equalities(countVars.size() + inputVars.size());
-  for (int i = 0; i < equalities.size(); i++) {
-    equalities[i] = Gecode::BoolVar(_space, 0, 1);
-    if (i < countVars.size()) {
-      dom(_space, countVars[i], static_cast<int>(lowerBounds[i]),
-          static_cast<int>(upperBounds[i]), equalities[i]);
-    } else {
-      rel(_space, countVars[i], Gecode::IRT_EQ, 0, equalities[i]);
-    }
-  }
-  rel(_space, Gecode::BOT_AND, equalities, 0);
-  Gecode::count(_space, inputVars, countVars, intArgCover, Gecode::IPL_BND);
+  return gcc_low_up_closed(inputs, cover, lowerBounds, upperBounds, shouldHold);
 }
 
 void GecodeSolver::fzn_global_cardinality_low_up_closed_reif(
     const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
     const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
     const ConstraintVarId reified) {
-  if (boolVar(reified).assigned() && boolVar(reified).val()) {
-    return fzn_global_cardinality_low_up_closed(
-        inputs, cover, lowerBounds, upperBounds, boolVar(reified).val() == 1);
-  }
-
-  auto inputVars = intVarArgs(inputs);
-  auto intArgCover = intArgs(cover);
-
-  Gecode::Region re;
-  const Gecode::IntSet coverSet(intArgCover);
-  Gecode::IntSetRanges coverRanges(coverSet);
-  auto* iv0_ri = re.alloc<Gecode::IntVarRanges>(inputVars.size());
-  for (int i = inputVars.size(); i--;) {
-    iv0_ri[i] = Gecode::IntVarRanges(inputVars[i]);
-  }
-  Gecode::Iter::Ranges::NaryUnion inputDomains(re, iv0_ri, inputVars.size());
-  Gecode::Iter::Ranges::Diff<Gecode::Iter::Ranges::NaryUnion,
-                             Gecode::IntSetRanges>
-      domainUnion(inputDomains, coverRanges);
-  Gecode::Iter::Ranges::ToValues<Gecode::Iter::Ranges::Diff<
-      Gecode::Iter::Ranges::NaryUnion, Gecode::IntSetRanges>>
-      extra(domainUnion);
-  for (; extra(); ++extra) {
-    intArgCover << extra.val();
-  }
-  Gecode::IntVarArgs countVars(intArgCover.size());
-  for (int i = 0; i < countVars.size(); i++) {
-    countVars[i] = Gecode::IntVar(_space, 0, inputVars.size());
-  }
-  unshare(_space, inputVars);
-  Gecode::BoolVarArgs equalities(countVars.size() + inputVars.size());
-  for (int i = 0; i < equalities.size(); i++) {
-    equalities[i] = Gecode::BoolVar(_space, 0, 1);
-    if (i < countVars.size()) {
-      dom(_space, countVars[i], static_cast<int>(lowerBounds[i]),
-          static_cast<int>(upperBounds[i]), equalities[i]);
-    } else {
-      rel(_space, countVars[i], Gecode::IRT_EQ, 0, equalities[i]);
-    }
-  }
-  rel(_space, Gecode::BOT_AND, equalities, boolVar(reified));
-  Gecode::count(_space, inputVars, countVars, intArgCover, Gecode::IPL_BND);
+  return gcc_low_up_closed(inputs, cover, lowerBounds, upperBounds, reified);
 }
 
 void GecodeSolver::fzn_count(const std::vector<ConstraintVarId>& inputs,

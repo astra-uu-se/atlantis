@@ -178,9 +178,8 @@ bool TableNode::propagate() {
     SortedUniqueVector sortedValues(std::move(values));
     const size_t prevDomSize =
         invariantGraphConst().varNodeConst(colVar(c)).constDomain()->size();
-    if (c != 0 && (*sortedValues).size() == 1) {
-      invariantGraph().varNode(colVar(c)).domain()->fix(
-          (*sortedValues).front());
+    if (c != 0 && sortedValues->size() == 1) {
+      invariantGraph().varNode(colVar(c)).domain()->fix(sortedValues->front());
       removeColumn(c);
       removeOutputAtIndex(c - 1);
       prunedVals |= prevDomSize > 1;

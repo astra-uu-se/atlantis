@@ -63,7 +63,26 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
 
   ViolationInvariantNode::updateState();
 
-  if (isReified() || !shouldHold()) {
+  if (isReified()) {
+    return;
+  }
+
+  if (!shouldHold()) {
+    const bool allOverlaps =
+        gccIsClosed(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+    if (!allOverlaps) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+    const auto bounds =
+        gccBounds(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+    assert(bounds.size() == _cover.size());
+    for (size_t i = 0; i < bounds.size(); i++) {
+      if (bounds[i].second < _low[i] || _up[i] < bounds[i].first) {
+        setState(InvariantNodeState::SUBSUMED);
+        return;
+      }
+    }
     return;
   }
 
@@ -79,7 +98,7 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
   assert(outputIndexOffset == 0 ||
          outputVarNodeIds().front() == reifiedViolationNodeId());
 
-  for (Int i = static_cast<Int>((*coverIndicesToRemove).size()) - 1; i >= 0;
+  for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
        --i) {
     _cover.erase(_cover.begin() + i);
     _low.erase(_low.begin() + i);

@@ -13,7 +13,7 @@ class GlobalCardinalityClosedNodeTestFixture
     : public NodeTestBase<GlobalCardinalityClosedNode> {
  protected:
   std::vector<Var> inputVars;
-  const std::vector<Int> cover{2, 6};
+  const std::vector<Int> cover{1, 5};
   std::vector<Var> outputVars;
   Var reifiedVar{"reified", std::vector<Int>{}, false};
 
@@ -27,8 +27,9 @@ class GlobalCardinalityClosedNodeTestFixture
         bool valInCover = false;
         for (size_t i = 0; i < cover.size(); ++i) {
           if (val == cover.at(i)) {
-            counts.at(i)++;
+            ++counts.at(i);
             valInCover = true;
+            break;
           }
         }
         if (!valInCover) {
@@ -36,9 +37,10 @@ class GlobalCardinalityClosedNodeTestFixture
         }
       }
       for (size_t i = 0; i < counts.size(); ++i) {
-        if (counts.at(i) != varNodeConst(outputVars.at(i)).isFixed()
-                ? varNodeConst(outputVars.at(i)).lowerBound()
-                : _solver->currentValue(varId(outputVars.at(i)))) {
+        const Int outVal = varNodeConst(outputVars.at(i)).isFixed()
+                               ? varNodeConst(outputVars.at(i)).lowerBound()
+                               : _solver->currentValue(varId(outputVars.at(i)));
+        if (counts.at(i) != outVal) {
           return true;
         }
       }
@@ -50,7 +52,7 @@ class GlobalCardinalityClosedNodeTestFixture
       bool valInCover = false;
       for (size_t i = 0; i < cover.size(); ++i) {
         if (val == cover.at(i)) {
-          counts.at(i)++;
+          ++counts.at(i);
           valInCover = true;
           break;
         }
@@ -131,31 +133,23 @@ TEST_P(GlobalCardinalityClosedNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : inputVars) {
-    if (!varNode(var).isFixed()) {
-      EXPECT_NE(varId(var), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(var));
-    }
-  }
-
   const propagation::VarViewId violVarId =
       isReified() ? varId(reifiedVar) : _solverMapping->totalViolationId();
 
   EXPECT_NE(violVarId, propagation::NULL_ID);
 
-  std::vector<Int> inputVals = makeInputVals(inputVarIds);
+  std::vector<Int> inputVals = makeInputVals(inputVars);
 
-  while (increaseNextVal(inputVarIds, inputVals) >= 0) {
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
     _solver->beginMove();
-    setVarVals(inputVarIds, inputVals);
+    setVarVals(inputVars, inputVals);
     _solver->endMove();
 
     _solver->beginProbe();
     _solver->query(violVarId);
     _solver->endProbe();
 
-    expectVarVals(inputVarIds, inputVals);
+    expectVarVals(inputVars, inputVals);
 
     const bool actual = _solver->currentValue(violVarId) > 0;
     const bool expected = isViolating(true);

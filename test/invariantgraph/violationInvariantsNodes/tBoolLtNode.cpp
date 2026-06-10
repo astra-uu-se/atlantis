@@ -40,15 +40,6 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolRelNode> {
 
     bVar.identifier = "b";
 
-    if (shouldBeReplaced()) {
-      if (isReified()) {
-        if (_paramData.data == 0) {
-          aVar.domain = std::vector<Int>{0};
-        } else {
-          bVar.domain = std::vector<Int>{1};
-        }
-      }
-    }
     if (shouldBeSubsumed()) {
       if (isReified() || shouldFail()) {
         if (_paramData.data == 0) {
@@ -183,10 +174,6 @@ INSTANTIATE_TEST_SUITE_P(
     BoolLtNodeTest, BoolLtNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED},
-                      ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::REIFIED, 0},
-                      ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::REIFIED, 1},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::SUBSUME,

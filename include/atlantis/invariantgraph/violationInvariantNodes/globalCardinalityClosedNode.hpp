@@ -5,6 +5,7 @@
 namespace atlantis::invariantgraph {
 class GlobalCardinalityClosedNode : public ViolationInvariantNode {
   std::vector<Int> _cover;
+  std::vector<Int> _offsets;
 
  public:
   explicit GlobalCardinalityClosedNode(InvariantGraph& graph,

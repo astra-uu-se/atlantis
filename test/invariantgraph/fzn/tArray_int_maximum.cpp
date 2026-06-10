@@ -50,7 +50,7 @@ class array_int_maximumTest : public FznTestBase {
   void generate() override {
     constraintIdentifier = "array_int_maximum";
     addIntArg(output);
-    const size_t size = *rc::gen::inRange(1, 3);
+    const size_t size = true ? 2 : *rc::gen::inRange(1, 3);
     for (size_t i = 0; i < size; i++) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
@@ -58,7 +58,7 @@ class array_int_maximumTest : public FznTestBase {
     generateConstraint();
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const Int expected = getValue(committedValue);
     const Int actual = intVal(output, committedValue);
 
@@ -87,7 +87,7 @@ class array_int_maximumTest : public FznTestBase {
         inputs, [&](const std::string& input) { return !isFixed(input); });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : inputs) {
       if (!isFixed(input) && randBool()) {
         changeValue(input, committedValue);

@@ -22,10 +22,12 @@ namespace atlantis::invariantgraph {
 GlobalCardinalityNode::GlobalCardinalityNode(InvariantGraph& graph,
                                              std::vector<VarNodeId>&& inputs,
                                              std::vector<Int>&& cover,
-                                             std::vector<VarNodeId>&& counts)
+                                             std::vector<VarNodeId>&& counts,
+                                             std::vector<Int>&& countOffsets)
     : InvariantNode(graph, std::move(counts), std::move(inputs)),
       _cover(std::move(cover)),
-      _countOffsets(_cover.size(), 0) {
+      _countOffsets(std::move(countOffsets)) {
+  _countOffsets.resize(_cover.size(), 0);
   assert(_cover.size() == outputVarNodeIds().size());
   if (_cover.empty()) {
     setState(InvariantNodeState::SUBSUMED);
@@ -68,7 +70,7 @@ void GlobalCardinalityNode::updateState() {
     removeStaticInputVarNode(vId);
   }
 
-  for (Int i = static_cast<Int>((*coverIndicesToRemove).size()) - 1; i >= 0;
+  for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
        --i) {
     _cover.erase(_cover.begin() + i);
     removeOutputAtIndex(i);

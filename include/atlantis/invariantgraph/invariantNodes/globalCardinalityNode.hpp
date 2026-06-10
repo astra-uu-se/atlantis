@@ -9,10 +9,10 @@ class GlobalCardinalityNode : public InvariantNode {
 
  public:
   explicit GlobalCardinalityNode(InvariantGraph& graph,
-
                                  std::vector<VarNodeId>&& inputs,
                                  std::vector<Int>&& cover,
-                                 std::vector<VarNodeId>&& counts);
+                                 std::vector<VarNodeId>&& counts,
+                                 std::vector<Int>&& countOffsets = {});
 
   void init(InvariantNodeId) override;
 

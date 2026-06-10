@@ -32,6 +32,9 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
     numeratorVar.domain = std::pair<Int, Int>{0, 6};
     denominatorVar.domain = std::pair<Int, Int>{1, 10};
     outputVar.domain = std::pair<Int, Int>{0, 10};
+    retrieveIntVarNode(numeratorVar);
+    retrieveIntVarNode(denominatorVar);
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(numeratorVar),
                         varNodeId(denominatorVar), varNodeId(outputVar));

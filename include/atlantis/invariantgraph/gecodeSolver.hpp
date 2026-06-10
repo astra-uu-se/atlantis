@@ -82,24 +82,53 @@ class GecodeSolver : public ConstraintSolver {
                Gecode::BoolOpType);
 
   void bool_lin_rel(const std::vector<Int>& coeffs,
-                    const std::vector<ConstraintVarId>& inputs, Int rhs,
-                    ConstraintVarId reified, RelationType);
+                    const std::vector<ConstraintVarId>& inputs, RelationType,
+                    Int rhs, ConstraintVarId reified);
   void bool_lin_rel(const std::vector<Int>& coeffs,
-                    const std::vector<ConstraintVarId>& inputs,
-                    ConstraintVarId rhs, Int rhsOffset, RelationType);
+                    const std::vector<ConstraintVarId>& inputs, RelationType,
+                    ConstraintVarId rhs, Int rhsOffset);
   void bool_lin_rel(const std::vector<Int>& coeffs,
-                    const std::vector<ConstraintVarId>& inputs, Int rhs,
-                    bool shouldHold, RelationType);
+                    const std::vector<ConstraintVarId>& inputs, RelationType,
+                    Int rhs, bool shouldHold);
 
   void int_lin_rel(const std::vector<Int>& coeffs,
-                   const std::vector<ConstraintVarId>& inputs, Int rhs,
-                   ConstraintVarId reified, RelationType);
+                   const std::vector<ConstraintVarId>& inputs, RelationType,
+                   Int rhs, ConstraintVarId reified);
   void int_lin_rel(const std::vector<Int>& coeffs,
-                   const std::vector<ConstraintVarId>& inputs,
-                   ConstraintVarId rhs, Int rhsOffset, RelationType);
+                   const std::vector<ConstraintVarId>& inputs, RelationType,
+                   ConstraintVarId rhs, Int rhsOffset);
   void int_lin_rel(const std::vector<Int>& coeffs,
-                   const std::vector<ConstraintVarId>& inputs, Int rhs,
-                   bool shouldHold, RelationType);
+                   const std::vector<ConstraintVarId>& inputs, RelationType,
+                   Int rhs, bool shouldHold);
+
+  Gecode::IntArgs gcc_get_cover(const Gecode::IntVarArgs& inputVars,
+                                const std::vector<Int>& cover,
+                                Gecode::IntVarArgs& countVars);
+
+  bool fixedToTrue(ConstraintVarId b);
+
+  bool fixedToTrue(std::variant<bool, ConstraintVarId> b);
+
+  void gcc(const std::vector<ConstraintVarId>& inputs,
+           const std::vector<Int>& cover,
+           const std::vector<ConstraintVarId>& counts,
+           std::variant<bool, ConstraintVarId> reified);
+  void gcc_closed(const std::vector<ConstraintVarId>& inputs,
+                  const std::vector<Int>& cover,
+                  const std::vector<ConstraintVarId>& counts,
+                  std::variant<bool, ConstraintVarId> reified);
+
+  void gcc_low_up(const std::vector<ConstraintVarId>& inputs,
+                  const std::vector<Int>& cover,
+                  const std::vector<Int>& lowerBounds,
+                  const std::vector<Int>& upperBounds,
+                  std::variant<bool, ConstraintVarId> reified);
+
+  void gcc_low_up_closed(const std::vector<ConstraintVarId>& inputs,
+                         const std::vector<Int>& cover,
+                         const std::vector<Int>& lowerBounds,
+                         const std::vector<Int>& upperBounds,
+                         std::variant<bool, ConstraintVarId> reified);
 
  public:
   /// Construct empty space
@@ -189,16 +218,16 @@ class GecodeSolver : public ConstraintSolver {
                         ConstraintVarId reified) override;
 
   void bool_rel_reif(ConstraintVarId lhs, RelationType, ConstraintVarId rhs,
-                     ConstraintVarId reified);
+                     ConstraintVarId reified) override;
   void bool_rel(ConstraintVarId lhs, RelationType, ConstraintVarId rhs,
-                bool shouldHold);
+                bool shouldHold) override;
 
   void int_rel_reif(ConstraintVarId lhs, RelationType, ConstraintVarId rhs,
-                    ConstraintVarId reified);
+                    ConstraintVarId reified) override;
   void int_rel_reif(ConstraintVarId lhs, RelationType, Int rhs,
-                    ConstraintVarId reified);
+                    ConstraintVarId reified) override;
   void int_rel(ConstraintVarId lhs, RelationType, ConstraintVarId rhs,
-               bool shouldHold);
+               bool shouldHold) override;
 
   void bool_eq(ConstraintVarId b1, ConstraintVarId b2,
                bool shouldHold) override;

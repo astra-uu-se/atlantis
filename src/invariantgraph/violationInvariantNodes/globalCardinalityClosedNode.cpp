@@ -11,6 +11,7 @@
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intRelNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/setInNode.hpp"
 #include "atlantis/utils/domains.hpp"
 
@@ -22,14 +23,16 @@ GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
     const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(counts), std::move(inputs),
                              shouldHold),
-      _cover(std::move(cover)) {}
+      _cover(std::move(cover)),
+      _offsets(_cover.size(), 0) {}
 
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
     InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
     std::vector<Int>&& cover, std::vector<VarNodeId>&& counts,
     const VarNodeId r)
     : ViolationInvariantNode(graph, std::move(counts), std::move(inputs), r),
-      _cover(std::move(cover)) {}
+      _cover(std::move(cover)),
+      _offsets(_cover.size(), 0) {}
 
 void GlobalCardinalityClosedNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
@@ -83,25 +86,57 @@ void GlobalCardinalityClosedNode::updateState() {
   postAllEqualOnReplacedVars(invariantGraph(), splitOutputVarNodes());
 
   ViolationInvariantNode::updateState();
-  if (isReified() || !shouldHold()) {
+  if (isReified()) {
+    return;
+  }
+
+  if (!shouldHold()) {
+    const bool allOverlaps =
+        gccIsClosed(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+    if (!allOverlaps) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+    const auto bounds = gccBounds(invariantGraphConst(),
+                                  staticInputVarNodeIds(), _cover, _offsets);
+    assert(bounds.size() == _cover.size());
+    assert(outputVarNodeIds().size() == _cover.size());
+    for (size_t i = 0; i < bounds.size(); i++) {
+      if (!outputVarNodeConst(i).constDomain()->contains(bounds[i].first,
+                                                         bounds[i].second)) {
+        setState(InvariantNodeState::SUBSUMED);
+        outputVarNode(i).tightenDomainType(
+            outputVarNodeConst(i).constDomain()->isInterval()
+                ? DomainType::DOM_RANGE
+                : DomainType::DOM_DOMAIN);
+      }
+    }
     return;
   }
 
   const auto [varsToRemove, coverIndicesToRemove] =
       gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover);
 
-  for (const VarNodeId vId : varsToRemove) {
-    removeStaticInputVarNode(vId);
-  }
-
   const Int outputIndexOffset =
       reifiedViolationNodeId() == NULL_NODE_ID ? 0 : 1;
   assert(outputIndexOffset == 0 ||
          outputVarNodeIds().front() == reifiedViolationNodeId());
-  for (Int i = static_cast<Int>((*coverIndicesToRemove).size()) - 1; i >= 0;
+  for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
        --i) {
     _cover.erase(_cover.begin() + i);
+    _offsets.erase(_offsets.begin() + i);
     removeOutputAtIndex(i + outputIndexOffset);
+  }
+
+  for (const VarNodeId vId : varsToRemove) {
+    assert(varNodeConst(vId).isFixed());
+    for (size_t i = 0; i < _cover.size(); i++) {
+      if (varNodeConst(vId).lowerBound() == _cover[i]) {
+        ++_offsets[i];
+        break;
+      }
+    }
+    removeStaticInputVarNode(vId);
   }
 
   if (_cover.empty() || staticInputVarNodeIds().empty()) {
@@ -140,8 +175,8 @@ bool GlobalCardinalityClosedNode::replace() {
 
     violationVarNodeIds.emplace_back(invariantGraph().retrieveBoolVarNode());
 
-    invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
-        invariantGraph(), outputVarNodeIds()[i],
+    invariantGraph().addInvariantNode(std::make_shared<IntRelNode>(
+        invariantGraph(), outputVarNodeIds()[i], RelationType::REL_TYPE_EQ,
         intermediateOutputNodeIds.back(), violationVarNodeIds.back()));
   }
 
@@ -155,7 +190,8 @@ bool GlobalCardinalityClosedNode::replace() {
 
   invariantGraph().addInvariantNode(std::make_shared<GlobalCardinalityNode>(
       invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
-      std::vector<Int>{_cover}, std::move(intermediateOutputNodeIds)));
+      std::vector<Int>{_cover}, std::move(intermediateOutputNodeIds),
+      std::move(_offsets)));
 
   if (isReified()) {
     invariantGraph().addInvariantNode(std::make_shared<ArrayBoolAndNode>(

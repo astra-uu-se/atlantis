@@ -20,6 +20,8 @@ std::vector<VarNodeId>&& append(std::vector<VarNodeId>&&, VarNodeId);
 std::vector<VarNodeId> concat(const std::vector<VarNodeId>&,
                               const std::vector<VarNodeId>&);
 
+SortedUniqueVector duplicateVarNodeIndices(const std::vector<VarNodeId>&);
+
 std::vector<VarNodeId> pruneAllDifferentFree(
     InvariantGraph&, const std::vector<VarNodeId>& staticInputVarNodeIds);
 
@@ -40,14 +42,28 @@ void postAllEqualOnReplacedVars(
     InvariantGraph& invariantGraph,
     std::vector<std::pair<VarNodeId, VarNodeId>>&& replacedVarNodeIds);
 
-std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
+[[nodiscard]] std::pair<std::vector<VarNodeId>, SortedUniqueVector>
+gccUpdateState(const InvariantGraph& invariantGraph,
+               const std::vector<VarNodeId>& inputs,
+               const std::vector<Int>& cover);
+
+[[nodiscard]] std::pair<std::vector<VarNodeId>, SortedUniqueVector>
+gccUpdateState(const InvariantGraph& invariantGraph,
+               const std::vector<VarNodeId>& inputs,
+               const std::vector<Int>& cover, std::vector<Int>& lowerBounds,
+               std::vector<Int>& upperBounds);
+
+[[nodiscard]] bool gccIsClosed(const InvariantGraph& invariantGraph,
+                               const std::vector<VarNodeId>& inputs,
+                               const std::vector<Int>& cover);
+
+[[nodiscard]] std::vector<std::pair<Int, Int>> gccBounds(
     const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
     const std::vector<Int>& cover);
 
-std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
+[[nodiscard]] std::vector<std::pair<Int, Int>> gccBounds(
     const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
-    const std::vector<Int>& cover, std::vector<Int>& lowerBounds,
-    std::vector<Int>& upperBounds);
+    const std::vector<Int>& cover, const std::vector<Int>& offsets);
 
 propagation::VarViewId makeSolverConstIntRelation(
     propagation::SolverBase& solver, propagation::VarViewId lhs,

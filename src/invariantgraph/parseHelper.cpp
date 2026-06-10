@@ -51,6 +51,30 @@ std::vector<VarNodeId> concat(const std::vector<VarNodeId>& fst,
   return res;
 }
 
+SortedUniqueVector duplicateVarNodeIndices(const std::vector<VarNodeId>& vIds) {
+  std::vector<bool> isDuplicate(vIds.size(), false);
+  size_t numDuplicates = 0;
+  for (size_t i = 0; i < vIds.size(); ++i) {
+    if (isDuplicate[i]) {
+      continue;
+    }
+    for (size_t j = i + 1; j < vIds.size(); ++j) {
+      if (vIds[i] == vIds[j]) {
+        isDuplicate[j] = true;
+        ++numDuplicates;
+      }
+    }
+  }
+  std::vector<Int> duplicateIndices(numDuplicates);
+  size_t index = 0;
+  for (size_t i = 0; i < vIds.size(); ++i) {
+    if (isDuplicate[i]) {
+      duplicateIndices[index++] = static_cast<Int>(i);
+    }
+  }
+  return SortedUniqueVector(std::move(duplicateIndices));
+}
+
 static std::vector<std::pair<size_t, Int>> allDifferent(
     InvariantGraph& invariantGraph,
     const std::vector<VarNodeId>& inputVarNodeIds) {
@@ -195,7 +219,6 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     bool domainIntersectsCover = false;
     for (size_t coverIndex = 0; coverIndex < cover.size(); ++coverIndex) {
       if (invariantGraph.varNodeConst(vId).isFixed()) {
-        varsToRemove.emplace_back(vId);
         break;
       }
       if (invariantGraph.varNodeConst(vId).inDomain(cover[coverIndex])) {
@@ -432,6 +455,43 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
 
   return std::pair<std::vector<VarNodeId>, SortedUniqueVector>{
       varsToRemove, SortedUniqueVector(std::move(coverIndicesToRemove))};
+}
+bool gccIsClosed(const InvariantGraph& invariantGraph,
+                 const std::vector<VarNodeId>& inputs,
+                 const std::vector<Int>& cover) {
+  const SortedUniqueVector suv(std::vector<Int>{cover});
+  return std::ranges::none_of(inputs, [&](const VarNodeId vId) {
+    return invariantGraph.varNodeConst(vId).constDomain()->isDisjoint(suv);
+  });
+}
+std::vector<std::pair<Int, Int>> gccBounds(const InvariantGraph& invariantGraph,
+                                           const std::vector<VarNodeId>& inputs,
+                                           const std::vector<Int>& cover) {
+  const std::vector<Int> offsets(cover.size(), 0);
+  return gccBounds(invariantGraph, inputs, cover, offsets);
+}
+
+std::vector<std::pair<Int, Int>> gccBounds(const InvariantGraph& invariantGraph,
+                                           const std::vector<VarNodeId>& inputs,
+                                           const std::vector<Int>& cover,
+                                           const std::vector<Int>& offsets) {
+  assert(offsets.size() == cover.size());
+  std::vector<std::pair<Int, Int>> result(cover.size());
+  for (size_t i = 0; i < cover.size(); ++i) {
+    result[i].first = offsets[i];
+    result[i].second = offsets[i];
+  }
+  for (const VarNodeId vId : inputs) {
+    for (size_t i = 0; i < cover.size(); ++i) {
+      if (invariantGraph.varNodeConst(vId).constDomain()->contains(cover[i])) {
+        if (invariantGraph.varNodeConst(vId).isFixed()) {
+          ++result[i].first;
+        }
+        ++result[i].second;
+      }
+    }
+  }
+  return result;
 }
 
 Int maxOverlaps(const std::vector<std::pair<Int, Int>>& intervals) {

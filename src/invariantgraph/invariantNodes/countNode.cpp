@@ -80,15 +80,16 @@ void CountNode::updateState() {
   std::vector<Int> indicesToRemove;
   indicesToRemove.reserve(numInputVars());
   for (Int i = static_cast<Int>(numInputVars()) - 1; i >= 0; --i) {
-    if (_fixedNeedle.has_value() && staticInputVarNodeConst(i).isFixed()) {
-      _offset +=
-          (*_fixedNeedle == staticInputVarNodeConst(i).lowerBound() ? 1 : 0);
-      indicesToRemove.emplace_back(i);
-      continue;
-    }
-    if (!_fixedNeedle.has_value() &&
-        staticInputVarNodeConst(i).constDomain()->isDisjoint(
-            *varNodeConst(needle()).constDomain())) {
+    if (_fixedNeedle.has_value()) {
+      if (staticInputVarNodeConst(i).isFixed()) {
+        _offset +=
+            (*_fixedNeedle == staticInputVarNodeConst(i).lowerBound() ? 1 : 0);
+        indicesToRemove.emplace_back(i);
+      } else if (!staticInputVarNodeConst(i).inDomain(*_fixedNeedle)) {
+        indicesToRemove.emplace_back(i);
+      }
+    } else if (staticInputVarNodeConst(i).constDomain()->isDisjoint(
+                   *varNodeConst(needle()).constDomain())) {
       indicesToRemove.emplace_back(i);
     }
   }

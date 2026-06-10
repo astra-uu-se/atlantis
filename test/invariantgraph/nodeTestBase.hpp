@@ -390,6 +390,19 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   [[nodiscard]] std::vector<Int> makeInputVals(
+      const std::vector<Var>& inputVars) const {
+    std::vector<Int> inputVals;
+    inputVals.reserve(inputVars.size());
+    for (const Var& var : inputVars) {
+      inputVals.emplace_back(varNodeConst(var).lowerBound());
+    }
+    if (!inputVals.empty()) {
+      --inputVals.back();
+    }
+    return inputVals;
+  }
+
+  [[nodiscard]] std::vector<Int> makeInputVals(
       const std::vector<propagation::VarViewId>& inputVars) const {
     std::vector<Int> inputVals;
     inputVals.reserve(inputVars.size());
@@ -415,12 +428,56 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return -1;
   }
 
+  Int increaseNextVal(const std::vector<Var>& inputVars,
+                      std::vector<Int>& inputVals) const {
+    EXPECT_EQ(inputVars.size(), inputVals.size());
+    for (Int i = static_cast<Int>(inputVals.size()) - 1; i >= 0; --i) {
+      const auto vId = varId(inputVars.at(i));
+      if (vId == propagation::NULL_ID) {
+        continue;
+      }
+      const auto& vNode = varNodeConst(inputVars.at(i));
+      if (inputVals.at(i) < vNode.upperBound()) {
+        for (auto valIter = vNode.constDomain()->begin();
+             valIter != vNode.constDomain()->end(); ++valIter) {
+          if (*valIter > inputVals.at(i)) {
+            inputVals.at(i) = *valIter;
+            return i;
+          }
+        }
+        EXPECT_TRUE(false);
+      }
+      inputVals.at(i) = vNode.lowerBound();
+    }
+    return -1;
+  }
+
+  void setVarVals(const std::vector<Var>& inputVars,
+                  const std::vector<Int>& vals) const {
+    EXPECT_EQ(inputVars.size(), vals.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      if (varId(inputVars.at(i)) != propagation::NULL_ID) {
+        _solver->setValue(varId(inputVars.at(i)), vals.at(i));
+      }
+    }
+  }
+
   void setVarVals(const std::vector<propagation::VarViewId>& inputVars,
                   const std::vector<Int>& vals) const {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVars.at(i) != propagation::NULL_ID) {
         _solver->setValue(inputVars.at(i), vals.at(i));
+      }
+    }
+  }
+
+  void expectVarVals(const std::vector<Var>& inputVars,
+                     const std::vector<Int>& vals) const {
+    EXPECT_EQ(inputVars.size(), vals.size());
+    for (size_t i = 0; i < inputVars.size(); ++i) {
+      if (varId(inputVars.at(i)) != propagation::NULL_ID) {
+        EXPECT_EQ(_solver->currentValue(varId(inputVars.at(i))), vals.at(i));
       }
     }
   }
