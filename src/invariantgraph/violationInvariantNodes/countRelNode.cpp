@@ -302,7 +302,8 @@ bool CountRelNode::replace() {
   }
   if (_fixedNeedle.has_value()) {
     invariantGraph().addInvariantNode(std::make_shared<CountNode>(
-        invariantGraph(), bound(), std::move(varNodeIds), *_fixedNeedle));
+        invariantGraph(), bound(), std::move(varNodeIds), *_fixedNeedle,
+        _boundOffset));
   } else {
     invariantGraph().addInvariantNode(std::make_shared<CountNode>(
         invariantGraph(), bound(), std::move(varNodeIds), needle()));

@@ -80,10 +80,17 @@ class fzn_count_eqTest : public fzn_countTest {
     }
     const auto [lb, ub] = getBounds();
     if (lb == ub) {
+      if (isFixed(needle)) {
+        if (isFixedTo(reified, false)) {
+          return isFixedTo(bound, lb);
+        }
+        return !inDomain(bound, lb);
+      }
       if (isFixedTo(reified, false)) {
         return isFixedTo(bound, lb);
       }
-      return !inDomain(bound, lb);
+      return static_cast<Int>(inputs.size()) < lowerBound(bound) ||
+             upperBound(bound) < 0;
     }
     const bool alwaysUnsat = ub < lowerBound(bound) || upperBound(bound) < lb;
     if (alwaysUnsat) {
@@ -93,17 +100,16 @@ class fzn_count_eqTest : public fzn_countTest {
   }
 
   void generate() override {
-    const size_t size = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t size = *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
-    addIntVarArray({IntArgState::FIXED, IntArgState::PAR, IntArgState::FIXED},
-                   {{-3, -3}, {-1, -1}, {-2, -2}}, inputs);
-    addIntArg(IntArgState::VAR, needle);
-    addIntArg(IntArgState::PAR, 2, 2, bound);
+    addIntVarArray(inputs);
+    addIntArg(needle);
+    addIntArg(bound);
 
-    const bool isReified = true ? false : *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_eq_reif" : "fzn_count_eq";
     if (isReified) {
       addBoolArg(reified);

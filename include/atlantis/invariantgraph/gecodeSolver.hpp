@@ -104,7 +104,8 @@ class GecodeSolver : public ConstraintSolver {
   Gecode::IntArgs gcc_get_cover(const Gecode::IntVarArgs& inputVars,
                                 const std::vector<Int>& cover,
                                 Gecode::IntVarArgs& countVars);
-  bool fixedTo(ConstraintVarId varId, Int val);
+
+  bool allFixed(const std::vector<ConstraintVarId>& vars);
 
   bool fixedToTrue(ConstraintVarId b);
 

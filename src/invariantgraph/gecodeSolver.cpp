@@ -363,9 +363,10 @@ Gecode::IntArgs GecodeSolver::gcc_get_cover(const Gecode::IntVarArgs& inputVars,
   return intArgCover;
 }
 
-bool GecodeSolver::fixedTo(ConstraintVarId varId, Int val) {
-  return intVar(varId).assigned() &&
-         intVar(varId).val() == static_cast<int>(val);
+bool GecodeSolver::allFixed(const std::vector<ConstraintVarId>& vars) {
+  return std::ranges::all_of(vars, [this](const ConstraintVarId v) {
+    return v.isBoolVar() ? boolVar(v).assigned() : intVar(v).assigned();
+  });
 }
 
 bool GecodeSolver::fixedToTrue(ConstraintVarId b) {
@@ -1248,7 +1249,7 @@ void GecodeSolver::fzn_count(const Int bound, const RelationType relation,
                              const Int needle, const bool shouldHold) {
   Gecode::count(_space, intVarArgs(inputs), static_cast<int>(needle),
                 toGecodeIntRelType(relationTypeConverse(relation), shouldHold),
-                static_cast<int>(bound));
+                static_cast<int>(bound), Gecode::IPL_DOM);
 }
 
 void GecodeSolver::fzn_count(const ConstraintVarId bound,
@@ -1260,7 +1261,7 @@ void GecodeSolver::fzn_count(const ConstraintVarId bound,
   }
   Gecode::count(_space, intVarArgs(inputs), static_cast<int>(needle),
                 toGecodeIntRelType(relationTypeConverse(relation), shouldHold),
-                intVar(bound));
+                intVar(bound), Gecode::IPL_DOM);
 }
 
 void GecodeSolver::fzn_count(const Int bound, const RelationType relation,
@@ -1270,9 +1271,12 @@ void GecodeSolver::fzn_count(const Int bound, const RelationType relation,
   if (intVar(needle).assigned()) {
     return fzn_count(bound, relation, inputs, intVar(needle).val(), shouldHold);
   }
+  const Gecode::IntPropLevel ipl = allFixed(inputs) || intVar(needle).size() < 4
+                                       ? Gecode::IPL_DOM
+                                       : Gecode::IPL_DEF;
   Gecode::count(_space, intVarArgs(inputs), intVar(needle),
                 toGecodeIntRelType(relationTypeConverse(relation), shouldHold),
-                static_cast<int>(bound));
+                static_cast<int>(bound), ipl);
 }
 
 void GecodeSolver::fzn_count(const ConstraintVarId bound,
@@ -1290,9 +1294,13 @@ void GecodeSolver::fzn_count(const ConstraintVarId bound,
   if (intVar(needle).assigned()) {
     return fzn_count(bound, relation, inputs, intVar(needle).val(), shouldHold);
   }
+  const Gecode::IntPropLevel ipl =
+      allFixed(inputs) || intVar(needle).size() < 4 || intVar(bound).size() < 4
+          ? Gecode::IPL_DOM
+          : Gecode::IPL_DEF;
   Gecode::count(_space, intVarArgs(inputs), intVar(needle),
                 toGecodeIntRelType(relationTypeConverse(relation), shouldHold),
-                intVar(bound));
+                intVar(bound), ipl);
 }
 
 void GecodeSolver::fzn_count_reif(const Int bound, const RelationType relation,
@@ -1406,6 +1414,9 @@ void GecodeSolver::fzn_table_int(const std::vector<ConstraintVarId>& inputs,
 void GecodeSolver::fzn_table_int_reif(
     const std::vector<ConstraintVarId>& inputs,
     const std::vector<std::vector<Int>>& table, const ConstraintVarId reified) {
+  if (boolVar(reified).assigned()) {
+    return fzn_table_int(inputs, table, boolVar(reified).val() == 1);
+  }
   auto inputVars = intVarArgs(inputs);
   const Gecode::TupleSet ts = tupleSet(table);
   Gecode::unshare(_space, inputVars);
