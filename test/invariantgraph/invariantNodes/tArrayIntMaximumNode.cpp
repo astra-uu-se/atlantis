@@ -119,14 +119,6 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
     return;
   }
 
-  std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : inputVars) {
-    if (varNode(var).upperBound() > lb) {
-      EXPECT_NE(varId(var), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(var));
-    }
-  }
-
   VarNode& outputNode = varNode(outputVar);
 
   if (outputNode.isFixed()) {
@@ -140,18 +132,18 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
 
   const propagation::VarViewId outputId = varId(outputVar);
 
-  std::vector<Int> inputVals = makeInputVals(inputVarIds);
+  std::vector<Int> inputVals = makeInputVals(inputVars);
 
-  while (increaseNextVal(inputVarIds, inputVals) >= 0) {
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
     _solver->beginMove();
-    setVarVals(inputVarIds, inputVals);
+    setVarVals(inputVars, inputVals);
     _solver->endMove();
 
     _solver->beginProbe();
     _solver->query(outputId);
     _solver->endProbe();
 
-    expectVarVals(inputVarIds, inputVals);
+    expectVarVals(inputVars, inputVals);
 
     const Int expected = computeOutput(true);
     const Int actual = _solver->currentValue(outputId);

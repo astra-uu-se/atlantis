@@ -11,10 +11,10 @@ namespace atlantis::invariantgraph::fzn {
 bool fzn_count_leq(FznInvariantGraph& graph,
                    const std::shared_ptr<fznparser::IntVarArray>& inputs,
                    const fznparser::IntArg& needle,
-                   const fznparser::IntArg& count) {
+                   const fznparser::IntArg& bound) {
   graph.addInvariantNode(std::make_shared<CountRelNode>(
-      graph, graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle),
-      graph.retrieveVarNode(count), RelationType::REL_TYPE_LE));
+      graph, graph.retrieveVarNode(bound), RelationType::REL_TYPE_LE,
+      graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle)));
   return true;
 }
 
@@ -24,8 +24,8 @@ bool fzn_count_leq_reif(FznInvariantGraph& graph,
                         const fznparser::IntArg& count,
                         const fznparser::BoolArg& reified) {
   graph.addInvariantNode(std::make_shared<CountRelNode>(
-      graph, graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle),
-      graph.retrieveVarNode(count), RelationType::REL_TYPE_LE,
+      graph, graph.retrieveVarNode(count), RelationType::REL_TYPE_LE,
+      graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle),
       graph.retrieveVarNode(reified)));
   return true;
 }

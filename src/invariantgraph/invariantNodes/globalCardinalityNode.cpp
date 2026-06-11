@@ -11,10 +11,8 @@
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/countNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
 #include "atlantis/propagation/invariants/globalCardinalityOpen.hpp"
 #include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
 
 namespace atlantis::invariantgraph {
@@ -91,8 +89,9 @@ bool GlobalCardinalityNode::replace() {
   }
   assert(_cover.size() == 1);
   invariantGraph().addInvariantNode(std::make_shared<CountNode>(
-      invariantGraph(), std::vector<VarNodeId>(staticInputVarNodeIds()),
-      _cover.front(), outputVarNodeIds().front(), _countOffsets.front()));
+      invariantGraph(), outputVarNodeIds().front(),
+      std::vector<VarNodeId>(staticInputVarNodeIds()), _cover.front(),
+      _countOffsets.front()));
   return true;
 }
 

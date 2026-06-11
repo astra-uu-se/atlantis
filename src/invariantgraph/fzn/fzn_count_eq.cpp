@@ -12,21 +12,21 @@ namespace atlantis::invariantgraph::fzn {
 bool fzn_count_eq(FznInvariantGraph& graph,
                   const std::shared_ptr<fznparser::IntVarArray>& inputs,
                   const fznparser::IntArg& needle,
-                  const fznparser::IntArg& count) {
+                  const fznparser::IntArg& amount) {
   graph.addInvariantNode(std::make_shared<CountNode>(
-      graph, graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle),
-      graph.retrieveVarNode(count)));
+      graph, graph.retrieveVarNode(amount), graph.retrieveVarNodes(inputs),
+      graph.retrieveVarNode(needle)));
   return true;
 }
 
 bool fzn_count_eq_reif(FznInvariantGraph& graph,
                        const std::shared_ptr<fznparser::IntVarArray>& inputs,
                        const fznparser::IntArg& needle,
-                       const fznparser::IntArg& count,
+                       const fznparser::IntArg& amount,
                        const fznparser::BoolArg& reified) {
   graph.addInvariantNode(std::make_shared<CountRelNode>(
-      graph, graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle),
-      graph.retrieveVarNode(count), RelationType::REL_TYPE_EQ,
+      graph, graph.retrieveVarNode(amount), RelationType::REL_TYPE_EQ,
+      graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle),
       graph.retrieveVarNode(reified)));
   return true;
 }

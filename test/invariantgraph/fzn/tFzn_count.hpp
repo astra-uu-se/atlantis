@@ -21,7 +21,7 @@ class fzn_countTest : public FznTestBase {
  public:
   std::vector<std::string> inputs{};
   std::string needle{"needle"};
-  std::string output{"output"};
+  std::string bound{"bound"};
   std::string reified{"reified"};
 
   [[nodiscard]] std::pair<Int, Int> getBounds() const {
@@ -104,7 +104,7 @@ class fzn_countTest : public FznTestBase {
 
   void query() override {
     for (const auto& vId :
-         std::array{varId(reified), varId(output), totalViolationVarId()}) {
+         std::array{varId(reified), varId(bound), totalViolationVarId()}) {
       if (vId != propagation::NULL_ID) {
         _solver->query(vId);
       }

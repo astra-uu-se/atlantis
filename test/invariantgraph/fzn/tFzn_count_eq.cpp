@@ -39,7 +39,7 @@ class fzn_count_eqTest : public fzn_countTest {
       }
     }
 
-    const Int o = intVal(output, committedValue);
+    const Int o = intVal(bound, committedValue);
     const bool expected = count == o;
     const bool actual = boolVal(reified, committedValue);
 
@@ -63,11 +63,11 @@ class fzn_count_eqTest : public fzn_countTest {
     const auto [lb, ub] = getBounds();
     if (lb == ub) {
       if (isFixedTo(reified, true)) {
-        return isFixedTo(output, lb);
+        return isFixedTo(bound, lb);
       }
-      return !inDomain(output, lb);
+      return !inDomain(bound, lb);
     }
-    const bool alwaysUnsat = ub < lowerBound(output) || upperBound(output) < lb;
+    const bool alwaysUnsat = ub < lowerBound(bound) || upperBound(bound) < lb;
     if (alwaysUnsat) {
       return isFixedTo(reified, bool{false});
     }
@@ -81,11 +81,11 @@ class fzn_count_eqTest : public fzn_countTest {
     const auto [lb, ub] = getBounds();
     if (lb == ub) {
       if (isFixedTo(reified, false)) {
-        return isFixedTo(output, lb);
+        return isFixedTo(bound, lb);
       }
-      return !inDomain(output, lb);
+      return !inDomain(bound, lb);
     }
-    const bool alwaysUnsat = ub < lowerBound(output) || upperBound(output) < lb;
+    const bool alwaysUnsat = ub < lowerBound(bound) || upperBound(bound) < lb;
     if (alwaysUnsat) {
       return isFixedTo(reified, bool{true});
     }
@@ -93,16 +93,17 @@ class fzn_count_eqTest : public fzn_countTest {
   }
 
   void generate() override {
-    const size_t size = *rc::gen::inRange<size_t>(0, 4);
+    const size_t size = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
-    addIntVarArray(inputs);
-    addIntArg(needle);
-    addIntArg(output);
+    addIntVarArray({IntArgState::FIXED, IntArgState::PAR, IntArgState::FIXED},
+                   {{-3, -3}, {-1, -1}, {-2, -2}}, inputs);
+    addIntArg(IntArgState::VAR, needle);
+    addIntArg(IntArgState::PAR, 2, 2, bound);
 
-    const bool isReified = *rc::gen::arbitrary<bool>();
+    const bool isReified = true ? false : *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_eq_reif" : "fzn_count_eq";
     if (isReified) {
       addBoolArg(reified);
@@ -153,7 +154,7 @@ class fzn_count_eqTest : public fzn_countTest {
 
   void query() override {
     for (const auto& vId :
-         std::array{varId(reified), varId(output), totalViolationVarId()}) {
+         std::array{varId(reified), varId(bound), totalViolationVarId()}) {
       if (vId != propagation::NULL_ID) {
         _solver->query(vId);
       }

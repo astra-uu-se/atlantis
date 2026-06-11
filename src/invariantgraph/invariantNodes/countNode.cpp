@@ -26,19 +26,20 @@ size_t CountNode::numInputVars() const {
   return staticInputVarNodeIds().size() - (_fixedNeedle.has_value() ? 0 : 1);
 }
 
-CountNode::CountNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                     const Int needle, const VarNodeId count, const Int offset)
+CountNode::CountNode(InvariantGraph& graph, const VarNodeId count,
+                     std::vector<VarNodeId>&& vars, const Int needle,
+                     const Int countOffset)
     : InvariantNode(graph, std::vector<VarNodeId>{count}, std::move(vars)),
       _fixedNeedle(needle),
-      _offset(offset) {}
+      _countOffset(countOffset) {}
 
-CountNode::CountNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                     const VarNodeId needle, const VarNodeId count,
-                     const Int offset)
+CountNode::CountNode(InvariantGraph& graph, const VarNodeId count,
+                     std::vector<VarNodeId>&& vars, const VarNodeId needle,
+                     const Int countOffset)
     : InvariantNode(graph, std::vector<VarNodeId>{count},
                     append(std::move(vars), needle)),
       _fixedNeedle(std::nullopt),
-      _offset(offset) {}
+      _countOffset(countOffset) {}
 
 void CountNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
@@ -60,13 +61,13 @@ void CountNode::postConstraint() {
     inputs[i] = staticInputVarNodeConst(i).constraintVarId();
   }
   if (_fixedNeedle.has_value()) {
-    return constraintSolver().fzn_count(
-        inputs, *_fixedNeedle, RelationType::REL_TYPE_EQ,
-        outputVarNodeConst(0).constraintVarId(), true);
+    return constraintSolver().fzn_count(outputVarNodeConst(0).constraintVarId(),
+                                        RelationType::REL_TYPE_EQ, inputs,
+                                        *_fixedNeedle, true);
   }
   return constraintSolver().fzn_count(
-      inputs, varNodeConst(needle()).constraintVarId(),
-      RelationType::REL_TYPE_EQ, outputVarNodeConst(0).constraintVarId(), true);
+      outputVarNodeConst(0).constraintVarId(), RelationType::REL_TYPE_EQ,
+      inputs, varNodeConst(needle()).constraintVarId(), true);
 }
 
 void CountNode::updateState() {
@@ -82,7 +83,7 @@ void CountNode::updateState() {
   for (Int i = static_cast<Int>(numInputVars()) - 1; i >= 0; --i) {
     if (_fixedNeedle.has_value()) {
       if (staticInputVarNodeConst(i).isFixed()) {
-        _offset +=
+        _countOffset +=
             (*_fixedNeedle == staticInputVarNodeConst(i).lowerBound() ? 1 : 0);
         indicesToRemove.emplace_back(i);
       } else if (!staticInputVarNodeConst(i).inDomain(*_fixedNeedle)) {
@@ -101,7 +102,7 @@ void CountNode::updateState() {
     return;
   }
   if (outputVarNodeConst(0).isFixed() && _fixedNeedle.has_value() &&
-      _offset + outputVarNodeConst(0).lowerBound() <= 0) {
+      _countOffset + outputVarNodeConst(0).lowerBound() <= 0) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -116,7 +117,7 @@ bool CountNode::canBeMadeImplicit() const {
   if (!outputVarNodeConst(0).isFixed()) {
     return false;
   }
-  if (outputVarNodeConst(0).lowerBound() + _offset <= 0) {
+  if (outputVarNodeConst(0).lowerBound() + _countOffset <= 0) {
     return false;
   }
   const bool allSourceVars =
@@ -139,7 +140,7 @@ bool CountNode::makeImplicit() {
   const size_t amount = invariantGraphConst()
                             .varNodeConst(outputVarNodeIds().front())
                             .lowerBound() -
-                        _offset;
+                        _countOffset;
 
   invariantGraph().addImplicitConstraintNode(
       std::make_shared<CountImplicitNode>(
@@ -155,7 +156,7 @@ void CountNode::registerOutputVars(propagation::SolverBase& solver,
         outputVarNodeIds().front(),
         solver.makeIntView<propagation::IfThenElseConst>(
             solver, mapping.solverId(staticInputVarNodeIds().front()),
-            _offset + 1, _offset, *_fixedNeedle));
+            _countOffset + 1, _countOffset, *_fixedNeedle));
   } else {
     makeSolverVar(outputVarNodeIds().front(), solver, mapping);
   }
@@ -186,10 +187,10 @@ void CountNode::registerNode(propagation::SolverBase& solver,
   if (_fixedNeedle.has_value()) {
     solver.makeInvariant<propagation::CountConst>(
         solver, mapping.solverId(outputVarNodeIds().front()), *_fixedNeedle,
-        std::move(solverVars), _offset);
+        std::move(solverVars), _countOffset);
     return;
   }
-  assert(_offset == 0);
+  assert(_countOffset == 0);
   solver.makeInvariant<propagation::Count>(
       solver, mapping.solverId(outputVarNodeIds().front()),
       mapping.solverId(needle()), std::move(solverVars));

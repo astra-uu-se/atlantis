@@ -24,98 +24,98 @@ VarNodeId CountRelNode::needle() const {
 
 size_t CountRelNode::needleIndex() const { return numInputVars(); }
 
-VarNodeId CountRelNode::amount() const {
-  return _fixedAmount.has_value() ? NULL_NODE_ID
-                                  : staticInputVarNodeIds()[amountIndex()];
+VarNodeId CountRelNode::bound() const {
+  return _fixedBound.has_value() ? NULL_NODE_ID
+                                 : staticInputVarNodeIds()[boundIndex()];
   ;
 }
 
-size_t CountRelNode::amountIndex() const {
+size_t CountRelNode::boundIndex() const {
   return numInputVars() + (_fixedNeedle.has_value() ? 0 : 1);
 }
 
 size_t CountRelNode::numInputVars() const {
   return staticInputVarNodeIds().size() - (_fixedNeedle.has_value() ? 0 : 1) -
-         (_fixedAmount.has_value() ? 0 : 1);
+         (_fixedBound.has_value() ? 0 : 1);
 }
 
-CountRelNode::CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           const Int needle, const Int amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, const Int amount,
                            const RelationType relationType,
+                           std::vector<VarNodeId>&& vars, const Int needle,
                            const bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(vars), shouldHold),
       _fixedNeedle(needle),
-      _fixedAmount(amount),
+      _fixedBound(amount),
       _relType(relationType) {}
 
-CountRelNode::CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           const Int needle, const VarNodeId amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, const VarNodeId amount,
                            const RelationType relationType,
+                           std::vector<VarNodeId>&& vars, const Int needle,
                            const bool shouldHold)
     : ViolationInvariantNode(graph, {}, append(std::move(vars), amount),
                              shouldHold),
       _fixedNeedle(needle),
-      _fixedAmount(std::nullopt),
+      _fixedBound(std::nullopt),
       _relType(relationType) {}
 
-CountRelNode::CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           const VarNodeId needle, const Int amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, const Int amount,
                            const RelationType relationType,
-                           const bool shouldHold)
+                           std::vector<VarNodeId>&& vars,
+                           const VarNodeId needle, const bool shouldHold)
     : ViolationInvariantNode(graph, {}, append(std::move(vars), needle),
                              shouldHold),
       _fixedNeedle(std::nullopt),
-      _fixedAmount(amount),
+      _fixedBound(amount),
       _relType(relationType) {}
 
-CountRelNode::CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           const VarNodeId needle, const VarNodeId amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, const VarNodeId amount,
                            const RelationType relationType,
-                           const bool shouldHold)
+                           std::vector<VarNodeId>&& vars,
+                           const VarNodeId needle, const bool shouldHold)
     : ViolationInvariantNode(graph, {},
                              append(append(std::move(vars), needle), amount),
                              shouldHold),
       _fixedNeedle(std::nullopt),
-      _fixedAmount(std::nullopt),
+      _fixedBound(std::nullopt),
       _relType(relationType) {}
 
-CountRelNode::CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           const Int needle, const Int amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, const Int amount,
                            const RelationType relationType,
+                           std::vector<VarNodeId>&& vars, const Int needle,
                            const VarNodeId reified)
     : ViolationInvariantNode(graph, {}, std::move(vars), reified),
       _fixedNeedle(needle),
-      _fixedAmount(amount),
+      _fixedBound(amount),
       _relType(relationType) {}
 
-CountRelNode::CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           const Int needle, const VarNodeId amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, const VarNodeId amount,
                            const RelationType relationType,
+                           std::vector<VarNodeId>&& vars, const Int needle,
                            const VarNodeId reified)
     : ViolationInvariantNode(graph, {}, append(std::move(vars), amount),
                              reified),
       _fixedNeedle(needle),
-      _fixedAmount(std::nullopt),
+      _fixedBound(std::nullopt),
       _relType(relationType) {}
 
-CountRelNode::CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           const VarNodeId needle, const Int amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, const Int amount,
                            const RelationType relationType,
-                           const VarNodeId reified)
+                           std::vector<VarNodeId>&& vars,
+                           const VarNodeId needle, const VarNodeId reified)
     : ViolationInvariantNode(graph, {}, append(std::move(vars), needle),
                              reified),
       _fixedNeedle(std::nullopt),
-      _fixedAmount(amount),
+      _fixedBound(amount),
       _relType(relationType) {}
 
-CountRelNode::CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           const VarNodeId needle, const VarNodeId amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, const VarNodeId amount,
                            const RelationType relationType,
-                           const VarNodeId reified)
+                           std::vector<VarNodeId>&& vars,
+                           const VarNodeId needle, const VarNodeId reified)
     : ViolationInvariantNode(
           graph, {}, append(append(std::move(vars), needle), amount), reified),
       _fixedNeedle(std::nullopt),
-      _fixedAmount(std::nullopt),
+      _fixedBound(std::nullopt),
       _relType(relationType) {}
 
 void CountRelNode::init(const InvariantNodeId id) {
@@ -133,64 +133,67 @@ void CountRelNode::postConstraint() {
   for (size_t i = 0; i < numInputVars(); ++i) {
     inputs[i] = staticInputVarNodeConst(i).constraintVarId();
   }
-  assert(_offset == 0);
+  assert(_boundOffset == 0);
   if (isReified()) {
     if (_fixedNeedle.has_value()) {
-      if (_fixedAmount.has_value()) {
+      if (_fixedBound.has_value()) {
         return constraintSolver().fzn_count_reif(
-            inputs, *_fixedNeedle, _relType, *_fixedAmount,
+            *_fixedBound, _relType, inputs, *_fixedNeedle,
             reifiedVarNodeConst().constraintVarId());
       }
       return constraintSolver().fzn_count_reif(
-          inputs, *_fixedNeedle, _relType,
-          varNodeConst(amount()).constraintVarId(),
+          varNodeConst(bound()).constraintVarId(), _relType, inputs,
+          *_fixedNeedle, reifiedVarNodeConst().constraintVarId());
+    }
+    if (_fixedBound.has_value()) {
+      return constraintSolver().fzn_count_reif(
+          *_fixedBound, _relType, inputs,
+          varNodeConst(needle()).constraintVarId(),
           reifiedVarNodeConst().constraintVarId());
     }
-    if (_fixedAmount.has_value()) {
-      return constraintSolver().fzn_count_reif(
-          inputs, varNodeConst(needle()).constraintVarId(), _relType,
-          *_fixedAmount, reifiedVarNodeConst().constraintVarId());
-    }
     return constraintSolver().fzn_count_reif(
-        inputs, varNodeConst(needle()).constraintVarId(), _relType,
-        varNodeConst(amount()).constraintVarId(),
+        varNodeConst(bound()).constraintVarId(), _relType, inputs,
+        varNodeConst(needle()).constraintVarId(),
         reifiedVarNodeConst().constraintVarId());
   }
   if (_fixedNeedle.has_value()) {
-    if (_fixedAmount.has_value()) {
-      return constraintSolver().fzn_count(inputs, *_fixedNeedle, _relType,
-                                          *_fixedAmount, shouldHold());
+    if (_fixedBound.has_value()) {
+      return constraintSolver().fzn_count(*_fixedBound, _relType, inputs,
+                                          *_fixedNeedle, shouldHold());
     }
-    return constraintSolver().fzn_count(
-        inputs, *_fixedNeedle, _relType,
-        varNodeConst(amount()).constraintVarId(), shouldHold());
+    return constraintSolver().fzn_count(varNodeConst(bound()).constraintVarId(),
+                                        _relType, inputs, *_fixedNeedle,
+                                        shouldHold());
   }
-  if (_fixedAmount.has_value()) {
+  if (_fixedBound.has_value()) {
     return constraintSolver().fzn_count(
-        inputs, varNodeConst(needle()).constraintVarId(), _relType,
-        *_fixedAmount, shouldHold());
+        *_fixedBound, _relType, inputs,
+        varNodeConst(needle()).constraintVarId(), shouldHold());
   }
   return constraintSolver().fzn_count(
-      inputs, varNodeConst(needle()).constraintVarId(), _relType,
-      varNodeConst(amount()).constraintVarId(), shouldHold());
+      varNodeConst(bound()).constraintVarId(), _relType, inputs,
+      varNodeConst(needle()).constraintVarId(), shouldHold());
 }
 
 void CountRelNode::updateState() {
   ViolationInvariantNode::updateState();
   // update fixed needle and amount
   if (!_fixedNeedle.has_value() && varNodeConst(needle()).isFixed()) {
-    // updating _fixedNeedle modified indices
+    // updating _fixedNeedle modifies indices
     const Int n = varNodeConst(needle()).lowerBound();
     removeStaticInputAtIndex(needleIndex());
     _fixedNeedle = n;
   }
-  if (!_fixedAmount.has_value() && varNodeConst(amount()).isFixed()) {
-    // updating _fixedAmount modified indices
-    const Int a = varNodeConst(amount()).lowerBound();
-    removeStaticInputAtIndex(amountIndex());
-    _fixedAmount = a;
+  if (!_fixedBound.has_value() && varNodeConst(bound()).isFixed()) {
+    // updating _fixedAmount modifies indices
+    const Int a = varNodeConst(bound()).lowerBound();
+    removeStaticInputAtIndex(boundIndex());
+    _fixedBound = a;
   }
-  if (isReified() && !shouldHold()) {
+  if (isReified()) {
+    return;
+  }
+  if (!isReified() && !shouldHold()) {
     setShouldHold(true);
     _relType = relationTypeComplement(_relType);
   }
@@ -198,7 +201,7 @@ void CountRelNode::updateState() {
   indicesToRemove.reserve(numInputVars());
   for (Int i = static_cast<Int>(numInputVars()) - 1; i >= 0; --i) {
     if (_fixedNeedle.has_value() && staticInputVarNodeConst(i).isFixed()) {
-      _offset +=
+      _boundOffset +=
           (*_fixedNeedle == staticInputVarNodeConst(i).lowerBound() ? 1 : 0);
       indicesToRemove.emplace_back(i);
       continue;
@@ -236,33 +239,44 @@ void CountRelNode::updateState() {
                  std::min(needleUb, staticInputVarNodeConst(i).upperBound()))};
   }
 
-  const Int actualLb = _offset;
-  const Int actualUb = _offset + maxOverlaps(domIntervals);
+  const Int actualLb = _boundOffset;
+  const Int actualUb = _boundOffset + maxOverlaps(domIntervals);
 
-  const Int amountLb = _fixedAmount.has_value()
-                           ? *_fixedAmount
-                           : varNodeConst(amount()).lowerBound();
-  const Int amountUb = _fixedAmount.has_value()
-                           ? *_fixedAmount
-                           : varNodeConst(amount()).upperBound();
+  const Int boundLb = _fixedBound.has_value()
+                          ? *_fixedBound
+                          : varNodeConst(bound()).lowerBound();
+  const Int boundUb = _fixedBound.has_value()
+                          ? *_fixedBound
+                          : varNodeConst(bound()).upperBound();
 
   assert(actualLb < actualUb || numInputVars() == 0);
-  if (_relType == RelationType::REL_TYPE_EQ ||
-      _relType == RelationType::REL_TYPE_NE) {
-    if ((actualLb == actualUb && amountLb == amountUb) || actualUb < amountLb ||
-        amountUb < actualLb) {
+  if (_relType == RelationType::REL_TYPE_EQ) {
+    if (boundLb == boundUb && actualLb == actualUb && boundLb == actualUb) {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
-  } else if (_relType == RelationType::REL_TYPE_GE ||
-             _relType == RelationType::REL_TYPE_LT) {
-    if (amountLb >= actualUb || amountUb < actualLb) {
+  } else if (_relType == RelationType::REL_TYPE_NE) {
+    if (actualUb < boundLb || boundUb < actualLb) {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
-  } else if (_relType == RelationType::REL_TYPE_GT ||
-             _relType == RelationType::REL_TYPE_LE) {
-    if (amountLb > actualUb || amountUb <= actualLb) {
+  } else if (_relType == RelationType::REL_TYPE_GE) {
+    if (boundLb >= actualUb) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+  } else if (_relType == RelationType::REL_TYPE_GT) {
+    if (boundLb > actualUb) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+  } else if (_relType == RelationType::REL_TYPE_LT) {
+    if (boundUb < actualLb) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+  } else if (_relType == RelationType::REL_TYPE_LE) {
+    if (boundUb <= actualLb) {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
@@ -273,7 +287,7 @@ bool CountRelNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE) {
     return false;
   }
-  return !isReified() && !_fixedAmount.has_value() &&
+  return !isReified() && !_fixedBound.has_value() &&
          (shouldHold() ? _relType : relationTypeComplement(_relType)) ==
              RelationType::REL_TYPE_EQ;
 }
@@ -288,10 +302,10 @@ bool CountRelNode::replace() {
   }
   if (_fixedNeedle.has_value()) {
     invariantGraph().addInvariantNode(std::make_shared<CountNode>(
-        invariantGraph(), std::move(varNodeIds), *_fixedNeedle, amount()));
+        invariantGraph(), bound(), std::move(varNodeIds), *_fixedNeedle));
   } else {
     invariantGraph().addInvariantNode(std::make_shared<CountNode>(
-        invariantGraph(), std::move(varNodeIds), needle(), amount()));
+        invariantGraph(), bound(), std::move(varNodeIds), needle()));
   }
   return true;
 }
@@ -300,21 +314,21 @@ void CountRelNode::registerOutputVars(propagation::SolverBase& solver,
                                       SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
     if (numInputVars() == 0 && isReified()) {
-      assert(!_fixedAmount.has_value());
+      assert(!_fixedBound.has_value());
       setViolationVarId(
-          makeSolverConstIntRelation(solver, mapping.solverId(amount()),
-                                     _relType, _offset, true, true),
+          makeSolverConstIntRelation(solver, mapping.solverId(bound()),
+                                     _relType, _boundOffset, shouldHold()),
           mapping);
     } else {
       assert(isReified() ||
              (shouldHold() ? _relType : relationTypeComplement(_relType)) !=
                  RelationType::REL_TYPE_EQ ||
-             _fixedAmount.has_value());
+             _fixedBound.has_value());
       mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
-      if (_fixedAmount.has_value()) {
+      if (_fixedBound.has_value()) {
         setViolationVarId(makeSolverConstIntRelation(
                               solver, mapping.intermediateId(id()), _relType,
-                              *_fixedAmount + _offset, shouldHold(), true),
+                              *_fixedBound + _boundOffset, shouldHold(), true),
                           mapping);
       } else {
         setViolationVarId(
@@ -341,15 +355,15 @@ void CountRelNode::registerNode(propagation::SolverBase& solver,
   if (_fixedNeedle.has_value()) {
     solver.makeInvariant<propagation::CountConst>(
         solver, mapping.intermediateId(id()), *_fixedNeedle,
-        std::move(solverVars), _offset);
+        std::move(solverVars), _boundOffset);
   } else {
-    assert(_offset == 0);
+    assert(_boundOffset == 0);
     solver.makeInvariant<propagation::Count>(
         solver, mapping.intermediateId(id()), mapping.solverId(needle()),
         std::move(solverVars));
   }
-  if (!_fixedAmount.has_value()) {
-    makeSolverIntRelation(solver, mapping.solverId(amount()), _relType,
+  if (!_fixedBound.has_value()) {
+    makeSolverIntRelation(solver, mapping.solverId(bound()), _relType,
                           mapping.intermediateId(id()), violationVarId(mapping),
                           shouldHold());
   }

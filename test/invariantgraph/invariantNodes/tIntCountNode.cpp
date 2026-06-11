@@ -80,8 +80,8 @@ class IntCountNodeTestFixture : public NodeTestBase<CountNode> {
     }
     retrieveIntVarNode(outputVar);
 
-    createInvariantNode(*_invariantGraph, varNodeIds(inputVars), needle,
-                        varNodeId(outputVar));
+    createInvariantNode(*_invariantGraph, varNodeId(outputVar),
+                        varNodeIds(inputVars), needle);
   }
 };  // namespace atlantis::testing
 

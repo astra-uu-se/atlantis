@@ -38,7 +38,7 @@ class fzn_count_neqTest : public fzn_countTest {
       }
     }
     RC_LOG() << "count = " << count << std::endl;
-    const Int o = intVal(output, committedValue);
+    const Int o = intVal(bound, committedValue);
     RC_LOG() << "output = " << o << std::endl;
     const bool expected = count != o;
     RC_LOG() << "expected = " << to_string(expected) << std::endl;
@@ -60,11 +60,11 @@ class fzn_count_neqTest : public fzn_countTest {
     const auto [lb, ub] = getBounds();
     if (lb == ub) {
       if (isFixedTo(reified, true)) {
-        return !isFixedTo(output, lb);
+        return !isFixedTo(bound, lb);
       }
-      return inDomain(output, lb);
+      return inDomain(bound, lb);
     }
-    const bool alwaysSat = ub < lowerBound(output) || upperBound(output) < lb;
+    const bool alwaysSat = ub < lowerBound(bound) || upperBound(bound) < lb;
     if (alwaysSat) {
       return isFixedTo(reified, bool{true});
     }
@@ -78,11 +78,11 @@ class fzn_count_neqTest : public fzn_countTest {
     const auto [lb, ub] = getBounds();
     if (lb == ub) {
       if (isFixedTo(reified, true)) {
-        return isFixedTo(output, lb);
+        return isFixedTo(bound, lb);
       }
-      return !inDomain(output, lb);
+      return !inDomain(bound, lb);
     }
-    const bool alwaysSat = ub < lowerBound(output) || upperBound(output) < lb;
+    const bool alwaysSat = ub < lowerBound(bound) || upperBound(bound) < lb;
     if (alwaysSat) {
       return isFixedTo(reified, bool{false});
     }
@@ -97,7 +97,7 @@ class fzn_count_neqTest : public fzn_countTest {
     }
     addIntVarArray(inputs);
     addIntArg(needle);
-    addIntArg(output);
+    addIntArg(bound);
 
     const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_neq_reif" : "fzn_count_neq";
@@ -129,7 +129,7 @@ class fzn_count_neqTest : public fzn_countTest {
 
   void query() override {
     for (const auto& vId :
-         std::array{varId(reified), varId(output), totalViolationVarId()}) {
+         std::array{varId(reified), varId(bound), totalViolationVarId()}) {
       if (vId != propagation::NULL_ID) {
         _solver->query(vId);
       }

@@ -23,7 +23,8 @@ ArrayIntMinimumNode::ArrayIntMinimumNode(InvariantGraph& graph,
 ArrayIntMinimumNode::ArrayIntMinimumNode(InvariantGraph& graph,
                                          std::vector<VarNodeId>&& vars,
                                          const VarNodeId output)
-    : InvariantNode(graph, {output}, std::move(vars)) {}
+    : InvariantNode(graph, {output}, std::move(vars)),
+      _upperBound(std::numeric_limits<Int>::max()) {}
 
 void ArrayIntMinimumNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
@@ -51,21 +52,25 @@ void ArrayIntMinimumNode::updateState() {
     removeStaticInputAtIndex(i);
   }
 
-  const Int lb = outputVarNodeConst(0).lowerBound();
-  const Int ub = outputVarNodeConst(0).upperBound();
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
+  const Int outputLb = outputVarNodeConst(0).lowerBound();
+  const Int outputUb = outputVarNodeConst(0).upperBound();
+
   std::optional<VarNodeId> equalityVarNodeId{std::nullopt};
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
-    if (staticInputVarNodeConst(i).isFixed()) {
-      if (staticInputVarNodeConst(i).lowerBound() == lb) {
+
+  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
+       --i) {
+    const Int inputLb = staticInputVarNodeConst(i).lowerBound();
+    const Int inputUb = staticInputVarNodeConst(i).upperBound();
+    _upperBound = std::min(_upperBound, inputUb);
+    if (inputLb == inputUb) {
+      if (inputLb == outputLb) {
         setState(InvariantNodeState::SUBSUMED);
         return;
       }
-      removeStaticInputVarNode(staticInputVarNodeIds().at(i));
-    } else if (staticInputVarNodeConst(i).lowerBound() > ub) {
-      removeStaticInputVarNode(staticInputVarNodeIds().at(i));
-    } else if (staticInputVarNodeConst(i).lowerBound() == ub) {
+      removeStaticInputAtIndex(i);
+    } else if (inputLb > outputUb) {
+      removeStaticInputAtIndex(i);
+    } else if (outputLb <= inputLb && inputUb <= outputUb) {
       equalityVarNodeId = equalityVarNodeId.has_value()
                               ? NULL_NODE_ID
                               : staticInputVarNodeIds().at(i);
@@ -74,7 +79,8 @@ void ArrayIntMinimumNode::updateState() {
   if (equalityVarNodeId.has_value() && *equalityVarNodeId != NULL_NODE_ID) {
     while (staticInputVarNodeIds().size() > 1) {
       const size_t index =
-          staticInputVarNodeIds().front() == *equalityVarNodeId ? 1 : 0;
+          staticInputVarNodeIds().size() -
+          (staticInputVarNodeIds().back() == *equalityVarNodeId ? 2 : 1);
       removeStaticInputAtIndex(index);
     }
   }
@@ -85,32 +91,56 @@ void ArrayIntMinimumNode::updateState() {
 }
 
 bool ArrayIntMinimumNode::canBeReplaced() const {
-  return state() == InvariantNodeState::ACTIVE &&
-         (staticInputVarNodeIds().size() == 1 ||
-          outputVarNodeConst(0).isFixed());
+  if (state() != InvariantNodeState::ACTIVE) {
+    return false;
+  }
+  if (staticInputVarNodeIds().size() == 1 &&
+      _upperBound >= staticInputVarNodeConst(0).upperBound()) {
+    return true;
+  }
+  if (outputVarNodeConst(0).isFixed()) {
+    return true;
+  }
+  return false;
 }
 
 bool ArrayIntMinimumNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (staticInputVarNodeIds().size() == 1) {
+  if (staticInputVarNodeIds().size() == 1 &&
+      _upperBound >= staticInputVarNodeConst(0).upperBound()) {
     invariantGraph().replaceVarNode(outputVarNodeIds().front(),
                                     staticInputVarNodeIds().front());
     return true;
   }
   assert(outputVarNodeIds().size() == 1 && outputVarNodeConst(0).isFixed());
   invariantGraph().addInvariantNode(std::make_shared<CountRelNode>(
-      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
-      outputVarNodeConst(0).upperBound(), Int{1}, RelationType::REL_TYPE_LE,
-      true));
+      invariantGraph(), Int{1}, RelationType::REL_TYPE_LE,
+      std::vector<VarNodeId>{staticInputVarNodeIds()},
+      outputVarNodeConst(0).upperBound(), true));
   return true;
 }
 
 void ArrayIntMinimumNode::registerOutputVars(propagation::SolverBase& solver,
                                              SolverMapping& mapping) const {
-  assert(staticInputVarNodeIds().size() > 1);
-  makeSolverVar(outputVarNodeIds().front(), solver, mapping);
+  if (staticInputVarNodeIds().size() == 1) {
+    mapping.setSolverId(
+        outputVarNodeIds().front(),
+        solver.makeIntView<propagation::IntMinView>(
+            solver, mapping.solverId(staticInputVarNodeIds().front()),
+            _upperBound));
+  } else if (!staticInputVarNodeIds().empty()) {
+    if (_upperBound > staticInputVarNodeConst(0).lowerBound()) {
+      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+      mapping.setSolverId(
+          outputVarNodeIds().front(),
+          solver.makeIntView<propagation::IntMinView>(
+              solver, mapping.intermediateId(id()), _upperBound));
+    } else {
+      makeSolverVar(outputVarNodeIds().front(), solver, mapping);
+    }
+  }
   assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
     return mapping.solverId(vId) != propagation::NULL_ID;
   }));
@@ -129,9 +159,14 @@ void ArrayIntMinimumNode::registerNode(propagation::SolverBase& solver,
       [&](const auto& node) { return mapping.solverId(node); });
 
   assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
+  assert(mapping.intermediateId(id()) != propagation::NULL_ID
+             ? mapping.solverId(outputVarNodeIds().front()).isView()
+             : mapping.solverId(outputVarNodeIds().front()).isVar());
   solver.makeInvariant<propagation::Min>(
-      solver, mapping.solverId(outputVarNodeIds().front()),
+      solver,
+      mapping.intermediateId(id()) != propagation::NULL_ID
+          ? mapping.intermediateId(id())
+          : mapping.solverId(outputVarNodeIds().front()),
       std::move(solverVars));
 }
 

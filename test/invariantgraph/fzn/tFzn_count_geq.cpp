@@ -29,7 +29,7 @@ class fzn_count_geqTest : public fzn_countTest {
       }
     }
 
-    const bool expected = count <= intVal(output, committedValue);
+    const bool expected = count <= intVal(bound, committedValue);
     const bool actual = boolVal(reified, committedValue);
 
     if (isFixed(reified)) {
@@ -45,9 +45,9 @@ class fzn_count_geqTest : public fzn_countTest {
     }
     const auto [lb, ub] = getBounds();
     if (isFixedTo(reified, true)) {
-      return ub <= lowerBound(output);
+      return ub <= lowerBound(bound);
     }
-    return lb > upperBound(output);
+    return lb > upperBound(bound);
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
@@ -56,9 +56,9 @@ class fzn_count_geqTest : public fzn_countTest {
     }
     const auto [lb, ub] = getBounds();
     if (isFixedTo(reified, true)) {
-      return lb > upperBound(output);
+      return lb > upperBound(bound);
     }
-    return ub <= lowerBound(output);
+    return ub <= lowerBound(bound);
   }
 
   void generate() override {
@@ -69,7 +69,7 @@ class fzn_count_geqTest : public fzn_countTest {
     }
     addIntVarArray(inputs);
     addIntArg(needle);
-    addIntArg(output);
+    addIntArg(bound);
 
     const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_geq_reif" : "fzn_count_geq";
@@ -101,7 +101,7 @@ class fzn_count_geqTest : public fzn_countTest {
 
   void query() override {
     for (const auto& vId :
-         std::array{varId(reified), varId(output), totalViolationVarId()}) {
+         std::array{varId(reified), varId(bound), totalViolationVarId()}) {
       if (vId != propagation::NULL_ID) {
         _solver->query(vId);
       }

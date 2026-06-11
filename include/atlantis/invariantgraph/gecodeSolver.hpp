@@ -104,6 +104,7 @@ class GecodeSolver : public ConstraintSolver {
   Gecode::IntArgs gcc_get_cover(const Gecode::IntVarArgs& inputVars,
                                 const std::vector<Int>& cover,
                                 Gecode::IntVarArgs& countVars);
+  bool fixedTo(ConstraintVarId varId, Int val);
 
   bool fixedToTrue(ConstraintVarId b);
 
@@ -408,36 +409,37 @@ class GecodeSolver : public ConstraintSolver {
       const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
       ConstraintVarId reified) override;
 
-  void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle,
-                 RelationType relation, Int amount, bool shouldHold) override;
-
-  void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle,
-                 RelationType relation, ConstraintVarId amount,
+  void fzn_count(Int bound, RelationType relation,
+                 const std::vector<ConstraintVarId>& inputs, Int needle,
                  bool shouldHold) override;
 
-  void fzn_count(const std::vector<ConstraintVarId>& inputs,
-                 ConstraintVarId needle, RelationType relation, Int amount,
+  void fzn_count(ConstraintVarId bound, RelationType relation,
+                 const std::vector<ConstraintVarId>& inputs, Int needle,
                  bool shouldHold) override;
 
-  void fzn_count(const std::vector<ConstraintVarId>& inputs,
-                 ConstraintVarId needle, RelationType relation,
-                 ConstraintVarId amount, bool shouldHold) override;
+  void fzn_count(Int bound, RelationType relation,
+                 const std::vector<ConstraintVarId>& inputs,
+                 ConstraintVarId needle, bool shouldHold) override;
 
-  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, Int needle,
-                      RelationType relation, Int amount,
+  void fzn_count(ConstraintVarId bound, RelationType relation,
+                 const std::vector<ConstraintVarId>& inputs,
+                 ConstraintVarId needle, bool shouldHold) override;
+
+  void fzn_count_reif(Int bound, RelationType relation,
+                      const std::vector<ConstraintVarId>& inputs, Int needle,
                       ConstraintVarId reified) override;
 
-  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs, Int needle,
-                      RelationType relation, ConstraintVarId amount,
+  void fzn_count_reif(ConstraintVarId bound, RelationType relation,
+                      const std::vector<ConstraintVarId>& inputs, Int needle,
                       ConstraintVarId reified) override;
 
-  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
-                      ConstraintVarId needle, RelationType relation, Int amount,
-                      ConstraintVarId reified) override;
+  void fzn_count_reif(Int bound, RelationType relation,
+                      const std::vector<ConstraintVarId>& inputs,
+                      ConstraintVarId needle, ConstraintVarId reified) override;
 
-  void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
-                      ConstraintVarId needle, RelationType relation,
-                      ConstraintVarId amount, ConstraintVarId reified) override;
+  void fzn_count_reif(ConstraintVarId bound, RelationType relation,
+                      const std::vector<ConstraintVarId>& inputs,
+                      ConstraintVarId needle, ConstraintVarId reified) override;
 
   void fzn_table_bool(const std::vector<ConstraintVarId>& inputs,
                       const std::vector<std::vector<bool>>& table,

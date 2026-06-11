@@ -4,47 +4,66 @@
 
 namespace atlantis::invariantgraph {
 
+/**
+ * CountRelNode(vars, needle, amount, relationType[, reified])
+ *  with \var relationType \in {=, !=, <, <=, =>, >},
+ *  Variable \var amount \var relationType the number of occurcences of \var
+ *needle in \var vars.
+ **/
 class CountRelNode : public ViolationInvariantNode {
   std::optional<Int> _fixedNeedle;
-  std::optional<Int> _fixedAmount;
-  Int _offset{0};
+  std::optional<Int> _fixedBound;
+  Int _boundOffset{0};
   RelationType _relType;
 
   [[nodiscard]] VarNodeId needle() const;
   [[nodiscard]] size_t needleIndex() const;
-  [[nodiscard]] VarNodeId amount() const;
-  [[nodiscard]] size_t amountIndex() const;
+  [[nodiscard]] VarNodeId bound() const;
+  [[nodiscard]] size_t boundIndex() const;
   [[nodiscard]] size_t numInputVars() const;
 
  public:
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
-               Int amount, RelationType relationType, bool shouldHold = true);
-
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
-               Int amount, RelationType relationType, VarNodeId reified);
-
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
-               VarNodeId amount, RelationType relationType,
+  /**
+   * @param graph the invariant graph this invariant is created for
+   * @param amount the bound for the number of occurrences of \a needle in \a
+   * vars
+   * @param relationType the relation between \a amount and the number of
+   * occurrences of \a needle in \a vars
+   * @param vars the variables that are counted over
+   * @param needle the variable that is to be counted
+   * @param shouldHold true if the invariant should be satisfied, and false
+   * otherwise
+   */
+  CountRelNode(InvariantGraph& graph, Int amount, RelationType relationType,
+               std::vector<VarNodeId>&& vars, Int needle,
                bool shouldHold = true);
 
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
-               VarNodeId amount, RelationType relationType, VarNodeId reified);
+  CountRelNode(InvariantGraph& graph, Int amount, RelationType relationType,
+               std::vector<VarNodeId>&& vars, Int needle, VarNodeId reified);
 
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-               VarNodeId needle, Int amount, RelationType relationType,
+  CountRelNode(InvariantGraph& graph, VarNodeId amount,
+               RelationType relationType, std::vector<VarNodeId>&& vars,
+               Int needle, bool shouldHold = true);
+
+  CountRelNode(InvariantGraph& graph, VarNodeId amount,
+               RelationType relationType, std::vector<VarNodeId>&& vars,
+               Int needle, VarNodeId reified);
+
+  CountRelNode(InvariantGraph& graph, Int amount, RelationType relationType,
+               std::vector<VarNodeId>&& vars, VarNodeId needle,
                bool shouldHold = true);
 
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-               VarNodeId needle, Int amount, RelationType relationType,
+  CountRelNode(InvariantGraph& graph, Int amount, RelationType relationType,
+               std::vector<VarNodeId>&& vars, VarNodeId needle,
                VarNodeId reified);
 
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-               VarNodeId needle, VarNodeId amount, RelationType relationType,
-               bool shouldHold = true);
+  CountRelNode(InvariantGraph& graph, VarNodeId amount,
+               RelationType relationType, std::vector<VarNodeId>&& vars,
+               VarNodeId needle, bool shouldHold = true);
 
-  CountRelNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-               VarNodeId needle, VarNodeId amount, RelationType relationType,
-               VarNodeId reified);
+  CountRelNode(InvariantGraph& graph, VarNodeId amount,
+               RelationType relationType, std::vector<VarNodeId>&& vars,
+               VarNodeId needle, VarNodeId reified);
 
   void init(InvariantNodeId) override;
 

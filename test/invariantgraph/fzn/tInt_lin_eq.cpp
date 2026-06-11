@@ -272,7 +272,7 @@ TEST(IntLinEqRegression, DefinedVarDomainDoesNotConflictWithDefinition) {
 
   fznparser::Constraint constraint{
       "int_lin_eq",
-      std::vector<fznparser::Arg>{coeffs, vars, fznparser::IntArg(Int{-2})}};
+      std::vector<fznparser::Arg>{coeffs, vars, fznparser::IntArg(Int{0})}};
   constraint.addAnnotation("defines_var", fznparser::AnnotationExpression(
                                               fznparser::Annotation("out")));
   model->addConstraint(std::move(constraint));

@@ -279,38 +279,38 @@ class ConstraintSolver {
       const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
       ConstraintVarId reified) = 0;
 
-  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle,
-                         RelationType relation, Int amount,
+  virtual void fzn_count(Int bound, RelationType relation,
+                         const std::vector<ConstraintVarId>& inputs, Int needle,
                          bool shouldHold) = 0;
 
-  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs, Int needle,
-                         RelationType relation, ConstraintVarId amount,
+  virtual void fzn_count(ConstraintVarId bound, RelationType relation,
+                         const std::vector<ConstraintVarId>& inputs, Int needle,
                          bool shouldHold) = 0;
 
-  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs,
-                         ConstraintVarId needle, RelationType relation,
-                         Int amount, bool shouldHold) = 0;
+  virtual void fzn_count(Int bound, RelationType relation,
+                         const std::vector<ConstraintVarId>& inputs,
+                         ConstraintVarId needle, bool shouldHold) = 0;
 
-  virtual void fzn_count(const std::vector<ConstraintVarId>& inputs,
-                         ConstraintVarId needle, RelationType relation,
-                         ConstraintVarId amount, bool shouldHold) = 0;
+  virtual void fzn_count(ConstraintVarId bound, RelationType relation,
+                         const std::vector<ConstraintVarId>& inputs,
+                         ConstraintVarId needle, bool shouldHold) = 0;
 
-  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
-                              Int needle, RelationType relation, Int amount,
+  virtual void fzn_count_reif(Int bound, RelationType relation,
+                              const std::vector<ConstraintVarId>& inputs,
+                              Int needle, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_reif(ConstraintVarId bound, RelationType relation,
+                              const std::vector<ConstraintVarId>& inputs,
+                              Int needle, ConstraintVarId reified) = 0;
+
+  virtual void fzn_count_reif(Int bound, RelationType relation,
+                              const std::vector<ConstraintVarId>& inputs,
+                              ConstraintVarId needle,
                               ConstraintVarId reified) = 0;
 
-  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
-                              Int needle, RelationType relation,
-                              ConstraintVarId amount,
-                              ConstraintVarId reified) = 0;
-
-  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
-                              ConstraintVarId needle, RelationType relation,
-                              Int amount, ConstraintVarId reified) = 0;
-
-  virtual void fzn_count_reif(const std::vector<ConstraintVarId>& inputs,
-                              ConstraintVarId needle, RelationType relation,
-                              ConstraintVarId amount,
+  virtual void fzn_count_reif(ConstraintVarId bound, RelationType relation,
+                              const std::vector<ConstraintVarId>& inputs,
+                              ConstraintVarId needle,
                               ConstraintVarId reified) = 0;
 
   virtual void fzn_table_bool(const std::vector<ConstraintVarId>& inputs,

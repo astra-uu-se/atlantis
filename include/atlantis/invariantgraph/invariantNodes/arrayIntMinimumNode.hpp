@@ -4,6 +4,8 @@
 
 namespace atlantis::invariantgraph {
 class ArrayIntMinimumNode : public InvariantNode {
+  Int _upperBound;
+
  public:
   explicit ArrayIntMinimumNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                                VarNodeId output);
