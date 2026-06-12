@@ -121,6 +121,35 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
     if (cover.empty()) {
       return isFixedTo(reified, false);
     }
+    if (inputs.empty()) {
+      const bool alwaysUnsat =
+          std::ranges::any_of(outputs, [&](const std::string& identifier) {
+            return !inDomain(identifier, Int{0});
+          });
+      if (alwaysUnsat) {
+        return isFixedTo(reified, false);
+      }
+      const bool alwaysSat =
+          std::ranges::all_of(outputs, [&](const std::string& identifier) {
+            return isFixedTo(identifier, Int{0});
+          });
+      if (alwaysSat) {
+        return isFixedTo(reified, true);
+      }
+    }
+
+    for (size_t i = 0; i < cover.size(); ++i) {
+      for (size_t j = i + 1; j < cover.size(); ++j) {
+        if (intVal(cover[i]) == intVal(cover[j])) {
+          const auto& iDom = varNodeConst(outputs.at(i)).constDomain();
+          const auto& jDom = varNodeConst(outputs.at(i)).constDomain();
+          if (iDom->isDisjoint(*jDom)) {
+            return isFixedTo(reified, false);
+          }
+        }
+      }
+    }
+
     if (isFixedTo(reified, false)) {
       const auto vti = valToIndices(true);
       for (const auto& input : inputs) {
@@ -145,45 +174,63 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
     for (size_t i = 0; alwaysSat && i < bounds.size(); ++i) {
       const auto [lb, ub] = bounds.at(i);
       if (lb == ub) {
-        alwaysSat &= isFixedTo(reified, true) ? isFixedTo(outputs.at(i), lb)
-                                              : !inDomain(outputs.at(i), lb);
+        const bool alwaysUnsat = !inDomain(outputs.at(i), lb);
+        if (isFixedTo(reified, false)) {
+          if (alwaysUnsat) {
+            return true;
+          }
+        } else {
+          alwaysSat &= !alwaysUnsat;
+        }
       } else {
         const bool alwaysUnsat =
             ub < lowerBound(outputs.at(i)) || upperBound(outputs.at(i)) < lb;
-        alwaysSat &= isFixedTo(reified, false) ? !alwaysUnsat : false;
+        if (isFixedTo(reified, false)) {
+          if (alwaysUnsat) {
+            return true;
+          }
+        } else {
+          alwaysSat &= !alwaysUnsat;
+        }
       }
     }
     if (alwaysSat) {
       return alwaysSat;
     }
-    if (isFixedTo(reified, false)) {
-      for (size_t i = 0; i < cover.size(); ++i) {
-        const Int iCover = intVal(cover.at(i));
-        for (size_t j = i + 1; j < cover.size(); ++j) {
-          const Int jCover = intVal(cover.at(i));
-          if (iCover == jCover) {
-            if (isFixed(outputs.at(i)) && isFixed(outputs.at(j))) {
-              if (intVal(outputs.at(i)) != intVal(outputs.at(j))) {
-                return true;
-              }
-            } else if (isFixed(outputs.at(i))) {
-              if (!varNodeConst(outputs.at(j)).inDomain(iCover)) {
-                return true;
-              }
-            } else if (isFixed(outputs.at(j))) {
-              if (!varNodeConst(outputs.at(i)).inDomain(jCover)) {
-                return true;
-              }
-            } else {
-              const auto& iDom = varNodeConst(outputs.at(i)).constDomain();
-              const auto& jDom = varNodeConst(outputs.at(j)).constDomain();
-              if (iDom->isDisjoint(*jDom)) {
-                return true;
-              }
-            }
+    std::unordered_set<Int> visitedCovers;
+    visitedCovers.reserve(cover.size());
+    Int totalLb = 0;
+    Int totalUb = 0;
+    for (size_t i = 0; i < cover.size(); ++i) {
+      if (visitedCovers.contains(intVal(cover.at(i)))) {
+        continue;
+      }
+      visitedCovers.emplace(intVal(cover.at(i)));
+      const Int iCover = intVal(cover.at(i));
+      SearchDomain combinedDomain =
+          isFixed(outputs.at(i))
+              ? SearchDomain(intVal(outputs.at(i)), intVal(outputs.at(i)))
+              : SearchDomain(*varNodeConst(outputs.at(i)).constDomain());
+      for (size_t j = i + 1; j < cover.size(); ++j) {
+        const Int jCover = intVal(cover.at(i));
+        if (iCover == jCover) {
+          if (isFixed(outputs.at(j))) {
+            combinedDomain.remove(intVal(outputs.at(j)));
+          } else {
+            combinedDomain.removeAllValuesExcept(
+                *varNodeConst(outputs.at(j)).constDomain());
           }
         }
       }
+      if (combinedDomain.size() == 0) {
+        return isFixedTo(reified, false);
+      }
+      totalLb += combinedDomain.lowerBound();
+      totalUb += combinedDomain.upperBound();
+    }
+    if (static_cast<Int>(inputs.size()) < totalLb ||
+        totalUb < static_cast<Int>(inputs.size())) {
+      return isFixedTo(reified, true);
     }
     return false;
   }
@@ -197,6 +244,22 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
     }
     if (cover.empty()) {
       return isFixedTo(reified, true);
+    }
+    if (inputs.empty()) {
+      const bool alwaysUnsat =
+          std::ranges::any_of(outputs, [&](const std::string& identifier) {
+            return !inDomain(identifier, Int{0});
+          });
+      if (alwaysUnsat) {
+        return isFixedTo(reified, true);
+      }
+      const bool alwaysSat =
+          std::ranges::all_of(outputs, [&](const std::string& identifier) {
+            return isFixedTo(identifier, Int{0});
+          });
+      if (alwaysSat) {
+        return isFixedTo(reified, false);
+      }
     }
 
     if (isFixedTo(reified, true)) {
@@ -237,34 +300,40 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
         }
       }
     }
-    if (isFixedTo(reified, true)) {
-      for (size_t i = 0; i < cover.size(); ++i) {
-        const Int iCover = intVal(cover.at(i));
-        for (size_t j = i + 1; j < cover.size(); ++j) {
-          const Int jCover = intVal(cover.at(i));
-          if (iCover == jCover) {
-            if (isFixed(outputs.at(i)) && isFixed(outputs.at(j))) {
-              if (intVal(outputs.at(i)) != intVal(outputs.at(j))) {
-                return true;
-              }
-            } else if (isFixed(outputs.at(i))) {
-              if (!varNodeConst(outputs.at(j)).inDomain(iCover)) {
-                return true;
-              }
-            } else if (isFixed(outputs.at(j))) {
-              if (!varNodeConst(outputs.at(i)).inDomain(jCover)) {
-                return true;
-              }
-            } else {
-              const auto& iDom = varNodeConst(outputs.at(i)).constDomain();
-              const auto& jDom = varNodeConst(outputs.at(j)).constDomain();
-              if (iDom->isDisjoint(*jDom)) {
-                return true;
-              }
-            }
+    std::unordered_set<Int> visitedCovers;
+    visitedCovers.reserve(cover.size());
+    Int totalLb = 0;
+    Int totalUb = 0;
+    for (size_t i = 0; i < cover.size(); ++i) {
+      if (visitedCovers.contains(intVal(cover.at(i)))) {
+        continue;
+      }
+      visitedCovers.emplace(intVal(cover.at(i)));
+      const Int iCover = intVal(cover.at(i));
+      SearchDomain combinedDomain =
+          isFixed(outputs.at(i))
+              ? SearchDomain(intVal(outputs.at(i)), intVal(outputs.at(i)))
+              : SearchDomain(*varNodeConst(outputs.at(i)).constDomain());
+      for (size_t j = i + 1; j < cover.size(); ++j) {
+        const Int jCover = intVal(cover.at(i));
+        if (iCover == jCover) {
+          if (isFixed(outputs.at(j))) {
+            combinedDomain.remove(intVal(outputs.at(j)));
+          } else {
+            combinedDomain.removeAllValuesExcept(
+                *varNodeConst(outputs.at(j)).constDomain());
           }
         }
       }
+      if (combinedDomain.size() == 0) {
+        return isFixedTo(reified, false);
+      }
+      totalLb += combinedDomain.lowerBound();
+      totalUb += combinedDomain.upperBound();
+    }
+    if (static_cast<Int>(inputs.size()) < totalLb ||
+        totalUb < static_cast<Int>(inputs.size())) {
+      return isFixedTo(reified, true);
     }
 
     return false;

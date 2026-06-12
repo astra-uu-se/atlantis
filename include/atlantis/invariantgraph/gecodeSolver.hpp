@@ -107,9 +107,33 @@ class GecodeSolver : public ConstraintSolver {
 
   bool allFixed(const std::vector<ConstraintVarId>& vars);
 
-  bool fixedToTrue(ConstraintVarId b);
+  bool isFixedTo(ConstraintVarId b, bool val);
 
-  bool fixedToTrue(std::variant<bool, ConstraintVarId> b);
+  bool isFixedTo(std::variant<bool, ConstraintVarId> b, bool val);
+  bool gcc_cover_sanity(const std::vector<Int>& cover,
+                        std::variant<bool, ConstraintVarId> reified);
+
+  bool gcc_sanity(const std::vector<ConstraintVarId>& inputs,
+                  const std::vector<Int>& cover,
+                  const std::vector<ConstraintVarId>& counts,
+                  std::variant<bool, ConstraintVarId> reified);
+  bool gcc_closed_sanity(const std::vector<Int>& cover,
+                         std::variant<bool, ConstraintVarId> reified);
+
+  bool gcc_sanity(const std::vector<ConstraintVarId>& inputs,
+                  const std::vector<Int>& cover,
+                  const std::vector<Int>& lowerBounds,
+                  const std::vector<Int>& upperBounds,
+                  std::variant<bool, ConstraintVarId> reified);
+  std::pair<std::vector<Int>, std::vector<ConstraintVarId>> gcc_combine_covers(
+      const std::vector<Int>& cover, const std::vector<ConstraintVarId>& counts,
+      std::variant<bool, ConstraintVarId> reified);
+
+  static std::pair<std::vector<Int>,
+                   std::pair<std::vector<Int>, std::vector<Int>>>
+  gcc_combine_covers(const std::vector<Int>& cover,
+                     const std::vector<Int>& lowerBounds,
+                     const std::vector<Int>& upperBounds);
 
   void gcc(const std::vector<ConstraintVarId>& inputs,
            const std::vector<Int>& cover,

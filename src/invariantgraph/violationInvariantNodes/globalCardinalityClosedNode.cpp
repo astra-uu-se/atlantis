@@ -102,8 +102,8 @@ void GlobalCardinalityClosedNode::updateState() {
     assert(bounds.size() == _cover.size());
     assert(outputVarNodeIds().size() == _cover.size());
     for (size_t i = 0; i < bounds.size(); i++) {
-      if (!outputVarNodeConst(i).constDomain()->contains(bounds[i].first,
-                                                         bounds[i].second)) {
+      if (outputVarNodeConst(i).constDomain()->isDisjoint(bounds[i].first,
+                                                          bounds[i].second)) {
         setState(InvariantNodeState::SUBSUMED);
         outputVarNode(i).tightenDomainType(
             outputVarNodeConst(i).constDomain()->isInterval()
@@ -129,7 +129,6 @@ void GlobalCardinalityClosedNode::updateState() {
   }
 
   for (const VarNodeId vId : varsToRemove) {
-    assert(varNodeConst(vId).isFixed());
     for (size_t i = 0; i < _cover.size(); i++) {
       if (varNodeConst(vId).lowerBound() == _cover[i]) {
         ++_offsets[i];

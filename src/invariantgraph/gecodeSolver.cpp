@@ -369,25 +369,236 @@ bool GecodeSolver::allFixed(const std::vector<ConstraintVarId>& vars) {
   });
 }
 
-bool GecodeSolver::fixedToTrue(ConstraintVarId b) {
-  return boolVar(b).assigned() && boolVar(b).val() == 1;
+bool GecodeSolver::isFixedTo(const ConstraintVarId b, const bool val) {
+  return boolVar(b).assigned() && (boolVar(b).val() == 1) == val;
 }
 
-bool GecodeSolver::fixedToTrue(const std::variant<bool, ConstraintVarId> b) {
+bool GecodeSolver::isFixedTo(const std::variant<bool, ConstraintVarId> b,
+                             const bool val) {
   return std::holds_alternative<bool>(b)
-             ? std::get<bool>(b)
-             : fixedToTrue(std::get<ConstraintVarId>(b));
+             ? std::get<bool>(b) == val
+             : isFixedTo(std::get<ConstraintVarId>(b), val);
+}
+
+bool GecodeSolver::gcc_cover_sanity(
+    const std::vector<Int>& cover,
+    const std::variant<bool, ConstraintVarId> reified) {
+  if (!cover.empty()) {
+    return false;
+  }
+  if (std::holds_alternative<bool>(reified)) {
+    if (!isFixedTo(reified, true)) {
+      throw InconsistencyException("UNSAT");
+    }
+    return true;
+  }
+  Gecode::rel(_space, boolVar(std::get<ConstraintVarId>(reified)),
+              Gecode::IRT_EQ, 1);
+  return true;
+}
+
+bool GecodeSolver::gcc_sanity(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<ConstraintVarId>& counts,
+    const std::variant<bool, ConstraintVarId> reified) {
+  if (!inputs.empty()) {
+    return false;
+  }
+  if (cover.empty()) {
+    if (isFixedTo(reified, false)) {
+      throw InconsistencyException("UNSAT");
+    }
+    if (!isFixedTo(reified, true)) {
+      Gecode::rel(_space, boolVar(std::get<ConstraintVarId>(reified)),
+                  Gecode::IRT_EQ, 1);
+    }
+    return true;
+  }
+
+  if (isFixedTo(reified, true)) {
+    for (const auto c : counts) {
+      Gecode::rel(_space, intVar(c), Gecode::IRT_EQ, 0);
+    }
+    return true;
+  }
+  if (isFixedTo(reified, false)) {
+    Gecode::count(_space, intVarArgs(inputs), 0, Gecode::IRT_LE,
+                  static_cast<int>(counts.size()));
+    return true;
+  }
+  Gecode::BoolVarArgs areZero(static_cast<int>(cover.size()));
+  for (int i = 0; i < areZero.size(); i++) {
+    areZero[i] = Gecode::BoolVar(_space, 0, 1);
+    Gecode::rel(_space, intVar(counts[i]), Gecode::IRT_EQ, 0, areZero[i]);
+  }
+  if (std::holds_alternative<bool>(reified)) {
+    Gecode::rel(_space, Gecode::BOT_AND, areZero, 0);
+  } else {
+    Gecode::rel(_space, Gecode::BOT_AND, areZero,
+                boolVar(std::get<ConstraintVarId>(reified)));
+  }
+  return true;
+}
+
+bool GecodeSolver::gcc_closed_sanity(
+    const std::vector<Int>& cover,
+    const std::variant<bool, ConstraintVarId> reified) {
+  if (!cover.empty()) {
+    return false;
+  }
+  if (isFixedTo(reified, true)) {
+    throw InconsistencyException("UNSAT");
+  }
+  if (!isFixedTo(reified, false)) {
+    Gecode::rel(_space, boolVar(std::get<ConstraintVarId>(reified)),
+                Gecode::IRT_EQ, 0);
+  }
+  return true;
+}
+
+bool GecodeSolver::gcc_sanity(
+    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
+    const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
+    const std::variant<bool, ConstraintVarId> reified) {
+  if (!inputs.empty() && !cover.empty()) {
+    return false;
+  }
+  if (gcc_cover_sanity(cover, reified)) {
+    return true;
+  }
+
+  size_t satisfiedCounts = 0;
+  for (size_t i = 0; i < cover.size(); i++) {
+    if (lowerBounds[i] <= 0 && 0 <= upperBounds[i]) {
+      ++satisfiedCounts;
+    }
+  }
+  if (isFixedTo(reified, true)) {
+    if (satisfiedCounts < cover.size()) {
+      throw InconsistencyException("UNSAT");
+    }
+  }
+  if (isFixedTo(reified, false)) {
+    if (satisfiedCounts == cover.size()) {
+      throw InconsistencyException("UNSAT");
+    }
+  }
+  Gecode::rel(_space, boolVar(std::get<ConstraintVarId>(reified)),
+              Gecode::IRT_EQ, satisfiedCounts == cover.size() ? 1 : 0);
+  return true;
+}
+
+std::pair<std::vector<Int>, std::vector<ConstraintVarId>>
+GecodeSolver::gcc_combine_covers(
+    const std::vector<Int>& cover, const std::vector<ConstraintVarId>& counts,
+    const std::variant<bool, ConstraintVarId> reified) {
+  std::vector<Int> newCover;
+  newCover.reserve(cover.size());
+  std::vector<ConstraintVarId> newCounts;
+  newCounts.reserve(counts.size());
+
+  std::vector<bool> removed(cover.size(), false);
+  for (size_t i = 0; i < cover.size(); i++) {
+    if (removed[i]) {
+      continue;
+    }
+    newCover.emplace_back(cover[i]);
+    newCounts.emplace_back(counts[i]);
+
+    Gecode::IntVarArgs sameCounts;
+    sameCounts << intVar(counts[i]);
+    for (size_t j = i + 1; j < cover.size(); j++) {
+      if (removed[j]) {
+        continue;
+      }
+      if (cover[i] == cover[j]) {
+        removed[j] = true;
+        sameCounts << intVar(counts[j]);
+      }
+    }
+    if (sameCounts.size() > 1) {
+      Gecode::Region re;
+      auto* sameCountDomains =
+          re.alloc<Gecode::IntVarRanges>(sameCounts.size());
+      for (int j = sameCounts.size(); j--;) {
+        sameCountDomains[j].init(sameCounts[j]);
+      }
+      Gecode::Iter::Ranges::NaryInter domIntersection(re, sameCountDomains,
+                                                      sameCounts.size());
+      Gecode::IntSet newDom(domIntersection);
+      if (newDom.size() == 0) {
+        if (isFixedTo(reified, true)) {
+          throw InconsistencyException("UNSAT");
+        }
+        if (!isFixedTo(reified, false)) {
+          Gecode::rel(_space, boolVar(std::get<ConstraintVarId>(reified)),
+                      Gecode::IRT_EQ, 0);
+        }
+        return {{}, {}};
+      }
+      Gecode::dom(_space, sameCounts, newDom);
+    }
+  }
+
+  return std::pair<std::vector<Int>, std::vector<ConstraintVarId>>{newCover,
+                                                                   newCounts};
+}
+
+std::pair<std::vector<Int>, std::pair<std::vector<Int>, std::vector<Int>>>
+GecodeSolver::gcc_combine_covers(const std::vector<Int>& cover,
+                                 const std::vector<Int>& lowerBounds,
+                                 const std::vector<Int>& upperBounds) {
+  std::vector<Int> newCover;
+  newCover.reserve(cover.size());
+  std::vector<Int> newLowerBounds;
+  newLowerBounds.reserve(cover.size());
+  std::vector<Int> newUpperBounds;
+  newLowerBounds.reserve(cover.size());
+
+  std::vector<bool> removed(cover.size(), false);
+  for (size_t i = 0; i < cover.size(); i++) {
+    if (removed[i]) {
+      continue;
+    }
+    newCover.emplace_back(cover[i]);
+    newLowerBounds.emplace_back(lowerBounds[i]);
+    newUpperBounds.emplace_back(upperBounds[i]);
+
+    for (size_t j = i + 1; j < cover.size(); j++) {
+      if (removed[j]) {
+        continue;
+      }
+      if (cover[i] == cover[j]) {
+        removed[j] = true;
+        newLowerBounds.back() = std::max(newLowerBounds.back(), lowerBounds[j]);
+        newUpperBounds.back() = std::min(newUpperBounds.back(), lowerBounds[j]);
+      }
+    }
+  }
+  return std::pair<std::vector<Int>,
+                   std::pair<std::vector<Int>, std::vector<Int>>>{
+      newCover, {newLowerBounds, newUpperBounds}};
 }
 
 void GecodeSolver::gcc(const std::vector<ConstraintVarId>& inputs,
-                       const std::vector<Int>& cover,
-                       const std::vector<ConstraintVarId>& counts,
+                       const std::vector<Int>& inputCover,
+                       const std::vector<ConstraintVarId>& inputCounts,
                        const std::variant<bool, ConstraintVarId> reified) {
+  const auto [cover, counts] =
+      gcc_combine_covers(inputCover, inputCounts, reified);
+  if ((cover.empty() && !inputCover.empty()) ||
+      (counts.empty() && !inputCounts.empty())) {
+    return;
+  }
+
+  if (gcc_sanity(inputs, cover, counts, reified)) {
+    return;
+  }
   Gecode::IntVarArgs inputVars = intVarArgs(inputs);
   Gecode::IntVarArgs countVars = intVarArgs(counts);
   const auto intArgCover = gcc_get_cover(inputVars, cover, countVars);
   unshare(_space, inputVars);
-  if (fixedToTrue(reified)) {
+  if (isFixedTo(reified, true)) {
     Gecode::count(_space, inputVars, countVars, intArgCover, Gecode::IPL_BND);
     return;
   }
@@ -413,10 +624,25 @@ void GecodeSolver::gcc(const std::vector<ConstraintVarId>& inputs,
 }
 
 void GecodeSolver::gcc_closed(
-    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
-    const std::vector<ConstraintVarId>& counts,
+    const std::vector<ConstraintVarId>& inputs,
+    const std::vector<Int>& inputCover,
+    const std::vector<ConstraintVarId>& inputCounts,
     const std::variant<bool, ConstraintVarId> reified) {
-  if (fixedToTrue(reified)) {
+  const auto [cover, counts] =
+      gcc_combine_covers(inputCover, inputCounts, reified);
+
+  if ((cover.empty() && !inputCover.empty()) ||
+      (counts.empty() && !inputCounts.empty())) {
+    return;
+  }
+
+  if (gcc_sanity(inputs, cover, counts, reified)) {
+    return;
+  }
+  if (gcc_closed_sanity(cover, reified)) {
+    return;
+  }
+  if (isFixedTo(reified, true)) {
     auto inputVars = intVarArgs(inputs);
     const auto intArgCover = intArgs(cover);
     const auto countVars = intVarArgs(counts);
@@ -455,11 +681,20 @@ void GecodeSolver::gcc_closed(
 }
 
 void GecodeSolver::gcc_low_up(
-    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
-    const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
+    const std::vector<ConstraintVarId>& inputs,
+    const std::vector<Int>& inputCover,
+    const std::vector<Int>& inputLowerBounds,
+    const std::vector<Int>& inputUpperBounds,
     const std::variant<bool, ConstraintVarId> reified) {
+  const auto [cover, pair] =
+      gcc_combine_covers(inputCover, inputLowerBounds, inputUpperBounds);
+  const auto [lowerBounds, upperBounds] = pair;
+
+  if (gcc_sanity(inputs, cover, lowerBounds, upperBounds, reified)) {
+    return;
+  }
   auto inputVars = intVarArgs(inputs);
-  if (fixedToTrue(reified)) {
+  if (isFixedTo(reified, true)) {
     auto intArgCover = intArgs(cover);
     const auto lbound = intSharedArray(lowerBounds);
     const auto ubound = intSharedArray(upperBounds);
@@ -510,12 +745,24 @@ void GecodeSolver::gcc_low_up(
 }
 
 void GecodeSolver::gcc_low_up_closed(
-    const std::vector<ConstraintVarId>& inputs, const std::vector<Int>& cover,
-    const std::vector<Int>& lowerBounds, const std::vector<Int>& upperBounds,
+    const std::vector<ConstraintVarId>& inputs,
+    const std::vector<Int>& inputCover,
+    const std::vector<Int>& inputLowerBounds,
+    const std::vector<Int>& inputUpperBounds,
     const std::variant<bool, ConstraintVarId> reified) {
+  const auto [cover, pair] =
+      gcc_combine_covers(inputCover, inputLowerBounds, inputUpperBounds);
+  const auto [lowerBounds, upperBounds] = pair;
+
+  if (gcc_sanity(inputs, cover, lowerBounds, upperBounds, reified)) {
+    return;
+  }
+  if (gcc_closed_sanity(cover, reified)) {
+    return;
+  }
   auto inputVars = intVarArgs(inputs);
 
-  if (fixedToTrue(reified)) {
+  if (isFixedTo(reified, true)) {
     auto intArgCover = intArgs(cover);
     const auto lbound = intArgs(lowerBounds);
     const auto ubound = intArgs(upperBounds);
@@ -1427,6 +1674,12 @@ void GecodeSolver::fzn_table_int_reif(
 void GecodeSolver::set_in(const ConstraintVarId varId,
                           const SortedUniqueVector& values,
                           const bool shouldHold) {
+  if (values->empty()) {
+    if (shouldHold) {
+      throw InconsistencyException("UNSAT");
+    }
+    return;
+  }
   if (shouldHold) {
     Gecode::dom(_space, intVar(varId), intSet(values));
   }
@@ -1438,6 +1691,10 @@ void GecodeSolver::set_in(const ConstraintVarId varId,
 void GecodeSolver::set_in_reif(const ConstraintVarId varId,
                                const SortedUniqueVector& values,
                                const ConstraintVarId reified) {
+  if (values->empty()) {
+    Gecode::rel(_space, boolVar(reified), Gecode::IRT_EQ, 1);
+    return;
+  }
   Gecode::dom(_space, intVar(varId), intSet(values), boolVar(reified));
 }
 
