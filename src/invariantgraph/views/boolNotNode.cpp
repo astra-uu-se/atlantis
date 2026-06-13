@@ -30,19 +30,8 @@ void BoolNotNode::postConstraint() {
 }
 
 void BoolNotNode::updateState() {
-  if (invariantGraphConst().varNodeConst(input()).isFixed()) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .fixToValue(
-            !invariantGraphConst().varNodeConst(input()).inDomain(bool{true}));
-    setState(InvariantNodeState::SUBSUMED);
-  } else if (invariantGraph()
-                 .varNodeConst(outputVarNodeIds().front())
-                 .isFixed()) {
-    invariantGraph().varNode(input()).fixToValue(
-        !invariantGraph()
-             .varNodeConst(outputVarNodeIds().front())
-             .inDomain(bool{true}));
+  if (varNodeConst(input()).isFixed()) {
+    assert(outputVarNodeConst(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
 }

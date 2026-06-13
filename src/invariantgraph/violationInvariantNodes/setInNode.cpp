@@ -52,10 +52,7 @@ void SetInNode::updateState() {
   ViolationInvariantNode::updateState();
   if (!isReified()) {
     setState(InvariantNodeState::SUBSUMED);
-    staticInputVarNode(0).tightenDomainType(
-        staticInputVarNodeConst(0).constDomain()->isInterval()
-            ? DomainType::DOM_RANGE
-            : DomainType::DOM_DOMAIN);
+    staticInputVarNode(0).tightenDomainType();
   }
 }
 

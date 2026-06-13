@@ -243,7 +243,14 @@ Int VarNode::val() const {
 
 DomainType VarNode::domainType() const noexcept { return _domainType; }
 
-void VarNode::tightenDomainType(DomainType domainType) {
+void VarNode::tightenDomainType() {
+  tightenDomainType(_domain->isFixed()
+                        ? DomainType::DOM_FIXED
+                        : (_domain->isInterval() ? DomainType::DOM_RANGE
+                                                 : DomainType::DOM_DOMAIN));
+}
+
+void VarNode::tightenDomainType(const DomainType domainType) {
   if ((domainType == DomainType::DOM_LOWER_BOUND &&
        _domainType == DomainType::DOM_UPPER_BOUND) ||
       (domainType == DomainType::DOM_UPPER_BOUND &&

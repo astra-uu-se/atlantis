@@ -14,7 +14,7 @@ namespace atlantis::invariantgraph {
 
 IntTimesNode::IntTimesNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                            VarNodeId output)
-    : InvariantNode(graph, {output}, {a, b}) {}
+    : InvariantNode(graph, {output}, {a, b}), _scalar(std::nullopt) {}
 
 void IntTimesNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
@@ -23,9 +23,7 @@ void IntTimesNode::init(const InvariantNodeId id) {
              .isIntVar());
   assert(std::ranges::all_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      [&](const VarNodeId vId) { return varNodeConst(vId).isIntVar(); }));
 }
 void IntTimesNode::postConstraint() {
   InvariantNode::postConstraint();
@@ -39,14 +37,19 @@ void IntTimesNode::updateState() {
   varNodeIdsToRemove.reserve(staticInputVarNodeIds().size());
 
   for (const auto& varNodeId : staticInputVarNodeIds()) {
-    if (invariantGraphConst().varNodeConst(varNodeId).isFixed()) {
+    if (varNodeConst(varNodeId).isFixed()) {
       varNodeIdsToRemove.emplace_back(varNodeId);
-      _scalar *= invariantGraphConst().varNodeConst(varNodeId).lowerBound();
+      if (_scalar.has_value()) {
+        _scalar = std::nullopt;
+      } else {
+        _scalar = varNodeConst(varNodeId).lowerBound();
+      }
     }
   }
 
   if (_scalar == 0) {
-    invariantGraph().varNode(outputVarNodeIds().front()).fixToValue(Int{0});
+    const auto& oNode = outputVarNodeConst(0);
+    assert(oNode.isFixed() && oNode.lowerBound() == 0);
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
@@ -56,12 +59,13 @@ void IntTimesNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
+    assert(outputVarNodeConst(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 bool IntTimesNode::canBeReplaced() const {
-  return state() == InvariantNodeState::ACTIVE &&
+  return state() == InvariantNodeState::ACTIVE && _scalar.has_value() &&
          staticInputVarNodeIds().size() == 1;
 }
 
@@ -69,13 +73,13 @@ bool IntTimesNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (_scalar == 1) {
+  if (_scalar.value_or(1) == 1) {
     invariantGraph().replaceVarNode(outputVarNodeIds().front(),
                                     staticInputVarNodeIds().front());
   }
   invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(
       invariantGraph(), staticInputVarNodeIds().front(),
-      outputVarNodeIds().front(), _scalar, 0));
+      outputVarNodeIds().front(), *_scalar, 0));
   return true;
 }
 

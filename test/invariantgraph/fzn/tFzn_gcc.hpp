@@ -1,3 +1,5 @@
+#pragma once
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <rapidcheck/gen/Numeric.h>
@@ -19,81 +21,45 @@ class fzn_gccTest : public FznTestBase {
   std::vector<std::string> inputs{};
   std::vector<std::string> cover{};
   std::string reified{"reified"};
+  std::vector<std::pair<size_t, std::string>> coverDuplicates{};
 
-  [[nodiscard]] std::vector<Int> getCover() const {
+  virtual void fixGenerate() {
     std::vector<bool> firstOrDistinct(cover.size(), true);
-    size_t numDistinct = 0;
     for (size_t i = 0; i < cover.size(); ++i) {
       if (!firstOrDistinct.at(i)) {
         continue;
       }
-      ++numDistinct;
       const Int iCov = intVal(cover.at(i));
       for (size_t j = i + 1; j < cover.size(); ++j) {
-        firstOrDistinct.at(j) = firstOrDistinct.at(j) && iCov != intVal(cover.at(j));
-      }
-    }
-    std::vector<Int> c(numDistinct);
-    size_t index = 0;
-    for (size_t i = 0; i < cover.size(); ++i) {
-      if (firstOrDistinct.at(i)) {
-        c[index++] = intVal(cover.at(i));
-      }
-    }
-    return c;
-  }
-
-  [[nodiscard]] std::vector<SearchDomain> getCountDomains(const std::vector<std::string>& counts) const {
-    std::vector<SearchDomain> domains;
-    std::vector<bool> firstOrDistinct(counts.size(), true);
-    domains.reserve(cover.size());
-    for (size_t i = 0; i < cover.size(); ++i) {
-      if (!firstOrDistinct.at(i)) {
-        continue;
-      }
-      SearchDomain iDom = isFixed(counts.at(i)) ? SearchDomain(std::vector<Int>(intVal(counts.at(i)))) : SearchDomain(*varNodeConst(counts.at(i)).constDomain());
-      const Int iCov = intVal(cover.at(i));
-      for (size_t j = i + 1; j < cover.size(); ++j) {
+        if (!firstOrDistinct.at(j)) {
+          continue;
+        }
         if (iCov == intVal(cover.at(j))) {
           firstOrDistinct.at(j) = false;
-        }
-        if (isFixed(counts.at(j))) {
-          iDom.fix(lowerBound(counts.at(j)));
-        } else {
-          iDom.removeAllValuesExcept(*varNodeConst(counts.at(j)).constDomain());
+          coverDuplicates.emplace_back(cover.size(), cover.at(j));
         }
       }
-      domains.emplace_back(iDom);
     }
-    return domains;
-  }
-
-  [[nodiscard]] std::vector<std::pair<Int, Int>> getLowUp(const std::vector<std::string>& low, const std::vector<std::string>& up) const {
-    std::vector<std::pair<Int, Int>> lowup;
-    std::vector<bool> firstOrDistinct(lowup.size(), true);
-    lowup.reserve(cover.size());
-    for (size_t i = 0; i < cover.size(); ++i) {
+    for (Int i = static_cast<Int>(cover.size()) - 1; i >= 0; --i) {
       if (!firstOrDistinct.at(i)) {
-        continue;
+        cover.erase(cover.begin() + i);
       }
-      std::pair<Int, Int> lu{intVal(low.at(i)), intVal(up.at(i))};
-      const Int iCov = intVal(cover.at(i));
-      for (size_t j = i + 1; j < cover.size(); ++j) {
-        if (iCov == intVal(cover.at(j))) {
-          firstOrDistinct.at(j) = false;
-        }
-        lu.first = std::max(lu.first, intVal(low.at(j)));
-        lu.second = std::min(lu.second, intVal(up.at(j)));
-      }
-      lowup.emplace_back(lu);
     }
-    return lowup;
+    for (size_t dupIndex = 0; dupIndex < coverDuplicates.size(); ++dupIndex) {
+      const Int dupVal = intVal(coverDuplicates.at(dupIndex).second);
+      for (size_t covIndex = 0; covIndex < cover.size(); ++covIndex) {
+        if (intVal(cover.at(covIndex)) == dupVal) {
+          coverDuplicates.at(dupIndex).first = covIndex;
+        }
+      }
+    }
   }
 
-  [[nodiscard]] std::vector<std::pair<Int, Int>> getBounds(std::vector<Int> cov) const {
+  [[nodiscard]] std::vector<std::pair<Int, Int>> getBounds() const {
     std::vector<std::pair<Int, Int>> bounds{};
     bounds.reserve(cover.size());
-    for (const Int needle : cov) {
+    for (const std::string& covIdentifier : cover) {
+      const Int needle = intVal(covIdentifier);
       Int lb = 0;
       Int ub = 0;
       for (const auto& input : inputs) {

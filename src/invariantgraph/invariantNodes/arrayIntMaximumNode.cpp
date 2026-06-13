@@ -84,6 +84,7 @@ void ArrayIntMaximumNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
+    outputVarNode(0).tightenDomainType();
     setState(InvariantNodeState::SUBSUMED);
   }
 }

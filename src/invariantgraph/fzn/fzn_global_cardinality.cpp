@@ -7,7 +7,8 @@
 #include "atlantis/invariantgraph/invariantNodes/globalCardinalityNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolRelNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intRelNode.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph::fzn {
@@ -42,8 +43,9 @@ bool fzn_global_cardinality_reif(
     const fznparser::BoolArg& reified) {
   checkInputs(cover, counts);
   if (cover.empty()) {
-    const auto r = graph.retrieveVarNode(reified);
-    graph.varNode(r).fixToValue(bool{true});
+    graph.addInvariantNode(std::make_shared<BoolRelNode>(
+        graph, graph.retrieveVarNode(reified), RelationType::REL_TYPE_EQ,
+        graph.retrieveBoolVarNode(true)));
     return true;
   }
   if (reified.isFixed() && reified.toParameter()) {
@@ -67,9 +69,9 @@ bool fzn_global_cardinality_reif(
       std::vector(outputVarNodeIds)));
 
   for (size_t i = 0; i < counts->size(); ++i) {
-    graph.addInvariantNode(std::make_shared<IntAllEqualNode>(
-        graph, outputVarNodeIds.at(i), countVarNodeIds.at(i),
-        binaryOutputVarNodeIds.at(i)));
+    graph.addInvariantNode(std::make_shared<IntRelNode>(
+        graph, outputVarNodeIds.at(i), RelationType::REL_TYPE_EQ,
+        countVarNodeIds.at(i), binaryOutputVarNodeIds.at(i)));
   }
 
   graph.addInvariantNode(std::make_shared<ArrayBoolAndNode>(

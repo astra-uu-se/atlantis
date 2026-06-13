@@ -60,9 +60,7 @@ void IntDivNode::updateState() {
     for (const auto vId : varNodeIds) {
       auto& vNode = varNode(vId);
       if (!vNode.isFixed()) {
-        vNode.tightenDomainType(vNode.constDomain()->isInterval()
-                                    ? DomainType::DOM_RANGE
-                                    : DomainType::DOM_DOMAIN);
+        vNode.tightenDomainType();
       }
     }
   }

@@ -31,33 +31,8 @@ void Bool2IntNode::postConstraint() {
 }
 
 void Bool2IntNode::updateState() {
-  invariantGraph().varNode(input()).domain()->removeBelow(Int{0});
-  invariantGraph().varNode(input()).domain()->removeAbove(Int{1});
-
-  invariantGraph()
-      .varNode(outputVarNodeIds().front())
-      .domain()
-      ->removeBelow(Int{0});
-  invariantGraph()
-      .varNode(outputVarNodeIds().front())
-      .domain()
-      ->removeAbove(Int{1});
-
-  if (invariantGraphConst().varNodeConst(input()).isFixed()) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .fixToValue(
-            invariantGraphConst().varNodeConst(input()).inDomain(bool{true})
-                ? Int{1}
-                : Int{0});
-    setState(InvariantNodeState::SUBSUMED);
-  } else if (invariantGraph()
-                 .varNodeConst(outputVarNodeIds().front())
-                 .isFixed()) {
-    invariantGraph().varNode(input()).fixToValue(
-        invariantGraph()
-            .varNodeConst(outputVarNodeIds().front())
-            .inDomain(Int{1}));
+  assert(outputVarNodeConst(0).isFixed() == varNodeConst(input()).isFixed());
+  if (varNodeConst(input()).isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }

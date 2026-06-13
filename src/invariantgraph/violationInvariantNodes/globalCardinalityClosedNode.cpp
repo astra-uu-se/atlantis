@@ -81,6 +81,21 @@ void GlobalCardinalityClosedNode::registerOutputVars(propagation::SolverBase&,
 }
 
 void GlobalCardinalityClosedNode::updateState() {
+  if (!isReified() && shouldHold()) {
+    for (Int index = 0; index < static_cast<Int>(_cover.size()); ++index) {
+      for (Int dupIndex = static_cast<Int>(_cover.size()) - 1; dupIndex > index;
+           --dupIndex) {
+        if (_cover[index] == _cover[dupIndex]) {
+          _cover.erase(_cover.begin() + dupIndex);
+          const VarNodeId duplicateNodeId = outputVarNodeIds().at(dupIndex);
+          removeOutputAtIndex(dupIndex);
+          invariantGraph().replaceVarNode(duplicateNodeId,
+                                          outputVarNodeIds().at(index));
+        }
+      }
+    }
+  }
+
   // GCC can define the same output multiple times. Therefore, split all outputs
   // that are defined multiple times:
   postAllEqualOnReplacedVars(invariantGraph(), splitOutputVarNodes());

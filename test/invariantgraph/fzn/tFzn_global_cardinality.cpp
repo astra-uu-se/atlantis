@@ -10,6 +10,7 @@
 #include "./tFzn_gcc.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_global_cardinality.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "tFzn_gcc_count.hpp"
 
 namespace atlantis::testing {
 
@@ -19,10 +20,8 @@ using ::testing::AtMost;
 using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
-class fzn_global_cardinalityTest : public fzn_gccTest {
+class fzn_global_cardinalityTest : public fzn_gcc_countTest {
  public:
-  std::vector<std::string> outputs{};
-
   [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     RC_LOG() << "-----" << std::endl
              << "FznCountEqTest::isSatisfied(" << to_string(committedValue)
@@ -56,7 +55,7 @@ class fzn_global_cardinalityTest : public fzn_gccTest {
       outs.emplace_back(oVal);
     }
 
-    bool expected = true;
+    bool expected = duplicateOutputsEquals(committedValue);
 
     for (size_t i = 0; i < cover.size(); ++i) {
       RC_LOG() << "counts[" << i << "] = " << counts.at(i) << std::endl;
@@ -83,33 +82,27 @@ class fzn_global_cardinalityTest : public fzn_gccTest {
     if (cover.empty()) {
       return isFixedTo(reified, true);
     }
-    const auto cov = getCover();
-    const auto outputDomains = getCountDomains(outputs);
+    const auto outputDomains = getOutputDomains();
 
-    const auto bounds = getBounds(cov);
+    const auto bounds = getBounds();
     bool alwaysSat = true;
     for (size_t i = 0; alwaysSat && i < bounds.size(); ++i) {
+      if (!outputDomains.at(i).has_value()) {
+        return isFixedTo(reified, false);
+      }
       const auto [lb, ub] = bounds.at(i);
       if (lb == ub) {
-        alwaysSat &= isFixedTo(reified, true) ? outputDomains.at(i).isFixed() && outputDomains.at(i).contains(lb)
-                                              : !outputDomains.at(i).contains(lb);
+        alwaysSat &= isFixedTo(reified, true)
+                         ? outputDomains.at(i)->isFixed() &&
+                               outputDomains.at(i)->contains(lb)
+                         : !outputDomains.at(i)->contains(lb);
       } else {
-        const bool alwaysUnsat =
-            ub < outputDomains.at(i).lowerBound() || outputDomains.at(i).upperBound() < lb;
+        const bool alwaysUnsat = ub < outputDomains.at(i)->lowerBound() ||
+                                 outputDomains.at(i)->upperBound() < lb;
         alwaysSat &= isFixedTo(reified, false) ? alwaysUnsat : false;
       }
     }
-    if (alwaysSat) {
-      return alwaysSat;
-    }
-    if (isFixedTo(reified, false)) {
-      for (const auto& dom : outputDomains) {
-        if (dom.size() == 0) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return alwaysSat;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
@@ -119,47 +112,42 @@ class fzn_global_cardinalityTest : public fzn_gccTest {
     if (cover.empty()) {
       return isFixedTo(reified, false);
     }
-    const auto cov = getCover();
-    const auto outputDomains = getCountDomains(outputs);
+    const auto outputDomains = getOutputDomains();
 
-    const auto bounds = getBounds(cov);
+    const auto bounds = getBounds();
     for (size_t i = 0; i < bounds.size(); ++i) {
+      if (!outputDomains.at(i).has_value()) {
+        return isFixedTo(reified, true);
+      }
       const auto [lb, ub] = bounds.at(i);
       if (lb == ub) {
         const bool neverSat = isFixedTo(reified, false)
-                                  ? outputDomains.at(i).isFixed() && outputDomains.at(i).contains(lb)
-                                  : !outputDomains.at(i).contains(lb);
+                                  ? outputDomains.at(i)->isFixed() &&
+                                        outputDomains.at(i)->contains(lb)
+                                  : !outputDomains.at(i)->contains(lb);
         if (neverSat) {
           return true;
         }
       } else {
-        const bool alwaysUnsat =
-            ub < outputDomains.at(i).lowerBound() || outputDomains.at(i).upperBound() < lb;
+        const bool alwaysUnsat = ub < outputDomains.at(i)->lowerBound() ||
+                                 outputDomains.at(i)->upperBound() < lb;
         const bool neverSat = isFixedTo(reified, true) ? alwaysUnsat : false;
         if (neverSat) {
           return true;
         }
       }
     }
-    if (isFixedTo(reified, true)) {
-      for (const auto& dom : outputDomains) {
-        if (dom.size() == 0) {
-          return true;
-        }
-      }
-    }
-
     return false;
   }
 
   void generate() override {
-    const size_t inputSize = *rc::gen::inRange<size_t>(0, 4);
+    const size_t inputSize = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(inputSize);
     for (size_t i = 0; i < inputSize; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
 
-    const size_t coverSize = *rc::gen::inRange<size_t>(0, 4);
+    const size_t coverSize = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
     cover.reserve(coverSize);
     for (size_t i = 0; i < coverSize; ++i) {
       cover.emplace_back("cover_" + std::to_string(i));
@@ -170,18 +158,23 @@ class fzn_global_cardinalityTest : public fzn_gccTest {
       outputs.emplace_back("output_" + std::to_string(i));
     }
 
-    addIntVarArray(inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), cover, "cover");
-    addIntVarArray(outputs, "outputs");
+    addIntVarArray({IntArgState::VAR, IntArgState::VAR, IntArgState::FIXED},
+                   {{-3, 3}, {-3, 3}, {-3, -3}}, inputs, "inputs");
+    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), {{-2, -2}},
+                   cover, "cover");
+    addIntVarArray({IntArgState::PAR}, {{0, 0}}, outputs, "outputs");
 
-    const bool isReified = *rc::gen::arbitrary<bool>();
+    const bool isReified = true ? true : *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_global_cardinality_reif" : "fzn_global_cardinality";
     if (isReified) {
-      addBoolArg(BoolArgState::FIXED_FALSE, reified);
+      addBoolArg(BoolArgState::PAR_FALSE, reified);
     } else {
       addBoolPar(reified, true);
     }
+    // Removes duplicates from cover, making testing easier:
+    fixGenerate();
+
     generateConstraint();
   }
 

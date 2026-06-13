@@ -1692,7 +1692,7 @@ void GecodeSolver::set_in_reif(const ConstraintVarId varId,
                                const SortedUniqueVector& values,
                                const ConstraintVarId reified) {
   if (values->empty()) {
-    Gecode::rel(_space, boolVar(reified), Gecode::IRT_EQ, 1);
+    Gecode::rel(_space, boolVar(reified), Gecode::IRT_EQ, 0);
     return;
   }
   Gecode::dom(_space, intVar(varId), intSet(values), boolVar(reified));

@@ -102,6 +102,8 @@ class VarNode {
 
   DomainType domainType() const noexcept;
 
+  void tightenDomainType();
+
   void tightenDomainType(DomainType);
   void setDomainType(DomainType);
 

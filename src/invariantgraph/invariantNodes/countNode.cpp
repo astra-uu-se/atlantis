@@ -98,6 +98,7 @@ void CountNode::updateState() {
     removeStaticInputAtIndex(index);
   }
   if (numInputVars() == 0) {
+    assert(outputVarNode(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
     return;
   }

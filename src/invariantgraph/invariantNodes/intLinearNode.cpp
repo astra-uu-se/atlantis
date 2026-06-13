@@ -75,6 +75,7 @@ void IntLinearNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
+    assert(outputVarNode(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
 }

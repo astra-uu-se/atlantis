@@ -42,6 +42,7 @@ void GlobalCardinalityNode::postConstraint() {
 
 void GlobalCardinalityNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
+
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),
       [&](const VarNodeId vId) {
@@ -55,6 +56,19 @@ void GlobalCardinalityNode::init(const InvariantNodeId id) {
 }
 
 void GlobalCardinalityNode::updateState() {
+  // Remove duplicated covers:
+  for (Int index = 0; index < static_cast<Int>(_cover.size()); ++index) {
+    for (Int dupIndex = static_cast<Int>(_cover.size()) - 1; dupIndex > index;
+         --dupIndex) {
+      if (_cover[index] == _cover[dupIndex]) {
+        _cover.erase(_cover.begin() + dupIndex);
+        const VarNodeId duplicateNodeId = outputVarNodeIds().at(dupIndex);
+        removeOutputAtIndex(dupIndex);
+        invariantGraph().replaceVarNode(duplicateNodeId,
+                                        outputVarNodeIds().at(index));
+      }
+    }
+  }
   // GCC can define the same output multiple times. Therefore, split all outputs
   // that are defined multiple times:
   postAllEqualOnReplacedVars(invariantGraph(), splitOutputVarNodes());
@@ -64,10 +78,6 @@ void GlobalCardinalityNode::updateState() {
   const auto [varsToRemove, coverIndicesToRemove] =
       gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover);
 
-  for (const VarNodeId vId : varsToRemove) {
-    removeStaticInputVarNode(vId);
-  }
-
   for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
        --i) {
     _cover.erase(_cover.begin() + i);
@@ -75,6 +85,25 @@ void GlobalCardinalityNode::updateState() {
   }
 
   if (_cover.empty() || staticInputVarNodeIds().empty()) {
+    setState(InvariantNodeState::SUBSUMED);
+    return;
+  }
+
+  for (const VarNodeId vId : varsToRemove) {
+    if (varNodeConst(vId).isFixed()) {
+      for (size_t i = 0; i < _cover.size(); ++i) {
+        if (_cover[i] == varNodeConst(vId).lowerBound()) {
+          ++_countOffsets[i];
+        }
+      }
+    }
+    removeStaticInputVarNode(vId);
+  }
+
+  if (staticInputVarNodeIds().empty()) {
+    for (const auto vId : outputVarNodeIds()) {
+      varNode(vId).tightenDomainType();
+    }
     setState(InvariantNodeState::SUBSUMED);
   }
 }

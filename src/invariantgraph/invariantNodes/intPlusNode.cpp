@@ -51,6 +51,7 @@ void IntPlusNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
+    assert(outputVarNodeConst(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
 }

@@ -76,13 +76,7 @@ void ArrayElementNode::updateState() {
     }
     staticInputVarNode(0).domain()->removeAllValuesExcept(
         SortedUniqueVector(std::move(validIndices)));
-    if (staticInputVarNodeConst(0).isFixed()) {
-      staticInputVarNode(0).setDomainType(DomainType::DOM_FIXED);
-    } else if (staticInputVarNode(0).domain()->isInterval()) {
-      staticInputVarNode(0).setDomainType(DomainType::DOM_RANGE);
-    } else {
-      staticInputVarNode(0).setDomainType(DomainType::DOM_DOMAIN);
-    }
+    staticInputVarNode(0).tightenDomainType();
     setState(InvariantNodeState::SUBSUMED);
   }
 }

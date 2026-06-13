@@ -86,6 +86,7 @@ void ArrayIntMinimumNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
+    outputVarNode(0).tightenDomainType();
     setState(InvariantNodeState::SUBSUMED);
   }
 }

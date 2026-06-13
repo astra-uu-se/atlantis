@@ -74,9 +74,7 @@ void BoolLinearNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .fixToValue(_outputOffset);
+    outputVarNode(0).fixToValue(_outputOffset);
     setState(InvariantNodeState::SUBSUMED);
   }
 }
