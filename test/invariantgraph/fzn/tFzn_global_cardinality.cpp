@@ -79,17 +79,43 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
     if (!isFixed(reified)) {
       return false;
     }
+    if (inputs.empty()) {
+      if (cover.empty()) {
+        return isFixedTo(reified, true);
+      }
+      bool allFixedToZero = true;
+      for (const auto& c : cover) {
+        if (isFixed(c)) {
+          if (!isFixedTo(c, Int{0})) {
+            return isFixedTo(reified, false);
+          }
+          allFixedToZero &= true;
+        } else {
+          allFixedToZero = false;
+          if (!inDomain(c, Int{0})) {
+            return isFixedTo(reified, false);
+          }
+        }
+      }
+      if (allFixedToZero) {
+        return isFixedTo(reified, true);
+      }
+    }
     if (cover.empty()) {
       return isFixedTo(reified, true);
     }
     const auto outputDomains = getOutputDomains();
 
     const auto bounds = getBounds();
+    Int totalLb = 0;
+    Int totalUb = 0;
     bool alwaysSat = true;
     bool alwaysUnsat = false;
     for (size_t i = 0; i < bounds.size(); ++i) {
       RC_ASSERT(outputDomains.at(i).has_value());
       const auto [lb, ub] = bounds.at(i);
+      totalLb += std::max(Int{0}, outputDomains.at(i)->lowerBound());
+      totalUb += std::max(Int{0}, outputDomains.at(i)->upperBound());
       if (lb == ub) {
         alwaysSat &= outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
         alwaysUnsat |= !outputDomains.at(i)->contains(lb);
@@ -97,6 +123,12 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
         alwaysSat = false;
         alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() || outputDomains.at(i)->upperBound() < lb;
       }
+    }
+    if (static_cast<Int>(inputs.size()) < totalLb || totalUb < static_cast<Int>(inputs.size())) {
+      return isFixedTo(reified, false);
+    }
+    if (isFixedTo(reified, false)) {
+      return alwaysSat;
     }
     if (isFixedTo(reified, true)) {
       return alwaysSat;
@@ -108,17 +140,43 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
     if (!isFixed(reified)) {
       return false;
     }
+    if (inputs.empty()) {
+      if (cover.empty()) {
+        return isFixedTo(reified, false);
+      }
+      bool allFixedToZero = true;
+      for (const auto& c : cover) {
+        if (isFixed(c)) {
+          if (!isFixedTo(c, Int{0})) {
+            return isFixedTo(reified, true);
+          }
+          allFixedToZero &= true;
+        } else {
+          allFixedToZero = false;
+          if (!inDomain(c, Int{0})) {
+            return isFixedTo(reified, true);
+          }
+        }
+      }
+      if (allFixedToZero) {
+        return isFixedTo(reified, false);
+      }
+    }
     if (cover.empty()) {
       return isFixedTo(reified, false);
     }
     const auto outputDomains = getOutputDomains();
 
     const auto bounds = getBounds();
+    Int totalLb = 0;
+    Int totalUb = 0;
     bool alwaysSat = true;
     bool alwaysUnsat = false;
     for (size_t i = 0; i < bounds.size(); ++i) {
       RC_ASSERT(outputDomains.at(i).has_value());
       const auto [lb, ub] = bounds.at(i);
+      totalLb += std::max(Int{0}, outputDomains.at(i)->lowerBound());
+      totalUb += std::max(Int{0}, outputDomains.at(i)->upperBound());
       if (lb == ub) {
         alwaysSat &= outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
         alwaysUnsat |= !outputDomains.at(i)->contains(lb);
@@ -127,6 +185,9 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
         alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() || outputDomains.at(i)->upperBound() < lb;
       }
     }
+    if (static_cast<Int>(inputs.size()) < totalLb || totalUb < static_cast<Int>(inputs.size())) {
+      return isFixedTo(reified, true);
+    }
     if (isFixedTo(reified, false)) {
       return alwaysSat;
     }
@@ -134,13 +195,13 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
   }
 
   void generate() override {
-    const size_t inputSize = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t inputSize = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(inputSize);
     for (size_t i = 0; i < inputSize; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
 
-    const size_t coverSize = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t coverSize = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
     cover.reserve(coverSize);
     for (size_t i = 0; i < coverSize; ++i) {
       cover.emplace_back("cover_" + std::to_string(i));
@@ -151,17 +212,15 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
       outputs.emplace_back("output_" + std::to_string(i));
     }
 
-    addIntVarArray({IntArgState::VAR, IntArgState::VAR, IntArgState::FIXED},
-                   {{-3, 3}, {-3, 3}, {-3, -3}}, inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), {{-2, -2}},
-                   cover, "cover");
-    addIntVarArray({IntArgState::PAR}, {{0, 0}}, outputs, "outputs");
+    addIntVarArray({IntArgState::VAR}, {{-3, 3}}, inputs, "inputs");
+    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), {{-3,-3},{-2,-2},{-3,-3}}, cover, "cover");
+    addIntVarArray({IntArgState::PAR, IntArgState::PAR, IntArgState::VAR}, {{1,1},{1,1},{-3,3}}, outputs, "outputs");
 
-    const bool isReified = true ? true : *rc::gen::arbitrary<bool>();
+    const bool isReified = true ? false : *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_global_cardinality_reif" : "fzn_global_cardinality";
     if (isReified) {
-      addBoolArg(BoolArgState::PAR_FALSE, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }

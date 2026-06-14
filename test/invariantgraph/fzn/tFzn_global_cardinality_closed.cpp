@@ -164,6 +164,28 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
     if (!isFixed(reified)) {
       return false;
     }
+    if (inputs.empty()) {
+      if (cover.empty()) {
+        return isFixedTo(reified, false);
+      }
+      bool allFixedToZero = true;
+      for (const auto& c : cover) {
+        if (isFixed(c)) {
+          if (!isFixedTo(c, Int{0})) {
+            return isFixedTo(reified, true);
+          }
+          allFixedToZero &= true;
+        } else {
+          allFixedToZero = false;
+          if (!inDomain(c, Int{0})) {
+            return isFixedTo(reified, true);
+          }
+        }
+      }
+      if (allFixedToZero) {
+        return isFixedTo(reified, false);
+      }
+    }
     if (inputs.empty() && cover.empty()) {
       return isFixedTo(reified, false);
     }
