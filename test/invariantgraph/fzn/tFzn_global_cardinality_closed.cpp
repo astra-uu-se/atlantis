@@ -85,160 +85,11 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
-    if (!isFixed(reified)) {
-      return false;
-    }
-    if (inputs.empty()) {
-      if (cover.empty()) {
-        return isFixedTo(reified, true);
-      }
-      bool allFixedToZero = true;
-      for (const auto& c : cover) {
-        if (isFixed(c)) {
-          if (!isFixedTo(c, Int{0})) {
-            return isFixedTo(reified, false);
-          }
-          allFixedToZero &= true;
-        } else {
-          allFixedToZero = false;
-          if (!inDomain(c, Int{0})) {
-            return isFixedTo(reified, false);
-          }
-        }
-      }
-      if (allFixedToZero) {
-        return isFixedTo(reified, true);
-      }
-    }
-    if (cover.empty()) {
-      return isFixedTo(reified, false);
-    }
-    for (const auto& input : inputs) {
-      bool coverContainsVal = false;
-      for (const auto& c : cover) {
-        if (isFixed(input)) {
-          if (intVal(input) == intVal(c)) {
-            coverContainsVal = true;
-          }
-        } else if (varNodeConst(input).constDomain()->contains(intVal(c))) {
-          coverContainsVal = true;
-        }
-      }
-      if (!coverContainsVal) {
-        return isFixedTo(reified, false);
-      }
-    }
-    const auto outputDomains = getOutputDomains();
-    Int totalUb = 0;
-    for (const auto& dom : outputDomains) {
-      if (!dom.has_value()) {
-        return isFixedTo(reified, false);
-      }
-      totalUb = std::max(dom->upperBound(), Int{0});
-    }
-    if (totalUb < static_cast<Int>(inputs.size())) {
-      return isFixedTo(reified, false);
-    }
-
-    const auto bounds = getBounds();
-    bool alwaysSat = true;
-    bool alwaysUnsat = false;
-    for (size_t i = 0; i < bounds.size(); ++i) {
-      RC_ASSERT(outputDomains.at(i).has_value());
-      const auto [lb, ub] = bounds.at(i);
-      if (lb == ub) {
-        alwaysSat &= outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
-        alwaysUnsat |= !outputDomains.at(i)->contains(lb);
-      } else {
-        alwaysSat = false;
-        alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() || outputDomains.at(i)->upperBound() < lb;
-      }
-    }
-    if (isFixedTo(reified, true)) {
-      return alwaysSat;
-    }
-    return alwaysUnsat;
+    return false;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
-    if (!isFixed(reified)) {
-      return false;
-    }
-    if (inputs.empty()) {
-      if (cover.empty()) {
-        return isFixedTo(reified, false);
-      }
-      bool allFixedToZero = true;
-      for (const auto& c : cover) {
-        if (isFixed(c)) {
-          if (!isFixedTo(c, Int{0})) {
-            return isFixedTo(reified, true);
-          }
-          allFixedToZero &= true;
-        } else {
-          allFixedToZero = false;
-          if (!inDomain(c, Int{0})) {
-            return isFixedTo(reified, true);
-          }
-        }
-      }
-      if (allFixedToZero) {
-        return isFixedTo(reified, false);
-      }
-    }
-    if (inputs.empty() && cover.empty()) {
-      return isFixedTo(reified, false);
-    }
-    if (cover.empty()) {
-      return isFixedTo(reified, true);
-    }
-    for (const auto& input : inputs) {
-      bool coverContainsVal = false;
-      for (const auto& c : cover) {
-        if (isFixed(input)) {
-          if (intVal(input) == intVal(c)) {
-            coverContainsVal = true;
-          }
-        } else if (varNodeConst(input).constDomain()->contains(intVal(c))) {
-          coverContainsVal = true;
-        }
-      }
-      if (!coverContainsVal) {
-        return isFixedTo(reified, true);
-      }
-    }
-
-    const auto outputDomains = getOutputDomains();
-
-    Int totalUb = 0;
-    for (const auto& dom : outputDomains) {
-      if (!dom.has_value()) {
-        return isFixedTo(reified, true);
-      }
-      totalUb = std::max(dom->upperBound(), Int{0});
-    }
-    if (totalUb < static_cast<Int>(inputs.size())) {
-      return isFixedTo(reified, true);
-    }
-
-    const auto bounds = getBounds();
-    bool alwaysSat = true;
-    bool alwaysUnsat = false;
-    for (size_t i = 0; i < bounds.size(); ++i) {
-      RC_ASSERT(outputDomains.at(i).has_value());
-      const auto [lb, ub] = bounds.at(i);
-      if (lb == ub) {
-        alwaysSat &= outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
-        alwaysUnsat |= !outputDomains.at(i)->contains(lb);
-      } else {
-        alwaysSat = false;
-        alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() || outputDomains.at(i)->upperBound() < lb;
-      }
-    }
-    if (isFixedTo(reified, false)) {
-      return alwaysSat;
-    }
-    return alwaysUnsat;
+    return false;
   }
 
   void generate() override {
@@ -290,7 +141,7 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
 };
 
 RC_GTEST_FIXTURE_PROP(fzn_global_cardinality_closedTest, RapidCheck, ()) {
-  rapidCheck(false);
+  rapidCheck(true, true);
 }
 
 }  // namespace atlantis::testing

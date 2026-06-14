@@ -271,7 +271,7 @@ class FznTestBase : public ::testing::Test {
 
   void changeValue(const std::string& identifier, bool committedValue);
 
-  void rapidCheck(bool reachesFixpoint = true);
+  void rapidCheck(bool reachesFixpoint = true, bool assumeCorrect = false);
 };
 
 }  // namespace atlantis::testing

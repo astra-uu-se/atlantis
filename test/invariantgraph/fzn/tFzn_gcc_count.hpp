@@ -95,6 +95,17 @@ class fzn_gcc_countTest : public fzn_gccTest {
              intVal(outputs.at(pair.first), committedValue);
     });
   }
+
+  [[nodiscard]] bool canMove() const override {
+    if (!fzn_gccTest::canMove()) {
+      return false;
+    }
+    return std::ranges::all_of(outputs, [&](const auto& out) {
+      return varId(out) != propagation::NULL_ID;
+    });
+  }
+
+
 };
 
 }  // namespace atlantis::testing
