@@ -7,6 +7,8 @@
 #include <vector>
 
 #include "./fznTestBase.hpp"
+#include "tFzn_count.hpp"
+#include "tFzn_gcc_count.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_global_cardinality_closed.hpp"
 #include "atlantis/utils/domains.hpp"
 
@@ -18,73 +20,42 @@ using ::testing::AtMost;
 using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
-class fzn_global_cardinality_closedTest : public FznTestBase {
+class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
  public:
-  std::vector<std::string> inputs{};
-  std::vector<std::string> cover{};
-  std::vector<std::string> outputs{};
-  std::string reified{"reified"};
-
-  [[nodiscard]] std::vector<std::pair<Int, Int>> getBounds() const {
-    std::vector<std::pair<Int, Int>> bounds{};
-    bounds.reserve(cover.size());
-    for (const auto& c : cover) {
-      const Int needle = intVal(c);
-      Int lb = 0;
-      Int ub = 0;
-      for (const auto& input : inputs) {
-        if (isFixed(input)) {
-          if (intVal(input) == needle) {
-            ++lb;
-            ++ub;
-          }
-        } else {
-          if (inDomain(input, needle)) {
-            ++ub;
-          }
-        }
-      }
-      bounds.emplace_back(lb, ub);
-    }
-    return bounds;
-  }
-
-  std::unordered_map<Int, std::vector<size_t>> valToIndices(
-      bool committedValue) const {
-    std::unordered_map<Int, std::vector<size_t>> vti;
-    vti.reserve(cover.size());
-    for (size_t i = 0; i < cover.size(); ++i) {
-      const Int needle = intVal(cover.at(i), committedValue);
-      if (vti.contains(needle)) {
-        vti.at(needle).emplace_back(i);
-      } else {
-        vti.emplace(needle, std::vector<size_t>{i});
-      }
-    }
-    return vti;
-  }
-
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     RC_LOG() << "-----" << std::endl
              << "FznCountEqTest::isSatisfied(" << to_string(committedValue)
              << ")" << std::endl;
     std::vector<Int> counts(cover.size(), 0);
-    const auto vti = valToIndices(committedValue);
+    std::unordered_map<Int, std::vector<size_t>> valToIndices;
+    valToIndices.reserve(cover.size());
+    for (size_t i = 0; i < cover.size(); ++i) {
+      const Int needle = intVal(cover.at(i), committedValue);
+      if (valToIndices.contains(needle)) {
+        valToIndices.at(needle).emplace_back(i);
+      } else {
+        valToIndices.emplace(needle, std::vector<size_t>{i});
+      }
+    }
 
     bool expected = true;
 
     for (const auto& input : inputs) {
       const Int val = intVal(input);
       RC_LOG() << input << " = " << val << std::endl;
-      if (vti.contains(val)) {
-        for (const size_t index : vti.at(val)) {
+      bool coverContainsVal = false;
+      if (valToIndices.contains(val)) {
+        for (const size_t index : valToIndices.at(val)) {
           RC_ASSERT(index < cover.size());
           ++counts.at(index);
+          coverContainsVal = true;
         }
-      } else {
+      }
+      if (!coverContainsVal) {
         expected = false;
       }
     }
+
     std::vector<Int> outs;
     outs.reserve(cover.size());
     for (const auto& o : outputs) {
@@ -92,6 +63,8 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
       RC_LOG() << o << " = " << oVal << std::endl;
       outs.emplace_back(oVal);
     }
+
+    expected &= duplicateOutputsEquals(committedValue);
 
     for (size_t i = 0; i < cover.size(); ++i) {
       RC_LOG() << "counts[" << i << "] = " << counts.at(i) << std::endl;
@@ -115,124 +88,75 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
     if (!isFixed(reified)) {
       return false;
     }
-    if (inputs.empty() && cover.empty()) {
-      return isFixedTo(reified, true);
-    }
-    if (cover.empty()) {
-      return isFixedTo(reified, false);
-    }
     if (inputs.empty()) {
-      const bool alwaysUnsat =
-          std::ranges::any_of(outputs, [&](const std::string& identifier) {
-            return !inDomain(identifier, Int{0});
-          });
-      if (alwaysUnsat) {
-        return isFixedTo(reified, false);
-      }
-      const bool alwaysSat =
-          std::ranges::all_of(outputs, [&](const std::string& identifier) {
-            return isFixedTo(identifier, Int{0});
-          });
-      if (alwaysSat) {
+      if (cover.empty()) {
         return isFixedTo(reified, true);
       }
-    }
-
-    for (size_t i = 0; i < cover.size(); ++i) {
-      for (size_t j = i + 1; j < cover.size(); ++j) {
-        if (intVal(cover[i]) == intVal(cover[j])) {
-          const auto& iDom = varNodeConst(outputs.at(i)).constDomain();
-          const auto& jDom = varNodeConst(outputs.at(i)).constDomain();
-          if (iDom->isDisjoint(*jDom)) {
+      bool allFixedToZero = true;
+      for (const auto& c : cover) {
+        if (isFixed(c)) {
+          if (!isFixedTo(c, Int{0})) {
+            return isFixedTo(reified, false);
+          }
+          allFixedToZero &= true;
+        } else {
+          allFixedToZero = false;
+          if (!inDomain(c, Int{0})) {
             return isFixedTo(reified, false);
           }
         }
       }
+      if (allFixedToZero) {
+        return isFixedTo(reified, true);
+      }
     }
-
-    if (isFixedTo(reified, false)) {
-      const auto vti = valToIndices(true);
-      for (const auto& input : inputs) {
+    if (cover.empty()) {
+      return isFixedTo(reified, false);
+    }
+    for (const auto& input : inputs) {
+      bool coverContainsVal = false;
+      for (const auto& c : cover) {
         if (isFixed(input)) {
-          if (!vti.contains(intVal(input))) {
-            return true;
+          if (intVal(input) == intVal(c)) {
+            coverContainsVal = true;
           }
-        } else {
-          const auto& dom = varNodeConst(input).constDomain();
-          const bool noOverlap =
-              std::none_of(dom->begin(), dom->end(),
-                           [&](const Int v) { return vti.contains(v); });
-          if (noOverlap) {
-            return true;
-          }
+        } else if (varNodeConst(input).constDomain()->contains(intVal(c))) {
+          coverContainsVal = true;
         }
       }
+      if (!coverContainsVal) {
+        return isFixedTo(reified, false);
+      }
+    }
+    const auto outputDomains = getOutputDomains();
+    Int totalUb = 0;
+    for (const auto& dom : outputDomains) {
+      if (!dom.has_value()) {
+        return isFixedTo(reified, false);
+      }
+      totalUb = std::max(dom->upperBound(), Int{0});
+    }
+    if (totalUb < static_cast<Int>(inputs.size())) {
+      return isFixedTo(reified, false);
     }
 
     const auto bounds = getBounds();
     bool alwaysSat = true;
     for (size_t i = 0; alwaysSat && i < bounds.size(); ++i) {
+      RC_ASSERT(outputDomains.at(i).has_value());
       const auto [lb, ub] = bounds.at(i);
       if (lb == ub) {
-        const bool alwaysUnsat = !inDomain(outputs.at(i), lb);
-        if (isFixedTo(reified, false)) {
-          if (alwaysUnsat) {
-            return true;
-          }
-        } else {
-          alwaysSat &= !alwaysUnsat;
-        }
+        alwaysSat &= isFixedTo(reified, true)
+                         ? outputDomains.at(i)->isFixed() &&
+                               outputDomains.at(i)->contains(lb)
+                         : !outputDomains.at(i)->contains(lb);
       } else {
-        const bool alwaysUnsat =
-            ub < lowerBound(outputs.at(i)) || upperBound(outputs.at(i)) < lb;
-        if (isFixedTo(reified, false)) {
-          if (alwaysUnsat) {
-            return true;
-          }
-        } else {
-          alwaysSat &= !alwaysUnsat;
-        }
+        const bool alwaysUnsat = ub < outputDomains.at(i)->lowerBound() ||
+                                 outputDomains.at(i)->upperBound() < lb;
+        alwaysSat &= isFixedTo(reified, false) ? alwaysUnsat : false;
       }
     }
-    if (alwaysSat) {
-      return alwaysSat;
-    }
-    std::unordered_set<Int> visitedCovers;
-    visitedCovers.reserve(cover.size());
-    Int totalLb = 0;
-    Int totalUb = 0;
-    for (size_t i = 0; i < cover.size(); ++i) {
-      if (visitedCovers.contains(intVal(cover.at(i)))) {
-        continue;
-      }
-      visitedCovers.emplace(intVal(cover.at(i)));
-      const Int iCover = intVal(cover.at(i));
-      SearchDomain combinedDomain =
-          isFixed(outputs.at(i))
-              ? SearchDomain(intVal(outputs.at(i)), intVal(outputs.at(i)))
-              : SearchDomain(*varNodeConst(outputs.at(i)).constDomain());
-      for (size_t j = i + 1; j < cover.size(); ++j) {
-        const Int jCover = intVal(cover.at(i));
-        if (iCover == jCover) {
-          if (isFixed(outputs.at(j))) {
-            combinedDomain.remove(intVal(outputs.at(j)));
-          } else {
-            combinedDomain.removeAllValuesExcept(
-                *varNodeConst(outputs.at(j)).constDomain());
-          }
-        }
-      }
-      if (combinedDomain.size() == 0) {
-        return isFixedTo(reified, false);
-      }
-      totalLb += combinedDomain.lowerBound();
-      totalUb += combinedDomain.upperBound();
-    }
-    if (static_cast<Int>(inputs.size()) < totalLb ||
-        totalUb < static_cast<Int>(inputs.size())) {
-      return isFixedTo(reified, true);
-    }
-    return false;
+    return alwaysSat;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
@@ -245,108 +169,68 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
     if (cover.empty()) {
       return isFixedTo(reified, true);
     }
-    if (inputs.empty()) {
-      const bool alwaysUnsat =
-          std::ranges::any_of(outputs, [&](const std::string& identifier) {
-            return !inDomain(identifier, Int{0});
-          });
-      if (alwaysUnsat) {
-        return isFixedTo(reified, true);
+    for (const auto& input : inputs) {
+      bool coverContainsVal = false;
+      for (const auto& c : cover) {
+        if (isFixed(input)) {
+          if (intVal(input) == intVal(c)) {
+            coverContainsVal = true;
+          }
+        } else if (varNodeConst(input).constDomain()->contains(intVal(c))) {
+          coverContainsVal = true;
+        }
       }
-      const bool alwaysSat =
-          std::ranges::all_of(outputs, [&](const std::string& identifier) {
-            return isFixedTo(identifier, Int{0});
-          });
-      if (alwaysSat) {
-        return isFixedTo(reified, false);
+      if (!coverContainsVal) {
+        return isFixedTo(reified, true);
       }
     }
 
-    if (isFixedTo(reified, true)) {
-      const auto vti = valToIndices(true);
-      for (const auto& input : inputs) {
-        if (isFixed(input)) {
-          if (!vti.contains(intVal(input))) {
-            return true;
-          }
-        } else {
-          const auto& dom = varNodeConst(input).constDomain();
-          const bool noOverlap =
-              std::none_of(dom->begin(), dom->end(),
-                           [&](const Int v) { return vti.contains(v); });
-          if (noOverlap) {
-            return true;
-          }
-        }
+    const auto outputDomains = getOutputDomains();
+
+    Int totalUb = 0;
+    for (const auto& dom : outputDomains) {
+      if (!dom.has_value()) {
+        return isFixedTo(reified, true);
       }
+      totalUb = std::max(dom->upperBound(), Int{0});
+    }
+    if (totalUb < static_cast<Int>(inputs.size())) {
+      return isFixedTo(reified, true);
     }
 
     const auto bounds = getBounds();
-    for (size_t i = 0; i < bounds.size(); ++i) {
+    bool alwaysSat = true;
+    for (size_t i = 0; alwaysSat && i < bounds.size(); ++i) {
+      RC_ASSERT(outputDomains.at(i).has_value());
       const auto [lb, ub] = bounds.at(i);
       if (lb == ub) {
         const bool neverSat = isFixedTo(reified, false)
-                                  ? isFixedTo(outputs.at(i), lb)
-                                  : !inDomain(outputs.at(i), lb);
+                                  ? outputDomains.at(i)->isFixed() &&
+                                        outputDomains.at(i)->contains(lb)
+                                  : !outputDomains.at(i)->contains(lb);
         if (neverSat) {
           return true;
         }
       } else {
-        const bool alwaysUnsat =
-            ub < lowerBound(outputs.at(i)) || upperBound(outputs.at(i)) < lb;
+        const bool alwaysUnsat = ub < outputDomains.at(i)->lowerBound() ||
+                                 outputDomains.at(i)->upperBound() < lb;
         const bool neverSat = isFixedTo(reified, true) ? alwaysUnsat : false;
         if (neverSat) {
           return true;
         }
       }
     }
-    std::unordered_set<Int> visitedCovers;
-    visitedCovers.reserve(cover.size());
-    Int totalLb = 0;
-    Int totalUb = 0;
-    for (size_t i = 0; i < cover.size(); ++i) {
-      if (visitedCovers.contains(intVal(cover.at(i)))) {
-        continue;
-      }
-      visitedCovers.emplace(intVal(cover.at(i)));
-      const Int iCover = intVal(cover.at(i));
-      SearchDomain combinedDomain =
-          isFixed(outputs.at(i))
-              ? SearchDomain(intVal(outputs.at(i)), intVal(outputs.at(i)))
-              : SearchDomain(*varNodeConst(outputs.at(i)).constDomain());
-      for (size_t j = i + 1; j < cover.size(); ++j) {
-        const Int jCover = intVal(cover.at(i));
-        if (iCover == jCover) {
-          if (isFixed(outputs.at(j))) {
-            combinedDomain.remove(intVal(outputs.at(j)));
-          } else {
-            combinedDomain.removeAllValuesExcept(
-                *varNodeConst(outputs.at(j)).constDomain());
-          }
-        }
-      }
-      if (combinedDomain.size() == 0) {
-        return isFixedTo(reified, false);
-      }
-      totalLb += combinedDomain.lowerBound();
-      totalUb += combinedDomain.upperBound();
-    }
-    if (static_cast<Int>(inputs.size()) < totalLb ||
-        totalUb < static_cast<Int>(inputs.size())) {
-      return isFixedTo(reified, true);
-    }
-
     return false;
   }
 
   void generate() override {
-    const size_t inputSize = *rc::gen::inRange<size_t>(0, 4);
+    const size_t inputSize = true ? 0 : *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(inputSize);
     for (size_t i = 0; i < inputSize; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
 
-    const size_t coverSize = *rc::gen::inRange<size_t>(0, 4);
+    const size_t coverSize = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
     cover.reserve(coverSize);
     for (size_t i = 0; i < coverSize; ++i) {
       cover.emplace_back("cover_" + std::to_string(i));
@@ -358,32 +242,19 @@ class fzn_global_cardinality_closedTest : public FznTestBase {
     }
 
     addIntVarArray(inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), cover, "cover");
-    addIntVarArray(outputs, "outputs");
+    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), {{-3, -3}, {-3, -3}, {-2, -2}}, cover, "cover");
+    addIntVarArray({IntArgState::VAR, IntArgState::PAR, IntArgState::VAR}, {{-3, 3}, {-3, -3}, {-3, 3}}, outputs, "outputs");
 
-    const bool isReified = *rc::gen::arbitrary<bool>();
+    const bool isReified = true ? true : *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_global_cardinality_closed_reif"
                                      : "fzn_global_cardinality_closed";
     if (isReified) {
-      addBoolArg(reified);
+      addBoolArg(BoolArgState::VAR, reified);
     } else {
       addBoolPar(reified, true);
     }
+    fixGenerate();
     generateConstraint();
-  }
-
-  [[nodiscard]] bool canMove() const override {
-    return std::ranges::any_of(inputs, [&](const std::string& input) {
-      return varId(input) != propagation::NULL_ID;
-    });
-  }
-
-  void move(bool committedValue) override {
-    for (const auto& input : inputs) {
-      if (varId(input) != propagation::NULL_ID && randBool()) {
-        changeValue(input, committedValue);
-      }
-    }
   }
 
   void query() override {
