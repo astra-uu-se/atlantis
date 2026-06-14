@@ -86,23 +86,22 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
 
     const auto bounds = getBounds();
     bool alwaysSat = true;
-    for (size_t i = 0; alwaysSat && i < bounds.size(); ++i) {
-      if (!outputDomains.at(i).has_value()) {
-        return isFixedTo(reified, false);
-      }
+    bool alwaysUnsat = false;
+    for (size_t i = 0; i < bounds.size(); ++i) {
+      RC_ASSERT(outputDomains.at(i).has_value());
       const auto [lb, ub] = bounds.at(i);
       if (lb == ub) {
-        alwaysSat &= isFixedTo(reified, true)
-                         ? outputDomains.at(i)->isFixed() &&
-                               outputDomains.at(i)->contains(lb)
-                         : !outputDomains.at(i)->contains(lb);
+        alwaysSat &= outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
+        alwaysUnsat |= !outputDomains.at(i)->contains(lb);
       } else {
-        const bool alwaysUnsat = ub < outputDomains.at(i)->lowerBound() ||
-                                 outputDomains.at(i)->upperBound() < lb;
-        alwaysSat &= isFixedTo(reified, false) ? alwaysUnsat : false;
+        alwaysSat = false;
+        alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() || outputDomains.at(i)->upperBound() < lb;
       }
     }
-    return alwaysSat;
+    if (isFixedTo(reified, true)) {
+      return alwaysSat;
+    }
+    return alwaysUnsat;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
@@ -115,29 +114,23 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
     const auto outputDomains = getOutputDomains();
 
     const auto bounds = getBounds();
+    bool alwaysSat = true;
+    bool alwaysUnsat = false;
     for (size_t i = 0; i < bounds.size(); ++i) {
-      if (!outputDomains.at(i).has_value()) {
-        return isFixedTo(reified, true);
-      }
+      RC_ASSERT(outputDomains.at(i).has_value());
       const auto [lb, ub] = bounds.at(i);
       if (lb == ub) {
-        const bool neverSat = isFixedTo(reified, false)
-                                  ? outputDomains.at(i)->isFixed() &&
-                                        outputDomains.at(i)->contains(lb)
-                                  : !outputDomains.at(i)->contains(lb);
-        if (neverSat) {
-          return true;
-        }
+        alwaysSat &= outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
+        alwaysUnsat |= !outputDomains.at(i)->contains(lb);
       } else {
-        const bool alwaysUnsat = ub < outputDomains.at(i)->lowerBound() ||
-                                 outputDomains.at(i)->upperBound() < lb;
-        const bool neverSat = isFixedTo(reified, true) ? alwaysUnsat : false;
-        if (neverSat) {
-          return true;
-        }
+        alwaysSat = false;
+        alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() || outputDomains.at(i)->upperBound() < lb;
       }
     }
-    return false;
+    if (isFixedTo(reified, false)) {
+      return alwaysSat;
+    }
+    return alwaysUnsat;
   }
 
   void generate() override {

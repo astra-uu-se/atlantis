@@ -142,21 +142,22 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
 
     const auto bounds = getBounds();
     bool alwaysSat = true;
-    for (size_t i = 0; alwaysSat && i < bounds.size(); ++i) {
+    bool alwaysUnsat = false;
+    for (size_t i = 0; i < bounds.size(); ++i) {
       RC_ASSERT(outputDomains.at(i).has_value());
       const auto [lb, ub] = bounds.at(i);
       if (lb == ub) {
-        alwaysSat &= isFixedTo(reified, true)
-                         ? outputDomains.at(i)->isFixed() &&
-                               outputDomains.at(i)->contains(lb)
-                         : !outputDomains.at(i)->contains(lb);
+        alwaysSat &= outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
+        alwaysUnsat |= !outputDomains.at(i)->contains(lb);
       } else {
-        const bool alwaysUnsat = ub < outputDomains.at(i)->lowerBound() ||
-                                 outputDomains.at(i)->upperBound() < lb;
-        alwaysSat &= isFixedTo(reified, false) ? alwaysUnsat : false;
+        alwaysSat = false;
+        alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() || outputDomains.at(i)->upperBound() < lb;
       }
     }
-    return alwaysSat;
+    if (isFixedTo(reified, true)) {
+      return alwaysSat;
+    }
+    return alwaysUnsat;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
@@ -200,37 +201,32 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
 
     const auto bounds = getBounds();
     bool alwaysSat = true;
-    for (size_t i = 0; alwaysSat && i < bounds.size(); ++i) {
+    bool alwaysUnsat = false;
+    for (size_t i = 0; i < bounds.size(); ++i) {
       RC_ASSERT(outputDomains.at(i).has_value());
       const auto [lb, ub] = bounds.at(i);
       if (lb == ub) {
-        const bool neverSat = isFixedTo(reified, false)
-                                  ? outputDomains.at(i)->isFixed() &&
-                                        outputDomains.at(i)->contains(lb)
-                                  : !outputDomains.at(i)->contains(lb);
-        if (neverSat) {
-          return true;
-        }
+        alwaysSat &= outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
+        alwaysUnsat |= !outputDomains.at(i)->contains(lb);
       } else {
-        const bool alwaysUnsat = ub < outputDomains.at(i)->lowerBound() ||
-                                 outputDomains.at(i)->upperBound() < lb;
-        const bool neverSat = isFixedTo(reified, true) ? alwaysUnsat : false;
-        if (neverSat) {
-          return true;
-        }
+        alwaysSat = false;
+        alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() || outputDomains.at(i)->upperBound() < lb;
       }
     }
-    return false;
+    if (isFixedTo(reified, false)) {
+      return alwaysSat;
+    }
+    return alwaysUnsat;
   }
 
   void generate() override {
-    const size_t inputSize = true ? 0 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t inputSize = *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(inputSize);
     for (size_t i = 0; i < inputSize; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
 
-    const size_t coverSize = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t coverSize = *rc::gen::inRange<size_t>(0, 4);
     cover.reserve(coverSize);
     for (size_t i = 0; i < coverSize; ++i) {
       cover.emplace_back("cover_" + std::to_string(i));
@@ -242,14 +238,14 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
     }
 
     addIntVarArray(inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), {{-3, -3}, {-3, -3}, {-2, -2}}, cover, "cover");
-    addIntVarArray({IntArgState::VAR, IntArgState::PAR, IntArgState::VAR}, {{-3, 3}, {-3, -3}, {-3, 3}}, outputs, "outputs");
+    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), cover, "cover");
+    addIntVarArray(outputs, "outputs");
 
-    const bool isReified = true ? true : *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_global_cardinality_closed_reif"
                                      : "fzn_global_cardinality_closed";
     if (isReified) {
-      addBoolArg(BoolArgState::VAR, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }
