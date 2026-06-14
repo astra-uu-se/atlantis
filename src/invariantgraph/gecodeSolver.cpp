@@ -477,14 +477,14 @@ bool GecodeSolver::gcc_sanity(
     if (satisfiedCounts < cover.size()) {
       throw InconsistencyException("UNSAT");
     }
-  }
-  if (isFixedTo(reified, false)) {
+  } else if (isFixedTo(reified, false)) {
     if (satisfiedCounts == cover.size()) {
       throw InconsistencyException("UNSAT");
     }
+  } else {
+    Gecode::rel(_space, boolVar(std::get<ConstraintVarId>(reified)),
+                Gecode::IRT_EQ, satisfiedCounts == cover.size() ? 1 : 0);
   }
-  Gecode::rel(_space, boolVar(std::get<ConstraintVarId>(reified)),
-              Gecode::IRT_EQ, satisfiedCounts == cover.size() ? 1 : 0);
   return true;
 }
 

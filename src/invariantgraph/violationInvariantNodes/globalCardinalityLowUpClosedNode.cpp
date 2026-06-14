@@ -57,14 +57,17 @@ void GlobalCardinalityLowUpClosedNode::postConstraint() {
 }
 
 void GlobalCardinalityLowUpClosedNode::updateState() {
-  // GCC can define the same output multiple times. Therefore, split all outputs
-  // that are defined multiple times:
-  postAllEqualOnReplacedVars(invariantGraph(), splitOutputVarNodes());
-
   ViolationInvariantNode::updateState();
 
   if (isReified()) {
     return;
+  }
+
+  for (size_t i = 0; i < _cover.size(); ++i) {
+    if (_up[i] < 0 || static_cast<Int>(staticInputVarNodeIds().size()) < _low[i] || _low[i] > _up[i]) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
   }
 
   if (!shouldHold()) {
@@ -89,21 +92,22 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
   const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(
       invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
 
-  for (const VarNodeId vId : varsToRemove) {
-    removeStaticInputVarNode(vId);
-  }
-
-  const Int outputIndexOffset =
-      reifiedViolationNodeId() == NULL_NODE_ID ? 0 : 1;
-  assert(outputIndexOffset == 0 ||
-         outputVarNodeIds().front() == reifiedViolationNodeId());
-
   for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
        --i) {
     _cover.erase(_cover.begin() + i);
     _low.erase(_low.begin() + i);
     _up.erase(_up.begin() + i);
-    removeOutputAtIndex(i + outputIndexOffset);
+       }
+
+  for (const VarNodeId vId : varsToRemove) {
+    for (size_t i = 0; i < _cover.size(); ++i) {
+      if (varNodeConst(vId).constDomain()->contains(_cover[i])) {
+        assert(varNodeConst(vId).isFixed());
+        --_low[i];
+        --_up[i];
+      }
+    }
+    removeStaticInputVarNode(vId);
   }
 
   if (_cover.empty() || staticInputVarNodeIds().empty()) {

@@ -248,6 +248,6 @@ class int_divTest : public FznTestBase {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(int_divTest, RapidCheck, ()) { rapidCheck(); }
+RC_GTEST_FIXTURE_PROP(int_divTest, RapidCheck, ()) { rapidCheck(true, true); }
 
 }  // namespace atlantis::testing

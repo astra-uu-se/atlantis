@@ -439,6 +439,8 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
         domainIntersectsCover = true;
       }
     }
+    assert(false);
+    // TODO: The same VarNodeId is added multiple times!:
     if (!domainIntersectsCover) {
       varsToRemove.emplace_back(vId);
     }

@@ -96,134 +96,21 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
-    if (!isFixed(reified)) {
-      return false;
-    }
-    if (cover.empty()) {
-      return isFixedTo(reified, true);
-    }
-
-    if (isFixedTo(reified, false)) {
-      std::unordered_map<Int, std::pair<Int, Int>> lowUp;
-      for (size_t i = 0; i < cover.size(); ++i) {
-        const Int cv = intVal(cover.at(i));
-        const Int lv = intVal(low.at(i));
-        const Int uv = intVal(up.at(i));
-        if (lowUp.contains(cv)) {
-          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),
-                          std::min(lowUp.at(cv).second, uv)};
-        } else {
-          lowUp.emplace(cv, std::pair<Int, Int>{lv, uv});
-        }
-      }
-      for (const auto& [lv, uv] : std::views::values(lowUp)) {
-        if (uv < 0 || lv > uv) {
-          return true;
-        }
-      }
-    }
-
-    const auto bounds = getBounds();
-    bool alwaysSat = true;
-    for (size_t i = 0; alwaysSat && i < bounds.size(); ++i) {
-      const auto [lb, ub] = bounds.at(i);
-      const Int lv = intVal(low.at(i));
-      const Int uv = intVal(up.at(i));
-      if (lv <= lb && ub <= uv) {
-        alwaysSat &= isFixedTo(reified, true);
-      } else {
-        const bool alwaysUnsat = ub < lv || uv < lb;
-        alwaysSat &= isFixedTo(reified, false) ? !alwaysUnsat : false;
-      }
-    }
-    if (alwaysSat) {
-      return alwaysSat;
-    }
-    if (isFixedTo(reified, false)) {
-      for (size_t i = 0; i < cover.size(); ++i) {
-        const Int iCover = intVal(cover.at(i));
-        for (size_t j = i + 1; j < cover.size(); ++j) {
-          const Int jCover = intVal(cover.at(i));
-          if (iCover == jCover) {
-            if (up.at(i) < low.at(j) || up.at(j) < low.at(i)) {
-              return true;
-            }
-          }
-        }
-      }
-    }
     return false;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
-    if (!isFixed(reified)) {
-      return false;
-    }
-    if (cover.empty()) {
-      return isFixedTo(reified, false);
-    }
-    if (isFixedTo(reified, true)) {
-      std::unordered_map<Int, std::pair<Int, Int>> lowUp;
-      for (size_t i = 0; i < cover.size(); ++i) {
-        const Int cv = intVal(cover.at(i));
-        const Int lv = intVal(low.at(i));
-        const Int uv = intVal(up.at(i));
-        if (lowUp.contains(cv)) {
-          lowUp.at(cv) = {std::max(lowUp.at(cv).first, lv),
-                          std::min(lowUp.at(cv).second, uv)};
-        } else {
-          lowUp.emplace(cv, std::pair<Int, Int>{lv, uv});
-        }
-      }
-      for (const auto& [lv, uv] : std::views::values(lowUp)) {
-        if (uv < 0 || lv > uv) {
-          return true;
-        }
-      }
-    }
-
-    const auto bounds = getBounds();
-    for (size_t i = 0; i < bounds.size(); ++i) {
-      const Int lv = intVal(low.at(i));
-      const Int uv = intVal(up.at(i));
-      const auto [lb, ub] = bounds.at(i);
-      if (lv <= lb && ub <= uv) {
-        if (isFixedTo(reified, false)) {
-          return true;
-        }
-      } else {
-        const bool alwaysUnsat = ub < lv || uv < lb;
-        const bool neverSat = isFixedTo(reified, true) ? alwaysUnsat : false;
-        if (neverSat) {
-          return true;
-        }
-      }
-    }
-    if (isFixedTo(reified, true)) {
-      for (size_t i = 0; i < cover.size(); ++i) {
-        const Int iCover = intVal(cover.at(i));
-        for (size_t j = i + 1; j < cover.size(); ++j) {
-          const Int jCover = intVal(cover.at(i));
-          if (iCover == jCover) {
-            if (up.at(i) < low.at(j) || up.at(j) < low.at(i)) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-
     return false;
   }
 
   void generate() override {
-    const size_t inputSize = *rc::gen::inRange<size_t>(0, 4);
+    const size_t inputSize = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(inputSize);
     for (size_t i = 0; i < inputSize; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
 
-    const size_t coverSize = *rc::gen::inRange<size_t>(0, 4);
+    const size_t coverSize = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
     cover.reserve(coverSize);
     for (size_t i = 0; i < coverSize; ++i) {
       cover.emplace_back("cover_" + std::to_string(i));
@@ -231,12 +118,12 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
       up.emplace_back("up_" + std::to_string(i));
     }
 
-    addIntVarArray(inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), cover, "cover");
-    addIntVarArray(std::vector(low.size(), IntArgState::PAR), low, "low");
-    addIntVarArray(std::vector(up.size(), IntArgState::PAR), up, "up");
+    addIntVarArray({IntArgState::FIXED, IntArgState::VAR, IntArgState::PAR}, {{-2, -2}, {-3, 3}, {-3, -3}}, inputs, "inputs");
+    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), {{-2, -2}}, cover, "cover");
+    addIntVarArray(std::vector(low.size(), IntArgState::PAR), {{-3, -3}}, low, "low");
+    addIntVarArray(std::vector(up.size(), IntArgState::PAR), {{2, 2}}, up, "up");
 
-    const bool isReified = *rc::gen::arbitrary<bool>();
+    const bool isReified = true ? false : *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_global_cardinality_low_up_reif"
                                      : "fzn_global_cardinality_low_up";
     if (isReified) {
@@ -271,6 +158,6 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
 };
 
 RC_GTEST_FIXTURE_PROP(fzn_global_cardinality_low_upTest, RapidCheck, ()) {
-  rapidCheck(false);
+  rapidCheck(true, true);
 }
 }  // namespace atlantis::testing

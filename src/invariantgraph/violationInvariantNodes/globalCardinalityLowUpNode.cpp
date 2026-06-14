@@ -79,32 +79,49 @@ void GlobalCardinalityLowUpNode::postConstraint() {
 }
 
 void GlobalCardinalityLowUpNode::updateState() {
-  // GCC can define the same output multiple times. Therefore, split all outputs
-  // that are defined multiple times:
-  postAllEqualOnReplacedVars(invariantGraph(), splitOutputVarNodes());
-
   ViolationInvariantNode::updateState();
-  if (!isReified() || !shouldHold()) {
+  if (isReified()) {
+    return;
+  }
+
+  for (size_t i = 0; i < _cover.size(); ++i) {
+    if (_up[i] < 0 || static_cast<Int>(staticInputVarNodeIds().size()) < _low[i] || _low[i] > _up[i]) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+  }
+
+  if (!shouldHold()) {
+    const auto bounds = gccBounds(invariantGraphConst(),
+                                  staticInputVarNodeIds(), _cover);
+    assert(bounds.size() == _cover.size());
+    for (size_t i = 0; i < bounds.size(); i++) {
+      if (bounds[i].second < _low[i] || _up[i] < bounds[i].first) {
+        setState(InvariantNodeState::SUBSUMED);
+      }
+    }
     return;
   }
 
   const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(
       invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
 
-  for (const VarNodeId vId : varsToRemove) {
-    removeStaticInputVarNode(vId);
-  }
-
-  const Int outputIndexOffset =
-      reifiedViolationNodeId() == NULL_NODE_ID ? 0 : 1;
-  assert(outputIndexOffset == 0 ||
-         outputVarNodeIds().front() == reifiedViolationNodeId());
   for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
        --i) {
     _cover.erase(_cover.begin() + i);
     _low.erase(_low.begin() + i);
     _up.erase(_up.begin() + i);
-    removeOutputAtIndex(i + outputIndexOffset);
+  }
+
+  for (const VarNodeId vId : varsToRemove) {
+    for (size_t i = 0; i < _cover.size(); ++i) {
+      if (varNodeConst(vId).constDomain()->contains(_cover[i])) {
+        assert(varNodeConst(vId).isFixed());
+        --_low[i];
+        --_up[i];
+      }
+    }
+    removeStaticInputVarNode(vId);
   }
 
   if (_cover.empty() || staticInputVarNodeIds().empty()) {
@@ -146,16 +163,23 @@ void GlobalCardinalityLowUpNode::registerNode(propagation::SolverBase& solver,
                          std::back_inserter(inputVarIds),
                          [&](const auto& id) { return mapping.solverId(id); });
 
+  std::vector<Int> low(_cover.size());
+  std::vector<Int> up(_cover.size());
+  for (size_t i = 0; i < _cover.size(); ++i) {
+    low[i] = std::min(std::max(Int{0}, _low[i]), static_cast<Int>(inputVarIds.size()));
+    up[i] = std::min(std::max(Int{0}, _up[i]), static_cast<Int>(inputVarIds.size()));
+  }
+
   if (shouldHold()) {
     solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
         solver, violationVarId(mapping), std::move(inputVarIds),
-        std::vector<Int>(_cover), std::vector<Int>(_low),
-        std::vector<Int>(_up));
+        std::vector<Int>(_cover), std::move(low),
+        std::move(up));
   } else {
     solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
         solver, mapping.intermediateId(id()), std::move(inputVarIds),
-        std::vector<Int>(_cover), std::vector<Int>(_low),
-        std::vector<Int>(_up));
+        std::vector<Int>(_cover), std::move(low),
+        std::move(up));
   }
 }
 

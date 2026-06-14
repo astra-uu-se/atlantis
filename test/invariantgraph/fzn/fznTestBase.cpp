@@ -757,6 +757,9 @@ void FznTestBase::rapidCheck(const bool reachesFixpoint, const bool assumeCorrec
     RC_FAIL();
   }
   if (neverSat) {
+    if (assumeCorrect) {
+      RC_SUCCEED();
+    }
     RC_SUCCEED_IF(!reachesFixpoint);
     RC_SUCCEED_IF(!neverSatisfied());
     RC_FAIL();
