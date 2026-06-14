@@ -85,15 +85,17 @@ void GlobalCardinalityLowUpNode::updateState() {
   }
 
   for (size_t i = 0; i < _cover.size(); ++i) {
-    if (_up[i] < 0 || static_cast<Int>(staticInputVarNodeIds().size()) < _low[i] || _low[i] > _up[i]) {
+    if (_up[i] < 0 ||
+        static_cast<Int>(staticInputVarNodeIds().size()) < _low[i] ||
+        _low[i] > _up[i]) {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
   }
 
   if (!shouldHold()) {
-    const auto bounds = gccBounds(invariantGraphConst(),
-                                  staticInputVarNodeIds(), _cover);
+    const auto bounds =
+        gccBounds(invariantGraphConst(), staticInputVarNodeIds(), _cover);
     assert(bounds.size() == _cover.size());
     for (size_t i = 0; i < bounds.size(); i++) {
       if (bounds[i].second < _low[i] || _up[i] < bounds[i].first) {
@@ -166,20 +168,20 @@ void GlobalCardinalityLowUpNode::registerNode(propagation::SolverBase& solver,
   std::vector<Int> low(_cover.size());
   std::vector<Int> up(_cover.size());
   for (size_t i = 0; i < _cover.size(); ++i) {
-    low[i] = std::min(std::max(Int{0}, _low[i]), static_cast<Int>(inputVarIds.size()));
-    up[i] = std::min(std::max(Int{0}, _up[i]), static_cast<Int>(inputVarIds.size()));
+    low[i] = std::min(std::max(Int{0}, _low[i]),
+                      static_cast<Int>(inputVarIds.size()));
+    up[i] = std::min(std::max(Int{0}, _up[i]),
+                     static_cast<Int>(inputVarIds.size()));
   }
 
   if (shouldHold()) {
     solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
         solver, violationVarId(mapping), std::move(inputVarIds),
-        std::vector<Int>(_cover), std::move(low),
-        std::move(up));
+        std::vector<Int>(_cover), std::move(low), std::move(up));
   } else {
     solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
         solver, mapping.intermediateId(id()), std::move(inputVarIds),
-        std::vector<Int>(_cover), std::move(low),
-        std::move(up));
+        std::vector<Int>(_cover), std::move(low), std::move(up));
   }
 }
 

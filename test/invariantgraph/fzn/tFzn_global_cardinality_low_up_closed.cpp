@@ -109,13 +109,9 @@ class fzn_global_cardinality_low_up_closedTest : public FznTestBase {
     return expected == actual;
   }
 
-  [[nodiscard]] bool alwaysSatisfied() const override {
-    return false;
-  }
+  [[nodiscard]] bool alwaysSatisfied() const override { return false; }
 
-  [[nodiscard]] bool neverSatisfied() const override {
-    return false;
-  }
+  [[nodiscard]] bool neverSatisfied() const override { return false; }
 
   void generate() override {
     const size_t inputSize = *rc::gen::inRange<size_t>(0, 4);

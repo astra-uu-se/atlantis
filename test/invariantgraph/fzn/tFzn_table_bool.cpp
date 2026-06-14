@@ -168,7 +168,9 @@ class fzn_table_boolTest : public FznTestBase {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(fzn_table_boolTest, RapidCheck, ()) { rapidCheck(true, true); }
+RC_GTEST_FIXTURE_PROP(fzn_table_boolTest, RapidCheck, ()) {
+  rapidCheck(true, true);
+}
 
 class fzn_table_boolRegressionTest : public FznTestBase {
  public:

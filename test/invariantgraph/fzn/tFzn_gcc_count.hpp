@@ -104,8 +104,6 @@ class fzn_gcc_countTest : public fzn_gccTest {
       return varId(out) != propagation::NULL_ID;
     });
   }
-
-
 };
 
 }  // namespace atlantis::testing

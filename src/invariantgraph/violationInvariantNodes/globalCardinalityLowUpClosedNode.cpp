@@ -64,7 +64,9 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
   }
 
   for (size_t i = 0; i < _cover.size(); ++i) {
-    if (_up[i] < 0 || static_cast<Int>(staticInputVarNodeIds().size()) < _low[i] || _low[i] > _up[i]) {
+    if (_up[i] < 0 ||
+        static_cast<Int>(staticInputVarNodeIds().size()) < _low[i] ||
+        _low[i] > _up[i]) {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
@@ -97,7 +99,7 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
     _cover.erase(_cover.begin() + i);
     _low.erase(_low.begin() + i);
     _up.erase(_up.begin() + i);
-       }
+  }
 
   for (const VarNodeId vId : varsToRemove) {
     for (size_t i = 0; i < _cover.size(); ++i) {

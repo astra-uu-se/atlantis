@@ -95,13 +95,9 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
     return expected == actual;
   }
 
-  [[nodiscard]] bool alwaysSatisfied() const override {
-    return false;
-  }
+  [[nodiscard]] bool alwaysSatisfied() const override { return false; }
 
-  [[nodiscard]] bool neverSatisfied() const override {
-    return false;
-  }
+  [[nodiscard]] bool neverSatisfied() const override { return false; }
 
   void generate() override {
     const size_t inputSize = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
@@ -118,10 +114,14 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
       up.emplace_back("up_" + std::to_string(i));
     }
 
-    addIntVarArray({IntArgState::FIXED, IntArgState::VAR, IntArgState::PAR}, {{-2, -2}, {-3, 3}, {-3, -3}}, inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), {{-2, -2}}, cover, "cover");
-    addIntVarArray(std::vector(low.size(), IntArgState::PAR), {{-3, -3}}, low, "low");
-    addIntVarArray(std::vector(up.size(), IntArgState::PAR), {{2, 2}}, up, "up");
+    addIntVarArray({IntArgState::FIXED, IntArgState::VAR, IntArgState::PAR},
+                   {{-2, -2}, {-3, 3}, {-3, -3}}, inputs, "inputs");
+    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), {{-2, -2}},
+                   cover, "cover");
+    addIntVarArray(std::vector(low.size(), IntArgState::PAR), {{-3, -3}}, low,
+                   "low");
+    addIntVarArray(std::vector(up.size(), IntArgState::PAR), {{2, 2}}, up,
+                   "up");
 
     const bool isReified = true ? false : *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_global_cardinality_low_up_reif"

@@ -117,14 +117,17 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
       totalLb += std::max(Int{0}, outputDomains.at(i)->lowerBound());
       totalUb += std::max(Int{0}, outputDomains.at(i)->upperBound());
       if (lb == ub) {
-        alwaysSat &= outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
+        alwaysSat &=
+            outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
         alwaysUnsat |= !outputDomains.at(i)->contains(lb);
       } else {
         alwaysSat = false;
-        alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() || outputDomains.at(i)->upperBound() < lb;
+        alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() ||
+                       outputDomains.at(i)->upperBound() < lb;
       }
     }
-    if (static_cast<Int>(inputs.size()) < totalLb || totalUb < static_cast<Int>(inputs.size())) {
+    if (static_cast<Int>(inputs.size()) < totalLb ||
+        totalUb < static_cast<Int>(inputs.size())) {
       return isFixedTo(reified, false);
     }
     if (isFixedTo(reified, false)) {
@@ -178,14 +181,17 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
       totalLb += std::max(Int{0}, outputDomains.at(i)->lowerBound());
       totalUb += std::max(Int{0}, outputDomains.at(i)->upperBound());
       if (lb == ub) {
-        alwaysSat &= outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
+        alwaysSat &=
+            outputDomains.at(i)->isFixed() && outputDomains.at(i)->contains(lb);
         alwaysUnsat |= !outputDomains.at(i)->contains(lb);
       } else {
         alwaysSat = false;
-        alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() || outputDomains.at(i)->upperBound() < lb;
+        alwaysUnsat |= ub < outputDomains.at(i)->lowerBound() ||
+                       outputDomains.at(i)->upperBound() < lb;
       }
     }
-    if (static_cast<Int>(inputs.size()) < totalLb || totalUb < static_cast<Int>(inputs.size())) {
+    if (static_cast<Int>(inputs.size()) < totalLb ||
+        totalUb < static_cast<Int>(inputs.size())) {
       return isFixedTo(reified, true);
     }
     if (isFixedTo(reified, false)) {
@@ -213,8 +219,10 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
     }
 
     addIntVarArray({IntArgState::VAR}, {{-3, 3}}, inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), {{-3,-3},{-2,-2},{-3,-3}}, cover, "cover");
-    addIntVarArray({IntArgState::PAR, IntArgState::PAR, IntArgState::VAR}, {{1,1},{1,1},{-3,3}}, outputs, "outputs");
+    addIntVarArray(std::vector(cover.size(), IntArgState::PAR),
+                   {{-3, -3}, {-2, -2}, {-3, -3}}, cover, "cover");
+    addIntVarArray({IntArgState::PAR, IntArgState::PAR, IntArgState::VAR},
+                   {{1, 1}, {1, 1}, {-3, 3}}, outputs, "outputs");
 
     const bool isReified = true ? false : *rc::gen::arbitrary<bool>();
     constraintIdentifier =

@@ -7,10 +7,10 @@
 #include <vector>
 
 #include "./fznTestBase.hpp"
-#include "tFzn_count.hpp"
-#include "tFzn_gcc_count.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_global_cardinality_closed.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "tFzn_count.hpp"
+#include "tFzn_gcc_count.hpp"
 
 namespace atlantis::testing {
 
@@ -84,13 +84,9 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
     return expected == actual;
   }
 
-  [[nodiscard]] bool alwaysSatisfied() const override {
-    return false;
-  }
+  [[nodiscard]] bool alwaysSatisfied() const override { return false; }
 
-  [[nodiscard]] bool neverSatisfied() const override {
-    return false;
-  }
+  [[nodiscard]] bool neverSatisfied() const override { return false; }
 
   void generate() override {
     const size_t inputSize = *rc::gen::inRange<size_t>(0, 4);

@@ -734,7 +734,8 @@ void FznTestBase::changeValue(const std::string& identifier,
                     curVal != newVal ? newVal : dom->upperBound());
 }
 
-void FznTestBase::rapidCheck(const bool reachesFixpoint, const bool assumeCorrect) {
+void FznTestBase::rapidCheck(const bool reachesFixpoint,
+                             const bool assumeCorrect) {
   bool neverSat = false;
   try {
     generate();
