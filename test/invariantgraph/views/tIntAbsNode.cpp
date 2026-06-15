@@ -48,7 +48,7 @@ TEST_P(IntAbsNodeTestFixture, updateState) {
     EXPECT_TRUE(varNode(inputVar).isFixed());
     EXPECT_TRUE(varNode(outputVar).isFixed());
     const Int expected = computeOutput();
-    const Int actual = varNode(outputVar).domain()->lowerBound();
+    const Int actual = varNode(outputVar).constDomain()->lowerBound();
     EXPECT_EQ(expected, actual);
   } else {
     EXPECT_NE(invNode().state(), InvariantNodeState::SUBSUMED);

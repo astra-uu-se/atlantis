@@ -209,25 +209,34 @@ void postAllEqualOnReplacedVars(
 
 std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
-    const std::vector<Int>& cover) {
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(inputs.size());
-
+    const std::vector<Int>& cover, std::vector<Int>& offsets) {
+  std::vector<bool> shouldBeRemoved(inputs.size(), false);
   std::vector<bool> coverIntersectsDomains(cover.size(), false);
 
-  for (const VarNodeId vId : inputs) {
+  for (size_t inputIndex = 0; inputIndex < inputs.size(); inputIndex++) {
     bool domainIntersectsCover = false;
     for (size_t coverIndex = 0; coverIndex < cover.size(); ++coverIndex) {
-      if (invariantGraph.varNodeConst(vId).isFixed()) {
-        break;
-      }
-      if (invariantGraph.varNodeConst(vId).inDomain(cover[coverIndex])) {
+      if (invariantGraph.varNodeConst(inputs[inputIndex]).isFixed()) {
+        if (invariantGraph.varNodeConst(inputs[inputIndex]).lowerBound() ==
+            cover[coverIndex]) {
+          ++offsets[coverIndex];
+        }
+        shouldBeRemoved[inputIndex] = true;
+      } else if (invariantGraph.varNodeConst(inputs[inputIndex])
+                     .inDomain(cover[coverIndex])) {
         coverIntersectsDomains[coverIndex] = true;
         domainIntersectsCover = true;
       }
     }
-    if (!domainIntersectsCover) {
-      varsToRemove.emplace_back(vId);
+    shouldBeRemoved[inputIndex] =
+        shouldBeRemoved[inputIndex] || !domainIntersectsCover;
+  }
+
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(inputs.size());
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (shouldBeRemoved[i]) {
+      varsToRemove.emplace_back(inputs[i]);
     }
   }
 
@@ -413,36 +422,108 @@ std::vector<std::vector<Int>> boolToViol(
   return violations;
 }
 
+bool intToBool(const Int i) { return i == 0; }
+
+std::vector<bool> intToBool(const std::vector<Int>& ints) {
+  std::vector<bool> bools(ints.size());
+  for (size_t i = 0; i < ints.size(); ++i) {
+    bools[i] = ints[i] == 0;
+  }
+  return bools;
+}
+
+std::vector<std::vector<bool>> intToBool(
+    const std::vector<std::vector<Int>>& ints) {
+  std::vector<std::vector<bool>> bools(ints.size());
+  for (size_t row = 0; row < ints.size(); ++row) {
+    bools[row] = intToBool(ints[row]);
+  }
+  return bools;
+}
+
+Int boolToInt(const bool b) { return b ? 1 : 0; }
+
+std::vector<Int> boolToInt(const std::vector<bool>& bools) {
+  std::vector<Int> ints(bools.size());
+  for (size_t i = 0; i < bools.size(); ++i) {
+    ints[i] = bools[i] ? 1 : 0;
+  }
+  return ints;
+}
+
+std::vector<std::vector<Int>> boolToInt(
+    const std::vector<std::vector<bool>>& bools) {
+  std::vector<std::vector<Int>> ints(bools.size());
+  for (size_t i = 0; i < bools.size(); ++i) {
+    ints[i] = boolToInt(bools[i]);
+  }
+  return ints;
+}
+
+Int intToViol(const Int i) { return i == 0 ? 1 : 0; }
+
+std::vector<Int> intToViol(const std::vector<Int>& ints) {
+  std::vector<Int> viols(ints.size());
+  for (size_t i = 0; i < ints.size(); ++i) {
+    viols[i] = ints[i] == 0 ? 1 : 0;
+  }
+  return viols;
+}
+
+std::vector<std::vector<Int>> intToViol(
+    const std::vector<std::vector<Int>>& ints) {
+  std::vector<std::vector<Int>> viols(ints.size());
+  for (size_t i = 0; i < ints.size(); ++i) {
+    viols[i] = intToViol(ints[i]);
+  }
+  return viols;
+}
+
+Int violToInt(const Int viol) { return intToViol(viol); }
+
+std::vector<Int> violToInt(const std::vector<Int>& viols) {
+  return intToViol(viols);
+}
+
+std::vector<std::vector<Int>> violToInt(
+    const std::vector<std::vector<Int>>& viols) {
+  return intToViol(viols);
+}
+
 std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
     const std::vector<Int>& cover, std::vector<Int>& lowerBounds,
     std::vector<Int>& upperBounds) {
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(inputs.size());
-
   std::vector<bool> coverIntersectsDomains(cover.size(), false);
+  std::vector<bool> shouldBeRemoved(inputs.size(), false);
 
-  for (const VarNodeId vId : inputs) {
+  for (size_t inputIndex = 0; inputIndex < inputs.size(); ++inputIndex) {
     bool domainIntersectsCover = false;
     for (size_t coverIndex = 0; coverIndex < cover.size(); ++coverIndex) {
-      if (invariantGraph.varNodeConst(vId).isFixed()) {
-        if (invariantGraph.varNodeConst(vId).lowerBound() ==
+      if (invariantGraph.varNodeConst(inputs[inputIndex]).isFixed()) {
+        if (invariantGraph.varNodeConst(inputs[inputIndex]).lowerBound() ==
             cover[coverIndex]) {
           --lowerBounds[coverIndex];
           --upperBounds[coverIndex];
         }
-        varsToRemove.emplace_back(vId);
-        break;
-      }
-      if (invariantGraph.varNodeConst(vId).inDomain(cover[coverIndex])) {
+        shouldBeRemoved[inputIndex] = true;
+        domainIntersectsCover = true;
+      } else if (invariantGraph.varNodeConst(inputs[inputIndex])
+                     .inDomain(cover[coverIndex])) {
         coverIntersectsDomains[coverIndex] = true;
         domainIntersectsCover = true;
       }
     }
-    assert(false);
-    // TODO: The same VarNodeId is added multiple times!:
-    if (!domainIntersectsCover) {
-      varsToRemove.emplace_back(vId);
+    shouldBeRemoved[inputIndex] =
+        shouldBeRemoved[inputIndex] || !domainIntersectsCover;
+  }
+
+  std::vector<VarNodeId> varsToRemove;
+  varsToRemove.reserve(cover.size());
+
+  for (Int i = static_cast<Int>(inputs.size()) - 1; i >= 0; --i) {
+    if (shouldBeRemoved[i]) {
+      varsToRemove.emplace_back(inputs[i]);
     }
   }
 

@@ -75,8 +75,8 @@ void GlobalCardinalityNode::updateState() {
 
   InvariantNode::updateState();
 
-  const auto [varsToRemove, coverIndicesToRemove] =
-      gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+  const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(
+      invariantGraphConst(), staticInputVarNodeIds(), _cover, _countOffsets);
 
   for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
        --i) {
@@ -90,13 +90,6 @@ void GlobalCardinalityNode::updateState() {
   }
 
   for (const VarNodeId vId : varsToRemove) {
-    if (varNodeConst(vId).isFixed()) {
-      for (size_t i = 0; i < _cover.size(); ++i) {
-        if (_cover[i] == varNodeConst(vId).lowerBound()) {
-          ++_countOffsets[i];
-        }
-      }
-    }
     removeStaticInputVarNode(vId);
   }
 

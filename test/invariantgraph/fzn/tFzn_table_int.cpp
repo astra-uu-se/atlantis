@@ -168,7 +168,9 @@ class fzn_table_intTest : public FznTestBase {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(fzn_table_intTest, RapidCheck, ()) { rapidCheck(); }
+RC_GTEST_FIXTURE_PROP(fzn_table_intTest, RapidCheck, ()) {
+  rapidCheck(false, true);
+}
 
 class fzn_table_intRegressionTest : public FznTestBase {
  public:

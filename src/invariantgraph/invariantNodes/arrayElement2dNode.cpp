@@ -13,20 +13,6 @@
 
 namespace atlantis::invariantgraph {
 
-static std::vector<std::vector<Int>> toIntMatrix(
-    const std::vector<std::vector<bool>>& boolMatrix) {
-  std::vector<std::vector<Int>> intMatrix;
-  intMatrix.reserve(boolMatrix.size());
-  for (auto& row : boolMatrix) {
-    intMatrix.emplace_back();
-    intMatrix.back().reserve(row.size());
-    for (const bool par : row) {
-      intMatrix.back().emplace_back(par ? 0 : 1);
-    }
-  }
-  return intMatrix;
-}
-
 ArrayElement2dNode::ArrayElement2dNode(
     InvariantGraph& graph, const VarNodeId rowIdx, const VarNodeId colIdx,
     std::vector<std::vector<Int>>&& parMatrix, const VarNodeId output,
@@ -41,7 +27,7 @@ ArrayElement2dNode::ArrayElement2dNode(
     InvariantGraph& graph, const VarNodeId rowIdx, const VarNodeId colIdx,
     const std::vector<std::vector<bool>>& parMatrix, const VarNodeId output,
     const Int rowOffset, const Int colOffset)
-    : ArrayElement2dNode(graph, rowIdx, colIdx, toIntMatrix(parMatrix), output,
+    : ArrayElement2dNode(graph, rowIdx, colIdx, boolToViol(parMatrix), output,
                          rowOffset, colOffset, false) {}
 void ArrayElement2dNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
@@ -57,10 +43,9 @@ void ArrayElement2dNode::postConstraint() {
         varNodeConst(colIdx()).constraintVarId(), _parMatrix,
         outputNode.constraintVarId(), _rowOffset, _colOffset);
   } else {
-    const std::vector<std::vector<bool>> boolMatrix = violToBool(_parMatrix);
     invariantGraph().constraintSolver().array_bool_element2d(
         varNodeConst(rowIdx()).constraintVarId(),
-        varNodeConst(colIdx()).constraintVarId(), boolMatrix,
+        varNodeConst(colIdx()).constraintVarId(), violToBool(_parMatrix),
         outputNode.constraintVarId(), _rowOffset, _colOffset);
   }
 }
@@ -96,13 +81,7 @@ void ArrayElement2dNode::updateState() {
     }
     if (allSatisfying) {
       for (const auto vId : staticInputVarNodeIds()) {
-        if (varNodeConst(vId).isFixed()) {
-          varNode(vId).setDomainType(DomainType::DOM_FIXED);
-        } else if (varNode(vId).domain()->isInterval()) {
-          varNode(vId).setDomainType(DomainType::DOM_RANGE);
-        } else {
-          varNode(vId).setDomainType(DomainType::DOM_DOMAIN);
-        }
+        varNode(vId).tightenDomainType();
       }
       setState(InvariantNodeState::SUBSUMED);
     }
@@ -165,7 +144,7 @@ void ArrayElement2dNode::registerNode(propagation::SolverBase& solver,
   solver.makeInvariant<propagation::Element2dConst>(
       solver, mapping.solverId(outputVarNodeIds().front()),
       mapping.solverId(rowIdx()), mapping.solverId(colIdx()),
-      std::vector<std::vector<Int>>(_parMatrix), _rowOffset, _colOffset);
+      std::vector<std::vector<Int>>{_parMatrix}, _rowOffset, _colOffset);
 }
 
 std::string ArrayElement2dNode::dotLangIdentifier() const {

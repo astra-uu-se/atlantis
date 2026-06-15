@@ -485,7 +485,13 @@ class GecodeSolver : public ConstraintSolver {
   void set_in(ConstraintVarId varId, const SortedUniqueVector& values,
               bool shouldHold) override;
 
+  void set_in(ConstraintVarId varId, Int lowerBound, Int upperBound,
+              bool shouldHold) override;
+
   void set_in_reif(ConstraintVarId varId, const SortedUniqueVector& values,
+                   ConstraintVarId reified) override;
+
+  void set_in_reif(ConstraintVarId varId, Int lowerBound, Int upperBound,
                    ConstraintVarId reified) override;
 
   void nvalue(ConstraintVarId numVals,

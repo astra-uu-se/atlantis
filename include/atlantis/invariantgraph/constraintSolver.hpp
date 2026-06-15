@@ -332,9 +332,15 @@ class ConstraintSolver {
   virtual void set_in(ConstraintVarId varId, const SortedUniqueVector& values,
                       bool shouldHold) = 0;
 
+  virtual void set_in(ConstraintVarId varId, Int lowerBound, Int upperBound,
+                      bool shouldHold) = 0;
+
   virtual void set_in_reif(ConstraintVarId varId,
                            const SortedUniqueVector& values,
                            ConstraintVarId reified) = 0;
+
+  virtual void set_in_reif(ConstraintVarId varId, Int lowerBound,
+                           Int upperBound, ConstraintVarId reified) = 0;
 
   virtual void nvalue(ConstraintVarId numVals,
                       const std::vector<ConstraintVarId>& inputs) = 0;

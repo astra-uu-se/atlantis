@@ -21,18 +21,6 @@
 
 namespace atlantis::invariantgraph {
 
-static std::vector<std::vector<Int>> toIntTable(
-    std::vector<std::vector<bool>>&& boolTable) {
-  std::vector<std::vector<Int>> intTable(boolTable.size());
-  for (size_t r = 0; r < boolTable.size(); ++r) {
-    intTable[r].resize(boolTable[r].size());
-    for (size_t c = 0; c < boolTable[r].size(); ++c) {
-      intTable[r][c] = boolTable[r][c] ? 0 : 1;
-    }
-  }
-  return intTable;
-}
-
 TableInNode::TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
                          std::vector<std::vector<Int>>&& table,
                          const VarNodeId reified, const bool isBoolTable)
@@ -54,16 +42,15 @@ TableInNode::TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
 }
 
 TableInNode::TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                         std::vector<std::vector<bool>>&& table,
+                         const std::vector<std::vector<bool>>& table,
                          VarNodeId reified)
-    : TableInNode(graph, std::move(vars), toIntTable(std::move(table)), reified,
-                  true) {}
+    : TableInNode(graph, std::move(vars), boolToViol(table), reified, true) {}
 
 TableInNode::TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                         std::vector<std::vector<bool>>&& table,
+                         const std::vector<std::vector<bool>>& table,
                          const bool shouldHold)
-    : TableInNode(graph, std::move(vars), toIntTable(std::move(table)),
-                  shouldHold, true) {}
+    : TableInNode(graph, std::move(vars), boolToViol(table), shouldHold, true) {
+}
 
 void TableInNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);

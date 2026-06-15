@@ -24,7 +24,7 @@ GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
     : ViolationInvariantNode(graph, std::move(counts), std::move(inputs),
                              shouldHold),
       _cover(std::move(cover)),
-      _offsets(_cover.size(), 0) {}
+      _countOffsets(_cover.size(), 0) {}
 
 GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
     InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
@@ -32,7 +32,7 @@ GlobalCardinalityClosedNode::GlobalCardinalityClosedNode(
     const VarNodeId r)
     : ViolationInvariantNode(graph, std::move(counts), std::move(inputs), r),
       _cover(std::move(cover)),
-      _offsets(_cover.size(), 0) {}
+      _countOffsets(_cover.size(), 0) {}
 
 void GlobalCardinalityClosedNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
@@ -112,8 +112,8 @@ void GlobalCardinalityClosedNode::updateState() {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
-    const auto bounds = gccBounds(invariantGraphConst(),
-                                  staticInputVarNodeIds(), _cover, _offsets);
+    const auto bounds = gccBounds(
+        invariantGraphConst(), staticInputVarNodeIds(), _cover, _countOffsets);
     assert(bounds.size() == _cover.size());
     assert(outputVarNodeIds().size() == _cover.size());
     for (size_t i = 0; i < bounds.size(); i++) {
@@ -129,8 +129,8 @@ void GlobalCardinalityClosedNode::updateState() {
     return;
   }
 
-  const auto [varsToRemove, coverIndicesToRemove] =
-      gccUpdateState(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+  const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(
+      invariantGraphConst(), staticInputVarNodeIds(), _cover, _countOffsets);
 
   const Int outputIndexOffset =
       reifiedViolationNodeId() == NULL_NODE_ID ? 0 : 1;
@@ -139,17 +139,11 @@ void GlobalCardinalityClosedNode::updateState() {
   for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
        --i) {
     _cover.erase(_cover.begin() + i);
-    _offsets.erase(_offsets.begin() + i);
+    _countOffsets.erase(_countOffsets.begin() + i);
     removeOutputAtIndex(i + outputIndexOffset);
   }
 
   for (const VarNodeId vId : varsToRemove) {
-    for (size_t i = 0; i < _cover.size(); i++) {
-      if (varNodeConst(vId).lowerBound() == _cover[i]) {
-        ++_offsets[i];
-        break;
-      }
-    }
     removeStaticInputVarNode(vId);
   }
 
@@ -205,7 +199,7 @@ bool GlobalCardinalityClosedNode::replace() {
   invariantGraph().addInvariantNode(std::make_shared<GlobalCardinalityNode>(
       invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
       std::vector<Int>{_cover}, std::move(intermediateOutputNodeIds),
-      std::move(_offsets)));
+      std::move(_countOffsets)));
 
   if (isReified()) {
     invariantGraph().addInvariantNode(std::make_shared<ArrayBoolAndNode>(

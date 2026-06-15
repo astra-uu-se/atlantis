@@ -1680,12 +1680,31 @@ void GecodeSolver::set_in(const ConstraintVarId varId,
     }
     return;
   }
+  const auto setVals = intSet(values);
   if (shouldHold) {
-    Gecode::dom(_space, intVar(varId), intSet(values));
+    Gecode::dom(_space, intVar(varId), setVals);
+    return;
   }
-  for (const auto val : *values) {
-    Gecode::rel(_space, intVar(varId), Gecode::IRT_NQ, static_cast<int>(val));
+  const Gecode::BoolVar neg(_space, 0, 0);
+  Gecode::dom(_space, intVar(varId), setVals, neg);
+}
+
+void GecodeSolver::set_in(const ConstraintVarId varId, const Int lowerBound,
+                          const Int upperBound, const bool shouldHold) {
+  if (lowerBound > upperBound) {
+    if (shouldHold) {
+      throw InconsistencyException("UNSAT");
+    }
+    return;
   }
+  const Gecode::IntSet setVals(static_cast<int>(lowerBound),
+                               static_cast<int>(upperBound));
+  if (shouldHold) {
+    Gecode::dom(_space, intVar(varId), setVals);
+    return;
+  }
+  const Gecode::BoolVar neg(_space, 0, 0);
+  Gecode::dom(_space, intVar(varId), setVals, neg);
 }
 
 void GecodeSolver::set_in_reif(const ConstraintVarId varId,
@@ -1696,6 +1715,19 @@ void GecodeSolver::set_in_reif(const ConstraintVarId varId,
     return;
   }
   Gecode::dom(_space, intVar(varId), intSet(values), boolVar(reified));
+}
+
+void GecodeSolver::set_in_reif(const ConstraintVarId varId,
+                               const Int lowerBound, const Int upperBound,
+                               const ConstraintVarId reified) {
+  if (upperBound < lowerBound) {
+    Gecode::rel(_space, boolVar(reified), Gecode::IRT_EQ, 0);
+    return;
+  }
+  Gecode::dom(_space, intVar(varId),
+              Gecode::IntSet(static_cast<int>(lowerBound),
+                             static_cast<int>(upperBound)),
+              boolVar(reified));
 }
 
 void GecodeSolver::nvalue(const ConstraintVarId numVals,

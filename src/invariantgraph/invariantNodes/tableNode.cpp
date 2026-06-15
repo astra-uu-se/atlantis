@@ -12,23 +12,12 @@
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/countNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/propagation/invariants/boolTable.hpp"
 #include "atlantis/propagation/invariants/table.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
-
-static std::vector<std::vector<Int>> toIntTable(
-    std::vector<std::vector<bool>>&& boolTable) {
-  std::vector<std::vector<Int>> intTable(boolTable.size());
-  for (size_t r = 0; r < boolTable.size(); ++r) {
-    intTable[r].resize(boolTable[r].size());
-    for (size_t c = 0; c < boolTable[r].size(); ++c) {
-      intTable[r][c] = boolTable[r][c] ? 0 : 1;
-    }
-  }
-  return intTable;
-}
 
 static std::vector<std::vector<Int>>&& moveInputFirst(
     std::vector<std::vector<Int>>&& table, const size_t inputColumn) {
@@ -55,26 +44,40 @@ TableNode::TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
 
 TableNode::TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
                      const VarNodeId input,
-                     std::vector<std::vector<bool>>&& table,
+                     const std::vector<std::vector<bool>>& table,
                      const size_t inputColumnIndex)
-    : TableNode(graph, std::move(outputs), input, toIntTable(std::move(table)),
+    : TableNode(graph, std::move(outputs), input, boolToViol(table),
                 inputColumnIndex) {}
 
-void TableNode::init(InvariantNodeId id) {
+void TableNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(staticInputVarNodeIds().size() == 1);
   assert(std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
-    return invariantGraphConst().varNodeConst(vId).isIntVar() ==
-           invariantGraphConst()
-               .varNodeConst(staticInputVarNodeIds().front())
-               .isIntVar();
+    return varNodeConst(vId).isIntVar() ==
+           staticInputVarNodeConst(0).isIntVar();
   }));
   assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return invariantGraphConst().varNodeConst(vId).isIntVar() ==
-           invariantGraphConst()
-               .varNodeConst(staticInputVarNodeIds().front())
-               .isIntVar();
+    return varNodeConst(vId).isIntVar() ==
+           staticInputVarNodeConst(0).isIntVar();
   }));
+  assert(staticInputVarNodeConst(0).isIntVar() || _table.size() <= 2);
+}
+
+void TableNode::postConstraint() {
+  InvariantNode::postConstraint();
+  std::vector<ConstraintVarId> inputs(outputVarNodeIds().size() + 1,
+                                      ConstraintVarId{NULL_NODE_ID});
+  inputs.front() = staticInputVarNodeConst(0).constraintVarId();
+  for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
+    inputs[i + 1] = outputVarNodeConst(i).constraintVarId();
+  }
+
+  if (staticInputVarNodeConst(0).isIntVar()) {
+    return invariantGraph().constraintSolver().fzn_table_int(inputs, _table,
+                                                             true);
+  }
+  return invariantGraph().constraintSolver().fzn_table_bool(
+      inputs, violToBool(_table), true);
 }
 
 size_t TableNode::numCols() const { return _table.front().size(); }
@@ -86,15 +89,12 @@ VarNodeId TableNode::colVar(const size_t index) const {
   return outputVarNodeIds().at(index - 1);
 }
 
-bool TableNode::removeRows() {
+void TableNode::removeRows() {
   std::vector<size_t> invalidRows;
   invalidRows.reserve(_table.size());
   for (size_t r = 0; r < _table.size(); ++r) {
     for (size_t c = 0; c < numCols(); ++c) {
-      if (!invariantGraphConst()
-               .varNodeConst(colVar(c))
-               .constDomain()
-               ->contains(_table[r][c])) {
+      if (!varNodeConst(colVar(c)).constDomain()->contains(_table[r][c])) {
         invalidRows.emplace_back(r);
         break;
       }
@@ -106,13 +106,12 @@ bool TableNode::removeRows() {
     std::swap(_table.back(), _table[invalidRow]);
     _table.pop_back();
   }
-  return !invalidRows.empty();
 }
 
-void TableNode::removeColumn(const size_t index) {
+void TableNode::removeColumn(const size_t colIndex) {
   for (auto& row : _table) {
-    assert(index < row.size());
-    row.erase(row.begin() + index);
+    assert(colIndex < row.size());
+    row.erase(row.begin() + static_cast<Int>(colIndex));
   }
 }
 
@@ -167,56 +166,52 @@ void TableNode::removeDuplicateColumns() {
   }
 }
 
-bool TableNode::propagate() {
-  bool prunedVals = false;
-  for (Int c = static_cast<Int>(numCols()) - 1; c >= 0; --c) {
-    std::vector<Int> values(_table.size());
-    values.reserve(_table.size());
-    for (size_t r = 0; r < _table.size(); ++r) {
-      values[r] = _table[r][c];
-    }
-    SortedUniqueVector sortedValues(std::move(values));
-    const size_t prevDomSize =
-        invariantGraphConst().varNodeConst(colVar(c)).constDomain()->size();
-    if (c != 0 && sortedValues->size() == 1) {
-      invariantGraph().varNode(colVar(c)).domain()->fix(sortedValues->front());
-      removeColumn(c);
-      removeOutputAtIndex(c - 1);
-      prunedVals |= prevDomSize > 1;
-    } else {
-      invariantGraph().varNode(colVar(c)).domain()->removeAllValuesExcept(
-          sortedValues);
-      prunedVals |=
-          prevDomSize !=
-          invariantGraphConst().varNodeConst(colVar(c)).constDomain()->size();
-    }
+void TableNode::removeColumns() {
+  if (staticInputVarNodeConst(0).isFixed()) {
+    _table.clear();
+    assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+      return varNodeConst(vId).isFixed();
+    }));
+    setState(InvariantNodeState::SUBSUMED);
+    return;
   }
-  return prunedVals;
+  for (Int c = static_cast<Int>(numCols()) - 1; c >= 1; --c) {
+    const size_t index = c - 1;
+    if (!outputVarNodeConst(index).isFixed()) {
+      continue;
+    }
+    removeColumn(c);
+    removeOutputAtIndex(index);
+  }
 }
 
 void TableNode::updateState() {
+  removeColumns();
+  if (state() == InvariantNodeState::SUBSUMED) {
+    return;
+  }
   removeDuplicateColumns();
-  while (true) {
-    const bool didPruneVals = propagate();
-    const bool didRemoveRows = removeRows();
-    if (!didPruneVals && !didRemoveRows) {
-      break;
+  if (state() == InvariantNodeState::SUBSUMED) {
+    return;
+  }
+  removeRows();
+  if (state() == InvariantNodeState::SUBSUMED) {
+    return;
+  }
+  if (outputVarNodeIds().empty()) {
+    if (!staticInputVarNodeIds().empty()) {
+      staticInputVarNode(0).tightenDomainType();
     }
+    setState(InvariantNodeState::SUBSUMED);
   }
   if (_table.empty() || _table.front().empty()) {
     throw InconsistencyException("TableNode::updateState: Table is empty");
-  }
-  if (_table.size() == 1 || _table.front().size() == 1) {
-    setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 bool TableNode::canBeMadeImplicit() const {
   return state() != InvariantNodeState::SUBSUMED &&
-         invariantGraphConst()
-             .varNodeConst(staticInputVarNodeIds().front())
-             .definingNodes()
-             .empty();
+         staticInputVarNodeConst(0).definingNodes().empty();
 }
 
 bool TableNode::makeImplicit() {
@@ -246,11 +241,9 @@ void TableNode::registerOutputVars(propagation::SolverBase& solver,
     assert(mapping.solverId(outputVarNodeIds().at(i)) == propagation::NULL_ID);
     makeSolverVar(outputVarNodeIds().at(i), solver, mapping);
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return mapping.solverId(vId) != propagation::NULL_ID;
+  }));
 }
 
 void TableNode::registerNode(propagation::SolverBase& solver,
@@ -265,9 +258,19 @@ void TableNode::registerNode(propagation::SolverBase& solver,
     outputVarIds.emplace_back(mapping.solverId(outVarId));
   }
 
-  solver.makeInvariant<propagation::Table>(
-      solver, std::move(outputVarIds), inputVarId,
-      std::vector<std::vector<Int>>(_table), 0);
+  if (staticInputVarNodeConst(0).isIntVar()) {
+    solver.makeInvariant<propagation::Table>(
+        solver, std::move(outputVarIds), inputVarId,
+        std::vector<std::vector<Int>>{_table}, 0);
+  } else {
+    assert(_table.size() == 2);
+    std::array<std::vector<Int>, 2> violTable;
+    for (size_t row = 0; row < 2; ++row) {
+      violTable[row] = _table[row];
+    }
+    solver.makeInvariant<propagation::BoolTable>(
+        solver, std::move(outputVarIds), inputVarId, std::move(violTable), 0);
+  }
 }
 
 std::string TableNode::dotLangIdentifier() const { return {"table"}; }

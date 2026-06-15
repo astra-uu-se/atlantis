@@ -105,6 +105,7 @@ void GlobalCardinalityLowUpNode::updateState() {
     return;
   }
 
+  // Note that gccUpdateStates modifies the values in _low and _up
   const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(
       invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
 
@@ -116,13 +117,6 @@ void GlobalCardinalityLowUpNode::updateState() {
   }
 
   for (const VarNodeId vId : varsToRemove) {
-    for (size_t i = 0; i < _cover.size(); ++i) {
-      if (varNodeConst(vId).constDomain()->contains(_cover[i])) {
-        assert(varNodeConst(vId).isFixed());
-        --_low[i];
-        --_up[i];
-      }
-    }
     removeStaticInputVarNode(vId);
   }
 

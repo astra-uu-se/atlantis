@@ -45,7 +45,7 @@ void postAllEqualOnReplacedVars(
 [[nodiscard]] std::pair<std::vector<VarNodeId>, SortedUniqueVector>
 gccUpdateState(const InvariantGraph& invariantGraph,
                const std::vector<VarNodeId>& inputs,
-               const std::vector<Int>& cover);
+               const std::vector<Int>& cover, std::vector<Int>& offsets);
 
 [[nodiscard]] std::pair<std::vector<VarNodeId>, SortedUniqueVector>
 gccUpdateState(const InvariantGraph& invariantGraph,
@@ -99,7 +99,35 @@ std::vector<Int> boolToViol(const std::vector<bool>& bools);
 std::vector<std::vector<Int>> boolToViol(
     const std::vector<std::vector<bool>>& bools);
 
-inline std::string relToAcronym(RelationType relType) {
+bool intToBool(Int i);
+
+std::vector<bool> intToBool(const std::vector<Int>& ints);
+
+std::vector<std::vector<bool>> intToBool(
+    const std::vector<std::vector<Int>>& ints);
+
+Int boolToInt(bool b);
+
+std::vector<Int> boolToInt(const std::vector<bool>& bools);
+
+std::vector<std::vector<Int>> boolToInt(
+    const std::vector<std::vector<bool>>& bools);
+
+Int intToViol(Int i);
+
+std::vector<Int> intToViol(const std::vector<Int>& ints);
+
+std::vector<std::vector<Int>> intToViol(
+    const std::vector<std::vector<Int>>& ints);
+
+Int violToInt(Int viol);
+
+std::vector<Int> violToInt(const std::vector<Int>& viols);
+
+std::vector<std::vector<Int>> violToInt(
+    const std::vector<std::vector<Int>>& viols);
+
+inline std::string relToAcronym(const RelationType relType) {
   switch (relType) {
     case RelationType::REL_TYPE_NE:
       return "ne";
