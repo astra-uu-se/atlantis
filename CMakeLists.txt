@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.23 FATAL_ERROR)
 set(CMAKE_POLICY_DEFAULT_CMP0169 OLD)
+
 if(POLICY CMP0169)
   cmake_policy(SET CMP0169 OLD)
 endif()
@@ -13,20 +14,25 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(GNUInstallDirs)
+
 if(NOT CPM_SOURCE_CACHE AND NOT DEFINED ENV{CPM_SOURCE_CACHE})
   set(CPM_SOURCE_CACHE "${CMAKE_SOURCE_DIR}/.cpm-cache" CACHE PATH
-      "Directory to share CPM dependency sources across build trees" FORCE)
+    "Directory to share CPM dependency sources across build trees" FORCE)
 endif()
+
 if(CPM_SOURCE_CACHE AND NOT DEFINED ENV{CPM_SOURCE_CACHE})
+  cmake_path(ABSOLUTE_PATH CPM_SOURCE_CACHE OUTPUT_VARIABLE CPM_SOURCE_CACHE)
   set(ENV{CPM_SOURCE_CACHE} "${CPM_SOURCE_CACHE}")
 endif()
+
 include(cmake/CPM.cmake)
 
 set(ATLANTIS_SANITIZERS "" CACHE STRING
-    "Comma- or semicolon-separated list of sanitizers to enable (address, undefined, thread)")
+  "Comma- or semicolon-separated list of sanitizers to enable (address, undefined, thread)")
 
 set(_atlantis_supported_sanitizers address undefined thread)
 set(_atlantis_sanitizer_flags "")
+
 if(ATLANTIS_SANITIZERS)
   if(MSVC)
     message(FATAL_ERROR "ATLANTIS_SANITIZERS is only supported with GCC- and Clang-like toolchains")
@@ -42,12 +48,13 @@ if(ATLANTIS_SANITIZERS)
         "Unsupported sanitizer '${_atlantis_sanitizer}'. "
         "Use one or more of: ${_atlantis_supported_sanitizers}")
     endif()
+
     list(APPEND _atlantis_sanitizer_flags "-fsanitize=${_atlantis_sanitizer}")
   endforeach()
 
   if("thread" IN_LIST _atlantis_requested_sanitizers
-     AND ("address" IN_LIST _atlantis_requested_sanitizers
-          OR "undefined" IN_LIST _atlantis_requested_sanitizers))
+    AND("address" IN_LIST _atlantis_requested_sanitizers
+    OR "undefined" IN_LIST _atlantis_requested_sanitizers))
     message(FATAL_ERROR "ThreadSanitizer must be used without address/undefined sanitizers")
   endif()
 endif()
@@ -177,6 +184,21 @@ option(FMT_INSTALL "Enable install for fmt project" ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+if(EXISTS "${CPM_SOURCE_CACHE}/gecode")
+  set(GECODE_INCLUDE "${CPM_SOURCE_CACHE}/gecode")
+endif()
+
+find_package(Gecode 6.3 REQUIRED COMPONENTS Driver Int Kernel Search Support Minimodel)
+
+# Link Gecode to target test
+message("GECODE_FOUND: ${GECODE_FOUND}")
+message("GECODE_INCLUDE_DIRS: ${GECODE_INCLUDE_DIRS}")
+message("GECODE_LIBRARIES: ${GECODE_LIBRARIES}")
+message("GECODE_TARGETS: ${GECODE_TARGETS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}-Wl,--copy-dt-needed-entries")
+
 include(FetchContent)
 FetchContent_Declare(
   fznparser
@@ -188,7 +210,6 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/jarro2783/cxxopts
   GIT_TAG v3.3.1
 )
-
 FetchContent_Declare(
   fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt
@@ -206,10 +227,10 @@ target_include_directories(${PROJECT_LIB}
   $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${COMMON_INCLUDES}>)
 
-target_link_libraries(${PROJECT_LIB} fznparser::fznparser fmt::fmt)
+target_link_libraries(${PROJECT_LIB} fznparser::fznparser fmt::fmt Gecode::Driver Gecode::Int Gecode::Kernel Gecode::Minimodel Gecode::Search Gecode::Support)
 
 # Link the src library with the project
-target_link_libraries(${PROJECT_EXEC} ${PROJECT_LIB} cxxopts::cxxopts fmt::fmt)
+target_link_libraries(${PROJECT_EXEC} ${PROJECT_LIB} cxxopts::cxxopts)
 
 if(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 elseif(NOT ATLANTIS_SANITIZERS)
@@ -231,11 +252,11 @@ option(BUILD_TESTS "Build all tests." OFF) # Makes boolean 'test' available.
 option(BUILD_BENCHMARKS "Build all benchmarks." OFF) # Makes boolean 'benchmark' available.
 option(MORE_STATS "Track more statistics in benchmarks" OFF)
 
-if (MORE_STATS)
+if(MORE_STATS)
   add_compile_definitions(MORE_STATS)
 endif()
 
-if (BUILD_TESTS)
+if(BUILD_TESTS)
   include(CTest)
   enable_testing()
 endif()

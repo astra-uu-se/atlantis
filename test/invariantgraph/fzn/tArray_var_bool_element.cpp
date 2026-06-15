@@ -19,7 +19,6 @@ using namespace atlantis::invariantgraph::fzn;
 
 class array_var_bool_elementTest : public FznTestBase {
  public:
-  std::vector<VarNodeId> inputVarNodeIds{};
   std::string idx{"idx"};
   Int offset{1};
   std::string output{"output"};

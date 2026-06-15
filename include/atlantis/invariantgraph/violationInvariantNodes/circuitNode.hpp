@@ -10,6 +10,8 @@ class CircuitNode : public ViolationInvariantNode {
   explicit CircuitNode(InvariantGraph& graph, std::vector<VarNodeId>&&,
                        Int offset);
 
+  void postConstraint() override;
+
   void init(InvariantNodeId) override;
 
   void updateState() override;

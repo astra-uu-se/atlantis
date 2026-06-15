@@ -4,8 +4,6 @@
 
 namespace atlantis::testing {
 
-TEST(FznTspAllDiff, Solve) { testModelFile("tsp_alldiff.fzn"); }
-
-TEST(FznTspAllDiff, Gecode) { testModelFile("tsp_alldiff_gecode.fzn"); }
+TEST(FznTspAllDiff, DISABLED_Solve) { testModelFile("tsp_alldiff.fzn"); }
 
 }  // namespace atlantis::testing

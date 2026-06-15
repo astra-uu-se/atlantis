@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -23,33 +24,18 @@ void IntModViewNode::init(InvariantNodeId id) {
              .varNodeConst(staticInputVarNodeIds().front())
              .isIntVar());
 }
+void IntModViewNode::postConstraint() {
+  InvariantNode::postConstraint();
+  const auto den = invariantGraph().retrieveIntVarNode(_denominator);
+  constraintSolver().int_mod(staticInputVarNodeConst(0).constraintVarId(),
+                             varNodeConst(den).constraintVarId(),
+                             outputVarNodeConst(0).constraintVarId());
+}
 
 void IntModViewNode::updateState() {
-  auto& numerator = invariantGraph().varNode(staticInputVarNodeIds().front());
-  auto& remainder = invariantGraph().varNode(outputVarNodeIds().front());
-
-  if (numerator.lowerBound() >= 0) {
-    remainder.removeValuesBelow(0);
-  }
-  if (numerator.upperBound() <= 0) {
-    remainder.removeValuesAbove(0);
-  }
-  if (remainder.lowerBound() > 0) {
-    numerator.removeValuesBelow(0);
-  }
-  if (remainder.upperBound() < 0) {
-    numerator.removeValuesAbove(0);
-  }
-
-  if (numerator.isFixed()) {
-    remainder.fixToValue(numerator.lowerBound() % _denominator);
+  if (staticInputVarNodeConst(0).isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
-    return;
   }
-  const Int lb = std::min(-_denominator + 1, Int{0});
-  const Int ub = std::max(_denominator - 1, Int{0});
-  remainder.removeValuesBelow(lb);
-  remainder.removeValuesAbove(ub);
 }
 
 void IntModViewNode::registerOutputVars(propagation::SolverBase& solver,

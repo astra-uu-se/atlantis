@@ -11,19 +11,18 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 
 class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
- public:
+ protected:
   Int numInputs{4};
-  std::vector<std::string> inputVars;
+  std::vector<Var> inputVars;
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  std::string reifiedVar{"reified"};
-
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       bool allSameVarNodeId = true;
       for (size_t i = 0; i < inputVars.size(); ++i) {
         for (size_t j = i + 1; j < inputVars.size(); ++j) {
-          if (varNode(inputVars.at(i)).varNodeId() !=
-              varNode(inputVars.at(j)).varNodeId()) {
+          if (varNodeConst(inputVars.at(i)).varNodeId() !=
+              varNodeConst(inputVars.at(j)).varNodeId()) {
             allSameVarNodeId = false;
             break;
           }
@@ -37,13 +36,13 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
       }
       for (size_t i = 0; i < inputVars.size(); ++i) {
         const bool iVal =
-            varNode(inputVars.at(i)).isFixed()
-                ? varNode(inputVars.at(i)).inDomain(bool{true})
+            varNodeConst(inputVars.at(i)).isFixed()
+                ? varNodeConst(inputVars.at(i)).inDomain(bool{true})
                 : _solver->currentValue(varId(inputVars.at(i))) == 0;
         for (size_t j = i + 1; j < inputVars.size(); ++j) {
           const bool jVal =
-              varNode(inputVars.at(j)).isFixed()
-                  ? varNode(inputVars.at(j)).inDomain(bool{true})
+              varNodeConst(inputVars.at(j)).isFixed()
+                  ? varNodeConst(inputVars.at(j)).inDomain(bool{true})
                   : _solver->currentValue(varId(inputVars.at(j))) == 0;
           if (iVal != jVal) {
             return true;
@@ -55,8 +54,8 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
     bool allSameVarNodeId = true;
     for (size_t i = 0; i < inputVars.size(); ++i) {
       for (size_t j = i + 1; j < inputVars.size(); ++j) {
-        if (varNode(inputVars.at(i)).varNodeId() !=
-            varNode(inputVars.at(j)).varNodeId()) {
+        if (varNodeConst(inputVars.at(i)).varNodeId() !=
+            varNodeConst(inputVars.at(j)).varNodeId()) {
           allSameVarNodeId = false;
           break;
         }
@@ -70,8 +69,8 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
     }
     for (size_t i = 0; i < inputVars.size(); ++i) {
       for (size_t j = i + 1; j < inputVars.size(); ++j) {
-        if (varNode(inputVars.at(i)).inDomain(bool{true}) !=
-            varNode(inputVars.at(j)).inDomain(bool{true})) {
+        if (varNodeConst(inputVars.at(i)).inDomain(bool{true}) !=
+            varNodeConst(inputVars.at(j)).inDomain(bool{true})) {
           return true;
         }
       }
@@ -79,17 +78,20 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
     return false;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     numInputs = !shouldBeReplaced() || shouldHold() ? 4 : 2;
 
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
-      retrieveBoolVarNode(inputVars.back());
-      if (shouldBeSubsumed()) {
-        const bool val = shouldHold() || i == 0;
-        varNode(inputVars.back()).fixToValue(val);
+      std::vector<Int> dom;
+      if (!shouldBeSubsumed()) {
+        dom = {0, 1};
+      } else {
+        dom.emplace_back(shouldHold() || i == 0 ? 1 : 0);
       }
+      inputVars.emplace_back("input_" + std::to_string(i), std::move(dom),
+                             false);
+      retrieveBoolVarNode(inputVars.back());
     }
     if (!shouldBeMadeImplicit()) {
       for (const auto& var : inputVars) {
@@ -97,6 +99,7 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
       }
     }
     if (isReified()) {
+      reifiedVar.domain = std::pair<Int, Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           varNodeId(reifiedVar), !shouldBeReplaced());
@@ -151,6 +154,8 @@ TEST_P(BoolAllEqualNodeTestFixture, application) {
 
 TEST_P(BoolAllEqualNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -170,6 +175,8 @@ TEST_P(BoolAllEqualNodeTestFixture, updateState) {
 
 TEST_P(BoolAllEqualNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -211,11 +218,10 @@ TEST_P(BoolAllEqualNodeTestFixture, propagation) {
     if (!varNode(var).isFixed()) {
       const propagation::VarViewId inputVarId = varId(var);
       EXPECT_NE(inputVarId, propagation::NULL_ID);
-      const bool inVec =
-          std::ranges::any_of(inputVarIds.begin(), inputVarIds.end(),
-                              [&](const propagation::VarViewId& varId) {
-                                return varId == inputVarId;
-                              });
+      const bool inVec = std::ranges::any_of(
+          inputVarIds, [&](const propagation::VarViewId& varId) {
+            return varId == inputVarId;
+          });
       if (!inVec) {
         inputVarIds.emplace_back(inputVarId);
       }
@@ -261,7 +267,7 @@ TEST_P(BoolAllEqualNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BoolAllEqualNodeTest, BoolAllEqualNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::REPLACE,

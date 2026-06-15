@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/pow.hpp"
@@ -10,11 +11,11 @@
 
 namespace atlantis::invariantgraph {
 
-IntPowNode::IntPowNode(InvariantGraph& graph, VarNodeId base,
-                       VarNodeId exponent, VarNodeId power)
+IntPowNode::IntPowNode(InvariantGraph& graph, const VarNodeId base,
+                       const VarNodeId exponent, const VarNodeId power)
     : InvariantNode(graph, {power}, {base, exponent}) {}
 
-void IntPowNode::init(InvariantNodeId id) {
+void IntPowNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
@@ -24,6 +25,19 @@ void IntPowNode::init(InvariantNodeId id) {
       [&](const VarNodeId vId) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
+}
+void IntPowNode::postConstraint() {
+  InvariantNode::postConstraint();
+  constraintSolver().int_pow(varNodeConst(base()).constraintVarId(),
+                             varNodeConst(exponent()).constraintVarId(),
+                             varNodeConst(power()).constraintVarId());
+}
+
+void IntPowNode::updateState() {
+  if (varNodeConst(base()).isFixed() && varNodeConst(exponent()).isFixed()) {
+    assert(varNodeConst(power()).isFixed());
+    setState(InvariantNodeState::SUBSUMED);
+  }
 }
 
 void IntPowNode::registerOutputVars(propagation::SolverBase& solver,

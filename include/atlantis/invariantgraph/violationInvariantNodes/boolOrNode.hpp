@@ -13,6 +13,14 @@ class BoolOrNode : public ViolationInvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void postConstraint() override;
+
+  void updateState() override;
+
+  [[nodiscard]] bool canBeReplaced() const override;
+
+  bool replace() override;
+
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 

@@ -9,16 +9,16 @@ using ::testing::ContainerEq;
 using ::testing::Contains;
 
 class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
- public:
-  std::vector<std::string> inputVars;
-  std::string outputVar{"output"};
+ protected:
+  std::vector<Var> inputVars;
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       Int sum = 0;
       for (const auto& var : inputVars) {
-        if (varNode(var).isFixed()) {
-          sum += varNode(var).lowerBound();
+        if (varNodeConst(var).isFixed()) {
+          sum += varNodeConst(var).lowerBound();
         } else {
           sum += _solver->currentValue(varId(var));
         }
@@ -27,28 +27,33 @@ class IntPlusNodeTestFixture : public NodeTestBase<IntPlusNode> {
     }
     Int sum = 0;
     for (const auto& var : inputVars) {
-      EXPECT_TRUE(varNode(var).isFixed());
-      sum += varNode(var).lowerBound();
+      EXPECT_TRUE(varNodeConst(var).isFixed());
+      sum += varNodeConst(var).lowerBound();
     }
     return sum;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     for (size_t i = 0; i < 2; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
+      inputVars.emplace_back("input_" + std::to_string(i), std::vector<Int>{},
+                             true);
     }
     if (shouldBeSubsumed()) {
-      retrieveIntVarNode(1, 1, inputVars.at(0));
-      retrieveIntVarNode(1, 1, inputVars.at(1));
+      inputVars.at(0).domain = std::pair<Int, Int>{1, 1};
+      inputVars.at(1).domain = std::pair<Int, Int>{1, 1};
     } else if (shouldBeReplaced()) {
-      retrieveIntVarNode(0, 0, inputVars.at(0));
-      retrieveIntVarNode(-2, 2, inputVars.at(1));
+      inputVars.at(0).domain = std::pair<Int, Int>{0, 0};
+      inputVars.at(1).domain = std::pair<Int, Int>{-2, 2};
     } else {
-      retrieveIntVarNode(-2, 2, inputVars.at(0));
-      retrieveIntVarNode(-2, 2, inputVars.at(1));
+      inputVars.at(0).domain = std::pair<Int, Int>{-2, 2};
+      inputVars.at(1).domain = std::pair<Int, Int>{-2, 2};
     }
-    retrieveIntVarNode(0, 10, outputVar);
+    outputVar.domain = std::pair<Int, Int>{0, 10};
+    for (const auto& var : inputVars) {
+      retrieveIntVarNode(var);
+    }
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVars.at(0)),
                         varNodeId(inputVars.at(1)), varNodeId(outputVar));
@@ -68,6 +73,8 @@ TEST_P(IntPlusNodeTestFixture, construction) {
 
 TEST_P(IntPlusNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -83,6 +90,8 @@ TEST_P(IntPlusNodeTestFixture, updateState) {
 
 TEST_P(IntPlusNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -149,7 +158,7 @@ TEST_P(IntPlusNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntPlusNodeTest, IntPlusNodeTestFixture,
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME},
                       ParamData{InvariantNodeAction::REPLACE}));

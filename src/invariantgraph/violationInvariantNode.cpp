@@ -69,6 +69,18 @@ void ViolationInvariantNode::init(InvariantNodeId id) {
 
 bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
 
+void ViolationInvariantNode::setShouldHold(const bool sh) noexcept {
+  _shouldHold = sh;
+}
+
+VarNode& ViolationInvariantNode::reifiedVarNode() {
+  return varNode(reifiedViolationNodeId());
+}
+
+const VarNode& ViolationInvariantNode::reifiedVarNodeConst() const {
+  return varNodeConst(reifiedViolationNodeId());
+}
+
 void ViolationInvariantNode::fixReified(bool shouldHold) {
   if (isReified()) {
     invariantGraph().varNode(reifiedViolationNodeId()).fixToValue(shouldHold);
@@ -88,7 +100,9 @@ void ViolationInvariantNode::updateReified() {
       assert(outputVarNodeIds().front() == reifiedViolationNodeId());
       const bool isAlsoOutput = std::ranges::any_of(
           outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-          [this](VarNodeId oId) { return oId == reifiedViolationNodeId(); });
+          [this](const VarNodeId oId) {
+            return oId == reifiedViolationNodeId();
+          });
       if (!isAlsoOutput) {
         removeOutputVarNode(reifiedViolationNodeId());
       }
@@ -109,6 +123,8 @@ propagation::VarViewId ViolationInvariantNode::violationVarId(
 VarNodeId ViolationInvariantNode::reifiedViolationNodeId() const {
   return isReified() ? outputVarNodeIds().front() : VarNodeId{NULL_NODE_ID};
 }
+
+void ViolationInvariantNode::postConstraint() { updateReified(); }
 
 void ViolationInvariantNode::updateState() { updateReified(); }
 

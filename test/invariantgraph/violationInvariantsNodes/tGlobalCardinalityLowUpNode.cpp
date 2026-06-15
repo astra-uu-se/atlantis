@@ -11,19 +11,19 @@ using ::testing::ContainerEq;
 
 class GlobalCardinalityLowUpNodeTestFixture
     : public NodeTestBase<GlobalCardinalityLowUpNode> {
- public:
-  std::vector<std::string> inputVars;
+ protected:
+  std::vector<Var> inputVars;
   const std::vector<Int> cover{2, 6};
   const std::vector<Int> low{0, 1};
   const std::vector<Int> up{1, 2};
-  std::string reifiedVar{"reified"};
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       std::vector<Int> counts(cover.size(), 0);
       for (const auto& var : inputVars) {
-        const Int val = varNode(var).isFixed()
-                            ? varNode(var).lowerBound()
+        const Int val = varNodeConst(var).isFixed()
+                            ? varNodeConst(var).lowerBound()
                             : _solver->currentValue(varId(var));
         for (size_t i = 0; i < cover.size(); ++i) {
           if (val == cover.at(i)) {
@@ -41,7 +41,7 @@ class GlobalCardinalityLowUpNodeTestFixture
     }
     std::vector<Int> counts(cover.size(), 0);
     for (const auto& var : inputVars) {
-      const Int val = varNode(var).lowerBound();
+      const Int val = varNodeConst(var).lowerBound();
       for (size_t i = 0; i < cover.size(); ++i) {
         if (val == cover.at(i)) {
           counts.at(i)++;
@@ -57,14 +57,16 @@ class GlobalCardinalityLowUpNodeTestFixture
     return false;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    inputVars = {"x_0", "x_1"};
-    retrieveIntVarNode(5, 10, inputVars.at(0));
-
-    retrieveIntVarNode(2, 7, inputVars.at(1));
+    inputVars = std::vector<Var>{Var("input_1", 2, 10, true),
+                                 Var("input_2", 2, 7, true)};
+    for (const auto& var : inputVars) {
+      retrieveIntVarNode(var);
+    }
 
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           std::vector<Int>{cover}, std::vector<Int>{low},
@@ -139,7 +141,7 @@ TEST_P(GlobalCardinalityLowUpNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     GlobalCardinalityLowUpNodeTest, GlobalCardinalityLowUpNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},

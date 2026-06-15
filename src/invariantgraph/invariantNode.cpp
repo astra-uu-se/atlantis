@@ -22,7 +22,51 @@ InvariantNode::InvariantNode(InvariantGraph& invariantGraph,
       _staticInputVarNodeIds(std::move(staticInputIds)),
       _dynamicInputVarNodeIds(std::move(dynamicInputIds)) {}
 
+VarNode& InvariantNode::varNode(const VarNodeId vId) {
+  return _invariantGraph.varNode(vId);
+}
+
+const VarNode& InvariantNode::varNodeConst(const VarNodeId vId) const {
+  return _invariantGraph.varNode(vId);
+}
+
+VarNode& InvariantNode::outputVarNode(const size_t index) {
+  assert(index < _outputVarNodeIds.size());
+  return _invariantGraph.varNode(_outputVarNodeIds[index]);
+}
+
+const VarNode& InvariantNode::outputVarNodeConst(const size_t index) const {
+  assert(index < _outputVarNodeIds.size());
+  return _invariantGraph.varNode(_outputVarNodeIds[index]);
+}
+
+VarNode& InvariantNode::staticInputVarNode(const size_t index) {
+  assert(index < _staticInputVarNodeIds.size());
+  return _invariantGraph.varNode(_staticInputVarNodeIds[index]);
+}
+
+const VarNode& InvariantNode::staticInputVarNodeConst(
+    const size_t index) const {
+  assert(index < _staticInputVarNodeIds.size());
+  return _invariantGraph.varNode(_staticInputVarNodeIds[index]);
+}
+
+VarNode& InvariantNode::dynamicInputVarNode(const size_t index) {
+  assert(index < _dynamicInputVarNodeIds.size());
+  return _invariantGraph.varNode(_dynamicInputVarNodeIds[index]);
+}
+
+const VarNode& InvariantNode::dynamicInputVarNodeConst(
+    const size_t index) const {
+  assert(index < _dynamicInputVarNodeIds.size());
+  return _invariantGraph.varNode(_dynamicInputVarNodeIds[index]);
+}
+
 InvariantGraph& InvariantNode::invariantGraph() { return _invariantGraph; }
+
+ConstraintSolver& InvariantNode::constraintSolver() const {
+  return _invariantGraph.constraintSolver();
+}
 
 void InvariantNode::setState(const InvariantNodeState state) { _state = state; }
 
@@ -30,7 +74,13 @@ const InvariantGraph& InvariantNode::invariantGraphConst() const {
   return _invariantGraph;
 }
 
+const ConstraintSolver& InvariantNode::constraintSolverConst() const {
+  return _invariantGraph.constraintSolverConst();
+}
+
 InvariantNodeId InvariantNode::id() const { return _id; }
+
+void InvariantNode::postConstraint() {}
 
 bool InvariantNode::isReified() const { return false; }
 

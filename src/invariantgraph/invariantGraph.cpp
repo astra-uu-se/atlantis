@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "atlantis/invariantgraph/gecodeSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNode.hpp"
@@ -236,19 +237,32 @@ InvariantGraphRoot& InvariantGraph::root() const {
   return dynamic_cast<InvariantGraphRoot&>(*_implicitConstraintNodes.front());
 }
 
-InvariantGraph::InvariantGraph(bool breakDynamicCycles)
+InvariantGraph::InvariantGraph(const bool breakDynamicCycles)
     : _varNodes{VarNode{VarNodeId{0}, false,
                         std::make_shared<SearchDomain>(std::vector<Int>{1})},
                 VarNode{VarNodeId{1}, false,
                         std::make_shared<SearchDomain>(std::vector<Int>{0})}},
       _boolVarNodeIndices{VarNodeId{0}, VarNodeId{1}},
+      _constraintSolver(std::make_shared<GecodeSolver>()),
       _breakDynamicCycles(breakDynamicCycles),
       _objectiveVarNodeId{NULL_NODE_ID} {
+  for (const VarNodeId bVarId : _boolVarNodeIndices) {
+    varNode(bVarId).setConstraintVarId(
+        _constraintSolver->newBoolVar(varNode(bVarId).inDomain(true)));
+  }
   addImplicitConstraintNode(std::make_shared<InvariantGraphRoot>(*this));
 }
 
+ConstraintSolver& InvariantGraph::constraintSolver() {
+  return *_constraintSolver;
+}
+
+const ConstraintSolver& InvariantGraph::constraintSolverConst() const {
+  return *_constraintSolver;
+}
+
 VarNodeId InvariantGraph::nextVarNodeId() const {
-  return VarNodeId(_varNodes.size());
+  return VarNodeId{_varNodes.size()};
 }
 
 bool InvariantGraph::containsVarNode(const std::string& identifier) const {
@@ -256,35 +270,38 @@ bool InvariantGraph::containsVarNode(const std::string& identifier) const {
          _namedVarNodeIndices.contains(identifier);
 }
 
-bool InvariantGraph::containsVarNode(Int i) const {
+bool InvariantGraph::containsVarNode(const Int i) const {
   return !_intVarNodeIndices.empty() && _intVarNodeIndices.contains(i);
 }
 
 bool InvariantGraph::containsVarNode(bool) const { return true; }
 
-VarNodeId InvariantGraph::retrieveBoolVarNode(bool b) {
+VarNodeId InvariantGraph::retrieveBoolVarNode(const bool b) {
   assert(varNode(_boolVarNodeIndices.at(0)).inDomain(bool{false}));
   assert(varNode(_boolVarNodeIndices.at(1)).inDomain(bool{true}));
   return _boolVarNodeIndices.at(b ? 1 : 0);
 }
 
-VarNodeId InvariantGraph::retrieveBoolVarNode(bool value, bool forceNew) {
-  if (!forceNew) {
+VarNodeId InvariantGraph::retrieveBoolVarNode(const bool value,
+                                              const bool forceNewVar) {
+  if (!forceNewVar) {
     return retrieveBoolVarNode(value);
   }
   return _varNodes
       .emplace_back(
           nextVarNodeId(), false,
           std::make_shared<SearchDomain>(std::vector<Int>{value ? 0 : 1}),
-          DomainType::DOM_FIXED)
+          _constraintSolver->newBoolVar(value), DomainType::DOM_FIXED)
       .varNodeId();
 }
 
 VarNodeId InvariantGraph::retrieveBoolVarNode(const std::string& identifier,
-                                              DomainType domainType) {
+                                              const DomainType domainType) {
   if (!containsVarNode(identifier)) {
     const VarNodeId nId =
-        _varNodes.emplace_back(identifier, nextVarNodeId(), false, domainType)
+        _varNodes
+            .emplace_back(identifier, nextVarNodeId(), false,
+                          _constraintSolver->newBoolVar(), domainType)
             .varNodeId();
     _namedVarNodeIndices.emplace(identifier, nId);
     return nId;
@@ -293,11 +310,14 @@ VarNodeId InvariantGraph::retrieveBoolVarNode(const std::string& identifier,
   return _namedVarNodeIndices.at(identifier);
 }
 
-VarNodeId InvariantGraph::retrieveBoolVarNode(DomainType domainType) {
-  return _varNodes.emplace_back(nextVarNodeId(), false, domainType).varNodeId();
+VarNodeId InvariantGraph::retrieveBoolVarNode(const DomainType domainType) {
+  return _varNodes
+      .emplace_back(nextVarNodeId(), false, _constraintSolver->newBoolVar(),
+                    domainType)
+      .varNodeId();
 }
 
-VarNodeId InvariantGraph::retrieveBoolVarNode(bool b,
+VarNodeId InvariantGraph::retrieveBoolVarNode(const bool b,
                                               const std::string& identifier) {
   const VarNodeId nId = retrieveBoolVarNode(b);
   if (!containsVarNode(identifier)) {
@@ -317,22 +337,24 @@ VarNodeId InvariantGraph::retrieveBoolVarNode(bool b,
 }
 
 VarNodeId InvariantGraph::retrieveBoolVarNode(
-    const std::shared_ptr<SearchDomain>& domain, DomainType domainType) {
+    const std::shared_ptr<SearchDomain>& domain, const DomainType domainType) {
   if (domain->isFixed()) {
     return retrieveBoolVarNode(domain->lowerBound() == 0);
   }
-  return _varNodes.emplace_back(nextVarNodeId(), false, domain, domainType)
+  return _varNodes
+      .emplace_back(nextVarNodeId(), false, domain,
+                    _constraintSolver->newBoolVar(), domainType)
       .varNodeId();
 }
 
-VarNodeId InvariantGraph::retrieveIntVarNode(Int value) {
+VarNodeId InvariantGraph::retrieveIntVarNode(const Int value) {
   if (!containsVarNode(value)) {
     const VarNodeId nodeId =
         _varNodes
             .emplace_back(
                 nextVarNodeId(), true,
                 std::make_shared<SearchDomain>(std::vector<Int>{value}),
-                DomainType::DOM_FIXED)
+                _constraintSolver->newIntVar(value), DomainType::DOM_FIXED)
             .varNodeId();
     _intVarNodeIndices.emplace(value, nodeId);
     return nodeId;
@@ -349,7 +371,8 @@ VarNodeId InvariantGraph::retrieveIntVarNode(Int value) {
   return _intVarNodeIndices.at(value);
 }
 
-VarNodeId InvariantGraph::retrieveIntVarNode(Int value, bool forceNew) {
+VarNodeId InvariantGraph::retrieveIntVarNode(const Int value,
+                                             const bool forceNew) {
   if (!forceNew) {
     retrieveIntVarNode(value);
   }
@@ -357,6 +380,7 @@ VarNodeId InvariantGraph::retrieveIntVarNode(Int value, bool forceNew) {
       _varNodes
           .emplace_back(nextVarNodeId(), true,
                         std::make_shared<SearchDomain>(std::vector<Int>{value}),
+                        _constraintSolver->newIntVar(value),
                         DomainType::DOM_FIXED)
           .varNodeId();
   if (!containsVarNode(value)) {
@@ -386,11 +410,13 @@ VarNodeId InvariantGraph::retrieveIntVarNode(Int i,
 }
 
 VarNodeId InvariantGraph::retrieveIntVarNode(
-    const std::shared_ptr<SearchDomain>& domain, DomainType domainType) {
+    const std::shared_ptr<SearchDomain>& domain, const DomainType domainType) {
   if (domain->isFixed()) {
     return retrieveIntVarNode(domain->lowerBound());
   }
-  return _varNodes.emplace_back(nextVarNodeId(), true, domain, domainType)
+  return _varNodes
+      .emplace_back(nextVarNodeId(), true, domain,
+                    _constraintSolver->newIntVar(*domain), domainType)
       .varNodeId();
 }
 
@@ -401,7 +427,7 @@ VarNodeId InvariantGraph::retrieveIntVarNode(
 
 VarNodeId InvariantGraph::retrieveIntVarNode(
     const std::shared_ptr<SearchDomain>& domain, const std::string& identifier,
-    DomainType domainType) {
+    const DomainType domainType) {
   if (containsVarNode(identifier)) {
     const auto& node = varNode(identifier);
     if (!node.isIntVar()) {
@@ -411,12 +437,13 @@ VarNodeId InvariantGraph::retrieveIntVarNode(
     return node.varNodeId();
   }
 
-  VarNodeId nId = domain->isFixed()
-                      ? retrieveIntVarNode(domain->lowerBound())
-                      : _varNodes
-                            .emplace_back(identifier, nextVarNodeId(), true,
-                                          domain, domainType)
-                            .varNodeId();
+  VarNodeId nId =
+      domain->isFixed()
+          ? retrieveIntVarNode(domain->lowerBound())
+          : _varNodes
+                .emplace_back(identifier, nextVarNodeId(), true, domain,
+                              _constraintSolver->newIntVar(*domain), domainType)
+                .varNodeId();
 
   assert(!containsVarNode(identifier));
   _namedVarNodeIndices.emplace(identifier, nId);
@@ -430,19 +457,19 @@ VarNodeId InvariantGraph::retrieveIntVarNode(
 
 VarNode& InvariantGraph::varNode(const std::string& identifier) {
   assert(_namedVarNodeIndices.contains(identifier));
-  assert(size_t(_namedVarNodeIndices.at(identifier)) < _varNodes.size());
-  return _varNodes.at(size_t(_namedVarNodeIndices.at(identifier)));
+  assert(size_t{_namedVarNodeIndices.at(identifier)} < _varNodes.size());
+  return _varNodes.at(size_t{_namedVarNodeIndices.at(identifier)});
 }
 
-VarNode& InvariantGraph::varNode(VarNodeId id) {
-  assert(size_t(id) < _varNodes.size());
-  return _varNodes.at(size_t(id));
+VarNode& InvariantGraph::varNode(const VarNodeId id) {
+  assert(size_t{id} < _varNodes.size());
+  return _varNodes.at(size_t{id});
 }
 
-VarNode& InvariantGraph::varNode(Int value) {
+VarNode& InvariantGraph::varNode(const Int value) {
   assert(_intVarNodeIndices.contains(value));
-  assert(size_t(_intVarNodeIndices.at(value)) < _varNodes.size());
-  return _varNodes.at(size_t(_intVarNodeIndices.at(value)));
+  assert(size_t{_intVarNodeIndices.at(value)} < _varNodes.size());
+  return _varNodes.at(size_t{_intVarNodeIndices.at(value)});
 }
 
 void InvariantGraph::replaceInvariantNodes() {
@@ -608,6 +635,7 @@ InvariantNodeId InvariantGraph::addInvariantNode(
   const InvariantNodeId id = nextInvariantNodeId();
   const auto& invNode = _invariantNodes.emplace_back(std::move(node));
   invNode->init(id);
+  invNode->postConstraint();
   return invNode->id();
 }
 
@@ -708,6 +736,7 @@ InvariantNodeId InvariantGraph::addImplicitConstraintNode(
   const InvariantNodeId id = nextImplicitNodeId();
   const auto& implNode = _implicitConstraintNodes.emplace_back(std::move(node));
   implNode->init(id);
+  implNode->postConstraint();
   return implNode->id();
 }
 
@@ -798,6 +827,7 @@ void InvariantGraph::splitMultiDefinedVars() {
       VarNode& splitVarNode = _varNodes.emplace_back(
           nextVarNodeId(), _varNodes[i].isIntVar(),
           std::make_shared<SearchDomain>(*(_varNodes[i].constDomain())),
+          _varNodes[i].constraintVarId(),
           isFixed ? DomainType::DOM_FIXED : DomainType::DOM_NONE);
 
       invariantNode(invNodeId).replaceDefinedVar(_varNodes[i].varNodeId(),
@@ -855,6 +885,7 @@ void InvariantGraph::breakSelfCycles() {
                               std::make_shared<SearchDomain>(
                                   varNodeConst(outputVarId).lowerBound(),
                                   varNodeConst(outputVarId).upperBound()),
+                              varNodeConst(outputVarId).constraintVarId(),
                               DomainType::DOM_NONE)
                 .varNodeId();
         invNode->replaceDefinedVar(outputVarId, newDefinedVar);
@@ -905,6 +936,7 @@ void InvariantGraph::breakCycles() {
                               std::make_shared<SearchDomain>(
                                   varNodeConst(pivotId).lowerBound(),
                                   varNodeConst(pivotId).upperBound()),
+                              varNodeConst(pivotId).constraintVarId(),
                               DomainType::DOM_NONE)
                 .varNodeId();
         invNode.replaceStaticInputVarNode(pivotId, newDefinedVar);
@@ -1119,6 +1151,9 @@ void InvariantGraph::close() {
   if (!isOpen()) {
     return;
   }
+  _constraintSolver->fixPoint();
+  sanity(false);
+  updateDomains();
   sanity(false);
   replaceInvariantNodes();
   sanity(false);
@@ -1132,6 +1167,30 @@ void InvariantGraph::close() {
   sanity(true);
   breakCycles();
   sanity(true);
+}
+
+void InvariantGraph::updateDomains() {
+  std::array<std::vector<std::shared_ptr<SearchDomain>>, 2> domains{
+      std::vector<std::shared_ptr<SearchDomain>>(
+          _constraintSolver->numIntVars(), nullptr),
+      std::vector<std::shared_ptr<SearchDomain>>(
+          _constraintSolver->numBoolVars(), nullptr)};
+  for (size_t i = 0; i < _constraintSolver->numIntVars(); i++) {
+    domains[0][i] = std::make_shared<SearchDomain>(
+        _constraintSolver->intVarDomain({i, true}));
+  }
+  for (size_t i = 0; i < _constraintSolver->numBoolVars(); i++) {
+    domains[1][i] = std::make_shared<SearchDomain>(
+        _constraintSolver->boolVarDomain({i, false}));
+  }
+
+  for (auto& varNode : _varNodes) {
+    if (varNode.isIntVar()) {
+      varNode.replaceDomain(domains[0][size_t{varNode.constraintVarId()}]);
+    } else {
+      varNode.replaceDomain(domains[1][size_t{varNode.constraintVarId()}]);
+    }
+  }
 }
 
 void InvariantGraph::sanity([[maybe_unused]] bool oneDefInv) {

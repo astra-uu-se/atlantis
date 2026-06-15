@@ -8,27 +8,31 @@
 
 namespace atlantis::propagation {
 
-Linear::Linear(SolverBase& solver, VarId output, std::vector<Int>&& coeffs,
-               std::vector<VarViewId>&& varArray)
+Linear::Linear(SolverBase& solver, const VarId output,
+               std::vector<Int>&& coeffs, std::vector<VarViewId>&& varArray,
+               const Int outputOffset)
     : Invariant(solver),
+      _outputOffset(outputOffset),
       _output(output),
       _coeffs(std::move(coeffs)),
       _varArray(std::move(varArray)) {}
 
-Linear::Linear(SolverBase& solver, VarViewId output, std::vector<Int>&& coeffs,
-               std::vector<VarViewId>&& varArray)
-    : Linear(solver, VarId(output), std::move(coeffs), std::move(varArray)) {
+Linear::Linear(SolverBase& solver, const VarViewId output,
+               std::vector<Int>&& coeffs, std::vector<VarViewId>&& varArray,
+               const Int outputOffset)
+    : Linear(solver, VarId{output}, std::move(coeffs), std::move(varArray),
+             outputOffset) {
   assert(output.isVar());
 }
 
-Linear::Linear(SolverBase& solver, VarId output,
-               std::vector<VarViewId>&& varArray)
+Linear::Linear(SolverBase& solver, const VarId output,
+               std::vector<VarViewId>&& varArray, const Int outputOffset)
     : Linear(solver, output, std::vector<Int>(varArray.size(), 1),
-             std::move(varArray)) {}
+             std::move(varArray), outputOffset) {}
 
-Linear::Linear(SolverBase& solver, VarViewId output,
-               std::vector<VarViewId>&& varArray)
-    : Linear(solver, VarId(output), std::move(varArray)) {
+Linear::Linear(SolverBase& solver, const VarViewId output,
+               std::vector<VarViewId>&& varArray, const Int outputOffset)
+    : Linear(solver, VarId{output}, std::move(varArray), outputOffset) {
   assert(output.isVar());
 }
 
@@ -44,8 +48,8 @@ void Linear::registerVars() {
 }
 
 void Linear::updateBounds(const bool widenOnly) {
-  Int sumLb = 0;
-  Int sumUb = 0;
+  Int sumLb = _outputOffset;
+  Int sumUb = _outputOffset;
   for (size_t i = 0; i < _varArray.size(); ++i) {
     const Int varLb = _solver.lowerBound(_varArray[i]);
     const Int varUb = _solver.upperBound(_varArray[i]);
@@ -59,7 +63,7 @@ void Linear::updateBounds(const bool widenOnly) {
 }
 
 void Linear::recompute(const Timestamp ts) {
-  Int total = 0;
+  Int total = _outputOffset;
   for (size_t i = 0; i < _varArray.size(); ++i) {
     total += _coeffs[i] * _solver.value(ts, _varArray[i]);
   }

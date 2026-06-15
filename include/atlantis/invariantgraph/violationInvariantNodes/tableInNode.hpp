@@ -9,13 +9,11 @@ class TableInNode : public ViolationInvariantNode {
 
   [[nodiscard]] VarNodeId numCols() const;
 
-  bool removeFixedColumns();
-  bool removeInvalidRows();
+  void removeInvalidColumns();
+  void removeInvalidRows();
 
   void removeColumn(size_t colIndex);
   void removeDuplicateColumns();
-
-  [[nodiscard]] bool propagate();
 
   [[nodiscard]] Int firstInputColIndex() const;
 
@@ -29,14 +27,16 @@ class TableInNode : public ViolationInvariantNode {
                        bool shouldHold = true, bool isBoolTable = false);
 
   explicit TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                       std::vector<std::vector<bool>>&& table,
+                       const std::vector<std::vector<bool>>& table,
                        VarNodeId reified);
 
   explicit TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                       std::vector<std::vector<bool>>&& table,
+                       const std::vector<std::vector<bool>>& table,
                        bool shouldHold = true);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

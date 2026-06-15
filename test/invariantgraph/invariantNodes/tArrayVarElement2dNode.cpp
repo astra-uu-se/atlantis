@@ -1,4 +1,5 @@
 #include "../nodeTestBase.hpp"
+#include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayVarElement2dNode.hpp"
 
 namespace atlantis::testing {
@@ -7,65 +8,81 @@ using namespace atlantis::invariantgraph;
 
 class ArrayVarElement2dNodeTestFixture
     : public NodeTestBase<ArrayVarElement2dNode> {
- public:
-  std::vector<std::vector<std::string>> varMatrix;
+ protected:
+  std::vector<std::vector<Var>> varMatrix;
 
-  std::string idx1Var{"idx1"};
-  std::string idx2Var{"idx2"};
-  std::string outputVar{"output"};
+  Var rowIdx{"rowIdx", std::vector<Int>{}, true};
+  Var colIdx{"colIdx", std::vector<Int>{}, true};
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int offsetIdx1 = 1;
-  Int offsetIdx2 = 1;
+  Int rowOffset = -5;
+  Int colOffset = 5;
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data <= 2; }
 
-  [[nodiscard]] bool idx1ShouldBeReplaced() const {
+  [[nodiscard]] bool rowIdxShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 0 || _paramData.data == 2);
   }
 
-  [[nodiscard]] bool idx2ShouldBeReplaced() const {
+  [[nodiscard]] bool colIdxShouldBeReplaced() const {
     return shouldBeReplaced() && (_paramData.data == 1 || _paramData.data == 3);
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    varMatrix = {{"x00", "x01"}, {"x10", "x11"}};
+
     if (isIntElement()) {
-      retrieveIntVarNode(-2, -1, varMatrix.at(0).at(0));
-      retrieveIntVarNode(-1, 0, varMatrix.at(0).at(1));
-      retrieveIntVarNode(0, 1, varMatrix.at(1).at(0));
-      retrieveIntVarNode(1, 2, varMatrix.at(1).at(1));
-      retrieveIntVarNode(-2, 2, outputVar);
+      varMatrix = std::vector<std::vector<Var>>{
+          {Var{"x00", -2, 1, true}, Var{"x01", -1, 0, true}},
+          {Var{"x10", 0, 1, true}, Var{"x11", 1, 2, true}}};
     } else {
-      for (const auto& row : varMatrix) {
-        for (const auto& identifier : row) {
-          retrieveBoolVarNode(identifier);
+      varMatrix = std::vector<std::vector<Var>>{
+          {Var{"x00", 0, 1, false}, Var{"x01", 0, 1, false}},
+          {Var{"x10", 0, 1, false}, Var{"x11", 0, 1, false}}};
+    }
+
+    rowIdx.domain = std::pair<Int, Int>{
+        rowOffset, rowIdxShouldBeReplaced()
+                       ? rowOffset
+                       : (rowOffset + static_cast<Int>(varMatrix.size()) - 1)};
+    retrieveIntVarNode(rowIdx);
+
+    colIdx.domain = std::pair<Int, Int>{
+        colOffset,
+        colIdxShouldBeReplaced()
+            ? colOffset
+            : (colOffset + static_cast<Int>(varMatrix.front().size()) - 1)};
+    retrieveIntVarNode(colIdx);
+
+    for (const auto& row : varMatrix) {
+      for (const auto& v : row) {
+        if (isIntElement()) {
+          retrieveIntVarNode(v);
+        } else {
+          retrieveBoolVarNode(v);
         }
       }
+    }
+
+    outputVar.isIntVar = isIntElement();
+    if (isIntElement()) {
+      outputVar.domain = std::pair<Int, Int>(-2, 2);
+      retrieveIntVarNode(outputVar);
+    } else {
+      outputVar.domain = std::pair<Int, Int>(0, 1);
       retrieveBoolVarNode(outputVar);
     }
 
-    retrieveIntVarNode(
-        offsetIdx1,
-        idx1ShouldBeReplaced()
-            ? offsetIdx1
-            : (offsetIdx1 + static_cast<Int>(varMatrix.size()) - 1),
-        idx1Var);
-    retrieveIntVarNode(
-        offsetIdx2,
-        idx2ShouldBeReplaced()
-            ? offsetIdx2
-            : (offsetIdx2 + static_cast<Int>(varMatrix.front().size()) - 1),
-        idx2Var);
-
-    createInvariantNode(*_invariantGraph, varNodeId(idx1Var),
-                        varNodeId(idx2Var), varNodeIds(varMatrix),
-                        varNodeId(outputVar), offsetIdx1, offsetIdx2);
+    createInvariantNode(*_invariantGraph, varNodeId(rowIdx), varNodeId(colIdx),
+                        varNodeIds(varMatrix), varNodeId(outputVar), rowOffset,
+                        colOffset);
   }
 };
 
 TEST_P(ArrayVarElement2dNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -89,7 +106,8 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   std::vector<propagation::VarViewId> inputVarIds;
   std::vector<Int> inputVals;
 
-  for (const auto& idx : std::array<std::string, 2>{idx1Var, idx2Var}) {
+  for (const auto& idx :
+       std::array<std::string, 2>{rowIdx.identifier, colIdx.identifier}) {
     inputVarIds.emplace_back(varNode(idx).isFixed() ? propagation::NULL_ID
                                                     : varId(idx));
     inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
@@ -118,8 +136,8 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
     _solver->endProbe();
 
     const Int actual = _solver->currentValue(outputId);
-    const Int row = inputVals.at(0) - offsetIdx1;
-    const Int col = inputVals.at(1) - offsetIdx2;
+    const Int row = inputVals.at(0) - rowOffset;
+    const Int col = inputVals.at(1) - colOffset;
 
     const Int index =
         2 + (row * static_cast<Int>(varMatrix.front().size()) + col);
@@ -128,7 +146,7 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ArrayVarElement2dNodeTest, ArrayVarElement2dNodeTestFixture,
     ::testing::Values(ParamData{0}, ParamData{InvariantNodeAction::REPLACE, 0},
                       ParamData{InvariantNodeAction::REPLACE, 1}, ParamData{2},
@@ -163,6 +181,34 @@ TEST(ArrayVarElement2dNodeRegression, ReplaceHandlesReducedMatrixOffsets) {
   node.updateState();
   EXPECT_TRUE(node.canBeReplaced());
   EXPECT_TRUE(node.replace());
+}
+
+TEST(ArrayVarElement2dNodeRegression, ReplaceUniformInputMatrix) {
+  auto graph = std::make_shared<FznInvariantGraph>();
+  graph->open();
+
+  const auto input =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(-5, 5));
+  const auto rowIdx =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(0, 9));
+  const auto colIdx =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(0, 9));
+  const auto output =
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(-5, 5));
+
+  std::vector<std::vector<VarNodeId>> varMatrix(
+      10, std::vector<VarNodeId>(10, input));
+
+  const auto invId =
+      graph->addInvariantNode(std::make_shared<ArrayVarElement2dNode>(
+          *graph, rowIdx, colIdx, std::move(varMatrix), output, 0, 0));
+  const auto& node =
+      dynamic_cast<ArrayVarElement2dNode&>(graph->invariantNode(invId));
+  EXPECT_TRUE(node.canBeReplaced());
+  EXPECT_EQ(node.state(), InvariantNodeState::ACTIVE);
+  graph->close();
+
+  EXPECT_EQ(node.state(), InvariantNodeState::SUBSUMED);
 }
 
 }  // namespace atlantis::testing

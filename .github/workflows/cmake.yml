@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.9
@@ -25,7 +25,7 @@ jobs:
         shell: bash
         run: |
           sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
-          sudo apt-get install gcc-14 g++-14 python3; \
+          sudo apt-get install gcc-13 g++-13 gcc-14 g++-14 python3; \
           sudo apt-get update -qq;
 
       - name: Set Benchmark Flag
@@ -36,20 +36,51 @@ jobs:
           if_true: "ON"
           if_false: "OFF"
 
-      - name: Create build Folder
+      - name: Create build Folders
         id: buildFolder
         working-directory: ${{github.workspace}}
         shell: bash
-        run: mkdir -p build
+        run: |
+          mkdir -p build
+          mkdir -p .cpm-cache
+          mkdir -p .cpm-cache/gecode-6.3.0
+          mkdir -p .cpm-cache/gecode
+
+      - name: Checkout Gecode
+        id: gecode-checkout
+        uses: actions/checkout@v6
+        with:
+          repository: Gecode/gecode
+          ref: release/6.3.0
+          path: ${{github.workspace}}/.cpm-cache/gecode-6.3.0
+
+      - name: Build Gecode
+        id: gecode-build
+        working-directory: ${{github.workspace}}/.cpm-cache
+        env:
+          CMAKE_FLAGS: >
+            -DCMAKE_C_COMPILER=gcc-13
+            -DCMAKE_CXX_COMPILER=g++-13
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+            -DCMAKE_BUILD_TYPE=Release
+        run: |
+          mkdir -p gecode-6.3.0/build
+          cmake -B gecode-6.3.0/build -S gecode-6.3.0
+          cmake --build gecode-6.3.0/build --config Release -j 8
+          cmake --install gecode-6.3.0/build --config Release --prefix gecode
+          rm -r gecode-6.3.0
 
       - name: Build
         id: build
         working-directory: ${{github.workspace}}/build
         env:
           CMAKE_FLAGS: >
+            -DCMAKE_C_COMPILER=gcc-14
+            -DCMAKE_CXX_COMPILER=g++-14
             -DBUILD_TESTS:BOOL=ON
             -DBUILD_BENCHMARKS:BOOL=${{steps.buildBenchmarksFlag.outputs.value}}
             -DCMAKE_BUILD_TYPE=${{steps.buildBenchmarksFlag.outputs.value == 'ON' && 'Release' || 'Debug'}}
+            -DCPM_SOURCE_CACHE=${{github.workspace}}/.cpm-cache
         shell: bash
         run: cmake $CMAKE_FLAGS ..; make -j 8
 
@@ -73,7 +104,7 @@ jobs:
 
       - name: Slack
         id: slack
-        if: '!cancelled()'
+        if: "!cancelled()"
         uses: act10ns/slack@v1
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_BUILD }}
@@ -106,7 +137,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.9

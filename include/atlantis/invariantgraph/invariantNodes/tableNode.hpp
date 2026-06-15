@@ -9,22 +9,24 @@ class TableNode : public InvariantNode {
   [[nodiscard]] VarNodeId numCols() const;
   [[nodiscard]] VarNodeId colVar(size_t index) const;
 
-  bool removeRows();
-
   void removeColumn(size_t colIndex);
-  void removeDuplicateColumns();
 
-  [[nodiscard]] bool propagate();
+  void removeColumns();
+  void removeDuplicateColumns();
+  void removeRows();
 
  public:
   explicit TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
                      VarNodeId input, std::vector<std::vector<Int>>&& table,
                      size_t inputColumnIndex);
   explicit TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
-                     VarNodeId input, std::vector<std::vector<bool>>&& table,
+                     VarNodeId input,
+                     const std::vector<std::vector<bool>>& table,
                      size_t inputColumnIndex);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

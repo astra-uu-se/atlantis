@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -13,7 +14,7 @@ BoolNotNode::BoolNotNode(InvariantGraph& graph, VarNodeId staticInput,
                          VarNodeId output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 
-void BoolNotNode::init(InvariantNodeId id) {
+void BoolNotNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(!invariantGraphConst()
               .varNodeConst(outputVarNodeIds().front())
@@ -22,21 +23,15 @@ void BoolNotNode::init(InvariantNodeId id) {
               .varNodeConst(staticInputVarNodeIds().front())
               .isIntVar());
 }
+void BoolNotNode::postConstraint() {
+  InvariantNode::postConstraint();
+  constraintSolver().bool_not(staticInputVarNodeConst(0).constraintVarId(),
+                              outputVarNodeConst(0).constraintVarId(), true);
+}
 
 void BoolNotNode::updateState() {
-  if (invariantGraphConst().varNodeConst(input()).isFixed()) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .fixToValue(
-            !invariantGraphConst().varNodeConst(input()).inDomain(bool{true}));
-    setState(InvariantNodeState::SUBSUMED);
-  } else if (invariantGraph()
-                 .varNodeConst(outputVarNodeIds().front())
-                 .isFixed()) {
-    invariantGraph().varNode(input()).fixToValue(
-        !invariantGraph()
-             .varNodeConst(outputVarNodeIds().front())
-             .inDomain(bool{true}));
+  if (varNodeConst(input()).isFixed()) {
+    assert(outputVarNodeConst(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
 }

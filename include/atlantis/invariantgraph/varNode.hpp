@@ -7,7 +7,6 @@
 
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/types.hpp"
-#include "solverMapping.hpp"
 
 namespace atlantis {
 class SortedUniqueVector;
@@ -21,12 +20,14 @@ class SolverBase;  // forward declaration
 }
 
 namespace atlantis::invariantgraph {
+class SolverMapping;
 
 class VarNode {
   VarNodeId _varNodeId;
+  ConstraintVarId _constraintSolverId{NULL_NODE_ID};
   bool _isIntVar;
   DomainType _domainType{DomainType::DOM_DOMAIN};
-  std::shared_ptr<SearchDomain> _domain;
+  std::shared_ptr<SearchDomain> _domain{nullptr};
 
   std::vector<InvariantNodeId> _staticInputTo;
   std::vector<InvariantNodeId> _dynamicInputTo;
@@ -35,21 +36,33 @@ class VarNode {
   std::optional<std::string> _identifier;
 
  public:
-  explicit VarNode(VarNodeId, bool isIntVar,
-                   DomainType = DomainType::DOM_RANGE);
+  explicit VarNode(
+      VarNodeId, bool isIntVar,
+      ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
+      DomainType = DomainType::DOM_RANGE);
 
-  explicit VarNode(VarNodeId, bool isIntVar,
-                   const std::shared_ptr<SearchDomain>& domain,
-                   DomainType = DomainType::DOM_DOMAIN);
+  explicit VarNode(
+      VarNodeId, bool isIntVar, const std::shared_ptr<SearchDomain>& domain,
+      ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
+      DomainType = DomainType::DOM_DOMAIN);
+
+  explicit VarNode(
+      const std::string& identifier, VarNodeId, bool isIntVar,
+      ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
+      DomainType = DomainType::DOM_RANGE);
 
   explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
-                   DomainType = DomainType::DOM_RANGE);
-
-  explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
                    const std::shared_ptr<SearchDomain>& domain,
+                   ConstraintVarId constraintVarId = {NULL_NODE_ID, false},
                    DomainType = DomainType::DOM_DOMAIN);
 
   VarNodeId varNodeId() const noexcept;
+
+  ConstraintVarId constraintVarId() const noexcept;
+
+  void setConstraintVarId(ConstraintVarId constraintVarId);
+
+  void replaceDomain(std::shared_ptr<SearchDomain> newDomain);
 
   [[nodiscard]] std::shared_ptr<const SearchDomain> constDomain()
       const noexcept;
@@ -88,6 +101,8 @@ class VarNode {
                              bool tightenDomainState = true);
 
   DomainType domainType() const noexcept;
+
+  void tightenDomainType();
 
   void tightenDomainType(DomainType);
   void setDomainType(DomainType);

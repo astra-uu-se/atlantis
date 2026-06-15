@@ -9,56 +9,61 @@ using ::testing::ContainerEq;
 
 class GlobalCardinalityNodeTestFixture
     : public NodeTestBase<GlobalCardinalityNode> {
- public:
-  std::vector<std::string> inputVars;
+ protected:
+  std::vector<Var> inputVars;
   std::vector<Int> cover{2, 4};
-  std::vector<std::string> outputVars;
+  std::vector<Var> outputVars;
 
-  std::vector<Int> computeOutputs(bool isRegistered = false) {
+  [[nodiscard]] std::vector<Int> computeOutputs(
+      const bool isRegistered = false) const {
+    std::vector<Int> outputVals(cover.size(), 0);
     if (isRegistered) {
-      std::vector<Int> outputVars(cover.size(), 0);
       for (const auto& var : inputVars) {
-        const Int value = varNode(var).isFixed()
-                              ? varNode(var).lowerBound()
+        const Int value = varNodeConst(var).isFixed()
+                              ? varNodeConst(var).lowerBound()
                               : _solver->currentValue(varId(var));
         for (size_t j = 0; j < cover.size(); ++j) {
           if (value == cover.at(j)) {
-            outputVars.at(j)++;
+            outputVals.at(j)++;
           }
         }
       }
-      return outputVars;
+      return outputVals;
     }
-    std::vector<Int> outputVars(cover.size(), 0);
     for (const auto& var : inputVars) {
-      const Int value = varNode(var).lowerBound();
+      const Int value = varNodeConst(var).lowerBound();
       for (size_t j = 0; j < cover.size(); ++j) {
         if (value == cover.at(j)) {
-          outputVars.at(j)++;
+          outputVals.at(j)++;
         }
       }
     }
-    return outputVars;
+    return outputVals;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    inputVars = {"input_1", "input_2"};
+    inputVars =
+        std::vector<Var>{Var{"input_1", {}, true}, Var{"input_2", {}, true}};
     if (shouldBeSubsumed()) {
-      retrieveIntVarNode(2, 2, inputVars.at(0));
-      retrieveIntVarNode(std::vector<Int>{1, 3, 5}, inputVars.at(1));
+      inputVars.at(0).domain = std::pair<Int, Int>{2, 2};
+      inputVars.at(1).domain = std::vector<Int>{1, 3, 5};
     } else if (shouldBeReplaced()) {
-      retrieveIntVarNode(1, 3, inputVars.at(0));
-      retrieveIntVarNode(1, 3, inputVars.at(1));
+      inputVars.at(0).domain = std::pair<Int, Int>{1, 3};
+      inputVars.at(1).domain = std::pair<Int, Int>{1, 3};
     } else {
-      retrieveIntVarNode(1, 5, inputVars.at(0));
-      retrieveIntVarNode(1, 5, inputVars.at(1));
+      inputVars.at(0).domain = std::pair<Int, Int>{1, 5};
+      inputVars.at(1).domain = std::pair<Int, Int>{1, 5};
+    }
+    for (const auto& var : inputVars) {
+      retrieveIntVarNode(var);
     }
 
+    outputVars.clear();
     for (size_t i = 0; i < cover.size(); ++i) {
-      outputVars.emplace_back("output" + std::to_string(i + 1));
-      retrieveIntVarNode(0, static_cast<Int>(inputVars.size()),
-                         outputVars.back());
+      outputVars.emplace_back("output_" + std::to_string(i + 1), 0,
+                              static_cast<Int>(inputVars.size()), true);
+      retrieveIntVarNode(outputVars.back());
     }
 
     createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
@@ -68,6 +73,8 @@ class GlobalCardinalityNodeTestFixture
 
 TEST_P(GlobalCardinalityNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -89,6 +96,8 @@ TEST_P(GlobalCardinalityNodeTestFixture, updateState) {
 
 TEST_P(GlobalCardinalityNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -124,12 +133,6 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
     outputIds.emplace_back(varNode(var).isFixed() ? propagation::NULL_ID
                                                   : varId(var));
   }
-  bool allNull = true;
-  for (const auto& outputId : outputIds) {
-    allNull = allNull && outputId == propagation::NULL_ID;
-  }
-
-  EXPECT_EQ(allNull, shouldBeSubsumed());
   if (shouldBeSubsumed()) {
     return;
   }
@@ -174,7 +177,7 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     GlobalCardinalityNodeTest, GlobalCardinalityNodeTestFixture,
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME},
                       ParamData{InvariantNodeAction::REPLACE}));

@@ -4,26 +4,29 @@
 #include "./fznHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
+#include "atlantis/invariantgraph/invariantNodes/countNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/countRelNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool fzn_count_eq(FznInvariantGraph& graph,
                   const std::shared_ptr<fznparser::IntVarArray>& inputs,
                   const fznparser::IntArg& needle,
-                  const fznparser::IntArg& count) {
-  createCountNode(graph, inputs, needle, count);
+                  const fznparser::IntArg& amount) {
+  graph.addInvariantNode(std::make_shared<CountNode>(
+      graph, graph.retrieveVarNode(amount), graph.retrieveVarNodes(inputs),
+      graph.retrieveVarNode(needle)));
   return true;
 }
 
 bool fzn_count_eq_reif(FznInvariantGraph& graph,
                        const std::shared_ptr<fznparser::IntVarArray>& inputs,
                        const fznparser::IntArg& needle,
-                       const fznparser::IntArg& count,
+                       const fznparser::IntArg& amount,
                        const fznparser::BoolArg& reified) {
-  const VarNodeId output = createCountNode(graph, inputs, needle);
-  graph.addInvariantNode(std::make_shared<IntAllEqualNode>(
-      graph, output, graph.retrieveVarNode(count),
+  graph.addInvariantNode(std::make_shared<CountRelNode>(
+      graph, graph.retrieveVarNode(amount), RelationType::REL_TYPE_EQ,
+      graph.retrieveVarNodes(inputs), graph.retrieveVarNode(needle),
       graph.retrieveVarNode(reified)));
   return true;
 }
@@ -38,9 +41,9 @@ bool fzn_count_eq(FznInvariantGraph& graph,
   const bool isReified = constraintIdentifierIsReified(constraint);
 
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, true);
   if (!isReified) {
     return fzn_count_eq(
         graph,
@@ -48,7 +51,7 @@ bool fzn_count_eq(FznInvariantGraph& graph,
         std::get<fznparser::IntArg>(constraint.arguments().at(1)),
         std::get<fznparser::IntArg>(constraint.arguments().at(2)));
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true);
   return fzn_count_eq_reif(
       graph, getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0)),
       std::get<fznparser::IntArg>(constraint.arguments().at(1)),

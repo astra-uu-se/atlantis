@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -26,18 +27,7 @@ void IntScalarNode::init(InvariantNodeId id) {
 }
 
 void IntScalarNode::updateState() {
-  if (_factor == 0) {
-    invariantGraph().varNode(outputVarNodeIds().front()).fixToValue(_offset);
-    setState(InvariantNodeState::SUBSUMED);
-  } else if (invariantGraph()
-                 .varNodeConst(staticInputVarNodeIds().front())
-                 .isFixed()) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .fixToValue(_factor * invariantGraph()
-                                  .varNodeConst(staticInputVarNodeIds().front())
-                                  .lowerBound() +
-                    _offset);
+  if (varNodeConst(input()).isFixed() || outputVarNodeConst(0).isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }

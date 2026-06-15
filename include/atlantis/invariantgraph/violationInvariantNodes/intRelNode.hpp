@@ -4,28 +4,31 @@
 
 namespace atlantis::invariantgraph {
 
-class IntLinEqNode : public ViolationInvariantNode {
-  std::vector<Int> _coeffs;
-  Int _bound;
+class IntRelNode : public ViolationInvariantNode {
+  RelationType _relType;
+  std::optional<Int> _fixedRhs{std::nullopt};
 
  public:
-  IntLinEqNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-               std::vector<VarNodeId>&& vars, Int bound,
-               bool shouldHold = true);
+  IntRelNode(InvariantGraph& graph, VarNodeId a, RelationType, VarNodeId b,
+             VarNodeId r);
 
-  IntLinEqNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-               std::vector<VarNodeId>&& vars, Int bound, VarNodeId reified);
+  IntRelNode(InvariantGraph& graph, VarNodeId a, RelationType, VarNodeId b,
+             bool shouldHold = true);
 
   void init(InvariantNodeId) override;
 
+  void postConstraint() override;
+
   void updateState() override;
+
+  [[nodiscard]] bool canBeReplaced() const override;
+
+  bool replace() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
-
-  [[nodiscard]] const std::vector<Int>& coeffs() const;
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

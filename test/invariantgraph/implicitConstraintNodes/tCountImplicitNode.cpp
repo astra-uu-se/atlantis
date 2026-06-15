@@ -8,7 +8,7 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class CountNodeTestFixture : public NodeTestBase<CountImplicitNode> {
- public:
+ protected:
   Int numVars = 4;
   std::vector<std::string> inputVars;
   size_t amount = 2;

@@ -7,10 +7,11 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class TableNodeTestFixture : public NodeTestBase<TableNode> {
- public:
-  std::string inputVar{"input_col"};
-  std::vector<std::string> outputVars{"output_col_1", "output_col_2",
-                                      "fixed_col"};
+ protected:
+  Var inputVar{"input_col", std::vector<Int>{}, true};
+  std::vector<Var> outputVars{Var{"output_col_1", std::vector<Int>{}, true},
+                              Var{"output_col_2", std::vector<Int>{}, true},
+                              Var{"output_col_3", std::vector<Int>{}, true}};
 
   std::vector<std::vector<Int>> intTable{
       {0, 1, 2, 10}, {1, 2, 3, 10}, {2, 3, 4, 10}};
@@ -36,19 +37,20 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
     return colVals.size() == 1;
   }
 
-  std::vector<Int> computeOutputs(const bool isRegistered = false) {
+  [[nodiscard]] std::vector<Int> computeOutputs(
+      const bool isRegistered = false) const {
     std::vector<Int> outputs;
     outputs.reserve(outputVars.size());
     EXPECT_GE(inputColIndex(), 0);
     EXPECT_LE(inputColIndex(), static_cast<Int>(outputVars.size()));
     if (isRegistered) {
-      EXPECT_TRUE(varNode(inputVar).isFixed() ||
+      EXPECT_TRUE(varNodeConst(inputVar).isFixed() ||
                   varId(inputVar) != propagation::NULL_ID);
     } else {
-      EXPECT_TRUE(varNode(inputVar).isFixed());
+      EXPECT_TRUE(varNodeConst(inputVar).isFixed());
     }
-    const Int inputColVal = varNode(inputVar).isFixed()
-                                ? varNode(inputVar).lowerBound()
+    const Int inputColVal = varNodeConst(inputVar).isFixed()
+                                ? varNodeConst(inputVar).lowerBound()
                                 : _solver->currentValue(varId(inputVar));
     Int row = -1;
     for (Int r = 0; r < static_cast<Int>(table.size()); ++r) {
@@ -66,7 +68,7 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
     return outputs;
   }
 
-  [[nodiscard]] Int colLb(size_t i) const {
+  [[nodiscard]] Int colLb(const size_t i) const {
     if (isIntTable()) {
       Int lb = intTable.front().at(i);
       for (size_t j = 1; j < intTable.size(); ++j) {
@@ -81,7 +83,7 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
     return lb;
   }
 
-  [[nodiscard]] Int colUb(size_t i) const {
+  [[nodiscard]] Int colUb(const size_t i) const {
     EXPECT_TRUE(isIntTable());
     Int ub = intTable.front().at(i);
     for (size_t j = 1; j < intTable.size(); ++j) {
@@ -93,24 +95,30 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
   void SetUp() override {
     NodeTestBase::SetUp();
 
+    inputVar.isIntVar = isIntTable();
+
     if (isIntTable()) {
-      retrieveIntVarNode(
+      inputVar.domain = std::pair<Int, Int>{
           colLb(inputColIndex()),
-          shouldBeSubsumed() ? colLb(inputColIndex()) : colUb(inputColIndex()),
-          inputVar);
+          shouldBeSubsumed() ? colLb(inputColIndex()) : colUb(inputColIndex())};
+      retrieveIntVarNode(inputVar);
     } else {
       if (shouldBeSubsumed()) {
-        const bool val = colLb(inputColIndex()) == 0;
-        retrieveBoolVarNode(val, inputVar);
+        inputVar.domain = std::vector<Int>{colLb(inputColIndex()) == 0};
+        retrieveBoolVarNode(inputVar);
       } else {
+        inputVar.domain = std::vector<Int>{0, 1};
         retrieveBoolVarNode(inputVar);
       }
     }
 
-    for (const auto& outputVar : outputVars) {
+    for (auto& outputVar : outputVars) {
+      outputVar.isIntVar = isIntTable();
       if (isIntTable()) {
-        retrieveIntVarNode(-10, 10, outputVar);
+        outputVar.domain = std::pair<Int, Int>{-10, 10};
+        retrieveIntVarNode(outputVar);
       } else {
+        outputVar.domain = std::pair<Int, Int>{0, 1};
         retrieveBoolVarNode(outputVar);
       }
     }
@@ -154,6 +162,8 @@ TEST_P(TableNodeTestFixture, construction) {
 
 TEST_P(TableNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -263,7 +273,7 @@ TEST_P(TableNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TableNodeTest, TableNodeTestFixture,
     ::testing::Values(ParamData{0}, ParamData{1}, ParamData{2}, ParamData{4},
                       ParamData{5}, ParamData{6},

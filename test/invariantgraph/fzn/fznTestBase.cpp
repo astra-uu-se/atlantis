@@ -197,8 +197,9 @@ bool FznTestBase::isFixedTo(const std::string& identifier, Int val) const {
   }
   return false;
 }
+
 Int FznTestBase::intVal(const std::string& identifier,
-                        bool committedValue) const {
+                        const bool committedValue) const {
   std::optional<Int> ret{};
   if (_invariantGraph->containsVarNode(identifier)) {
     const auto& vNode = varNodeConst(identifier);
@@ -733,7 +734,8 @@ void FznTestBase::changeValue(const std::string& identifier,
                     curVal != newVal ? newVal : dom->upperBound());
 }
 
-void FznTestBase::rapidCheck(bool reachesFixpoint) {
+void FznTestBase::rapidCheck(const bool reachesFixpoint,
+                             const bool assumeCorrect) {
   bool neverSat = false;
   try {
     generate();
@@ -748,11 +750,17 @@ void FznTestBase::rapidCheck(bool reachesFixpoint) {
     _randomProvider = std::make_shared<search::RandomProvider>(1234);
     _assignment->initialize(*_randomProvider);
   } catch (const InconsistencyException&) {
+    if (assumeCorrect) {
+      RC_SUCCEED();
+    }
     RC_SUCCEED_IF(neverSat);
     RC_SUCCEED_IF(neverSatisfied());
     RC_FAIL();
   }
   if (neverSat) {
+    if (assumeCorrect) {
+      RC_SUCCEED();
+    }
     RC_SUCCEED_IF(!reachesFixpoint);
     RC_SUCCEED_IF(!neverSatisfied());
     RC_FAIL();
@@ -763,6 +771,9 @@ void FznTestBase::rapidCheck(bool reachesFixpoint) {
   }
 
   if (!canMove()) {
+    if (assumeCorrect) {
+      RC_SUCCEED();
+    }
     RC_ASSERT(isSatisfied(false));
     RC_ASSERT(isSatisfied(true));
     return;

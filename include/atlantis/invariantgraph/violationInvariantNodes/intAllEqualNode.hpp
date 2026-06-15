@@ -25,6 +25,8 @@ class IntAllEqualNode : public ViolationInvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void postConstraint() override;
+
   void updateState() override;
 
   [[nodiscard]] bool canBeReplaced() const override;

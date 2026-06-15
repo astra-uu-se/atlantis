@@ -1,3 +1,6 @@
+#include <numeric>
+#include <ranges>
+
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/invariantNodes/arrayElementNode.hpp"
 
@@ -6,9 +9,9 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
- public:
-  std::string idxVar{"idx"};
-  std::string outputVar{"output"};
+ protected:
+  Var idxVar{"idx", std::vector<Int>{}, true};
+  Var outputVar{"output", std::vector<Int>{}, true};
 
   Int offsetIdx = 1;
 
@@ -24,35 +27,41 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
 
   [[nodiscard]] bool isIntElement() const { return _paramData.data == 0; }
 
-  Int computeOutput(bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
-      EXPECT_TRUE(varNode(idxVar).isFixed() ||
+      EXPECT_TRUE(varNodeConst(idxVar).isFixed() ||
                   varId(idxVar) != propagation::NULL_ID);
-      return parVal(parArray.at((varNode(idxVar).isFixed()
-                                     ? varNode(idxVar).lowerBound()
+      return parVal(parArray.at((varNodeConst(idxVar).isFixed()
+                                     ? varNodeConst(idxVar).lowerBound()
                                      : _solver->currentValue(varId(idxVar))) -
                                 offsetIdx));
     }
-    EXPECT_TRUE(varNode(idxVar).isFixed());
-    return parVal(parArray.at(varNode(idxVar).lowerBound() - offsetIdx));
+    EXPECT_TRUE(varNodeConst(idxVar).isFixed());
+    return parVal(parArray.at(varNodeConst(idxVar).lowerBound() - offsetIdx));
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    retrieveIntVarNode(
-        offsetIdx,
-        shouldBeSubsumed()
-            ? offsetIdx
-            : (offsetIdx + static_cast<Int>(parArray.size()) - 1),
-        idxVar);
+    if (shouldBeSubsumed()) {
+      idxVar.fixToValue(offsetIdx);
+    } else {
+      idxVar.domain = std::pair{
+          offsetIdx, offsetIdx + static_cast<Int>(parArray.size()) - 1};
+    }
+
+    outputVar.isIntVar = isIntElement();
+
+    retrieveIntVarNode(idxVar);
 
     if (isIntElement()) {
       // int version of element
-      retrieveIntVarNode(-2, 1, outputVar);
+      outputVar.domain = std::pair<Int, Int>{-2, 1};
+      retrieveIntVarNode(outputVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>{parArray},
                           varNodeId(idxVar), varNodeId(outputVar), offsetIdx);
     } else {
       // bool version of element
+      outputVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(outputVar);
       std::vector<bool> boolArray(parArray.size());
       boolArray.reserve(parArray.size());
@@ -69,7 +78,7 @@ TEST_P(ArrayElementNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().idx(), varNodeId(idxVar));
+  EXPECT_EQ(invNode().staticInputVarNodeIds().front(), varNodeId(idxVar));
   EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
   EXPECT_EQ(invNode().outputVarNodeIds().front(), varNodeId(outputVar));
 
@@ -82,6 +91,8 @@ TEST_P(ArrayElementNodeTestFixture, construction) {
 
 TEST_P(ArrayElementNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -132,7 +143,7 @@ TEST_P(ArrayElementNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ArrayElementNodeTest, ArrayElementNodeTestFixture,
     ::testing::Values(ParamData{0}, ParamData{InvariantNodeAction::SUBSUME, 0},
                       ParamData{InvariantNodeAction::REPLACE, 0}, ParamData{1},
@@ -153,6 +164,8 @@ TEST(ArrayElementNodeRegression, UpdateStatePrunesOutOfRangeIndexValues) {
   const auto invId = graph->addInvariantNode(std::make_shared<ArrayElementNode>(
       *graph, std::vector<Int>{-2, -1, 0, 1}, idx, output, 1));
   auto& node = dynamic_cast<ArrayElementNode&>(graph->invariantNode(invId));
+  graph->constraintSolver().fixPoint();
+  graph->updateDomains();
 
   EXPECT_NO_THROW(node.updateState());
   EXPECT_TRUE(graph->varNode(idx).isFixed());

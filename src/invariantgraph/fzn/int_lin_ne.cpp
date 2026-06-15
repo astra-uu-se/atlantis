@@ -4,7 +4,7 @@
 #include "./fznHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLinNeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLinRelNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
@@ -22,8 +22,9 @@ bool int_lin_ne(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
                 Int bound) {
   verifyInputs(coeffs, inputs);
-  graph.addInvariantNode(std::make_shared<IntLinNeNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
+  graph.addInvariantNode(std::make_shared<IntLinRelNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs),
+      RelationType::REL_TYPE_NE, bound));
 
   return true;
 }
@@ -33,9 +34,9 @@ bool int_lin_ne(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
 
-  graph.addInvariantNode(std::make_shared<IntLinNeNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound,
-      graph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_shared<IntLinRelNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs),
+      RelationType::REL_TYPE_NE, bound, graph.retrieveVarNode(reified)));
 
   return true;
 }
@@ -48,9 +49,9 @@ bool int_lin_ne(FznInvariantGraph& graph,
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false)
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
 
   std::vector<Int> coeffs =
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0))
@@ -63,7 +64,7 @@ bool int_lin_ne(FznInvariantGraph& graph,
         std::get<fznparser::IntArg>(constraint.arguments().at(2))
             .toParameter());
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true);
   return int_lin_ne(
       graph, std::move(coeffs),
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),

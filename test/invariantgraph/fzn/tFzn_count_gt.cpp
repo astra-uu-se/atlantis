@@ -9,6 +9,7 @@
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_gt.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "tFzn_count.hpp"
 
 namespace atlantis::testing {
 
@@ -18,48 +19,25 @@ using ::testing::AtMost;
 using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
-class fzn_count_gtTest : public FznTestBase {
+class fzn_count_gtTest : public fzn_countTest {
  public:
-  std::vector<std::string> inputs{};
-  std::string needle{"needle"};
-  std::string output{"output"};
-  std::string reified{"reified"};
-
-  [[nodiscard]] std::pair<Int, Int> getBounds() const {
-    Int lb = 0;
-    Int ub = 0;
-    for (const auto& input : inputs) {
-      if (isFixed(input)) {
-        const Int inputVal = intVal(input);
-        if (isFixed(needle)) {
-          if (inputVal == intVal(needle)) {
-            ++lb;
-            ++ub;
-          }
-        } else if (inDomain(needle, inputVal)) {
-          ++ub;
-        }
-      } else if (isFixed(needle)) {
-        if (inDomain(input, intVal(needle))) {
-          ++ub;
-        }
-      } else if (!varNodeConst(input).constDomain()->isDisjoint(
-                     *varNodeConst(needle).constDomain())) {
-        ++ub;
-      }
-    }
-    return {lb, ub};
-  }
-
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     Int count = 0;
+    const Int needleVal = intVal(needle, committedValue);
     for (const auto& input : inputs) {
-      if (intVal(input, committedValue) == intVal(needle, committedValue)) {
+      const Int inputVal = intVal(input, committedValue);
+      if (inputVal == needleVal) {
         ++count;
+        RC_LOG() << input << ": " << needleVal << std::endl;
       }
     }
 
-    const bool expected = count < intVal(output, committedValue);
+    const Int boundVal = intVal(bound, committedValue);
+
+    RC_LOG() << bound << " > count" << ": " << boundVal << " > " << count
+             << std::endl;
+
+    const bool expected = boundVal > count;
     const bool actual = boolVal(reified, committedValue);
 
     if (isFixed(reified)) {
@@ -75,9 +53,9 @@ class fzn_count_gtTest : public FznTestBase {
     }
     const auto [lb, ub] = getBounds();
     if (isFixedTo(reified, true)) {
-      return ub < lowerBound(output);
+      return ub < lowerBound(bound);
     }
-    return upperBound(output) <= lb;
+    return upperBound(bound) <= lb;
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
@@ -86,9 +64,9 @@ class fzn_count_gtTest : public FznTestBase {
     }
     const auto [lb, ub] = getBounds();
     if (isFixedTo(reified, true)) {
-      return upperBound(output) <= lb;
+      return upperBound(bound) <= lb;
     }
-    return ub < lowerBound(output);
+    return ub < lowerBound(bound);
   }
 
   void generate() override {
@@ -99,12 +77,12 @@ class fzn_count_gtTest : public FznTestBase {
     }
     addIntVarArray(inputs);
     addIntArg(needle);
-    addIntArg(output);
+    addIntArg(bound);
 
     const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_gt_reif" : "fzn_count_gt";
     if (isReified) {
-      addBoolArg(reified);
+      addBoolArg(BoolArgState::VAR, reified);
     } else {
       addBoolPar(reified, true);
     }
@@ -118,7 +96,7 @@ class fzn_count_gtTest : public FznTestBase {
            });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (varId(needle) != propagation::NULL_ID && randBool()) {
       changeValue(needle, committedValue);
     }
@@ -131,7 +109,7 @@ class fzn_count_gtTest : public FznTestBase {
 
   void query() override {
     for (const auto& vId :
-         std::array{varId(reified), varId(output), totalViolationVarId()}) {
+         std::array{varId(reified), varId(bound), totalViolationVarId()}) {
       if (vId != propagation::NULL_ID) {
         _solver->query(vId);
       }

@@ -5,6 +5,7 @@
 namespace atlantis::invariantgraph {
 class GlobalCardinalityClosedNode : public ViolationInvariantNode {
   std::vector<Int> _cover;
+  std::vector<Int> _countOffsets;
 
  public:
   explicit GlobalCardinalityClosedNode(InvariantGraph& graph,
@@ -26,6 +27,8 @@ class GlobalCardinalityClosedNode : public ViolationInvariantNode {
   bool replace() override;
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

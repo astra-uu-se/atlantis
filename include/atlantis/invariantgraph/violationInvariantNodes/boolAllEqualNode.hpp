@@ -4,14 +4,8 @@
 
 namespace atlantis::invariantgraph {
 class BoolAllEqualNode : public ViolationInvariantNode {
-  unsigned char _dom{2};
   bool _breaksCycle;
-
-  [[nodiscard]] bool isFixed() const;
-  [[nodiscard]] bool inDomain(bool) const;
-  [[nodiscard]] bool holdsTrue() const;
-  [[nodiscard]] bool holdsFalse() const;
-  void fixToVal(bool);
+  std::optional<bool> _fixedVal{std::nullopt};
 
  public:
   explicit BoolAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
@@ -29,6 +23,8 @@ class BoolAllEqualNode : public ViolationInvariantNode {
                             bool shouldHold = true, bool breaksCycle = false);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void updateState() override;
 

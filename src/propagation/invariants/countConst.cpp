@@ -4,19 +4,22 @@
 #include <vector>
 
 #include "atlantis/propagation/solverBase.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::propagation {
 
-CountConst::CountConst(SolverBase& solver, VarId output, Int needle,
-                       std::vector<VarViewId>&& vars)
+CountConst::CountConst(SolverBase& solver, const VarId output, const Int needle,
+                       std::vector<VarViewId>&& vars, const Int outputOffset)
     : Invariant(solver),
+      _outputOffset(outputOffset),
       _output(output),
       _needle(needle),
       _vars(std::move(vars)) {}
 
-CountConst::CountConst(SolverBase& solver, VarViewId output, Int needle,
-                       std::vector<VarViewId>&& vars)
-    : CountConst(solver, VarId(output), needle, std::move(vars)) {
+CountConst::CountConst(SolverBase& solver, const VarViewId output,
+                       const Int needle, std::vector<VarViewId>&& vars,
+                       const Int outputOffset)
+    : CountConst(solver, VarId{output}, needle, std::move(vars), outputOffset) {
   assert(output.isVar());
 }
 
@@ -31,19 +34,22 @@ void CountConst::registerVars() {
   registerDefinedVar(_output);
 }
 
-void CountConst::updateBounds(bool widenOnly) {
-  _solver.updateBounds(_output, 0, static_cast<Int>(_vars.size()), widenOnly);
+void CountConst::updateBounds(const bool widenOnly) {
+  _solver.updateBounds(
+      _output, _outputOffset,
+      overflow::saturatingAdd(_outputOffset, static_cast<Int>(_vars.size())),
+      widenOnly);
 }
 
-void CountConst::recompute(Timestamp ts) {
-  Int count = 0;
+void CountConst::recompute(const Timestamp ts) {
+  Int count = _outputOffset;
   for (const auto& var : _vars) {
     count += static_cast<Int>(_solver.value(ts, var) == _needle);
   }
   updateValue(ts, _output, count);
 }
 
-void CountConst::notifyInputChanged(Timestamp ts, LocalId id) {
+void CountConst::notifyInputChanged(const Timestamp ts, const LocalId id) {
   assert(id < _vars.size());
   const Int newValue = _solver.value(ts, _vars[id]) == _needle ? 1 : 0;
   const Int committedValue =
@@ -54,7 +60,7 @@ void CountConst::notifyInputChanged(Timestamp ts, LocalId id) {
   incValue(ts, _output, newValue - committedValue);
 }
 
-VarViewId CountConst::nextInput(Timestamp ts) {
+VarViewId CountConst::nextInput(const Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index < _vars.size()) {
@@ -63,7 +69,7 @@ VarViewId CountConst::nextInput(Timestamp ts) {
   return NULL_ID;  // Done
 }
 
-void CountConst::notifyCurrentInputChanged(Timestamp ts) {
+void CountConst::notifyCurrentInputChanged(const Timestamp ts) {
   assert(_state.value(ts) != -1);
   notifyInputChanged(ts, _state.value(ts));
 }

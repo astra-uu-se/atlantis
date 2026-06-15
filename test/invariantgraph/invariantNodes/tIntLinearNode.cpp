@@ -8,21 +8,21 @@ using ::testing::ContainerEq;
 using ::testing::Contains;
 
 class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
- public:
+ protected:
   size_t numInputs = 3;
-  std::vector<std::string> inputVars;
   std::vector<Int> coeffs;
-  std::string outputVar{"output"};
+  std::vector<Var> inputVars;
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       Int sum = 0;
       for (size_t i = 0; i < coeffs.size(); ++i) {
         if (coeffs.at(i) == 0) {
           continue;
         }
-        if (varNode(inputVars.at(i)).isFixed()) {
-          sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
+        if (varNodeConst(inputVars.at(i)).isFixed()) {
+          sum += varNodeConst(inputVars.at(i)).lowerBound() * coeffs.at(i);
         } else {
           sum += _solver->currentValue(varId(inputVars.at(i))) * coeffs.at(i);
         }
@@ -34,13 +34,13 @@ class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
       if (coeffs.at(i) == 0) {
         continue;
       }
-      EXPECT_TRUE(varNode(inputVars.at(i)).isFixed());
-      sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
+      EXPECT_TRUE(varNodeConst(inputVars.at(i)).isFixed());
+      sum += varNodeConst(inputVars.at(i)).lowerBound() * coeffs.at(i);
     }
     return sum;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
@@ -49,19 +49,23 @@ class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
     const Int lb = -2;
     const Int ub = 2;
     for (Int i = 0; i < static_cast<Int>(numInputs); ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
+      inputVars.emplace_back("input_" + std::to_string(i), std::vector<Int>{},
+                             true);
       if (shouldBeSubsumed()) {
         const Int val = i % 3 == 0 ? lb : ub;
-        retrieveIntVarNode(val, val, inputVars.back());
+        inputVars.back().domain = std::vector<Int>{val};
       } else {
-        retrieveIntVarNode(lb, ub, inputVars.back());
+        inputVars.back().domain = std::pair<Int, Int>(lb, ub);
       }
       coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
       minSum += std::min(lb * coeffs.back(), ub * coeffs.back());
       maxSum += std::max(lb * coeffs.back(), ub * coeffs.back());
+      retrieveIntVarNode(inputVars.back());
     }
 
-    retrieveIntVarNode(minSum, maxSum, outputVar);
+    outputVar.domain = std::pair<Int, Int>(minSum, maxSum);
+
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                         varNodeIds(inputVars), varNodeId(outputVar));
@@ -84,6 +88,8 @@ TEST_P(IntLinearNodeTestFixture, construction) {
 
 TEST_P(IntLinearNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -142,7 +148,7 @@ TEST_P(IntLinearNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntLinearNodeTest, IntLinearNodeTestFixture,
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME}));
 
@@ -152,9 +158,9 @@ TEST(IntLinearNodeRegression, MultiInputOffsetUsesOffsetViewForOutput) {
   graph->open();
 
   const auto a =
-      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2), "a");
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(0, 2), "a");
   const auto b =
-      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2), "b");
+      graph->retrieveIntVarNode(std::make_shared<SearchDomain>(0, 2), "b");
   const auto out =
       graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 3), "out");
 

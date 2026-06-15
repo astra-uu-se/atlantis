@@ -55,7 +55,7 @@ class int_minTest : public FznTestBase {
     generateConstraint();
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const auto expected = getValue(committedValue);
     const Int actual = intVal(output, committedValue);
     if (isFixed(output) && totalViolationVarId() != propagation::NULL_ID) {

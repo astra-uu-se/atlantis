@@ -10,7 +10,7 @@
 
 namespace atlantis::propagation {
 
-std::unordered_map<Int, size_t> generateValToRows(
+std::unordered_map<Int, size_t> generateTrueRows(
     const std::vector<std::vector<Int>>& table, const size_t inputColumn) {
   std::unordered_map<Int, size_t> valToRows(
       std::unordered_map<Int, size_t>(table.size()));
@@ -42,7 +42,7 @@ Table::Table(SolverBase& solver, std::vector<VarId>&& outputVars,
       _inputVar(inputVar),
       _outputVars(std::move(outputVars)),
       _valToRow(
-          generateValToRows(table, inputColumn)),  // must come before _table
+          generateTrueRows(table, inputColumn)),  // must come before _table
       _table(std::move(removeInputColumn(std::move(table), inputColumn))) {
   assert(!_table.empty());
   assert(std::ranges::all_of(_table, [&](const std::vector<Int>& row) {

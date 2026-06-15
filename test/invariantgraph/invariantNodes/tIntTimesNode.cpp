@@ -6,16 +6,16 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class IntTimesNodeTestFixture : public NodeTestBase<IntTimesNode> {
- public:
-  std::vector<std::string> inputVars;
-  std::string outputVar{"output"};
+ protected:
+  std::vector<Var> inputVars;
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       Int product = 1;
       for (const auto& var : inputVars) {
-        if (varNode(var).isFixed()) {
-          product *= varNode(var).lowerBound();
+        if (varNodeConst(var).isFixed()) {
+          product *= varNodeConst(var).lowerBound();
         } else {
           product *= _solver->currentValue(varId(var));
         }
@@ -24,32 +24,37 @@ class IntTimesNodeTestFixture : public NodeTestBase<IntTimesNode> {
     }
     Int product = 1;
     for (const auto& var : inputVars) {
-      product *= varNode(var).lowerBound();
+      product *= varNodeConst(var).lowerBound();
     }
     return product;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     for (size_t i = 0; i < 2; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
+      inputVars.emplace_back("input_" + std::to_string(i), std::vector<Int>{},
+                             true);
     }
     if (shouldBeSubsumed()) {
       if (_paramData.data == 0) {
-        retrieveIntVarNode(0, 0, inputVars.at(0));
-        retrieveIntVarNode(0, 10, inputVars.at(1));
+        inputVars.at(0).domain = std::pair<Int, Int>{0, 0};
+        inputVars.at(1).domain = std::pair<Int, Int>{0, 10};
       } else {
-        retrieveIntVarNode(-2, -2, inputVars.at(0));
-        retrieveIntVarNode(2, 2, inputVars.at(1));
+        inputVars.at(0).domain = std::pair<Int, Int>{-2, -2};
+        inputVars.at(1).domain = std::pair<Int, Int>{2, 2};
       }
     } else if (shouldBeReplaced()) {
-      retrieveIntVarNode(1, 1, inputVars.at(0));
-      retrieveIntVarNode(-2, 2, inputVars.at(1));
+      inputVars.at(0).domain = std::pair<Int, Int>{1, 1};
+      inputVars.at(1).domain = std::pair<Int, Int>{-2, 2};
     } else {
-      retrieveIntVarNode(-2, 2, inputVars.at(0));
-      retrieveIntVarNode(-2, 2, inputVars.at(1));
+      inputVars.at(0).domain = std::pair<Int, Int>{-2, 2};
+      inputVars.at(1).domain = std::pair<Int, Int>{-2, 2};
     }
-    retrieveIntVarNode(-10, 10, outputVar);
+    outputVar.domain = std::pair<Int, Int>{-10, 10};
+    for (const auto& var : inputVars) {
+      retrieveIntVarNode(var);
+    }
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVars.at(0)),
                         varNodeId(inputVars.at(1)), varNodeId(outputVar));
@@ -58,6 +63,8 @@ class IntTimesNodeTestFixture : public NodeTestBase<IntTimesNode> {
 
 TEST_P(IntTimesNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -77,6 +84,8 @@ TEST_P(IntTimesNodeTestFixture, updateState) {
 
 TEST_P(IntTimesNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -146,7 +155,7 @@ TEST_P(IntTimesNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntTimesNodeTest, IntTimesNodeTestFixture,
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME, 0},
                       ParamData{InvariantNodeAction::SUBSUME, 1},

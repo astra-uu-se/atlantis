@@ -10,20 +10,20 @@ class ArrayVarElement2dNode : public InvariantNode {
   Int _colOffset;
 
  public:
-  ArrayVarElement2dNode(InvariantGraph& graph,
-
-                        VarNodeId rowIdx, VarNodeId colIdx,
+  ArrayVarElement2dNode(InvariantGraph& graph, VarNodeId rowIdx,
+                        VarNodeId colIdx,
                         std::vector<VarNodeId>&& flatVarMatrix,
                         VarNodeId output, size_t numRows, Int rowOffset,
                         Int colOffset);
 
-  ArrayVarElement2dNode(InvariantGraph& graph,
-
-                        VarNodeId rowIdx, VarNodeId colIdx,
+  ArrayVarElement2dNode(InvariantGraph& graph, VarNodeId rowIdx,
+                        VarNodeId colIdx,
                         std::vector<std::vector<VarNodeId>>&& varMatrix,
                         VarNodeId output, Int rowOffset, Int colOffset);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void updateState() override;
 
@@ -36,7 +36,9 @@ class ArrayVarElement2dNode : public InvariantNode {
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] VarNodeId at(Int row, Int col) const;
+  [[nodiscard]] VarNodeId at(Int row, Int col, bool useOffset = true) const;
+
+  [[nodiscard]] size_t index(Int row, Int col, bool useOffset = true) const;
 
   [[nodiscard]] VarNodeId rowIdx() const noexcept {
     return staticInputVarNodeIds().front();

@@ -22,10 +22,13 @@ std::string toString(VarNodeId varNodeId) {
   return "ATLANTIS_INTRODUCED_" + std::to_string(varNodeId);
 }
 
-VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
-                 bool isIntVar, const std::shared_ptr<SearchDomain>& domain,
-                 DomainType domainType)
+VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
+                 const bool isIntVar,
+                 const std::shared_ptr<SearchDomain>& domain,
+                 const ConstraintVarId constraintVarId,
+                 const DomainType domainType)
     : _varNodeId(varNodeId),
+      _constraintSolverId(constraintVarId),
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(domain),
@@ -33,9 +36,11 @@ VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
   assert(_domain != nullptr);
 }
 
-VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
-                 bool isIntVar, DomainType domainType)
+VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
+                 const bool isIntVar, const ConstraintVarId constraintVarId,
+                 const DomainType domainType)
     : _varNodeId(varNodeId),
+      _constraintSolverId(constraintVarId),
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(std::make_shared<SearchDomain>(0, 1)),
@@ -43,8 +48,11 @@ VarNode::VarNode(const std::string& identifier, VarNodeId varNodeId,
   assert(!isIntVar);
 }
 
-VarNode::VarNode(VarNodeId varNodeId, bool isIntVar, DomainType domainType)
+VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar,
+                 const ConstraintVarId constraintVarId,
+                 const DomainType domainType)
     : _varNodeId(varNodeId),
+      _constraintSolverId(constraintVarId),
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(std::make_shared<SearchDomain>(0, 1)),
@@ -52,10 +60,12 @@ VarNode::VarNode(VarNodeId varNodeId, bool isIntVar, DomainType domainType)
   assert(!isIntVar);
 }
 
-VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
+VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar,
                  const std::shared_ptr<SearchDomain>& domain,
-                 DomainType domainType)
+                 const ConstraintVarId constraintVarId,
+                 const DomainType domainType)
     : _varNodeId(varNodeId),
+      _constraintSolverId(constraintVarId),
       _isIntVar(isIntVar),
       _domainType(domainType),
       _domain(domain),
@@ -64,6 +74,19 @@ VarNode::VarNode(VarNodeId varNodeId, bool isIntVar,
 }
 
 VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
+
+ConstraintVarId VarNode::constraintVarId() const noexcept {
+  return _constraintSolverId;
+}
+
+void VarNode::setConstraintVarId(const ConstraintVarId constraintVarId) {
+  assert(_constraintSolverId == NULL_NODE_ID);
+  _constraintSolverId = constraintVarId;
+}
+
+void VarNode::replaceDomain(const std::shared_ptr<SearchDomain> newDomain) {
+  _domain = newDomain;
+}
 
 std::shared_ptr<const SearchDomain> VarNode::constDomain() const noexcept {
   return _domain;
@@ -220,7 +243,14 @@ Int VarNode::val() const {
 
 DomainType VarNode::domainType() const noexcept { return _domainType; }
 
-void VarNode::tightenDomainType(DomainType domainType) {
+void VarNode::tightenDomainType() {
+  tightenDomainType(_domain->isFixed()
+                        ? DomainType::DOM_FIXED
+                        : (_domain->isInterval() ? DomainType::DOM_RANGE
+                                                 : DomainType::DOM_DOMAIN));
+}
+
+void VarNode::tightenDomainType(const DomainType domainType) {
   if ((domainType == DomainType::DOM_LOWER_BOUND &&
        _domainType == DomainType::DOM_UPPER_BOUND) ||
       (domainType == DomainType::DOM_UPPER_BOUND &&
@@ -288,11 +318,11 @@ void VarNode::removeValues(const SortedUniqueVector& values,
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  if ((*values).empty()) {
+  if (values->empty()) {
     return;
   }
-  if ((*values).size() == 1) {
-    return removeValue((*values).front(), tightenDomainState);
+  if (values->size() == 1) {
+    return removeValue(values->front(), tightenDomainState);
   }
   const size_t prevSize = _domain->size();
   _domain->remove(values);
@@ -307,8 +337,8 @@ void VarNode::removeAllValuesExcept(const SortedUniqueVector& values,
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
   }
-  if ((*values).size() == 1) {
-    return fixToValue((*values).front(), tightenDomainState);
+  if (values->size() == 1) {
+    return fixToValue(values->front(), tightenDomainState);
   }
   const size_t prevSize = _domain->size();
   _domain->removeAllValuesExcept(values);

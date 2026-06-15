@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLinNeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLinRelNode.hpp"
 
 namespace atlantis::testing {
 
@@ -9,24 +9,24 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 using ::testing::Contains;
 
-class IntLinNeNodeTestFixture : public NodeTestBase<IntLinNeNode> {
- public:
-  size_t numInputs = 3;
-  std::vector<std::string> inputVars;
+class IntLinNeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
+ protected:
+  size_t numInputs{3};
   std::vector<Int> coeffs;
-  std::string reifiedVar{"reified"};
+  std::vector<Var> inputVars;
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
   Int bound = 1;
 
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       Int sum = 0;
       for (size_t i = 0; i < coeffs.size(); ++i) {
         if (coeffs.at(i) == 0) {
           continue;
         }
-        if (varNode(inputVars.at(i)).isFixed()) {
-          sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
+        if (varNodeConst(inputVars.at(i)).isFixed()) {
+          sum += varNodeConst(inputVars.at(i)).lowerBound() * coeffs.at(i);
         } else {
           sum += _solver->currentValue(varId(inputVars.at(i))) * coeffs.at(i);
         }
@@ -38,42 +38,49 @@ class IntLinNeNodeTestFixture : public NodeTestBase<IntLinNeNode> {
       if (coeffs.at(i) == 0) {
         continue;
       }
-      EXPECT_TRUE(varNode(inputVars.at(i)).isFixed());
-      sum += varNode(inputVars.at(i)).lowerBound() * coeffs.at(i);
+      EXPECT_TRUE(varNodeConst(inputVars.at(i)).isFixed());
+      sum += varNodeConst(inputVars.at(i)).lowerBound() * coeffs.at(i);
     }
     return sum == bound;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.reserve(numInputs);
     coeffs.reserve(numInputs);
-    const Int lb = -2;
-    const Int ub = 2;
     for (Int i = 0; i < static_cast<Int>(numInputs); ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
+      coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
+
+      Int ub = 2;
+      Int lb = -2;
       if (shouldBeSubsumed()) {
         const Int val = i % 3 == 0 ? lb : ub;
-        retrieveIntVarNode(val, val, inputVars.back());
-      } else {
-        retrieveIntVarNode(lb, ub, inputVars.back());
+        lb = val;
+        ub = val;
       }
-      coeffs.emplace_back((i + 1) * (i % 2 == 0 ? -1 : 1));
+      inputVars.emplace_back("input_" + std::to_string(i), lb, ub, true);
+
+      retrieveIntVarNode(inputVars.back());
     }
 
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          varNodeIds(inputVars), bound, varNodeId(reifiedVar));
+                          varNodeIds(inputVars), RelationType::REL_TYPE_NE,
+                          bound, varNodeId(reifiedVar));
     } else {
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
-                          varNodeIds(inputVars), bound, shouldHold());
+                          varNodeIds(inputVars), RelationType::REL_TYPE_NE,
+                          bound, shouldHold());
     }
   }
 };
 
 TEST_P(IntLinNeNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -155,7 +162,7 @@ TEST_P(IntLinNeNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntLinNeNodeTest, IntLinNeNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},

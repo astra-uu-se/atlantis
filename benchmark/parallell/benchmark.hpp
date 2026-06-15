@@ -81,16 +81,15 @@ inline std::vector<std::string> createInstances(const std::string& relDir) {
       "/tsptw/n60w140.001.fzn",
       "/tsptw/n80w140.001.fzn",
       "/tsptw/n100w140.001.fzn",
-};
+  };
   for (const auto& entry : std::filesystem::directory_iterator(relDir)) {
     if (entry.is_regular_file() && entry.path().extension() == ".fzn") {
       for (const auto& model : fileSet) {
-        if (std::string file = entry.path().string();
-            file.ends_with(model)) {
+        if (std::string file = entry.path().string(); file.ends_with(model)) {
           printf("Adding instance %s\n", file.c_str());
           instances.emplace_back(file);
           break;
-            }
+        }
       }
     }
   }

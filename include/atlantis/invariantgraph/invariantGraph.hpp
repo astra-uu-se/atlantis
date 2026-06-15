@@ -3,19 +3,15 @@
 #include <array>
 #include <memory>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
-#include "atlantis/invariantgraph/invariantGraph.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
 #include "atlantis/invariantgraph/solverMapping.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/types.hpp"
-#include "implicitConstraintNode.hpp"
-
-namespace atlantis {
-class SearchDomain;
-}
+#include "atlantis/utils/domains.hpp"
 
 namespace atlantis::search::neighborhoods {
 class NeighborhoodCombinator;
@@ -32,9 +28,11 @@ class InvariantGraph {
   std::unordered_map<std::string, VarNodeId> _namedVarNodeIndices;
   std::unordered_map<Int, VarNodeId> _intVarNodeIndices;
   std::array<VarNodeId, 2> _boolVarNodeIndices;
+  std::shared_ptr<ConstraintSolver> _constraintSolver;
 
   std::vector<std::shared_ptr<InvariantNode>> _invariantNodes;
   std::vector<std::shared_ptr<ImplicitConstraintNode>> _implicitConstraintNodes;
+
   bool _breakDynamicCycles;
   bool _isOpen{false};
 
@@ -50,6 +48,7 @@ class InvariantGraph {
 
   propagation::VarViewId createViolations(propagation::SolverBase&,
                                           SolverMapping&) const;
+
   void sanity(bool);
 
  protected:
@@ -63,6 +62,10 @@ class InvariantGraph {
 
   InvariantGraph(const InvariantGraph&) = delete;
   InvariantGraph(InvariantGraph&&) = default;
+
+  [[nodiscard]] ConstraintSolver& constraintSolver();
+
+  [[nodiscard]] const ConstraintSolver& constraintSolverConst() const;
 
   [[nodiscard]] virtual VarNodeId nextVarNodeId() const;
 
@@ -152,6 +155,8 @@ class InvariantGraph {
   [[nodiscard]] InvariantNodeId nextImplicitNodeId() const;
 
   InvariantNodeId addInvariantNode(std::shared_ptr<InvariantNode>&&);
+
+  void updateDomains();
 
   /**
    * @brief replaces the given old VarNode with the new VarNode in

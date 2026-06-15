@@ -4,7 +4,7 @@
 
 namespace atlantis::invariantgraph {
 class ArrayIntMinimumNode : public InvariantNode {
-  Int _ub;
+  Int _upperBound;
 
  public:
   explicit ArrayIntMinimumNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
@@ -15,6 +15,8 @@ class ArrayIntMinimumNode : public InvariantNode {
                                std::vector<VarNodeId>&& vars, VarNodeId output);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

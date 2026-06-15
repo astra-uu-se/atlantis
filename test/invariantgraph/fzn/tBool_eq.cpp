@@ -22,7 +22,7 @@ class bool_eqTest : public FznTestBase {
   std::string b{"b_2"};
   std::string reified{"reified"};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const bool expected =
         boolVal(a, committedValue) == boolVal(b, committedValue);
     const bool actual = boolVal(reified, committedValue);

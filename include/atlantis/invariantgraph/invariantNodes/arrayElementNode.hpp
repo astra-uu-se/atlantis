@@ -18,6 +18,8 @@ class ArrayElementNode : public InvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void postConstraint() override;
+
   void updateState() override;
 
   void registerOutputVars(propagation::SolverBase&,
@@ -27,9 +29,6 @@ class ArrayElementNode : public InvariantNode {
 
   [[nodiscard]] const std::vector<Int>& as() const noexcept {
     return _parVector;
-  }
-  [[nodiscard]] VarNodeId idx() const noexcept {
-    return staticInputVarNodeIds().back();
   }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;

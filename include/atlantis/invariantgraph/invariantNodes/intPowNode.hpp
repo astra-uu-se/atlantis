@@ -11,6 +11,10 @@ class IntPowNode : public InvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void postConstraint() override;
+
+  void updateState() override;
+
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 

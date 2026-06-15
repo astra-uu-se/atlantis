@@ -20,7 +20,6 @@ using namespace atlantis::invariantgraph::fzn;
 
 class array_bool_element2dTest : public FznTestBase {
  public:
-  std::vector<VarNodeId> inputVarNodeIds{};
   std::string rowIndex{"rowIndex"};
   std::string colIndex{"colIndex"};
   std::vector<std::vector<bool>> parameters{};
@@ -41,10 +40,10 @@ class array_bool_element2dTest : public FznTestBase {
                                : "array_bool_element2d_nonshifted_flat";
 
     const Int rowLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(rowLb, numRows + rowLb - 1, rowIndex);
+    addIntArg(IntArgState::VAR, rowLb, numRows + rowLb - 1, rowIndex);
 
     const Int colLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(colLb, numCols + colLb - 1, colIndex);
+    addIntArg(IntArgState::VAR, colLb, numCols + colLb - 1, colIndex);
 
     parameters = *rc::gen::container<std::vector<std::vector<bool>>>(
         numRows, rc::gen::container<std::vector<bool>>(
@@ -60,7 +59,7 @@ class array_bool_element2dTest : public FznTestBase {
 
     addArg(flatPars);
 
-    addBoolArg(output);
+    addBoolArg(BoolArgState::PAR_TRUE, output);
 
     addArg(numRows);
     rowOffset = lowerBound(rowIndex);
@@ -136,7 +135,7 @@ class array_bool_element2dTest : public FznTestBase {
               return std::all_of(
                   colIdxNode.constDomain()->begin(),
                   colIdxNode.constDomain()->end(), [&](const Int colVal) {
-                    return boolVal(output) == getValue(rowVal, colVal);
+                    return getValue(rowVal, colVal) == boolVal(output);
                   });
             });
       }

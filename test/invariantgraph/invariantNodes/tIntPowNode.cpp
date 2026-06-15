@@ -6,12 +6,12 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
- public:
-  std::string baseVar{"base"};
-  std::string exponentVar{"exponent"};
-  std::string outputVar{"output"};
+ protected:
+  Var baseVar{"base", std::vector<Int>{}, true};
+  Var exponentVar{"exponent", std::vector<Int>{}, true};
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  [[nodiscard]] static Int int_exp(Int baseVal, Int exponentVal) {
+  [[nodiscard]] static Int int_exp(const Int baseVal, const Int exponentVal) {
     if (exponentVal == 0) {
       return 1;
     }
@@ -35,26 +35,30 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
     return result;
   }
 
-  Int computeOutput(bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
-      const Int baseVal = varNode(baseVar).isFixed()
-                              ? varNode(baseVar).lowerBound()
+      const Int baseVal = varNodeConst(baseVar).isFixed()
+                              ? varNodeConst(baseVar).lowerBound()
                               : _solver->currentValue(varId(baseVar));
-      const Int exponentVal = varNode(exponentVar).isFixed()
-                                  ? varNode(exponentVar).lowerBound()
+      const Int exponentVal = varNodeConst(exponentVar).isFixed()
+                                  ? varNodeConst(exponentVar).lowerBound()
                                   : _solver->currentValue(varId(exponentVar));
       return int_exp(baseVal, exponentVal);
     }
-    const Int baseVal = varNode(baseVar).lowerBound();
-    const Int exponentVal = varNode(exponentVar).lowerBound();
+    const Int baseVal = varNodeConst(baseVar).lowerBound();
+    const Int exponentVal = varNodeConst(exponentVar).lowerBound();
     return int_exp(baseVal, exponentVal);
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    retrieveIntVarNode(0, 10, baseVar);
-    retrieveIntVarNode(0, 10, exponentVar);
-    retrieveIntVarNode(0, 10, outputVar);
+    baseVar.domain = std::pair<Int, Int>{0, 10};
+    exponentVar.domain = std::pair<Int, Int>{0, 10};
+    outputVar.domain = std::pair<Int, Int>{0, 10};
+
+    retrieveIntVarNode(baseVar);
+    retrieveIntVarNode(exponentVar);
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(baseVar),
                         varNodeId(exponentVar), varNodeId(outputVar));
@@ -74,7 +78,8 @@ TEST_P(IntPowNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : std::array<std::string, 2>{baseVar, exponentVar}) {
+  for (const auto& var :
+       std::array<VarNodeId, 2>{varNodeId(baseVar), varNodeId(exponentVar)}) {
     if (!varNode(var).isFixed()) {
       EXPECT_NE(varId(var), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));
@@ -105,8 +110,8 @@ TEST_P(IntPowNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(IntPowNodeTest, IntPowNodeTestFixture,
-                        ::testing::Values(ParamData{
-                            InvariantNodeAction::NONE}));
+INSTANTIATE_TEST_SUITE_P(IntPowNodeTest, IntPowNodeTestFixture,
+                         ::testing::Values(ParamData{
+                             InvariantNodeAction::NONE}));
 
 }  // namespace atlantis::testing

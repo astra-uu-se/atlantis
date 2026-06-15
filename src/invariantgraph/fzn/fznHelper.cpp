@@ -3,8 +3,6 @@
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
-#include "atlantis/invariantgraph/invariantNodes/intCountNode.hpp"
-#include "atlantis/invariantgraph/invariantNodes/varIntCountNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/utils/domains.hpp"
 
@@ -291,42 +289,6 @@ void verifyAllDifferent(
     }
   }
   return false;
-}
-
-VarNodeId createCountNode(FznInvariantGraph& graph,
-                          const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                          const fznparser::IntArg& needle) {
-  VarNodeId countVarNodeId = graph.retrieveIntVarNode(
-      std::make_shared<SearchDomain>(0, static_cast<Int>(inputs->size())));
-
-  if (needle.isFixed()) {
-    graph.addInvariantNode(
-        std::make_shared<IntCountNode>(graph, graph.retrieveVarNodes(inputs),
-                                       needle.toParameter(), countVarNodeId));
-  } else {
-    graph.addInvariantNode(std::make_shared<VarIntCountNode>(
-        graph, graph.retrieveVarNodes(inputs),
-        graph.retrieveVarNode(needle.var()), countVarNodeId));
-  }
-  return countVarNodeId;
-}
-
-VarNodeId createCountNode(FznInvariantGraph& graph,
-                          const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                          const fznparser::IntArg& needle,
-                          const fznparser::IntArg& count) {
-  VarNodeId countVarNodeId = graph.retrieveVarNode(count);
-
-  if (needle.isFixed()) {
-    graph.addInvariantNode(
-        std::make_shared<IntCountNode>(graph, graph.retrieveVarNodes(inputs),
-                                       needle.toParameter(), countVarNodeId));
-  } else {
-    graph.addInvariantNode(std::make_shared<VarIntCountNode>(
-        graph, graph.retrieveVarNodes(inputs),
-        graph.retrieveVarNode(needle.var()), countVarNodeId));
-  }
-  return countVarNodeId;
 }
 
 void invertCoeffs(std::vector<Int>& coeffs) {

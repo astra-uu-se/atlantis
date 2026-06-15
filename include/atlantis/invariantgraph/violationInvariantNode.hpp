@@ -35,7 +35,12 @@ class ViolationInvariantNode : public InvariantNode {
   propagation::VarViewId registerViolation(propagation::SolverBase&,
                                            SolverMapping&) const;
 
+  [[nodiscard]] VarNode& reifiedVarNode();
+  [[nodiscard]] const VarNode& reifiedVarNodeConst() const;
+
   [[nodiscard]] bool shouldHold() const noexcept;
+
+  void setShouldHold(bool sh) noexcept;
 
   void fixReified(bool);
 
@@ -66,6 +71,8 @@ class ViolationInvariantNode : public InvariantNode {
       const SolverMapping&) const override;
 
   [[nodiscard]] VarNodeId reifiedViolationNodeId() const;
+
+  void postConstraint() override;
 
   void updateState() override;
 };

@@ -5,6 +5,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/arrayBoolAndNode.hpp"
@@ -16,7 +17,7 @@ namespace atlantis::invariantgraph {
 
 GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
     InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
-    std::vector<Int>&& low, std::vector<Int>&& up, VarNodeId r)
+    std::vector<Int>&& low, std::vector<Int>&& up, const VarNodeId r)
     : ViolationInvariantNode(graph, {}, std::move(x), r),
       _cover(std::move(cover)),
       _low(std::move(low)),
@@ -24,13 +25,13 @@ GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
 
 GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
     InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
-    std::vector<Int>&& low, std::vector<Int>&& up, bool shouldHold)
+    std::vector<Int>&& low, std::vector<Int>&& up, const bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(x), shouldHold),
       _cover(std::move(cover)),
       _low(std::move(low)),
       _up(std::move(up)) {}
 
-void GlobalCardinalityLowUpClosedNode::init(InvariantNodeId id) {
+void GlobalCardinalityLowUpClosedNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||
@@ -43,38 +44,70 @@ void GlobalCardinalityLowUpClosedNode::init(InvariantNodeId id) {
       }));
 }
 
+void GlobalCardinalityLowUpClosedNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (isReified()) {
+    return constraintSolver().fzn_global_cardinality_low_up_closed_reif(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        _cover, _low, _up, reifiedVarNodeConst().constraintVarId());
+  }
+  constraintSolver().fzn_global_cardinality_low_up_closed(
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      _cover, _low, _up, shouldHold());
+}
+
 void GlobalCardinalityLowUpClosedNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (staticInputVarNodeIds().empty() && _cover.empty()) {
-    if (isReified()) {
-      fixReified(true);
-    } else if (!shouldHold()) {
-      throw InconsistencyException(
-          "GlobalCardinalityClosedNode::updateState neg: no inputs and empty "
-          "cover");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (_cover.empty()) {
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException(
-          "GlobalCardinalityClosedNode::updateState: empty cover");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
+
   if (isReified()) {
     return;
   }
-  const SortedUniqueVector coveredVals(std::vector<Int>{_cover});
-  if (shouldHold()) {
-    for (const auto vId : staticInputVarNodeIds()) {
-      invariantGraph().varNode(vId).domain()->removeAllValuesExcept(
-          coveredVals);
+
+  for (size_t i = 0; i < _cover.size(); ++i) {
+    if (_up[i] < 0 ||
+        static_cast<Int>(staticInputVarNodeIds().size()) < _low[i] ||
+        _low[i] > _up[i]) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
     }
+  }
+
+  if (!shouldHold()) {
+    const bool allOverlaps =
+        gccIsClosed(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+    if (!allOverlaps) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
+    const auto bounds =
+        gccBounds(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+    assert(bounds.size() == _cover.size());
+    for (size_t i = 0; i < bounds.size(); i++) {
+      if (bounds[i].second < _low[i] || _up[i] < bounds[i].first) {
+        setState(InvariantNodeState::SUBSUMED);
+        return;
+      }
+    }
+    return;
+  }
+
+  // Note that gccUpdateStates modifies the values in _low and _up
+  const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(
+      invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
+
+  for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
+       --i) {
+    _cover.erase(_cover.begin() + i);
+    _low.erase(_low.begin() + i);
+    _up.erase(_up.begin() + i);
+  }
+
+  for (const VarNodeId vId : varsToRemove) {
+    removeStaticInputVarNode(vId);
+  }
+
+  if (_cover.empty() || staticInputVarNodeIds().empty()) {
+    setState(InvariantNodeState::SUBSUMED);
   }
 }
 

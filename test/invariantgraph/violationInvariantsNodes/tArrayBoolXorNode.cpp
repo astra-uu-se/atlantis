@@ -10,19 +10,17 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 
 class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
- public:
-  std::vector<std::string> inputVars;
+ protected:
+  Int numInputs{4};
+  std::vector<Var> inputVars;
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  std::string reifiedVar{"reified"};
-
-  Int numInputs = 4;
-
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       bool trueFound = false;
       for (const auto& var : inputVars) {
-        if (varNode(var).isFixed()) {
-          if (varNode(var).inDomain(bool{true})) {
+        if (varNodeConst(var).isFixed()) {
+          if (varNodeConst(var).inDomain(bool{true})) {
             if (trueFound) {
               return true;
             }
@@ -41,7 +39,7 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
     }
     bool trueFound = false;
     for (const auto& var : inputVars) {
-      if (varNode(var).inDomain(bool{true})) {
+      if (varNodeConst(var).inDomain(bool{true})) {
         if (trueFound) {
           return true;
         }
@@ -51,25 +49,29 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
     return !trueFound;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     inputVars.clear();
     inputVars.reserve(numInputs);
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
-      retrieveBoolVarNode(inputVars.back());
+      inputVars.emplace_back(Var::BoolVar("input_" + std::to_string(i)));
     }
 
     if (shouldBeSubsumed() || shouldBeReplaced()) {
       if (shouldBeSubsumed()) {
-        varNode(inputVars.front()).fixToValue(shouldHold());
+        inputVars.front().fixToValue(shouldHold());
       }
       for (size_t i = 1; i < inputVars.size(); ++i) {
-        varNode(inputVars.at(i)).fixToValue(shouldFail());
+        inputVars.at(i).fixToValue(shouldFail());
       }
     }
 
+    for (const auto& var : inputVars) {
+      retrieveBoolVarNode(var);
+    }
+
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           varNodeId(reifiedVar));
@@ -82,6 +84,8 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
 
 TEST_P(ArrayBoolXorNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -101,6 +105,8 @@ TEST_P(ArrayBoolXorNodeTestFixture, updateState) {
 
 TEST_P(ArrayBoolXorNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -181,7 +187,7 @@ TEST_P(ArrayBoolXorNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ArrayBoolXorNodeTest, ArrayBoolXorNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::REPLACE,
