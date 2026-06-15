@@ -4,19 +4,25 @@
 
 namespace atlantis::invariantgraph {
 
-class BoolLinLeNode : public ViolationInvariantNode {
+class IntLinRelNode : public ViolationInvariantNode {
+  RelationType _relType;
   std::vector<Int> _coeffs;
-  Int _bound;
+  Int _rhs;
+
+  void updateRelType();
 
  public:
-  BoolLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                std::vector<VarNodeId>&& vars, Int bound,
-                bool shouldHold = true);
+  IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+                std::vector<VarNodeId>&& vars, RelationType relationType,
+                Int rhs, bool shouldHold = true);
 
-  BoolLinLeNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                std::vector<VarNodeId>&& vars, Int bound, VarNodeId reified);
+  IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+                std::vector<VarNodeId>&& vars, RelationType relType, Int bound,
+                VarNodeId reified);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void updateState() override;
 

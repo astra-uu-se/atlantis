@@ -4,6 +4,7 @@
 
 #include "../parseHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/invariantgraph/views/boolNotNode.hpp"
@@ -14,80 +15,83 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, VarNodeId a,
-                                   VarNodeId b, VarNodeId output)
+ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, const VarNodeId a,
+                                   const VarNodeId b, const VarNodeId output)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, output) {}
 
-ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, VarNodeId a,
-                                   VarNodeId b, bool shouldHold)
+ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, const VarNodeId a,
+                                   const VarNodeId b, const bool shouldHold)
     : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
 
 ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph,
                                    std::vector<VarNodeId>&& as,
-                                   VarNodeId output)
+                                   const VarNodeId output)
     : ViolationInvariantNode(graph, std::move(as), output) {}
 
 ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph,
-                                   std::vector<VarNodeId>&& as, bool shouldHold)
+                                   std::vector<VarNodeId>&& as,
+                                   const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(as), shouldHold) {}
 
-void ArrayBoolAndNode::init(InvariantNodeId id) {
+void ArrayBoolAndNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
-  assert(
-      !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(!isReified() || !reifiedVarNodeConst().isIntVar());
   assert(std::ranges::none_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodeIds(),
+      [&](const VarNodeId vId) { return varNodeConst(vId).isIntVar(); }));
+}
+
+void ArrayBoolAndNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (isReified()) {
+    constraintSolver().array_bool_and(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        reifiedVarNodeConst().constraintVarId());
+  } else {
+    constraintSolver().array_bool_and(
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        shouldHold());
+  }
 }
 
 void ArrayBoolAndNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (!isReified() && shouldHold()) {
-    for (const auto& vId : staticInputVarNodeIds()) {
-      invariantGraph().varNode(vId).fixToValue(bool{true});
+
+  // Constraint has subsumed:
+  if (!isReified()) {
+    bool alwaysHolds = false;
+    if (shouldHold()) {
+      alwaysHolds = staticInputVarNodeIds().empty() ||
+                    std::ranges::all_of(
+                        staticInputVarNodeIds(), [&](const VarNodeId vId) {
+                          return varNodeConst(vId).isFixed() &&
+                                 varNodeConst(vId).inDomain(true);
+                        });
+    } else {
+      alwaysHolds = !staticInputVarNodeIds().empty() &&
+                    std::ranges::any_of(
+                        staticInputVarNodeIds(), [&](const VarNodeId vId) {
+                          return varNodeConst(vId).isFixed() &&
+                                 varNodeConst(vId).inDomain(false);
+                        });
     }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
+    if (alwaysHolds) {
+      setState(InvariantNodeState::SUBSUMED);
+      return;
+    }
   }
 
   std::vector<VarNodeId> varsToRemove;
   varsToRemove.reserve(staticInputVarNodeIds().size());
-  // remove fixed inputs that are true:
   for (const auto& id : staticInputVarNodeIds()) {
-    if (invariantGraphConst().varNodeConst(id).isFixed()) {
-      if (invariantGraphConst().varNodeConst(id).inDomain(bool{true})) {
-        varsToRemove.emplace_back(id);
-      } else if (isReified()) {
-        fixReified(false);
-      } else if (shouldHold()) {
-        throw InconsistencyException(
-            "ArrayBoolAndNode::updateState constraint is violated");
-      } else {
-        setState(InvariantNodeState::SUBSUMED);
-        return;
-      }
+    if (varNodeConst(id).isFixed()) {
+      varsToRemove.emplace_back(id);
     }
   }
-
   for (const auto& id : varsToRemove) {
     removeStaticInputVarNode(id);
   }
-
   if (staticInputVarNodeIds().empty()) {
-    if (isReified()) {
-      fixReified(true);
-    } else if (!shouldHold()) {
-      throw InconsistencyException(
-          "ArrayBoolAndNode::updateState constraint is violated");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-  } else if (staticInputVarNodeIds().size() == 1 && !isReified()) {
-    auto& inputNode = invariantGraph().varNode(staticInputVarNodeIds().front());
-    inputNode.fixToValue(shouldHold());
-    removeStaticInputVarNode(inputNode.varNodeId());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -122,11 +126,9 @@ void ArrayBoolAndNode::registerOutputVars(propagation::SolverBase& solver,
                         mapping);
     }
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
+    return mapping.solverId(vId) != propagation::NULL_ID;
+  }));
 }
 
 void ArrayBoolAndNode::registerNode(propagation::SolverBase& solver,
@@ -142,8 +144,7 @@ void ArrayBoolAndNode::registerNode(propagation::SolverBase& solver,
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodeIds().size());
   std::ranges::transform(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      std::back_inserter(solverVars),
+      staticInputVarNodeIds(), std::back_inserter(solverVars),
       [&](const auto& node) { return mapping.solverId(node); });
   if (solverVars.size() == 2) {
     solver.makeInvariant<propagation::BoolAnd>(

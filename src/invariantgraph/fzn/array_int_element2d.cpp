@@ -55,13 +55,13 @@ bool array_int_element2d(FznInvariantGraph& graph,
       constraint.identifier() != "array_int_element2d_nonshifted_flat") {
     return false;
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, false)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 4, fznparser::IntArg, false)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 5, fznparser::IntArg, false)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 6, fznparser::IntArg, false)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 4, fznparser::IntArg, false);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 5, fznparser::IntArg, false);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 6, fznparser::IntArg, false);
 
   return array_int_element2d(
       graph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),

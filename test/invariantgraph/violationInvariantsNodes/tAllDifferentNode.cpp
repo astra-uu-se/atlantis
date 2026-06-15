@@ -1,7 +1,5 @@
 #include <gmock/gmock.h>
 
-#include <iostream>
-
 #include "../nodeTestBase.hpp"
 #include "atlantis/invariantgraph/invariantGraphRoot.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/allDifferentNode.hpp"
@@ -14,15 +12,15 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 
 class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
- public:
-  Int numInputs = 4;
-  std::vector<std::string> inputVars;
-  std::string reifiedVar{"reified"};
+ protected:
+  Int numInputs{4};
+  std::vector<Var> inputVars;
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
       for (size_t i = 0; i < inputVars.size(); ++i) {
-        const VarNode& iNode = varNode(inputVars.at(i));
+        const VarNode& iNode = varNodeConst(inputVars.at(i));
         const Int iVal = iNode.isFixed()
                              ? iNode.lowerBound()
                              : _solver->currentValue(varId(inputVars.at(i)));
@@ -30,8 +28,8 @@ class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
           return true;
         }
         for (size_t j = i + 1; j < inputVars.size(); ++j) {
-          const Int jVal = varNode(inputVars.at(j)).isFixed()
-                               ? varNode(inputVars.at(j)).lowerBound()
+          const Int jVal = varNodeConst(inputVars.at(j)).isFixed()
+                               ? varNodeConst(inputVars.at(j)).lowerBound()
                                : _solver->currentValue(varId(inputVars.at(j)));
           if (iVal == jVal) {
             return true;
@@ -42,8 +40,8 @@ class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
     }
     for (size_t i = 0; i < inputVars.size(); ++i) {
       for (size_t j = i + 1; j < inputVars.size(); ++j) {
-        if (varNode(inputVars.at(i)).lowerBound() ==
-            varNode(inputVars.at(j)).lowerBound()) {
+        if (varNodeConst(inputVars.at(i)).lowerBound() ==
+            varNodeConst(inputVars.at(j)).lowerBound()) {
           return true;
         }
       }
@@ -51,15 +49,13 @@ class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
     return false;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    for (Int i = 0; i < numInputs - 1; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
-      if (shouldBeSubsumed()) {
-        retrieveIntVarNode(i, i, inputVars.back());
-      } else {
-        retrieveIntVarNode(-2, 2, inputVars.back());
-      }
+    for (Int i = 0; i < numInputs; ++i) {
+      inputVars.emplace_back("input_" + std::to_string(i),
+                             shouldBeSubsumed() ? i : -2,
+                             shouldBeSubsumed() ? i : 2, true);
+      retrieveIntVarNode(inputVars.back());
     }
     if (!shouldBeMadeImplicit()) {
       for (const auto& var : inputVars) {
@@ -67,6 +63,7 @@ class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
       }
     }
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           varNodeId(reifiedVar));
@@ -135,6 +132,8 @@ TEST_P(AllDifferentNodeTestFixture, application) {
 
 TEST_P(AllDifferentNodeTestFixture, makeImplicit) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeMadeImplicit()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -206,7 +205,7 @@ TEST_P(AllDifferentNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AllDifferentNodeTest, AllDifferentNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::REPLACE,

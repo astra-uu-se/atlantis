@@ -100,6 +100,10 @@ Int SearchProcedure::run(SearchController& searchController) {
       const auto cost = _assignment.performProbe(_random);
 
       if (metaHeuristic->acceptMove(cost)) {
+#ifdef MORE_STATS
+        startCommit = std::chrono::high_resolution_clock::now();
+#endif
+
         _assignment.commitLastProbe();
 
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
@@ -107,6 +111,13 @@ Int SearchProcedure::run(SearchController& searchController) {
             communications->increment();
         }
       }
+
+#ifdef MORE_STATS
+      fullProbeTime +=
+          std::chrono::duration_cast<std::chrono::microseconds>(
+              std::chrono::high_resolution_clock::now() - startProbe)
+              .count();
+#endif
     }
 
     restarts->increment();

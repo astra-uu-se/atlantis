@@ -19,7 +19,6 @@ using namespace atlantis::invariantgraph::fzn;
 
 class array_var_int_element2dTest : public FznTestBase {
  public:
-  std::vector<VarNodeId> inputVarNodeIds{};
   std::string rowIdx{"row_idx"};
   std::string colIdx{"col_idx"};
   Int numRows{0};

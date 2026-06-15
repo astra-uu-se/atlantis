@@ -5,6 +5,8 @@
 namespace atlantis::invariantgraph {
 
 class ArrayBoolXorNode : public ViolationInvariantNode {
+  std::optional<bool> _containsFixedTrue{std::nullopt};
+
  public:
   ArrayBoolXorNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                    VarNodeId reified);
@@ -19,6 +21,8 @@ class ArrayBoolXorNode : public ViolationInvariantNode {
                    bool shouldHold = true);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void updateState() override;
 

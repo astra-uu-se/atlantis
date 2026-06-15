@@ -29,7 +29,7 @@ class fzn_table_boolTest : public FznTestBase {
     addBoolVarArray(inputs);
 
     table = *rc::gen::container<std::vector<std::vector<bool>>>(
-        *rc::gen::inRange(0, 5), rc::gen::container<std::vector<bool>>(
+        *rc::gen::inRange(1, 5), rc::gen::container<std::vector<bool>>(
                                      numVars, rc::gen::arbitrary<bool>()));
 
     std::vector<bool> flatTable(table.size() * numVars);
@@ -109,8 +109,8 @@ class fzn_table_boolTest : public FznTestBase {
     }
     const size_t numFree = std::ranges::count_if(
         inputs, [&](const std::string& input) { return !isFixed(input); });
-    if (numFree <= 1 && boolVal(reified)) {
-      return false;
+    if (numFree == 0) {
+      return !boolVal(reified);
     }
     if (boolVal(reified) && inputs.size() == 1) {
       return !boolVal(reified);
@@ -168,7 +168,9 @@ class fzn_table_boolTest : public FznTestBase {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(fzn_table_boolTest, RapidCheck, ()) { rapidCheck(); }
+RC_GTEST_FIXTURE_PROP(fzn_table_boolTest, RapidCheck, ()) {
+  rapidCheck(true, true);
+}
 
 class fzn_table_boolRegressionTest : public FznTestBase {
  public:

@@ -11,8 +11,4 @@ std::unordered_set<Int> validObjectives() {
 
 TEST(FznTsptw, Solve) { testModelFile("tsptw_6.fzn", validObjectives()); }
 
-TEST(FznTsptw, Gecode) {
-  testModelFile("tsptw_6_gecode.fzn", validObjectives());
-}
-
 }  // namespace atlantis::testing

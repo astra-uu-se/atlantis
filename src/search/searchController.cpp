@@ -7,7 +7,7 @@
 
 namespace atlantis::search {
 
-bool SearchController::shouldRun(const Assignment& assignment) {
+bool SearchController::shouldRun(const Assignment&) {
   if (_shouldStop != nullptr && *_shouldStop) {
     return false;
   }

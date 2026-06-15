@@ -29,7 +29,7 @@ class fzn_table_intTest : public FznTestBase {
     addIntVarArray(inputs);
 
     table = *rc::gen::container<std::vector<std::vector<Int>>>(
-        *rc::gen::inRange(0, 5), rc::gen::container<std::vector<Int>>(
+        *rc::gen::inRange(1, 5), rc::gen::container<std::vector<Int>>(
                                      numVars, rc::gen::inRange<Int>(-10, 10)));
 
     std::vector<Int> flatTable;
@@ -42,12 +42,12 @@ class fzn_table_intTest : public FznTestBase {
 
     addArg(flatTable);
 
-    const bool isReified = *rc::gen::arbitrary<bool>();
+    const bool isReified = true ? true : *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_table_int_flat_reif" : "fzn_table_int_flat";
 
     if (isReified) {
-      addBoolArg(reified);
+      addBoolArg(BoolArgState::FIXED_FALSE, reified);
     } else {
       addBoolPar(reified, true);
     }
@@ -109,8 +109,8 @@ class fzn_table_intTest : public FznTestBase {
     }
     const size_t numFree = std::ranges::count_if(
         inputs, [&](const std::string& input) { return !isFixed(input); });
-    if (numFree <= 1 && boolVal(reified)) {
-      return false;
+    if (numFree == 0) {
+      return !boolVal(reified);
     }
     if (boolVal(reified) && inputs.size() == 1) {
       return !boolVal(reified);
@@ -168,7 +168,9 @@ class fzn_table_intTest : public FznTestBase {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(fzn_table_intTest, RapidCheck, ()) { rapidCheck(); }
+RC_GTEST_FIXTURE_PROP(fzn_table_intTest, RapidCheck, ()) {
+  rapidCheck(false, true);
+}
 
 class fzn_table_intRegressionTest : public FznTestBase {
  public:

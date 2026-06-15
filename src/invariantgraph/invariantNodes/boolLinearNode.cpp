@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/boolLinear.hpp"
@@ -15,12 +16,12 @@ namespace atlantis::invariantgraph {
 
 BoolLinearNode::BoolLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                                std::vector<VarNodeId>&& vars, VarNodeId output,
-                               Int offset)
+                               const Int offset)
     : InvariantNode(graph, {output}, std::move(vars)),
       _coeffs(std::move(coeffs)),
-      _offset(offset) {}
+      _outputOffset(offset) {}
 
-void BoolLinearNode::init(InvariantNodeId id) {
+void BoolLinearNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
@@ -30,6 +31,14 @@ void BoolLinearNode::init(InvariantNodeId id) {
       [&](const VarNodeId vId) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
+}
+
+void BoolLinearNode::postConstraint() {
+  InvariantNode::postConstraint();
+  constraintSolver().bool_lin_eq(
+      _coeffs,
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      outputVarNodeConst(0).constraintVarId(), _outputOffset);
 }
 
 void BoolLinearNode::updateState() {
@@ -54,7 +63,7 @@ void BoolLinearNode::updateState() {
     const auto& inputNode =
         invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
     if (inputNode.isFixed() || _coeffs.at(i) == 0) {
-      _offset += inputNode.inDomain(bool{true}) ? _coeffs.at(i) : 0;
+      _outputOffset += inputNode.inDomain(bool{true}) ? _coeffs.at(i) : 0;
       indicesToRemove.emplace_back(i);
     }
   }
@@ -65,7 +74,7 @@ void BoolLinearNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
-    invariantGraph().varNode(outputVarNodeIds().front()).fixToValue(_offset);
+    outputVarNode(0).fixToValue(_outputOffset);
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -77,16 +86,16 @@ void BoolLinearNode::registerOutputVars(propagation::SolverBase& solver,
         outputVarNodeIds().front(),
         solver.makeIntView<propagation::IfThenElseConst>(
             solver, mapping.solverId(staticInputVarNodeIds().front()),
-            _offset + _coeffs.front(), _offset));
+            _outputOffset + _coeffs.front(), _outputOffset));
   } else if (!staticInputVarNodeIds().empty()) {
-    if (_offset != 0) {
+    if (_outputOffset != 0) {
       makeSolverVar(outputVarNodeIds().front(), solver, mapping);
     } else if (mapping.intermediateId(id(), 0) == propagation::NULL_ID) {
       mapping.setIntermediateId(id(), 0, solver.makeIntVar(0, 0, 0));
       mapping.setSolverId(
           outputVarNodeIds().front(),
           solver.makeIntView<propagation::IntOffsetView>(
-              solver, mapping.intermediateId(id(), 0), _offset));
+              solver, mapping.intermediateId(id(), 0), _outputOffset));
     }
   }
   assert(std::ranges::all_of(

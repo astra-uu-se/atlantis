@@ -8,7 +8,7 @@
 
 namespace atlantis::propagation {
 
-std::vector<std::unordered_map<Int, std::vector<size_t>>> generateValToRows(
+std::vector<std::unordered_map<Int, std::vector<size_t>>> generateTrueRows(
     const std::vector<std::vector<Int>>& table) {
   std::vector<std::unordered_map<Int, std::vector<size_t>>> valToRows(
       table.front().size(),
@@ -32,7 +32,7 @@ TableIn::TableIn(SolverBase& solver, VarId violationId,
                  const std::vector<std::vector<Int>>& table)
     : ViolationInvariant(solver, violationId),
       _varArray(std::move(vars)),
-      _valToRows(generateValToRows(table)),
+      _valToRows(generateTrueRows(table)),
       _rowViolations(table.size(), {NULL_TIMESTAMP, -1, -1}),
       _violationCounts(_varArray.size() + 1, {NULL_TIMESTAMP, -1, -1}) {}
 

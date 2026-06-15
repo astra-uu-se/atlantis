@@ -53,15 +53,15 @@ bool set_in(FznInvariantGraph& graph, const fznparser::Constraint& constraint) {
 
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 3 : 2);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntSetArg, false)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntSetArg, false);
   if (!isReified) {
     return set_in(graph,
                   std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                   std::get<fznparser::IntSetArg>(constraint.arguments().at(1))
                       .toParameter());
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true);
   return set_in_reif(
       graph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),
       std::get<fznparser::IntSetArg>(constraint.arguments().at(1))

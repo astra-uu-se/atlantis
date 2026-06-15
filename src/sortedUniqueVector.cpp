@@ -11,16 +11,23 @@ std::vector<Int> sortedUniqueVector(std::vector<Int>&& vec) {
   return vec;
 }
 
-SortedUniqueVector::SortedUniqueVector(std::vector<Int>&& v)
-    : vec(sortedUniqueVector(std::move(v))) {}
+SortedUniqueVector::SortedUniqueVector(std::vector<Int>&& vec)
+    : _vec(sortedUniqueVector(std::move(vec))) {}
 
 bool SortedUniqueVector::isInterval() const noexcept {
-  if (vec.empty()) {
+  if (_vec.empty()) {
     return true;
   }
-  return vec.back() - vec.front() == static_cast<int>(vec.size()) - 1;
+  return _vec.back() - _vec.front() == static_cast<Int>(_vec.size()) - 1;
 }
-
-const std::vector<Int>& SortedUniqueVector::operator*() const { return vec; }
+const std::vector<Int>& SortedUniqueVector::operator*() const noexcept {
+  return _vec;
+}
+std::vector<Int> const* SortedUniqueVector::operator->() const noexcept {
+  return &_vec;
+}
+Int SortedUniqueVector::operator[](const size_t index) const noexcept {
+  return _vec[index];
+}
 
 }  // namespace atlantis

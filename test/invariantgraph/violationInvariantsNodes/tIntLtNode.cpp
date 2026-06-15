@@ -1,37 +1,36 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLtNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intRelNode.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
- public:
-  VarNodeId aVarNodeId{NULL_NODE_ID};
-  std::string aIdentifier{"a"};
-  VarNodeId bVarNodeId{NULL_NODE_ID};
-  std::string bIdentifier{"b"};
-  std::string reifiedVar{"reified"};
+class IntLtNodeTestFixture : public NodeTestBase<IntRelNode> {
+ protected:
+  Var aVar{"a", std::vector<Int>{}, false};
+  Var bVar{"b", std::vector<Int>{}, false};
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
-      const Int aVal = varNode(aIdentifier).isFixed()
-                           ? varNode(aIdentifier).lowerBound()
-                           : _solver->currentValue(varId(aIdentifier));
-      const Int bVal = varNode(bIdentifier).isFixed()
-                           ? varNode(bIdentifier).lowerBound()
-                           : _solver->currentValue(varId(bIdentifier));
+      const Int aVal = varNodeConst(aVar).isFixed()
+                           ? varNodeConst(aVar).lowerBound()
+                           : _solver->currentValue(varId(aVar));
+      const Int bVal = varNodeConst(bVar).isFixed()
+                           ? varNodeConst(bVar).lowerBound()
+                           : _solver->currentValue(varId(bVar));
 
       return aVal >= bVal;
     }
-    return varNode(aIdentifier).lowerBound() >=
-           varNode(bIdentifier).lowerBound();
+    return varNodeConst(aVar).lowerBound() >= varNodeConst(bVar).lowerBound();
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    aVarNodeId = retrieveIntVarNode(-5, 5, aIdentifier);
-    bVarNodeId = retrieveIntVarNode(-5, 5, bIdentifier);
+    aVar.domain = std::pair<Int, Int>{-5, 5};
+    bVar.domain = std::pair<Int, Int>{-5, 5};
+    retrieveIntVarNode(aVar);
+    retrieveIntVarNode(bVar);
     if (shouldBeSubsumed()) {
       if (shouldHold() || _paramData.data > 0) {
         // varNode(aVarNodeId).removeValuesAbove(0);
@@ -42,11 +41,14 @@ class IntLtNodeTestFixture : public NodeTestBase<IntLtNode> {
       }
     }
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
-      createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
+      createInvariantNode(*_invariantGraph, varNodeId(aVar),
+                          RelationType::REL_TYPE_LT, varNodeId(bVar),
                           varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
+      createInvariantNode(*_invariantGraph, varNodeId(aVar),
+                          RelationType::REL_TYPE_LT, varNodeId(bVar),
                           shouldHold());
     }
   }
@@ -81,7 +83,8 @@ TEST_P(IntLtNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : std::array<std::string, 2>{aIdentifier, bIdentifier}) {
+  for (const auto& var :
+       std::array<VarNodeId, 2>{varNodeId(aVar), varNodeId(bVar)}) {
     if (!varNode(var).isFixed()) {
       EXPECT_NE(varId(var), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));
@@ -118,7 +121,7 @@ TEST_P(IntLtNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntLtNodeTest, IntLtNodeTestFixture,
     ::testing::Values(ParamData{},
                       ParamData{InvariantNodeAction::SUBSUME,

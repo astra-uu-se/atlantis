@@ -7,7 +7,7 @@ namespace atlantis::testing {
 using namespace atlantis::invariantgraph;
 
 class TableImplicitNodeTestFixture : public NodeTestBase<TableImplicitNode> {
- public:
+ protected:
   VarNodeId a{NULL_NODE_ID};
   VarNodeId b{NULL_NODE_ID};
   VarNodeId c{NULL_NODE_ID};

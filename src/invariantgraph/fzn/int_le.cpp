@@ -4,22 +4,23 @@
 #include "./fznHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intRelNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool int_le(FznInvariantGraph& graph, const fznparser::IntArg& a,
             const fznparser::IntArg& b) {
-  graph.addInvariantNode(std::make_shared<IntLeNode>(
-      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b)));
+  graph.addInvariantNode(std::make_shared<IntRelNode>(
+      graph, graph.retrieveVarNode(a), RelationType::REL_TYPE_LE,
+      graph.retrieveVarNode(b)));
   return true;
 }
 
 bool int_le(FznInvariantGraph& graph, const fznparser::IntArg& a,
             const fznparser::IntArg& b, const fznparser::BoolArg& reified) {
-  graph.addInvariantNode(std::make_shared<IntLeNode>(
-      graph, graph.retrieveVarNode(a), graph.retrieveVarNode(b),
-      graph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_shared<IntRelNode>(
+      graph, graph.retrieveVarNode(a), RelationType::REL_TYPE_LE,
+      graph.retrieveVarNode(b), graph.retrieveVarNode(reified)));
   return true;
 }
 
@@ -30,15 +31,15 @@ bool int_le(FznInvariantGraph& graph, const fznparser::Constraint& constraint) {
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 3 : 2);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
 
   if (!isReified) {
     return int_le(graph,
                   std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                   std::get<fznparser::IntArg>(constraint.arguments().at(1)));
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true);
   return int_le(graph,
                 std::get<fznparser::IntArg>(constraint.arguments().at(0)),
                 std::get<fznparser::IntArg>(constraint.arguments().at(1)),

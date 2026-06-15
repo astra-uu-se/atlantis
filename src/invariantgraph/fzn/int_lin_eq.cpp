@@ -6,7 +6,7 @@
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/invariantgraph/invariantNodes/intLinearNode.hpp"
 #include "atlantis/invariantgraph/violationInvariantNodes/intAllEqualNode.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLinEqNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intLinRelNode.hpp"
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph::fzn {
@@ -23,7 +23,7 @@ static void verifyInputs(
 
 bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                Int bound,
+                const Int bound,
                 const std::shared_ptr<const fznparser::IntVar>& definedVar) {
   verifyInputs(coeffs, inputs);
   Int definedVarCoeff = 0;
@@ -64,8 +64,8 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
     // swapping lhs and rhs, moving the defined variable to the rhs. Then
     // reducing both lhs and rhs by all other variables, making the defined
     // variable the only variable on the rhs.
-    for (size_t i = 0; i < coeffs.size(); ++i) {
-      coeffs.at(i) = -coeffs.at(i);
+    for (long& c : coeffs) {
+      c = -c;
     }
   }  // otherwise (with definedVarCoeff = -1), add the defined variable to both
      // sides.
@@ -84,20 +84,21 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                 const std::shared_ptr<fznparser::IntVarArray>& inputs,
                 Int bound) {
   verifyInputs(coeffs, inputs);
-  graph.addInvariantNode(std::make_shared<IntLinEqNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
+  graph.addInvariantNode(std::make_shared<IntLinRelNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs),
+      RelationType::REL_TYPE_EQ, bound));
 
   return true;
 }
 
-bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
-                const std::shared_ptr<fznparser::IntVarArray>& inputs,
-                Int bound, const fznparser::BoolArg& reified) {
+bool int_lin_eq_reif(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
+                     const std::shared_ptr<fznparser::IntVarArray>& inputs,
+                     Int bound, const fznparser::BoolArg& reified) {
   verifyInputs(coeffs, inputs);
 
-  graph.addInvariantNode(std::make_shared<IntLinEqNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound,
-      graph.retrieveVarNode(reified)));
+  graph.addInvariantNode(std::make_shared<IntLinRelNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs),
+      RelationType::REL_TYPE_EQ, bound, graph.retrieveVarNode(reified)));
 
   return true;
 }
@@ -110,11 +111,11 @@ bool int_lin_eq(FznInvariantGraph& graph,
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 4 : 3);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false)
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
   if (isReified) {
-    FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true)
+    FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::BoolArg, true);
   }
 
   std::vector<Int> coeffs =
@@ -140,7 +141,7 @@ bool int_lin_eq(FznInvariantGraph& graph,
         std::get<fznparser::IntArg>(constraint.arguments().at(2))
             .toParameter());
   }
-  return int_lin_eq(
+  return int_lin_eq_reif(
       graph, std::move(coeffs),
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(1)),
       std::get<fznparser::IntArg>(constraint.arguments().at(2)).toParameter(),

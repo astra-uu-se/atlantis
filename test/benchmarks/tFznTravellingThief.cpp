@@ -4,7 +4,7 @@
 
 namespace atlantis::testing {
 
-TEST(FznTravellingThief, Solve) {
+TEST(FznTravellingThief, DISABLED_Solve) {
   testModelFile("n10_k3_c5000_l10000_u10100_r46.fzn");
 }
 

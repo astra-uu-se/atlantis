@@ -14,14 +14,14 @@ using ::testing::ContainerEq;
 
 class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
  public:
-  Int numInputs = 4;
-  std::vector<std::string> inputVars;
+  Int numInputs{4};
+  std::vector<Var> inputVars;
 
-  bool isViolating(bool) {
+  [[nodiscard]] bool isViolating(bool) const {
     std::vector<Int> values(numInputs, -1);
     for (size_t i = 0; i < inputVars.size(); i++) {
-      values.at(i) = varNode(inputVars.at(i)).isFixed()
-                         ? varNode(inputVars.at(i)).lowerBound()
+      values.at(i) = varNodeConst(inputVars.at(i)).isFixed()
+                         ? varNodeConst(inputVars.at(i)).lowerBound()
                          : _solver->currentValue(varId(inputVars.at(i)));
     }
     std::vector<bool> visited(numInputs, false);
@@ -30,14 +30,12 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
       visited.at(curNode - 1) = true;
       curNode = values.at(curNode - 1);
     }
-    return std::ranges::any_of(visited.begin(), visited.end(),
-                               [](bool v) { return !v; });
+    return std::ranges::any_of(visited, [](const bool v) { return !v; });
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     for (Int i = 0; i < numInputs; ++i) {
-      inputVars.emplace_back("input_" + std::to_string(i));
       std::vector<Int> domain;
       domain.reserve(numInputs - 1);
       for (Int j = 0; j < numInputs; ++j) {
@@ -45,7 +43,9 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
           domain.emplace_back(j + 1);
         }
       }
-      retrieveIntVarNode(std::move(domain), inputVars.back());
+      inputVars.emplace_back("input_" + std::to_string(i), std::move(domain),
+                             true);
+      retrieveIntVarNode(inputVars.back());
     }
     if (shouldBeReplaced()) {
       for (const auto& var : inputVars) {
@@ -58,6 +58,8 @@ class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
 
 TEST_P(CircuitNodeTestFixture, makeImplicit) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeMadeImplicit()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);

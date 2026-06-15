@@ -1,34 +1,36 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/intLeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/intRelNode.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class IntLeNodeTestFixture : public NodeTestBase<IntLeNode> {
- public:
-  VarNodeId aVarNodeId{NULL_NODE_ID};
-  VarNodeId bVarNodeId{NULL_NODE_ID};
-  std::string reifiedVar{"reified"};
+class IntLeNodeTestFixture : public NodeTestBase<IntRelNode> {
+ protected:
+  Var aVar{"a", std::vector<Int>{}, false};
+  Var bVar{"b", std::vector<Int>{}, false};
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
-      const Int aVal = varNode(aVarNodeId).isFixed()
-                           ? varNode(aVarNodeId).lowerBound()
-                           : _solver->currentValue(varId(aVarNodeId));
-      const Int bVal = varNode(bVarNodeId).isFixed()
-                           ? varNode(bVarNodeId).lowerBound()
-                           : _solver->currentValue(varId(bVarNodeId));
+      const Int aVal = varNodeConst(aVar).isFixed()
+                           ? varNodeConst(aVar).lowerBound()
+                           : _solver->currentValue(varId(aVar));
+      const Int bVal = varNodeConst(bVar).isFixed()
+                           ? varNodeConst(bVar).lowerBound()
+                           : _solver->currentValue(varId(bVar));
 
       return aVal > bVal;
     }
-    return varNode(aVarNodeId).lowerBound() > varNode(bVarNodeId).lowerBound();
+    return varNodeConst(aVar).lowerBound() > varNodeConst(bVar).lowerBound();
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    aVarNodeId = retrieveIntVarNode(-5, 5, "a");
-    bVarNodeId = retrieveIntVarNode(-5, 5, "b");
+    aVar.domain = std::pair<Int, Int>{-5, 5};
+    bVar.domain = std::pair<Int, Int>{-5, 5};
+    retrieveIntVarNode(aVar);
+    retrieveIntVarNode(bVar);
     if (shouldBeSubsumed()) {
       if (shouldHold() || _paramData.data > 0) {
         // varNode(aVarNodeId).removeValuesAbove(0);
@@ -39,11 +41,14 @@ class IntLeNodeTestFixture : public NodeTestBase<IntLeNode> {
       }
     }
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
-      createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
+      createInvariantNode(*_invariantGraph, varNodeId(aVar),
+                          RelationType::REL_TYPE_LE, varNodeId(bVar),
                           varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
+      createInvariantNode(*_invariantGraph, varNodeId(aVar),
+                          RelationType::REL_TYPE_LE, varNodeId(bVar),
                           shouldHold());
     }
   }
@@ -51,6 +56,8 @@ class IntLeNodeTestFixture : public NodeTestBase<IntLeNode> {
 
 TEST_P(IntLeNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     // TODO: disabled for the MZN challenge. This should be computed by Gecode.
@@ -113,7 +120,8 @@ TEST_P(IntLeNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : std::array<VarNodeId, 2>{aVarNodeId, bVarNodeId}) {
+  for (const auto& var :
+       std::array<VarNodeId, 2>{varNodeId(aVar), varNodeId(bVar)}) {
     if (!varNode(var).isFixed()) {
       EXPECT_NE(varId(var), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));
@@ -149,7 +157,7 @@ TEST_P(IntLeNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     IntLeNodeTest, IntLeNodeTestFixture,
     ::testing::Values(ParamData{},
                       ParamData{InvariantNodeAction::SUBSUME,

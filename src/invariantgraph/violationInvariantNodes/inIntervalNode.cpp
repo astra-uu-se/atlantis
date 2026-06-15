@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/violationInvariantNodes/inIntervalNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
@@ -30,36 +31,23 @@ void InIntervalNode::init(InvariantNodeId id) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
 }
+
+void InIntervalNode::postConstraint() {
+  ViolationInvariantNode::postConstraint();
+  if (isReified()) {
+    return invariantGraph().constraintSolver().set_in_reif(
+        staticInputVarNodeConst(0).constraintVarId(), _lb, _ub,
+        reifiedVarNodeConst().constraintVarId());
+  }
+  invariantGraph().constraintSolver().set_in(
+      staticInputVarNodeConst(0).constraintVarId(), _lb, _ub, shouldHold());
+}
+
 void InIntervalNode::updateState() {
   ViolationInvariantNode::updateState();
-  if (_ub < _lb) {
-    if (isReified()) {
-      fixReified(false);
-    } else if (shouldHold()) {
-      throw InconsistencyException("InIntervalNode::updateState: empty set");
-    }
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  auto& vNode = invariantGraph().varNode(staticInputVarNodeIds().front());
   if (!isReified()) {
-    if (shouldHold()) {
-      vNode.domain()->removeAllValuesExcept(_lb, _ub);
-    } else {
-      vNode.domain()->remove(_lb, _ub);
-    }
+    staticInputVarNode(0).tightenDomainType();
     setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (vNode.constDomain()->isDisjoint(_lb, _ub)) {
-    fixReified(false);
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-  if (vNode.constDomain()->isContained(_lb, _ub)) {
-    fixReified(true);
-    setState(InvariantNodeState::SUBSUMED);
-    return;
   }
 }
 

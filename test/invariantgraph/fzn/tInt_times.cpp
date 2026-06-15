@@ -22,7 +22,7 @@ class int_timesTest : public FznTestBase {
   std::string b{"b"};
   std::string product{"product"};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const Int expectedVal = intVal(product);
     const Int actualVal = intVal(a) * intVal(b);
     const bool expected = actualVal == expectedVal;
@@ -79,8 +79,12 @@ class int_timesTest : public FznTestBase {
     } else if ((isFixed(a) || isFixed(b)) && isFixed(product)) {
       const auto& unfixed = isFixed(a) ? b : a;
       const Int factor = isFixed(a) ? intVal(a) : intVal(b);
+      const Int productVal = intVal(product);
+      if (productVal % factor != 0) {
+        return true;
+      }
       RC_ASSERT(!isFixed(unfixed));
-      const Int quotient = intVal(product) / factor;
+      const Int quotient = productVal / factor;
       if (quotient < lowerBound(unfixed) || upperBound(unfixed) < quotient) {
         return true;
       }

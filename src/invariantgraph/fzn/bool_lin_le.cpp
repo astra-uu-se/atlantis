@@ -4,15 +4,16 @@
 #include "./fznHelper.hpp"
 #include "atlantis/exceptions/exceptions.hpp"
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolLinLeNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolLinRelNode.hpp"
 
 namespace atlantis::invariantgraph::fzn {
 
 bool bool_lin_le(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
                  const std::shared_ptr<fznparser::BoolVarArray>& inputs,
                  Int bound) {
-  graph.addInvariantNode(std::make_shared<BoolLinLeNode>(
-      graph, std::move(coeffs), graph.retrieveVarNodes(inputs), bound));
+  graph.addInvariantNode(std::make_shared<BoolLinRelNode>(
+      graph, std::move(coeffs), graph.retrieveVarNodes(inputs),
+      RelationType::REL_TYPE_LE, bound));
   return true;
 }
 
@@ -22,9 +23,9 @@ bool bool_lin_le(FznInvariantGraph& graph,
     return false;
   }
   verifyNumArguments(constraint, 3);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false)
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, false);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::IntArg, false);
 
   std::vector<Int> coeffs =
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0))

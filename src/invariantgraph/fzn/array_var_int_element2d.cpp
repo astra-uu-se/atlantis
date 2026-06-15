@@ -12,7 +12,8 @@ bool array_var_int_element2d(
     FznInvariantGraph& graph, const fznparser::IntArg& idx1,
     const fznparser::IntArg& idx2,
     const std::shared_ptr<fznparser::IntVarArray>& inputs,
-    const fznparser::IntArg& output, Int numRows, Int offset1, Int offset2) {
+    const fznparser::IntArg& output, const Int numRows, const Int offset1,
+    const Int offset2) {
   if (numRows <= 0 || inputs->size() % numRows != 0) {
     throw FznArgumentException(
         "Constraint array_var_int_element2d the number of rows must be "
@@ -44,13 +45,13 @@ bool array_var_int_element2d(FznInvariantGraph& graph,
     return false;
   }
   verifyNumArguments(constraint, 7);
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true)
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 4, fznparser::IntArg, false)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 5, fznparser::IntArg, false)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 6, fznparser::IntArg, false)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 0, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::IntArg, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 2, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 3, fznparser::IntArg, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 4, fznparser::IntArg, false);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 5, fznparser::IntArg, false);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 6, fznparser::IntArg, false);
 
   return array_var_int_element2d(
       graph, std::get<fznparser::IntArg>(constraint.arguments().at(0)),

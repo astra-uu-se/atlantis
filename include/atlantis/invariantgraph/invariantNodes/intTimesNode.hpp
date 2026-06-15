@@ -5,13 +5,15 @@
 namespace atlantis::invariantgraph {
 
 class IntTimesNode : public InvariantNode {
-  Int _scalar{1};
+  std::optional<Int> _scalar;
 
  public:
   IntTimesNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
                VarNodeId output);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void updateState() override;
 

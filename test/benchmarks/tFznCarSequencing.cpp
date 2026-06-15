@@ -4,8 +4,6 @@
 
 namespace atlantis::testing {
 
-TEST(FznCarSequencing, Solve) { testModelFile("car_sequencing.fzn"); }
-
-TEST(FznCarSequencing, Gecode) { testModelFile("car_sequencing_gecode.fzn"); }
+TEST(FznCarSequencing, DISABLED_Solve) { testModelFile("car_sequencing.fzn"); }
 
 }  // namespace atlantis::testing

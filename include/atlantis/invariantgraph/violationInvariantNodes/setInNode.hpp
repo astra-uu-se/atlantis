@@ -17,6 +17,8 @@ class SetInNode : public ViolationInvariantNode {
 
   void init(InvariantNodeId) override;
 
+  void postConstraint() override;
+
   void updateState() override;
 
   void registerOutputVars(propagation::SolverBase&,
@@ -24,7 +26,9 @@ class SetInNode : public ViolationInvariantNode {
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] const std::vector<Int>& values() const { return *_values; }
+  [[nodiscard]] const std::vector<Int>& values() const {
+    return *_values.operator->();
+  }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

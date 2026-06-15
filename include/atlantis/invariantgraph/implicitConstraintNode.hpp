@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "atlantis/invariantgraph/invariantNode.hpp"
 
 namespace atlantis::search::neighborhoods {

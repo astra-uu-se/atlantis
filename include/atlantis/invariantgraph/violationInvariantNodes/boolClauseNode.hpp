@@ -4,17 +4,22 @@
 
 namespace atlantis::invariantgraph {
 class BoolClauseNode : public ViolationInvariantNode {
-  size_t _numAs;
+  size_t _numPosVars;
   propagation::VarViewId _sumVarId{propagation::NULL_ID};
 
  public:
-  explicit BoolClauseNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
-                          std::vector<VarNodeId>&& bs, VarNodeId r);
+  explicit BoolClauseNode(InvariantGraph& graph,
+                          std::vector<VarNodeId>&& posVars,
+                          std::vector<VarNodeId>&& negVars, VarNodeId r);
 
-  explicit BoolClauseNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
-                          std::vector<VarNodeId>&& bs, bool shouldHold = true);
+  explicit BoolClauseNode(InvariantGraph& graph,
+                          std::vector<VarNodeId>&& posVars,
+                          std::vector<VarNodeId>&& negVars,
+                          bool shouldHold = true);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void updateState() override;
 

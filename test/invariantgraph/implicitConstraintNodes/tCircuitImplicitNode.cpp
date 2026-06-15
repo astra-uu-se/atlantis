@@ -8,13 +8,13 @@ using namespace atlantis::invariantgraph;
 
 class CircuitImplicitNodeTestFixture
     : public NodeTestBase<CircuitImplicitNode> {
- public:
+ protected:
   VarNodeId a{NULL_NODE_ID};
   VarNodeId b{NULL_NODE_ID};
   VarNodeId c{NULL_NODE_ID};
   VarNodeId d{NULL_NODE_ID};
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     a = retrieveIntVarNode(1, 4, "a");
     b = retrieveIntVarNode(1, 4, "b");

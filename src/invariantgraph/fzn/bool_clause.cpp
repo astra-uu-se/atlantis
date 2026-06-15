@@ -34,15 +34,15 @@ bool bool_clause(FznInvariantGraph& graph,
     return false;
   }
   const bool isReified = constraintIdentifierIsReified(constraint);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true)
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::BoolVarArray, true);
   if (!isReified) {
     return bool_clause(
         graph,
         getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0)),
         getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)));
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true);
   return bool_clause_reif(
       graph, getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0)),
       getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(1)),

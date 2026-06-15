@@ -8,13 +8,13 @@ using namespace atlantis::invariantgraph;
 
 class AllDifferentImplicitNodeTestFixture
     : public NodeTestBase<AllDifferentImplicitNode> {
- public:
+ protected:
   VarNodeId a{NULL_NODE_ID};
   VarNodeId b{NULL_NODE_ID};
   VarNodeId c{NULL_NODE_ID};
   VarNodeId d{NULL_NODE_ID};
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     a = retrieveIntVarNode(2, 7, "a");
     b = retrieveIntVarNode(2, 7, "b");

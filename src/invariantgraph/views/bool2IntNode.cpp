@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
@@ -10,48 +11,28 @@
 
 namespace atlantis::invariantgraph {
 
-Bool2IntNode::Bool2IntNode(InvariantGraph& graph, VarNodeId staticInput,
-                           VarNodeId output)
+Bool2IntNode::Bool2IntNode(InvariantGraph& graph, const VarNodeId staticInput,
+                           const VarNodeId output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 
-void Bool2IntNode::init(InvariantNodeId id) {
+void Bool2IntNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(invariantGraphConst()
-             .varNodeConst(outputVarNodeIds().front())
-             .isIntVar());
   assert(!invariantGraph()
               .varNodeConst(staticInputVarNodeIds().front())
               .isIntVar());
+  assert(invariantGraphConst()
+             .varNodeConst(outputVarNodeIds().front())
+             .isIntVar());
+}
+void Bool2IntNode::postConstraint() {
+  InvariantNode::postConstraint();
+  constraintSolver().bool2int(staticInputVarNodeConst(0).constraintVarId(),
+                              outputVarNodeConst(0).constraintVarId());
 }
 
 void Bool2IntNode::updateState() {
-  invariantGraph().varNode(input()).domain()->removeBelow(Int{0});
-  invariantGraph().varNode(input()).domain()->removeAbove(Int{1});
-
-  invariantGraph()
-      .varNode(outputVarNodeIds().front())
-      .domain()
-      ->removeBelow(Int{0});
-  invariantGraph()
-      .varNode(outputVarNodeIds().front())
-      .domain()
-      ->removeAbove(Int{1});
-
-  if (invariantGraphConst().varNodeConst(input()).isFixed()) {
-    invariantGraph()
-        .varNode(outputVarNodeIds().front())
-        .fixToValue(
-            invariantGraphConst().varNodeConst(input()).inDomain(bool{true})
-                ? Int{1}
-                : Int{0});
-    setState(InvariantNodeState::SUBSUMED);
-  } else if (invariantGraph()
-                 .varNodeConst(outputVarNodeIds().front())
-                 .isFixed()) {
-    invariantGraph().varNode(input()).fixToValue(
-        invariantGraph()
-            .varNodeConst(outputVarNodeIds().front())
-            .inDomain(Int{1}));
+  assert(outputVarNodeConst(0).isFixed() == varNodeConst(input()).isFixed());
+  if (varNodeConst(input()).isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }

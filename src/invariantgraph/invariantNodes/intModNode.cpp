@@ -1,6 +1,7 @@
 #include "atlantis/invariantgraph/invariantNodes/intModNode.hpp"
 
 #include "../parseHelper.hpp"
+#include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
@@ -10,70 +11,54 @@
 
 namespace atlantis::invariantgraph {
 
-IntModNode::IntModNode(InvariantGraph& graph, VarNodeId numerator,
-                       VarNodeId denominator, VarNodeId remainder)
+IntModNode::IntModNode(InvariantGraph& graph, const VarNodeId numerator,
+                       const VarNodeId denominator, const VarNodeId remainder)
     : InvariantNode(graph, {remainder}, {numerator, denominator}) {}
 
-void IntModNode::init(InvariantNodeId id) {
+void IntModNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
-  assert(invariantGraphConst().varNodeConst(remainder()).isIntVar());
-  assert(invariantGraphConst().varNodeConst(numerator()).isIntVar());
-  assert(invariantGraphConst().varNodeConst(denominator()).isIntVar());
+  assert(varNodeConst(remainder()).isIntVar());
+  assert(varNodeConst(numerator()).isIntVar());
+  assert(varNodeConst(denominator()).isIntVar());
+}
+void IntModNode::postConstraint() {
+  InvariantNode::postConstraint();
+  constraintSolver().int_mod(varNodeConst(numerator()).constraintVarId(),
+                             varNodeConst(denominator()).constraintVarId(),
+                             varNodeConst(remainder()).constraintVarId());
 }
 
 void IntModNode::updateState() {
-  auto& dNode = invariantGraph().varNode(denominator());
-  dNode.removeValue(Int{0});
-
-  auto& nNode = invariantGraph().varNode(numerator());
-  auto& rNode = invariantGraph().varNode(remainder());
-
-  if (nNode.isFixed() && nNode.lowerBound() == 0) {
-    rNode.fixToValue(Int{0});
+  if (varNodeConst(remainder()).isFixed()) {
+    auto& nNode = varNode(numerator());
+    auto& dNode = varNode(denominator());
+    const bool overZero = nNode.lowerBound() < 0 && 0 < nNode.upperBound() &&
+                          dNode.lowerBound() < 0 && 0 < dNode.upperBound();
+    if (!nNode.isFixed()) {
+      nNode.tightenDomainType(overZero ? DomainType::DOM_DOMAIN
+                                       : DomainType::DOM_RANGE);
+    }
+    if (!dNode.isFixed()) {
+      dNode.tightenDomainType(overZero ? DomainType::DOM_DOMAIN
+                                       : DomainType::DOM_RANGE);
+    }
     setState(InvariantNodeState::SUBSUMED);
-    return;
   }
-
-  if (nNode.isFixed() && nNode.isFixed() == 0) {
-    rNode.fixToValue(nNode.lowerBound() % std::abs(nNode.upperBound()));
-    setState(InvariantNodeState::SUBSUMED);
-    return;
-  }
-
-  if (nNode.lowerBound() >= 0) {
-    rNode.removeValuesBelow(0);
-    rNode.removeValuesAbove(nNode.upperBound());
-  }
-  if (nNode.upperBound() <= 0) {
-    rNode.removeValuesAbove(0);
-    rNode.removeValuesBelow(nNode.lowerBound());
-  }
-  if (rNode.lowerBound() > 0) {
-    nNode.removeValuesBelow(rNode.lowerBound());
-  }
-  if (rNode.upperBound() < 0) {
-    nNode.removeValuesAbove(rNode.upperBound());
-  }
-
-  const Int lb = std::min(dNode.lowerBound(), -dNode.upperBound()) + 1;
-  const Int ub = std::max(dNode.upperBound(), -dNode.lowerBound()) - 1;
-  rNode.removeValuesBelow(lb);
-  rNode.removeValuesAbove(ub);
 }
 
 bool IntModNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         invariantGraphConst().varNodeConst(denominator()).isFixed();
+         varNodeConst(denominator()).isFixed();
 }
 
 bool IntModNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  assert(invariantGraphConst().varNodeConst(denominator()).isFixed());
+  assert(varNodeConst(denominator()).isFixed());
   invariantGraph().addInvariantNode(std::make_shared<IntModViewNode>(
       invariantGraph(), numerator(), remainder(),
-      invariantGraphConst().varNodeConst(denominator()).lowerBound()));
+      varNodeConst(denominator()).lowerBound()));
   return true;
 }
 

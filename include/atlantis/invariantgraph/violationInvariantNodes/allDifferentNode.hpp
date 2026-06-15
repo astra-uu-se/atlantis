@@ -4,6 +4,8 @@
 
 namespace atlantis::invariantgraph {
 class AllDifferentNode : public ViolationInvariantNode {
+  std::vector<Int> _seenValues;
+
  public:
   explicit AllDifferentNode(InvariantGraph& graph,
 
@@ -23,6 +25,8 @@ class AllDifferentNode : public ViolationInvariantNode {
                             bool shouldHold = true);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void updateState() override;
 

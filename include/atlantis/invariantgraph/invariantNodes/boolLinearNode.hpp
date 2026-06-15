@@ -5,7 +5,7 @@
 namespace atlantis::invariantgraph {
 class BoolLinearNode : public InvariantNode {
   std::vector<Int> _coeffs;
-  Int _offset{0};
+  Int _outputOffset{0};
 
  public:
   BoolLinearNode(InvariantGraph& graph,
@@ -14,6 +14,8 @@ class BoolLinearNode : public InvariantNode {
                  VarNodeId output, Int offset = 0);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void updateState() override;
 

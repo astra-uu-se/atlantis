@@ -112,6 +112,6 @@ class int_modTest : public FznTestBase {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(int_modTest, RapidCheck, ()) { rapidCheck(); }
+RC_GTEST_FIXTURE_PROP(int_modTest, RapidCheck, ()) { rapidCheck(true, true); }
 
 }  // namespace atlantis::testing

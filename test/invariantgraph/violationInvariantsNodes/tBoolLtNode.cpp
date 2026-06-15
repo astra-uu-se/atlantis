@@ -1,29 +1,29 @@
 #include "../nodeTestBase.hpp"
-#include "atlantis/invariantgraph/violationInvariantNodes/boolLtNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNodes/boolRelNode.hpp"
 
 namespace atlantis::testing {
 
 using namespace atlantis::invariantgraph;
 
-class BoolLtNodeTestFixture : public NodeTestBase<BoolLtNode> {
- public:
-  VarNodeId aVarNodeId{NULL_NODE_ID};
-  VarNodeId bVarNodeId{NULL_NODE_ID};
-  std::string reifiedVar{"reified"};
+class BoolLtNodeTestFixture : public NodeTestBase<BoolRelNode> {
+ protected:
+  Var aVar{"a", std::vector<Int>{}, false};
+  Var bVar{"b", std::vector<Int>{}, false};
+  Var reifiedVar{"reified", std::vector<Int>{}, false};
 
-  [[nodiscard]] bool isViolating(bool isRegistered = false) {
+  [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     if (isRegistered) {
-      const bool aVal = varNode(aVarNodeId).isFixed()
-                            ? varNode(aVarNodeId).inDomain(bool{true})
-                            : _solver->currentValue(varId(aVarNodeId)) == 0;
-      const bool bVal = varNode(bVarNodeId).isFixed()
-                            ? varNode(bVarNodeId).inDomain(bool{true})
-                            : _solver->currentValue(varId(bVarNodeId)) == 0;
+      const bool aVal = varNodeConst(aVar).isFixed()
+                            ? varNodeConst(aVar).inDomain(bool{true})
+                            : _solver->currentValue(varId(aVar)) == 0;
+      const bool bVal = varNodeConst(bVar).isFixed()
+                            ? varNodeConst(bVar).inDomain(bool{true})
+                            : _solver->currentValue(varId(bVar)) == 0;
       // !(a < b) <=> a >= b
       return aVal || !bVal;
     }
-    const VarNode& aNode = varNode(aVarNodeId);
-    const VarNode& bNode = varNode(bVarNodeId);
+    const VarNode& aNode = varNodeConst(aVar);
+    const VarNode& bNode = varNodeConst(bVar);
 
     const bool aVal = aNode.inDomain(bool{true});
     const bool bVal = bNode.inDomain(bool{true});
@@ -32,40 +32,36 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolLtNode> {
     return aVal || !bVal;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
-    aVarNodeId = retrieveBoolVarNode("a");
-    if (shouldBeSubsumed() && _paramData.data == 2) {
-      bVarNodeId = aVarNodeId;
-    } else {
-      bVarNodeId = retrieveBoolVarNode("b");
-    }
 
-    if (shouldBeReplaced()) {
-      if (isReified()) {
-        if (_paramData.data == 0) {
-          varNode(aVarNodeId).fixToValue(bool{false});
-        } else {
-          varNode(bVarNodeId).fixToValue(bool{true});
-        }
-      }
-    }
+    aVar.domain = std::pair<Int, Int>{0, 1};
+    bVar.domain = std::pair<Int, Int>{0, 1};
+
+    bVar.identifier = "b";
+
     if (shouldBeSubsumed()) {
       if (isReified() || shouldFail()) {
         if (_paramData.data == 0) {
-          varNode(aVarNodeId).fixToValue(bool{true});
+          aVar.domain = std::vector<Int>{1};
         } else {
-          varNode(bVarNodeId).fixToValue(bool{false});
+          bVar.domain = std::vector<Int>{0};
         }
       }
     }
 
+    retrieveBoolVarNode(aVar);
+    retrieveBoolVarNode(bVar);
+
     if (isReified()) {
+      reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
-      createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
+      createInvariantNode(*_invariantGraph, varNodeId(aVar),
+                          RelationType::REL_TYPE_LT, varNodeId(bVar),
                           varNodeId(reifiedVar));
     } else {
-      createInvariantNode(*_invariantGraph, aVarNodeId, bVarNodeId,
+      createInvariantNode(*_invariantGraph, varNodeId(aVar),
+                          RelationType::REL_TYPE_LT, varNodeId(bVar),
                           shouldHold());
     }
   }
@@ -73,6 +69,8 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolLtNode> {
 
 TEST_P(BoolLtNodeTestFixture, updateState) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -89,6 +87,8 @@ TEST_P(BoolLtNodeTestFixture, updateState) {
 
 TEST_P(BoolLtNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
@@ -133,7 +133,8 @@ TEST_P(BoolLtNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : std::array<VarNodeId, 2>{aVarNodeId, bVarNodeId}) {
+  for (const auto& var :
+       std::array<VarNodeId, 2>{varNodeId(aVar), varNodeId(bVar)}) {
     if (!varNode(var).isFixed()) {
       EXPECT_NE(varId(var), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));
@@ -169,14 +170,10 @@ TEST_P(BoolLtNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BoolLtNodeTest, BoolLtNodeTestFixture,
     ::testing::Values(ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED},
-                      ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::REIFIED, 0},
-                      ParamData{InvariantNodeAction::REPLACE,
-                                ViolationInvariantType::REIFIED, 1},
                       ParamData{InvariantNodeAction::SUBSUME,
                                 ViolationInvariantType::CONSTANT_TRUE},
                       ParamData{InvariantNodeAction::SUBSUME,

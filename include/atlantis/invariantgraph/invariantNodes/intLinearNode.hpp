@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 
 class IntLinearNode : public InvariantNode {
   std::vector<Int> _coeffs;
-  Int _offset;
+  Int _rhsOffset;
 
  public:
   IntLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
@@ -14,6 +14,7 @@ class IntLinearNode : public InvariantNode {
                 Int offset = 0);
 
   void init(InvariantNodeId) override;
+  void postConstraint() override;
 
   void updateState() override;
 

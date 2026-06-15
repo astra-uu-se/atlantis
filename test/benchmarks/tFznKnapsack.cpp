@@ -43,4 +43,8 @@ TEST(FznKnapsack, SolveBool) {
   testModelFile("knapsack/f1_l-d_kp_10_269_bool.fzn", solutions());
 }
 
+TEST(FznKnapsack, DISABLED_SolveBool) {
+  testModelFile("knapsack/f1_l-d_kp_10_269_bool.fzn", solutions());
+}
+
 }  // namespace atlantis::testing

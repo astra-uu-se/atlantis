@@ -23,8 +23,8 @@ bool array_bool_and(FznInvariantGraph& graph,
   if (constraint.identifier() != "array_bool_and") {
     return false;
   }
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true)
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::BoolVarArray, true);
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 1, fznparser::BoolArg, true);
 
   return array_bool_and(
       graph, getArgArray<fznparser::BoolVarArray>(constraint.arguments().at(0)),

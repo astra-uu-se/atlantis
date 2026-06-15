@@ -3,10 +3,12 @@
 #include <rapidcheck/gen/Numeric.h>
 #include <rapidcheck/gtest.h>
 
+#include <ranges>
 #include <string>
 #include <vector>
 
 #include "./fznTestBase.hpp"
+#include "./tFzn_count.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_count_eq.hpp"
 #include "atlantis/utils/domains.hpp"
 
@@ -18,40 +20,9 @@ using ::testing::AtMost;
 using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 
-class fzn_count_eqTest : public FznTestBase {
+class fzn_count_eqTest : public fzn_countTest {
  public:
-  std::vector<std::string> inputs{};
-  std::string needle{"needle"};
-  std::string output{"output"};
-  std::string reified{"reified"};
-
-  [[nodiscard]] std::pair<Int, Int> getBounds() const {
-    Int lb = 0;
-    Int ub = 0;
-    for (const auto& input : inputs) {
-      if (isFixed(input)) {
-        const Int inputVal = intVal(input);
-        if (isFixed(needle)) {
-          if (inputVal == intVal(needle)) {
-            ++lb;
-            ++ub;
-          }
-        } else if (inDomain(needle, inputVal)) {
-          ++ub;
-        }
-      } else if (isFixed(needle)) {
-        if (inDomain(input, intVal(needle))) {
-          ++ub;
-        }
-      } else if (!varNodeConst(input).constDomain()->isDisjoint(
-                     *varNodeConst(needle).constDomain())) {
-        ++ub;
-      }
-    }
-    return {lb, ub};
-  }
-
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     RC_LOG() << "-----" << std::endl
              << "FznCountEqTest::isSatisfied(" << to_string(committedValue)
              << ")" << std::endl;
@@ -68,7 +39,7 @@ class fzn_count_eqTest : public FznTestBase {
       }
     }
 
-    const Int o = intVal(output, committedValue);
+    const Int o = intVal(bound, committedValue);
     const bool expected = count == o;
     const bool actual = boolVal(reified, committedValue);
 
@@ -92,11 +63,11 @@ class fzn_count_eqTest : public FznTestBase {
     const auto [lb, ub] = getBounds();
     if (lb == ub) {
       if (isFixedTo(reified, true)) {
-        return isFixedTo(output, lb);
+        return isFixedTo(bound, lb);
       }
-      return !inDomain(output, lb);
+      return !inDomain(bound, lb);
     }
-    const bool alwaysUnsat = ub < lowerBound(output) || upperBound(output) < lb;
+    const bool alwaysUnsat = ub < lowerBound(bound) || upperBound(bound) < lb;
     if (alwaysUnsat) {
       return isFixedTo(reified, bool{false});
     }
@@ -109,12 +80,19 @@ class fzn_count_eqTest : public FznTestBase {
     }
     const auto [lb, ub] = getBounds();
     if (lb == ub) {
-      if (isFixedTo(reified, false)) {
-        return isFixedTo(output, lb);
+      if (isFixed(needle)) {
+        if (isFixedTo(reified, false)) {
+          return isFixedTo(bound, lb);
+        }
+        return !inDomain(bound, lb);
       }
-      return !inDomain(output, lb);
+      if (isFixedTo(reified, false)) {
+        return isFixedTo(bound, lb);
+      }
+      return static_cast<Int>(inputs.size()) < lowerBound(bound) ||
+             upperBound(bound) < 0;
     }
-    const bool alwaysUnsat = ub < lowerBound(output) || upperBound(output) < lb;
+    const bool alwaysUnsat = ub < lowerBound(bound) || upperBound(bound) < lb;
     if (alwaysUnsat) {
       return isFixedTo(reified, bool{true});
     }
@@ -129,7 +107,7 @@ class fzn_count_eqTest : public FznTestBase {
     }
     addIntVarArray(inputs);
     addIntArg(needle);
-    addIntArg(output);
+    addIntArg(bound);
 
     const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_eq_reif" : "fzn_count_eq";
@@ -182,7 +160,7 @@ class fzn_count_eqTest : public FznTestBase {
 
   void query() override {
     for (const auto& vId :
-         std::array{varId(reified), varId(output), totalViolationVarId()}) {
+         std::array{varId(reified), varId(bound), totalViolationVarId()}) {
       if (vId != propagation::NULL_ID) {
         _solver->query(vId);
       }

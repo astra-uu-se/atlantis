@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <iostream>
 #include <random>
 #include <vector>
 
@@ -24,6 +23,8 @@ class MagicSquareTest : public ::testing::Test {
   propagation::VarViewId totalViolation = propagation::NULL_ID;
 
   Int magicSum = 0;
+
+ protected:
   void SetUp() override {
     _solver = std::make_unique<propagation::Solver>();
     n = 3;

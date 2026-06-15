@@ -1,13 +1,17 @@
 UNAME_S := $(shell uname -s)
 find-first = $(firstword $(foreach candidate,$1,$(shell which $(candidate) 2>/dev/null)))
 
+NUM_PROCS:=1
 ifeq ($(UNAME_S),Darwin)
 GCC=$(call find-first,clang)
 GPP=$(call find-first,clang++)
+NUM_PROCS:=$(shell system_profiler | awk '/Number Of CPUs/{print $4}{next;}')
 else
 GCC=$(call find-first,gcc-14 gcc-13 gcc)
 GPP=$(call find-first,g++-14 g++-13 g++)
+NUM_PROCS:=$(shell grep -c ^processor /proc/cpuinfo)
 endif
+GECODE_VERSION="6.3.0"
 
 CMAKE_C_COMPILER=$(if ${GCC}, -DCMAKE_C_COMPILER=${GCC},)
 CMAKE_CXX_COMPILER=$(if ${GPP}, -DCMAKE_CXX_COMPILER=${GPP},)
@@ -16,6 +20,7 @@ MKFILE_PATH=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BUILD_DIR?=${MKFILE_PATH}build
 
 CMAKE=$(shell which cmake)
+GIT=$(shell which git)
 
 BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
 NUM_BENCHMARK_REPETITIONS=3
@@ -23,6 +28,8 @@ BENCHMARK_FILTER="^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|NQueens
 BENCHMARK_FILTER_SYNTH="^(ElementVarTree|LinearTree|TSP|TSPTWAllDiff)\/[A-Za-z]"
 BENCHMARK_FILTER_PAR='^Par(TSP[^T]|TSPTW|NQueens|Knapsack)'
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
+
+CPM_SOURCE_CACHE=${MKFILE_PATH}.cpm-cache
 
 DZN_DIR=${MKFILE_PATH}dzn
 MZN_MODEL_DIR=${MKFILE_PATH}mzn-models
@@ -77,14 +84,38 @@ endef
 clean:
 	rm -rf ${BUILD_DIR}
 
+.PHONY: gecode
+gecode:
+	mkdir -p ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION}
+	$(GIT) clone --depth 1 \
+           --branch release/${GECODE_VERSION} \
+           https://github.com/Gecode/gecode.git ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION} \
+           || true
+	mkdir -p ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION}/build
+	$(CMAKE) ${CMAKE_OPTIONS} \
+             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+             -DCMAKE_BUILD_TYPE=Release \
+             -B ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION}/build \
+             -S ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION}
+	$(CMAKE) --build ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION}/build \
+             --config Release \
+             -j ${NUM_PROCS}
+	rm -rf ${CPM_SOURCE_CACHE}/gecode || true
+	mkdir -p ${CPM_SOURCE_CACHE}/gecode
+	$(CMAKE) --install ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION}/build \
+             --config Release \
+             --prefix ${CPM_SOURCE_CACHE}/gecode
+	rm -rf ${CPM_SOURCE_CACHE}/gecode-${GECODE_VERSION}
+
 .PHONY: build
 build:
 	mkdir -p ${BUILD_DIR}
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
 											   -DMORE_STATS=OFF \
 	                                           -DBUILD_TESTS:BOOL=OFF \
-	                                           -DBUILD_BENCHMARKS:BOOL=OFF ..
-	cd ${BUILD_DIR}; $(MAKE) -j 8
+	                                           -DBUILD_BENCHMARKS:BOOL=OFF \
+											   -DCPM_SOURCE_CACHE=${CPM_SOURCE_CACHE} ..
+	cd ${BUILD_DIR}; $(MAKE) -j ${NUM_PROCS}
 
 .PHONY: build-tests
 build-tests:
@@ -92,8 +123,9 @@ build-tests:
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
 											   -DMORE_STATS=OFF \
 	                                           -DBUILD_TESTS:BOOL=ON \
-	                                           -DBUILD_BENCHMARKS:BOOL=OFF ..
-	cd ${BUILD_DIR}; $(MAKE) -j 8
+	                                           -DBUILD_BENCHMARKS:BOOL=OFF \
+											   -DCPM_SOURCE_CACHE=${CPM_SOURCE_CACHE} ..
+	cd ${BUILD_DIR}; $(MAKE) -j ${NUM_PROCS}
 
 .PHONY: build-tests-asan
 build-tests-asan: BUILD_DIR=${MKFILE_PATH}build-asan
@@ -102,8 +134,9 @@ build-tests-asan:
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
 	                                           -DBUILD_TESTS:BOOL=ON \
 	                                           -DBUILD_BENCHMARKS:BOOL=OFF \
-	                                           -DATLANTIS_SANITIZERS=address ..
-	cd ${BUILD_DIR}; $(MAKE) -j 8
+	                                           -DATLANTIS_SANITIZERS=address \
+											   -DCPM_SOURCE_CACHE=${CPM_SOURCE_CACHE} ..
+	cd ${BUILD_DIR}; $(MAKE) -j ${NUM_PROCS}
 
 .PHONY: build-tests-ubsan
 build-tests-ubsan: BUILD_DIR=${MKFILE_PATH}build-ubsan
@@ -112,8 +145,9 @@ build-tests-ubsan:
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
 	                                           -DBUILD_TESTS:BOOL=ON \
 	                                           -DBUILD_BENCHMARKS:BOOL=OFF \
-	                                           -DATLANTIS_SANITIZERS=undefined ..
-	cd ${BUILD_DIR}; $(MAKE) -j 8
+	                                           -DATLANTIS_SANITIZERS=undefined \
+											   -DCPM_SOURCE_CACHE=${CPM_SOURCE_CACHE} ..
+	cd ${BUILD_DIR}; $(MAKE) -j ${NUM_PROCS}
 
 .PHONY: build-tests-tsan
 build-tests-tsan: BUILD_DIR=${MKFILE_PATH}build-tsan
@@ -122,8 +156,9 @@ build-tests-tsan:
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
 	                                           -DBUILD_TESTS:BOOL=ON \
 	                                           -DBUILD_BENCHMARKS:BOOL=OFF \
-	                                           -DATLANTIS_SANITIZERS=thread ..
-	cd ${BUILD_DIR}; $(MAKE) -j 8
+	                                           -DATLANTIS_SANITIZERS=thread \
+											   -DCPM_SOURCE_CACHE=${CPM_SOURCE_CACHE} ..
+	cd ${BUILD_DIR}; $(MAKE) -j ${NUM_PROCS}
 
 .PHONY: build-benchmarks
 build-benchmarks:
@@ -131,8 +166,9 @@ build-benchmarks:
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Release \
 											   -DMORE_STATS=ON \
 	                                           -DBUILD_TESTS:BOOL=OFF \
-	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
-	cd ${BUILD_DIR}; $(MAKE) -j 8
+	                                           -DBUILD_BENCHMARKS:BOOL=ON \
+											   -DCPM_SOURCE_CACHE=${CPM_SOURCE_CACHE} ..; \
+	cd ${BUILD_DIR}; $(MAKE) -j ${NUM_PROCS}
 
 .PHONY: build-benchmarks-debug
 build-benchmarks-debug:
@@ -140,8 +176,9 @@ build-benchmarks-debug:
 	cd ${BUILD_DIR}; $(CMAKE) ${CMAKE_OPTIONS} -DCMAKE_BUILD_TYPE=Debug \
 											   -DMORE_STATS=OFF \
 	                                           -DBUILD_TESTS:BOOL=OFF \
-	                                           -DBUILD_BENCHMARKS:BOOL=ON ..; \
-	cd ${BUILD_DIR}; $(MAKE) -j 8
+	                                           -DBUILD_BENCHMARKS:BOOL=ON \
+											   -DCPM_SOURCE_CACHE=${CPM_SOURCE_CACHE} ..; \
+	cd ${BUILD_DIR}; $(MAKE) -j ${NUM_PROCS}
 
 .PHONY: run
 run: build

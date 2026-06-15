@@ -39,8 +39,8 @@ bool fzn_table_int(FznInvariantGraph& graph,
 
   const bool isReified = constraintIdentifierIsReified(constraint);
   verifyNumArguments(constraint, isReified ? 3 : 2);
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true)
-  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false)
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 0, fznparser::IntVarArray, true);
+  FZN_CONSTRAINT_ARRAY_TYPE_CHECK(constraint, 1, fznparser::IntVarArray, false);
 
   const auto& vars =
       getArgArray<fznparser::IntVarArray>(constraint.arguments().at(0));
@@ -76,7 +76,7 @@ bool fzn_table_int(FznInvariantGraph& graph,
   if (!isReified) {
     return fzn_table_int(graph, vars, std::move(table));
   }
-  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true)
+  FZN_CONSTRAINT_TYPE_CHECK(constraint, 2, fznparser::BoolArg, true);
   return fzn_table_int(
       graph, vars, std::move(table),
       std::get<fznparser::BoolArg>(constraint.arguments().at(2)));

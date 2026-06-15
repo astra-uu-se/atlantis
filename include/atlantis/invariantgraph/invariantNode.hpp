@@ -3,15 +3,16 @@
 #include <vector>
 
 #include "atlantis/invariantgraph/types.hpp"
+#include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/types.hpp"
 #include "atlantis/types.hpp"
-#include "solverMapping.hpp"
 
 namespace atlantis::propagation {
 class SolverBase;  //  forward declaration;
 }
 
 namespace atlantis::invariantgraph {
+class ConstraintSolver;
 
 class InvariantGraph;  // forward declaration;
 
@@ -31,6 +32,15 @@ class InvariantNode {
   std::vector<VarNodeId> _staticInputVarNodeIds;
   std::vector<VarNodeId> _dynamicInputVarNodeIds;
 
+  [[nodiscard]] VarNode& varNode(VarNodeId);
+  [[nodiscard]] const VarNode& varNodeConst(VarNodeId) const;
+  [[nodiscard]] VarNode& outputVarNode(size_t index);
+  [[nodiscard]] const VarNode& outputVarNodeConst(size_t index) const;
+  [[nodiscard]] VarNode& staticInputVarNode(size_t index);
+  [[nodiscard]] const VarNode& staticInputVarNodeConst(size_t index) const;
+  [[nodiscard]] VarNode& dynamicInputVarNode(size_t index);
+  [[nodiscard]] const VarNode& dynamicInputVarNodeConst(size_t index) const;
+
  public:
   explicit InvariantNode(InvariantGraph& invariantGraph,
                          std::vector<VarNodeId>&& outputIds,
@@ -41,9 +51,17 @@ class InvariantNode {
 
   [[nodiscard]] InvariantGraph& invariantGraph();
 
+  [[nodiscard]] ConstraintSolver& constraintSolver() const;
+
   [[nodiscard]] const InvariantGraph& invariantGraphConst() const;
 
+  [[nodiscard]] const ConstraintSolver& constraintSolverConst() const;
+
   [[nodiscard]] InvariantNodeId id() const;
+
+  virtual void init(InvariantNodeId);
+
+  virtual void postConstraint();
 
   [[nodiscard]] virtual bool isReified() const;
 
@@ -77,8 +95,6 @@ class InvariantNode {
   [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds() const;
 
   void setState(InvariantNodeState);
-
-  virtual void init(InvariantNodeId);
 
   void deactivate();
 

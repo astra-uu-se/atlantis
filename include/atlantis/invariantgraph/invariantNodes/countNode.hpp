@@ -1,17 +1,29 @@
 #pragma once
 
+#include <optional>
+
 #include "atlantis/invariantgraph/invariantNode.hpp"
 
 namespace atlantis::invariantgraph {
-class IntCountNode : public InvariantNode {
-  Int _needle;
-  Int _offset;
+class CountNode : public InvariantNode {
+  std::optional<Int> _fixedNeedle;
+  Int _countOffset;
+
+  [[nodiscard]] VarNodeId needle() const;
+  [[nodiscard]] size_t needleIndex() const;
+  [[nodiscard]] size_t numInputVars() const;
 
  public:
-  IntCountNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars, Int needle,
-               VarNodeId count, Int offset = 0);
+  CountNode(InvariantGraph& graph, VarNodeId count,
+            std::vector<VarNodeId>&& vars, Int needle, Int countOffset = 0);
+
+  CountNode(InvariantGraph& graph, VarNodeId count,
+            std::vector<VarNodeId>&& vars, VarNodeId needle,
+            Int countOffset = 0);
 
   void init(InvariantNodeId) override;
+
+  void postConstraint() override;
 
   void updateState() override;
 
@@ -23,10 +35,6 @@ class IntCountNode : public InvariantNode {
   [[nodiscard]] bool canBeMadeImplicit() const override;
 
   bool makeImplicit() override;
-
-  [[nodiscard]] const std::vector<VarNodeId>& haystack() const;
-
-  [[nodiscard]] Int needle() const;
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

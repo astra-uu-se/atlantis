@@ -8,17 +8,16 @@ using namespace atlantis::invariantgraph;
 
 class ArrayIntMaximumNodeTestFixture
     : public NodeTestBase<ArrayIntMaximumNode> {
- public:
-  Int numInputs = 3;
-  std::vector<std::string> inputVars;
-  std::string outputVar{"output"};
+ protected:
+  std::vector<Var> inputVars;
+  Var outputVar{"output", std::vector<Int>{}, true};
 
-  Int computeOutput(bool isRegistered = false) {
+  [[nodiscard]] Int computeOutput(const bool isRegistered = false) const {
     if (isRegistered) {
       Int val = std::numeric_limits<Int>::min();
       for (const auto& var : inputVars) {
-        if (varNode(var).isFixed() || varId(var) == propagation::NULL_ID) {
-          val = std::max(val, varNode(var).upperBound());
+        if (varNodeConst(var).isFixed() || varId(var) == propagation::NULL_ID) {
+          val = std::max(val, varNodeConst(var).upperBound());
         } else {
           val = std::max(val, _solver->currentValue(varId(var)));
         }
@@ -27,12 +26,12 @@ class ArrayIntMaximumNodeTestFixture
     }
     Int val = std::numeric_limits<Int>::min();
     for (const auto& var : inputVars) {
-      val = std::max(val, varNode(var).upperBound());
+      val = std::max(val, varNodeConst(var).upperBound());
     }
     return val;
   }
 
-  void SetUp() {
+  void SetUp() override {
     NodeTestBase::SetUp();
     std::vector<std::pair<Int, Int>> bounds;
 
@@ -44,10 +43,12 @@ class ArrayIntMaximumNodeTestFixture
       bounds = {{0, 5}, {2, 2}, {-5, 0}};
     }
     for (const auto& [lb, ub] : bounds) {
-      inputVars.emplace_back("input_" + std::to_string(inputVars.size()));
-      retrieveIntVarNode(lb, ub, inputVars.back());
+      inputVars.emplace_back("input_" + std::to_string(inputVars.size()), lb,
+                             ub, true);
+      retrieveIntVarNode(inputVars.back());
     }
-    retrieveIntVarNode(-5, 5, outputVar);
+    outputVar.domain = std::pair<Int, Int>(-5, 5);
+    retrieveIntVarNode(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                         varNodeId(outputVar));
@@ -62,6 +63,8 @@ TEST_P(ArrayIntMaximumNodeTestFixture, updateState) {
     maxVal = std::max(maxVal, varNode(var).upperBound());
   }
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeSubsumed()) {
     EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
@@ -80,6 +83,8 @@ TEST_P(ArrayIntMaximumNodeTestFixture, updateState) {
 
 TEST_P(ArrayIntMaximumNodeTestFixture, replace) {
   EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
   invNode().updateState();
   if (shouldBeReplaced()) {
     EXPECT_TRUE(invNode().canBeReplaced());
@@ -103,28 +108,15 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
       std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeSubsumed()) {
-    [[maybe_unused]] const Int expected = computeOutput(true);
-    [[maybe_unused]] const Int actual = varNode(outputVar).lowerBound();
-    // TODO: disabled for the MZN challenge. This should be computed by Gecode.
-    /*
     const Int expected = computeOutput(true);
     const Int actual = varNode(outputVar).lowerBound();
     EXPECT_EQ(expected, actual);
-    */
     return;
   }
   if (shouldBeReplaced()) {
     EXPECT_FALSE(varNode(outputVar).isFixed());
     EXPECT_EQ(varId(outputVar), propagation::NULL_ID);
     return;
-  }
-
-  std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var : inputVars) {
-    if (varNode(var).upperBound() > lb) {
-      EXPECT_NE(varId(var), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(var));
-    }
   }
 
   VarNode& outputNode = varNode(outputVar);
@@ -140,18 +132,18 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
 
   const propagation::VarViewId outputId = varId(outputVar);
 
-  std::vector<Int> inputVals = makeInputVals(inputVarIds);
+  std::vector<Int> inputVals = makeInputVals(inputVars);
 
-  while (increaseNextVal(inputVarIds, inputVals) >= 0) {
+  while (increaseNextVal(inputVars, inputVals) >= 0) {
     _solver->beginMove();
-    setVarVals(inputVarIds, inputVals);
+    setVarVals(inputVars, inputVals);
     _solver->endMove();
 
     _solver->beginProbe();
     _solver->query(outputId);
     _solver->endProbe();
 
-    expectVarVals(inputVarIds, inputVals);
+    expectVarVals(inputVars, inputVals);
 
     const Int expected = computeOutput(true);
     const Int actual = _solver->currentValue(outputId);
@@ -159,7 +151,7 @@ TEST_P(ArrayIntMaximumNodeTestFixture, propagation) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ArrayIntMaximumNodeTest, ArrayIntMaximumNodeTestFixture,
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME},
                       ParamData{InvariantNodeAction::REPLACE}));
