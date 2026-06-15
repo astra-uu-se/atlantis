@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir -p build
           mkdir -p .cpm-cache
-          mkdir -p .cpm-cache/gecode-6.2.0
+          mkdir -p .cpm-cache/gecode-6.3.0
           mkdir -p .cpm-cache/gecode
 
       - name: Checkout Gecode
@@ -51,8 +51,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: Gecode/gecode
-          ref: release-6.2.0
-          path: ${{github.workspace}}/.cpm-cache/gecode-6.2.0
+          ref: release/release-6.3.0
+          path: ${{github.workspace}}/.cpm-cache/gecode-6.3.0
 
       - name: Build Gecode
         id: gecode-build
@@ -64,11 +64,11 @@ jobs:
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5
             -DCMAKE_BUILD_TYPE=Release
         run: |
-          mkdir -p gecode-6.2.0/build
-          cmake -B gecode-6.2.0/build -S gecode-6.2.0
-          cmake --build gecode-6.2.0/build --config Release -j 8
-          cmake --install gecode-6.2.0/build --config Release --prefix gecode
-          rm -r gecode-6.2.0
+          mkdir -p gecode-6.3.0/build
+          cmake -B gecode-6.3.0/build -S gecode-6.3.0
+          cmake --build gecode-6.3.0/build --config Release -j 8
+          cmake --install gecode-6.3.0/build --config Release --prefix gecode
+          rm -r gecode-6.3.0
 
       - name: Build
         id: build
