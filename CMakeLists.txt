@@ -190,10 +190,12 @@ if(EXISTS "${CPM_SOURCE_CACHE}/gecode")
   set(GECODE_INCLUDE "${CPM_SOURCE_CACHE}/gecode")
 endif()
 
-find_package(Gecode 6.3 REQUIRED COMPONENTS Driver Int Kernel Search Support Minimodel)
+find_package(Gecode 6.3 REQUIRED COMPONENTS Driver Int Kernel Minimodel Search Support)
 
 # Link Gecode to target test
 message("GECODE_FOUND: ${GECODE_FOUND}")
+message("GECODE_INCLUDE: ${GECODE_INCLUDE}")
+message("GECODE_VERSION: ${GECODE_VERSION}")
 message("GECODE_INCLUDE_DIRS: ${GECODE_INCLUDE_DIRS}")
 message("GECODE_LIBRARIES: ${GECODE_LIBRARIES}")
 message("GECODE_TARGETS: ${GECODE_TARGETS}")
@@ -203,7 +205,7 @@ include(FetchContent)
 FetchContent_Declare(
   fznparser
   GIT_REPOSITORY https://github.com/astra-uu-se/fznparser
-  GIT_TAG v1.2.3
+  GIT_TAG v1.2.4
 )
 FetchContent_Declare(
   cxxopts
@@ -223,6 +225,7 @@ target_include_directories(${PROJECT_LIB}
   PRIVATE
   ${COMMON_INCLUDES}
   ${PROJECT_SOURCE_DIR}/ext
+  ${GECODE_INCLUDE}/include
   PUBLIC
   $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${COMMON_INCLUDES}>)
@@ -375,5 +378,5 @@ packageProject(
   INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include
   INCLUDE_DESTINATION include/
   VERSION_HEADER "${VERSION_HEADER_LOCATION}"
-  DEPENDENCIES "fmt 8.1.1;fznparser v1.2.3"
+  DEPENDENCIES "fmt 8.1.1;fznparser v1.2.4;gecode release-3.2.0"
 )

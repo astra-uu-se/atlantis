@@ -46,24 +46,33 @@ RUN --mount=type=ssh \
           -B .cpm-cache/gecode-6.3.0/build \
           -S .cpm-cache/gecode-6.3.0 && \
     cmake --build .cpm-cache/gecode-6.3.0/build \
-          --config Release && \
-    rm -rf .cpm-cache/gecode && \
+          --config Release \
+          -j 8 && \
     mkdir -p .cpm-cache/gecode && \
     cmake --install .cpm-cache/gecode-6.3.0/build \
           --config Release \
           --prefix .cpm-cache/gecode && \
     rm -rf .cpm-cache/gecode-6.3.0
 
-# Build Atlantis and install it into /install.
+# Config Atlantis
 RUN --mount=type=ssh \
-    mkdir /install && mkdir -p build && cd build && \
+    echo "test" \
+    mkdir -p /install && \
+    mkdir -p build && \
+    cd build && \
     cmake -DCMAKE_C_COMPILER=gcc-14 \
           -DCMAKE_CXX_COMPILER=g++-14 \
           -DCMAKE_BUILD_TYPE=Release \
-          -DMORE_STATS=OFF \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_INSTALL_PREFIX=/install .. && \
-    cmake --build . --config Release && \
+          -DMORE_STATS:BOOL=OFF \
+          -DBUILD_TESTS:BOOL=OFF \
+          -DBUILD_BENCHMARKS:BOOL=OFF \
+          -DCPM_SOURCE_CACHE=/src/.cpm-cache \
+          -DCMAKE_INSTALL_PREFIX=/install  \
+          ..
+
+RUN --mount=type=ssh \
+    cd build && \
+    cmake --build . --config Release -j 8 && \
     cmake --build . --config Release --target install
 
 # Create our final image using this base.
