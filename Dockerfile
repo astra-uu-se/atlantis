@@ -72,8 +72,8 @@ RUN --mount=type=ssh \
 
 RUN --mount=type=ssh \
     cd build && \
-    make -j 8 && \
-    cmake --build build --config Release --target install
+    cmake --build . --config Release -j 8 && \
+    cmake --build . --config Release --target install
 
 # Create our final image using this base.
 FROM minizinc/mznc2026:latest
