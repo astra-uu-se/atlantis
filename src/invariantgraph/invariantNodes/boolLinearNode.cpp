@@ -87,7 +87,7 @@ void BoolLinearNode::registerOutputVars(propagation::SolverBase& solver,
         outputVarNodeIds().front(),
         solver.makeIntView<propagation::IfThenElseConst>(
             solver, mapping.solverId(staticInputVarNodeIds().front()),
-            _coeffs.front() -_rhsOffset, -_rhsOffset));
+            _coeffs.front() - _rhsOffset, -_rhsOffset));
   } else if (!staticInputVarNodeIds().empty()) {
     if (_rhsOffset != 0) {
       makeSolverVar(outputVarNodeIds().front(), solver, mapping);
