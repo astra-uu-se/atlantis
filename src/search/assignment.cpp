@@ -158,8 +158,6 @@ void Assignment::setAssignment(const SavedAssignment& saved) {
   }
   _solver.endMove();
 
-  _solver.endMove();
-
   _solver.beginCommit();
   _solver.query(_violation);
   _solver.query(_objective);

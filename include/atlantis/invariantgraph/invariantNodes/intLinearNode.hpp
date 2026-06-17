@@ -11,7 +11,7 @@ class IntLinearNode : public InvariantNode {
  public:
   IntLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                 std::vector<VarNodeId>&& vars, VarNodeId output,
-                Int offset = 0);
+                Int rhsOffset = 0);
 
   void init(InvariantNodeId) override;
   void postConstraint() override;

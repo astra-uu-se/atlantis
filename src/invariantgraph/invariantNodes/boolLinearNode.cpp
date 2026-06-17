@@ -16,10 +16,10 @@ namespace atlantis::invariantgraph {
 
 BoolLinearNode::BoolLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                                std::vector<VarNodeId>&& vars, VarNodeId output,
-                               const Int offset)
+                               const Int rhsOffset)
     : InvariantNode(graph, {output}, std::move(vars)),
       _coeffs(std::move(coeffs)),
-      _outputOffset(offset) {}
+      _rhsOffset(rhsOffset) {}
 
 void BoolLinearNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
@@ -38,7 +38,7 @@ void BoolLinearNode::postConstraint() {
   constraintSolver().bool_lin_eq(
       _coeffs,
       toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
-      outputVarNodeConst(0).constraintVarId(), _outputOffset);
+      outputVarNodeConst(0).constraintVarId(), _rhsOffset);
 }
 
 void BoolLinearNode::updateState() {
@@ -63,7 +63,8 @@ void BoolLinearNode::updateState() {
     const auto& inputNode =
         invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
     if (inputNode.isFixed() || _coeffs.at(i) == 0) {
-      _outputOffset += inputNode.inDomain(bool{true}) ? _coeffs.at(i) : 0;
+      // var i is fixed: reduce the RHS:
+      _rhsOffset -= inputNode.inDomain(bool{true}) ? _coeffs.at(i) : 0;
       indicesToRemove.emplace_back(i);
     }
   }
@@ -74,7 +75,7 @@ void BoolLinearNode::updateState() {
   }
 
   if (staticInputVarNodeIds().empty()) {
-    outputVarNode(0).fixToValue(_outputOffset);
+    outputVarNode(0).fixToValue(-_rhsOffset);
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -86,16 +87,16 @@ void BoolLinearNode::registerOutputVars(propagation::SolverBase& solver,
         outputVarNodeIds().front(),
         solver.makeIntView<propagation::IfThenElseConst>(
             solver, mapping.solverId(staticInputVarNodeIds().front()),
-            _outputOffset + _coeffs.front(), _outputOffset));
+            _coeffs.front() - _rhsOffset, -_rhsOffset));
   } else if (!staticInputVarNodeIds().empty()) {
-    if (_outputOffset != 0) {
+    if (_rhsOffset != 0) {
       makeSolverVar(outputVarNodeIds().front(), solver, mapping);
     } else if (mapping.intermediateId(id(), 0) == propagation::NULL_ID) {
       mapping.setIntermediateId(id(), 0, solver.makeIntVar(0, 0, 0));
       mapping.setSolverId(
           outputVarNodeIds().front(),
           solver.makeIntView<propagation::IntOffsetView>(
-              solver, mapping.intermediateId(id(), 0), _outputOffset));
+              solver, mapping.intermediateId(id(), 0), -_rhsOffset));
     }
   }
   assert(std::ranges::all_of(

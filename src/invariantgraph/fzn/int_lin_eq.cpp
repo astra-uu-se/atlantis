@@ -72,11 +72,11 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
 
   // If the defined variable constant is -1, then the sides have not been
   // swapped, and the constant must be reduced from both sides:
-  const Int lhsOffset = definedVarCoeff == 1 ? bound : -bound;
+  const Int rhsOffset = definedVarCoeff == 1 ? -bound : bound;
 
   graph.addInvariantNode(std::make_shared<IntLinearNode>(
       graph, std::move(coeffs), std::move(inputVarNodes), definedVarNodeId,
-      lhsOffset));
+      rhsOffset));
   return true;
 }
 

@@ -870,7 +870,8 @@ SearchDomain GecodeSolver::varDomain(const ConstraintVarId varId) const {
 }
 
 void GecodeSolver::fixPoint() {
-  const Gecode::SpaceStatus s = _space.status();
+  Gecode::StatusStatistics stats;
+  const Gecode::SpaceStatus s = _space.status(stats);
   if (s == Gecode::SS_FAILED) {
     throw InconsistencyException("UNSAT");
   }
