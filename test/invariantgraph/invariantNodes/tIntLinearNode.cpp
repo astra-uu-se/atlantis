@@ -165,7 +165,7 @@ TEST(IntLinearNodeRegression, MultiInputOffsetUsesOffsetViewForOutput) {
       graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 3), "out");
 
   graph->addInvariantNode(std::make_shared<IntLinearNode>(
-      *graph, std::vector<Int>{1, 1}, std::vector<VarNodeId>{a, b}, out, -1));
+      *graph, std::vector<Int>{1, 1}, std::vector<VarNodeId>{a, b}, out, 1));
 
   graph->close();
   auto mapping = std::make_shared<SolverMapping>(graph->construct(*solver));

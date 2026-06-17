@@ -64,7 +64,8 @@ void IntLinearNode::updateState() {
     const auto& inputNode =
         invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
     if (inputNode.isFixed() || _coeffs.at(i) == 0) {
-      _rhsOffset += _coeffs.at(i) * inputNode.lowerBound();
+      // var i is fixed: reduce the RHS:
+      _rhsOffset -= _coeffs.at(i) * inputNode.lowerBound();
       indicesToRemove.emplace_back(i);
     }
   }
@@ -119,11 +120,12 @@ bool IntLinearNode::makeImplicit() {
 void IntLinearNode::registerOutputVars(propagation::SolverBase& solver,
                                        SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() == 1) {
+    // The rhs offset needs to be reduced from the lhs sum to equal the output:
     mapping.setSolverId(
         outputVarNodeIds().front(),
         solver.makeIntView<propagation::ScalarView>(
             solver, mapping.solverId(staticInputVarNodeIds().front()),
-            _coeffs.front(), _rhsOffset));
+            _coeffs.front(), -_rhsOffset));
     return;
   }
   if (!staticInputVarNodeIds().empty()) {
@@ -143,7 +145,7 @@ void IntLinearNode::registerOutputVars(propagation::SolverBase& solver,
       mapping.setSolverId(
           outputVarNodeIds().front(),
           solver.makeIntView<propagation::IntOffsetView>(
-              solver, mapping.intermediateId(id()), _rhsOffset));
+              solver, mapping.intermediateId(id()), -_rhsOffset));
     } else {
       makeSolverVar(outputVarNodeIds().front(), solver, mapping);
       assert(mapping.solverId(outputVarNodeIds().front()).isVar());
