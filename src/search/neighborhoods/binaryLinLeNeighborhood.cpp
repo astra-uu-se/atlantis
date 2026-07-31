@@ -128,4 +128,7 @@ void BinaryLinLeNeighborhood<Violation>::commitIf(
   assert(_curSum <= _bound);
 }
 
+template class BinaryLinLeNeighborhood<true>;
+template class BinaryLinLeNeighborhood<false>;
+
 }  // namespace atlantis::search::neighborhoods

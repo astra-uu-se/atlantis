@@ -157,7 +157,7 @@ void IntLinRelNode::updateState() {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
-    for (long& coeff : _coeffs) {
+    for (Int& coeff : _coeffs) {
       coeff /= c;
     }
     _rhs /= c;

@@ -64,7 +64,7 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
     // swapping lhs and rhs, moving the defined variable to the rhs. Then
     // reducing both lhs and rhs by all other variables, making the defined
     // variable the only variable on the rhs.
-    for (long& c : coeffs) {
+    for (Int& c : coeffs) {
       c = -c;
     }
   }  // otherwise (with definedVarCoeff = -1), add the defined variable to both

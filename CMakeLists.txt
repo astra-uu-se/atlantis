@@ -199,7 +199,11 @@ message("GECODE_VERSION: ${GECODE_VERSION}")
 message("GECODE_INCLUDE_DIRS: ${GECODE_INCLUDE_DIRS}")
 message("GECODE_LIBRARIES: ${GECODE_LIBRARIES}")
 message("GECODE_TARGETS: ${GECODE_TARGETS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}-Wl,--copy-dt-needed-entries")
+# --copy-dt-needed-entries is a GNU ld option; Apple's ld rejects it outright,
+# which breaks the compiler checks of every sub-project.
+if(NOT APPLE)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--copy-dt-needed-entries")
+endif()
 
 include(FetchContent)
 FetchContent_Declare(
@@ -231,6 +235,47 @@ target_include_directories(${PROJECT_LIB}
   $<BUILD_INTERFACE:${COMMON_INCLUDES}>)
 
 target_link_libraries(${PROJECT_LIB} fznparser::fznparser fmt::fmt Gecode::Driver Gecode::Int Gecode::Kernel Gecode::Minimodel Gecode::Search Gecode::Support)
+
+# The blackbox interface loads propagator libraries at run time.
+if(CMAKE_DL_LIBS)
+  target_link_libraries(${PROJECT_LIB} ${CMAKE_DL_LIBS})
+endif()
+
+# Feature detection for the executable blackbox backend. Without a usable
+# posix_spawn the exec mode falls back to blackboxProcessNone.cpp, which
+# reports that the platform is unsupported.
+if(NOT WIN32)
+  include(CheckCXXSourceCompiles)
+  check_cxx_source_compiles("
+    #include <spawn.h>
+    int main() {
+      posix_spawn_file_actions_t a;
+      posix_spawn_file_actions_init(&a);
+      posix_spawn_file_actions_addinherit_np(&a, 2);
+      return POSIX_SPAWN_CLOEXEC_DEFAULT;
+    }" ATLANTIS_POSIX_SPAWN_CLOEXEC_DEFAULT_AND_ADDINHERIT)
+  check_cxx_source_compiles("
+    #include <spawn.h>
+    int main() {
+      posix_spawn_file_actions_t a;
+      posix_spawn_file_actions_init(&a);
+      posix_spawn_file_actions_addclosefrom_np(&a, 3);
+      return 0;
+    }" ATLANTIS_POSIX_SPAWN_ADDCLOSEFROM_NP)
+
+  if(ATLANTIS_POSIX_SPAWN_CLOEXEC_DEFAULT_AND_ADDINHERIT)
+    target_compile_definitions(${PROJECT_LIB} PUBLIC
+      ATLANTIS_HAS_POSIX_BLACKBOX_EXEC
+      ATLANTIS_HAS_POSIX_SPAWN_CLOEXEC_DEFAULT
+      ATLANTIS_HAS_POSIX_SPAWN_ADDINHERIT_NP)
+  elseif(ATLANTIS_POSIX_SPAWN_ADDCLOSEFROM_NP)
+    target_compile_definitions(${PROJECT_LIB} PUBLIC
+      ATLANTIS_HAS_POSIX_BLACKBOX_EXEC
+      ATLANTIS_HAS_POSIX_SPAWN_ADDCLOSEFROM_NP)
+  else()
+    message(STATUS "No suitable posix_spawn support found: executable blackbox propagators will be unavailable")
+  endif()
+endif()
 
 # Link the src library with the project
 target_link_libraries(${PROJECT_EXEC} ${PROJECT_LIB} cxxopts::cxxopts)
