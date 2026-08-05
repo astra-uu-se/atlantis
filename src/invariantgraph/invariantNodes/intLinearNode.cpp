@@ -83,13 +83,16 @@ void IntLinearNode::updateState() {
 }
 
 bool IntLinearNode::constrainsOutput(VarNodeId) const {
-  const Int lb = linearLb(invariantGraphConst(), _coeffs, staticInputVarNodeIds(), _rhsOffset);
-  const Int ub = linearUb(invariantGraphConst(), _coeffs, staticInputVarNodeIds(), _rhsOffset);
+  const Int lb = linearLb(invariantGraphConst(), _coeffs,
+                          staticInputVarNodeIds(), _rhsOffset);
+  const Int ub = linearUb(invariantGraphConst(), _coeffs,
+                          staticInputVarNodeIds(), _rhsOffset);
   return !outputVarNodeConst(0).constDomain()->contains(lb, ub);
 }
 
 std::pair<size_t, size_t> IntLinearNode::implicitRank() const {
-  return {rank::IMPLICIT_RANK_BOOL_LIN_EQ, staticInputVarNodeIds().size() + outputVarNodeIds().size()};
+  return {rank::IMPLICIT_RANK_BOOL_LIN_EQ,
+          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
 }
 
 bool IntLinearNode::canBeMadeImplicit() const {

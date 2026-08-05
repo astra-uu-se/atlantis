@@ -12,5 +12,4 @@ inline constexpr size_t IMPLICIT_RANK_ALL_DIFFERENT = 4000;
 inline constexpr size_t IMPLICIT_RANK_TABLE = 5000;
 inline constexpr size_t IMPLICIT_RANK_CIRCUIT = 6000;
 
-
-}  // namespace atlantis::invariantgraph
+}  // namespace atlantis::invariantgraph::rank

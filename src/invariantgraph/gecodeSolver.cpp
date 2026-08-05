@@ -820,8 +820,10 @@ ConstraintVarId GecodeSolver::newIntVar(const Int value) {
 ConstraintVarId GecodeSolver::newIntVar(const SearchDomain& dom) {
   const size_t ret = _space._iv.size();
   if (dom.isInterval()) {
-    const int lb = std::clamp<Int>(dom.lowerBound(), Gecode::Int::Limits::min, Gecode::Int::Limits::max);
-    const int ub = std::clamp<Int>(dom.upperBound(), Gecode::Int::Limits::min, Gecode::Int::Limits::max);
+    const int lb = std::clamp<Int>(dom.lowerBound(), Gecode::Int::Limits::min,
+                                   Gecode::Int::Limits::max);
+    const int ub = std::clamp<Int>(dom.upperBound(), Gecode::Int::Limits::min,
+                                   Gecode::Int::Limits::max);
     _space._iv.emplace_back(_space, lb, ub);
   } else {
     std::vector<int> values(dom.size());
@@ -829,8 +831,10 @@ ConstraintVarId GecodeSolver::newIntVar(const SearchDomain& dom) {
     bool containsMin = false;
     bool containsMax = false;
     for (auto iter = dom.begin(); iter != dom.end(); ++iter) {
-      const int val = std::clamp<Int>(*iter, Gecode::Int::Limits::min, Gecode::Int::Limits::max);
-      if ((val == Gecode::Int::Limits::min && containsMin) || (val == Gecode::Int::Limits::max && containsMax)) {
+      const int val = std::clamp<Int>(*iter, Gecode::Int::Limits::min,
+                                      Gecode::Int::Limits::max);
+      if ((val == Gecode::Int::Limits::min && containsMin) ||
+          (val == Gecode::Int::Limits::max && containsMax)) {
         continue;
       }
       containsMin |= val == Gecode::Int::Limits::min;

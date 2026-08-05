@@ -40,7 +40,8 @@ void GlobalCardinalityNode::postConstraint() {
       true);
 }
 
-void GlobalCardinalityNode::removeOutputVarNode(const VarNodeId outputVarNodeId) {
+void GlobalCardinalityNode::removeOutputVarNode(
+    const VarNodeId outputVarNodeId) {
   for (Int i = static_cast<Int>(_cover.size()) - 1; i >= 0; --i) {
     if (outputVarNodeIds().at(i) == outputVarNodeId) {
       _cover.erase(_cover.begin() + i);
@@ -120,14 +121,17 @@ void GlobalCardinalityNode::updateState() {
   }
 }
 
-bool GlobalCardinalityNode::constrainsOutput(const VarNodeId outputVarNodeId) const {
+bool GlobalCardinalityNode::constrainsOutput(
+    const VarNodeId outputVarNodeId) const {
   for (size_t i = 0; i < _cover.size(); ++i) {
     if (outputVarNodeIds().at(i) != outputVarNodeId) {
       continue;
     }
-    const Int ub = _countOffsets[i] + std::ranges::count_if(staticInputVarNodeIds(), [&](const VarNodeId vId) {
-      return varNodeConst(vId).inDomain(_cover[i]);
-    });
+    const Int ub = _countOffsets[i] +
+                   std::ranges::count_if(
+                       staticInputVarNodeIds(), [&](const VarNodeId vId) {
+                         return varNodeConst(vId).inDomain(_cover[i]);
+                       });
     if (!outputVarNodeConst(i).constDomain()->contains(_countOffsets[i], ub)) {
       return true;
     }
@@ -166,7 +170,13 @@ void GlobalCardinalityNode::registerOutputVars(propagation::SolverBase& solver,
     } else {
       assert(mapping.solverId(outputVarNodeIds().at(i)) ==
              propagation::NULL_ID);
-      mapping.setIntermediateId(id(), i, solver.makeIntVar(0, 0, std::max<Int>(0, static_cast<Int>(staticInputVarNodeIds().size()) - _countOffsets[i])));
+      mapping.setIntermediateId(
+          id(), i,
+          solver.makeIntVar(
+              0, 0,
+              std::max<Int>(0,
+                            static_cast<Int>(staticInputVarNodeIds().size()) -
+                                _countOffsets[i])));
       mapping.setSolverId(
           outputVarNodeIds().at(i),
           solver.makeIntView<propagation::IntOffsetView>(

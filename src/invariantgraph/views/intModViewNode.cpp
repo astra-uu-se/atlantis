@@ -10,7 +10,8 @@
 
 namespace atlantis::invariantgraph {
 
-IntModViewNode::IntModViewNode(InvariantGraph& graph, const VarNodeId staticInput,
+IntModViewNode::IntModViewNode(InvariantGraph& graph,
+                               const VarNodeId staticInput,
                                const VarNodeId output, const Int denominator)
     : InvariantNode(graph, {output}, {staticInput}),
       _denominator(std::abs(denominator)) {}

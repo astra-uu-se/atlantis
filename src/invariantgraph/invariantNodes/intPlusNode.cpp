@@ -57,8 +57,10 @@ void IntPlusNode::updateState() {
 }
 
 bool IntPlusNode::constrainsOutput(VarNodeId) const {
-  const Int lb = staticInputVarNodeConst(0).lowerBound() + staticInputVarNodeConst(1).lowerBound();
-  const Int ub = staticInputVarNodeConst(0).upperBound() + staticInputVarNodeConst(1).upperBound();
+  const Int lb = staticInputVarNodeConst(0).lowerBound() +
+                 staticInputVarNodeConst(1).lowerBound();
+  const Int ub = staticInputVarNodeConst(0).upperBound() +
+                 staticInputVarNodeConst(1).upperBound();
   return !outputVarNodeConst(0).constDomain()->contains(lb, ub);
 }
 

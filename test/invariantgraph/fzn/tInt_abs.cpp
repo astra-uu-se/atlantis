@@ -23,8 +23,8 @@ class int_absTest : public FznTestBase {
   std::string output{"i_2"};
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
-    const bool expected =
-        std::abs(intVal(input, committedValue)) == intVal(output, committedValue);
+    const bool expected = std::abs(intVal(input, committedValue)) ==
+                          intVal(output, committedValue);
 
     const bool isSolution = violation(committedValue) == 0;
     return isSolution ? expected : !expected;

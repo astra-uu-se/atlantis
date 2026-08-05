@@ -15,8 +15,7 @@ class IntPowNode : public InvariantNode {
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(
-      VarNodeId) const override { return true;}
+  [[nodiscard]] bool constrainsOutput(VarNodeId) const override { return true; }
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

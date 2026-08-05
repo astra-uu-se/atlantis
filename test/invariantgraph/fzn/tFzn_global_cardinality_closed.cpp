@@ -95,7 +95,8 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
     }
 
     const size_t coverSize = *rc::gen::inRange<size_t>(0, 4);
-    cover = *rc::gen::container<std::vector<Int>>(coverSize, rc::gen::inRange<size_t>(defaultLb, defaultUb + 1));
+    cover = *rc::gen::container<std::vector<Int>>(
+        coverSize, rc::gen::inRange<size_t>(defaultLb, defaultUb + 1));
 
     outputs.reserve(coverSize);
     for (size_t i = 0; i < coverSize; ++i) {

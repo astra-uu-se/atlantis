@@ -12,7 +12,8 @@
 namespace atlantis::invariantgraph {
 
 IntScalarNode::IntScalarNode(InvariantGraph& graph, const VarNodeId staticInput,
-                             const VarNodeId output, const Int factor, const Int offset)
+                             const VarNodeId output, const Int factor,
+                             const Int offset)
     : InvariantNode(graph, {output}, {staticInput}),
       _factor(factor),
       _offset(offset) {}
@@ -33,29 +34,44 @@ void IntScalarNode::updateState() {
     return;
   }
   if (_factor == 1 && _offset == 0) {
-    invariantGraph().replaceVarNode(outputVarNodeIds().front(), staticInputVarNodeIds().front());
+    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
+                                    staticInputVarNodeIds().front());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 bool IntScalarNode::constrainsOutput(VarNodeId) const {
-  const Int a = overflow::saturatingAdd(overflow::saturatingMul(staticInputVarNodeConst(0).lowerBound(), _factor), _offset);
-  const Int b = overflow::saturatingAdd(overflow::saturatingMul(staticInputVarNodeConst(0).upperBound(), _factor), _offset);
-  return !outputVarNodeConst(0).constDomain()->contains(std::min(a, b), std::max(a, b));
+  const Int a = overflow::saturatingAdd(
+      overflow::saturatingMul(staticInputVarNodeConst(0).lowerBound(), _factor),
+      _offset);
+  const Int b = overflow::saturatingAdd(
+      overflow::saturatingMul(staticInputVarNodeConst(0).upperBound(), _factor),
+      _offset);
+  return !outputVarNodeConst(0).constDomain()->contains(std::min(a, b),
+                                                        std::max(a, b));
 }
 
 bool IntScalarNode::canBeReplaced() const {
-  if (state() != InvariantNodeState::ACTIVE || overflow::saturatingAbs(_factor) != 1) {
+  if (state() != InvariantNodeState::ACTIVE ||
+      overflow::saturatingAbs(_factor) != 1) {
     return false;
   }
 
-  return varNodeConst(staticInputVarNodeIds().front()).staticInputTo().size() == 1 && varNodeConst(staticInputVarNodeIds().front()).definingNodes().empty() && !varNodeConst(outputVarNodeIds().front()).staticInputTo().empty();
+  return varNodeConst(staticInputVarNodeIds().front()).staticInputTo().size() ==
+             1 &&
+         varNodeConst(staticInputVarNodeIds().front())
+             .definingNodes()
+             .empty() &&
+         !varNodeConst(outputVarNodeIds().front()).staticInputTo().empty();
 }
 
 bool IntScalarNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(invariantGraph(), outputVarNodeIds().front(), staticInputVarNodeIds().front(), _factor, overflow::saturatingSub(0, _offset)));
+  invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(
+      invariantGraph(), outputVarNodeIds().front(),
+      staticInputVarNodeIds().front(), _factor,
+      overflow::saturatingSub(0, _offset)));
   return true;
 }
 

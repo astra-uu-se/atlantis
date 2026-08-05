@@ -106,13 +106,13 @@ class bool_clauseTest : public FznTestBase {
       const auto& vNode = varNodeConst(input);
       if (vNode.definingNodes().size() == 1 && vNode.outputOf().isInvariant()) {
         try {
-          const auto& defInv = dynamic_cast<const BoolNotNode&>(_invariantGraph->invariantNode(vNode.outputOf()));
+          const auto& defInv = dynamic_cast<const BoolNotNode&>(
+              _invariantGraph->invariantNode(vNode.outputOf()));
           const auto source = defInv.staticInputVarNodeIds().front();
           if (varId(source) != propagation::NULL_ID && randBool()) {
             changeValue(source, committedValue);
           }
-        }
-        catch (const std::bad_cast&) {
+        } catch (const std::bad_cast&) {
         }
         continue;
       }

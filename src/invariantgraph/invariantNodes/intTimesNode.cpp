@@ -66,11 +66,17 @@ void IntTimesNode::updateState() {
 }
 
 bool IntTimesNode::constrainsOutput(VarNodeId) const {
-  const auto extremums = std::array<Int, 4>{staticInputVarNodeConst(0).lowerBound() * staticInputVarNodeConst(1).lowerBound(),
-  staticInputVarNodeConst(0).lowerBound() * staticInputVarNodeConst(1).upperBound(),
-  staticInputVarNodeConst(0).upperBound() * staticInputVarNodeConst(1).lowerBound(),
-  staticInputVarNodeConst(0).upperBound() * staticInputVarNodeConst(1).upperBound()};
-  return !outputVarNodeConst(0).constDomain()->contains(std::ranges::min(extremums), std::ranges::max(extremums));
+  const auto extremums =
+      std::array<Int, 4>{staticInputVarNodeConst(0).lowerBound() *
+                             staticInputVarNodeConst(1).lowerBound(),
+                         staticInputVarNodeConst(0).lowerBound() *
+                             staticInputVarNodeConst(1).upperBound(),
+                         staticInputVarNodeConst(0).upperBound() *
+                             staticInputVarNodeConst(1).lowerBound(),
+                         staticInputVarNodeConst(0).upperBound() *
+                             staticInputVarNodeConst(1).upperBound()};
+  return !outputVarNodeConst(0).constDomain()->contains(
+      std::ranges::min(extremums), std::ranges::max(extremums));
 }
 
 bool IntTimesNode::canBeReplaced() const {

@@ -157,7 +157,7 @@ void IntLinRelNode::updateState() {
       coeff = coeff > 0 ? 1 : -1;
     }
     if (_relType == RelationType::REL_TYPE_EQ ||
-         _relType == RelationType::REL_TYPE_NE) {
+        _relType == RelationType::REL_TYPE_NE) {
       if (_rhs % c != 0) {
         assert(_relType == RelationType::REL_TYPE_NE);
         setState(InvariantNodeState::SUBSUMED);
@@ -166,7 +166,8 @@ void IntLinRelNode::updateState() {
       _rhs /= c;
       return;
     }
-    // Note that all coefficients are now +/- 1, therefore this destructive modification to _rhs will be performed only once:
+    // Note that all coefficients are now +/- 1, therefore this destructive
+    // modification to _rhs will be performed only once:
     assert(_relType == RelationType::REL_TYPE_LE);
     if (_rhs >= 0 || std::abs(_rhs) % c == 0) {
       _rhs /= c;
@@ -181,21 +182,24 @@ std::pair<size_t, size_t> IntLinRelNode::implicitRank() const {
 }
 
 bool IntLinRelNode::canBeMadeImplicit() const {
-  if (state() != InvariantNodeState::ACTIVE || isReified() || _relType != RelationType::REL_TYPE_LE) {
+  if (state() != InvariantNodeState::ACTIVE || isReified() ||
+      _relType != RelationType::REL_TYPE_LE) {
     return false;
   }
   assert(shouldHold());
-  return
-      std::ranges::all_of(staticInputVarNodeIds(), [&](const auto& id) {
-        return varNodeConst(id).definingNodes().empty();
-      });
+  return std::ranges::all_of(staticInputVarNodeIds(), [&](const auto& id) {
+    return varNodeConst(id).definingNodes().empty();
+  });
 }
 
 bool IntLinRelNode::makeImplicit() {
   if (!canBeMadeImplicit()) {
     return false;
   }
-  invariantGraph().addImplicitConstraintNode(std::make_shared<LinLeImplicitNode>(invariantGraph(), std::move(_coeffs), std::vector<VarNodeId>{staticInputVarNodeIds()}, _rhs));
+  invariantGraph().addImplicitConstraintNode(
+      std::make_shared<LinLeImplicitNode>(
+          invariantGraph(), std::move(_coeffs),
+          std::vector<VarNodeId>{staticInputVarNodeIds()}, _rhs));
   return true;
 }
 

@@ -112,9 +112,7 @@ void VarNode::setIsViolationVar(bool isViolVar) {
   _isViolationVar = isViolVar;
 }
 
-bool VarNode::isOutputVar() const noexcept {
-  return _isOutputVar;
-}
+bool VarNode::isOutputVar() const noexcept { return _isOutputVar; }
 
 void VarNode::setIsOutputVar(const bool isOutputVar) {
   _isOutputVar = isOutputVar;

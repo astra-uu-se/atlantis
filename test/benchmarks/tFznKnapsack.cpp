@@ -4,7 +4,9 @@
 
 namespace atlantis::testing {
 
-static void knapsackSolutions(const search::SavedAssignment& sol, const Int trueVal, std::optional<Int>& foundOptimum) {
+static void knapsackSolutions(const search::SavedAssignment& sol,
+                              const Int trueVal,
+                              std::optional<Int>& foundOptimum) {
   EXPECT_FALSE(sol.cost().hasViolation());
 
   constexpr Int capacity = 269;
@@ -21,37 +23,43 @@ static void knapsackSolutions(const search::SavedAssignment& sol, const Int true
   const Int actualProfit = std::abs(sol.cost().objective());
   EXPECT_LE(totalWeight, capacity);
   EXPECT_EQ(totalProfit, actualProfit);
-  if (!sol.cost().hasViolation() && totalWeight <= capacity && totalProfit == actualProfit) {
+  if (!sol.cost().hasViolation() && totalWeight <= capacity &&
+      totalProfit == actualProfit) {
     foundOptimum = actualProfit;
   }
 }
 
 TEST(FznKnapsack, Solve) {
   std::optional<Int> foundOptimum{};
-  const auto onSolution = [&foundOptimum](const search::SavedAssignment& sol,
+  const auto onSolution =
+      [&foundOptimum](
+          const search::SavedAssignment& sol,
           const std::optional<
               std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
-    knapsackSolutions(sol, 1, foundOptimum);
-  };
-  const auto& onFinish = [&foundOptimum](const FznBackend::SolveOutcome outcome) {
-    EXPECT_EQ(outcome == FznBackend::SolveOutcome::SATISFIABLE,
-              foundOptimum.has_value());
-  };
+        knapsackSolutions(sol, 1, foundOptimum);
+      };
+  const auto& onFinish =
+      [&foundOptimum](const FznBackend::SolveOutcome outcome) {
+        EXPECT_EQ(outcome == FznBackend::SolveOutcome::SATISFIABLE,
+                  foundOptimum.has_value());
+      };
   testModelFile("test/f1_l-d_kp_10_269.fzn", onSolution, onFinish);
-
 }
 
 TEST(FznKnapsack, SolveBool) {
   std::optional<Int> foundOptimum{};
-  const auto onSolution = [&foundOptimum](const search::SavedAssignment& sol,
+  const auto onSolution =
+      [&foundOptimum](
+          const search::SavedAssignment& sol,
           const std::optional<
               std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
-    knapsackSolutions(sol, 0, foundOptimum);
-  };
-  const auto& onFinish = [&foundOptimum](const FznBackend::SolveOutcome outcome) {
-    EXPECT_EQ(outcome == FznBackend::SolveOutcome::SATISFIABLE,
-              foundOptimum.has_value());
-  };
+        knapsackSolutions(sol, 0, foundOptimum);
+      };
+  const auto& onFinish =
+      [&foundOptimum](const FznBackend::SolveOutcome outcome) {
+        EXPECT_EQ(outcome == FznBackend::SolveOutcome::SATISFIABLE,
+                  foundOptimum.has_value());
+      };
   testModelFile("test/f1_l-d_kp_10_269_bool.fzn", onSolution, onFinish);
 }
 

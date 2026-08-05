@@ -58,10 +58,10 @@ class int_lin_leTest : public FznTestBase {
     const bool expected = sum <= bound;
 
     RC_LOG() << "sum: " << sum << std::endl;
-    RC_LOG() << sum << " <= " << bound << " == " << to_string(expected) << std::endl;
+    RC_LOG() << sum << " <= " << bound << " == " << to_string(expected)
+             << std::endl;
     RC_LOG() << "reified: " << to_string(actual) << std::endl;
     RC_LOG() << to_string(actual) << " == " << to_string(expected) << std::endl;
-
 
     if (isFixed(reified)) {
       const bool isSolution = violation(committedValue) == 0;
@@ -105,7 +105,8 @@ class int_lin_leTest : public FznTestBase {
 
   void generate() override {
     const size_t size = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
-    coeffs = true ? std::vector<Int>{-2} : *rc::gen::container<std::vector<Int>>(
+    coeffs = true ? std::vector<Int>{-2}
+                  : *rc::gen::container<std::vector<Int>>(
                         size, rc::gen::inRange(-2, 2));
     addArg(coeffs);
     inputs.reserve(size);

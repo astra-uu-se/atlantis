@@ -83,10 +83,12 @@ void ArrayElementNode::updateState() {
 bool ArrayElementNode::constrainsOutput(VarNodeId) const {
   std::vector<Int> values;
   values.reserve(_parVector.size());
-  for (auto iter = staticInputVarNodeConst(0).constDomain()->begin(); iter != staticInputVarNodeConst(0).constDomain()->end(); ++iter) {
+  for (auto iter = staticInputVarNodeConst(0).constDomain()->begin();
+       iter != staticInputVarNodeConst(0).constDomain()->end(); ++iter) {
     const Int index = *iter - _offset;
     if (index < 0) {
-      continue;;
+      continue;
+      ;
     }
     if (static_cast<Int>(_parVector.size()) < index) {
       break;

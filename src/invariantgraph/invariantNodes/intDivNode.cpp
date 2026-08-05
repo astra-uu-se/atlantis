@@ -171,10 +171,16 @@ void IntDivNode::registerNode(propagation::SolverBase& solver,
                               SolverMapping& mapping) const {
   assert(mapping.solverId(quotient()) != propagation::NULL_ID);
   assert(mapping.solverId(quotient()).isVar());
-  assert(varNodeConst(denominator()).lowerBound() != 0 || varNodeConst(denominator()).upperBound() != 0);
-  const propagation::VarViewId denominatorSolverId = mapping.solverId(denominator());
-  if (denominatorSolverId.isVar() && solver.lowerBound(denominatorSolverId) == 0 && solver.upperBound(denominatorSolverId) == 0) {
-    solver.updateBounds(static_cast<propagation::VarId>(denominatorSolverId), varNodeConst(denominator()).lowerBound(), varNodeConst(denominator()).upperBound(), true);
+  assert(varNodeConst(denominator()).lowerBound() != 0 ||
+         varNodeConst(denominator()).upperBound() != 0);
+  const propagation::VarViewId denominatorSolverId =
+      mapping.solverId(denominator());
+  if (denominatorSolverId.isVar() &&
+      solver.lowerBound(denominatorSolverId) == 0 &&
+      solver.upperBound(denominatorSolverId) == 0) {
+    solver.updateBounds(static_cast<propagation::VarId>(denominatorSolverId),
+                        varNodeConst(denominator()).lowerBound(),
+                        varNodeConst(denominator()).upperBound(), true);
   }
 
   solver.makeInvariant<propagation::IntDiv>(

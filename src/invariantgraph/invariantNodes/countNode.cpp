@@ -110,11 +110,13 @@ void CountNode::updateState() {
 }
 
 bool CountNode::constrainsOutput(VarNodeId) const {
-  return !outputVarNodeConst(0).constDomain()->contains(_countOffset, static_cast<Int>(staticInputVarNodeIds().size()));
+  return !outputVarNodeConst(0).constDomain()->contains(
+      _countOffset, static_cast<Int>(staticInputVarNodeIds().size()));
 }
 
 std::pair<size_t, size_t> CountNode::implicitRank() const {
-  return {rank::IMPLICIT_RANK_COUNT, staticInputVarNodeIds().size() + outputVarNodeIds().size()};
+  return {rank::IMPLICIT_RANK_COUNT,
+          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
 }
 
 bool CountNode::canBeMadeImplicit() const {

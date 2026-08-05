@@ -91,19 +91,24 @@ void ArrayElement2dNode::updateState() {
 
 bool ArrayElement2dNode::constrainsOutput(VarNodeId) const {
   std::vector<Int> values;
-  values.reserve(_parMatrix.size() * (_parMatrix.empty() ? 0 : _parMatrix.front().size()));
-  for (auto rowIter = varNodeConst(rowIdx()).constDomain()->begin(); rowIter != varNodeConst(rowIdx()).constDomain()->end(); ++rowIter) {
+  values.reserve(_parMatrix.size() *
+                 (_parMatrix.empty() ? 0 : _parMatrix.front().size()));
+  for (auto rowIter = varNodeConst(rowIdx()).constDomain()->begin();
+       rowIter != varNodeConst(rowIdx()).constDomain()->end(); ++rowIter) {
     const Int r = *rowIter - _rowOffset;
     if (r < 0) {
-      continue;;
+      continue;
+      ;
     }
     if (static_cast<Int>(_parMatrix.size()) < r) {
       break;
     }
-    for (auto colIter = varNodeConst(colIdx()).constDomain()->begin(); colIter != varNodeConst(colIdx()).constDomain()->end(); ++colIter) {
+    for (auto colIter = varNodeConst(colIdx()).constDomain()->begin();
+         colIter != varNodeConst(colIdx()).constDomain()->end(); ++colIter) {
       const Int c = *colIter - _colOffset;
       if (c < 0) {
-        continue;;
+        continue;
+        ;
       }
       if (static_cast<Int>(_parMatrix[r].size()) < c) {
         break;

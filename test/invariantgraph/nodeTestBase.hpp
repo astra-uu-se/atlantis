@@ -458,7 +458,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (varId(inputVars.at(i)) != propagation::NULL_ID) {
-        _solver->setValue(_solver->sourceId(varId(inputVars.at(i))), vals.at(i));
+        _solver->setValue(_solver->sourceId(varId(inputVars.at(i))),
+                          vals.at(i));
       }
     }
   }
@@ -488,7 +489,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVars.at(i) != propagation::NULL_ID) {
-        EXPECT_EQ(_solver->currentValue( _solver->sourceId(inputVars.at(i))), vals.at(i));
+        EXPECT_EQ(_solver->currentValue(_solver->sourceId(inputVars.at(i))),
+                  vals.at(i));
       }
     }
   }
@@ -508,9 +510,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     }
   }
 
-  void markOutputVar(const Var& v) {
-    markOutputVar(v.identifier);
-  }
+  void markOutputVar(const Var& v) { markOutputVar(v.identifier); }
 };
 
 }  // namespace atlantis::testing

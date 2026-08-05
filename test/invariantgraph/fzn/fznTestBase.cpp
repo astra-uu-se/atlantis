@@ -177,7 +177,8 @@ bool FznTestBase::boolVal(const std::string& identifier,
            << ") unhandled argument type" << std::endl;
   RC_FAIL();
 }
-bool FznTestBase::inDomain(const std::string& identifier, const bool val) const {
+bool FznTestBase::inDomain(const std::string& identifier,
+                           const bool val) const {
   RC_LOG() << "inDomain(\"" << identifier << "\", " << to_string(val) << ')'
            << std::endl;
   if (_invariantGraph->containsVarNode(identifier)) {
@@ -191,13 +192,15 @@ bool FznTestBase::inDomain(const std::string& identifier, const bool val) const 
   RC_LOG() << "unhandled argument type" << std::endl;
   RC_FAIL();
 }
-bool FznTestBase::isFixedTo(const std::string& identifier, const bool val) const {
+bool FznTestBase::isFixedTo(const std::string& identifier,
+                            const bool val) const {
   if (isFixed(identifier)) {
     return boolVal(identifier, val) == val;
   }
   return false;
 }
-bool FznTestBase::isFixedTo(const std::string& identifier, const Int val) const {
+bool FznTestBase::isFixedTo(const std::string& identifier,
+                            const Int val) const {
   if (isFixed(identifier)) {
     return intVal(identifier, val) == val;
   }
@@ -347,7 +350,7 @@ void FznTestBase::addIntSetPar(const std::string& identifier,
 }
 
 IntArg FznTestBase::_addIntArg(const IntArgState state, const Int val,
-                              const std::string& identifier) {
+                               const std::string& identifier) {
   RC_ASSERT(state != IntArgState::VAR);
   switch (state) {
     case IntArgState::PAR: {
@@ -372,10 +375,8 @@ IntArg FznTestBase::addIntArg(const IntArgState state, const Int val,
   return _addIntArg(state, val, identifier);
 }
 
-
 IntArg FznTestBase::_addIntArg(const IntArgState state, const Int lb,
-                              const Int ub,
-                              const std::string& identifier) {
+                               const Int ub, const std::string& identifier) {
   switch (state) {
     case IntArgState::PAR: {
       const Int val = lb == ub ? lb : *rc::gen::inRange<Int>(lb, ub + 1);
@@ -402,15 +403,13 @@ IntArg FznTestBase::_addIntArg(const IntArgState state, const Int lb,
 }
 
 IntArg FznTestBase::addIntArg(const IntArgState state, const Int lb,
-                              const Int ub,
-                              const std::string& identifier) {
+                              const Int ub, const std::string& identifier) {
   return _addIntArg(state, lb, ub, identifier);
 }
 
-
 IntArg FznTestBase::_addIntArg(const IntArgState state,
-                              const std::vector<Int>& dom,
-                              const std::string& identifier) {
+                               const std::vector<Int>& dom,
+                               const std::string& identifier) {
   RC_ASSERT(!dom.empty());
   switch (state) {
     case IntArgState::PAR: {
@@ -444,9 +443,8 @@ IntArg FznTestBase::addIntArg(const IntArgState state,
   return _addIntArg(state, dom, identifier);
 }
 
-
 IntArg FznTestBase::_addIntArg(const IntArgState state,
-                              const std::string& identifier) {
+                               const std::string& identifier) {
   return _addIntArg(state, defaultLb, defaultUb, identifier);
 }
 
@@ -455,14 +453,16 @@ IntArg FznTestBase::addIntArg(const IntArgState state,
   return _addIntArg(state, identifier);
 }
 
-IntArg FznTestBase::_addIntArg(const Int lb, const Int ub, const std::string& identifier) {
-  return _addIntArg(lb == ub
-                       ? *rc::gen::element(IntArgState::PAR, IntArgState::FIXED)
-                       : *rc::gen::arbitrary<IntArgState>(),
-                   lb, ub, identifier);
+IntArg FznTestBase::_addIntArg(const Int lb, const Int ub,
+                               const std::string& identifier) {
+  return _addIntArg(
+      lb == ub ? *rc::gen::element(IntArgState::PAR, IntArgState::FIXED)
+               : *rc::gen::arbitrary<IntArgState>(),
+      lb, ub, identifier);
 }
 
-IntArg FznTestBase::addIntArg(const Int lb, const Int ub, const std::string& identifier) {
+IntArg FznTestBase::addIntArg(const Int lb, const Int ub,
+                              const std::string& identifier) {
   return _addIntArg(lb, ub, identifier);
 }
 
@@ -482,14 +482,15 @@ std::shared_ptr<IntVarArray> FznTestBase::addIntParArray(
 }
 
 std::shared_ptr<IntVarArray> FznTestBase::addIntParArray(
-    const size_t arraySize, const Int lb, const Int ub, const std::string& identifier) {
+    const size_t arraySize, const Int lb, const Int ub,
+    const std::string& identifier) {
   const std::vector<Int> pars = *rc::gen::container<std::vector<Int>>(
       arraySize, rc::gen::inRange<Int>(lb, ub));
   return addIntParArray(pars, identifier);
 }
 std::shared_ptr<IntVarArray> FznTestBase::genIntVarArray(
-    const size_t arraySize, const Int lb, const Int ub, const std::string& identifier,
-    const std::string& varPrefix) {
+    const size_t arraySize, const Int lb, const Int ub,
+    const std::string& identifier, const std::string& varPrefix) {
   auto vars = std::get<std::shared_ptr<IntVarArray>>(
       _model->addVar(std::make_shared<IntVarArray>(identifier)));
   std::vector<IntArgState> argStates =
@@ -686,10 +687,13 @@ std::shared_ptr<IntVarArray> FznTestBase::_addIntVarArray(
   RC_ASSERT(domains.size() == identifiers.size());
   auto vars = std::get<std::shared_ptr<IntVarArray>>(
       _model->addVar(std::make_shared<IntVarArray>(identifier)));
-  const size_t numFixed = std::ranges::count_if(argStates, [](const IntArgState s) {
-    return s != IntArgState::VAR;
-  });
-  const std::vector<Int> fixedVals = numFixed == 0 ? std::vector<Int>{} : *rc::gen::container<std::vector<Int>>(numFixed, rc::gen::inRange<Int>(defaultLb, defaultUb + 1));
+  const size_t numFixed = std::ranges::count_if(
+      argStates, [](const IntArgState s) { return s != IntArgState::VAR; });
+  const std::vector<Int> fixedVals =
+      numFixed == 0
+          ? std::vector<Int>{}
+          : *rc::gen::container<std::vector<Int>>(
+                numFixed, rc::gen::inRange<Int>(defaultLb, defaultUb + 1));
   size_t valIndex = 0;
   for (size_t i = 0; i < identifiers.size(); ++i) {
     const auto [lb, ub] = domains.at(i);
@@ -730,9 +734,8 @@ std::shared_ptr<IntVarArray> FznTestBase::_addIntVarArray(
     const std::vector<std::string>& identifiers,
     const std::string& identifier) {
   RC_ASSERT(argStates.size() == identifiers.size());
-  const size_t numFixedStates = std::ranges::count_if(argStates, [](const IntArgState s) {
-    return s != IntArgState::VAR;
-  });
+  const size_t numFixedStates = std::ranges::count_if(
+      argStates, [](const IntArgState s) { return s != IntArgState::VAR; });
   RC_ASSERT(fixedVals.size() == numFixedStates);
   auto vars = std::get<std::shared_ptr<IntVarArray>>(
       _model->addVar(std::make_shared<IntVarArray>(identifier)));
@@ -740,7 +743,8 @@ std::shared_ptr<IntVarArray> FznTestBase::_addIntVarArray(
   for (size_t i = 0; i < identifiers.size(); ++i) {
     switch (argStates.at(i)) {
       case IntArgState::VAR:
-        vars->append(genIntVar(argStates.at(i), defaultLb, defaultUb, identifiers.at(i)));
+        vars->append(genIntVar(argStates.at(i), defaultLb, defaultUb,
+                               identifiers.at(i)));
         break;
       case IntArgState::PAR: {
         const Int val = fixedVals.at(valIndex++);
@@ -774,10 +778,13 @@ std::shared_ptr<IntVarArray> FznTestBase::_addIntVarArray(
     const std::vector<std::string>& identifiers,
     const std::string& identifier) {
   RC_ASSERT(argStates.size() == identifiers.size());
-  const size_t numFixed = std::ranges::count_if(argStates, [](const IntArgState s) {
-    return s != IntArgState::VAR;
-  });
-  const std::vector<Int> fixedVals = numFixed == 0 ? std::vector<Int>{} : *rc::gen::container<std::vector<Int>>(numFixed, rc::gen::inRange<Int>(defaultLb, defaultUb + 1));
+  const size_t numFixed = std::ranges::count_if(
+      argStates, [](const IntArgState s) { return s != IntArgState::VAR; });
+  const std::vector<Int> fixedVals =
+      numFixed == 0
+          ? std::vector<Int>{}
+          : *rc::gen::container<std::vector<Int>>(
+                numFixed, rc::gen::inRange<Int>(defaultLb, defaultUb + 1));
   return _addIntVarArray(argStates, fixedVals, identifiers, identifier);
 }
 

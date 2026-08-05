@@ -187,7 +187,8 @@ class fzn_table_intRegressionTest : public FznTestBase {
 
   void generate() override {}
 
-  void buildConstraint(const std::string& identifier, const bool reifiedConstraint) {
+  void buildConstraint(const std::string& identifier,
+                       const bool reifiedConstraint) {
     addIntVarArray({IntArgState::VAR, IntArgState::VAR},
                    std::vector<std::string>{"x0", "x1"});
 

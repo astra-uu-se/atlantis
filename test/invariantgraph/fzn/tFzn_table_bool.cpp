@@ -26,11 +26,16 @@ class fzn_table_boolTest : public FznTestBase {
     for (Int i = 0; i < numVars; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
-    addBoolVarArray({BoolArgState::VAR, BoolArgState::FIXED_FALSE, BoolArgState::VAR, BoolArgState::PAR_TRUE}, inputs);
+    addBoolVarArray({BoolArgState::VAR, BoolArgState::FIXED_FALSE,
+                     BoolArgState::VAR, BoolArgState::PAR_TRUE},
+                    inputs);
 
-    table = true ? std::vector<std::vector<bool>>{{false, false, false, false}, {false, true, false, false}} : *rc::gen::container<std::vector<std::vector<bool>>>(
-        *rc::gen::inRange(1, 5), rc::gen::container<std::vector<bool>>(
-                                     numVars, rc::gen::arbitrary<bool>()));
+    table = true ? std::vector<std::vector<bool>>{{false, false, false, false},
+                                                  {false, true, false, false}}
+                 : *rc::gen::container<std::vector<std::vector<bool>>>(
+                       *rc::gen::inRange(1, 5),
+                       rc::gen::container<std::vector<bool>>(
+                           numVars, rc::gen::arbitrary<bool>()));
 
     std::vector<bool> flatTable(table.size() * numVars);
     size_t i = 0;
@@ -129,9 +134,12 @@ class fzn_table_boolTest : public FznTestBase {
     if (!isFixed(reified)) {
       return false;
     }
-    const bool subsumed = std::ranges::all_of(inputs, [&](const std::string& input) {
-      return varNodeId(input) == NULL_NODE_ID || varNodeConst(input).isFixed() || varNodeConst(input).staticInputTo().empty();
-    });
+    const bool subsumed =
+        std::ranges::all_of(inputs, [&](const std::string& input) {
+          return varNodeId(input) == NULL_NODE_ID ||
+                 varNodeConst(input).isFixed() ||
+                 varNodeConst(input).staticInputTo().empty();
+        });
     if (subsumed) {
       return true;
     }
@@ -220,8 +228,6 @@ class fzn_table_boolRegressionTest : public FznTestBase {
     generateConstraint();
     closeInvariantGraph();
   }
-
-
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     std::vector<bool> vals(inputs.size());

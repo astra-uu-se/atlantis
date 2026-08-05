@@ -113,7 +113,8 @@ void AllDifferentNode::updateState() {
 }
 
 std::pair<size_t, size_t> AllDifferentNode::implicitRank() const {
-  return {rank::IMPLICIT_RANK_ALL_DIFFERENT, staticInputVarNodeIds().size() + outputVarNodeIds().size()};
+  return {rank::IMPLICIT_RANK_ALL_DIFFERENT,
+          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
 }
 
 bool AllDifferentNode::canBeMadeImplicit() const {

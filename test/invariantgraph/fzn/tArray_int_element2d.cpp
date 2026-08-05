@@ -29,7 +29,9 @@ class array_int_element2dTest : public FznTestBase {
     RC_ASSERT(rowValue - rowOffset >= 0);
     RC_ASSERT(rowValue - rowOffset < static_cast<Int>(parameters.size()));
     RC_ASSERT(colValue - colOffset >= 0);
-    RC_ASSERT(parameters.empty() || colValue - colOffset < static_cast<Int>(parameters.front().size()));
+    RC_ASSERT(parameters.empty() ||
+              colValue - colOffset <
+                  static_cast<Int>(parameters.front().size()));
 
     return parameters.at(rowValue - rowOffset).at(colValue - colOffset);
   }

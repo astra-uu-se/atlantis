@@ -57,7 +57,8 @@ void CircuitNode::updateState() {
 }
 
 std::pair<size_t, size_t> CircuitNode::implicitRank() const {
-  return {rank::IMPLICIT_RANK_CIRCUIT, staticInputVarNodeIds().size() + outputVarNodeIds().size()};
+  return {rank::IMPLICIT_RANK_CIRCUIT,
+          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
 }
 
 bool CircuitNode::canBeMadeImplicit() const {

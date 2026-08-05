@@ -91,10 +91,10 @@ class FznTestBase : public ::testing::Test {
   IntArg _addIntArg(IntArgState state, Int val, const std::string& identifier);
 
   IntArg _addIntArg(IntArgState state, Int lb, Int ub,
-                   const std::string& identifier = "i");
+                    const std::string& identifier = "i");
 
   IntArg _addIntArg(IntArgState state, const std::vector<Int>& dom,
-                   const std::string& identifier = "i");
+                    const std::string& identifier = "i");
 
   IntArg _addIntArg(IntArgState state, const std::string& identifier = "i");
 
@@ -105,9 +105,9 @@ class FznTestBase : public ::testing::Test {
       const std::string& varPrefix = "b_");
 
   std::shared_ptr<BoolVarArray> _addBoolVarArray(
-  const std::vector<BoolArgState>& argStates,
-  const std::vector<std::string>& identifiers,
-  const std::string& identifier = "b_arr");
+      const std::vector<BoolArgState>& argStates,
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "b_arr");
 
   std::shared_ptr<IntVarArray> _addIntVarArray(
       const std::vector<IntArgState>& argStates,
@@ -219,17 +219,21 @@ class FznTestBase : public ::testing::Test {
 
   void addIntSetPar(const std::string& identifier, std::vector<Int>&& vals);
 
-  [[deprecated]] IntArg addIntArg(IntArgState state, Int val, const std::string& identifier);
+  [[deprecated]] IntArg addIntArg(IntArgState state, Int val,
+                                  const std::string& identifier);
 
   [[deprecated]] IntArg addIntArg(IntArgState state, Int lb, Int ub,
-                   const std::string& identifier = "i");
+                                  const std::string& identifier = "i");
 
-  [[deprecated]] IntArg addIntArg(IntArgState state, const std::vector<Int>& dom,
-                   const std::string& identifier = "i");
+  [[deprecated]] IntArg addIntArg(IntArgState state,
+                                  const std::vector<Int>& dom,
+                                  const std::string& identifier = "i");
 
-  [[deprecated]] IntArg addIntArg(IntArgState state, const std::string& identifier = "i");
+  [[deprecated]] IntArg addIntArg(IntArgState state,
+                                  const std::string& identifier = "i");
 
-  [[deprecated]] IntArg addIntArg(Int lb, Int ub, const std::string& identifier = "i");
+  [[deprecated]] IntArg addIntArg(Int lb, Int ub,
+                                  const std::string& identifier = "i");
 
   IntArg addIntArg(const std::string& identifier = "i");
 
@@ -264,7 +268,8 @@ class FznTestBase : public ::testing::Test {
   BoolArg addBoolArg(const std::string& identifier = "b");
 
   std::shared_ptr<BoolVarArray> addBoolParArray(
-      const std::vector<bool>& pars, const std::string& identifier = "par_b_arr");
+      const std::vector<bool>& pars,
+      const std::string& identifier = "par_b_arr");
 
   std::shared_ptr<BoolVarArray> addBoolParArray(
       size_t arraySize, const std::string& identifier = "par_b_arr");

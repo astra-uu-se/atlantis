@@ -115,12 +115,9 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
     }
 
     addIntVarArray(inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR),
-                   cover, "cover");
-    addIntVarArray(std::vector(low.size(), IntArgState::PAR), low,
-                   "low");
-    addIntVarArray(std::vector(up.size(), IntArgState::PAR), up,
-                   "up");
+    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), cover, "cover");
+    addIntVarArray(std::vector(low.size(), IntArgState::PAR), low, "low");
+    addIntVarArray(std::vector(up.size(), IntArgState::PAR), up, "up");
 
     const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_global_cardinality_low_up_reif"

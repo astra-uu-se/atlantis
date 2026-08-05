@@ -244,7 +244,8 @@ bool TableNode::constrainsOutput(VarNodeId outputVarNodeId) const {
 }
 
 std::pair<size_t, size_t> TableNode::implicitRank() const {
-  return {rank::IMPLICIT_RANK_TABLE, staticInputVarNodeIds().size() + outputVarNodeIds().size()};
+  return {rank::IMPLICIT_RANK_TABLE,
+          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
 }
 
 bool TableNode::canBeMadeImplicit() const {

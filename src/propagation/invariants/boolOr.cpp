@@ -38,8 +38,7 @@ void BoolOr::updateBounds(bool widenOnly) {
 void BoolOr::recompute(Timestamp ts) {
   const Int xVal = _solver.value(ts, _x);
   const Int yVal = _solver.value(ts, _y);
-  updateValue(ts, _output,
-              std::min(xVal, yVal));
+  updateValue(ts, _output, std::min(xVal, yVal));
 }
 
 void BoolOr::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }

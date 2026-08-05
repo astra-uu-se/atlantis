@@ -18,9 +18,8 @@ namespace atlantis::testing {
 
 using ::testing::ContainerEq;
 
-inline FznBackend createBackend(const char* modelFile,
-    logging::Logger& logger,
-    const std::optional<std::uint_fast32_t> seed) {
+inline FznBackend createBackend(const char* modelFile, logging::Logger& logger,
+                                const std::optional<std::uint_fast32_t> seed) {
   std::filesystem::path modelFilePath(
       (std::string(FZN_DIR) + "/" + modelFile).c_str());
 
@@ -36,9 +35,10 @@ inline FznBackend createBackend(const char* modelFile,
 static void testModelFile(
     const char* modelFile,
     const std::function<void(const search::SavedAssignment&,
-                               const std::optional<std::vector<std::shared_ptr<
-                                   search::SearchStatistics>>>&)>& onSolution,
-                                   const std::function<void(FznBackend::SolveOutcome)>& onFinish,
+                             const std::optional<std::vector<
+                                 std::shared_ptr<search::SearchStatistics>>>&)>&
+        onSolution,
+    const std::function<void(FznBackend::SolveOutcome)>& onFinish,
     const logging::Level logLvl = logging::Level::LVL_ERROR,
     const std::optional<std::uint_fast32_t> seed = {}) {
   logging::Logger logger(stdout, logLvl);
@@ -50,8 +50,7 @@ static void testModelFile(
 }
 
 static void testModelFile(
-    const char* modelFile,
-    const std::vector<std::vector<Int>>& expectedOutputs,
+    const char* modelFile, const std::vector<std::vector<Int>>& expectedOutputs,
     const logging::Level logLvl = logging::Level::LVL_ERROR,
     const std::optional<std::uint_fast32_t> seed = {}) {
   logging::Logger logger(stdout, logLvl);
@@ -112,7 +111,10 @@ static void testModelFile(
               std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
         solution = sol;
         EXPECT_EQ(sol.cost().violation(), 0);
-        const Int objective = backend.problemType() == fznparser::ProblemType::MAXIMIZE ? overflow::saturatingAbs(sol.cost().objective()) : sol.cost().objective();
+        const Int objective =
+            backend.problemType() == fznparser::ProblemType::MAXIMIZE
+                ? overflow::saturatingAbs(sol.cost().objective())
+                : sol.cost().objective();
         if (!validObjectives.empty()) {
           EXPECT_TRUE(validObjectives.contains(objective))
               << "Objective: " << objective;

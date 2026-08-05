@@ -82,8 +82,10 @@ void BoolLinearNode::updateState() {
 }
 
 bool BoolLinearNode::constrainsOutput(VarNodeId) const {
-  const Int lb = linearLb(invariantGraphConst(), _coeffs, staticInputVarNodeIds(), _rhsOffset);
-  const Int ub = linearUb(invariantGraphConst(), _coeffs, staticInputVarNodeIds(), _rhsOffset);
+  const Int lb = linearLb(invariantGraphConst(), _coeffs,
+                          staticInputVarNodeIds(), _rhsOffset);
+  const Int ub = linearUb(invariantGraphConst(), _coeffs,
+                          staticInputVarNodeIds(), _rhsOffset);
   return !outputVarNodeConst(0).constDomain()->contains(lb, ub);
 }
 

@@ -212,7 +212,7 @@ TEST_F(bool_lin_eqTest, SupportsVariableBoundOutput) {
 
   inputs = {"b_0", "b_1", "b_2"};
   _addBoolVarArray({BoolArgState::VAR, BoolArgState::VAR, BoolArgState::VAR},
-                  inputs);
+                   inputs);
 
   const std::string sum{"sum"};
   _addIntArg(IntArgState::VAR, 0, 3, sum);

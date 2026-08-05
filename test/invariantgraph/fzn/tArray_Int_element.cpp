@@ -40,7 +40,7 @@ class array_int_elementTest : public FznTestBase {
     addArg(parameters);
 
     _addIntArg(std::ranges::min(parameters), std::ranges::max(parameters),
-              output);
+               output);
 
     offset = lowerBound(idx);
     if (useOffset) {

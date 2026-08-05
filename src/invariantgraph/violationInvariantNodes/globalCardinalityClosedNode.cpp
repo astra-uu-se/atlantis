@@ -167,7 +167,8 @@ bool GlobalCardinalityClosedNode::replace() {
   if (!isReified() && shouldHold()) {
     invariantGraph().addInvariantNode(std::make_shared<GlobalCardinalityNode>(
         invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
-        std::vector<Int>{_cover}, std::vector<VarNodeId>{outputVarNodeIds()}, std::move(_countOffsets)));
+        std::vector<Int>{_cover}, std::vector<VarNodeId>{outputVarNodeIds()},
+        std::move(_countOffsets)));
     return true;
   }
 

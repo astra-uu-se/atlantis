@@ -131,8 +131,8 @@ class int_lin_neTest : public FznTestBase {
 
   void generate() override {
     const size_t size = *rc::gen::inRange<size_t>(0, 4);
-    coeffs = *rc::gen::container<std::vector<Int>>(
-                        size, rc::gen::inRange(-2, 2));
+    coeffs =
+        *rc::gen::container<std::vector<Int>>(size, rc::gen::inRange(-2, 2));
     addArg(coeffs);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
@@ -184,6 +184,8 @@ class int_lin_neTest : public FznTestBase {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(int_lin_neTest, RapidCheck, ()) { rapidCheck(true, true); }
+RC_GTEST_FIXTURE_PROP(int_lin_neTest, RapidCheck, ()) {
+  rapidCheck(true, true);
+}
 
 }  // namespace atlantis::testing

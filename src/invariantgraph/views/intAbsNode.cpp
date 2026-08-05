@@ -48,16 +48,20 @@ bool IntAbsNode::constrainsOutput(VarNodeId) const {
       return !outputVarNodeConst(0).constDomain()->contains(lb, ub);
     }
     if (ub <= 0) {
-      return !outputVarNodeConst(0).constDomain()->contains(overflow::saturatingAbs(ub), overflow::saturatingAbs(lb));
+      return !outputVarNodeConst(0).constDomain()->contains(
+          overflow::saturatingAbs(ub), overflow::saturatingAbs(lb));
     }
-    return !outputVarNodeConst(0).constDomain()->contains(0, std::max(overflow::saturatingAbs(lb), ub));
+    return !outputVarNodeConst(0).constDomain()->contains(
+        0, std::max(overflow::saturatingAbs(lb), ub));
   }
   if (lb >= 0) {
-    return !outputVarNodeConst(0).constDomain()->contains(*staticInputVarNodeConst(0).constDomain());
+    return !outputVarNodeConst(0).constDomain()->contains(
+        *staticInputVarNodeConst(0).constDomain());
   }
   std::vector<Int> vals(staticInputVarNodeConst(0).constDomain()->size());
   size_t i = 0;
-  for (auto iter = staticInputVarNodeConst(0).constDomain()->begin(); iter != staticInputVarNodeConst(0).constDomain()->end(); ++iter) {
+  for (auto iter = staticInputVarNodeConst(0).constDomain()->begin();
+       iter != staticInputVarNodeConst(0).constDomain()->end(); ++iter) {
     vals[i++] = overflow::saturatingAbs(*iter);
   }
   const SortedUniqueVector sortedVals(std::move(vals));

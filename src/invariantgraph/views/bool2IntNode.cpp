@@ -40,10 +40,12 @@ void Bool2IntNode::updateState() {
 }
 
 bool Bool2IntNode::constrainsOutput(VarNodeId) const {
-  if (staticInputVarNodeConst(0).inDomain(bool{false}) && !outputVarNodeConst(0).inDomain(Int{0})) {
+  if (staticInputVarNodeConst(0).inDomain(bool{false}) &&
+      !outputVarNodeConst(0).inDomain(Int{0})) {
     return true;
   }
-  if (staticInputVarNodeConst(0).inDomain(bool{true}) && !outputVarNodeConst(0).inDomain(Int{1})) {
+  if (staticInputVarNodeConst(0).inDomain(bool{true}) &&
+      !outputVarNodeConst(0).inDomain(Int{1})) {
     return true;
   }
   return false;
@@ -53,14 +55,21 @@ bool Bool2IntNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE) {
     return false;
   }
-  return varNodeConst(staticInputVarNodeIds().front()).staticInputTo().size() == 1 && varNodeConst(staticInputVarNodeIds().front()).definingNodes().empty() && !varNodeConst(outputVarNodeIds().front()).staticInputTo().empty();
+  return varNodeConst(staticInputVarNodeIds().front()).staticInputTo().size() ==
+             1 &&
+         varNodeConst(staticInputVarNodeIds().front())
+             .definingNodes()
+             .empty() &&
+         !varNodeConst(outputVarNodeIds().front()).staticInputTo().empty();
 }
 
 bool Bool2IntNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  invariantGraph().addInvariantNode(std::make_shared<Int2BoolNode>(invariantGraph(), outputVarNodeIds().front(), staticInputVarNodeIds().front()));
+  invariantGraph().addInvariantNode(std::make_shared<Int2BoolNode>(
+      invariantGraph(), outputVarNodeIds().front(),
+      staticInputVarNodeIds().front()));
   return true;
 }
 
