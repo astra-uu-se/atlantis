@@ -4,6 +4,21 @@
 
 namespace atlantis::testing {
 
-TEST(FznCarSequencing, DISABLED_Solve) { testModelFile("car_sequencing.fzn"); }
+TEST(FznCompDomain, Solve) {
+  const std::vector<std::vector<Int>> expectedOutputs{{1, 1, 2, 4},
+{1, 1, 4, 2},
+{1, 2, 1, 4},
+{1, 2, 4, 1},
+{1, 4, 1, 2},
+{1, 4, 2, 1},
+{2, 1, 1, 4},
+{2, 1, 4, 1},
+{2, 4, 1, 1},
+{4, 1, 1, 2},
+{4, 1, 2, 1},
+{4, 2, 1, 1}};
+
+  testModelFile("test/comp_domain_ann.fzn", expectedOutputs);
+}
 
 }  // namespace atlantis::testing

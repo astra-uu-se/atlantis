@@ -4,8 +4,9 @@
 
 namespace atlantis::testing {
 
-TEST(FznSimpleMinimize, DISABLED_Solve) {
-  testModelFile("simple_minimize.fzn");
+TEST(FznSimpleMinimize, Solve) {
+  const std::unordered_set<Int> validObjectives{1,2,3};
+  testModelFile("test/simple_minimize.fzn", validObjectives);
 }
 
 }  // namespace atlantis::testing

@@ -4,5 +4,5 @@
 
 namespace atlantis::testing {
 
-TEST(FznJsp, Solve) { testModelFile("jobshop/12-12-0-1_7.fzn"); }
+TEST(FznVarSet, Solve) { testModelFile("test/var_set_2.fzn"); }
 }  // namespace atlantis::testing
