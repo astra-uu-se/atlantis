@@ -46,7 +46,7 @@ TEST(FznTsp, Solve) {
           const search::SavedAssignment& sol,
           const std::optional<
               std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
-        const std::vector<Int>& solution = sol.getOutputValues();
+        const std::vector<Int>& solution = sol.outputValues();
         EXPECT_EQ(solution.size(), duration.size());
         bool validSolution = solution.size() == duration.size();
         std::vector<bool> visited(solution.size(), false);

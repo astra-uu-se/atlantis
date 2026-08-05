@@ -32,7 +32,7 @@ inline FznBackend createBackend(const char* modelFile, logging::Logger& logger,
   return backend;
 }
 
-static void testModelFile(
+inline void testModelFile(
     const char* modelFile,
     const std::function<void(const search::SavedAssignment&,
                              const std::optional<std::vector<
@@ -49,7 +49,7 @@ static void testModelFile(
   backend.join(logger);
 }
 
-static void testModelFile(
+inline void testModelFile(
     const char* modelFile, const std::vector<std::vector<Int>>& expectedOutputs,
     const logging::Level logLvl = logging::Level::LVL_ERROR,
     const std::optional<std::uint_fast32_t> seed = {}) {
@@ -63,7 +63,7 @@ static void testModelFile(
               std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
         solution = sol;
         EXPECT_EQ(sol.cost().violation(), 0);
-        const std::vector<Int>& actualOutput = sol.getOutputValues();
+        const std::vector<Int>& actualOutput = sol.outputValues();
         size_t outputIndex = expectedOutputs.size();
         for (size_t i = 0; i < expectedOutputs.size(); ++i) {
           if (outputIndex < expectedOutputs.size()) {
@@ -96,7 +96,7 @@ static void testModelFile(
   backend.join(logger);
 }
 
-static void testModelFile(
+inline void testModelFile(
     const char* modelFile,
     const std::unordered_set<Int>& validObjectives = std::unordered_set<Int>{},
     const logging::Level logLvl = logging::Level::LVL_ERROR,

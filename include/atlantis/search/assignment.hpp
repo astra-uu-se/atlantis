@@ -76,11 +76,11 @@ class Assignment {
 
   [[nodiscard]] ObjectiveDirection objectiveDirection() const;
 
-  [[nodiscard]] Cost getCost() const;
+  [[nodiscard]] Cost cost() const;
 
-  [[nodiscard]] bool hasViolation() const;
+  [[nodiscard]] bool hasViolation() const noexcept;
 
-  [[nodiscard]] bool hasObjective() const;
+  [[nodiscard]] bool hasObjective() const noexcept;
 
   void setAssignment(const SavedAssignment& saved);
 };

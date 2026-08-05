@@ -12,7 +12,7 @@ static void knapsackSolutions(const search::SavedAssignment& sol,
   constexpr Int capacity = 269;
   constexpr std::array<Int, 10> weight{95, 4, 60, 32, 23, 72, 80, 62, 65, 46};
   constexpr std::array<Int, 10> profit{55, 10, 47, 5, 4, 50, 8, 61, 85, 87};
-  const std::vector<Int>& outputs = sol.getOutputValues();
+  const std::vector<Int>& outputs = sol.outputValues();
   Int totalWeight = 0;
   Int totalProfit = 0;
   EXPECT_EQ(outputs.size(), weight.size());

@@ -14,7 +14,6 @@
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/metaheuristic.hpp"
 #include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
-#include "atlantis/search/objective.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
@@ -84,13 +83,13 @@ void SolverThread::solve() {
     // TODO: This can possibly be extracted, or restricted to one thread
     if (mapping.globalNeighborhood()->coveredVars().empty()) {
       _threadController->trySolution(
-          _threadId, search::SavedAssignment(assignment, outputVarIds),
+          static_cast<Int>(_threadId), search::SavedAssignment(assignment, outputVarIds),
           nullptr);
     } else {
       search::RandomProvider randomProvider(_seed);
       search::SearchProcedure search(
           randomProvider, assignment, mapping.globalNeighborhood(), _searchType,
-          _threadController, outputVarIds, _threadId);
+          _threadController, outputVarIds, static_cast<Int>(_threadId));
 
       search::SearchController searchController(
           mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,

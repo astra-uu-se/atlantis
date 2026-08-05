@@ -23,10 +23,10 @@ SavedAssignment SearchProcedure::saveAssignment() const {
 
 bool SearchProcedure::onAccepted(
     const std::shared_ptr<CounterStatistic>& improvingSolutions,
-    std::unique_ptr<MetaHeuristic>&& metaHeuristic) {
+    MetaHeuristic& metaHeuristic) {
   // If a worsening move was accepted, there's no need to communicate
   if (_localBestAssignment.has_value() &&
-      _localBestAssignment->cost() <= _assignment.getCost()) {
+      _localBestAssignment->cost() <= _assignment.cost()) {
     return false;
   }
 
@@ -43,10 +43,12 @@ bool SearchProcedure::onAccepted(
 
     switch (_searchType) {
       case SearchType::BESTCOST: {
-        metaHeuristic->setCost(_localBestAssignment.value().cost());
+        metaHeuristic.setCost(_localBestAssignment.value().cost());
+        break;
       }
       case SearchType::BEAMSEARCH: {
         _assignment.setAssignment(_localBestAssignment.value());
+        break;
       }
       default:;
     }
@@ -68,7 +70,7 @@ Int SearchProcedure::run(SearchController& searchController,
       std::make_shared<CounterStatistic>("communications");
   const auto stats = makeStats({improvingSolutions, communications});
   _threadController->setThreadStats(_threadId, stats);
-  auto roundStats = metaHeuristic->currentRoundStatistics();
+  const auto roundStats = metaHeuristic->currentRoundStatistics();
   stats->setRoundStatistics(roundStats);
 
 #ifdef MORE_STATS
@@ -80,12 +82,14 @@ Int SearchProcedure::run(SearchController& searchController,
 #endif
 
   do {
+    // TODO: This is where we restart. If the objective has been improved, then Gecode should recompute the fixpoint, and a new mapping should be generated.
     _assignment.initialize(_random);
 
     // TODO: handle this case: this should call some separate version
     if (_assignment.satisfiesConstraints()) {
-      if (onAccepted(improvingSolutions, std::move(metaHeuristic)))
+      if (onAccepted(improvingSolutions, *metaHeuristic)) {
         communications->increment();
+      }
     }
 
     if (_searchType == SearchType::BEAMSEARCH &&
@@ -124,7 +128,7 @@ Int SearchProcedure::run(SearchController& searchController,
 #endif
 
         if (!_hasSolution || _assignment.satisfiesConstraints()) {
-          if (onAccepted(improvingSolutions, std::move(metaHeuristic)))
+          if (onAccepted(improvingSolutions, *metaHeuristic))
             communications->increment();
         }
       }

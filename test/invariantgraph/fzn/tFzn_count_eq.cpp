@@ -173,6 +173,6 @@ class fzn_count_eqTest : public fzn_countTest {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(fzn_count_eqTest, RapidCheck, ()) { rapidCheck(); }
+RC_GTEST_FIXTURE_PROP(fzn_count_eqTest, RapidCheck, ()) { rapidCheck(true, true); }
 
 }  // namespace atlantis::testing

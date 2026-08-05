@@ -20,7 +20,7 @@ void FznBackend::onSolutionDefault(
     const search::SavedAssignment& assignment,
     const std::optional<
         std::vector<std::shared_ptr<search::SearchStatistics>>>&) const {
-  _fznOutput->displaySolution(std::cout, assignment.getOutputValues());
+  _fznOutput->displaySolution(std::cout, assignment.outputValues());
   std::cout << "----------" << std::endl;
 }
 

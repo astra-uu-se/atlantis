@@ -46,7 +46,7 @@ TEST(FznTspAllDiff, Solve) {
           const search::SavedAssignment& sol,
           const std::optional<
               std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
-        const std::vector<Int>& solution = sol.getOutputValues();
+        const std::vector<Int>& solution = sol.outputValues();
         bool validSolution = true;
         for (size_t i = 0; i < solution.size(); ++i) {
           for (size_t j = i + 1; j < solution.size(); ++j) {

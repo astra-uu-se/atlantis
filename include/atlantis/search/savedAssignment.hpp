@@ -1,7 +1,5 @@
 #pragma once
 
-#include <unordered_map>
-
 #include "assignment.hpp"
 #include "atlantis/invariantgraph/solverMapping.hpp"
 #include "atlantis/invariantgraph/types.hpp"
@@ -18,27 +16,16 @@ class SavedAssignment {
  public:
   explicit SavedAssignment(
       const Assignment& assignment,
-      const std::vector<propagation::VarViewId>& outputVars)
-      : _cost(assignment.getCost()),
-        _outputValues(outputVars.size()),
-        _searchValues(assignment.searchVars().size()) {
-    for (std::size_t i = 0; i < outputVars.size(); ++i) {
-      _outputValues[i] = assignment.committedValue(outputVars[i]);
-    }
-    for (size_t i = 0; i < assignment.searchVars().size(); ++i) {
-      _searchValues[i] = {assignment.searchVars()[i],
-                          assignment.currentValue(assignment.searchVars()[i])};
-    }
-  }
+      const std::vector<propagation::VarViewId>& outputVars);
 
-  [[gnu::always_inline]] [[nodiscard]] Cost cost() const { return _cost; }
+  [[gnu::always_inline]] [[nodiscard]] Cost cost() const noexcept { return _cost; }
 
-  [[nodiscard]] const std::vector<Int>& getOutputValues() const {
+  [[nodiscard]] const std::vector<Int>& outputValues() const noexcept {
     return _outputValues;
   }
 
   [[nodiscard]] const std::vector<std::pair<propagation::VarId, Int>>&
-  getSearchValues() const {
+  searchValues() const noexcept {
     return _searchValues;
   }
 
