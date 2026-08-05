@@ -21,6 +21,9 @@ class IntDivNode : public InvariantNode {
 
   void updateState() override;
 
+  [[nodiscard]] bool constrainsOutput(
+      VarNodeId) const override { return true; }
+
   [[nodiscard]] bool canBeReplaced() const override;
 
   [[nodiscard]] bool replace() override;

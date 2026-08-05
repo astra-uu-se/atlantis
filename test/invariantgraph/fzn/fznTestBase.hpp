@@ -85,6 +85,47 @@ namespace atlantis::testing {
 std::string to_string(bool v);
 
 class FznTestBase : public ::testing::Test {
+ protected:
+  void SetUp() override;
+
+  IntArg _addIntArg(IntArgState state, Int val, const std::string& identifier);
+
+  IntArg _addIntArg(IntArgState state, Int lb, Int ub,
+                   const std::string& identifier = "i");
+
+  IntArg _addIntArg(IntArgState state, const std::vector<Int>& dom,
+                   const std::string& identifier = "i");
+
+  IntArg _addIntArg(IntArgState state, const std::string& identifier = "i");
+
+  IntArg _addIntArg(Int lb, Int ub, const std::string& identifier = "i");
+
+  std::shared_ptr<BoolVarArray> _addBoolVarArray(
+      size_t arraySize, const std::string& identifier = "b_arr",
+      const std::string& varPrefix = "b_");
+
+  std::shared_ptr<BoolVarArray> _addBoolVarArray(
+  const std::vector<BoolArgState>& argStates,
+  const std::vector<std::string>& identifiers,
+  const std::string& identifier = "b_arr");
+
+  std::shared_ptr<IntVarArray> _addIntVarArray(
+      const std::vector<IntArgState>& argStates,
+      const std::vector<std::pair<Int, Int>>& domains,
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "i_arr");
+
+  std::shared_ptr<IntVarArray> _addIntVarArray(
+      const std::vector<IntArgState>& argStates,
+      const std::vector<Int>& fixedVals,
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "i_arr");
+
+  std::shared_ptr<IntVarArray> _addIntVarArray(
+      const std::vector<IntArgState>& argStates,
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "i_arr");
+
  public:
   std::shared_ptr<Model> _model;
   std::shared_ptr<FznInvariantGraph> _invariantGraph;
@@ -104,8 +145,6 @@ class FznTestBase : public ::testing::Test {
 
   const Int defaultLb = -3;
   const Int defaultUb = 3;
-
-  void SetUp() override;
 
   void generateConstraint();
 
@@ -127,6 +166,7 @@ class FznTestBase : public ::testing::Test {
 
   [[nodiscard]] propagation::VarViewId varId(
       const std::string& identifier) const;
+  propagation::VarViewId varId(VarNodeId vId) const;
 
   void setValue(const std::string& identifier, Int val) const;
 
@@ -177,23 +217,29 @@ class FznTestBase : public ::testing::Test {
 
   void addIntPar(const std::string& identifier, Int val);
 
-  void addIntSetPar(const std::string& identifier, std::vector<Int>&& val);
+  void addIntSetPar(const std::string& identifier, std::vector<Int>&& vals);
 
-  IntArg addIntArg(IntArgState state, Int lb, Int ub,
+  [[deprecated]] IntArg addIntArg(IntArgState state, Int val, const std::string& identifier);
+
+  [[deprecated]] IntArg addIntArg(IntArgState state, Int lb, Int ub,
                    const std::string& identifier = "i");
 
-  IntArg addIntArg(IntArgState state, const std::vector<Int>& dom,
+  [[deprecated]] IntArg addIntArg(IntArgState state, const std::vector<Int>& dom,
                    const std::string& identifier = "i");
 
-  IntArg addIntArg(IntArgState state, const std::string& identifier = "i");
+  [[deprecated]] IntArg addIntArg(IntArgState state, const std::string& identifier = "i");
 
-  IntArg addIntArg(Int lb, Int ub, const std::string& identifier = "i");
+  [[deprecated]] IntArg addIntArg(Int lb, Int ub, const std::string& identifier = "i");
 
   IntArg addIntArg(const std::string& identifier = "i");
 
-  [[nodiscard]] std::shared_ptr<IntVarArray> genIntParArray(
+  std::shared_ptr<IntVarArray> addIntParArray(
+      const std::vector<Int>& pars,
+      const std::string& identifier = "par_i_arr");
+
+  std::shared_ptr<IntVarArray> addIntParArray(
       size_t arraySize, Int lb, Int ub,
-      const std::string& identifier = "i_arr");
+      const std::string& identifier = "par_i_arr");
 
   std::shared_ptr<IntVarArray> genIntVarArray(
       size_t arraySize, Int lb, Int ub, const std::string& identifier = "i_arr",
@@ -203,8 +249,8 @@ class FznTestBase : public ::testing::Test {
       size_t arraySize, const std::string& identifier = "i_arr",
       const std::string& varPrefix = "i_");
 
-  std::shared_ptr<IntVarArray> genIntParArray(
-      size_t arraySize, const std::string& identifier = "i_arr");
+  std::shared_ptr<IntVarArray> addIntParArray(
+      size_t arraySize, const std::string& identifier = "par_i_arr");
 
   std::shared_ptr<BoolVar> genBoolVar(BoolArgState state,
                                       const std::string& identifier = "b");
@@ -217,40 +263,45 @@ class FznTestBase : public ::testing::Test {
 
   BoolArg addBoolArg(const std::string& identifier = "b");
 
-  std::shared_ptr<BoolVarArray> genBoolParArray(
-      size_t arraySize, const std::string& identifier = "b_arr");
+  std::shared_ptr<BoolVarArray> addBoolParArray(
+      const std::vector<bool>& pars, const std::string& identifier = "par_b_arr");
 
-  std::shared_ptr<BoolVarArray> addBoolVarArray(
+  std::shared_ptr<BoolVarArray> addBoolParArray(
+      size_t arraySize, const std::string& identifier = "par_b_arr");
+
+  [[deprecated]] std::shared_ptr<BoolVarArray> addBoolVarArray(
       size_t arraySize, const std::string& identifier = "b_arr",
       const std::string& varPrefix = "b_");
 
-  std::shared_ptr<BoolVarArray> addBoolVarArray(
+  [[deprecated]] std::shared_ptr<BoolVarArray> addBoolVarArray(
       const std::vector<BoolArgState>& argStates,
       const std::vector<std::string>& identifiers,
       const std::string& identifier = "b_arr");
 
-  std::shared_ptr<BoolVarArray> addBoolVarArray(
-      const std::vector<std::string>& identifiers,
-      const std::string& identifier = "b_arr");
-
-  std::shared_ptr<IntVarArray> addIntVarArray(
+  [[deprecated]] std::shared_ptr<IntVarArray> addIntVarArray(
       const std::vector<IntArgState>& argStates,
       const std::vector<std::pair<Int, Int>>& domains,
       const std::vector<std::string>& identifiers,
       const std::string& identifier = "i_arr");
 
-  std::shared_ptr<IntVarArray> addIntVarArray(
+  [[deprecated]] std::shared_ptr<IntVarArray> addIntVarArray(
+      const std::vector<IntArgState>& argStates,
+      const std::vector<Int>& fixedVals,
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "i_arr");
+
+  [[deprecated]] std::shared_ptr<IntVarArray> addIntVarArray(
       const std::vector<IntArgState>& argStates,
       const std::vector<std::string>& identifiers,
       const std::string& identifier = "i_arr");
 
+  std::shared_ptr<BoolVarArray> addBoolVarArray(
+      const std::vector<std::string>& identifiers,
+      const std::string& identifier = "b_arr");
+
   std::shared_ptr<IntVarArray> addIntVarArray(
       const std::vector<std::string>& identifiers,
       const std::string& identifier = "i_arr");
-
-  std::shared_ptr<IntVarArray> addIntVarArray(
-      size_t arraySize, const std::string& identifier = "i_arr",
-      const std::string& varPrefix = "i_");
 
   Arg addArg(Int val);
 
@@ -270,6 +321,10 @@ class FznTestBase : public ::testing::Test {
   bool randBool();
 
   void changeValue(const std::string& identifier, bool committedValue);
+
+  void changeValue(VarNodeId vNodeId, bool committedValue);
+
+  void markOutputVar(const std::string&);
 
   void rapidCheck(bool reachesFixpoint = true, bool assumeCorrect = false);
 };

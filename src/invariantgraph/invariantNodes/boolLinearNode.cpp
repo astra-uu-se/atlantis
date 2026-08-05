@@ -11,6 +11,7 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/ifThenElseConst.hpp"
 #include "atlantis/propagation/views/intOffsetView.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -80,6 +81,12 @@ void BoolLinearNode::updateState() {
   }
 }
 
+bool BoolLinearNode::constrainsOutput(VarNodeId) const {
+  const Int lb = linearLb(invariantGraphConst(), _coeffs, staticInputVarNodeIds(), _rhsOffset);
+  const Int ub = linearUb(invariantGraphConst(), _coeffs, staticInputVarNodeIds(), _rhsOffset);
+  return !outputVarNodeConst(0).constDomain()->contains(lb, ub);
+}
+
 void BoolLinearNode::registerOutputVars(propagation::SolverBase& solver,
                                         SolverMapping& mapping) const {
   if (staticInputVarNodeIds().size() == 1) {
@@ -92,7 +99,16 @@ void BoolLinearNode::registerOutputVars(propagation::SolverBase& solver,
     if (_rhsOffset != 0) {
       makeSolverVar(outputVarNodeIds().front(), solver, mapping);
     } else if (mapping.intermediateId(id(), 0) == propagation::NULL_ID) {
-      mapping.setIntermediateId(id(), 0, solver.makeIntVar(0, 0, 0));
+      Int ub = 0;
+      Int lb = 0;
+      for (const Int c : _coeffs) {
+        if (c > 0) {
+          ub = overflow::saturatingAdd(ub, c);
+        } else {
+          lb = overflow::saturatingAdd(lb, c);
+        }
+      }
+      mapping.setIntermediateId(id(), 0, solver.makeIntVar(lb, lb, ub));
       mapping.setSolverId(
           outputVarNodeIds().front(),
           solver.makeIntView<propagation::IntOffsetView>(

@@ -21,7 +21,7 @@ class bool_xorTest : public FznTestBase {
   std::vector<std::string> inputs{"b_1", "b_2"};
   std::string reified{"reified"};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const size_t numTrue = std::ranges::count_if(
         inputs,
         [&](const auto& input) { return boolVal(input, committedValue); });
@@ -46,6 +46,7 @@ class bool_xorTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
@@ -88,7 +89,7 @@ class bool_xorTest : public FznTestBase {
     });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : inputs) {
       if (varId(input) != propagation::NULL_ID && randBool()) {
         changeValue(input, committedValue);

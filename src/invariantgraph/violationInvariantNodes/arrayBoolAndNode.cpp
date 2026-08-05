@@ -57,7 +57,6 @@ void ArrayBoolAndNode::postConstraint() {
 void ArrayBoolAndNode::updateState() {
   ViolationInvariantNode::updateState();
 
-  // Constraint has subsumed:
   if (!isReified()) {
     bool alwaysHolds = false;
     if (shouldHold()) {

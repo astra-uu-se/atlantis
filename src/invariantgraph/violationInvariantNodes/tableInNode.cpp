@@ -240,6 +240,12 @@ bool TableInNode::replace() {
   return true;
 }
 
+std::pair<size_t, size_t> TableInNode::implicitRank() const {
+  return {10000, staticInputVarNodeIds().size() + outputVarNodeIds().size()};
+}
+
+
+
 bool TableInNode::canBeMadeImplicit() const {
   return !isReified() && shouldHold() &&
          state() != InvariantNodeState::SUBSUMED &&

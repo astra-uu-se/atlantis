@@ -18,6 +18,9 @@ class ImplicitConstraintNode : public InvariantNode {
 
   void init(InvariantNodeId) override;
 
+  [[nodiscard]] bool constrainsOutput(
+      VarNodeId) const override { return true; }
+
   virtual void updateDomainTypes() {};
 
   void registerOutputVars(propagation::SolverBase&,

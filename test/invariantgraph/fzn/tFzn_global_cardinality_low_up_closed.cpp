@@ -66,7 +66,7 @@ class fzn_global_cardinality_low_up_closedTest : public FznTestBase {
     return vti;
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     RC_LOG() << "-----" << std::endl
              << "FznCountEqTest::isSatisfied(" << to_string(committedValue)
              << ")" << std::endl;
@@ -143,6 +143,7 @@ class fzn_global_cardinality_low_up_closedTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool canMove() const override {

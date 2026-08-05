@@ -130,16 +130,15 @@ class int_lin_neTest : public FznTestBase {
   }
 
   void generate() override {
-    const size_t size = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
-    coeffs = true ? std::vector<Int>{-1}
-                  : *rc::gen::container<std::vector<Int>>(
+    const size_t size = *rc::gen::inRange<size_t>(0, 4);
+    coeffs = *rc::gen::container<std::vector<Int>>(
                         size, rc::gen::inRange(-2, 2));
     addArg(coeffs);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
-    addIntVarArray({IntArgState::VAR}, {{-3, 3}}, inputs);
+    addIntVarArray(inputs);
 
     Int lb = -1;
     Int ub = 2;
@@ -148,10 +147,10 @@ class int_lin_neTest : public FznTestBase {
       lb += std::min<Int>(0, c);
     }
 
-    bound = true ? -2 : *rc::gen::inRange<Int>(lb, ub);
+    bound = *rc::gen::inRange<Int>(lb, ub);
     addArg(bound);
 
-    const bool isReified = true ? false : *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "int_lin_ne_reif" : "int_lin_ne";
     if (isReified) {
       addBoolArg(reified);
@@ -159,6 +158,7 @@ class int_lin_neTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool canMove() const override {
@@ -184,6 +184,6 @@ class int_lin_neTest : public FznTestBase {
   }
 };
 
-RC_GTEST_FIXTURE_PROP(int_lin_neTest, RapidCheck, ()) { rapidCheck(); }
+RC_GTEST_FIXTURE_PROP(int_lin_neTest, RapidCheck, ()) { rapidCheck(true, true); }
 
 }  // namespace atlantis::testing

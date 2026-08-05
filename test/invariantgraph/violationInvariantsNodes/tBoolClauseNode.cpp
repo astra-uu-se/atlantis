@@ -101,9 +101,13 @@ class BoolClauseNodeTestFixture : public NodeTestBase<BoolClauseNode> {
       retrieveBoolVarNode(negVars.back());
     }
 
+    for (const auto& negVar : negVars) {
+      markOutputVar(negVar);
+    }
     if (isReified()) {
       reifiedVar.domain = std::pair<Int, Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(posVars),
                           varNodeIds(negVars), varNodeId(reifiedVar));
     } else {

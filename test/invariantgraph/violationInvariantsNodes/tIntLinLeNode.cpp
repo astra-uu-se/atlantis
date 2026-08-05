@@ -61,14 +61,18 @@ class IntLinLeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
       }
       inputVars.emplace_back("input_" + std::to_string(i), lb, ub, true);
       retrieveIntVarNode(inputVars.back());
-      if (!shouldBeReplaced()) {
-        _invariantGraph->root().addSearchVarNode(varNodeId(inputVars.at(i)));
+    }
+
+    if (!shouldBeMadeImplicit()) {
+      for (const auto& var : inputVars) {
+        _invariantGraph->root().addSearchVarNode(varNodeId(var));
       }
     }
 
     if (isReified()) {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                           varNodeIds(inputVars), RelationType::REL_TYPE_LE,
                           bound, varNodeId(reifiedVar));
@@ -80,7 +84,24 @@ class IntLinLeNodeTestFixture : public NodeTestBase<IntLinRelNode> {
   }
 };
 
+TEST_P(IntLinLeNodeTestFixture, makeImplicit) {
+  EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+  _invariantGraph->constraintSolver().fixPoint();
+  _invariantGraph->updateDomains();
+  invNode().updateState();
+  if (shouldBeMadeImplicit()) {
+    EXPECT_EQ(invNode().state(), InvariantNodeState::ACTIVE);
+    EXPECT_TRUE(invNode().canBeMadeImplicit());
+    EXPECT_TRUE(invNode().makeImplicit());
+    invNode().deactivate();
+    EXPECT_EQ(invNode().state(), InvariantNodeState::SUBSUMED);
+  }
+}
+
 TEST_P(IntLinLeNodeTestFixture, propagation) {
+  if (shouldBeMadeImplicit()) {
+    return;
+  }
   _invariantGraph->close();
   _solverMapping =
       std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
@@ -150,6 +171,7 @@ INSTANTIATE_TEST_SUITE_P(
                       ParamData{ViolationInvariantType::CONSTANT_FALSE},
                       ParamData{ViolationInvariantType::REIFIED},
                       ParamData{InvariantNodeAction::SUBSUME},
-                      ParamData{InvariantNodeAction::REPLACE}));
+                      ParamData{InvariantNodeAction::REPLACE},
+                      ParamData{InvariantNodeAction::MAKE_IMPLICIT}));
 
 }  // namespace atlantis::testing

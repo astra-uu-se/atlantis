@@ -54,6 +54,7 @@ class ArrayVarElementNodeTestFixture
     } else {
       retrieveBoolVarNode(outputVar);
     }
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(idxVar),
                         varNodeIds(varArray), varNodeId(outputVar), offsetIdx);

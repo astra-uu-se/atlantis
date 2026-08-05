@@ -72,6 +72,7 @@ class ArrayVarElement2dNodeTestFixture
       outputVar.domain = std::pair<Int, Int>(0, 1);
       retrieveBoolVarNode(outputVar);
     }
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(rowIdx), varNodeId(colIdx),
                         varNodeIds(varMatrix), varNodeId(outputVar), rowOffset,

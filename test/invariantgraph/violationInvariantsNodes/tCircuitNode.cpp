@@ -13,7 +13,7 @@ using namespace atlantis::invariantgraph;
 using ::testing::ContainerEq;
 
 class CircuitNodeTestFixture : public NodeTestBase<CircuitNode> {
- public:
+ protected:
   Int numInputs{4};
   std::vector<Var> inputVars;
 

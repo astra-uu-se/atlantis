@@ -43,7 +43,7 @@ class bool_lin_leTest : public FznTestBase {
     return {lb, ub};
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     Int sum = 0;
     for (size_t i = 0; i < coeffs.size(); ++i) {
       if (coeffs.at(i) != 0) {
@@ -116,6 +116,7 @@ class bool_lin_leTest : public FznTestBase {
     constraintIdentifier = "bool_lin_le";
     addBoolPar(reified, true);
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool canMove() const override {

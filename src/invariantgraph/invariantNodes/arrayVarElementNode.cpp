@@ -110,6 +110,24 @@ void ArrayVarElementNode::updateState() {
     replaceDynamicInputVarNode(dynamicInputVarNodeIds()[i], prevVarNodeId);
   }
 }
+bool ArrayVarElementNode::constrainsOutput(VarNodeId) const {
+  std::vector<Int> values;
+  values.reserve(outputVarNodeConst(0).constDomain()->size());
+  for (auto indexIter = staticInputVarNodeConst(0).constDomain()->begin(); indexIter != staticInputVarNodeConst(0).constDomain()->end(); ++indexIter) {
+    const Int index = *indexIter - _offset;
+    if (index < 0) {
+      continue;;
+    }
+    if (static_cast<Int>(dynamicInputVarNodeIds().size()) < index) {
+      break;
+    }
+    for (auto valIter = dynamicInputVarNodeConst(index).constDomain()->begin(); valIter != dynamicInputVarNodeConst(index).constDomain()->end(); ++valIter) {
+      values.emplace_back(*valIter);
+    }
+  }
+  const SortedUniqueVector sortedVals(std::move(values));
+  return !outputVarNodeConst(0).constDomain()->contains(sortedVals);
+}
 
 bool ArrayVarElementNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE) {

@@ -169,6 +169,10 @@ void Solver::beginMove() {
 }
 
 void Solver::endMove() {
+  assert(_solverState != SolverState::COMMIT);
+  assert(_solverState != SolverState::IDLE);
+  assert(_solverState != SolverState::PROBE);
+  assert(_solverState != SolverState::PROCESSING);
   assert(_solverState == SolverState::MOVE);
   _solverState = SolverState::IDLE;
 }

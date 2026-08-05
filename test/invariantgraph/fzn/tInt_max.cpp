@@ -53,6 +53,7 @@ class int_maxTest : public FznTestBase {
     addIntArg(inputs.back());
     addIntArg(output);
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool isSatisfied(const bool committedValue) const override {

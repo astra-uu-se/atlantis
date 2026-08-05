@@ -80,6 +80,22 @@ void ArrayElementNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
+bool ArrayElementNode::constrainsOutput(VarNodeId) const {
+  std::vector<Int> values;
+  values.reserve(_parVector.size());
+  for (auto iter = staticInputVarNodeConst(0).constDomain()->begin(); iter != staticInputVarNodeConst(0).constDomain()->end(); ++iter) {
+    const Int index = *iter - _offset;
+    if (index < 0) {
+      continue;;
+    }
+    if (static_cast<Int>(_parVector.size()) < index) {
+      break;
+    }
+    values.emplace_back(_parVector[index]);
+  }
+  const SortedUniqueVector sortedVals(std::move(values));
+  return !outputVarNodeConst(0).constDomain()->contains(sortedVals);
+}
 
 void ArrayElementNode::registerOutputVars(propagation::SolverBase& solver,
                                           SolverMapping& mapping) const {

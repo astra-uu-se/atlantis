@@ -9,14 +9,15 @@
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/intAbsView.hpp"
 #include "atlantis/utils/domains.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::invariantgraph {
 
-IntAbsNode::IntAbsNode(InvariantGraph& graph, VarNodeId staticInput,
-                       VarNodeId output)
+IntAbsNode::IntAbsNode(InvariantGraph& graph, const VarNodeId staticInput,
+                       const VarNodeId output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 
-void IntAbsNode::init(InvariantNodeId id) {
+void IntAbsNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
@@ -25,6 +26,7 @@ void IntAbsNode::init(InvariantNodeId id) {
              .varNodeConst(staticInputVarNodeIds().front())
              .isIntVar());
 }
+
 void IntAbsNode::postConstraint() {
   InvariantNode::postConstraint();
   constraintSolver().int_abs(staticInputVarNodeConst(0).constraintVarId(),
@@ -36,6 +38,30 @@ void IntAbsNode::updateState() {
     assert(varNodeConst(input()).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+bool IntAbsNode::constrainsOutput(VarNodeId) const {
+  const Int lb = staticInputVarNodeConst(0).lowerBound();
+  const Int ub = staticInputVarNodeConst(0).upperBound();
+  if (staticInputVarNodeConst(0).constDomain()->isInterval()) {
+    if (lb >= 0) {
+      return !outputVarNodeConst(0).constDomain()->contains(lb, ub);
+    }
+    if (ub <= 0) {
+      return !outputVarNodeConst(0).constDomain()->contains(overflow::saturatingAbs(ub), overflow::saturatingAbs(lb));
+    }
+    return !outputVarNodeConst(0).constDomain()->contains(0, std::max(overflow::saturatingAbs(lb), ub));
+  }
+  if (lb >= 0) {
+    return !outputVarNodeConst(0).constDomain()->contains(*staticInputVarNodeConst(0).constDomain());
+  }
+  std::vector<Int> vals(staticInputVarNodeConst(0).constDomain()->size());
+  size_t i = 0;
+  for (auto iter = staticInputVarNodeConst(0).constDomain()->begin(); iter != staticInputVarNodeConst(0).constDomain()->end(); ++iter) {
+    vals[i++] = overflow::saturatingAbs(*iter);
+  }
+  const SortedUniqueVector sortedVals(std::move(vals));
+  return !outputVarNodeConst(0).constDomain()->contains(sortedVals);
 }
 
 bool IntAbsNode::canBeReplaced() const {

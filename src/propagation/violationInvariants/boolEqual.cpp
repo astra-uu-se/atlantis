@@ -35,7 +35,7 @@ void BoolEqual::updateBounds(const bool widenOnly) {
 void BoolEqual::recompute(const Timestamp ts) {
   updateValue(
       ts, _violationId,
-      (_solver.value(ts, _x) == 0) == (_solver.value(ts, _y) == 0) ? 0 : 1);
+      ((_solver.value(ts, _x) == 0) == (_solver.value(ts, _y) == 0)) ? 0 : 1);
 }
 
 void BoolEqual::notifyInputChanged(const Timestamp ts, LocalId) {

@@ -49,7 +49,7 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
     return bounds;
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     RC_LOG() << "-----" << std::endl
              << "fzn_global_cardinality_low_up::isSatisfied("
              << to_string(committedValue) << ")" << std::endl;
@@ -100,13 +100,13 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
   [[nodiscard]] bool neverSatisfied() const override { return false; }
 
   void generate() override {
-    const size_t inputSize = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t inputSize = *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(inputSize);
     for (size_t i = 0; i < inputSize; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
 
-    const size_t coverSize = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t coverSize = *rc::gen::inRange<size_t>(0, 4);
     cover.reserve(coverSize);
     for (size_t i = 0; i < coverSize; ++i) {
       cover.emplace_back("cover_" + std::to_string(i));
@@ -114,16 +114,15 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
       up.emplace_back("up_" + std::to_string(i));
     }
 
-    addIntVarArray({IntArgState::FIXED, IntArgState::VAR, IntArgState::PAR},
-                   {{-2, -2}, {-3, 3}, {-3, -3}}, inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), {{-2, -2}},
+    addIntVarArray(inputs, "inputs");
+    addIntVarArray(std::vector(cover.size(), IntArgState::PAR),
                    cover, "cover");
-    addIntVarArray(std::vector(low.size(), IntArgState::PAR), {{-3, -3}}, low,
+    addIntVarArray(std::vector(low.size(), IntArgState::PAR), low,
                    "low");
-    addIntVarArray(std::vector(up.size(), IntArgState::PAR), {{2, 2}}, up,
+    addIntVarArray(std::vector(up.size(), IntArgState::PAR), up,
                    "up");
 
-    const bool isReified = true ? false : *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_global_cardinality_low_up_reif"
                                      : "fzn_global_cardinality_low_up";
     if (isReified) {
@@ -132,6 +131,7 @@ class fzn_global_cardinality_low_upTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool canMove() const override {

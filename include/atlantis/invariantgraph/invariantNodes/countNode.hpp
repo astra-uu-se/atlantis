@@ -27,10 +27,14 @@ class CountNode : public InvariantNode {
 
   void updateState() override;
 
+  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
+
+  [[nodiscard]] std::pair<size_t, size_t> implicitRank() const override;
 
   [[nodiscard]] bool canBeMadeImplicit() const override;
 

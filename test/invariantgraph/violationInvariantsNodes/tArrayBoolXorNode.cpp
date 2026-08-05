@@ -73,6 +73,7 @@ class ArrayBoolXorNodeTestFixture : public NodeTestBase<ArrayBoolXorNode> {
     if (isReified()) {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           varNodeId(reifiedVar));
     } else {

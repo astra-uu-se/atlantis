@@ -19,6 +19,8 @@ class BoolLinearNode : public InvariantNode {
 
   void updateState() override;
 
+  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 

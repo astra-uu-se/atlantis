@@ -65,11 +65,18 @@ class InvariantNode {
 
   [[nodiscard]] virtual bool isReified() const;
 
+  [[nodiscard]] virtual bool isViolationInvariant() const;
+
   virtual void updateState();
+
+  [[nodiscard]] virtual bool constrainsOutput(
+      VarNodeId outputVarNodeId) const = 0;
 
   [[nodiscard]] virtual bool canBeReplaced() const;
 
   [[nodiscard]] virtual bool replace();
+
+  [[nodiscard]] virtual std::pair<size_t, size_t> implicitRank() const;
 
   [[nodiscard]] virtual bool canBeMadeImplicit() const;
 
@@ -109,9 +116,9 @@ class InvariantNode {
 
   void removeDynamicInputAtIndex(size_t);
 
-  void removeOutputVarNode(VarNodeId);
+  virtual void removeOutputVarNode(VarNodeId);
 
-  void removeOutputAtIndex(size_t);
+  virtual void removeOutputAtIndex(size_t);
 
   void eraseStaticInputVarNode(size_t index);
 

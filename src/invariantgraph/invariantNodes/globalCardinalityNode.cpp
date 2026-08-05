@@ -40,6 +40,25 @@ void GlobalCardinalityNode::postConstraint() {
       true);
 }
 
+void GlobalCardinalityNode::removeOutputVarNode(const VarNodeId outputVarNodeId) {
+  for (Int i = static_cast<Int>(_cover.size()) - 1; i >= 0; --i) {
+    if (outputVarNodeIds().at(i) == outputVarNodeId) {
+      _cover.erase(_cover.begin() + i);
+      _countOffsets.erase(_countOffsets.begin() + i);
+    }
+  }
+  InvariantNode::removeOutputVarNode(outputVarNodeId);
+  assert(_cover.size() == outputVarNodeIds().size());
+}
+
+void GlobalCardinalityNode::removeOutputAtIndex(const size_t index) {
+  assert(index < _cover.size());
+  _cover.erase(_cover.begin() + static_cast<Int>(index));
+  _countOffsets.erase(_countOffsets.begin() + static_cast<Int>(index));
+  InvariantNode::removeOutputAtIndex(index);
+  assert(_cover.size() == outputVarNodeIds().size());
+}
+
 void GlobalCardinalityNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
 
@@ -61,7 +80,8 @@ void GlobalCardinalityNode::updateState() {
     for (Int dupIndex = static_cast<Int>(_cover.size()) - 1; dupIndex > index;
          --dupIndex) {
       if (_cover[index] == _cover[dupIndex]) {
-        _cover.erase(_cover.begin() + dupIndex);
+        _countOffsets[index] += _countOffsets[dupIndex];
+
         const VarNodeId duplicateNodeId = outputVarNodeIds().at(dupIndex);
         removeOutputAtIndex(dupIndex);
         invariantGraph().replaceVarNode(duplicateNodeId,
@@ -80,7 +100,6 @@ void GlobalCardinalityNode::updateState() {
 
   for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
        --i) {
-    _cover.erase(_cover.begin() + i);
     removeOutputAtIndex(i);
   }
 
@@ -99,6 +118,21 @@ void GlobalCardinalityNode::updateState() {
     }
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+bool GlobalCardinalityNode::constrainsOutput(const VarNodeId outputVarNodeId) const {
+  for (size_t i = 0; i < _cover.size(); ++i) {
+    if (outputVarNodeIds().at(i) != outputVarNodeId) {
+      continue;
+    }
+    const Int ub = _countOffsets[i] + std::ranges::count_if(staticInputVarNodeIds(), [&](const VarNodeId vId) {
+      return varNodeConst(vId).inDomain(_cover[i]);
+    });
+    if (!outputVarNodeConst(i).constDomain()->contains(_countOffsets[i], ub)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool GlobalCardinalityNode::canBeReplaced() const {
@@ -132,7 +166,7 @@ void GlobalCardinalityNode::registerOutputVars(propagation::SolverBase& solver,
     } else {
       assert(mapping.solverId(outputVarNodeIds().at(i)) ==
              propagation::NULL_ID);
-      mapping.setIntermediateId(id(), i, solver.makeIntVar(0, 0, 0));
+      mapping.setIntermediateId(id(), i, solver.makeIntVar(0, 0, std::max<Int>(0, static_cast<Int>(staticInputVarNodeIds().size()) - _countOffsets[i])));
       mapping.setSolverId(
           outputVarNodeIds().at(i),
           solver.makeIntView<propagation::IntOffsetView>(

@@ -329,7 +329,7 @@ void CountRelNode::registerOutputVars(propagation::SolverBase& solver,
       if (_fixedBound.has_value()) {
         setViolationVarId(makeSolverConstIntRelation(
                               solver, mapping.intermediateId(id()), _relType,
-                              *_fixedBound + _boundOffset, shouldHold(), true),
+                              *_fixedBound, shouldHold(), true),
                           mapping);
       } else {
         setViolationVarId(

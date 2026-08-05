@@ -98,6 +98,7 @@ class array_bool_andTest : public FznTestBase {
     addBoolVarArray(inputs);
     addBoolArg(output);
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool canMove() const override {

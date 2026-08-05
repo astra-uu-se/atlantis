@@ -117,6 +117,11 @@ class fzn_count_eqTest : public fzn_countTest {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    if (!isFixed(reified)) {
+      markOutputVar(reified);
+    } else if (!isFixed(bound)) {
+      markOutputVar(bound);
+    }
   }
 
   [[nodiscard]] bool canMove() const override {
@@ -126,7 +131,7 @@ class fzn_count_eqTest : public fzn_countTest {
            });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     std::unordered_set<InvariantNodeId, InvariantNodeIdHash>
         implicitConstraints;
     std::vector<bool> hasImplicitConstraints(inputs.size(), false);

@@ -455,6 +455,12 @@ VarNodeId InvariantGraph::retrieveIntVarNode(
   return retrieveIntVarNode(dom, identifier, DomainType::DOM_DOMAIN);
 }
 
+void InvariantGraph::setObjective(const VarNodeId objId, const ObjectiveDirection objDir) {
+  assert((objId == NULL_NODE_ID) == (objDir == ObjectiveDirection::NONE));
+  _objectiveVarNodeId = objId;
+  _objectiveDirection = objDir;
+}
+
 VarNode& InvariantGraph::varNode(const std::string& identifier) {
   assert(_namedVarNodeIndices.contains(identifier));
   assert(size_t{_namedVarNodeIndices.at(identifier)} < _varNodes.size());
@@ -474,44 +480,164 @@ VarNode& InvariantGraph::varNode(const Int value) {
 
 void InvariantGraph::replaceInvariantNodes() {
   size_t invIndex = 0;
-  size_t implIndex = 0;
-  while (invIndex < _invariantNodes.size() &&
-         implIndex < _implicitConstraintNodes.size()) {
-    while (invIndex < _invariantNodes.size()) {
-      auto& invNode = *_invariantNodes.at(invIndex);
-      invNode.updateState();
-      if (invNode.state() == InvariantNodeState::SUBSUMED) {
+
+  for (; invIndex < _invariantNodes.size(); ++invIndex) {
+    auto& invNode = *_invariantNodes.at(invIndex);
+    invNode.updateState();
+    if (invNode.state() == InvariantNodeState::SUBSUMED) {
+      invNode.deactivate();
+    } else if (invNode.canBeReplaced()) {
+      const bool wasReplaced = invNode.replace();
+      assert(wasReplaced);
+      if (wasReplaced) {
         invNode.deactivate();
-      } else {
-        if (invNode.canBeReplaced()) {
-          const bool wasReplaced = invNode.replace();
-          assert(wasReplaced);
-          if (wasReplaced) {
-            invNode.deactivate();
-          }
-        } else if (invNode.canBeMadeImplicit()) {
-          const bool isImplicit = invNode.makeImplicit();
-          assert(isImplicit);
-          if (isImplicit) {
-            invNode.deactivate();
-          }
-        }
       }
-      ++invIndex;
     }
-    while (implIndex < _implicitConstraintNodes.size()) {
-      auto& implNode = *_implicitConstraintNodes.at(implIndex);
-      implNode.updateState();
-      if (implNode.state() == InvariantNodeState::SUBSUMED) {
+  }
+
+  for (size_t implIndex = 0; implIndex < _implicitConstraintNodes.size(); ++implIndex) {
+    auto& implNode = *_implicitConstraintNodes.at(implIndex);
+    implNode.updateState();
+    if (implNode.state() == InvariantNodeState::SUBSUMED) {
+      implNode.deactivate();
+    } else if (implNode.canBeReplaced()) {
+      if (implNode.replace()) {
         implNode.deactivate();
-      } else {
-        if (implNode.canBeReplaced()) {
-          if (implNode.replace()) {
-            implNode.deactivate();
-          }
-        }
       }
-      ++implIndex;
+      // Only implicit constraints were added by the replace call:
+      assert(invIndex == _invariantNodes.size());
+    }
+  }
+}
+
+void InvariantGraph::deactivateUnusedInvariantNodes() {
+  std::unordered_set<VarNodeId> onStack;
+  onStack.reserve(_varNodes.size());
+  std::vector<VarNodeId> unusedOutputVarIds;
+  unusedOutputVarIds.reserve(_varNodes.size());
+
+  // Find all non-objective output vars
+  for (const auto& vNode : _varNodes) {
+    if (vNode.varNodeId() == _objectiveVarNodeId || vNode.isOutputVar() || !vNode.staticInputTo().empty() || !vNode.dynamicInputTo().empty() || vNode.definingNodes().size() != 1) {
+      continue;
+    }
+    unusedOutputVarIds.emplace_back(vNode.varNodeId());
+    onStack.emplace(vNode.varNodeId());
+  }
+
+  std::unordered_set<InvariantNodeId, InvariantNodeIdHash> modifiedInvariantNodes;
+  modifiedInvariantNodes.reserve(_varNodes.size());
+
+  while (!unusedOutputVarIds.empty()) {
+    const VarNodeId outputId = unusedOutputVarIds.back();
+    unusedOutputVarIds.pop_back();
+    onStack.erase(outputId);
+
+    const auto& vNode = varNodeConst(outputId);
+
+    // Note that if the variable is defined by multiple invariants, then it will be duplicated and an all equal will be posted, making it constrained.
+    if (vNode.varNodeId() == _objectiveVarNodeId || vNode.isOutputVar() || !vNode.staticInputTo().empty() || !vNode.dynamicInputTo().empty() || vNode.definingNodes().size() != 1) {
+      continue;
+    }
+
+    const InvariantNodeId defInv = *vNode.definingNodes().begin();
+
+    if (!defInv.isInvariant() || invariantNodeConst(defInv).constrainsOutput(outputId)) {
+      continue;
+    }
+
+    assert(invariantNodeConst(defInv).state() == InvariantNodeState::ACTIVE);
+
+    invariantNode(defInv).removeOutputVarNode(outputId);
+    if (invariantNodeConst(defInv).state() != InvariantNodeState::SUBSUMED) {
+      modifiedInvariantNodes.emplace(defInv);
+      continue;
+    }
+
+    for (const auto staticInput : invariantNodeConst(defInv).staticInputVarNodeIds()) {
+      if (!onStack.contains(staticInput)) {
+        onStack.emplace(staticInput);
+        unusedOutputVarIds.emplace_back(staticInput);
+      }
+    }
+    for (const auto dynamicInput : invariantNodeConst(defInv).dynamicInputVarNodeIds()) {
+      if (!onStack.contains(dynamicInput)) {
+        onStack.emplace(dynamicInput);
+        unusedOutputVarIds.emplace_back(dynamicInput);
+      }
+    }
+    invariantNode(defInv).deactivate();
+    modifiedInvariantNodes.erase(defInv);
+  }
+
+  // The modified invariants must be updated and potentially replaced.
+  size_t invIndex = _invariantNodes.size();
+  for (const auto invId : modifiedInvariantNodes) {
+    invariantNode(invId).updateState();
+    if (invariantNodeConst(invId).state() == InvariantNodeState::SUBSUMED) {
+      invariantNode(invId).deactivate();
+    } else if (invariantNodeConst(invId).canBeReplaced()) {
+      [[maybe_unused]] const bool wasReplaced = invariantNode(invId).replace();
+      assert(wasReplaced);
+      invariantNode(invId).deactivate();
+    }
+  }
+  for (; invIndex < _invariantNodes.size(); ++invIndex) {
+    _invariantNodes[invIndex]->updateState();
+    if (_invariantNodes[invIndex]->state() == InvariantNodeState::SUBSUMED) {
+      _invariantNodes[invIndex]->deactivate();
+    } else if (_invariantNodes[invIndex]->canBeReplaced()) {
+      [[maybe_unused]] const bool wasReplaced = _invariantNodes[invIndex]->replace();
+      assert(wasReplaced);
+      _invariantNodes[invIndex]->deactivate();
+    }
+  }
+}
+
+void InvariantGraph::makeImplicitConstraintNodes() {
+  std::vector<std::pair<size_t, std::pair<size_t, size_t>>> implicitNodeRanks;
+  implicitNodeRanks.reserve(_invariantNodes.size());
+
+  size_t invIndex = 0;
+  for (; invIndex < _invariantNodes.size(); ++invIndex) {
+    auto& invNode = *_invariantNodes.at(invIndex);
+    if (invNode.state() == InvariantNodeState::ACTIVE && invNode.canBeMadeImplicit()) {
+      implicitNodeRanks.emplace_back(invIndex, invNode.implicitRank());
+      assert(implicitNodeRanks.back().second.first != 0);
+      assert(implicitNodeRanks.back().second.second != 0);
+    }
+  }
+
+  // Sort descending on ranks:
+  std::ranges::sort(implicitNodeRanks, [](const std::pair<size_t, std::pair<size_t, size_t>>& a, const std::pair<size_t, std::pair<size_t, size_t>>& b) {
+    return a.second > b.second;
+  });
+
+  size_t implIndex = _implicitConstraintNodes.size();
+
+  for (const size_t index : std::views::keys(implicitNodeRanks)) {
+    auto& invNode = *_invariantNodes.at(index);
+    assert(invNode.state() == InvariantNodeState::ACTIVE);
+    if (invNode.canBeMadeImplicit()) {
+      const bool wasMadeImpicit = invNode.makeImplicit();
+      assert(wasMadeImpicit);
+      assert(invIndex == _invariantNodes.size());
+      invNode.deactivate();
+    }
+  }
+
+  // Iterate over the new implicit constraints:
+  for (; implIndex < _implicitConstraintNodes.size(); ++implIndex) {
+    auto& implNode = *_implicitConstraintNodes.at(implIndex);
+    implNode.updateState();
+    if (implNode.state() == InvariantNodeState::SUBSUMED) {
+      implNode.deactivate();
+    } else if (implNode.canBeReplaced()) {
+      if (implNode.replace()) {
+        implNode.deactivate();
+      }
+      // Only implicit constraints were added by the replace call:
+      assert(invIndex == _invariantNodes.size());
     }
   }
 }
@@ -639,7 +765,7 @@ InvariantNodeId InvariantGraph::addInvariantNode(
   return invNode->id();
 }
 
-void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
+void InvariantGraph::replaceVarNode(const VarNodeId oldNodeId, const VarNodeId newNodeId) {
   if (oldNodeId == newNodeId) {
     return;
   }
@@ -729,6 +855,7 @@ void InvariantGraph::replaceVarNode(VarNodeId oldNodeId, VarNodeId newNodeId) {
       id = newNodeId;
     }
   }
+  newNode.setIsOutputVar(newNode.isOutputVar() || oldNode.isOutputVar());
 }
 
 InvariantNodeId InvariantGraph::addImplicitConstraintNode(
@@ -1074,8 +1201,7 @@ void InvariantGraph::createInvariants(SolverBase& solver,
   for (const auto& invariantNode : _invariantNodes) {
     if (invariantNode->state() == InvariantNodeState::ACTIVE) {
       assert(std::ranges::all_of(
-          invariantNode->outputVarNodeIds().begin(),
-          invariantNode->outputVarNodeIds().end(), [&](VarNodeId varNodeId) {
+          invariantNode->outputVarNodeIds(), [&](const VarNodeId varNodeId) {
             return mapping.solverId(varNodeId) != propagation::NULL_ID;
           }));
       invariantNode->registerNode(solver, mapping);
@@ -1156,6 +1282,10 @@ void InvariantGraph::close() {
   updateDomains();
   sanity(false);
   replaceInvariantNodes();
+  sanity(false);
+  deactivateUnusedInvariantNodes();
+  sanity(false);
+  makeImplicitConstraintNodes();
   sanity(false);
   replaceFixedVars();
   sanity(false);

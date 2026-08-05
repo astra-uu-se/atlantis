@@ -101,6 +101,7 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
     if (isReified()) {
       reifiedVar.domain = std::pair<Int, Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           varNodeId(reifiedVar), !shouldBeReplaced());
     } else {

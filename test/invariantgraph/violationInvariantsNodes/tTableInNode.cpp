@@ -158,6 +158,7 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
       if (isReified()) {
         reifiedVar.domain = std::vector<Int>{0, 1};
         retrieveBoolVarNode(reifiedVar);
+        markOutputVar(reifiedVar);
         createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                             std::vector<std::vector<Int>>{table},
                             varNodeId(reifiedVar));

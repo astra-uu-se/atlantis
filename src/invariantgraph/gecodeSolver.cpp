@@ -694,6 +694,8 @@ void GecodeSolver::gcc_low_up(
     return;
   }
   auto inputVars = intVarArgs(inputs);
+  unshare(_space, inputVars);
+
   if (isFixedTo(reified, true)) {
     auto intArgCover = intArgs(cover);
     const auto lbound = intSharedArray(lowerBounds);
@@ -734,6 +736,7 @@ void GecodeSolver::gcc_low_up(
     dom(_space, countVars[i], static_cast<int>(lowerBounds[i]),
         static_cast<int>(upperBounds[i]), reifiedEqualities[i]);
   }
+
   Gecode::count(_space, inputVars, countVars, intArgCover, Gecode::IPL_BND);
   if (std::holds_alternative<bool>(reified)) {
     assert(!std::get<bool>(reified));
@@ -817,13 +820,24 @@ ConstraintVarId GecodeSolver::newIntVar(const Int value) {
 ConstraintVarId GecodeSolver::newIntVar(const SearchDomain& dom) {
   const size_t ret = _space._iv.size();
   if (dom.isInterval()) {
-    _space._iv.emplace_back(_space, dom.lowerBound(), dom.upperBound());
+    const int lb = std::clamp<Int>(dom.lowerBound(), Gecode::Int::Limits::min, Gecode::Int::Limits::max);
+    const int ub = std::clamp<Int>(dom.upperBound(), Gecode::Int::Limits::min, Gecode::Int::Limits::max);
+    _space._iv.emplace_back(_space, lb, ub);
   } else {
     std::vector<int> values(dom.size());
     size_t i = 0;
+    bool containsMin = false;
+    bool containsMax = false;
     for (auto iter = dom.begin(); iter != dom.end(); ++iter) {
-      values[i++] = static_cast<int>(*iter);
+      const int val = std::clamp<Int>(*iter, Gecode::Int::Limits::min, Gecode::Int::Limits::max);
+      if ((val == Gecode::Int::Limits::min && containsMin) || (val == Gecode::Int::Limits::max && containsMax)) {
+        continue;
+      }
+      containsMin |= val == Gecode::Int::Limits::min;
+      containsMax |= val == Gecode::Int::Limits::max;
+      values[i++] = static_cast<int>(val);
     }
+    values.resize(i);
     _space._iv.emplace_back(
         _space, Gecode::IntSet(values.data(), static_cast<int>(values.size())));
   }

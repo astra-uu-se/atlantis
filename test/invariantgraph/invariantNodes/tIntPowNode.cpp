@@ -59,6 +59,7 @@ class IntPowNodeTestFixture : public NodeTestBase<IntPowNode> {
     retrieveIntVarNode(baseVar);
     retrieveIntVarNode(exponentVar);
     retrieveIntVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(baseVar),
                         varNodeId(exponentVar), varNodeId(outputVar));

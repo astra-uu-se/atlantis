@@ -38,7 +38,7 @@ class array_int_maximumTest : public FznTestBase {
     return ub;
   }
 
-  Int getValue(bool committedValue) const {
+  Int getValue(const bool committedValue) const {
     Int result = intVal(inputs.front(), committedValue);
     for (size_t i = 1; i < inputs.size(); ++i) {
       const Int v = intVal(inputs.at(i), committedValue);
@@ -50,21 +50,30 @@ class array_int_maximumTest : public FznTestBase {
   void generate() override {
     constraintIdentifier = "array_int_maximum";
     addIntArg(output);
-    const size_t size = true ? 2 : *rc::gen::inRange(1, 3);
+    const size_t size = *rc::gen::inRange(1, 3);
     for (size_t i = 0; i < size; i++) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
     addIntVarArray(inputs);
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
+    RC_LOG() << "-----" << std::endl
+             << "array_int_maximum::isSatisfied(" << to_string(committedValue)
+             << ")" << std::endl;
+
     const Int expected = getValue(committedValue);
     const Int actual = intVal(output, committedValue);
 
+    RC_LOG() << "actual = " << actual << std::endl;
+    RC_LOG() << "expected = " << expected << std::endl;
+
     if (isFixed(output)) {
-      const bool isSolution = violation(committedValue) == 0;
-      return isSolution ? expected == actual : expected != actual;
+      const bool satAssignment = violation(committedValue) == 0;
+      RC_LOG() << "satAssignment = " << to_string(satAssignment) << std::endl;
+      return satAssignment ? expected == actual : expected != actual;
     }
     return expected == actual;
   }

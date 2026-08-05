@@ -65,6 +65,9 @@ class GlobalCardinalityNodeTestFixture
                               static_cast<Int>(inputVars.size()), true);
       retrieveIntVarNode(outputVars.back());
     }
+    for (const auto& outputVar : outputVars) {
+      markOutputVar(outputVar);
+    }
 
     createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                         std::vector<Int>{cover}, varNodeIds(outputVars));

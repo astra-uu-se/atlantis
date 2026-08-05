@@ -47,6 +47,7 @@ class int_divTest : public FznTestBase {
     addIntArg(IntArgState::VAR, quotient);
     constraintIdentifier = "int_div";
     generateConstraint();
+    markOutputVar(quotient);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {

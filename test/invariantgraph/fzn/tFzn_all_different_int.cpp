@@ -23,7 +23,7 @@ class fzn_all_different_intTest : public FznTestBase {
   std::vector<std::string> inputs;
   std::string reified{"reified"};
 
-  bool getValue(bool committedValue) const {
+  bool getValue(const bool committedValue) const {
     for (size_t i = 0; i < inputs.size(); i++) {
       const Int val = intVal(inputs.at(i), committedValue);
       for (size_t j = i + 1; j < inputs.size(); j++) {
@@ -52,6 +52,7 @@ class fzn_all_different_intTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {

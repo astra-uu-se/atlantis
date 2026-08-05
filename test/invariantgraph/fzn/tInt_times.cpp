@@ -44,6 +44,7 @@ class int_timesTest : public FznTestBase {
     addIntArg(product);
     constraintIdentifier = "int_times";
     generateConstraint();
+    markOutputVar(product);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {

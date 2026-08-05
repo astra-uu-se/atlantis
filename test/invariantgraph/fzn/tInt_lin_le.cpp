@@ -47,6 +47,7 @@ class int_lin_leTest : public FznTestBase {
   }
 
   [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
+    RC_LOG() << "-----" << std::endl << "in_lin_le::isSatisfied()" << std::endl;
     Int sum = 0;
     for (size_t i = 0; i < coeffs.size(); ++i) {
       if (coeffs.at(i) != 0) {
@@ -56,8 +57,15 @@ class int_lin_leTest : public FznTestBase {
     const bool actual = boolVal(reified, committedValue);
     const bool expected = sum <= bound;
 
+    RC_LOG() << "sum: " << sum << std::endl;
+    RC_LOG() << sum << " <= " << bound << " == " << to_string(expected) << std::endl;
+    RC_LOG() << "reified: " << to_string(actual) << std::endl;
+    RC_LOG() << to_string(actual) << " == " << to_string(expected) << std::endl;
+
+
     if (isFixed(reified)) {
       const bool isSolution = violation(committedValue) == 0;
+      RC_LOG() << "isSolution: " << to_string(isSolution) << std::endl;
       return isSolution ? expected == actual : expected != actual;
     }
     return expected == actual;
@@ -97,8 +105,7 @@ class int_lin_leTest : public FznTestBase {
 
   void generate() override {
     const size_t size = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
-    coeffs = true ? std::vector<Int>{-2}
-                  : *rc::gen::container<std::vector<Int>>(
+    coeffs = true ? std::vector<Int>{-2} : *rc::gen::container<std::vector<Int>>(
                         size, rc::gen::inRange(-2, 2));
     addArg(coeffs);
     inputs.reserve(size);
@@ -117,14 +124,15 @@ class int_lin_leTest : public FznTestBase {
     bound = true ? -3 : *rc::gen::inRange<Int>(lb, ub);
     addArg(bound);
 
-    const bool isReified = true ? false : *rc::gen::arbitrary<bool>();
+    const bool isReified = true ? true : *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "int_lin_le_reif" : "int_lin_le";
     if (isReified) {
-      addBoolArg(reified);
+      addBoolArg(BoolArgState::VAR, reified);
     } else {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool canMove() const override {

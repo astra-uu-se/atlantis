@@ -28,12 +28,11 @@ class fzn_gcc_countTest : public fzn_gccTest {
       if (!firstOrDistinct.at(i)) {
         continue;
       }
-      const Int iCov = intVal(cover.at(i));
       for (size_t j = i + 1; j < cover.size(); ++j) {
         if (!firstOrDistinct.at(j)) {
           continue;
         }
-        if (iCov == intVal(cover.at(j))) {
+        if (cover.at(i) == cover.at(j)) {
           firstOrDistinct.at(j) = false;
           coverDuplicates.emplace_back(cover.size(), cover.at(j));
           outputDuplicates.emplace_back(cover.size(), outputs.at(j));
@@ -47,9 +46,9 @@ class fzn_gcc_countTest : public fzn_gccTest {
       }
     }
     for (size_t dupIndex = 0; dupIndex < coverDuplicates.size(); ++dupIndex) {
-      const Int dupVal = intVal(coverDuplicates.at(dupIndex).second);
+      const Int dupVal = coverDuplicates.at(dupIndex).second;
       for (size_t covIndex = 0; covIndex < cover.size(); ++covIndex) {
-        if (intVal(cover.at(covIndex)) == dupVal) {
+        if (cover.at(covIndex) == dupVal) {
           coverDuplicates.at(dupIndex).first = covIndex;
           outputDuplicates.at(dupIndex).first = covIndex;
         }

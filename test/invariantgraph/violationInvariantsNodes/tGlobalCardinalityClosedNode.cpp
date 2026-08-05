@@ -92,11 +92,13 @@ class GlobalCardinalityClosedNodeTestFixture
       outputVars.emplace_back("output_" + std::to_string(i + 1), 0,
                               static_cast<Int>(inputVars.size()), true);
       retrieveIntVarNode(outputVars.back());
+      markOutputVar(outputVars.back());
     }
 
     if (isReified()) {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           std::vector<Int>{cover}, varNodeIds(outputVars),
                           varNodeId(reifiedVar));

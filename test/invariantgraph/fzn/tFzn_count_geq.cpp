@@ -79,6 +79,7 @@ class fzn_count_geqTest : public fzn_countTest {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool canMove() const override {
@@ -88,7 +89,7 @@ class fzn_count_geqTest : public fzn_countTest {
            });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (varId(needle) != propagation::NULL_ID && randBool()) {
       changeValue(needle, committedValue);
     }

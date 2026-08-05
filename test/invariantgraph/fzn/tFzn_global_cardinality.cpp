@@ -30,11 +30,10 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
     std::unordered_map<Int, std::vector<size_t>> valToIndices;
     valToIndices.reserve(cover.size());
     for (size_t i = 0; i < cover.size(); ++i) {
-      const Int needle = intVal(cover.at(i), committedValue);
-      if (valToIndices.contains(needle)) {
-        valToIndices.at(needle).emplace_back(i);
+      if (valToIndices.contains(cover.at(i))) {
+        valToIndices.at(cover.at(i)).emplace_back(i);
       } else {
-        valToIndices.emplace(needle, std::vector<size_t>{i});
+        valToIndices.emplace(cover.at(i), std::vector<size_t>{i});
       }
     }
     for (const auto& input : inputs) {
@@ -84,7 +83,7 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
         return isFixedTo(reified, true);
       }
       bool allFixedToZero = true;
-      for (const auto& c : cover) {
+      for (const auto& c : outputs) {
         if (isFixed(c)) {
           if (!isFixedTo(c, Int{0})) {
             return isFixedTo(reified, false);
@@ -112,7 +111,9 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
     bool alwaysSat = true;
     bool alwaysUnsat = false;
     for (size_t i = 0; i < bounds.size(); ++i) {
-      RC_ASSERT(outputDomains.at(i).has_value());
+      if (!outputDomains.at(i).has_value()) {
+        return isFixedTo(reified, false);
+      }
       const auto [lb, ub] = bounds.at(i);
       totalLb += std::max(Int{0}, outputDomains.at(i)->lowerBound());
       totalUb += std::max(Int{0}, outputDomains.at(i)->upperBound());
@@ -148,7 +149,7 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
         return isFixedTo(reified, false);
       }
       bool allFixedToZero = true;
-      for (const auto& c : cover) {
+      for (const auto& c : outputs) {
         if (isFixed(c)) {
           if (!isFixedTo(c, Int{0})) {
             return isFixedTo(reified, true);
@@ -176,7 +177,9 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
     bool alwaysSat = true;
     bool alwaysUnsat = false;
     for (size_t i = 0; i < bounds.size(); ++i) {
-      RC_ASSERT(outputDomains.at(i).has_value());
+      if (!outputDomains.at(i).has_value()) {
+        return isFixedTo(reified, true);
+      }
       const auto [lb, ub] = bounds.at(i);
       totalLb += std::max(Int{0}, outputDomains.at(i)->lowerBound());
       totalUb += std::max(Int{0}, outputDomains.at(i)->upperBound());
@@ -201,30 +204,25 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
   }
 
   void generate() override {
-    const size_t inputSize = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
+    const size_t inputSize = *rc::gen::inRange<size_t>(0, 4);
     inputs.reserve(inputSize);
     for (size_t i = 0; i < inputSize; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
 
-    const size_t coverSize = true ? 3 : *rc::gen::inRange<size_t>(0, 4);
-    cover.reserve(coverSize);
-    for (size_t i = 0; i < coverSize; ++i) {
-      cover.emplace_back("cover_" + std::to_string(i));
-    }
+    const size_t coverSize = *rc::gen::inRange<size_t>(0, 4);
+    cover = *rc::gen::container<std::vector<Int>>(coverSize, rc::gen::inRange<size_t>(defaultLb, defaultUb + 1));
 
     outputs.reserve(coverSize);
     for (size_t i = 0; i < coverSize; ++i) {
       outputs.emplace_back("output_" + std::to_string(i));
     }
 
-    addIntVarArray({IntArgState::VAR}, {{-3, 3}}, inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR),
-                   {{-3, -3}, {-2, -2}, {-3, -3}}, cover, "cover");
-    addIntVarArray({IntArgState::PAR, IntArgState::PAR, IntArgState::VAR},
-                   {{1, 1}, {1, 1}, {-3, 3}}, outputs, "outputs");
+    addIntVarArray(inputs, "inputs");
+    addIntParArray(cover, "cover");
+    addIntVarArray(outputs, "outputs");
 
-    const bool isReified = true ? false : *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_global_cardinality_reif" : "fzn_global_cardinality";
     if (isReified) {
@@ -236,6 +234,13 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
     fixGenerate();
 
     generateConstraint();
+    if (!isFixed(reified)) {
+      markOutputVar(reified);
+    } else {
+      for (const auto& output : outputs) {
+        markOutputVar(output);
+      }
+    }
   }
 
   void query() override {
@@ -253,7 +258,7 @@ class fzn_global_cardinalityTest : public fzn_gcc_countTest {
 };
 
 RC_GTEST_FIXTURE_PROP(fzn_global_cardinalityTest, RapidCheck, ()) {
-  rapidCheck(false);
+  rapidCheck(true, true);
 }
 
 }  // namespace atlantis::testing

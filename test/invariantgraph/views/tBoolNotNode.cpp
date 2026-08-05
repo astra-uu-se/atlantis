@@ -30,6 +30,7 @@ class BoolNotNodeTestFixture : public NodeTestBase<BoolNotNode> {
 
     retrieveBoolVarNode(inputVar);
     retrieveBoolVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVar),
                         varNodeId(outputVar));

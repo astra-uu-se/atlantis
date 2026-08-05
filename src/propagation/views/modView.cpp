@@ -12,7 +12,9 @@ ModView::ModView(SolverBase& solver, VarViewId parentId, Int denominator)
 }
 
 Int ModView::value(Timestamp ts) {
-  return _solver.value(ts, _parentId) % _denominator;
+  const Int parentVal = _solver.value(ts, _parentId);
+  const Int remainder = parentVal % _denominator;
+  return remainder;
 }
 
 Int ModView::committedValue() {

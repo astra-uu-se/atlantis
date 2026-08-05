@@ -69,6 +69,7 @@ class BoolLinearNodeTestFixture : public NodeTestBase<BoolLinearNode> {
     outputVar.domain = std::pair<Int, Int>{minSum, maxSum};
 
     retrieveIntVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                         varNodeIds(inputVars), varNodeId(outputVar));

@@ -10,8 +10,8 @@
 
 namespace atlantis::invariantgraph {
 
-BoolNotNode::BoolNotNode(InvariantGraph& graph, VarNodeId staticInput,
-                         VarNodeId output)
+BoolNotNode::BoolNotNode(InvariantGraph& graph, const VarNodeId staticInput,
+                         const VarNodeId output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 
 void BoolNotNode::init(const InvariantNodeId id) {
@@ -34,6 +34,31 @@ void BoolNotNode::updateState() {
     assert(outputVarNodeConst(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+bool BoolNotNode::constrainsOutput(VarNodeId) const {
+  if (staticInputVarNodeConst(0).inDomain(bool{false}) && !outputVarNodeConst(0).inDomain(bool{true})) {
+    return true;
+  }
+  if (staticInputVarNodeConst(0).inDomain(bool{true}) && !outputVarNodeConst(0).inDomain(bool{false})) {
+    return true;
+  }
+  return false;
+}
+
+bool BoolNotNode::canBeReplaced() const {
+  if (state() != InvariantNodeState::ACTIVE) {
+    return false;
+  }
+  return varNodeConst(staticInputVarNodeIds().front()).staticInputTo().size() == 1 && varNodeConst(staticInputVarNodeIds().front()).definingNodes().empty() && !varNodeConst(outputVarNodeIds().front()).staticInputTo().empty();
+}
+
+bool BoolNotNode::replace() {
+  if (!canBeReplaced()) {
+    return false;
+  }
+  invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(invariantGraph(), outputVarNodeIds().front(), staticInputVarNodeIds().front()));
+  return true;
 }
 
 void BoolNotNode::registerOutputVars(propagation::SolverBase& solver,

@@ -45,6 +45,7 @@ class array_bool_xorTest : public FznTestBase {
     addBoolVarArray(inputs);
     addBoolPar(reified, true);
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {

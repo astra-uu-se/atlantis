@@ -21,6 +21,7 @@
 #include "atlantis/propagation/violationInvariants/lessEqual.hpp"
 #include "atlantis/propagation/violationInvariants/lessThan.hpp"
 #include "atlantis/propagation/violationInvariants/notEqual.hpp"
+#include "atlantis/utils/overflow.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -198,10 +199,10 @@ void postAllEqualOnReplacedVars(
     if (!invariantGraph.varNodeConst(oldVarNodeId).isFixed()) {
       if (invariantGraph.varNodeConst(oldVarNodeId).isIntVar()) {
         invariantGraph.addInvariantNode(std::make_shared<IntAllEqualNode>(
-            invariantGraph, std::move(duplicates), true));
+            invariantGraph, std::move(duplicates), true, true));
       } else {
         invariantGraph.addInvariantNode(std::make_shared<BoolAllEqualNode>(
-            invariantGraph, std::move(duplicates), true));
+            invariantGraph, std::move(duplicates), true, true));
       }
     }
   }
@@ -607,6 +608,46 @@ Int maxOverlaps(const std::vector<std::pair<Int, Int>>& intervals) {
   }
 
   return ans;
+}
+
+Int linearLb(const InvariantGraph& invariantGraph, const std::vector<Int>& coeffs, const std::vector<VarNodeId>& vars, const Int offset) {
+  Int lb = offset;
+  assert(coeffs.size() == vars.size());
+  for (size_t i = 0; i < vars.size(); ++i) {
+    if (coeffs[i] == 0) {
+      continue;
+    }
+    if (invariantGraph.varNodeConst(vars[i]).isIntVar()) {
+      const Int a = overflow::saturatingMul(coeffs[i], invariantGraph.varNodeConst(vars[i]).lowerBound());
+      const Int b = overflow::saturatingMul(coeffs[i], invariantGraph.varNodeConst(vars[i]).upperBound());
+      lb = overflow::saturatingAdd(lb, std::min(a, b));
+    } else {
+      if (coeffs[i] > 0 ? !invariantGraph.varNodeConst(vars[i]).inDomain(bool{false}) : invariantGraph.varNodeConst(vars[i]).inDomain(bool{true})) {
+        lb = overflow::saturatingAdd(lb, coeffs[i]);
+      }
+    }
+  }
+  return lb;
+}
+
+Int linearUb(const InvariantGraph& invariantGraph, const std::vector<Int>& coeffs, const std::vector<VarNodeId>& vars, const Int offset) {
+  Int ub = offset;
+  assert(coeffs.size() == vars.size());
+  for (size_t i = 0; i < vars.size(); ++i) {
+    if (coeffs[i] == 0) {
+      continue;
+    }
+    if (invariantGraph.varNodeConst(vars[i]).isIntVar()) {
+      const Int a = overflow::saturatingMul(coeffs[i], invariantGraph.varNodeConst(vars[i]).lowerBound());
+      const Int b = overflow::saturatingMul(coeffs[i], invariantGraph.varNodeConst(vars[i]).upperBound());
+      ub = overflow::saturatingAdd(ub, std::max(a, b));
+    } else {
+      if (coeffs[i] < 0 ? !invariantGraph.varNodeConst(vars[i]).inDomain(bool{false}) : invariantGraph.varNodeConst(vars[i]).inDomain(bool{true})) {
+        ub = overflow::saturatingAdd(ub, coeffs[i]);
+      }
+    }
+  }
+  return ub;
 }
 
 }  // namespace atlantis::invariantgraph

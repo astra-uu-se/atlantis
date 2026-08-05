@@ -419,11 +419,12 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       if (inputVars.at(i) == propagation::NULL_ID) {
         continue;
       }
-      if (inputVals.at(i) < _solver->upperBound(inputVars.at(i))) {
+      const propagation::VarId sourceId = _solver->sourceId(inputVars.at(i));
+      if (inputVals.at(i) < _solver->upperBound(sourceId)) {
         ++inputVals.at(i);
         return i;
       }
-      inputVals.at(i) = _solver->lowerBound(inputVars.at(i));
+      inputVals.at(i) = _solver->lowerBound(sourceId);
     }
     return -1;
   }
@@ -457,7 +458,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (varId(inputVars.at(i)) != propagation::NULL_ID) {
-        _solver->setValue(varId(inputVars.at(i)), vals.at(i));
+        _solver->setValue(_solver->sourceId(varId(inputVars.at(i))), vals.at(i));
       }
     }
   }
@@ -467,7 +468,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVars.at(i) != propagation::NULL_ID) {
-        _solver->setValue(inputVars.at(i), vals.at(i));
+        _solver->setValue(_solver->sourceId(inputVars.at(i)), vals.at(i));
       }
     }
   }
@@ -487,7 +488,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVars.at(i) != propagation::NULL_ID) {
-        EXPECT_EQ(_solver->currentValue(inputVars.at(i)), vals.at(i));
+        EXPECT_EQ(_solver->currentValue( _solver->sourceId(inputVars.at(i))), vals.at(i));
       }
     }
   }
@@ -498,6 +499,17 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     for (size_t i = 0; i < outputVars.size(); ++i) {
       outputVals.at(i) = _solver->currentValue(outputVars.at(i));
     }
+  }
+
+  void markOutputVar(const std::string& identifier) {
+    const auto vId = varNodeId(identifier);
+    if (vId != NULL_NODE_ID) {
+      varNode(vId).setIsOutputVar(true);
+    }
+  }
+
+  void markOutputVar(const Var& v) {
+    markOutputVar(v.identifier);
   }
 };
 

@@ -45,6 +45,7 @@ class int_leTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {

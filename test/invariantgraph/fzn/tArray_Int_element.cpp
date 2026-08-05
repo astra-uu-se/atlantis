@@ -33,13 +33,13 @@ class array_int_elementTest : public FznTestBase {
 
     const Int lb =
         std::vector<Int>{-1024, -1, 0, 1, 1024}.at(*rc::gen::inRange(0, 5));
-    addIntArg(lb, size + lb - 1, idx);
+    _addIntArg(lb, size + lb - 1, idx);
 
     parameters = *rc::gen::container<std::vector<Int>>(
         size, rc::gen::inRange<Int>(-1, 2));
     addArg(parameters);
 
-    addIntArg(std::ranges::min(parameters), std::ranges::max(parameters),
+    _addIntArg(std::ranges::min(parameters), std::ranges::max(parameters),
               output);
 
     offset = lowerBound(idx);
@@ -47,6 +47,7 @@ class array_int_elementTest : public FznTestBase {
       addArg(offset);
     }
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {

@@ -19,49 +19,50 @@ using namespace atlantis::invariantgraph::fzn;
 
 class int_absTest : public FznTestBase {
  public:
-  std::string a{"i_1"};
-  std::string b{"i_2"};
+  std::string input{"i_1"};
+  std::string output{"i_2"};
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     const bool expected =
-        std::abs(intVal(a, committedValue)) == intVal(b, committedValue);
+        std::abs(intVal(input, committedValue)) == intVal(output, committedValue);
 
     const bool isSolution = violation(committedValue) == 0;
     return isSolution ? expected : !expected;
   }
 
   void generate() override {
-    addIntArg(a);
-    addIntArg(b);
+    addIntArg(input);
+    addIntArg(output);
     constraintIdentifier = "int_abs";
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
-    if (upperBound(b) < 0) {
+    if (upperBound(output) < 0) {
       return false;
     }
-    if (isFixed(a)) {
-      const Int aVal = intVal(a);
-      if (isFixed(b)) {
-        return std::abs(aVal) == intVal(b);
+    if (isFixed(input)) {
+      const Int aVal = intVal(input);
+      if (isFixed(output)) {
+        return std::abs(aVal) == intVal(output);
       }
       return false;
     }
-    const auto& aDom = varNodeConst(a).constDomain();
-    if (isFixed(b)) {
-      const Int bVal = intVal(b);
-      RC_ASSERT(!isFixed(a));
+    const auto& aDom = varNodeConst(input).constDomain();
+    if (isFixed(output)) {
+      const Int bVal = intVal(output);
+      RC_ASSERT(!isFixed(input));
       if (aDom->size() == 2) {
-        return inDomain(a, bVal) && inDomain(a, -bVal);
+        return inDomain(input, bVal) && inDomain(input, -bVal);
       }
       if (aDom->size() == 1) {
-        return inDomain(a, bVal) || inDomain(a, -bVal);
+        return inDomain(input, bVal) || inDomain(input, -bVal);
       }
       return false;
     }
 
-    const auto& bDom = varNodeConst(b).constDomain();
+    const auto& bDom = varNodeConst(output).constDomain();
 
     std::vector<Int> ad;
     ad.reserve(aDom->size());
@@ -75,23 +76,23 @@ class int_absTest : public FznTestBase {
   }
 
   [[nodiscard]] bool neverSatisfied() const override {
-    if (upperBound(b) < 0) {
+    if (upperBound(output) < 0) {
       return true;
     }
-    if (isFixed(a)) {
-      const Int aVal = intVal(a);
-      if (isFixed(b)) {
-        return std::abs(aVal) != intVal(b);
+    if (isFixed(input)) {
+      const Int aVal = intVal(input);
+      if (isFixed(output)) {
+        return std::abs(aVal) != intVal(output);
       }
-      return !inDomain(b, std::abs(aVal));
+      return !inDomain(output, std::abs(aVal));
     }
-    if (isFixed(b)) {
-      const Int bVal = intVal(b);
-      RC_ASSERT(!isFixed(a));
-      return !inDomain(a, bVal) && !inDomain(a, -bVal);
+    if (isFixed(output)) {
+      const Int bVal = intVal(output);
+      RC_ASSERT(!isFixed(input));
+      return !inDomain(input, bVal) && !inDomain(input, -bVal);
     }
-    const auto& aDom = varNodeConst(a).constDomain();
-    const auto& bDom = varNodeConst(b).constDomain();
+    const auto& aDom = varNodeConst(input).constDomain();
+    const auto& bDom = varNodeConst(output).constDomain();
 
     std::vector<Int> ad;
     ad.reserve(aDom->size());
@@ -105,12 +106,12 @@ class int_absTest : public FznTestBase {
   }
 
   [[nodiscard]] bool canMove() const override {
-    return varId(a) != propagation::NULL_ID;
+    return varId(input) != propagation::NULL_ID;
   }
 
   void move(bool committedValue) override {
-    if (varId(a) != propagation::NULL_ID && randBool()) {
-      changeValue(a, committedValue);
+    if (varId(input) != propagation::NULL_ID && randBool()) {
+      changeValue(input, committedValue);
     }
   }
 

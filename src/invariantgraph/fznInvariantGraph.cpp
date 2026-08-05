@@ -134,6 +134,7 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::BoolVar& var) {
         "Input IntVar must be a parameter or have an identifier");
   }
 
+  varNode(nId).setIsOutputVar(var.isOutput());
   if (var.isOutput() && !var.identifier().empty() &&
       !_outputIdentifiers.contains(var.identifier())) {
     _outputIdentifiers.emplace(var.identifier());
@@ -171,6 +172,7 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntVar& var) {
         "Input IntVar must be a parameter or have an identifier");
   }
 
+  varNode(nId).setIsOutputVar(var.isOutput());
   if (var.isOutput() && !var.identifier().empty() &&
       !_outputIdentifiers.contains(var.identifier())) {
     _outputIdentifiers.emplace(var.identifier());
@@ -204,6 +206,9 @@ std::vector<VarNodeId> FznInvariantGraph::retrieveVarNodes(
                       array->at(i))));
   }
 
+  for (const auto nId : varNodeIds) {
+    varNode(nId).setIsOutputVar(array->isOutput());
+  }
   if (array->isOutput() && !array->identifier().empty() &&
       !_outputIdentifiers.contains(array->identifier())) {
     _outputIdentifiers.emplace(array->identifier());
@@ -228,6 +233,9 @@ std::vector<VarNodeId> FznInvariantGraph::retrieveVarNodes(
                       array->at(i))));
   }
 
+  for (const auto nId : varNodeIds) {
+    varNode(nId).setIsOutputVar(array->isOutput());
+  }
   if (array->isOutput() && !array->identifier().empty() &&
       !_outputIdentifiers.contains(array->identifier())) {
     _outputIdentifiers.emplace(array->identifier());

@@ -45,11 +45,11 @@ class array_var_int_element2dTest : public FznTestBase {
       }
     }
     const Int rowIdxLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(rowIdxLb, numRows + rowIdxLb - 1, rowIdx);
+    _addIntArg(rowIdxLb, numRows + rowIdxLb - 1, rowIdx);
     rowOffset = lowerBound(rowIdx);
 
     const Int colIdxLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(colIdxLb, numCols + colIdxLb - 1, colIdx);
+    _addIntArg(colIdxLb, numCols + colIdxLb - 1, colIdx);
     colOffset = lowerBound(colIdx);
 
     addIntVarArray(flatMatrix);
@@ -59,6 +59,7 @@ class array_var_int_element2dTest : public FznTestBase {
     addArg(colOffset);
 
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {

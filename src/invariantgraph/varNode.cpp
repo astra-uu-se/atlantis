@@ -28,9 +28,9 @@ VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
                  const ConstraintVarId constraintVarId,
                  const DomainType domainType)
     : _varNodeId(varNodeId),
-      _constraintSolverId(constraintVarId),
-      _isIntVar(isIntVar),
       _domainType(domainType),
+      _isIntVar(isIntVar),
+      _constraintSolverId(constraintVarId),
       _domain(domain),
       _identifier(identifier) {
   assert(_domain != nullptr);
@@ -40,9 +40,9 @@ VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
                  const bool isIntVar, const ConstraintVarId constraintVarId,
                  const DomainType domainType)
     : _varNodeId(varNodeId),
-      _constraintSolverId(constraintVarId),
-      _isIntVar(isIntVar),
       _domainType(domainType),
+      _isIntVar(isIntVar),
+      _constraintSolverId(constraintVarId),
       _domain(std::make_shared<SearchDomain>(0, 1)),
       _identifier(identifier) {
   assert(!isIntVar);
@@ -52,9 +52,9 @@ VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar,
                  const ConstraintVarId constraintVarId,
                  const DomainType domainType)
     : _varNodeId(varNodeId),
-      _constraintSolverId(constraintVarId),
-      _isIntVar(isIntVar),
       _domainType(domainType),
+      _isIntVar(isIntVar),
+      _constraintSolverId(constraintVarId),
       _domain(std::make_shared<SearchDomain>(0, 1)),
       _identifier(std::nullopt) {
   assert(!isIntVar);
@@ -65,9 +65,9 @@ VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar,
                  const ConstraintVarId constraintVarId,
                  const DomainType domainType)
     : _varNodeId(varNodeId),
-      _constraintSolverId(constraintVarId),
-      _isIntVar(isIntVar),
       _domainType(domainType),
+      _isIntVar(isIntVar),
+      _constraintSolverId(constraintVarId),
       _domain(domain),
       _identifier(std::nullopt) {
   assert(_domain != nullptr);
@@ -110,6 +110,14 @@ void VarNode::setIsViolationVar(bool isViolVar) {
     throw std::runtime_error("Cannot set violation var on IntVar");
   }
   _isViolationVar = isViolVar;
+}
+
+bool VarNode::isOutputVar() const noexcept {
+  return _isOutputVar;
+}
+
+void VarNode::setIsOutputVar(const bool isOutputVar) {
+  _isOutputVar = isOutputVar;
 }
 
 propagation::VarViewId VarNode::postDomainConstraint(
@@ -405,7 +413,7 @@ void VarNode::markAsInputFor(InvariantNodeId listeningInvNodeId,
   }
 }
 
-void VarNode::unmarkOutputTo(InvariantNodeId definingInvNodeId) {
+void VarNode::unmarkOutputTo(const InvariantNodeId definingInvNodeId) {
   _outputOf.erase(definingInvNodeId);
 }
 

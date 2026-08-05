@@ -84,11 +84,15 @@ void InvariantNode::postConstraint() {}
 
 bool InvariantNode::isReified() const { return false; }
 
+bool InvariantNode::isViolationInvariant() const { return false; }
+
 void InvariantNode::updateState() {}
 
 bool InvariantNode::canBeReplaced() const { return false; }
 
 bool InvariantNode::replace() { return false; }
+
+std::pair<size_t, size_t> InvariantNode::implicitRank() const { return {0, 0}; }
 
 bool InvariantNode::canBeMadeImplicit() const { return false; }
 
@@ -220,17 +224,25 @@ void InvariantNode::removeDynamicInputAtIndex(size_t index) {
   }
 }
 
-void InvariantNode::removeOutputVarNode(VarNodeId outputVarNodeId) {
+void InvariantNode::removeOutputVarNode(const VarNodeId outputVarNodeId) {
   // remove all occurrences:
+  bool didErase = false;
   for (Int i = static_cast<Int>(_outputVarNodeIds.size()) - 1; i >= 0; --i) {
     if (_outputVarNodeIds[i] == outputVarNodeId) {
       _outputVarNodeIds.erase(_outputVarNodeIds.begin() + i);
+      didErase = true;
     }
   }
+  if (!didErase) {
+    return;
+  }
   _invariantGraph.varNode(outputVarNodeId).unmarkOutputTo(_id);
+  if (_outputVarNodeIds.empty() && !isViolationInvariant()) {
+    setState(InvariantNodeState::SUBSUMED);
+  }
 }
 
-void InvariantNode::removeOutputAtIndex(size_t index) {
+void InvariantNode::removeOutputAtIndex(const size_t index) {
   // remove all occurrences:
   assert(index < _outputVarNodeIds.size());
   const VarNodeId vId = _outputVarNodeIds[index];
@@ -239,6 +251,9 @@ void InvariantNode::removeOutputAtIndex(size_t index) {
       _outputVarNodeIds, [&](const VarNodeId id) { return id == vId; });
   if (shouldUnmark) {
     _invariantGraph.varNode(vId).unmarkOutputTo(_id);
+  }
+  if (_outputVarNodeIds.empty() && !isViolationInvariant()) {
+    setState(InvariantNodeState::SUBSUMED);
   }
 }
 

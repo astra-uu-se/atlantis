@@ -54,8 +54,8 @@ size_t CountNeighborhood::randomMove(RandomProvider& random,
   if (_eligibleIndices.size() <= _amount) {
     return 0;
   }
-  _index1 = random.intInRange(0, _amount - 1);
-  _index2 = random.intInRange(_amount, _eligibleIndices.size() - 1);
+  _index1 = random.intInRange(0, static_cast<Int>(_amount) - 1);
+  _index2 = random.intInRange(static_cast<Int>(_amount), static_cast<Int>(_eligibleIndices.size()) - 1);
   _curTimestamp = assignment.currentTimestamp();
   assignment.set(
       _vars[_eligibleIndices[_index1]].solverId(),

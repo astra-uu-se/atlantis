@@ -7,7 +7,6 @@ namespace atlantis::invariantgraph {
 class IntModNode : public InvariantNode {
  public:
   IntModNode(InvariantGraph& graph,
-
              VarNodeId numerator, VarNodeId denominator, VarNodeId remainder);
 
   void init(InvariantNodeId) override;
@@ -15,6 +14,9 @@ class IntModNode : public InvariantNode {
   void postConstraint() override;
 
   void updateState() override;
+
+  [[nodiscard]] bool constrainsOutput(
+      VarNodeId) const override { return true;}
 
   [[nodiscard]] bool canBeReplaced() const override;
 

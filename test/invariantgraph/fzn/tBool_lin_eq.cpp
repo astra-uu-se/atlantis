@@ -69,7 +69,7 @@ class bool_lin_eqTest : public FznTestBase {
     return {lb, ub};
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     Int sum = 0;
     for (size_t i = 0; i < coeffs.size(); ++i) {
       if (coeffs.at(i) != 0) {
@@ -154,6 +154,7 @@ class bool_lin_eqTest : public FznTestBase {
     constraintIdentifier = "bool_lin_eq";
     addBoolPar(reified, true);
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool canMove() const override {
@@ -162,7 +163,7 @@ class bool_lin_eqTest : public FznTestBase {
     });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     std::unordered_set<InvariantNodeId, InvariantNodeIdHash>
         implicitConstraints;
     std::vector<bool> hasImplicitConstraints(inputs.size(), false);
@@ -210,11 +211,11 @@ TEST_F(bool_lin_eqTest, SupportsVariableBoundOutput) {
   addArg(coeffs);
 
   inputs = {"b_0", "b_1", "b_2"};
-  addBoolVarArray({BoolArgState::VAR, BoolArgState::VAR, BoolArgState::VAR},
+  _addBoolVarArray({BoolArgState::VAR, BoolArgState::VAR, BoolArgState::VAR},
                   inputs);
 
   const std::string sum{"sum"};
-  addIntArg(IntArgState::VAR, 0, 3, sum);
+  _addIntArg(IntArgState::VAR, 0, 3, sum);
 
   constraintIdentifier = "bool_lin_eq";
   generateConstraint();

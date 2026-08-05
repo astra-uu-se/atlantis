@@ -177,6 +177,11 @@ class int_lin_eqTest : public FznTestBase {
       definedIndex = -1;
     }
     generateConstraint();
+    if (definedIndex >= 0) {
+      markOutputVar(inputs[definedIndex]);
+    } else {
+      markOutputVar(reified);
+    }
   }
 
   [[nodiscard]] bool canMove() const override {
