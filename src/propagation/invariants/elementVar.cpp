@@ -18,15 +18,15 @@ ElementVar::ElementVar(SolverBase& solver, VarId output, VarViewId index,
 
 ElementVar::ElementVar(SolverBase& solver, VarViewId output, VarViewId index,
                        std::vector<VarViewId>&& varArray, Int offset)
-    : ElementVar(solver, VarId(output), index, std::move(varArray), offset) {
+    : ElementVar(solver, VarId{output}, index, std::move(varArray), offset) {
   assert(output.isVar());
 }
 
 void ElementVar::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _index, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _index, 0, false);
   for (const VarViewId& input : _varArray) {
-    _solver.registerInvariantInput(_id, input, LocalId(0), true);
+    _solver.registerInvariantInput(_id, input, 0, true);
   }
   registerDefinedVar(_output);
 }

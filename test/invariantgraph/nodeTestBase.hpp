@@ -292,13 +292,13 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       _solver->open();
     }
     for (const VarNodeId varNodeId : invNode().staticInputVarNodeIds()) {
-      if (visited.contains(size_t(varNodeId))) {
+      if (visited.contains(size_t{varNodeId})) {
         EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
       } else {
         if (!varNode(varNodeId).isFixed()) {
           EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
         }
-        visited.emplace(size_t(varNodeId));
+        visited.emplace(size_t{varNodeId});
       }
       if (varId(varNodeId) == propagation::NULL_ID) {
         const auto& [lb, ub] = varNode(varNodeId).bounds();
@@ -308,13 +308,13 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
     for (const VarNodeId varNodeId : invNode().dynamicInputVarNodeIds()) {
-      if (visited.contains(size_t(varNodeId))) {
+      if (visited.contains(size_t{varNodeId})) {
         EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
       } else {
         if (!varNode(varNodeId).isFixed()) {
           EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
         }
-        visited.emplace(size_t(varNodeId));
+        visited.emplace(size_t{varNodeId});
       }
       if (varId(varNodeId) == propagation::NULL_ID) {
         const auto& [lb, ub] = varNode(varNodeId).bounds();
@@ -341,17 +341,17 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       EXPECT_TRUE(solverVarId(varNodeId).isVar());
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       if (!varNode(varNodeId).isFixed()) {
-        EXPECT_FALSE(registered.at(size_t(solverVarId(varNodeId))));
+        EXPECT_FALSE(registered.at(size_t{solverVarId(varNodeId)}));
       }
-      registered.at(size_t(solverVarId(varNodeId))) = true;
+      registered.at(size_t{solverVarId(varNodeId)}) = true;
     }
     for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
       EXPECT_TRUE(solverVarId(varNodeId).isVar());
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       if (!varNode(varNodeId).isFixed()) {
-        EXPECT_FALSE(registered.at(size_t(solverVarId(varNodeId))));
+        EXPECT_FALSE(registered.at(size_t{solverVarId(varNodeId)}));
       }
-      registered.at(size_t(solverVarId(varNodeId))) = true;
+      registered.at(size_t{solverVarId(varNodeId)}) = true;
     }
     for (const bool r : registered) {
       EXPECT_TRUE(r);

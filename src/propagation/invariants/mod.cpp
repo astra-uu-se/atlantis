@@ -15,7 +15,7 @@ Mod::Mod(SolverBase& solver, VarId output, VarViewId numerator,
 
 Mod::Mod(SolverBase& solver, VarViewId output, VarViewId numerator,
          VarViewId denominator)
-    : Mod(solver, VarId(output), numerator, denominator) {
+    : Mod(solver, VarId{output}, numerator, denominator) {
   assert(output.isVar());
 }
 
@@ -28,8 +28,8 @@ void Mod::registerVars() {
 
 void Mod::updateBounds(bool widenOnly) {
   _solver.updateBounds(
-      _output, std::min(Int(0), _solver.lowerBound(_numerator)),
-      std::max(Int(0), _solver.upperBound(_numerator)), widenOnly);
+      _output, std::min<Int>(0, _solver.lowerBound(_numerator)),
+      std::max<Int>(0, _solver.upperBound(_numerator)), widenOnly);
 }
 
 void Mod::close(Timestamp) {

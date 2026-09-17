@@ -24,7 +24,7 @@ Max::Max(SolverBase& solver, VarId output, std::vector<VarViewId>&& varArray)
 
 Max::Max(SolverBase& solver, VarViewId output,
          std::vector<VarViewId>&& varArray)
-    : Max(solver, VarId(output), std::move(varArray)) {
+    : Max(solver, VarId{output}, std::move(varArray)) {
   assert(output.isVar());
 }
 

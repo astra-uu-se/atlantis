@@ -47,7 +47,7 @@ GlobalCardinalityOpen::GlobalCardinalityOpen(SolverBase& solver,
 void GlobalCardinalityOpen::registerVars() {
   assert(_id != NULL_ID);
   for (size_t i = 0; i < _inputs.size(); ++i) {
-    _solver.registerInvariantInput(_id, _inputs[i], LocalId(i), false);
+    _solver.registerInvariantInput(_id, _inputs[i], i, false);
   }
   for (const VarId output : _outputs) {
     registerDefinedVar(output);

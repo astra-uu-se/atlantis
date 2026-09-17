@@ -18,14 +18,14 @@ BoolXor::BoolXor(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
 
 BoolXor::BoolXor(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
-    : BoolXor(solver, VarId(output), x, y) {
+    : BoolXor(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
 
 void BoolXor::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, LocalId(0), false);
-  _solver.registerInvariantInput(_id, _y, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _x, 0, false);
+  _solver.registerInvariantInput(_id, _y, 0, false);
   registerDefinedVar(_output);
 }
 

@@ -314,7 +314,7 @@ void Solver::propagate() {
       assert(_propGraph.varLayer(queuedVar) == curLayer);
       // queuedVar has been computed under _currentTimestamp
       const InvariantId definingInvariant =
-          _propGraph.definingInvariant(VarId(queuedVar));
+          _propGraph.definingInvariant(queuedVar);
 
       if (definingInvariant != NULL_ID) {
         // If the variable is a defined var
@@ -459,7 +459,7 @@ void Solver::computeBounds() {
         [&](const InvariantId invId) {
           return inputsToCompute[invariantId] < inputsToCompute[invId] ||
                  (inputsToCompute[invariantId] == inputsToCompute[invId] &&
-                  size_t(invariantId) <= size_t(invId));
+                  size_t{invariantId} <= size_t{invId});
         }));
     _store.invariant(invariantId).updateBounds(true);
 
@@ -500,7 +500,7 @@ size_t Solver::numVars() const { return _propGraph.numVars(); }
 size_t Solver::numInvariants() const { return _propGraph.numInvariants(); }
 
 InvariantId Solver::definingInvariant(VarViewId id) const {
-  return _propGraph.definingInvariant(id.isView() ? sourceId(id) : VarId(id));
+  return _propGraph.definingInvariant(id.isView() ? sourceId(id) : VarId{id});
 }
 
 const std::vector<VarId>& Solver::varsDefinedBy(InvariantId invariantId) const {
@@ -521,7 +521,7 @@ void Solver::notifyCurrentInputChanged(InvariantId invariantId) {
 
 void Solver::setValue(Timestamp ts, VarViewId id, Int val) {
   assert(id.isVar());
-  setValue(ts, VarId(id), val);
+  setValue(ts, VarId{id}, val);
 }
 
 void Solver::setValue(Timestamp ts, VarId id, Int val) {

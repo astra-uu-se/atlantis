@@ -16,7 +16,7 @@ using ::testing::Return;
 using ::testing::ReturnRef;
 
 class AssignmentTest : public ::testing::Test {
- public:
+ protected:
   propagation::VarId a{propagation::NULL_ID};
   propagation::VarId b{propagation::NULL_ID};
   propagation::VarId c{propagation::NULL_ID};
@@ -35,10 +35,10 @@ class AssignmentTest : public ::testing::Test {
     _solver = std::make_shared<propagation::Solver>();
 
     _solver->open();
-    a = propagation::VarId(_solver->makeIntVar(0, 0, 10));
-    b = propagation::VarId(_solver->makeIntVar(0, 0, 10));
-    c = propagation::VarId(_solver->makeIntVar(0, 0, 10));
-    d = propagation::VarId(_solver->makeIntVar(3, 3, 3));
+    a = propagation::VarId{_solver->makeIntVar(0, 0, 10)};
+    b = propagation::VarId{_solver->makeIntVar(0, 0, 10)};
+    c = propagation::VarId{_solver->makeIntVar(0, 0, 10)};
+    d = propagation::VarId{_solver->makeIntVar(3, 3, 3)};
     violation = _solver->makeIntVar(0, 0, 10);
 
     _solver->makeInvariant<propagation::Linear>(

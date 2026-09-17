@@ -34,7 +34,7 @@ Count::Count(SolverBase& solver, VarId output, VarViewId needle,
 
 Count::Count(SolverBase& solver, VarViewId output, VarViewId needle,
              std::vector<VarViewId>&& varArray)
-    : Count(solver, VarId(output), needle, std::move(varArray)) {
+    : Count(solver, VarId{output}, needle, std::move(varArray)) {
   assert(output.isVar());
 }
 

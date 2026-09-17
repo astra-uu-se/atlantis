@@ -11,7 +11,7 @@ BinaryMin::BinaryMin(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
 
 BinaryMin::BinaryMin(SolverBase& solver, VarViewId output, VarViewId x,
                      VarViewId y)
-    : BinaryMin(solver, VarId(output), x, y) {
+    : BinaryMin(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
 

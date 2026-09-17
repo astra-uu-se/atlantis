@@ -18,7 +18,7 @@ AllDifferent::AllDifferent(SolverBase& solver, VarId violationId,
 
 AllDifferent::AllDifferent(SolverBase& solver, VarViewId violationId,
                            std::vector<VarViewId>&& vars)
-    : AllDifferent(solver, VarId(violationId), std::move(vars)) {
+    : AllDifferent(solver, VarId{violationId}, std::move(vars)) {
   assert(violationId.isVar());
 }
 

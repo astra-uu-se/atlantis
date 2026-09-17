@@ -57,10 +57,10 @@ TEST_F(BoolAndTest, UpdateBounds) {
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_LE(xLb, xUb);
-    _solver->updateBounds(VarId(x), xLb, xUb, false);
+    _solver->updateBounds(VarId{x}, xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_LE(yLb, yUb);
-      _solver->updateBounds(VarId(y), yLb, yUb, false);
+      _solver->updateBounds(VarId{y}, yLb, yUb, false);
       invariant.updateBounds(false);
 
       EXPECT_EQ(_solver->lowerBound(outputVar), std::max(xLb, yLb));
@@ -160,7 +160,7 @@ TEST_F(BoolAndTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + 1 + i;
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -173,7 +173,7 @@ TEST_F(BoolAndTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputVar);

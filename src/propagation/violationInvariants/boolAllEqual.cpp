@@ -17,7 +17,7 @@ BoolAllEqual::BoolAllEqual(SolverBase& solver, VarId violationId,
 
 BoolAllEqual::BoolAllEqual(SolverBase& solver, VarViewId violationId,
                            std::vector<VarViewId>&& vars)
-    : BoolAllEqual(solver, VarId(violationId), std::move(vars)) {
+    : BoolAllEqual(solver, VarId{violationId}, std::move(vars)) {
   assert(violationId.isVar());
 }
 

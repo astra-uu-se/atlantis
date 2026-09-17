@@ -19,7 +19,7 @@ BoolLinear::BoolLinear(SolverBase& solver, VarId output,
 BoolLinear::BoolLinear(SolverBase& solver, VarViewId output,
                        std::vector<Int>&& coeffs,
                        std::vector<VarViewId>&& violArray)
-    : BoolLinear(solver, VarId(output), std::move(coeffs),
+    : BoolLinear(solver, VarId{output}, std::move(coeffs),
                  std::move(violArray)) {
   assert(output.isVar());
 }
@@ -31,7 +31,7 @@ BoolLinear::BoolLinear(SolverBase& solver, VarId output,
 
 BoolLinear::BoolLinear(SolverBase& solver, VarViewId output,
                        std::vector<VarViewId>&& violArray)
-    : BoolLinear(solver, VarId(output), std::vector<Int>(violArray.size(), 1),
+    : BoolLinear(solver, VarId{output}, std::vector<Int>(violArray.size(), 1),
                  std::move(violArray)) {
   assert(output.isVar());
 }

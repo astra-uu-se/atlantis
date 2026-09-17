@@ -18,14 +18,14 @@ PowDomain::PowDomain(SolverBase& solver, VarId violationId, VarViewId x,
 
 PowDomain::PowDomain(SolverBase& solver, VarViewId violationId, VarViewId x,
                      VarViewId y)
-    : PowDomain(solver, VarId(violationId), x, y) {
+    : PowDomain(solver, VarId{violationId}, x, y) {
   assert(violationId.isVar());
 }
 
 void PowDomain::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, LocalId(0), false);
-  _solver.registerInvariantInput(_id, _y, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _x, 0, false);
+  _solver.registerInvariantInput(_id, _y, 0, false);
   registerDefinedVar(_violationId);
 }
 

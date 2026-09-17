@@ -685,24 +685,24 @@ void InvariantGraph::replaceFixedVars() {
 const VarNode& InvariantGraph::varNodeConst(
     const std::string& identifier) const {
   assert(_namedVarNodeIndices.contains(identifier));
-  assert(size_t(_namedVarNodeIndices.at(identifier)) < _varNodes.size());
-  return _varNodes.at(size_t(_namedVarNodeIndices.at(identifier)));
+  assert(static_cast<size_t>(_namedVarNodeIndices.at(identifier)) < _varNodes.size());
+  return _varNodes.at(_namedVarNodeIndices.at(identifier));
 }
 
 const VarNode& InvariantGraph::varNodeConst(VarNodeId id) const {
-  assert(size_t(id) < _varNodes.size());
-  return _varNodes.at(size_t(id));
+  assert(size_t{id} < _varNodes.size());
+  return _varNodes.at(size_t{id});
 }
 
 const InvariantNode& InvariantGraph::invariantNodeConst(
     InvariantNodeId id) const {
   if (id.isInvariant()) {
-    assert(size_t(id) < _invariantNodes.size());
-    return *_invariantNodes.at(size_t(id));
+    assert(size_t{id} < _invariantNodes.size());
+    return *_invariantNodes.at(size_t{id});
   }
-  assert(size_t(id) < _implicitConstraintNodes.size());
+  assert(size_t{id} < _implicitConstraintNodes.size());
   return static_cast<const InvariantNode&>(
-      *_implicitConstraintNodes.at(size_t(id)));
+      *_implicitConstraintNodes.at(size_t{id}));
 }
 
 const std::vector<std::shared_ptr<ImplicitConstraintNode>>&
@@ -732,12 +732,12 @@ VarNodeId InvariantGraph::varNodeId(Int val) const {
 }
 
 bool InvariantGraph::containsInvariantNode(InvariantNodeId id) const {
-  return id.isInvariant() && size_t(id) < _invariantNodes.size();
+  return id.isInvariant() && size_t{id} < _invariantNodes.size();
 }
 
 bool InvariantGraph::containsImplicitConstraintNode(InvariantNodeId id) const {
   return id.isImplicitConstraint() &&
-         size_t(id) < _implicitConstraintNodes.size();
+         size_t{id} < _implicitConstraintNodes.size();
 }
 
 InvariantNode& InvariantGraph::invariantNode(InvariantNodeId id) {
@@ -746,13 +746,13 @@ InvariantNode& InvariantGraph::invariantNode(InvariantNodeId id) {
     return implicitConstraintNode(id);
   }
   assert(containsInvariantNode(id));
-  return *_invariantNodes.at(size_t(id));
+  return *_invariantNodes.at(size_t{id});
 }
 
 ImplicitConstraintNode& InvariantGraph::implicitConstraintNode(
     InvariantNodeId id) {
   assert(containsImplicitConstraintNode(id));
-  return *_implicitConstraintNodes.at(size_t(id));
+  return *_implicitConstraintNodes.at(size_t{id});
 }
 
 InvariantNodeId InvariantGraph::nextInvariantNodeId() const {
@@ -1057,7 +1057,7 @@ void InvariantGraph::breakCycles() {
   std::vector<size_t> componentOfVar(_varNodes.size(), components.size());
   for (size_t c = 0; c < components.size(); ++c) {
     for (const VarNodeId vId : components[c]) {
-      componentOfVar[size_t(vId)] = c;
+      componentOfVar[size_t{vId}] = c;
     }
   }
 

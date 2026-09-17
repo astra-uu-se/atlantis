@@ -14,7 +14,7 @@ IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarViewId condition,
 IfThenElse::IfThenElse(SolverBase& solver, VarViewId output,
                        VarViewId condition, VarViewId thenVar,
                        VarViewId elseVar)
-    : IfThenElse(solver, VarId(output), condition, thenVar, elseVar) {
+    : IfThenElse(solver, VarId{output}, condition, thenVar, elseVar) {
   assert(output.isVar());
 }
 

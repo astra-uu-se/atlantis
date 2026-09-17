@@ -18,14 +18,14 @@ BoolAnd::BoolAnd(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
 
 BoolAnd::BoolAnd(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
-    : BoolAnd(solver, VarId(output), x, y) {
+    : BoolAnd(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
 
 void BoolAnd::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, LocalId(0), false);
-  _solver.registerInvariantInput(_id, _y, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _x, 0, false);
+  _solver.registerInvariantInput(_id, _y, 0, false);
   registerDefinedVar(_output);
 }
 

@@ -18,8 +18,8 @@ class ElementConst : public IntView {
   Int _offset;
 
   [[nodiscard]] size_t safeIndex(Int index) const noexcept {
-    return std::max<Int>(Int(0),
-                         std::min<Int>(static_cast<Int>(_array.size()) - Int(1),
+    return std::max<Int>(0,
+                         std::min<Int>(static_cast<Int>(_array.size()) - 1,
                                        index - _offset));
   }
 

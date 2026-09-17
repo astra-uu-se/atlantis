@@ -17,7 +17,7 @@ BoolEqual::BoolEqual(SolverBase& solver, const VarId violationId,
 
 BoolEqual::BoolEqual(SolverBase& solver, const VarViewId violationId,
                      const VarViewId x, const VarViewId y)
-    : BoolEqual(solver, VarId(violationId), x, y) {
+    : BoolEqual(solver, VarId{violationId}, x, y) {
   assert(violationId.isVar());
 }
 

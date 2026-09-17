@@ -212,7 +212,7 @@ TEST_F(BoolTableTestIn, Commit) {
   std::ranges::shuffle(indices.begin(), indices.end(), rng);
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + i;
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -225,7 +225,7 @@ TEST_F(BoolTableTestIn, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     Int notifiedOutputValue = _solver->value(ts, outputVar);
@@ -234,9 +234,9 @@ TEST_F(BoolTableTestIn, Commit) {
 
     ASSERT_EQ(notifiedOutputValue, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, VarId{inputVars.at(i)});
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);

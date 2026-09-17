@@ -27,7 +27,7 @@ void OutputToInputExplorer::outputToInputStaticMarking() {
       [&](const std::unordered_set<VarId>& anc) { return anc.empty(); }));
 
   for (const VarId searchVar : _solver.searchVars()) {
-    std::fill(varVisited.begin(), varVisited.end(), false);
+    std::ranges::fill(varVisited, false);
     std::vector<VarId> stack;
     stack.reserve(_solver.numVars());
 

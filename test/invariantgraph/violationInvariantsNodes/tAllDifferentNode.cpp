@@ -119,10 +119,10 @@ TEST_P(AllDifferentNodeTestFixture, application) {
   for (const auto& input : inputVars) {
     EXPECT_TRUE(varId(input).isVar());
     EXPECT_THAT(_solver->searchVars(),
-                ::testing::Contains(size_t(varId(input))));
+                ::testing::Contains(size_t{varId(input)}));
   }
 
-  EXPECT_GE(_solver->numVars(), size_t(violationId));
+  EXPECT_GE(_solver->numVars(), size_t{violationId});
 
   // alldifferent
   EXPECT_EQ(_solver->numInvariants(), 1);

@@ -14,7 +14,7 @@ Pow::Pow(SolverBase& solver, VarId output, VarViewId base, VarViewId exponent)
 
 Pow::Pow(SolverBase& solver, VarViewId output, VarViewId base,
          VarViewId exponent)
-    : Pow(solver, VarId(output), base, exponent) {
+    : Pow(solver, VarId{output}, base, exponent) {
   assert(output.isVar());
 }
 

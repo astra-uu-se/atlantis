@@ -24,7 +24,7 @@ Int EqualConst::lowerBound() const {
   const Int lb = _solver.lowerBound(_parentId);
   const Int ub = _solver.upperBound(_parentId);
   if (lb <= _val && _val <= ub) {
-    return Int(0);
+    return 0;
   }
   return std::min(compute(lb, _val), compute(ub, _val));
 }

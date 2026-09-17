@@ -22,7 +22,7 @@ VarViewId SolverBase::makeIntVar(Int initValue, Int lowerBound,
   }
   const VarViewId newId =
       _store.createIntVar(_currentTimestamp, initValue, lowerBound, upperBound);
-  registerVar(VarId(newId));
+  registerVar(VarId{newId});
   return newId;
 }
 }  // namespace atlantis::propagation

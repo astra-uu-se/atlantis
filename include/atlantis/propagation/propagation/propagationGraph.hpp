@@ -143,13 +143,13 @@ class PropagationGraph {
   }
 
   [[nodiscard]] bool isEvaluationVar(VarId id) const {
-    assert(size_t(id) < _isEvaluationVar.size());
-    return _isEvaluationVar[size_t(id)];
+    assert(id < _isEvaluationVar.size());
+    return _isEvaluationVar[id];
   }
 
   [[nodiscard]] bool isSearchVar(VarId id) const {
-    assert(size_t(id) < _isSearchVar.size());
-    return _isSearchVar.at(size_t(id));
+    assert(id < _isSearchVar.size());
+    return _isSearchVar.at(id);
   }
 
   [[nodiscard]] bool isDynamicInvariant(InvariantId id) const {
@@ -239,7 +239,7 @@ class PropagationGraph {
   }
 
   [[nodiscard]] size_t varPosition(VarId id) const {
-    return _topologicalNumber[size_t(id)];
+    return _topologicalNumber[id];
   }
 
   [[nodiscard]] size_t invariantPosition(InvariantId invariantId) const {

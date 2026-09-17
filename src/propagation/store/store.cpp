@@ -25,12 +25,12 @@ InvariantId Store::createInvariantFromPtr(
 
 VarViewId Store::createIntViewFromPtr(const std::shared_ptr<IntView>& ptr) {
   const VarViewId newId(_intViews.size(), true);
-  ptr->setId(ViewId(newId));
+  ptr->setId(ViewId{newId});
   const VarViewId parentId = ptr->parentId();
   const VarViewId source =
-      parentId.isVar() ? parentId : _intViewSourceId[size_t(parentId)];
+      parentId.isVar() ? parentId : _intViewSourceId[size_t{parentId}];
   _intViews.emplace_back(ptr);
-  _intViewSourceId.emplace_back(VarId(source));
+  _intViewSourceId.emplace_back(VarId{source});
   return newId;
 }
 
@@ -46,7 +46,7 @@ const IntView& Store::constIntView(ViewId id) const {
 
 VarId Store::sourceId(VarViewId id) const noexcept {
   return id == NULL_ID ? NULL_ID
-                       : (id.isVar() ? VarId(id) : intViewSourceId(VarId(id)));
+                       : (id.isVar() ? VarId{id} : intViewSourceId(VarId{id}));
 }
 
 VarId Store::intViewSourceId(ViewId id) const {

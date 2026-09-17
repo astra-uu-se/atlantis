@@ -48,18 +48,18 @@ propagation::VarViewId SolverMapping::setImplicitIntermediateId(
 
 propagation::VarViewId SolverMapping::solverId(VarNodeId varNodeId) const {
   assert(varNodeId != NULL_NODE_ID);
-  if (size_t(varNodeId) >= _solverIds.size()) {
+  if (varNodeId >= _solverIds.size()) {
     return propagation::NULL_ID;
   }
-  return _solverIds[size_t(varNodeId)];
+  return _solverIds[varNodeId];
 }
 propagation::VarViewId SolverMapping::domainViolationId(
     VarNodeId varNodeId) const {
   assert(varNodeId != NULL_NODE_ID);
-  if (size_t(varNodeId) >= _domainViolationIds.size()) {
+  if (varNodeId >= _domainViolationIds.size()) {
     return propagation::NULL_ID;
   }
-  return _domainViolationIds[size_t(varNodeId)];
+  return _domainViolationIds[varNodeId];
 }
 
 propagation::VarViewId SolverMapping::totalViolationId() const {
@@ -74,8 +74,8 @@ void SolverMapping::setSolverId(const VarNodeId& varNodeId,
                                 propagation::VarViewId solverId) {
   assert(varNodeId != NULL_NODE_ID);
   assert(solverId != propagation::NULL_ID);
-  if (_solverIds.size() <= size_t(varNodeId)) {
-    _solverIds.resize(size_t(varNodeId) + 1, propagation::NULL_ID);
+  if (_solverIds.size() <= varNodeId) {
+    _solverIds.resize(varNodeId + 1, propagation::NULL_ID);
   }
   _solverIds[varNodeId] = solverId;
 }
@@ -83,10 +83,10 @@ void SolverMapping::setDomainViolationId(const VarNodeId& varNodeId,
                                          propagation::VarViewId solverId) {
   assert(varNodeId != NULL_NODE_ID);
   assert(solverId != propagation::NULL_ID);
-  if (_domainViolationIds.size() <= size_t(varNodeId)) {
-    _domainViolationIds.resize(size_t(varNodeId) + 1, propagation::NULL_ID);
+  if (_domainViolationIds.size() <= varNodeId) {
+    _domainViolationIds.resize(varNodeId + 1, propagation::NULL_ID);
   }
-  _domainViolationIds[size_t(varNodeId)] = solverId;
+  _domainViolationIds[varNodeId] = solverId;
 }
 
 void SolverMapping::setTotalViolationId(propagation::VarViewId solverId) {

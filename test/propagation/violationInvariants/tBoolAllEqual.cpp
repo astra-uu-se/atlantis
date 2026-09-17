@@ -172,7 +172,7 @@ TEST_F(BoolAllEqualTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + i;
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -185,7 +185,7 @@ TEST_F(BoolAllEqualTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedViolation = _solver->value(ts, outputVar);
@@ -193,9 +193,9 @@ TEST_F(BoolAllEqualTest, Commit) {
 
     ASSERT_EQ(notifiedViolation, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, VarId{inputVars.at(i)});
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);

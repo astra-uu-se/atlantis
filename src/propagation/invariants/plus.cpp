@@ -10,7 +10,7 @@ Plus::Plus(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
 
 Plus::Plus(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
-    : Plus(solver, VarId(output), x, y) {
+    : Plus(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
 

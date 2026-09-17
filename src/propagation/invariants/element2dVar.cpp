@@ -30,18 +30,18 @@ Element2dVar::Element2dVar(SolverBase& solver, VarViewId output,
                            VarViewId index1, VarViewId index2,
                            std::vector<std::vector<VarViewId>>&& varMatrix,
                            Int offset1, Int offset2)
-    : Element2dVar(solver, VarId(output), index1, index2, std::move(varMatrix),
+    : Element2dVar(solver, VarId{output}, index1, index2, std::move(varMatrix),
                    offset1, offset2) {
   assert(output.isVar());
 }
 
 void Element2dVar::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _indices[0], LocalId(0), false);
-  _solver.registerInvariantInput(_id, _indices[1], LocalId(0), false);
+  _solver.registerInvariantInput(_id, _indices[0], 0, false);
+  _solver.registerInvariantInput(_id, _indices[1], 0, false);
   for (const auto& varRow : _varMatrix) {
     for (const VarViewId& input : varRow) {
-      _solver.registerInvariantInput(_id, input, LocalId(0), true);
+      _solver.registerInvariantInput(_id, input, 0, true);
     }
   }
   registerDefinedVar(_output);

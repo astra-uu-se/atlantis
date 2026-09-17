@@ -11,7 +11,7 @@ BinaryMax::BinaryMax(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
 
 BinaryMax::BinaryMax(SolverBase& solver, VarViewId output, VarViewId x,
                      VarViewId y)
-    : BinaryMax(solver, VarId(output), x, y) {
+    : BinaryMax(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
 

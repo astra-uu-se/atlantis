@@ -29,13 +29,13 @@ Min::Min(SolverBase& solver, VarId output, std::vector<VarViewId>&& varArray)
 
 Min::Min(SolverBase& solver, VarViewId output,
          std::vector<VarViewId>&& varArray)
-    : Min(solver, VarId(output), std::move(varArray)) {
+    : Min(solver, VarId{output}, std::move(varArray)) {
   assert(output.isVar());
 }
 
 Min::Min(SolverBase& solver, VarViewId output,
          std::vector<VarViewId>&& varArray, Int limit)
-    : Min(solver, VarId(output), std::move(varArray), limit) {
+    : Min(solver, VarId{output}, std::move(varArray), limit) {
   assert(output.isVar());
 }
 

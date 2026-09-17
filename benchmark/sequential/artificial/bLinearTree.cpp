@@ -58,7 +58,7 @@ class LinearTree : public ::benchmark::Fixture {
     }
 #ifndef NDEBUG
     if (inputCount == 2) {
-      assert(numNodes == (size_t(1) << treeHeight) - 1);
+      assert(numNodes == (size_t{1} << treeHeight) - 1);
     }
 #endif
   }

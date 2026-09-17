@@ -25,7 +25,7 @@ AllDifferentExcept::AllDifferentExcept(SolverBase& solver,
                                        VarViewId violationId,
                                        std::vector<VarViewId>&& vars,
                                        const std::vector<Int>& ignored)
-    : AllDifferentExcept(solver, VarId(violationId), std::move(vars), ignored) {
+    : AllDifferentExcept(solver, VarId{violationId}, std::move(vars), ignored) {
   assert(violationId.isVar());
 }
 

@@ -28,7 +28,7 @@ std::vector<std::vector<T>> subsets(std::vector<T>& origin) {
   std::vector<std::vector<T>> res;
   std::deque<std::pair<size_t, size_t>> q;
   res.emplace_back(std::vector<T>{});
-  q.emplace_back(size_t(0), 0 + 1);
+  q.emplace_back(0, 0 + 1);
   q.emplace_back(std::pair<size_t, size_t>{res.size(), 0 + 1});
   res.emplace_back(std::vector<T>{origin.at(0)});
 
@@ -203,7 +203,7 @@ class InvariantTest : public ::testing::Test {
       const std::vector<VarViewId>& vars) {
     return *std::ranges::min_element(
         vars.begin(), vars.end(), [&](const VarViewId& a, const VarViewId& b) {
-          return size_t(a) < size_t(b);
+          return size_t{a} < size_t{b};
         });
   }
 
@@ -211,7 +211,7 @@ class InvariantTest : public ::testing::Test {
       const std::vector<VarViewId>& vars) {
     return *std::ranges::max_element(
         vars.begin(), vars.end(), [&](const VarViewId& a, const VarViewId& b) {
-          return size_t(a) < size_t(b);
+          return size_t{a} < size_t{b};
         });
   }
 
@@ -220,14 +220,14 @@ class InvariantTest : public ::testing::Test {
     for (const auto& id : inputVars) {
       EXPECT_TRUE(id.isVar());
     }
-    const auto minVarId = size_t(getMinVarViewId(inputVars));
-    const auto maxVarId = size_t(getMaxVarViewId(inputVars));
+    const auto minVarId = size_t{getMinVarViewId(inputVars)};
+    const auto maxVarId = size_t{getMaxVarViewId(inputVars)};
 
     for (Timestamp ts = _solver->currentTimestamp() + 1;
          ts < _solver->currentTimestamp() + 4; ++ts) {
       std::vector<bool> notified(maxVarId - minVarId + 1, false);
       for (size_t i = 0; i < inputVars.size(); ++i) {
-        const size_t varId = size_t(invariant.nextInput(ts));
+        const size_t varId = size_t{invariant.nextInput(ts)};
         EXPECT_NE(varId, NULL_ID);
         EXPECT_LE(minVarId, varId);
         EXPECT_GE(maxVarId, varId);

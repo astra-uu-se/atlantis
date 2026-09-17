@@ -30,7 +30,7 @@ Element2dConst::Element2dConst(SolverBase& solver, VarViewId output,
                                VarViewId index1, VarViewId index2,
                                std::vector<std::vector<Int>>&& matrix,
                                Int offset1, Int offset2)
-    : Element2dConst(solver, VarId(output), index1, index2, std::move(matrix),
+    : Element2dConst(solver, VarId{output}, index1, index2, std::move(matrix),
                      offset1, offset2) {
   assert(output.isVar());
 }

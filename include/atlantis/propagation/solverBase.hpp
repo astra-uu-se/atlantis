@@ -78,13 +78,13 @@ class SolverBase {
   void commitValue(VarId, Int val);
 
   [[nodiscard]] Int lowerBound(VarViewId id) const {
-    return id.isView() ? _store.constIntView(ViewId(id)).lowerBound()
-                       : _store.constIntVar(VarId(id)).lowerBound();
+    return id.isView() ? _store.constIntView(ViewId{id}).lowerBound()
+                       : _store.constIntVar(VarId{id}).lowerBound();
   }
 
   [[nodiscard]] Int upperBound(VarViewId id) const {
-    return id.isView() ? _store.constIntView(ViewId(id)).upperBound()
-                       : _store.constIntVar(VarId(id)).upperBound();
+    return id.isView() ? _store.constIntView(ViewId{id}).upperBound()
+                       : _store.constIntVar(VarId{id}).upperBound();
   }
 
   void updateBounds(VarId id, Int lb, Int ub, bool widenOnly) {
@@ -177,7 +177,7 @@ SolverBase::makeIntView(Args&&... args) {
 
   const VarViewId viewId = _store.createIntViewFromPtr(
       std::make_shared<T>(std::forward<Args>(args)...));
-  _store.intView(ViewId(viewId)).init(ViewId(viewId));
+  _store.intView(ViewId{viewId}).init(ViewId{viewId});
   return viewId;
 }
 
@@ -209,17 +209,17 @@ inline bool SolverBase::hasChanged(Timestamp ts, VarId id) const {
 }
 
 inline Int SolverBase::value(Timestamp ts, VarViewId id) {
-  return id.isView() ? _store.intView(ViewId(id)).value(ts)
-                     : _store.constIntVar(VarId(id)).value(ts);
+  return id.isView() ? _store.intView(ViewId{id}).value(ts)
+                     : _store.constIntVar(VarId{id}).value(ts);
 }
 
 inline Int SolverBase::committedValue(VarViewId id) {
-  return id.isView() ? _store.intView(ViewId(id)).committedValue()
-                     : _store.constIntVar(VarId(id)).committedValue();
+  return id.isView() ? _store.intView(ViewId{id}).committedValue()
+                     : _store.constIntVar(VarId{id}).committedValue();
 }
 
 inline Timestamp SolverBase::tmpTimestamp(VarViewId id) const {
-  return _store.constIntVar(id.isView() ? sourceId(id) : VarId(id))
+  return _store.constIntVar(id.isView() ? sourceId(id) : VarId{id})
       .tmpTimestamp();
 }
 

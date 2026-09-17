@@ -17,7 +17,7 @@ IntDiv::IntDiv(SolverBase& solver, VarId output, VarViewId numerator,
 
 IntDiv::IntDiv(SolverBase& solver, VarViewId output, VarViewId numerator,
                VarViewId denominator)
-    : IntDiv(solver, VarId(output), numerator, denominator) {
+    : IntDiv(solver, VarId{output}, numerator, denominator) {
   assert(output.isVar());
 }
 

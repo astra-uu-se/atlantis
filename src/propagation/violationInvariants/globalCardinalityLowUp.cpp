@@ -38,7 +38,7 @@ GlobalCardinalityLowUp::GlobalCardinalityLowUp(
     SolverBase& solver, VarViewId violationId, std::vector<VarViewId>&& vars,
     const std::vector<Int>& cover, const std::vector<Int>& lowerBounds,
     const std::vector<Int>& upperBounds)
-    : GlobalCardinalityLowUp(solver, VarId(violationId), std::move(vars), cover,
+    : GlobalCardinalityLowUp(solver, VarId{violationId}, std::move(vars), cover,
                              lowerBounds, upperBounds) {
   assert(violationId.isVar());
 }
@@ -56,44 +56,44 @@ GlobalCardinalityLowUp::GlobalCardinalityLowUp(SolverBase& solver,
                                                std::vector<VarViewId>&& vars,
                                                const std::vector<Int>& cover,
                                                const std::vector<Int>& bounds)
-    : GlobalCardinalityLowUp(solver, VarId(violationId), std::move(vars), cover,
+    : GlobalCardinalityLowUp(solver, VarId{violationId}, std::move(vars), cover,
                              bounds) {
   assert(violationId.isVar());
 }
 
 signed char GlobalCardinalityLowUp::increaseCount(Timestamp ts, Int value) {
   const size_t pos = static_cast<size_t>(std::max<Int>(
-      0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));
-  if (_lowerBounds.at(pos) < 0) {
+      0, std::min(static_cast<Int>(_lowerBounds.size()) - 1, value - _offset)));
+  if (_lowerBounds[pos] < 0) {
     return 0;
   }
-  const Int newCount = _counts.at(pos).incValue(ts, 1);
+  const Int newCount = _counts[pos].incValue(ts, 1);
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(_vars.size()));
-  return newCount > _upperBounds.at(pos)
+  return newCount > _upperBounds[pos]
              ? 1
-             : (newCount > _lowerBounds.at(pos) ? 0 : -1);
+             : static_cast<signed char>(newCount > _lowerBounds[pos] ? 0 : -1);
 }
 
 signed char GlobalCardinalityLowUp::decreaseCount(Timestamp ts, Int value) {
   const size_t pos = static_cast<size_t>(std::max<Int>(
-      0, std::min(Int(_lowerBounds.size()) - 1, value - _offset)));
-  if (_lowerBounds.at(pos) < 0) {
+      0, std::min(static_cast<Int>(_lowerBounds.size()) - 1, value - _offset)));
+  if (_lowerBounds[pos] < 0) {
     return 0;
   }
 
-  const Int newCount = _counts.at(pos).incValue(ts, -1);
+  const Int newCount = _counts[pos].incValue(ts, -1);
   assert(newCount >= 0);
   assert(newCount <= static_cast<Int>(_vars.size()));
-  return newCount < _lowerBounds.at(pos)
+  return newCount < _lowerBounds[pos]
              ? 1
-             : (newCount < _upperBounds.at(pos) ? 0 : -1);
+             : static_cast<signed char>(newCount < _upperBounds[pos] ? 0 : -1);
 }
 
 void GlobalCardinalityLowUp::registerVars() {
   assert(_id != NULL_ID);
   for (size_t i = 0; i < _vars.size(); ++i) {
-    _solver.registerInvariantInput(_id, _vars[i], LocalId(i), false);
+    _solver.registerInvariantInput(_id, _vars[i], i, false);
   }
   registerDefinedVar(_violationId);
 }
@@ -128,13 +128,13 @@ void GlobalCardinalityLowUp::recompute(Timestamp timestamp) {
 
   assert(_counts.size() == _lowerBounds.size());
   for (size_t i = 0; i < _lowerBounds.size(); ++i) {
-    if (_lowerBounds.at(i) < 0) {
+    if (_lowerBounds[i] < 0) {
       continue;
     }
     shortage +=
-        std::max(Int(0), _lowerBounds.at(i) - _counts.at(i).value(timestamp));
+        std::max<Int>(0, _lowerBounds[i] - _counts[i].value(timestamp));
     excess +=
-        std::max(Int(0), _counts.at(i).value(timestamp) - _upperBounds.at(i));
+        std::max<Int>(0, _counts[i].value(timestamp) - _upperBounds[i]);
   }
 
   _shortage.setValue(timestamp, shortage);
