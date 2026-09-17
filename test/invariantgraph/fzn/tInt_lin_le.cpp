@@ -104,16 +104,15 @@ class int_lin_leTest : public FznTestBase {
   }
 
   void generate() override {
-    const size_t size = true ? 1 : *rc::gen::inRange<size_t>(0, 4);
-    coeffs = true ? std::vector<Int>{-2}
-                  : *rc::gen::container<std::vector<Int>>(
+    const size_t size = *rc::gen::inRange<size_t>(0, 4);
+    coeffs = *rc::gen::container<std::vector<Int>>(
                         size, rc::gen::inRange(-2, 2));
     addArg(coeffs);
     inputs.reserve(size);
     for (size_t i = 0; i < size; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
-    addIntVarArray({IntArgState::VAR}, inputs);
+    addIntVarArray(inputs);
 
     Int lb = -1;
     Int ub = 2;
@@ -122,13 +121,13 @@ class int_lin_leTest : public FznTestBase {
       lb += std::min<Int>(0, c);
     }
 
-    bound = true ? -3 : *rc::gen::inRange<Int>(lb, ub);
+    bound = *rc::gen::inRange<Int>(lb, ub);
     addArg(bound);
 
-    const bool isReified = true ? true : *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "int_lin_le_reif" : "int_lin_le";
     if (isReified) {
-      addBoolArg(BoolArgState::VAR, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }

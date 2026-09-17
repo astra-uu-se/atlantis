@@ -90,9 +90,9 @@ class bool_andTest : public FznTestBase {
 
   void generate() override {
     constraintIdentifier = "bool_and";
-    addBoolArg(BoolArgState::VAR, inputs.front());
-    addBoolArg(BoolArgState::VAR, inputs.back());
-    addBoolArg(BoolArgState::FIXED_FALSE, output);
+    addBoolArg(inputs.front());
+    addBoolArg(inputs.back());
+    addBoolArg(output);
     generateConstraint();
     markOutputVar(output);
   }

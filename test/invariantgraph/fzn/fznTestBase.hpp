@@ -88,6 +88,8 @@ class FznTestBase : public ::testing::Test {
  protected:
   void SetUp() override;
 
+  BoolArg _addBoolArg(BoolArgState state, const std::string& identifier = "b");
+
   IntArg _addIntArg(IntArgState state, Int val, const std::string& identifier);
 
   IntArg _addIntArg(IntArgState state, Int lb, Int ub,
@@ -237,13 +239,16 @@ class FznTestBase : public ::testing::Test {
 
   IntArg addIntArg(const std::string& identifier = "i");
 
-  std::shared_ptr<IntVarArray> addIntParArray(
+  std::vector<Int> addIntParArray(
       const std::vector<Int>& pars,
       const std::string& identifier = "par_i_arr");
 
-  std::shared_ptr<IntVarArray> addIntParArray(
+  std::vector<Int> addIntParArray(
       size_t arraySize, Int lb, Int ub,
       const std::string& identifier = "par_i_arr");
+
+  std::vector<Int> addIntParArray(
+      size_t arraySize, const std::string& identifier = "par_i_arr");
 
   std::shared_ptr<IntVarArray> genIntVarArray(
       size_t arraySize, Int lb, Int ub, const std::string& identifier = "i_arr",
@@ -253,9 +258,6 @@ class FznTestBase : public ::testing::Test {
       size_t arraySize, const std::string& identifier = "i_arr",
       const std::string& varPrefix = "i_");
 
-  std::shared_ptr<IntVarArray> addIntParArray(
-      size_t arraySize, const std::string& identifier = "par_i_arr");
-
   std::shared_ptr<BoolVar> genBoolVar(BoolArgState state,
                                       const std::string& identifier = "b");
   std::vector<Int> genDomain(size_t size) const;
@@ -263,7 +265,7 @@ class FznTestBase : public ::testing::Test {
   std::vector<Int> genDomain(IntArgState state) const;
   std::vector<Int> genDomain() const;
 
-  BoolArg addBoolArg(BoolArgState state, const std::string& identifier = "b");
+  [[deprecated]] BoolArg addBoolArg(BoolArgState state, const std::string& identifier = "b");
 
   BoolArg addBoolArg(const std::string& identifier = "b");
 

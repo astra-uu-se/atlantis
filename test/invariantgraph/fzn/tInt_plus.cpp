@@ -39,9 +39,9 @@ class int_plusTest : public FznTestBase {
   }
 
   void generate() override {
-    addIntArg(IntArgState::VAR, a);
-    addIntArg(IntArgState::VAR, b);
-    addIntArg(IntArgState::PAR, -3, sum);
+    addIntArg(a);
+    addIntArg(b);
+    addIntArg(sum);
     constraintIdentifier = "int_plus";
     generateConstraint();
     markOutputVar(sum);

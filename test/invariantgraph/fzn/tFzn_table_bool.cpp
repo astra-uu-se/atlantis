@@ -22,17 +22,13 @@ class fzn_table_boolTest : public FznTestBase {
   std::vector<std::vector<bool>> table{};
 
   void generate() override {
-    const Int numVars = true ? 4 : *rc::gen::inRange<Int>(1, 10);
+    const Int numVars = *rc::gen::inRange<Int>(1, 10);
     for (Int i = 0; i < numVars; ++i) {
       inputs.emplace_back("i_" + std::to_string(i));
     }
-    addBoolVarArray({BoolArgState::VAR, BoolArgState::FIXED_FALSE,
-                     BoolArgState::VAR, BoolArgState::PAR_TRUE},
-                    inputs);
+    addBoolVarArray(inputs);
 
-    table = true ? std::vector<std::vector<bool>>{{false, false, false, false},
-                                                  {false, true, false, false}}
-                 : *rc::gen::container<std::vector<std::vector<bool>>>(
+    table = *rc::gen::container<std::vector<std::vector<bool>>>(
                        *rc::gen::inRange(1, 5),
                        rc::gen::container<std::vector<bool>>(
                            numVars, rc::gen::arbitrary<bool>()));
@@ -47,12 +43,12 @@ class fzn_table_boolTest : public FznTestBase {
 
     addArg(flatTable);
 
-    const bool isReified = true ? true : *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_table_bool_flat_reif" : "fzn_table_bool_flat";
 
     if (isReified) {
-      addBoolArg(BoolArgState::VAR, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }

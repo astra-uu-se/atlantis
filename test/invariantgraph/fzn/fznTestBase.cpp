@@ -470,18 +470,18 @@ IntArg FznTestBase::addIntArg(const std::string& identifier) {
   return _addIntArg(defaultLb, defaultUb, identifier);
 }
 
-std::shared_ptr<IntVarArray> FznTestBase::addIntParArray(
+std::vector<Int> FznTestBase::addIntParArray(
     const std::vector<Int>& pars, const std::string& identifier) {
   auto parArray = std::get<std::shared_ptr<IntVarArray>>(
       _model->addVar(std::make_shared<IntVarArray>(identifier)));
-  for (size_t i = 0; i < pars.size(); ++i) {
-    parArray->append(pars.at(i));
+  for (Int par : pars) {
+    parArray->append(par);
   }
   args.emplace_back(parArray);
-  return parArray;
+  return pars;
 }
 
-std::shared_ptr<IntVarArray> FznTestBase::addIntParArray(
+std::vector<Int> FznTestBase::addIntParArray(
     const size_t arraySize, const Int lb, const Int ub,
     const std::string& identifier) {
   const std::vector<Int> pars = *rc::gen::container<std::vector<Int>>(
@@ -522,7 +522,7 @@ std::shared_ptr<IntVarArray> FznTestBase::genIntVarArray(
   return genIntVarArray(arraySize, defaultLb, defaultUb, identifier, varPrefix);
 }
 
-std::shared_ptr<IntVarArray> FznTestBase::addIntParArray(
+std::vector<Int> FznTestBase::addIntParArray(
     const size_t arraySize, const std::string& identifier) {
   return addIntParArray(arraySize, defaultLb, defaultUb, identifier);
 }
@@ -567,8 +567,8 @@ std::vector<Int> FznTestBase::genDomain() const {
   return genDomain(*rc::gen::arbitrary<IntArgState>());
 }
 
-BoolArg FznTestBase::addBoolArg(BoolArgState state,
-                                const std::string& identifier) {
+BoolArg FznTestBase::_addBoolArg(const BoolArgState state,
+                                 const std::string& identifier) {
   switch (state) {
     case BoolArgState::PAR_FALSE:
     case BoolArgState::PAR_TRUE: {
@@ -585,8 +585,13 @@ BoolArg FznTestBase::addBoolArg(BoolArgState state,
   }
 }
 
+BoolArg FznTestBase::addBoolArg(const BoolArgState state,
+                                const std::string& identifier) {
+  return _addBoolArg(state, identifier);
+}
+
 BoolArg FznTestBase::addBoolArg(const std::string& identifier) {
-  return addBoolArg(*rc::gen::arbitrary<BoolArgState>(), identifier);
+  return _addBoolArg(*rc::gen::arbitrary<BoolArgState>(), identifier);
 }
 
 std::shared_ptr<BoolVarArray> FznTestBase::addBoolParArray(
