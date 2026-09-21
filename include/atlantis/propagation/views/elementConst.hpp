@@ -17,11 +17,7 @@ class ElementConst : public IntView {
   std::vector<Int> _array;
   Int _offset;
 
-  [[nodiscard]] size_t safeIndex(Int index) const noexcept {
-    return std::max<Int>(0,
-                         std::min<Int>(static_cast<Int>(_array.size()) - 1,
-                                       index - _offset));
-  }
+  [[nodiscard]] size_t safeIndex(Int index) const noexcept;
 
  public:
   explicit ElementConst(SolverBase& solver, VarViewId parentId,

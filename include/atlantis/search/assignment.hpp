@@ -47,11 +47,11 @@ class Assignment {
    * Get the current value of a variable in the assignment.
    */
   [[nodiscard]] Int currentValue(propagation::VarViewId) const;
-  Int currentValue(propagation::VarId var) const;
+  [[nodiscard]] Int currentValue(propagation::VarId var) const;
 
   [[nodiscard]] std::unordered_map<propagation::VarId, Int> currentValues()
       const;
-  Int committedValue(propagation::VarId var) const;
+  [[nodiscard]] Int committedValue(propagation::VarId var) const;
 
   /**
    * Get the committed value of a variable in the assignment.

@@ -26,8 +26,7 @@ class InvariantGraphRoot : public ImplicitConstraintNode {
   void updateDomainTypes() override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
-
- protected:
+  
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };
 

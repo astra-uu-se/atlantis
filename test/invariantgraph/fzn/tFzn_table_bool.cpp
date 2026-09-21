@@ -201,7 +201,8 @@ class fzn_table_boolRegressionTest : public FznTestBase {
   std::vector<std::vector<bool>> table{
       {true, false, false}, {true, false, true}, {true, true, false}};
 
-  void buildConstraint(const std::string& identifier, bool reifiedConstraint) {
+  void buildConstraint(const std::string& identifier,
+                       const bool reifiedConstraint) {
     addBoolVarArray(
         {BoolArgState::FIXED_TRUE, BoolArgState::VAR, BoolArgState::VAR},
         inputs);

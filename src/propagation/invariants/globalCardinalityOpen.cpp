@@ -65,6 +65,32 @@ std::optional<size_t> GlobalCardinalityOpen::coverIndex(Int value) const {
   return static_cast<size_t>(delta);
 }
 
+inline void GlobalCardinalityOpen::increaseCount(const Timestamp ts,
+                                                 const Int value) {
+  const auto index = coverIndex(value);
+  if (index.has_value() && _coverVarIndex[*index] >= 0) {
+    _counts[_coverVarIndex[*index]].incValue(ts, 1);
+  }
+}
+
+inline void GlobalCardinalityOpen::decreaseCountAndUpdateOutput(
+    const Timestamp ts, const Int value) {
+  const auto index = coverIndex(value);
+  if (index.has_value() && _coverVarIndex[*index] >= 0) {
+    updateValue(ts, _outputs[_coverVarIndex[*index]],
+                _counts[_coverVarIndex[*index]].incValue(ts, -1));
+  }
+}
+
+inline void GlobalCardinalityOpen::increaseCountAndUpdateOutput(
+    const Timestamp ts, const Int value) {
+  const auto index = coverIndex(value);
+  if (index.has_value() && _coverVarIndex[*index] >= 0) {
+    updateValue(ts, _outputs[_coverVarIndex[*index]],
+                _counts[_coverVarIndex[*index]].incValue(ts, 1));
+  }
+}
+
 void GlobalCardinalityOpen::updateBounds(bool widenOnly) {
   for (const VarId output : _outputs) {
     _solver.updateBounds(output, 0, static_cast<Int>(_inputs.size()),

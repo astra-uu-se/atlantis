@@ -7,6 +7,10 @@
 
 namespace atlantis::propagation {
 
+inline size_t ElementConst::safeIndex(const Int index) const noexcept {
+  return std::max<Int>(
+      0, std::min<Int>(static_cast<Int>(_array.size()) - 1, index - _offset));
+}
 ElementConst::ElementConst(SolverBase& solver, VarViewId parentId,
                            std::vector<Int>&& array, Int offset)
     : IntView(solver, parentId), _array(std::move(array)), _offset(offset) {}

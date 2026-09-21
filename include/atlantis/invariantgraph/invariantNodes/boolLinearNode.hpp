@@ -9,7 +9,6 @@ class BoolLinearNode : public InvariantNode {
 
  public:
   BoolLinearNode(InvariantGraph& graph,
-
                  std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
                  VarNodeId output, Int rhsOffset = 0);
 

@@ -111,10 +111,12 @@ inline InvariantId OutputToInputExplorer::peekInvariantStack() const {
   return _invariantStack[_invariantStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::setComputed(Timestamp ts, VarId id) {
+inline void OutputToInputExplorer::setComputed(const Timestamp ts,
+                                               const VarId id) {
   _varComputedAt[size_t{id}] = ts;
 }
-inline bool OutputToInputExplorer::isComputed(Timestamp ts, VarId id) const {
+inline bool OutputToInputExplorer::isComputed(const Timestamp ts,
+                                              const VarId id) const {
   return _varComputedAt.at(size_t{id}) == ts;
 }
 
@@ -124,7 +126,7 @@ OutputToInputExplorer::outputToInputMarkingMode() const {
 }
 
 inline void OutputToInputExplorer::setOutputToInputMarkingMode(
-    OutputToInputMarkingMode markingMode) {
+    const OutputToInputMarkingMode markingMode) {
   _outputToInputMarkingMode = markingMode;
 }
 

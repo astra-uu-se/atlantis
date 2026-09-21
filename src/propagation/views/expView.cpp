@@ -5,6 +5,8 @@
 
 namespace atlantis::propagation {
 
+ExpView::ExpView(SolverBase& solver, VarViewId parentId, Int power)
+    : IntView(solver, parentId), _power(power) {}
 Int ExpView::value(Timestamp ts) {
   return pow(_solver.value(ts, _parentId), _power);
 }

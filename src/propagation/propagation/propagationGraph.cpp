@@ -392,6 +392,10 @@ void topologicallyOrderUtil(
   inFrontier[index] = false;
 }
 
+bool PropagationGraph::PriorityCmp::operator()(const VarId left,
+                                               const VarId right) const {
+  return graph.varPosition(left) > graph.varPosition(right);
+}
 PropagationGraph::PropagationGraph(const Store& store, size_t expectedSize)
     : _store(store) {
   _definingInvariant.reserve(expectedSize);
@@ -475,6 +479,103 @@ void PropagationGraph::registerDefinedVar(VarId varId,
   _definingInvariant[varId] = invariantId;
   _varsDefinedByInvariant[invariantId].push_back(varId);
 }
+void PropagationGraph::topologicallyOrder(const Timestamp ts,
+                                          const size_t layer) {
+  topologicallyOrder(ts, layer, true);
+}
+size_t PropagationGraph::numVars() const {
+  return _numVars;  // this ignores null var
+}
+size_t PropagationGraph::numInvariants() const {
+  return _numInvariants;  // this ignores null invariant
+}
+bool PropagationGraph::isEvaluationVar(const VarId id) const {
+  assert(id < _isEvaluationVar.size());
+  return _isEvaluationVar[id];
+}
+bool PropagationGraph::isSearchVar(const VarId id) const {
+  assert(id < _isSearchVar.size());
+  return _isSearchVar.at(id);
+}
+bool PropagationGraph::isDynamicInvariant(InvariantId id) const {
+  assert(id < _isDynamicInvariant.size());
+  return _isDynamicInvariant[id];
+}
+InvariantId PropagationGraph::definingInvariant(VarId id) const {
+  // Returns NULL_ID if id is a search variable (not defined by an invariant)
+  return _definingInvariant.at(id);
+}
+const std::vector<VarId>& PropagationGraph::varsDefinedBy(
+    const InvariantId invariantId) const {
+  return _varsDefinedByInvariant.at(invariantId);
+}
+const std::vector<PropagationGraph::ListeningInvariantData>&
+PropagationGraph::listeningInvariantData(const VarId id) const {
+  return _listeningInvariantData.at(id);
+}
+const std::vector<std::pair<VarId, bool>>& PropagationGraph::inputVars(
+    const InvariantId invariantId) const {
+  return _inputVars.at(invariantId);
+}
+VarId PropagationGraph::dynamicInputVar(
+    const Timestamp ts, const InvariantId invariantId) const noexcept {
+  return _store.dynamicInputVar(ts, invariantId);
+}
+const std::vector<VarId>& PropagationGraph::searchVars() const {
+  return _searchVars;
+}
+const std::vector<VarId>& PropagationGraph::evaluationVars() const {
+  return _evaluationVars;
+}
+void PropagationGraph::clearPropagationQueue() {
+  while (!_propagationQueue.empty()) {
+    _propagationQueue.pop();
+  }
+}
+bool PropagationGraph::propagationQueueEmpty() const {
+  return _propagationQueue.empty();
+}
+VarId PropagationGraph::dequeuePropagationQueue() {
+  const VarId id = _propagationQueue.top();
+  _propagationQueue.pop();
+  return id;
+}
+bool PropagationGraph::hasDynamicCycle() const noexcept {
+  return _hasDynamicCycle;
+}
+bool PropagationGraph::hasDynamicCycle(const size_t layer) const {
+  assert(layer < _layerHasDynamicCycle.size());
+  return _layerHasDynamicCycle[layer];
+}
+size_t PropagationGraph::numLayers() const noexcept {
+  return _varsInLayer.size();
+}
+size_t PropagationGraph::numVarsInLayer(const size_t layer) const noexcept {
+  assert(layer < numLayers());
+  return _varsInLayer[layer].size();
+}
+const std::vector<VarId>& PropagationGraph::varsInLayer(
+    const size_t layer) const noexcept {
+  return _varsInLayer[layer];
+}
+size_t PropagationGraph::varLayer(const VarId id) const {
+  return _varLayerIndex.at(id).layer;
+}
+size_t PropagationGraph::invariantLayer(const InvariantId invariantId) const {
+  assert(!varsDefinedBy(invariantId).empty());
+  return _varLayerIndex.at(varsDefinedBy(invariantId).front()).layer;
+}
+size_t PropagationGraph::varPosition(const VarId id) const {
+  return _topologicalNumber[id];
+}
+size_t PropagationGraph::invariantPosition(
+    const InvariantId invariantId) const {
+  assert(!_varsDefinedByInvariant.at(invariantId).empty());
+  return _topologicalNumber.at(_varsDefinedByInvariant.at(invariantId).front());
+}
+void PropagationGraph::enqueuePropagationQueue(const VarId id) {
+  _propagationQueue.push(id);
+}
 
 void PropagationGraph::close(Timestamp ts) {
   _isSearchVar.resize(numVars());
@@ -496,12 +597,22 @@ void PropagationGraph::close(Timestamp ts) {
   topologicallyOrder(ts);
   // Reset propagation queue data structure.
 
-  _propagationQueue.init(numVars(), numLayers());
+  _propagationQueue.init();
   for (VarId vId = 0; vId < numVars(); ++vId) {
     _propagationQueue.initVar(vId, varPosition(vId));
   }
 }
 
+PropagationGraph::ListeningInvariantData::ListeningInvariantData(
+    const InvariantId t_invariantId, const LocalId t_localId)
+    : invariantId(t_invariantId), localId(t_localId) {}
+PropagationGraph::ListeningInvariantData&
+PropagationGraph::ListeningInvariantData::operator=(
+    ListeningInvariantData&& other) noexcept {
+  invariantId = other.invariantId;
+  localId = other.localId;
+  return *this;
+}
 /**
  * Computes a topological sort from a dependency graph with cycles by
  * non-deterministically ignoring one edge in each cycle.

@@ -53,23 +53,23 @@ class SolverBase {
 
   //--------------------- Variable ---------------------
 
-  [[nodiscard]] VarId sourceId(VarViewId id) const {
+  [[nodiscard]] VarId sourceId(const VarViewId id) const {
     return _store.sourceId(id);
   }
 
   virtual void enqueueDefinedVar(VarId) = 0;
 
   [[nodiscard]] Int value(Timestamp, VarViewId);
-  [[nodiscard]] Int value(Timestamp, VarId);
-  [[nodiscard]] Int currentValue(VarViewId id) {
+  [[nodiscard]] Int value(Timestamp, VarId) const;
+  [[nodiscard]] Int currentValue(const VarViewId id) {
     return value(_currentTimestamp, id);
   }
-  [[nodiscard]] Int currentValue(VarId id) {
+  [[nodiscard]] Int currentValue(const VarId id) const {
     return value(_currentTimestamp, id);
   }
 
   [[nodiscard]] Int committedValue(VarViewId);
-  [[nodiscard]] Int committedValue(VarId);
+  [[nodiscard]] Int committedValue(VarId) const;
 
   [[nodiscard]] Timestamp tmpTimestamp(VarViewId) const;
 
@@ -82,25 +82,25 @@ class SolverBase {
   void commitIf(Timestamp, VarId);
   void commitValue(VarId, Int val);
 
-  [[nodiscard]] Int lowerBound(VarViewId id) const {
+  [[nodiscard]] Int lowerBound(const VarViewId id) const {
     return id.isView() ? _store.constIntView(ViewId{id}).lowerBound()
                        : _store.constIntVar(VarId{id}).lowerBound();
   }
 
-  [[nodiscard]] Int lowerBound(VarId id) const {
+  [[nodiscard]] Int lowerBound(const VarId id) const {
     return _store.constIntVar(id).lowerBound();
   }
 
-  [[nodiscard]] Int upperBound(VarViewId id) const {
+  [[nodiscard]] Int upperBound(const VarViewId id) const {
     return id.isView() ? _store.constIntView(ViewId{id}).upperBound()
                        : _store.constIntVar(VarId{id}).upperBound();
   }
 
-  [[nodiscard]] Int upperBound(VarId id) const {
+  [[nodiscard]] Int upperBound(const VarId id) const {
     return _store.constIntVar(id).upperBound();
   }
 
-  void updateBounds(VarId id, Int lb, Int ub, bool widenOnly) {
+  void updateBounds(const VarId id, const Int lb, const Int ub, const bool widenOnly) {
     _store.intVar(id).updateBounds(lb, ub, widenOnly);
   }
 
@@ -148,7 +148,7 @@ class SolverBase {
   VarViewId makeIntVar(Int initValue, Int lowerBound, Int upperBound);
 
   /**
-   * Register that a variable is a input to an invariant.
+   * Register that a variable is an input to an invariant.
    * @param invariantId the invariant
    * @param varId the input
    * @param localId the id of the input in the invariant
@@ -217,65 +217,65 @@ inline Timestamp SolverBase::currentTimestamp() const {
   return _currentTimestamp;
 }
 
-inline bool SolverBase::hasChanged(Timestamp ts, VarId id) const {
+inline bool SolverBase::hasChanged(const Timestamp ts, const VarId id) const {
   return _store.constIntVar(id).hasChanged(ts);
 }
 
-inline Int SolverBase::value(Timestamp ts, VarViewId id) {
+inline Int SolverBase::value(const Timestamp ts, const VarViewId id) {
   return id.isView() ? _store.intView(ViewId{id}).value(ts)
                      : _store.constIntVar(VarId{id}).value(ts);
 }
 
-inline Int SolverBase::value(Timestamp ts, VarId id) {
+inline Int SolverBase::value(const Timestamp ts, const VarId id) const {
   return _store.constIntVar(VarId{id}).value(ts);
 }
 
-inline Int SolverBase::committedValue(VarViewId id) {
+inline Int SolverBase::committedValue(const VarViewId id) {
   return id.isView() ? _store.intView(ViewId{id}).committedValue()
                      : _store.constIntVar(VarId{id}).committedValue();
 }
 
-inline Int SolverBase::committedValue(VarId id) {
-  return _store.constIntVar(VarId{id}).committedValue();
+inline Int SolverBase::committedValue(const VarId id) const {
+  return _store.constIntVar(id).committedValue();
 }
 
-inline Timestamp SolverBase::tmpTimestamp(VarViewId id) const {
+inline Timestamp SolverBase::tmpTimestamp(const VarViewId id) const {
   return _store.constIntVar(id.isView() ? sourceId(id) : VarId{id})
       .tmpTimestamp();
 }
 
-inline void SolverBase::recompute(InvariantId invariantId) {
+inline void SolverBase::recompute(const InvariantId invariantId) {
   return _store.invariant(invariantId).recompute(_currentTimestamp);
 }
 
-inline void SolverBase::recompute(Timestamp ts, InvariantId invariantId) {
+inline void SolverBase::recompute(const Timestamp ts, const InvariantId invariantId) {
   return _store.invariant(invariantId).recompute(ts);
 }
 
-inline void SolverBase::updateValue(Timestamp ts, VarId id, Int val) {
+inline void SolverBase::updateValue(const Timestamp ts, const VarId id, const Int val) {
   _store.intVar(id).setValue(ts, val);
 }
 
-inline void SolverBase::incValue(Timestamp ts, VarId id, Int inc) {
+inline void SolverBase::incValue(const Timestamp ts, const VarId id, const Int inc) {
   _store.intVar(id).incValue(ts, inc);
 }
 
-inline void SolverBase::commit(VarId id) { _store.intVar(id).commit(); }
+inline void SolverBase::commit(const VarId id) { _store.intVar(id).commit(); }
 
-inline void SolverBase::commitIf(Timestamp ts, VarId id) {
+inline void SolverBase::commitIf(const Timestamp ts, const VarId id) {
   _store.intVar(id).commitIf(ts);
 }
 
-inline void SolverBase::commitValue(VarId id, Int val) {
+inline void SolverBase::commitValue(const VarId id, const Int val) {
   _store.intVar(id).commitValue(val);
 }
 
-inline void SolverBase::commitInvariantIf(Timestamp ts,
-                                          InvariantId invariantId) {
+inline void SolverBase::commitInvariantIf(const Timestamp ts,
+                                          const InvariantId invariantId) {
   _store.invariant(invariantId).commit(ts);
 }
 
-inline void SolverBase::commitInvariant(InvariantId invariantId) {
+inline void SolverBase::commitInvariant(const InvariantId invariantId) {
   _store.invariant(invariantId).commit(_currentTimestamp);
 }
 

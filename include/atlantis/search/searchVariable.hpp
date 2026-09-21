@@ -17,14 +17,10 @@ class SearchVar {
 
  public:
   explicit SearchVar(propagation::VarViewId varId,
-                     const std::shared_ptr<const SearchDomain>& domain)
-      : _domain(domain), _varId(propagation::VarId{varId}) {
-    assert(varId.isVar());
-  }
+                     const std::shared_ptr<const SearchDomain>& domain);
 
   explicit SearchVar(propagation::VarId varId,
-                     const std::shared_ptr<const SearchDomain>& domain)
-      : _domain(domain), _varId(varId) {}
+                     const std::shared_ptr<const SearchDomain>& domain);
 
   [[nodiscard]] propagation::VarId solverId() const noexcept { return _varId; }
 
@@ -33,5 +29,15 @@ class SearchVar {
   }
   [[nodiscard]] bool isFixed() const noexcept { return _domain->isFixed(); }
 };
+
+inline SearchVar::SearchVar(propagation::VarViewId varId,
+                            const std::shared_ptr<const SearchDomain>& domain)
+    : _domain(domain), _varId(propagation::VarId{varId}) {
+  assert(varId.isVar());
+}
+
+inline SearchVar::SearchVar(const propagation::VarId varId,
+                            const std::shared_ptr<const SearchDomain>& domain)
+    : _domain(domain), _varId(varId) {}
 
 }  // namespace atlantis::search

@@ -24,13 +24,9 @@ struct InvariantNodeId {
  public:
   InvariantNodeId(const InvariantNodeId&) = default;
 
-  InvariantNodeId(const size_t id, const bool isImplicitConstraint)
-      : _id(id == NULL_NODE_ID
-                ? id
-                : (isImplicitConstraint ? (id | IMPLICIT_CONSTRAINT_MASK)
-                                        : (id & ~IMPLICIT_CONSTRAINT_MASK))) {}
+  InvariantNodeId(size_t id, bool isImplicitConstraint);
 
-  explicit InvariantNodeId(const size_t id) : InvariantNodeId(id, false) {}
+  explicit InvariantNodeId(size_t id);
 
   [[nodiscard]] bool isImplicitConstraint() const {
     return _id != NULL_NODE_ID && (_id & IMPLICIT_CONSTRAINT_MASK) != size_t{0};
@@ -46,13 +42,13 @@ struct InvariantNodeId {
     return _id == other._id;
   }
 
-  bool operator==(const size_t other) const { return _id == other; }
+  bool operator==(size_t other) const;
 
   bool operator!=(const InvariantNodeId& other) const {
     return _id != other._id;
   }
 
-  bool operator!=(const size_t other) const { return _id != other; }
+  bool operator!=(size_t other) const;
 
   friend std::ostream& operator<<(std::ostream& os,
                                   const InvariantNodeId& invariantNodeId) {
@@ -64,6 +60,23 @@ struct InvariantNodeId {
     return _id == NULL_NODE_ID ? _id : (_id & ~IMPLICIT_CONSTRAINT_MASK);
   }
 };
+
+inline InvariantNodeId::InvariantNodeId(const size_t id,
+                                        const bool isImplicitConstraint)
+    : _id(id == NULL_NODE_ID
+              ? id
+              : (isImplicitConstraint ? (id | IMPLICIT_CONSTRAINT_MASK)
+                                      : (id & ~IMPLICIT_CONSTRAINT_MASK))) {}
+inline InvariantNodeId::InvariantNodeId(const size_t id)
+    : InvariantNodeId(id, false) {}
+
+inline bool InvariantNodeId::operator==(const size_t other) const {
+  return _id == other;
+}
+
+inline bool InvariantNodeId::operator!=(const size_t other) const {
+  return _id != other;
+}
 
 struct InvariantNodeIdHash {
   std::size_t operator()(
@@ -81,12 +94,9 @@ struct ConstraintVarId {
  public:
   ConstraintVarId(const ConstraintVarId&) = default;
 
-  ConstraintVarId(const size_t id, const bool isIntVar)
-      : _id(id == NULL_NODE_ID
-                ? id
-                : (isIntVar ? (id & ~BOOL_VAR_MASK) : (id | BOOL_VAR_MASK))) {}
+  ConstraintVarId(size_t id, bool isIntVar);
 
-  explicit ConstraintVarId(const size_t id) : ConstraintVarId(id, true) {}
+  explicit ConstraintVarId(size_t id);
 
   [[nodiscard]] bool isBoolVar() const {
     return _id != NULL_NODE_ID && (_id & BOOL_VAR_MASK) != size_t{0};
@@ -102,13 +112,13 @@ struct ConstraintVarId {
     return _id == other._id;
   }
 
-  bool operator==(const size_t other) const { return other == size_t{_id}; }
+  bool operator==(size_t other) const;
 
   bool operator!=(const ConstraintVarId& other) const {
     return _id != other._id;
   }
 
-  bool operator!=(const size_t other) const { return _id != other; }
+  bool operator!=(size_t other) const;
 
   friend std::ostream& operator<<(std::ostream& os,
                                   const ConstraintVarId& invariantNodeId) {
@@ -120,6 +130,22 @@ struct ConstraintVarId {
     return _id == NULL_NODE_ID ? _id : (_id & ~BOOL_VAR_MASK);
   }
 };
+
+inline ConstraintVarId::ConstraintVarId(const size_t id, const bool isIntVar)
+    : _id(id == NULL_NODE_ID
+              ? id
+              : (isIntVar ? (id & ~BOOL_VAR_MASK) : (id | BOOL_VAR_MASK))) {}
+
+inline ConstraintVarId::ConstraintVarId(const size_t id)
+    : ConstraintVarId(id, true) {}
+
+inline bool ConstraintVarId::operator==(const size_t other) const {
+  return other == size_t{_id};
+}
+
+inline bool ConstraintVarId::operator!=(const size_t other) const {
+  return _id != other;
+}
 
 struct InvariantGraphOutputVarArray {
   std::string identifier;

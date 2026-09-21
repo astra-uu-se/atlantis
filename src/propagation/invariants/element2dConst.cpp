@@ -15,6 +15,19 @@ static Int numCols(const std::vector<std::vector<Int>>& matrix) {
   return matrix.empty() ? 0 : static_cast<Int>(matrix.front().size());
 }
 
+inline size_t Element2dConst::safeIndex(const Int index,
+                                 const size_t pos) const noexcept {
+  return std::max<Int>(0,
+                       std::min(_dimensions[pos] - 1, index - _offsets[pos]));
+}
+
+inline size_t Element2dConst::safeIndex1(const Int index) const noexcept {
+  return safeIndex(index, 0);
+}
+
+inline size_t Element2dConst::safeIndex2(const Int index) const noexcept {
+  return safeIndex(index, 1);
+}
 Element2dConst::Element2dConst(SolverBase& solver, VarId output,
                                VarViewId index1, VarViewId index2,
                                std::vector<std::vector<Int>>&& matrix,

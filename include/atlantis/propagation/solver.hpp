@@ -112,7 +112,7 @@ class Solver : public SolverBase {
   void notifyCurrentInputChanged(InvariantId);
 
   /**
-   * Register that a variable is a input to an invariant
+   * Register that a variable is an input to an invariant
    * @param invariantId the invariant
    * @param inputId the id of the variable
    * @param localId the id of the variable in the invariant

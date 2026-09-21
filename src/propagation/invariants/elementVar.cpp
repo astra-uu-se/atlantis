@@ -8,6 +8,10 @@
 
 namespace atlantis::propagation {
 
+inline size_t ElementVar::safeIndex(const Int index) const noexcept {
+  return std::max<Int>(
+      0, std::min(static_cast<Int>(_varArray.size()) - 1, index - _offset));
+}
 ElementVar::ElementVar(SolverBase& solver, VarId output, VarViewId index,
                        std::vector<VarViewId>&& varArray, Int offset)
     : Invariant(solver),

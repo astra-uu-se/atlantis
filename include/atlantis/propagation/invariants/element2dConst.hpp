@@ -20,18 +20,12 @@ class Element2dConst : public Invariant {
   std::array<const Int, 2> _offsets;
   VarId _output;
 
-  [[nodiscard]] size_t safeIndex(Int index, size_t pos) const noexcept {
-    return std::max<Int>(0,
-                         std::min(_dimensions[pos] - 1, index - _offsets[pos]));
-  }
+  [[nodiscard]] size_t safeIndex(Int index,
+                                 size_t pos) const noexcept;
 
-  [[nodiscard]] size_t safeIndex1(Int index) const noexcept {
-    return safeIndex(index, 0);
-  }
+  [[nodiscard]] size_t safeIndex1(Int index) const noexcept;
 
-  [[nodiscard]] size_t safeIndex2(Int index) const noexcept {
-    return safeIndex(index, 1);
-  }
+  [[nodiscard]] size_t safeIndex2(Int index) const noexcept;
 
  public:
   explicit Element2dConst(SolverBase&, VarId output, VarViewId index1,

@@ -58,6 +58,10 @@ std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
       randomProvider, _annealingScheduleFactory->create(), assignment);
 }
 
+[[gnu::always_inline]] inline std::vector<invariantgraph::VarNodeId> SolverThread::getOutputVarNodeIds() {
+  return _outputVarNodeIds;
+}
+
 void SolverThread::solve() {
   try {
     // Create the propagation solver

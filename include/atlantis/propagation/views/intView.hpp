@@ -11,15 +11,19 @@ class IntView : public View {
   friend class SolverBase;
 
  public:
-  explicit IntView(SolverBase& solver, VarViewId parentId)
-      : View(solver, parentId) {}
+  explicit IntView(SolverBase& solver, VarViewId parentId);
 
-  void init(ViewId id) { _id = id; }
+  void init(ViewId id);
 
   [[nodiscard]] virtual Int value(Timestamp) = 0;
   [[nodiscard]] virtual Int committedValue() = 0;
   [[nodiscard]] virtual Int lowerBound() const = 0;
   [[nodiscard]] virtual Int upperBound() const = 0;
 };
+
+inline IntView::IntView(SolverBase& solver, const VarViewId parentId)
+    : View(solver, parentId) {}
+
+inline void IntView::init(const ViewId id) { _id = id; }
 
 }  // namespace atlantis::propagation

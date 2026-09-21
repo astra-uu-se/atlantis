@@ -13,21 +13,13 @@ class CommittableInt {
   Int _tmpValue;
 
  public:
-  CommittableInt(Timestamp ts, const Int& value)
-      : _tmpTimestamp(ts), _committedValue(value), _tmpValue(value) {}
+  CommittableInt(Timestamp ts, const Int& value);
 
-  CommittableInt(Timestamp ts, const Int& committedValue, const Int& tmpValue)
-      : _tmpTimestamp(ts),
-        _committedValue(committedValue),
-        _tmpValue(tmpValue) {}
+  CommittableInt(Timestamp ts, const Int& committedValue, const Int& tmpValue);
 
-  [[gnu::always_inline]] [[nodiscard]] bool hasChanged(Timestamp ts) const {
-    return _tmpTimestamp == ts && _committedValue != _tmpValue;
-  }
+  [[nodiscard]] bool hasChanged(Timestamp ts) const;
 
-  [[gnu::always_inline]] [[nodiscard]] Timestamp tmpTimestamp() const {
-    return _tmpTimestamp;
-  }
+  [[nodiscard]] Timestamp tmpTimestamp() const;
 
   /**
    * @brief if ts equals the timestamp of the new value, then returns
@@ -36,41 +28,70 @@ class CommittableInt {
    * @param ts
    * @return Int
    */
-  [[gnu::always_inline]] [[nodiscard]] Int value(Timestamp ts) const noexcept {
-    return ts == _tmpTimestamp ? _tmpValue : _committedValue;
-  }
+  [[nodiscard]] Int value(Timestamp ts) const noexcept;
 
-  [[gnu::always_inline]] [[nodiscard]] Int committedValue() const noexcept {
-    return _committedValue;
-  }
+  [[nodiscard]] Int committedValue() const noexcept;
 
-  [[gnu::always_inline]] Int setValue(Timestamp newTimestamp,
-                                      Int newValue) noexcept {
-    _tmpTimestamp = newTimestamp;
-    _tmpValue = newValue;
-    return _tmpValue;
-  }
+  Int setValue(Timestamp newTimestamp,
+                                      Int newValue) noexcept;
 
-  [[gnu::always_inline]] Int incValue(Timestamp ts, Int inc) noexcept {
-    _tmpValue = (ts == _tmpTimestamp ? _tmpValue : _committedValue) + inc;
-    _tmpTimestamp = ts;
-    return _tmpValue;
-  }
-  [[gnu::always_inline]] void commitValue(Int value) noexcept {
-    _committedValue = value;
-  }
+  Int incValue(Timestamp ts, Int inc) noexcept;
+  void commitValue(Int value) noexcept;
 
-  [[gnu::always_inline]] void commit() noexcept {
-    // todo: do we really want this? Very dangerous to just
-    // commit regardless of timestamp.
+  void commit() noexcept;
+
+  void commitIf(Timestamp ts) noexcept;
+};
+
+inline CommittableInt::CommittableInt(const Timestamp ts, const Int& value)
+    : _tmpTimestamp(ts), _committedValue(value), _tmpValue(value) {}
+inline CommittableInt::CommittableInt(const Timestamp ts,
+                                      const Int& committedValue,
+                                      const Int& tmpValue)
+    : _tmpTimestamp(ts), _committedValue(committedValue), _tmpValue(tmpValue) {}
+
+[[gnu::always_inline]] inline bool CommittableInt::hasChanged(const Timestamp ts) const {
+  return _tmpTimestamp == ts && _committedValue != _tmpValue;
+}
+
+[[gnu::always_inline]] inline Timestamp CommittableInt::tmpTimestamp() const { return _tmpTimestamp; }
+
+[[gnu::always_inline]] inline Int CommittableInt::value(const Timestamp ts) const noexcept {
+  return ts == _tmpTimestamp ? _tmpValue : _committedValue;
+}
+
+[[gnu::always_inline]] inline Int CommittableInt::committedValue() const noexcept {
+  return _committedValue;
+}
+
+[[gnu::always_inline]] inline Int CommittableInt::setValue(const Timestamp newTimestamp,
+                                    const Int newValue) noexcept {
+  _tmpTimestamp = newTimestamp;
+  _tmpValue = newValue;
+  return _tmpValue;
+}
+
+[[gnu::always_inline]] inline Int CommittableInt::incValue(const Timestamp ts,
+                                    const Int inc) noexcept {
+  _tmpValue = (ts == _tmpTimestamp ? _tmpValue : _committedValue) + inc;
+  _tmpTimestamp = ts;
+  return _tmpValue;
+}
+
+[[gnu::always_inline]] inline void CommittableInt::commitValue(const Int value) noexcept {
+  _committedValue = value;
+}
+
+[[gnu::always_inline]] inline void CommittableInt::commit() noexcept {
+  // todo: do we really want this? Very dangerous to just
+  // commit regardless of timestamp.
+  _committedValue = _tmpValue;
+}
+
+[[gnu::always_inline]] inline void CommittableInt::commitIf(const Timestamp ts) noexcept {
+  if (_tmpTimestamp == ts) {
     _committedValue = _tmpValue;
   }
-
-  [[gnu::always_inline]] void commitIf(Timestamp ts) noexcept {
-    if (_tmpTimestamp == ts) {
-      _committedValue = _tmpValue;
-    }
-  }
-};
+}
 
 }  // namespace atlantis::propagation

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stack>
-
 #include "atlantis/propagation/propagation/propagationQueue.hpp"
 #include "atlantis/propagation/store/store.hpp"
 
@@ -17,14 +15,9 @@ class PropagationGraph {
     InvariantId invariantId;
     LocalId localId;
     ListeningInvariantData(const ListeningInvariantData& other) = default;
-    ListeningInvariantData(const InvariantId t_invariantId,
-                           const LocalId t_localId)
-        : invariantId(t_invariantId), localId(t_localId) {}
-    ListeningInvariantData& operator=(ListeningInvariantData&& other) noexcept {
-      invariantId = other.invariantId;
-      localId = other.localId;
-      return *this;
-    }
+    ListeningInvariantData(InvariantId t_invariantId,
+                           LocalId t_localId);
+    ListeningInvariantData& operator=(ListeningInvariantData&& other) noexcept;
   };
 
  private:
@@ -80,9 +73,7 @@ class PropagationGraph {
   struct PriorityCmp {
     PropagationGraph& graph;
     explicit PriorityCmp(PropagationGraph& g) : graph(g) {}
-    bool operator()(VarId left, VarId right) const {
-      return graph.varPosition(left) > graph.varPosition(right);
-    }
+    bool operator()(VarId left, VarId right) const;
   };
 
   PropagationQueue _propagationQueue;
@@ -110,6 +101,7 @@ class PropagationGraph {
    * Register that inputId is a input of invariantId
    * @param invariantId the invariant
    * @param inputVarId the variable input
+   * @param localId
    * @param isDynamicInput true if the variable is a dynamic input to the
    * invariant.
    */
@@ -130,125 +122,62 @@ class PropagationGraph {
    * @param ts
    * @param layer
    */
-  void topologicallyOrder(Timestamp ts, size_t layer) {
-    topologicallyOrder(ts, layer, true);
-  }
+  void topologicallyOrder(Timestamp ts, size_t layer);
 
-  [[nodiscard]] size_t numVars() const {
-    return _numVars;  // this ignores null var
-  }
+  [[nodiscard]] size_t numVars() const;
 
-  [[nodiscard]] size_t numInvariants() const {
-    return _numInvariants;  // this ignores null invariant
-  }
+  [[nodiscard]] size_t numInvariants() const;
 
-  [[nodiscard]] bool isEvaluationVar(VarId id) const {
-    assert(id < _isEvaluationVar.size());
-    return _isEvaluationVar[id];
-  }
+  [[nodiscard]] bool isEvaluationVar(VarId id) const;
 
-  [[nodiscard]] bool isSearchVar(VarId id) const {
-    assert(id < _isSearchVar.size());
-    return _isSearchVar.at(id);
-  }
+  [[nodiscard]] bool isSearchVar(VarId id) const;
 
-  [[nodiscard]] bool isDynamicInvariant(InvariantId id) const {
-    assert(id < _isDynamicInvariant.size());
-    return _isDynamicInvariant[id];
-  }
+  [[nodiscard]] bool isDynamicInvariant(InvariantId id) const;
 
-  [[nodiscard]] InvariantId definingInvariant(VarId id) const {
-    // Returns NULL_ID if id is a search variable (not defined by an invariant)
-    return _definingInvariant.at(id);
-  }
+  [[nodiscard]] InvariantId definingInvariant(VarId id) const;
 
   [[nodiscard]] const std::vector<VarId>& varsDefinedBy(
-      InvariantId invariantId) const {
-    return _varsDefinedByInvariant.at(invariantId);
-  }
+      InvariantId invariantId) const;
 
   [[nodiscard]] const std::vector<ListeningInvariantData>&
-  listeningInvariantData(VarId id) const {
-    return _listeningInvariantData.at(id);
-  }
+  listeningInvariantData(VarId id) const;
 
   [[nodiscard]] const std::vector<std::pair<VarId, bool>>& inputVars(
-      InvariantId invariantId) const {
-    return _inputVars.at(invariantId);
-  }
+      InvariantId invariantId) const;
 
   [[nodiscard]] VarId dynamicInputVar(Timestamp ts,
-                                      InvariantId invariantId) const noexcept {
-    return _store.dynamicInputVar(ts, invariantId);
-  }
+                                      InvariantId invariantId) const noexcept;
 
-  [[nodiscard]] const std::vector<VarId>& searchVars() const {
-    return _searchVars;
-  }
+  [[nodiscard]] const std::vector<VarId>& searchVars() const;
 
-  [[nodiscard]] const std::vector<VarId>& evaluationVars() const {
-    return _evaluationVars;
-  }
+  [[nodiscard]] const std::vector<VarId>& evaluationVars() const;
 
-  void clearPropagationQueue() {
-    while (!_propagationQueue.empty()) {
-      _propagationQueue.pop();
-    }
-  }
+  void clearPropagationQueue();
 
-  [[nodiscard]] bool propagationQueueEmpty() const {
-    return _propagationQueue.empty();
-  }
+  [[nodiscard]] bool propagationQueueEmpty() const;
 
-  [[nodiscard]] VarId dequeuePropagationQueue() {
-    const VarId id = _propagationQueue.top();
-    _propagationQueue.pop();
-    return id;
-  }
+  [[nodiscard]] VarId dequeuePropagationQueue();
 
-  [[nodiscard]] bool hasDynamicCycle() const noexcept {
-    return _hasDynamicCycle;
-  }
+  [[nodiscard]] bool hasDynamicCycle() const noexcept;
 
-  [[nodiscard]] bool hasDynamicCycle(size_t layer) const {
-    assert(layer < _layerHasDynamicCycle.size());
-    return _layerHasDynamicCycle[layer];
-  }
+  [[nodiscard]] bool hasDynamicCycle(size_t layer) const;
 
-  [[nodiscard]] size_t numLayers() const noexcept {
-    return _varsInLayer.size();
-  }
+  [[nodiscard]] size_t numLayers() const noexcept;
 
-  [[nodiscard]] size_t numVarsInLayer(size_t layer) const noexcept {
-    assert(layer < numLayers());
-    return _varsInLayer[layer].size();
-  }
+  [[nodiscard]] size_t numVarsInLayer(size_t layer) const noexcept;
 
   [[nodiscard]] const std::vector<VarId>& varsInLayer(
-      size_t layer) const noexcept {
-    return _varsInLayer[layer];
-  }
+      size_t layer) const noexcept;
 
-  [[nodiscard]] size_t varLayer(VarId id) const {
-    return _varLayerIndex.at(id).layer;
-  }
+  [[nodiscard]] size_t varLayer(VarId id) const;
 
-  [[nodiscard]] size_t invariantLayer(InvariantId invariantId) const {
-    assert(!varsDefinedBy(invariantId).empty());
-    return _varLayerIndex.at(varsDefinedBy(invariantId).front()).layer;
-  }
+  [[nodiscard]] size_t invariantLayer(InvariantId invariantId) const;
 
-  [[nodiscard]] size_t varPosition(VarId id) const {
-    return _topologicalNumber[id];
-  }
+  [[nodiscard]] size_t varPosition(VarId id) const;
 
-  [[nodiscard]] size_t invariantPosition(InvariantId invariantId) const {
-    assert(!_varsDefinedByInvariant.at(invariantId).empty());
-    return _topologicalNumber.at(
-        _varsDefinedByInvariant.at(invariantId).front());
-  }
+  [[nodiscard]] size_t invariantPosition(InvariantId invariantId) const;
 
-  void enqueuePropagationQueue(VarId id) { _propagationQueue.push(id); }
+  void enqueuePropagationQueue(VarId id);
 };
 
 }  // namespace atlantis::propagation

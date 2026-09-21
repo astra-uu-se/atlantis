@@ -157,4 +157,66 @@ void FznBackend::join(logging::Logger& logger) {
   }
 }
 
+void FznBackend::setTimelimit(
+    const std::optional<std::chrono::milliseconds> timeLimit) {
+  _timelimit = timeLimit;
+}
+void FznBackend::setShouldStop(const std::shared_ptr<const bool>& shouldStop) {
+  _shouldStop = shouldStop;
+}
+std::shared_ptr<const search::AnnealingScheduleFactory>
+FznBackend::annealingScheduleFactory() const {
+  return _annealingScheduleFactory;
+}
+std::shared_ptr<const invariantgraph::FznInvariantGraph>
+FznBackend::invariantGraph() const {
+  return _invariantGraph;
+}
+std::vector<invariantgraph::VarNodeId> FznBackend::outputVarNodeIds() const {
+  return _fznOutput->varNodeIds();
+}
+fznparser::ProblemType FznBackend::problemType() const {
+  return _model->solveType().problemType();
+}
+std::shared_ptr<search::ThreadController> FznBackend::threadController() {
+  return _threadController;
+}
+search::SearchType FznBackend::searchType() const { return _searchType; }
+std::uint_fast32_t FznBackend::seed() const { return _seed; }
+std::optional<std::chrono::milliseconds> FznBackend::timelimit() const {
+  return _timelimit;
+}
+std::shared_ptr<const bool> FznBackend::shouldStop() const {
+  return _shouldStop;
+}
+std::function<void(const search::SavedAssignment&,
+                   const std::optional<std::vector<
+                       std::shared_ptr<search::SearchStatistics>>>&)>
+FznBackend::onSolution() const {
+  return _onSolution;
+}
+const std::function<void(FznBackend::SolveOutcome)>& FznBackend::onFinish()
+    const {
+  return _onFinish;
+}
+void FznBackend::setAnnealingScheduleFactory(
+    const std::shared_ptr<search::AnnealingScheduleFactory>& factory) {
+  _annealingScheduleFactory = factory;
+}
+void FznBackend::setRandomSeed(const std::uint_fast32_t seed) { _seed = seed; }
+void FznBackend::setOnSolution(
+    const std::function<void(const search::SavedAssignment&,
+                             const std::optional<std::vector<
+                                 std::shared_ptr<search::SearchStatistics>>>&)>&
+        onSolution) {
+  _onSolution = onSolution;
+}
+void FznBackend::setDotFilePath(std::filesystem::path&& path) {
+  _dotFilePath = std::optional(std::move(path));
+}
+void FznBackend::setOnFinish(
+    const std::function<void(SolveOutcome)>& onFinish) {
+  _onFinish = onFinish;
+}
+
 }  // namespace atlantis

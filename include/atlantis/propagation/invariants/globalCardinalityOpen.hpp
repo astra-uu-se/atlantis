@@ -37,29 +37,4 @@ class GlobalCardinalityOpen : public Invariant {
   void notifyCurrentInputChanged(Timestamp) override;
 };
 
-inline void GlobalCardinalityOpen::increaseCount(Timestamp ts, Int value) {
-  const auto index = coverIndex(value);
-  if (index.has_value() && _coverVarIndex[*index] >= 0) {
-    _counts[_coverVarIndex[*index]].incValue(ts, 1);
-  }
-}
-
-inline void GlobalCardinalityOpen::decreaseCountAndUpdateOutput(Timestamp ts,
-                                                                Int value) {
-  const auto index = coverIndex(value);
-  if (index.has_value() && _coverVarIndex[*index] >= 0) {
-    updateValue(ts, _outputs[_coverVarIndex[*index]],
-                _counts[_coverVarIndex[*index]].incValue(ts, -1));
-  }
-}
-
-inline void GlobalCardinalityOpen::increaseCountAndUpdateOutput(Timestamp ts,
-                                                                Int value) {
-  const auto index = coverIndex(value);
-  if (index.has_value() && _coverVarIndex[*index] >= 0) {
-    updateValue(ts, _outputs[_coverVarIndex[*index]],
-                _counts[_coverVarIndex[*index]].incValue(ts, 1));
-  }
-}
-
 }  // namespace atlantis::propagation
