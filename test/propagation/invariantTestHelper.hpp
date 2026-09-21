@@ -353,7 +353,6 @@ class InvariantTest : public ::testing::Test {
                      std::numeric_limits<Int>::max());
   }
 
- public:
   void SetUp() override {
     std::random_device rd;
     gen = std::mt19937(rd());

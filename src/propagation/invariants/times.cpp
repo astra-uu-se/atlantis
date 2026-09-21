@@ -11,7 +11,7 @@ Times::Times(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
 
 Times::Times(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
-    : Times(solver, VarId(output), x, y) {
+    : Times(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
 
@@ -44,7 +44,7 @@ VarViewId Times::nextInput(Timestamp ts) {
     case 1:
       return _y;
     default:
-      return NULL_ID;
+      return VAR_VIEW_NULL_ID;
   }
 }
 

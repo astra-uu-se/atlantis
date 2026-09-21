@@ -70,7 +70,7 @@ propagation::VarViewId FznTestBase::varId(const std::string& identifier) const {
   return _invariantGraph->containsVarNode(identifier) &&
                  _solverMapping != nullptr
              ? _solverMapping->solverId(_invariantGraph->varNodeId(identifier))
-             : propagation::NULL_ID;
+             : propagation::VAR_VIEW_NULL_ID;
 }
 
 propagation::VarViewId FznTestBase::varId(const VarNodeId vId) const {
@@ -263,7 +263,7 @@ const std::vector<Int>& FznTestBase::intSetVal(
 }
 
 propagation::VarViewId FznTestBase::totalViolationVarId() const {
-  return _solverMapping == nullptr ? propagation::NULL_ID
+  return _solverMapping == nullptr ? propagation::VAR_VIEW_NULL_ID
                                    : _solverMapping->totalViolationId();
 }
 Int FznTestBase::violation(const bool committedValue) const {
@@ -493,7 +493,7 @@ std::shared_ptr<IntVarArray> FznTestBase::genIntVarArray(
     const std::string& identifier, const std::string& varPrefix) {
   auto vars = std::get<std::shared_ptr<IntVarArray>>(
       _model->addVar(std::make_shared<IntVarArray>(identifier)));
-  std::vector<IntArgState> argStates =
+  const std::vector<IntArgState> argStates =
       *rc::gen::container<std::vector<IntArgState>>(
           arraySize, rc::gen::arbitrary<IntArgState>());
   for (size_t i = 0; i < arraySize; ++i) {

@@ -177,7 +177,7 @@ class TSPTWAllDiff : public ::benchmark::Fixture {
     latestVisit.clear();
   }
 
-  Int computeDistance() {
+  [[nodiscard]] Int computeDistance() const {
     std::vector<Int> departure(n, 0);
     departure.at(0) = std::max(
         earliestVisit.at(solver->currentValue(sequence.at(0))), Int{0});

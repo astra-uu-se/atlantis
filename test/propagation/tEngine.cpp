@@ -28,11 +28,11 @@ class MockInvariantSimple : public Invariant {
   explicit MockInvariantSimple(SolverBase& solver, VarViewId t_outputVar,
                                VarViewId t_inputVar)
       : Invariant(solver),
-        outputVar(VarId(t_outputVar)),
+        outputVar(VarId{t_outputVar}),
         inputVar(t_inputVar) {}
 
   void registerVars() override {
-    _solver.registerInvariantInput(_id, inputVar, LocalId(0), false);
+    _solver.registerInvariantInput(_id, inputVar, 0, false);
     registerDefinedVar(outputVar);
     isRegistered = true;
   }
@@ -57,7 +57,7 @@ class MockInvariantAdvanced : public Invariant {
   explicit MockInvariantAdvanced(SolverBase& solver, VarViewId t_output,
                                  std::vector<VarViewId>&& t_inputs)
       : Invariant(solver),
-        output(VarId(t_output)),
+        output(VarId{t_output}),
         inputs(std::move(t_inputs)) {
     EXPECT_TRUE(t_output.isVar());
   }
@@ -65,7 +65,7 @@ class MockInvariantAdvanced : public Invariant {
   void registerVars() override {
     assert(_id != NULL_ID);
     for (size_t i = 0; i < inputs.size(); ++i) {
-      _solver.registerInvariantInput(_id, inputs[i], LocalId(i), false);
+      _solver.registerInvariantInput(_id, inputs[i], i, false);
     }
     registerDefinedVar(output);
     isRegistered = true;
@@ -91,7 +91,7 @@ class MockSimplePlus : public Invariant {
                           VarViewId t_y,
                           std::vector<InvariantId>* t_position = nullptr)
       : Invariant(solver),
-        output(VarId(t_output)),
+        output(VarId{t_output}),
         x(t_x),
         y(t_y),
         position(t_position) {
@@ -111,8 +111,8 @@ class MockSimplePlus : public Invariant {
   void registerVars() override {
     assert(_id != NULL_ID);
 
-    _solver.registerInvariantInput(_id, x, LocalId(0), false);
-    _solver.registerInvariantInput(_id, y, LocalId(1), false);
+    _solver.registerInvariantInput(_id, x, 0, false);
+    _solver.registerInvariantInput(_id, y, 1, false);
     registerDefinedVar(output);
     isRegistered = true;
   }
@@ -215,15 +215,15 @@ class SolverTest : public ::testing::Test {
     const Timestamp timestamp = solver->currentTimestamp();
     const VarViewId modifiedDecisionVar = inputs[2][1];
     solver->setValue(modifiedDecisionVar, 1);
-    std::vector<size_t> markedInvariants = {2, 5, 6};
-    std::vector<size_t> unmarkedInvariants = {0, 1, 3, 4};
+    const std::vector<size_t> markedInvariants = {2, 5, 6};
+    const std::vector<size_t> unmarkedInvariants = {0, 1, 3, 4};
     solver->query(outputs.back());
 
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
       for (const size_t i : markedInvariants) {
-        EXPECT_CALL(*invariants[i], notifyInputChanged(timestamp, LocalId(0)))
+        EXPECT_CALL(*invariants[i], notifyInputChanged(timestamp, 0))
             .Times(i == 5 ? 1 : 0);
-        EXPECT_CALL(*invariants[i], notifyInputChanged(timestamp, LocalId(1)))
+        EXPECT_CALL(*invariants[i], notifyInputChanged(timestamp, 1))
             .Times(i == 5 ? 0 : 1);
       }
     } else {
@@ -235,17 +235,17 @@ class SolverTest : public ::testing::Test {
           EXPECT_CALL(*invariants[i], nextInput(timestamp))
               .WillOnce(Return(a))
               .WillOnce(Return(b))
-              .WillRepeatedly(Return(NULL_ID));
+              .WillRepeatedly(Return(VAR_VIEW_NULL_ID));
         }
       } else {
         EXPECT_EQ(solver->modifiedSearchVar().size(), 1);
         EXPECT_TRUE(
-            solver->modifiedSearchVar().contains(VarId(modifiedDecisionVar)));
+            solver->modifiedSearchVar().contains(VarId{modifiedDecisionVar}));
         for (const size_t i : markedInvariants) {
           EXPECT_CALL(*invariants[i], nextInput(timestamp))
               .WillOnce(Return(inputs[i][0]))
               .WillOnce(Return(inputs[i][1]))
-              .WillRepeatedly(Return(NULL_ID));
+              .WillRepeatedly(Return(VAR_VIEW_NULL_ID));
         }
         for (const size_t i : unmarkedInvariants) {
           EXPECT_CALL(*invariants[i], nextInput(timestamp)).Times(0);
@@ -267,8 +267,8 @@ class SolverTest : public ::testing::Test {
 TEST_F(SolverTest, CreateVarsAndInvariant) {
   solver->open();
 
-  const VarViewId inputVar = solver->makeIntVar(0, Int(-100), Int(100));
-  const VarViewId outputVar = solver->makeIntVar(0, Int(-100), Int(100));
+  const VarViewId inputVar = solver->makeIntVar(0, -100, 100);
+  const VarViewId outputVar = solver->makeIntVar(0, -100, 100);
 
   // TODO: use some other invariants...
   const auto invariant =
@@ -282,21 +282,21 @@ TEST_F(SolverTest, CreateVarsAndInvariant) {
 
   solver->close();
   EXPECT_EQ(solver->store().numVars(), 2);
-  EXPECT_EQ(solver->store().numInvariants(), size_t(1));
+  EXPECT_EQ(solver->store().numInvariants(), 1);
 }
 
 TEST_F(SolverTest, ThisTestShouldNotBeHere) {
   // Move this test into a tMinSparse file.
-  // I just had to do some quick test and was too lazy to do this propperly.
+  // I just had to do some quick test and was too lazy to do this properly.
   solver->open();
 
-  const Int intVarCount = 10;
+  constexpr Int intVarCount = 10;
   std::vector<VarViewId> X;
   for (Int value = 0; value < intVarCount; ++value) {
-    X.push_back(solver->makeIntVar(value, Int(-100), Int(100)));
+    X.push_back(solver->makeIntVar(value, -100, 100));
   }
 
-  VarViewId min = solver->makeIntVar(100, Int(-100), Int(100));
+  VarViewId min = solver->makeIntVar(100, -100, 100);
   // TODO: use some other invariants...
   solver->makeInvariant<Min>(*solver, min, std::vector<VarViewId>{X});
 
@@ -373,7 +373,7 @@ TEST_F(SolverTest, RecomputeAndCommit) {
   solver->close();
 
   ASSERT_EQ(solver->store().numVars(), 2);
-  ASSERT_EQ(solver->store().numInvariants(), size_t(1));
+  ASSERT_EQ(solver->store().numInvariants(), 1);
 }
 
 TEST_F(SolverTest, SimplePropagation) {
@@ -409,14 +409,14 @@ TEST_F(SolverTest, SimplePropagation) {
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
-        .WillRepeatedly(Return(NULL_ID));
+        .WillRepeatedly(Return(VAR_VIEW_NULL_ID));
 
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(moveTimestamp)).Times(3);
   }
 
   for (size_t id = 0; id < 3; ++id) {
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, LocalId(id)))
+      EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, id))
           .Times(1);
     }
   }
@@ -451,7 +451,7 @@ TEST_F(SolverTest, SimpleCommit) {
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
-        .WillRepeatedly(Return(NULL_ID));
+        .WillRepeatedly(Return(VAR_VIEW_NULL_ID));
 
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(::testing::_)).Times(3);
   }
@@ -464,7 +464,7 @@ TEST_F(SolverTest, SimpleCommit) {
 
   for (size_t id = 0; id < 3; ++id) {
     if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-      EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, LocalId(id)))
+      EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, id))
           .Times(1);
     }
   }
@@ -474,7 +474,7 @@ TEST_F(SolverTest, SimpleCommit) {
   solver->endProbe();
 
   if (solver->propagationMode() == PropagationMode::INPUT_TO_OUTPUT) {
-    EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, LocalId(0)))
+    EXPECT_CALL(*invariant, notifyInputChanged(::testing::_, 0))
         .Times(1);
 
     EXPECT_CALL(*invariant, nextInput(::testing::_)).Times(0);
@@ -485,7 +485,7 @@ TEST_F(SolverTest, SimpleCommit) {
         .WillOnce(Return(a))
         .WillOnce(Return(b))
         .WillOnce(Return(c))
-        .WillRepeatedly(Return(NULL_ID));
+        .WillRepeatedly(Return(VAR_VIEW_NULL_ID));
 
     EXPECT_CALL(*invariant, notifyCurrentInputChanged(::testing::_)).Times(1);
   }
@@ -834,8 +834,8 @@ TEST_F(SolverTest, ComputeBoundsCycle) {
   std::vector<InvariantId> position;
   std::vector<MockSimplePlus*> invariants;
 
-  const Int lb = 5;
-  const Int ub = 10;
+  constexpr Int lb = 5;
+  constexpr Int ub = 10;
 
   std::vector<std::vector<VarViewId>> inputs{
       std::vector<VarViewId>{solver->makeIntVar(lb, lb, ub),

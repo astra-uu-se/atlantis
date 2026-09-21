@@ -48,7 +48,7 @@ class Invariant {
   void setLevel(size_t newLevel) noexcept { _level = newLevel; }
 
   [[nodiscard]] virtual VarViewId dynamicInputVar(Timestamp) const noexcept {
-    return NULL_ID;
+    return VarViewId{NULL_ID};
   }
 
   [[nodiscard]] InvariantId id() const noexcept { return _id; }

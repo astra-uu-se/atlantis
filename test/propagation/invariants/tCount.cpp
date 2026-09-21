@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class CountTest : public InvariantTest {
- public:
+ protected:
   Int haystackSize{3};
   std::vector<VarViewId> haystackVars;
   VarViewId needleVar{NULL_ID};
@@ -117,7 +117,7 @@ TEST_F(CountTest, Recompute) {
 
   haystackSize = 3;
 
-  const std::pair<Int, Int> inputBound{-1, 1};
+  constexpr std::pair<Int, Int> inputBound{-1, 1};
   const std::vector<std::pair<Int, Int>> haystackBounds(haystackSize,
                                                         inputBound);
 
@@ -273,9 +273,10 @@ RC_GTEST_FIXTURE_PROP(CountTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {

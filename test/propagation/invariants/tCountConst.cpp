@@ -97,8 +97,8 @@ TEST_F(CountConstTest, Recompute) {
   generateState = GenerateState::LB;
 
   numInputVars = 3;
-  const Int lb = -5;
-  const Int ub = 5;
+  constexpr Int lb = -5;
+  constexpr Int ub = 5;
 
   for (Int needleVal = lb; needleVal <= ub; ++needleVal) {
     _solver->open();
@@ -124,8 +124,8 @@ TEST_F(CountConstTest, NotifyInputChanged) {
   generateState = GenerateState::LB;
 
   numInputVars = 3;
-  const Int lb = -10;
-  const Int ub = 10;
+  constexpr Int lb = -10;
+  constexpr Int ub = 10;
 
   for (Int needleVal = lb; needleVal <= ub; ++needleVal) {
     auto& invariant = generate();
@@ -158,8 +158,8 @@ TEST_F(CountConstTest, NextInput) {
 
 TEST_F(CountConstTest, NotifyCurrentInputChanged) {
   numInputVars = 100;
-  const Int lb = -10;
-  const Int ub = 10;
+  constexpr Int lb = -10;
+  constexpr Int ub = 10;
 
   Timestamp ts = _solver->currentTimestamp() + ub - lb + 2;
 
@@ -184,8 +184,8 @@ TEST_F(CountConstTest, NotifyCurrentInputChanged) {
 
 TEST_F(CountConstTest, Commit) {
   numInputVars = 100;
-  const Int lb = -10;
-  const Int ub = 10;
+  constexpr Int lb = -10;
+  constexpr Int ub = 10;
 
   std::vector<size_t> indices(numInputVars, 0);
   std::iota(indices.begin(), indices.end(), 0);
@@ -226,7 +226,7 @@ TEST_F(CountConstTest, Commit) {
       ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
       _solver->commitIf(ts, VarId{inputVars.at(i)});
-      committedValues.at(i) = _solver->value(ts, VarId{inputVars.at(i)});
+      committedValues.at(i) = _solver->value(ts, inputVars.at(i));
       _solver->commitIf(ts, VarId{outputVar});
 
       invariant.commit(ts);
@@ -249,9 +249,10 @@ RC_GTEST_FIXTURE_PROP(CountConstTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {

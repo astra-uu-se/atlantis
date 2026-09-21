@@ -1049,7 +1049,7 @@ void InvariantGraph::breakSelfCycles() {
 }
 
 void InvariantGraph::breakCycles() {
-  std::vector<std::vector<VarNodeId>> components = SCC(*this);
+  const std::vector<std::vector<VarNodeId>> components = SCC(*this);
   if (components.empty()) {
     return;
   }
@@ -1246,7 +1246,7 @@ propagation::VarViewId InvariantGraph::createViolations(
     }
   }
   if (violations.empty()) {
-    return propagation::NULL_ID;
+    return propagation::VAR_VIEW_NULL_ID;
   }
   if (violations.size() == 1) {
     return violations.front();

@@ -19,7 +19,7 @@ namespace atlantis::benchmark {
 
 class FoldableBinaryTree : public ::benchmark::Fixture {
  private:
-  propagation::VarViewId randomVar() {
+  propagation::VarViewId randomVar() const {
     return vars.at(std::rand() % vars.size());
   }
   propagation::VarViewId createTree() {

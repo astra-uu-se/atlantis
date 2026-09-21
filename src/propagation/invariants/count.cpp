@@ -134,7 +134,7 @@ VarViewId Count::nextInput(Timestamp ts) {
   if (index == _vars.size()) {
     return _needle;
   }
-  return NULL_ID;
+  return VAR_VIEW_NULL_ID;
 }
 
 void Count::notifyCurrentInputChanged(Timestamp ts) {

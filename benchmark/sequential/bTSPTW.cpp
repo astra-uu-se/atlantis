@@ -16,9 +16,8 @@
 #include "benchmark.hpp"
 
 namespace atlantis::benchmark {
-
 class TSPTW : public ::benchmark::Fixture {
- public:
+public:
   std::shared_ptr<propagation::Solver> solver;
   std::vector<std::vector<Int>> durations;
 
@@ -182,7 +181,7 @@ class TSPTW : public ::benchmark::Fixture {
     return numVisited == n + 1;
   }
 
-  Int computeDistance() {
+  [[nodiscard]] Int computeDistance() const {
     Int tot = 0;
     for (Int i = 0; i < n + 1; ++i) {
       tot += durations.at(i).at(solver->currentValue(pred.at(i)));

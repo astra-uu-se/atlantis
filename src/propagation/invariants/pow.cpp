@@ -98,7 +98,7 @@ VarViewId Pow::nextInput(Timestamp ts) {
     case 1:
       return _exponent;
     default:
-      return NULL_ID;
+      return VAR_VIEW_NULL_ID;
   }
 }
 

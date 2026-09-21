@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <memory>
-#include <vector>
 
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/violation2BoolView.hpp"

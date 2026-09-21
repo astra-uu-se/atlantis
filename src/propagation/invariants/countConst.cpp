@@ -66,7 +66,7 @@ VarViewId CountConst::nextInput(const Timestamp ts) {
   if (index < _vars.size()) {
     return _vars[index];
   }
-  return NULL_ID;  // Done
+  return VAR_VIEW_NULL_ID;  // Done
 }
 
 void CountConst::notifyCurrentInputChanged(const Timestamp ts) {

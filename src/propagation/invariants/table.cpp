@@ -128,7 +128,7 @@ VarViewId Table::nextInput(const Timestamp ts) {
   if (index == 0) {
     return _inputVar;
   }
-  return NULL_ID;
+  return VAR_VIEW_NULL_ID;
 }
 
 void Table::notifyCurrentInputChanged(const Timestamp ts) {

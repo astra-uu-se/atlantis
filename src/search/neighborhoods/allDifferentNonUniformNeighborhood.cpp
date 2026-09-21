@@ -135,7 +135,7 @@ size_t AllDifferentNonUniformNeighborhood::randomMove(RandomProvider& random,
 #ifndef NDEBUG
     {
       const size_t value1Index = toValueIndex(
-          assignment.committedValue(_vars.at(var1Index).solverId()));
+          assignment.committedValue(propagation::VarViewId{_vars.at(var1Index).solverId()}));
       assert(value1Index < _valueIndexToVarIndex.size());
       assert(var1Index == _valueIndexToVarIndex.at(value1Index));
     }
@@ -177,25 +177,25 @@ bool AllDifferentNonUniformNeighborhood::canSwap(
   // var 1:
   assert(var1Index < _vars.size());
   assert(_valueIndexToVarIndex.at(toValueIndex(assignment.committedValue(
-             _vars[var1Index].solverId()))) == var1Index);
+             propagation::VarViewId{_vars[var1Index].solverId()}))) == var1Index);
 
   // var 2:
   assert(value2Index < _valueIndexToVarIndex.size());
   assert(isValueIndexOccupied(value2Index));
   assert(toValue(value2Index) ==
          assignment.committedValue(
-             _vars[_valueIndexToVarIndex[value2Index]].solverId()));
+             propagation::VarViewId{_vars[_valueIndexToVarIndex[value2Index]].solverId()}));
 
   // sanity:
   assert(inDomain(var1Index, value2Index));
   assert(_valueIndexToVarIndex[value2Index] <= _inDomain.size());
   assert(value2Index < _inDomain.at(_valueIndexToVarIndex[value2Index]).size());
-  assert(toValueIndex(assignment.committedValue(_vars[var1Index].solverId())) <
+  assert(toValueIndex(assignment.committedValue(propagation::VarViewId{_vars[var1Index].solverId()})) <
          _inDomain.at(_valueIndexToVarIndex[value2Index]).size());
 
   return inDomain(
       _valueIndexToVarIndex[value2Index],
-      toValueIndex(assignment.committedValue(_vars[var1Index].solverId())));
+      toValueIndex(assignment.committedValue(propagation::VarViewId{_vars[var1Index].solverId()})));
 }
 
 size_t AllDifferentNonUniformNeighborhood::swapValues(Assignment& assignment,
@@ -204,7 +204,7 @@ size_t AllDifferentNonUniformNeighborhood::swapValues(Assignment& assignment,
   // var 1:
   assert(var1Index < _vars.size());
   const auto var1 = _vars[var1Index].solverId();
-  const size_t value1Index = toValueIndex(assignment.committedValue(var1));
+  const size_t value1Index = toValueIndex(assignment.committedValue(propagation::VarViewId{var1}));
   assert(value1Index != value2Index);
   assert(isValueIndexOccupied(value1Index));
   assert(_valueIndexToVarIndex.at(value1Index) == var1Index);
@@ -213,7 +213,7 @@ size_t AllDifferentNonUniformNeighborhood::swapValues(Assignment& assignment,
   assert(isValueIndexOccupied(value2Index));
   const size_t var2Index = _valueIndexToVarIndex[value2Index];
   assert(toValue(value2Index) ==
-         assignment.committedValue(_vars.at(var2Index).solverId()));
+         assignment.committedValue(propagation::VarViewId{_vars.at(var2Index).solverId()}));
 
   // sanity:
   assert(var1Index != var2Index);
@@ -221,7 +221,7 @@ size_t AllDifferentNonUniformNeighborhood::swapValues(Assignment& assignment,
   assert(inDomain(var2Index, value1Index));
   assert(inDomain(var1Index, value2Index));
 
-  assert(assignment.committedValue(_vars.at(var2Index).solverId()) ==
+  assert(assignment.committedValue(propagation::VarViewId{_vars.at(var2Index).solverId()}) ==
          toValue(value2Index));
 
   _moveValueIndex[0] = value1Index;
@@ -240,7 +240,7 @@ size_t AllDifferentNonUniformNeighborhood::assignValue(Assignment& assignment,
   assert(_valueIndexToVarIndex[newValueIndex] == _vars.size());
   assert(varIndex < _vars.size());
   const auto var = _vars[varIndex].solverId();
-  const size_t oldValueIndex = toValueIndex(assignment.committedValue(var));
+  const size_t oldValueIndex = toValueIndex(assignment.committedValue(propagation::VarViewId{var}));
 
   assert(oldValueIndex != newValueIndex);
   assert(_valueIndexToVarIndex.at(oldValueIndex) == varIndex);
@@ -272,13 +272,13 @@ void AllDifferentNonUniformNeighborhood::commitIf(
     const size_t var2Index = _valueIndexToVarIndex[_moveValueIndex[1]];
     const auto var2 = _vars.at(var2Index).solverId();
 
-    assert(assignment.currentValue(var1) == assignment.committedValue(var2));
-    assert(assignment.committedValue(var1) == assignment.currentValue(var2));
+    assert(assignment.currentValue(propagation::VarViewId{var1}) == assignment.committedValue(propagation::VarViewId{var2}));
+    assert(assignment.committedValue(propagation::VarViewId{var1}) == assignment.currentValue(propagation::VarViewId{var2}));
   } else {
     assert(_valueIndexToVarIndex.at(_moveValueIndex[1]) == _vars.size());
 
-    assert(assignment.committedValue(var1) == toValue(_moveValueIndex[0]));
-    assert(assignment.currentValue(var1) == toValue(_moveValueIndex[1]));
+    assert(assignment.committedValue(propagation::VarViewId{var1}) == toValue(_moveValueIndex[0]));
+    assert(assignment.currentValue(propagation::VarViewId{var1}) == toValue(_moveValueIndex[1]));
   }
 
 #endif

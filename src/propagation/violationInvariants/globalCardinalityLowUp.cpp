@@ -166,7 +166,7 @@ VarViewId GlobalCardinalityLowUp::nextInput(Timestamp timestamp) {
   if (index < _vars.size()) {
     return _vars[index];
   }
-  return NULL_ID;
+  return VAR_VIEW_NULL_ID;
 }
 
 void GlobalCardinalityLowUp::notifyCurrentInputChanged(Timestamp timestamp) {

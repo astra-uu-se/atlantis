@@ -136,7 +136,7 @@ VarViewId Min::nextInput(Timestamp ts) {
                          _solver.lowerBound(VarViewId{_output}))) {
     return VarViewId{_varArray[index]};
   }
-  return NULL_ID;  // Done
+  return VAR_VIEW_NULL_ID;  // Done
 }
 
 void Min::notifyCurrentInputChanged(Timestamp ts) {

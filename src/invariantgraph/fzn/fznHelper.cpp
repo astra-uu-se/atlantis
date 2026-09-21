@@ -267,7 +267,7 @@ std::vector<VarNodeId> getUnfixedVarNodeIds(
 
 void verifyAllDifferent(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
-  std::vector<Int> values = getFixedValues(intVarArray);
+  const std::vector<Int> values = getFixedValues(intVarArray);
   std::unordered_set<Int> seenValues;
   seenValues.reserve(values.size());
   for (const Int val : values) {

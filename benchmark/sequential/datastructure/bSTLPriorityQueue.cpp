@@ -21,7 +21,7 @@ class PrioQueue : public ::benchmark::Fixture {
   struct PriorityCmp {
     std::vector<size_t>& order;
     explicit PriorityCmp(std::vector<size_t>& o) : order(o) {}
-    bool operator()(size_t left, size_t right) {
+    bool operator()(const size_t left, const size_t right) const {
       return order[left] > order[right];
     }
   };

@@ -31,8 +31,8 @@ class RandomNeighborhoodTest : public NeighborhoodTestBase<RandomNeighborhood> {
   size_t expectHolds() const {
     size_t numModified{0};
     for (const auto& var : _vars) {
-      const Int curVal = _solver->currentValue(var.solverId());
-      const Int comVal = _solver->committedValue(var.solverId());
+      const Int curVal = _solver->currentValue(propagation::VarViewId{var.solverId()});
+      const Int comVal = _solver->committedValue(propagation::VarViewId{var.solverId()});
       EXPECT_TRUE(var.domain()->contains(curVal));
       EXPECT_TRUE(var.domain()->contains(comVal));
       if (curVal != comVal) {

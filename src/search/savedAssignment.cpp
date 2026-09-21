@@ -13,7 +13,8 @@ SavedAssignment::SavedAssignment(
   }
   for (size_t i = 0; i < assignment.searchVars().size(); ++i) {
     _searchValues[i] = {assignment.searchVars()[i],
-                        assignment.currentValue(assignment.searchVars()[i])};
+                        assignment.currentValue(propagation::VarViewId(
+                            assignment.searchVars()[i]))};
   }
 }
 }  // namespace atlantis::search

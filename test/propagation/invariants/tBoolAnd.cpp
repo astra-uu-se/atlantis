@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class BoolAndTest : public InvariantTest {
- public:
+ protected:
   VarViewId x{NULL_ID};
   VarViewId y{NULL_ID};
   Int xLb{0};
@@ -200,9 +200,10 @@ RC_GTEST_FIXTURE_PROP(BoolAndTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {

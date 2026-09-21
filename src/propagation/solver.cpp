@@ -419,7 +419,7 @@ void Solver::computeBounds() {
 
   // Search variables might now have been computed yet
   for (VarId varId = 0; varId < numVars(); ++varId) {
-    if (definingInvariant(varId) == NULL_ID) {
+    if (definingInvariant(VarViewId{varId}) == NULL_ID) {
       for (const PropagationGraph::ListeningInvariantData&
                listeningInvariantData : listeningInvariantData(varId)) {
         --inputsToCompute[listeningInvariantData.invariantId];

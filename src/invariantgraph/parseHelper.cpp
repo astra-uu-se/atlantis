@@ -282,7 +282,7 @@ propagation::VarViewId makeSolverConstIntRelation(
     case RelationType::REL_TYPE_LE:
       return solver.makeIntView<propagation::LessEqualConst>(solver, lhs, rhs);
   }
-  return propagation::NULL_ID;
+  return propagation::VAR_VIEW_NULL_ID;
 }
 
 propagation::VarViewId makeSolverConstBoolRelation(
@@ -315,7 +315,7 @@ propagation::VarViewId makeSolverConstBoolRelation(
   if (viewType == isFalse) {
     return solver.makeIntView<propagation::NotEqualConst>(solver, lhs, 0);
   }
-  return propagation::NULL_ID;
+  return propagation::VAR_VIEW_NULL_ID;
 }
 
 void makeSolverIntRelation(propagation::SolverBase& solver,

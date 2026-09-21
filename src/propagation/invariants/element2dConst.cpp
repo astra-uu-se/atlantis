@@ -93,7 +93,7 @@ VarViewId Element2dConst::nextInput(Timestamp ts) {
     case 1:
       return _indices[1];
     default:
-      return NULL_ID;  // Done
+      return VAR_VIEW_NULL_ID;  // Done
   }
 }
 

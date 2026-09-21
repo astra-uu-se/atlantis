@@ -72,7 +72,7 @@ VarViewId ElementVar::nextInput(Timestamp ts) {
       return _varArray[safeIndex(_solver.value(ts, _index))];
     }
     default:
-      return NULL_ID;  // Done
+      return VAR_VIEW_NULL_ID;  // Done
   }
 }
 

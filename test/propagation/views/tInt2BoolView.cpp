@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class Int2BoolViewTest : public ViewTest {
- public:
+ protected:
   void SetUp() override {
     inputVarLb = -1;
     inputVarUb = 2;
@@ -43,7 +43,7 @@ TEST_F(Int2BoolViewTest, bounds) {
     const auto& [expectedLb, expectedUb] = expected.at(i);
     EXPECT_LE(expectedLb, expectedUb);
 
-    _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
+    _solver->updateBounds(VarId{inputVar}, inputLb, inputUb, false);
 
     EXPECT_EQ(_solver->lowerBound(outputVar), expectedLb);
     EXPECT_EQ(_solver->upperBound(outputVar), expectedUb);

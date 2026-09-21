@@ -116,7 +116,7 @@ VarViewId GlobalCardinalityOpen::nextInput(Timestamp timestamp) {
   if (index < _inputs.size()) {
     return _inputs[index];
   }
-  return NULL_ID;
+  return VAR_VIEW_NULL_ID;
 }
 
 void GlobalCardinalityOpen::notifyCurrentInputChanged(Timestamp timestamp) {

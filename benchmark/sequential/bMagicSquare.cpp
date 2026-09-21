@@ -35,7 +35,7 @@ class MagicSquare : public ::benchmark::Fixture {
     if (n < 0) {
       throw std::runtime_error("n must be non-negative.");
     }
-    Int n2 = n * n;
+    const Int n2 = n * n;
     gen = std::mt19937(rd());
 
     const Int magicSum = (n * n * (n * n + 1) / 2) / n;
@@ -115,7 +115,7 @@ class MagicSquare : public ::benchmark::Fixture {
     // total violation
     assert(2 + 2 * static_cast<size_t>(n) == violations.size());
     Int maxViol = 0;
-    for (propagation::VarViewId viol : violations) {
+    for (const propagation::VarViewId viol : violations) {
       maxViol += solver->upperBound(viol);
     }
 

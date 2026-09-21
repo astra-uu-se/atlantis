@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <random>
-#include <vector>
 
 #include "atlantis/propagation/propagation/propagationQueue.hpp"
 

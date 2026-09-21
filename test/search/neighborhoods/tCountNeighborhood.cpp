@@ -33,12 +33,12 @@ class CountNeighborhoodTest : public NeighborhoodTestBase<CountNeighborhood> {
     size_t curAmount = 0;
     size_t comAmount = 0;
     for (size_t i = 0; i < _vars.size(); ++i) {
-      const Int curVal = _assignment->currentValue(_vars.at(i).solverId());
+      const Int curVal = _assignment->currentValue(propagation::VarViewId{_vars.at(i).solverId()});
       EXPECT_GE(curVal, _vars.at(i).domain()->lowerBound());
       EXPECT_LE(curVal, _vars.at(i).domain()->upperBound());
       curAmount += curVal == needle ? 1 : 0;
 
-      const Int comVal = _assignment->committedValue(_vars.at(i).solverId());
+      const Int comVal = _assignment->committedValue(propagation::VarViewId{_vars.at(i).solverId()});
       EXPECT_GE(comVal, _vars.at(i).domain()->lowerBound());
       EXPECT_LE(comVal, _vars.at(i).domain()->upperBound());
       comAmount += comVal == needle ? 1 : 0;
@@ -50,8 +50,8 @@ class CountNeighborhoodTest : public NeighborhoodTestBase<CountNeighborhood> {
 
   [[nodiscard]] bool currentDiffersFromCommitted() const {
     return std::ranges::any_of(_vars, [&](const auto& var) {
-      return _assignment->currentValue(var.solverId()) !=
-             _assignment->committedValue(var.solverId());
+      return _assignment->currentValue(propagation::VarViewId{var.solverId()}) !=
+             _assignment->committedValue(propagation::VarViewId{var.solverId()});
     });
   }
 };

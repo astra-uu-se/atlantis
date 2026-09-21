@@ -14,7 +14,8 @@ namespace atlantis::propagation {
  */
 
 class ElementVar : public Invariant {
-  VarId _output, _index;
+  VarId _output;
+  VarViewId _index;
   std::vector<VarViewId> _varArray;
   Int _offset;
 

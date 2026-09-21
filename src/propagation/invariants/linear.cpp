@@ -92,7 +92,7 @@ void Linear::notifyInputChanged(const Timestamp ts, const LocalId id) {
     const Int diff = overflow::saturatingSub(newValue, committedValue);
     const Int prod = overflow::saturatingMul(_coeffs.at(id), diff);
     Int sum;
-    return !overflow::addOverflow(_solver.value(ts, _output), prod, &sum);
+    return !overflow::addOverflow(_solver.value(ts, VarViewId{_output}), prod, &sum);
   }());
 
   incValue(ts, _output, _coeffs[id] * (newValue - committedValue));
@@ -104,7 +104,7 @@ VarViewId Linear::nextInput(const Timestamp ts) {
   if (index < _varArray.size()) {
     return _varArray[index];
   }
-  return NULL_ID;  // Done
+  return VAR_VIEW_NULL_ID;  // Done
 }
 
 void Linear::notifyCurrentInputChanged(const Timestamp ts) {

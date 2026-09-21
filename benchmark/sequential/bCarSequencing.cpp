@@ -174,8 +174,6 @@ class CarSequencing : public ::benchmark::Fixture {
     _solver->close();
   }
 
-  void sanity() const {}
-
   void TearDown(const ::benchmark::State&) override {
     sequence.clear();
     classCount.clear();

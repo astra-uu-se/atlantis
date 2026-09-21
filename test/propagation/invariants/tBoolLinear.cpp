@@ -10,7 +10,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class BoolLinearTest : public InvariantTest {
- public:
+ protected:
   Int numInputVars{3};
   Int inputVarLb{0};
   Int inputVarUb{2};
@@ -99,7 +99,7 @@ class BoolLinearTest : public InvariantTest {
 TEST_F(BoolLinearTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {0, 0}, {0, 1}, {0, 100}, {150, 250}};
-  std::vector<Int> coefVec{-1000, -1, 0, 1, 1000};
+  const std::vector<Int> coefVec{-1000, -1, 0, 1, 1000};
   numInputVars = 3;
   coeffs = std::vector<Int>(numInputVars, coefVec.front());
 
@@ -256,7 +256,7 @@ TEST_F(BoolLinearTest, Commit) {
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
     _solver->commitIf(ts, VarId{inputVars.at(i)});
-    committedValues.at(i) = _solver->value(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
     _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
@@ -265,20 +265,16 @@ TEST_F(BoolLinearTest, Commit) {
   }
 }
 
-static Int clamp(Int val, Int lb, Int ub) {
-  return std::max(lb, std::min(ub, val));
-}
-
 RC_GTEST_FIXTURE_PROP(BoolLinearTest, ShouldAlwaysBeSum,
                       (Int aCoef, Int aVal, Int bCoef, Int bVal, Int cCoef,
                        Int cVal)) {
   _solver->open();
-  const Int globalLb = std::numeric_limits<Int>::min() / static_cast<Int>(3);
-  const Int globalUb = std::numeric_limits<Int>::max() / static_cast<Int>(3);
+  constexpr Int globalLb = std::numeric_limits<Int>::min() / static_cast<Int>(3);
+  constexpr Int globalUb = std::numeric_limits<Int>::max() / static_cast<Int>(3);
 
-  aCoef = clamp(aCoef, globalLb, globalUb);
-  bCoef = clamp(bCoef, globalLb, globalUb);
-  cCoef = clamp(cCoef, globalLb, globalUb);
+  aCoef = std::clamp(aCoef, globalLb, globalUb);
+  bCoef = std::clamp(bCoef, globalLb, globalUb);
+  cCoef = std::clamp(cCoef, globalLb, globalUb);
 
   const VarViewId a =
       _solver->makeIntVar(0, 0, std::numeric_limits<Int>::max());
@@ -332,9 +328,10 @@ RC_GTEST_FIXTURE_PROP(BoolLinearTest, rapidcheck, ()) {
   }
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {

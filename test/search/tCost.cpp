@@ -44,7 +44,7 @@ class CostTest : public ::testing::Test {
 
 TEST_F(CostTest, constructor) {
   const auto costs = generateCosts();
-  std::vector<std::optional<Int>> violation{std::nullopt,
+  const std::vector<std::optional<Int>> violation{std::nullopt,
                                             {5},
                                             std::nullopt,
                                             std::nullopt,
@@ -57,7 +57,7 @@ TEST_F(CostTest, constructor) {
                                             {5},
                                             {5}};
 
-  std::vector<std::optional<Int>> objective{std::nullopt,
+  const std::vector<std::optional<Int>> objective{std::nullopt,
                                             std::nullopt,
                                             std::nullopt,
                                             {std::numeric_limits<Int>::max()},
@@ -96,27 +96,27 @@ TEST_F(CostTest, assignment) {
   const auto violVar = solver.makeIntVar(1, 0, 10);
   const auto objVar = solver.makeIntVar(5, 2, 10);
   solver.close();
-  std::shared_ptr<MockNeighborhood> neighborhood =
+  const std::shared_ptr<MockNeighborhood> neighborhood =
       std::make_shared<MockNeighborhood>();
 
-  std::vector<Assignment> assignments{
-      Assignment(solver, neighborhood, propagation::NULL_ID,
-                 propagation::NULL_ID, ObjectiveDirection::NONE, 0),
-      Assignment(solver, neighborhood, propagation::NULL_ID,
-                 propagation::NULL_ID, ObjectiveDirection::MINIMIZE, 2),
-      Assignment(solver, neighborhood, propagation::NULL_ID,
-                 propagation::NULL_ID, ObjectiveDirection::MAXIMIZE, 10),
-      Assignment(solver, neighborhood, violVar, propagation::NULL_ID,
+  const std::vector<Assignment> assignments{
+      Assignment(solver, neighborhood, propagation::VAR_VIEW_NULL_ID,
+                 propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::NONE, 0),
+      Assignment(solver, neighborhood, propagation::VAR_VIEW_NULL_ID,
+                 propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::MINIMIZE, 2),
+      Assignment(solver, neighborhood, propagation::VAR_VIEW_NULL_ID,
+                 propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::MAXIMIZE, 10),
+      Assignment(solver, neighborhood, violVar, propagation::VAR_VIEW_NULL_ID,
                  ObjectiveDirection::NONE, 0),
-      Assignment(solver, neighborhood, violVar, propagation::NULL_ID,
+      Assignment(solver, neighborhood, violVar, propagation::VAR_VIEW_NULL_ID,
                  ObjectiveDirection::MINIMIZE, 2),
-      Assignment(solver, neighborhood, violVar, propagation::NULL_ID,
+      Assignment(solver, neighborhood, violVar, propagation::VAR_VIEW_NULL_ID,
                  ObjectiveDirection::MAXIMIZE, 10),
-      Assignment(solver, neighborhood, propagation::NULL_ID, objVar,
+      Assignment(solver, neighborhood, propagation::VAR_VIEW_NULL_ID, objVar,
                  ObjectiveDirection::NONE, 0),
-      Assignment(solver, neighborhood, propagation::NULL_ID, objVar,
+      Assignment(solver, neighborhood, propagation::VAR_VIEW_NULL_ID, objVar,
                  ObjectiveDirection::MINIMIZE, 2),
-      Assignment(solver, neighborhood, propagation::NULL_ID, objVar,
+      Assignment(solver, neighborhood, propagation::VAR_VIEW_NULL_ID, objVar,
                  ObjectiveDirection::MAXIMIZE, 10),
       Assignment(solver, neighborhood, violVar, objVar,
                  ObjectiveDirection::NONE, 0),

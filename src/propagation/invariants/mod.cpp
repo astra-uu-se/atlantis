@@ -53,7 +53,7 @@ VarViewId Mod::nextInput(Timestamp ts) {
     case 1:
       return _denominator;
     default:
-      return NULL_ID;
+      return VAR_VIEW_NULL_ID;
   }
 }
 

@@ -7,7 +7,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class AbsDiffTest : public InvariantTest {
- public:
+ protected:
   VarViewId x{NULL_ID};
   VarViewId y{NULL_ID};
   Int xLb{-5};
@@ -195,7 +195,7 @@ TEST_F(AbsDiffTest, Commit) {
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
     _solver->commitIf(ts, VarId{inputVars.at(i)});
-    committedValues.at(i) = _solver->value(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
     _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
@@ -218,9 +218,10 @@ RC_GTEST_FIXTURE_PROP(AbsDiffTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {

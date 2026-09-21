@@ -133,7 +133,7 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
 
   std::vector<propagation::VarViewId> outputIds;
   for (const auto& var : outputVars) {
-    outputIds.emplace_back(varNode(var).isFixed() ? propagation::NULL_ID
+    outputIds.emplace_back(varNode(var).isFixed() ? propagation::VAR_VIEW_NULL_ID
                                                   : varId(var));
   }
   if (shouldBeSubsumed()) {
@@ -144,7 +144,7 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
   std::vector<Int> inputVals;
 
   for (const auto& var : inputVars) {
-    inputVarIds.emplace_back(varNode(var).isFixed() ? propagation::NULL_ID
+    inputVarIds.emplace_back(varNode(var).isFixed() ? propagation::VAR_VIEW_NULL_ID
                                                     : varId(var));
     inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
                                ? varNode(var).lowerBound()

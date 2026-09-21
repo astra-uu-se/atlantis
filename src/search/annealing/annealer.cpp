@@ -52,7 +52,7 @@ bool Annealer::acceptMove(const Cost& cost) {
   return ret;
 }
 
-void Annealer::logRoundStatistics(logging::Logger& logger) {
+void Annealer::logRoundStatistics(logging::Logger& logger) const {
   logger.trace("Accepted over attempted moves: {:d} / {:d} = {:.3f}",
                _statistics->acceptedMoves, _statistics->attemptedMoves,
                _statistics->moveAcceptanceRatio());

@@ -80,7 +80,7 @@ TEST_P(AllDifferentNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
+  const std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
 
   EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 

@@ -10,13 +10,13 @@ ViolationInvariant::ViolationInvariant(SolverBase& solver, VarId violationId,
 
 ViolationInvariant::ViolationInvariant(SolverBase& solver,
                                        VarViewId violationId, Int nullState)
-    : ViolationInvariant(solver, VarId(violationId), nullState) {
+    : ViolationInvariant(solver, VarId{violationId}, nullState) {
   assert(violationId.isVar());
 }
 
 inline VarId ViolationInvariant::violationId() const { return _violationId; }
 
 inline Int ViolationInvariant::violationCount(Timestamp ts) const {
-  return _solver.value(ts, _violationId);
+  return _solver.value(ts, VarViewId{_violationId});
 }
 }  // namespace atlantis::propagation

@@ -18,11 +18,6 @@ class InDomainTest : public ::testing::Test {
   std::mt19937 gen;
   std::default_random_engine rng;
 
- public:
-  Int computeOutput(Timestamp ts, VarViewId var,
-                    const std::vector<DomainEntry>& domain) {
-    return computeOutput(_solver->value(ts, var), domain);
-  }
   static Int computeOutput(Int val, const std::vector<DomainEntry>& domain) {
     Int viol = std::numeric_limits<Int>::max();
     for (const auto& [lb, ub] : domain) {
@@ -62,7 +57,7 @@ TEST_F(InDomainTest, Bounds) {
       if (!_solver->isOpen()) {
         _solver->open();
       }
-      _solver->updateBounds(VarId(x), xLb, xUb, false);
+      _solver->updateBounds(VarId{x}, xLb, xUb, false);
       const VarViewId violationId = _solver->makeIntView<InDomain>(
           *_solver, x, std::vector<DomainEntry>(dom));
       _solver->close();
@@ -81,10 +76,10 @@ TEST_F(InDomainTest, Bounds) {
 }
 
 TEST_F(InDomainTest, Value) {
-  const Int margin = 20;
   std::vector<DomainEntry> domainVec{
       {-20, -15}, {-10, -5}, {0, 0}, {5, 10}, {15, 20}};
   for (const std::vector<DomainEntry>& dom : subsets(domainVec)) {
+    constexpr Int margin = 20;
     if (dom.empty()) {
       continue;
     }
@@ -105,10 +100,10 @@ TEST_F(InDomainTest, Value) {
 }
 
 TEST_F(InDomainTest, CommittedValue) {
-  const Int margin = 20;
   std::vector<DomainEntry> domainVec{
       {-20, -15}, {-10, -5}, {0, 0}, {5, 10}, {15, 20}};
   for (const std::vector<DomainEntry>& dom : subsets(domainVec)) {
+    constexpr Int margin = 20;
     if (dom.empty()) {
       continue;
     }
@@ -133,7 +128,7 @@ TEST_F(InDomainTest, CommittedValue) {
     Int committedValue = _solver->committedValue(x);
 
     for (size_t i = 0; i < values.size(); ++i) {
-      const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+      const Timestamp ts = _solver->currentTimestamp() + 1 + i;
       ASSERT_EQ(_solver->committedValue(x), committedValue);
 
       _solver->setValue(ts, x, values[i]);
@@ -142,7 +137,7 @@ TEST_F(InDomainTest, CommittedValue) {
 
       ASSERT_EQ(expectedViol, _solver->value(ts, violationId));
 
-      _solver->commitIf(ts, VarId(x));
+      _solver->commitIf(ts, VarId{x});
       committedValue = _solver->value(ts, x);
 
       ASSERT_EQ(expectedViol, _solver->value(ts + 1, violationId));

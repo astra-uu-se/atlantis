@@ -153,7 +153,7 @@ INSTANTIATE_TEST_SUITE_P(
                       ParamData{InvariantNodeAction::REPLACE, 1}));
 
 TEST(ArrayElementNodeRegression, UpdateStatePrunesOutOfRangeIndexValues) {
-  auto graph = std::make_shared<InvariantGraph>();
+  const auto graph = std::make_shared<InvariantGraph>();
   graph->open();
 
   const auto idx =

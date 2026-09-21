@@ -80,12 +80,12 @@ bool IntDivNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  auto& dNode = varNode(denominator());
+  const auto& dNode = varNode(denominator());
   if (dNode.isFixed() && dNode.lowerBound() == 1) {
     invariantGraph().replaceVarNode(quotient(), numerator());
     return true;
   }
-  auto& nNode = varNode(numerator());
+  const auto& nNode = varNode(numerator());
   assert((!nNode.isFixed() || !dNode.isFixed()) &&
          varNode(quotient()).isFixed() &&
          varNode(quotient()).lowerBound() == 0);

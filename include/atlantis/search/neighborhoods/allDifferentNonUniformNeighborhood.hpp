@@ -86,8 +86,8 @@ class AllDifferentNonUniformNeighborhood : public Neighborhood {
     for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
       const Int value =
           committedValue
-              ? assignment.committedValue(_vars.at(varIndex).solverId())
-              : assignment.currentValue(_vars.at(varIndex).solverId());
+              ? assignment.committedValue(propagation::VarViewId{_vars.at(varIndex).solverId()})
+              : assignment.currentValue(propagation::VarViewId{_vars.at(varIndex).solverId()});
       const size_t valueIndex = toValueIndex(value);
       assert(valueIndex < _valueIndexToVarIndex.size());
       assert(_valueIndexToVarIndex.at(valueIndex) == varIndex);

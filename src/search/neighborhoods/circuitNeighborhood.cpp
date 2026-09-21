@@ -102,14 +102,14 @@ size_t CircuitNeighborhood::randomMove(RandomProvider& random,
   auto nodeIdx = static_cast<size_t>(
       random.intInRange(0, static_cast<Int>(_vars.size() - 1)));
   auto oldNextIdx =
-      node2Idx(assignment.committedValue(_vars[nodeIdx].solverId()));
+      node2Idx(assignment.committedValue(propagation::VarViewId{_vars[nodeIdx].solverId()}));
 
   auto newNextIdx = determineNewNext(random, nodeIdx, oldNextIdx, _vars.size());
   assert(newNextIdx < _vars.size());
   const auto kIdx =
-      node2Idx(assignment.committedValue(_vars[oldNextIdx].solverId()));
+      node2Idx(assignment.committedValue(propagation::VarViewId{_vars[oldNextIdx].solverId()}));
   const auto lastIdx =
-      node2Idx(assignment.committedValue(_vars[newNextIdx].solverId()));
+      node2Idx(assignment.committedValue(propagation::VarViewId{_vars[newNextIdx].solverId()}));
 
   for (const auto varIdx : {nodeIdx, oldNextIdx, newNextIdx}) {
     if (_vars[varIdx].isFixed()) {

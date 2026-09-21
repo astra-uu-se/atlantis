@@ -7,7 +7,7 @@ using rc::gen::inRange;
 using namespace atlantis::propagation;
 
 class MaxTest : public InvariantTest {
- public:
+ protected:
   Int numInputVars{3};
   Int inputVarLb{-2};
   Int inputVarUb{2};
@@ -20,7 +20,7 @@ class MaxTest : public InvariantTest {
     inputVars.clear();
   }
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     Int maxVal = std::numeric_limits<Int>::min();
     for (const auto var : inputVars) {
       maxVal = std::max(maxVal, committedValue ? _solver->committedValue(var)
@@ -29,7 +29,7 @@ class MaxTest : public InvariantTest {
     return maxVal;
   }
 
-  [[nodiscard]] Int computeOutput(Timestamp ts) const {
+  [[nodiscard]] Int computeOutput(const Timestamp ts) const {
     Int maxVal = std::numeric_limits<Int>::min();
     for (const auto var : inputVars) {
       maxVal = std::max(maxVal, _solver->value(ts, var));
@@ -67,13 +67,13 @@ TEST_F(MaxTest, UpdateBounds) {
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_LE(aLb, aUb);
-    _solver->updateBounds(VarId(inputVars.at(0)), aLb, aUb, false);
+    _solver->updateBounds(VarId{inputVars.at(0)}, aLb, aUb, false);
     for (const auto& [bLb, bUb] : boundVec) {
       EXPECT_LE(bLb, bUb);
-      _solver->updateBounds(VarId(inputVars.at(1)), bLb, bUb, false);
+      _solver->updateBounds(VarId{inputVars.at(1)}, bLb, bUb, false);
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_LE(cLb, cUb);
-        _solver->updateBounds(VarId(inputVars.at(2)), cLb, cUb, false);
+        _solver->updateBounds(VarId{inputVars.at(2)}, cLb, cUb, false);
         invariant.updateBounds(false);
 
         ASSERT_EQ(std::max(aLb, std::max(bLb, cLb)),
@@ -131,8 +131,8 @@ TEST_F(MaxTest, NextInput) {
   for (const auto& id : inputVars) {
     EXPECT_TRUE(id.isVar());
   }
-  const auto minVarId = size_t(getMinVarViewId(inputVars));
-  const auto maxVarId = size_t(getMaxVarViewId(inputVars));
+  const auto minVarId = size_t{getMinVarViewId(inputVars)};
+  const auto maxVarId = size_t{getMaxVarViewId(inputVars)};
 
   for (Int i = 0; i < numInputVars; ++i) {
     const Timestamp ts =
@@ -142,7 +142,7 @@ TEST_F(MaxTest, NextInput) {
     }
     std::vector<bool> notified(maxVarId - minVarId + 1, false);
     for (Int j = 0; j <= i; ++j) {
-      const size_t varId = size_t(invariant.nextInput(ts));
+      const size_t varId = size_t{invariant.nextInput(ts)};
       EXPECT_NE(varId, NULL_ID);
       EXPECT_LE(minVarId, varId);
       EXPECT_GE(maxVarId, varId);
@@ -198,7 +198,7 @@ TEST_F(MaxTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + i;
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -211,7 +211,7 @@ TEST_F(MaxTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputVar);
@@ -235,9 +235,10 @@ RC_GTEST_FIXTURE_PROP(MaxTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
@@ -308,7 +309,7 @@ TEST_F(MaxTest, SolverIntegration) {
       _solver->open();
     }
     std::vector<VarViewId> args;
-    const Int numArgs = 10;
+    constexpr Int numArgs = 10;
     for (Int value = 1; value <= numArgs; ++value) {
       args.push_back(_solver->makeIntVar(value, 1, numArgs));
     }

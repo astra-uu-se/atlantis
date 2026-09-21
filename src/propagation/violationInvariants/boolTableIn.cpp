@@ -85,12 +85,12 @@ void BoolTableIn::notifyInputChanged(const Timestamp ts, const LocalId id) {
   if (newValue == committedValue) {
     return;
   }
-  assert(0 <= _solver.value(ts, _violationId));
-  assert(_solver.value(ts, _violationId) <= static_cast<Int>(_varArray.size()));
-  assert(_violationCounts.at(_solver.value(ts, _violationId)).value(ts) > 0);
+  assert(0 <= _solver.value(ts, VarViewId{_violationId}));
+  assert(_solver.value(ts, VarViewId{_violationId}) <= static_cast<Int>(_varArray.size()));
+  assert(_violationCounts.at(_solver.value(ts, VarViewId{_violationId})).value(ts) > 0);
   assert(std::all_of(
       _violationCounts.begin(),
-      _violationCounts.begin() + _solver.value(ts, _violationId),
+      _violationCounts.begin() + _solver.value(ts, VarViewId{_violationId}),
       [&](const CommittableInt& count) { return count.value(ts) == 0; }));
   Int minViolation = static_cast<Int>(_varArray.size());
   for (size_t r = 0; r < _transposed[id].size(); ++r) {
@@ -114,7 +114,7 @@ VarViewId BoolTableIn::nextInput(const Timestamp ts) {
   if (index < _varArray.size()) {
     return _varArray[index];
   }
-  return NULL_ID;
+  return VAR_VIEW_NULL_ID;
 }
 
 void BoolTableIn::notifyCurrentInputChanged(const Timestamp ts) {

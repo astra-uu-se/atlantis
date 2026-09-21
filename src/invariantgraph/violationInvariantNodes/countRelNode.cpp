@@ -349,7 +349,7 @@ void CountRelNode::registerNode(propagation::SolverBase& solver,
     return;
   }
   std::vector<propagation::VarViewId> solverVars(numInputVars(),
-                                                 propagation::NULL_ID);
+                                                 propagation::VAR_VIEW_NULL_ID);
   for (size_t i = 0; i < numInputVars(); ++i) {
     solverVars[i] = mapping.solverId(staticInputVarNodeIds()[i]);
   }

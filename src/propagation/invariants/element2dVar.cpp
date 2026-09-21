@@ -111,7 +111,7 @@ VarViewId Element2dVar::nextInput(Timestamp ts) {
                        [safeIndex2(_solver.value(ts, _indices[1]))];
     }
     default:
-      return NULL_ID;  // Done
+      return VAR_VIEW_NULL_ID;  // Done
   }
 }
 

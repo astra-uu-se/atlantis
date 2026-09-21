@@ -45,7 +45,7 @@ class ElementLinearTree : public ::benchmark::Fixture {
 #endif
       treeNodes.pop();
       if (cur.level < treeHeight - 1) {
-        for (propagation::VarViewId var : linearInputs) {
+        for (const propagation::VarViewId var : linearInputs) {
           treeNodes.push({cur.level + 1, var});
         }
       } else {

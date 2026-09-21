@@ -38,8 +38,8 @@ size_t TableNeighborhood::randomMove(RandomProvider& random,
   Int numModified = 0;
   for (size_t c = 0; c < _vars.size(); ++c) {
     assignment.set(_vars[c].solverId(), _table[row][c]);
-    numModified += assignment.committedValue(_vars[c].solverId()) !=
-                           assignment.currentValue(_vars[c].solverId())
+    numModified += assignment.committedValue(propagation::VarViewId{_vars[c].solverId()}) !=
+                           assignment.currentValue(propagation::VarViewId{_vars[c].solverId()})
                        ? 1
                        : 0;
   }

@@ -98,7 +98,7 @@ VarViewId BoolLinear::nextInput(Timestamp ts) {
   if (index < _violArray.size()) {
     return _violArray[index];
   }
-  return NULL_ID;  // Done
+  return VAR_VIEW_NULL_ID;  // Done
 }
 
 void BoolLinear::notifyCurrentInputChanged(Timestamp ts) {

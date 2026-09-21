@@ -122,10 +122,10 @@ VarViewId Max::nextInput(Timestamp ts) {
   assert(0 <= _state.value(ts));
   if (index == 0 ||
       (index < _varArray.size() && _solver.value(ts, _varArray[index - 1]) !=
-                                       _solver.upperBound(_output))) {
+                                       _solver.upperBound(VarViewId{_output}))) {
     return _varArray[index];
   }
-  return NULL_ID;  // Done
+  return VAR_VIEW_NULL_ID;  // Done
 }
 
 void Max::notifyCurrentInputChanged(Timestamp ts) {

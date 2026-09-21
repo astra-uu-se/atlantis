@@ -20,7 +20,7 @@ class MagicSquareTest : public ::testing::Test {
   std::uniform_int_distribution<Int> distribution;
   Int n{3};
 
-  propagation::VarViewId totalViolation = propagation::NULL_ID;
+  propagation::VarViewId totalViolation = propagation::VAR_VIEW_NULL_ID;
 
   Int magicSum = 0;
 

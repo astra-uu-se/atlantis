@@ -19,7 +19,7 @@ Assignment::Assignment(
       _neighborhood(std::move(neighborhood)),
       _violation(violation),
       _objective(objectiveDirection == ObjectiveDirection::NONE
-                     ? propagation::NULL_ID
+                     ? propagation::VAR_VIEW_NULL_ID
                      : objective),
       _objectiveDirection(objectiveDirection),
       _objectiveOptimalValue(objectiveOptimalValue) {
@@ -71,7 +71,7 @@ void Assignment::commitLastProbe() {
   _solver.beginMove();
   for (const auto varId : searchVars()) {
     if (_solver.hasChanged(ts, varId)) {
-      _solver.setValue(varId, _solver.value(ts, varId));
+      _solver.setValue(varId, _solver.value(ts, propagation::VarViewId{varId}));
     }
   }
   _solver.endMove();
@@ -89,7 +89,7 @@ Int Assignment::currentValue(const propagation::VarViewId var) const {
 std::unordered_map<propagation::VarId, Int> Assignment::currentValues() const {
   std::unordered_map<propagation::VarId, Int> saved;
   for (auto var : searchVars()) {
-    saved[var] = currentValue(var);
+    saved[var] = currentValue(propagation::VarViewId{var});
   }
 
   return saved;
@@ -153,7 +153,7 @@ void Assignment::setAssignment(const SavedAssignment& saved) {
 
   for (const auto varId : searchVars()) {
     // if (_solver.hasChanged(ts, varId)) {
-    _solver.setValue(varId, _solver.value(ts, varId));
+    _solver.setValue(varId, _solver.value(ts, propagation::VarViewId{varId}));
     // }
   }
   _solver.endMove();

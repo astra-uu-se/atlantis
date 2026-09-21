@@ -126,7 +126,7 @@ VarViewId AllDifferent::nextInput(Timestamp ts) {
   if (index < _vars.size()) {
     return _vars[index];
   }
-  return NULL_ID;
+  return VAR_VIEW_NULL_ID;
 }
 
 void AllDifferent::notifyCurrentInputChanged(Timestamp ts) {

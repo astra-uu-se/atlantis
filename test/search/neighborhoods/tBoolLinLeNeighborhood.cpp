@@ -9,7 +9,7 @@ using namespace atlantis::search::neighborhoods;
 
 class BoolLinLeNeighborhoodTest
     : public NeighborhoodTestBase<BinaryLinLeNeighborhood<true>> {
- public:
+ protected:
   Int numVars = 4;
   RandomProvider _random{123456789};
 
@@ -26,7 +26,6 @@ class BoolLinLeNeighborhoodTest
                          std::make_shared<SearchDomain>(0, 1));
       _coeffs.emplace_back((i % 2 == 0 ? 2 : -2) * (i + 1));
     }
-
     createNeighborhood(std::vector<Int>{_coeffs}, std::vector<SearchVar>{_vars},
                        _bound);
   }
@@ -37,12 +36,12 @@ class BoolLinLeNeighborhoodTest
     for (size_t i = 0; i < _vars.size(); ++i) {
       EXPECT_LE(0, _vars.at(i).domain()->lowerBound());
 
-      const Int curVal = _solver->committedValue(_vars.at(i).solverId());
+      const Int curVal = _solver->committedValue(propagation::VarViewId{_vars.at(i).solverId()});
       EXPECT_GE(curVal, _vars.at(i).domain()->lowerBound());
       EXPECT_LE(curVal, _vars.at(i).domain()->upperBound());
       curSum += curVal == 0 ? _coeffs.at(i) : 0;
 
-      const Int comVal = _solver->committedValue(_vars.at(i).solverId());
+      const Int comVal = _solver->committedValue(propagation::VarViewId{_vars.at(i).solverId()});
       EXPECT_GE(comVal, _vars.at(i).domain()->lowerBound());
       EXPECT_LE(comVal, _vars.at(i).domain()->upperBound());
       comSum += comVal == 0 ? _coeffs.at(i) : 0;

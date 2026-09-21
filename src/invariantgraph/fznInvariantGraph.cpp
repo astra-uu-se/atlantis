@@ -332,7 +332,7 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
   std::unordered_set<std::string> definedVars;
   std::vector<bool> constraintIsProcessed(model.constraints().size(), false);
 
-  std::vector<std::function<bool(const fznparser::Constraint&)>>
+  const std::vector<std::function<bool(const fznparser::Constraint&)>>
       invariantNodeCreators{
           [&](const fznparser::Constraint& c) { return makeInvariantNode(c); },
           [&](const fznparser::Constraint& c) {

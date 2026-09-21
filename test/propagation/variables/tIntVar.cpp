@@ -3,7 +3,6 @@
 #include <limits>
 #include <random>
 #include <stdexcept>
-#include <vector>
 
 #include "../invariantTestHelper.hpp"
 #include "atlantis/propagation/variables/intVar.hpp"
@@ -45,7 +44,7 @@ TEST_F(IntVarTest, CommittableIntConstructor) {
 
   ASSERT_FALSE(intVarNoValue.hasChanged(timestamp));
 
-  // Random inital value
+  // Random initial value
   Int value = distribution(gen);
 
   IntVar intVarWithValue(varId, value, lowerBound, upperBound);
@@ -64,9 +63,9 @@ TEST_F(IntVarTest, CommittableIntConstructor) {
 }
 
 TEST_F(IntVarTest, InDomain) {
-  const Int lowerBound = -10;
-  const Int upperBound = 10;
-  const Timestamp timestamp(1);
+  constexpr Int lowerBound = -10;
+  constexpr Int upperBound = 10;
+  constexpr Timestamp timestamp(1);
   const IntVar intVar(timestamp, 0, lowerBound, upperBound);
 
   for (Int value = lowerBound; value <= upperBound; ++value) {
@@ -83,10 +82,10 @@ TEST_F(IntVarTest, InDomain) {
 }
 
 TEST_F(IntVarTest, UpdateBounds) {
-  const Int initialLowerBound = 0;
-  const Int initialUpperBound = 0;
+  constexpr Int initialLowerBound = 0;
+  constexpr Int initialUpperBound = 0;
 
-  const Timestamp timestamp(1);
+  constexpr Timestamp timestamp(1);
   IntVar intVar(timestamp, 0, initialLowerBound, initialUpperBound);
 
   for (Int value = 1; value <= 1000; ++value) {

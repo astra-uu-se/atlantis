@@ -49,7 +49,7 @@ VarViewId BoolEqual::nextInput(const Timestamp ts) {
     case 1:
       return _y;
     default:
-      return NULL_ID;
+      return VAR_VIEW_NULL_ID;
   }
 }
 

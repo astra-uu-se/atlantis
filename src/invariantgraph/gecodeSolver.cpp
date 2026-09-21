@@ -652,7 +652,7 @@ void GecodeSolver::gcc_closed(
   }
   Gecode::IntVarArgs inputVars = intVarArgs(inputs);
   Gecode::IntVarArgs countVars = intVarArgs(counts);
-  auto intArgCover = gcc_get_cover(inputVars, cover, countVars);
+  const auto intArgCover = gcc_get_cover(inputVars, cover, countVars);
 
   unshare(_space, inputVars);
   Gecode::IntVarArgs reifiedCounts(intArgCover.size());
@@ -766,7 +766,7 @@ void GecodeSolver::gcc_low_up_closed(
   auto inputVars = intVarArgs(inputs);
 
   if (isFixedTo(reified, true)) {
-    auto intArgCover = intArgs(cover);
+   const auto intArgCover = intArgs(cover);
     const auto lbound = intArgs(lowerBounds);
     const auto ubound = intArgs(upperBounds);
     Gecode::IntSetArgs countBounds(intArgCover.size());

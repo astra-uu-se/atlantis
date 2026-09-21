@@ -83,9 +83,9 @@ size_t AllDifferentUniformNeighborhood::swapValues(RandomProvider& random,
   _curTimestamp = NULL_TIMESTAMP;
 
   assignment.set(_vars[i].solverId(),
-                 assignment.committedValue(_vars[j].solverId()));
+                 assignment.committedValue(propagation::VarViewId{_vars[j].solverId()}));
   assignment.set(_vars[j].solverId(),
-                 assignment.committedValue(_vars[i].solverId()));
+                 assignment.committedValue(propagation::VarViewId{_vars[i].solverId()}));
 
   return 2;
 }
@@ -111,25 +111,25 @@ void AllDifferentUniformNeighborhood::commitIf(const Assignment& assignment) {
     assert(_moveVarIdx < _vars.size());
     assert(_moveValIdx < _freeVals.size());
 
-    assert(assignment.currentValue(_vars[_moveVarIdx].solverId()) ==
+    assert(assignment.currentValue(propagation::VarViewId{_vars[_moveVarIdx].solverId()}) ==
            _freeVals[_moveValIdx]);
 
     _freeVals[_moveValIdx] =
-        assignment.committedValue(_vars[_moveVarIdx].solverId());
+        assignment.committedValue(propagation::VarViewId{_vars[_moveVarIdx].solverId()});
 
     _curTimestamp = NULL_TIMESTAMP;
 #ifndef NDEBUG
     for (size_t i = 0; i < _vars.size(); ++i) {
       for (size_t j = i + 1; j < _vars.size(); ++j) {
-        assert(assignment.currentValue(_vars[i].solverId()) !=
-               assignment.currentValue(_vars[j].solverId()));
-        assert(assignment.committedValue(_vars[i].solverId()) !=
-               assignment.committedValue(_vars[j].solverId()));
+        assert(assignment.currentValue(propagation::VarViewId{_vars[i].solverId()}) !=
+               assignment.currentValue(propagation::VarViewId{_vars[j].solverId()}));
+        assert(assignment.committedValue(propagation::VarViewId{_vars[i].solverId()}) !=
+               assignment.committedValue(propagation::VarViewId{_vars[j].solverId()}));
       }
     }
     for (const Int fVal : _freeVals) {
       for (const auto& var : _vars) {
-        assert(assignment.currentValue(var.solverId()) != fVal);
+        assert(assignment.currentValue(propagation::VarViewId{var.solverId()}) != fVal);
       }
     }
 #endif

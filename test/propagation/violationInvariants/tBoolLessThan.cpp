@@ -29,7 +29,7 @@ class BoolLessThanTest : public InvariantTest {
   }
 
   static Int computeOutput(const Int xVal, const Int yVal) {
-    // none is satisifed:
+    // none is satisfied:
     if (xVal != 0 && yVal == 0) {
       return 0;
     }
@@ -197,7 +197,7 @@ TEST_F(BoolLessThanTest, Commit) {
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
     _solver->commitIf(ts, VarId{inputVars.at(i)});
-    committedValues.at(i) = _solver->value(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
     _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
@@ -212,9 +212,10 @@ RC_GTEST_FIXTURE_PROP(BoolLessThanTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {

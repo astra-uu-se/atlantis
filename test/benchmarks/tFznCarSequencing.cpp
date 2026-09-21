@@ -9,7 +9,7 @@ namespace atlantis::testing {
 using ::testing::ContainerEq;
 
 TEST(FznCarSequencing, Solve) {
-  std::vector<std::vector<Int>> expectedOutputs{
+  const std::vector<std::vector<Int>> expectedOutputs{
       {1, 2, 9, 3, 7, 5, 6, 8, 4, 10}, {1, 2, 9, 3, 7, 6, 5, 8, 4, 10},
       {1, 2, 9, 3, 8, 5, 6, 7, 4, 10}, {1, 2, 9, 3, 8, 6, 5, 7, 4, 10},
       {1, 2, 9, 4, 7, 5, 6, 8, 3, 10}, {1, 2, 9, 4, 7, 6, 5, 8, 3, 10},
