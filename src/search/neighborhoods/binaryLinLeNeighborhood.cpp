@@ -92,7 +92,7 @@ size_t BinaryLinLeNeighborhood<Violation>::randomMove(RandomProvider& random,
         _indices[random.intInRange(static_cast<Int>(i),
                                    static_cast<Int>(_indices.size()) - 1)]);
     _curVarIdx = _indices[i];
-    const Int curVal = assignment.committedValue(propagation::VarViewId{_vars[_curVarIdx].solverId()});
+    const Int curVal = assignment.committedValue(_vars[_curVarIdx].solverId());
     Int prod;
     if (overflow::mulOverflow(_coeffs[_curVarIdx],
                               toBool<Violation>(curVal) ? -1 : 1, &prod)) {
@@ -118,13 +118,10 @@ void BinaryLinLeNeighborhood<Violation>::commitIf(
   if (_curTimestamp != assignment.currentTimestamp()) {
     return;
   }
-  assert(assignment.committedValue(
-             propagation::VarViewId{_vars[_curVarIdx].solverId()}) !=
-         assignment.currentValue(
-             propagation::VarViewId{_vars[_curVarIdx].solverId()}));
+  assert(assignment.committedValue(_vars[_curVarIdx].solverId()) !=
+         assignment.currentValue(_vars[_curVarIdx].solverId()));
   _curSum +=
-      (toBool<Violation>(assignment.currentValue(
-                  propagation::VarViewId{_vars[_curVarIdx].solverId()}))
+      (toBool<Violation>(assignment.currentValue(_vars[_curVarIdx].solverId()))
            ? 1
            : -1) *
       _coeffs[_curVarIdx];

@@ -35,12 +35,12 @@ class IntLinLeNeighborhoodTest
     Int curSum = 0;
     Int comSum = 0;
     for (size_t i = 0; i < _vars.size(); ++i) {
-      const Int curVal = _solver->committedValue(propagation::VarViewId{_vars.at(i).solverId()});
+      const Int curVal = _solver->committedValue(_vars.at(i).solverId());
       EXPECT_GE(curVal, _vars.at(i).domain()->lowerBound());
       EXPECT_LE(curVal, _vars.at(i).domain()->upperBound());
       curSum += _coeffs.at(i) * curVal;
 
-      const Int comVal = _solver->committedValue(propagation::VarViewId{_vars.at(i).solverId()});
+      const Int comVal = _solver->committedValue(_vars.at(i).solverId());
       EXPECT_GE(comVal, _vars.at(i).domain()->lowerBound());
       EXPECT_LE(comVal, _vars.at(i).domain()->upperBound());
       comSum += _coeffs.at(i) * comVal;

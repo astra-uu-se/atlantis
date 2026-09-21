@@ -26,8 +26,8 @@ class AllDifferentUniformNeighborhoodTest
       holdsComVal.emplace(val, false);
     }
     for (const auto& var : _vars) {
-      const Int curVal = _solver->currentValue(propagation::VarViewId{var.solverId()});
-      const Int comVal = _solver->committedValue(propagation::VarViewId{var.solverId()});
+      const Int curVal = _solver->currentValue(var.solverId());
+      const Int comVal = _solver->committedValue(var.solverId());
       EXPECT_TRUE(var.domain()->contains(curVal));
       EXPECT_TRUE(var.domain()->contains(comVal));
 
@@ -76,10 +76,10 @@ TEST_F(AllDifferentUniformNeighborhoodTest, swap) {
       }
     }
     EXPECT_EQ(modified.size(), 2);
-    EXPECT_EQ(_solver->committedValue(propagation::VarViewId{modified.front()}),
-              _solver->currentValue(propagation::VarViewId{modified.back()}));
-    EXPECT_EQ(_solver->committedValue(propagation::VarViewId{modified.back()}),
-              _solver->currentValue(propagation::VarViewId{modified.front()}));
+    EXPECT_EQ(_solver->committedValue(modified.front()),
+              _solver->currentValue(modified.back()));
+    EXPECT_EQ(_solver->committedValue(modified.back()),
+              _solver->currentValue(modified.front()));
 
     expectHolds();
   }
@@ -98,8 +98,8 @@ TEST_F(AllDifferentUniformNeighborhoodTest, assignValue) {
       }
     }
     EXPECT_NE(modified, propagation::NULL_ID);
-    EXPECT_NE(_solver->committedValue(propagation::VarViewId{modified}),
-              _solver->currentValue(propagation::VarViewId{modified}));
+    EXPECT_NE(_solver->committedValue(modified),
+              _solver->currentValue(modified));
     expectHolds();
   }
 }

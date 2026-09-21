@@ -60,11 +60,16 @@ class SolverBase {
   virtual void enqueueDefinedVar(VarId) = 0;
 
   [[nodiscard]] Int value(Timestamp, VarViewId);
+  [[nodiscard]] Int value(Timestamp, VarId);
   [[nodiscard]] Int currentValue(VarViewId id) {
+    return value(_currentTimestamp, id);
+  }
+  [[nodiscard]] Int currentValue(VarId id) {
     return value(_currentTimestamp, id);
   }
 
   [[nodiscard]] Int committedValue(VarViewId);
+  [[nodiscard]] Int committedValue(VarId);
 
   [[nodiscard]] Timestamp tmpTimestamp(VarViewId) const;
 
@@ -82,9 +87,17 @@ class SolverBase {
                        : _store.constIntVar(VarId{id}).lowerBound();
   }
 
+  [[nodiscard]] Int lowerBound(VarId id) const {
+    return _store.constIntVar(id).lowerBound();
+  }
+
   [[nodiscard]] Int upperBound(VarViewId id) const {
     return id.isView() ? _store.constIntView(ViewId{id}).upperBound()
                        : _store.constIntVar(VarId{id}).upperBound();
+  }
+
+  [[nodiscard]] Int upperBound(VarId id) const {
+    return _store.constIntVar(id).upperBound();
   }
 
   void updateBounds(VarId id, Int lb, Int ub, bool widenOnly) {
@@ -213,9 +226,17 @@ inline Int SolverBase::value(Timestamp ts, VarViewId id) {
                      : _store.constIntVar(VarId{id}).value(ts);
 }
 
+inline Int SolverBase::value(Timestamp ts, VarId id) {
+  return _store.constIntVar(VarId{id}).value(ts);
+}
+
 inline Int SolverBase::committedValue(VarViewId id) {
   return id.isView() ? _store.intView(ViewId{id}).committedValue()
                      : _store.constIntVar(VarId{id}).committedValue();
+}
+
+inline Int SolverBase::committedValue(VarId id) {
+  return _store.constIntVar(VarId{id}).committedValue();
 }
 
 inline Timestamp SolverBase::tmpTimestamp(VarViewId id) const {

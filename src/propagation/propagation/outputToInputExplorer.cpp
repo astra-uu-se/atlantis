@@ -272,7 +272,7 @@ void OutputToInputExplorer::propagate(Timestamp currentTimestamp) {
       // results in an infinite loop.
       setComputed(currentTimestamp, currentVarId);
       // The variable is marked and computed: expand its defining invariant.
-      expandInvariant<MarkingMode>(_solver.definingInvariant(VarViewId{currentVarId}));
+      expandInvariant<MarkingMode>(_solver.definingInvariant(currentVarId));
       continue;
     }
     // currentVarId is done: pop it from the stack.

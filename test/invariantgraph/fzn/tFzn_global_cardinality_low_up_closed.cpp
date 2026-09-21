@@ -51,7 +51,7 @@ class fzn_global_cardinality_low_up_closedTest : public FznTestBase {
   }
 
   std::unordered_map<Int, std::vector<size_t>> valToIndices(
-      bool committedValue) const {
+      [[maybe_unused]] bool committedValue) const {
     std::unordered_map<Int, std::vector<size_t>> vti;
     vti.reserve(cover.size());
     for (size_t i = 0; i < cover.size(); ++i) {

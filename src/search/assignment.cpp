@@ -71,7 +71,7 @@ void Assignment::commitLastProbe() {
   _solver.beginMove();
   for (const auto varId : searchVars()) {
     if (_solver.hasChanged(ts, varId)) {
-      _solver.setValue(varId, _solver.value(ts, propagation::VarViewId{varId}));
+      _solver.setValue(varId, _solver.value(ts, varId));
     }
   }
   _solver.endMove();
@@ -85,16 +85,22 @@ void Assignment::commitLastProbe() {
 Int Assignment::currentValue(const propagation::VarViewId var) const {
   return _solver.currentValue(var);
 }
+Int Assignment::currentValue(const propagation::VarId var) const {
+  return _solver.currentValue(var);
+}
 
 std::unordered_map<propagation::VarId, Int> Assignment::currentValues() const {
   std::unordered_map<propagation::VarId, Int> saved;
   for (auto var : searchVars()) {
-    saved[var] = currentValue(propagation::VarViewId{var});
+    saved[var] = currentValue(var);
   }
 
   return saved;
 }
 
+Int Assignment::committedValue(const propagation::VarId var) const {
+  return _solver.committedValue(var);
+}
 Int Assignment::committedValue(const propagation::VarViewId var) const {
   return _solver.committedValue(var);
 }
@@ -153,7 +159,7 @@ void Assignment::setAssignment(const SavedAssignment& saved) {
 
   for (const auto varId : searchVars()) {
     // if (_solver.hasChanged(ts, varId)) {
-    _solver.setValue(varId, _solver.value(ts, propagation::VarViewId{varId}));
+    _solver.setValue(varId, _solver.value(ts, varId));
     // }
   }
   _solver.endMove();

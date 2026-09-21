@@ -34,7 +34,7 @@ class CircuitNeighborhoodTest
     Int cur = 0;
     while (!visited.at(cur)) {
       visited.at(cur) = true;
-      cur = _solver->committedValue(propagation::VarViewId{next.at(cur).solverId()}) - _offset;
+      cur = _solver->committedValue(next.at(cur).solverId()) - _offset;
       EXPECT_GE(cur, 0);
       EXPECT_LT(cur, next.size());
     }

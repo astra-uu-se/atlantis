@@ -18,8 +18,8 @@ class TableNeighborhoodTest : public NeighborhoodTestBase<TableNeighborhood> {
     std::vector<Int> comVals(_vars.size());
 
     for (size_t i = 0; i < _vars.size(); ++i) {
-      curVals.at(i) = _solver->currentValue(propagation::VarViewId{_vars.at(i).solverId()});
-      comVals.at(i) = _solver->committedValue(propagation::VarViewId{_vars.at(i).solverId()});
+      curVals.at(i) = _solver->currentValue(_vars.at(i).solverId());
+      comVals.at(i) = _solver->committedValue(_vars.at(i).solverId());
     }
     Int curRow = -1;
     Int comRow = -1;

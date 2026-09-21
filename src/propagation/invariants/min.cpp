@@ -131,9 +131,9 @@ void Min::notifyInputChanged(Timestamp ts, LocalId id) {
 VarViewId Min::nextInput(Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
-  if (index == 0 || (index < _varArray.size() &&
-                     _solver.value(ts, _varArray[index - 1]) !=
-                         _solver.lowerBound(VarViewId{_output}))) {
+  if (index == 0 ||
+      (index < _varArray.size() && _solver.value(ts, _varArray[index - 1]) !=
+                                       _solver.lowerBound(_output))) {
     return VarViewId{_varArray[index]};
   }
   return VAR_VIEW_NULL_ID;  // Done

@@ -499,6 +499,10 @@ size_t Solver::numVars() const { return _propGraph.numVars(); }
 
 size_t Solver::numInvariants() const { return _propGraph.numInvariants(); }
 
+InvariantId Solver::definingInvariant(VarId id) const {
+  return _propGraph.definingInvariant(id);
+}
+
 InvariantId Solver::definingInvariant(VarViewId id) const {
   return _propGraph.definingInvariant(id.isView() ? sourceId(id) : VarId{id});
 }

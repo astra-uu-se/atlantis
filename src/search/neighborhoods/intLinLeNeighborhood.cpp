@@ -103,7 +103,7 @@ size_t IntLinLeNeighborhood::randomMove(RandomProvider& random,
         _indices[random.intInRange(static_cast<Int>(i),
                                    static_cast<Int>(_indices.size()) - 1)]);
     _curVarIdx = _indices[i];
-    const Int curVal = assignment.committedValue(propagation::VarViewId{_vars[_curVarIdx].solverId()});
+    const Int curVal = assignment.committedValue(_vars[_curVarIdx].solverId());
     Int diff;
     if (overflow::subOverflow(_bound, _curSum, &diff)) {
       continue;
@@ -144,10 +144,10 @@ void IntLinLeNeighborhood::commitIf(const Assignment& assignment) {
   if (_curTimestamp != assignment.currentTimestamp()) {
     return;
   }
-  assert(assignment.committedValue(propagation::VarViewId{_vars[_curVarIdx].solverId()}) != _curVarVal);
+  assert(assignment.committedValue(_vars[_curVarIdx].solverId()) != _curVarVal);
   _curSum +=
       _coeffs[_curVarIdx] *
-      (_curVarVal - assignment.committedValue(propagation::VarViewId{_vars[_curVarIdx].solverId()}));
+      (_curVarVal - assignment.committedValue(_vars[_curVarIdx].solverId()));
   assert(_curSum <= _bound);
 }
 

@@ -87,6 +87,7 @@ class Solver : public SolverBase {
 
   size_t numVars() const;
   size_t numInvariants() const;
+  InvariantId definingInvariant(VarId id) const;
 
   [[nodiscard]] const std::vector<VarId>& searchVars() const;
   [[nodiscard]] const std::unordered_set<VarId>& modifiedSearchVar() const;

@@ -126,7 +126,7 @@ propagation::VarViewId VarNode::postDomainConstraint(
   if (_domainType == DomainType::DOM_NONE ||
       ((staticInputTo().empty() || dynamicInputTo().empty()) &&
        definingNodes().empty())) {
-    return propagation::VarViewId{propagation::NULL_ID};
+    return propagation::VAR_VIEW_NULL_ID;
   }
   if (_domainType == DomainType::DOM_FIXED && !isFixed()) {
     throw std::runtime_error("Domain type is fixed but domain is not fixed");
@@ -143,11 +143,11 @@ propagation::VarViewId VarNode::postDomainConstraint(
     const bool holdsTrue = solverLb <= 0 && 0 <= solverUb;
     const bool holdsFalse = solverUb >= 1;
     if (!isFixed()) {
-      return propagation::VarViewId{propagation::NULL_ID};
+      return propagation::VAR_VIEW_NULL_ID;
     }
     if ((inDomain(bool{true}) && !holdsFalse) ||
         (inDomain(bool{false}) && !holdsTrue)) {
-      return propagation::VarViewId{propagation::NULL_ID};
+      return propagation::VAR_VIEW_NULL_ID;
     }
     if (inDomain(bool{true})) {
       mapping.setDomainViolationId(

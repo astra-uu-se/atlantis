@@ -130,7 +130,7 @@ void InvariantNode::init(InvariantNodeId id) {
 
 propagation::VarViewId InvariantNode::violationVarId(
     const SolverMapping&) const {
-  return propagation::VarViewId{propagation::NULL_ID};
+  return propagation::VAR_VIEW_NULL_ID;
 }
 
 void InvariantNode::eraseStaticInputVarNode(size_t index) {

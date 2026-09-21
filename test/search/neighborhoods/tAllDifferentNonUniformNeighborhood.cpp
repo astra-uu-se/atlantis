@@ -34,8 +34,8 @@ class AllDifferentNonUniformNeighborhoodTest
     comVals.reserve(_vars.size());
 
     for (const auto& var : _vars) {
-      const Int curVal = _solver->currentValue(propagation::VarViewId{var.solverId()});
-      const Int comVal = _solver->committedValue(propagation::VarViewId{var.solverId()});
+      const Int curVal = _solver->currentValue(var.solverId());
+      const Int comVal = _solver->committedValue(var.solverId());
       EXPECT_TRUE(var.domain()->contains(curVal));
       EXPECT_TRUE(var.domain()->contains(comVal));
 
@@ -85,13 +85,13 @@ TEST_F(AllDifferentNonUniformNeighborhoodTest, canSwap) {
   initialize();
   expectHolds();
   for (size_t var1Index = 0; var1Index < _vars.size(); ++var1Index) {
-    const Int value1 = _solver->committedValue(propagation::VarViewId{_vars.at(var1Index).solverId()});
+    const Int value1 = _solver->committedValue(_vars.at(var1Index).solverId());
     for (size_t var2Index = 0; var2Index < _vars.size(); ++var2Index) {
       if (var1Index == var2Index) {
         continue;
       }
       const Int value2 =
-          _solver->committedValue(propagation::VarViewId{_vars.at(var2Index).solverId()});
+          _solver->committedValue(_vars.at(var2Index).solverId());
       EXPECT_GE(value2, domainLb);
       if (!setDomains.at(var1Index).contains(value2)) {
         continue;
@@ -118,13 +118,13 @@ TEST_F(AllDifferentNonUniformNeighborhoodTest, swap) {
       initialize();
       expectHolds();
       const Int value1 =
-          _solver->committedValue(propagation::VarViewId{_vars.at(var1Index).solverId()});
+          _solver->committedValue(_vars.at(var1Index).solverId());
       for (size_t var2Index = 0; var2Index < _vars.size(); ++var2Index) {
         if (var1Index == var2Index) {
           continue;
         }
         const Int value2 =
-            _solver->committedValue(propagation::VarViewId{_vars.at(var2Index).solverId()});
+            _solver->committedValue(_vars.at(var2Index).solverId());
         EXPECT_GE(value2, domainLb);
         if (!setDomains.at(var1Index).contains(value2)) {
           continue;
@@ -152,11 +152,11 @@ TEST_F(AllDifferentNonUniformNeighborhoodTest, assignValue) {
     for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
       for (const Int newValue : _domains.at(varIndex)) {
         const Int oldValue =
-            _solver->committedValue(propagation::VarViewId{_vars.at(varIndex).solverId()});
+            _solver->committedValue(_vars.at(varIndex).solverId());
         EXPECT_GE(newValue, domainLb);
         bool freeValue = true;
         for (const auto& var : _vars) {
-          if (newValue == _solver->committedValue(propagation::VarViewId{var.solverId()})) {
+          if (newValue == _solver->committedValue(var.solverId())) {
             freeValue = false;
             break;
           }
@@ -166,7 +166,7 @@ TEST_F(AllDifferentNonUniformNeighborhoodTest, assignValue) {
         }
         const auto newValueIndex = static_cast<size_t>(newValue - domainLb);
         EXPECT_EQ(oldValue,
-                  _solver->committedValue(propagation::VarViewId{_vars.at(varIndex).solverId()}));
+                  _solver->committedValue(_vars.at(varIndex).solverId()));
         _neighborhood->assignValue(*_assignment, varIndex, newValueIndex);
       }
     }

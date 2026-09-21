@@ -99,8 +99,7 @@ size_t IntLinEqNeighborhood::randomMove(RandomProvider& random,
         _indices[i],
         _indices[random.intInRange(i, static_cast<Int>(_indices.size()) - 1)]);
     const size_t index1 = _indices[i];
-    const Int cur1 = assignment.committedValue(
-        propagation::VarViewId{_vars[index1].solverId()});
+    const Int cur1 = assignment.committedValue(_vars[index1].solverId());
     const Int lb1 = _vars[index1].domain()->lowerBound();
     const Int ub1 = _vars[index1].domain()->upperBound();
 
@@ -109,8 +108,7 @@ size_t IntLinEqNeighborhood::randomMove(RandomProvider& random,
                         _indices[random.intInRange(
                             j, static_cast<Int>(_indices.size()) - 1)]);
       const size_t index2 = _indices[j];
-      const Int cur2 = assignment.committedValue(
-          propagation::VarViewId{_vars[index2].solverId()});
+      const Int cur2 = assignment.committedValue(_vars[index2].solverId());
       const Int lb2 = _vars[index2].domain()->lowerBound();
       const Int ub2 = _vars[index2].domain()->upperBound();
 

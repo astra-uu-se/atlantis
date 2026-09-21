@@ -23,8 +23,7 @@ size_t RandomNeighborhood::randomMove(RandomProvider& random,
   assignment.set(
       _vars[index].solverId(),
       random.inDomain(*_vars[index].domain(),
-                      assignment.committedValue(
-                          propagation::VarViewId{_vars[index].solverId()})));
+                      assignment.committedValue(_vars[index].solverId())));
   return 1;
 }
 

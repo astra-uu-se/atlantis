@@ -17,10 +17,10 @@ using ::testing::ReturnRef;
 
 class AssignmentTest : public ::testing::Test {
  protected:
-  propagation::VarId a{propagation::NULL_ID};
-  propagation::VarId b{propagation::NULL_ID};
-  propagation::VarId c{propagation::NULL_ID};
-  propagation::VarId d{propagation::NULL_ID};
+  propagation::VarViewId a{propagation::NULL_ID};
+  propagation::VarViewId b{propagation::NULL_ID};
+  propagation::VarViewId c{propagation::NULL_ID};
+  propagation::VarViewId d{propagation::NULL_ID};
   propagation::VarViewId violation{propagation::NULL_ID};
 
   std::shared_ptr<MockNeighborhood> _neighborhood;
@@ -35,18 +35,16 @@ class AssignmentTest : public ::testing::Test {
     _solver = std::make_shared<propagation::Solver>();
 
     _solver->open();
-    a = propagation::VarId{_solver->makeIntVar(0, 0, 10)};
-    b = propagation::VarId{_solver->makeIntVar(0, 0, 10)};
-    c = propagation::VarId{_solver->makeIntVar(0, 0, 10)};
-    d = propagation::VarId{_solver->makeIntVar(3, 3, 3)};
+    a = _solver->makeIntVar(0, 0, 10);
+    b = _solver->makeIntVar(0, 0, 10);
+    c = _solver->makeIntVar(0, 0, 10);
+    d = _solver->makeIntVar(3, 3, 3);
     violation = _solver->makeIntVar(0, 0, 10);
 
     _solver->makeInvariant<propagation::Linear>(
-        *_solver, c,
-        std::vector<propagation::VarViewId>{propagation::VarViewId{a},
-                                            propagation::VarViewId{b}});
-    _solver->makeViolationInvariant<propagation::Equal>(*_solver, violation, propagation::VarViewId{c},
-                                                        propagation::VarViewId{d});
+        *_solver, c, std::vector<propagation::VarViewId>{a, b});
+    _solver->makeViolationInvariant<propagation::Equal>(*_solver, violation, c,
+                                                        d);
     _solver->close();
 
     _neighborhood = std::make_shared<MockNeighborhood>();
@@ -54,34 +52,34 @@ class AssignmentTest : public ::testing::Test {
 };
 
 TEST_F(AssignmentTest, search_vars_are_identified) {
-  const Assignment assignment(*_solver, _neighborhood, violation, propagation::VarViewId{a},
+  const Assignment assignment(*_solver, _neighborhood, violation, a,
                               ObjectiveDirection::MINIMIZE,
-                              _solver->lowerBound(propagation::VarViewId{a}));
+                              _solver->lowerBound(a));
 
-  const std::vector<propagation::VarId> expectedSearchVars{a, b, d};
+  const std::vector<propagation::VarId> expectedSearchVars{propagation::VarId{a}, propagation::VarId{b}, propagation::VarId{d}};
   EXPECT_EQ(assignment.searchVars(), expectedSearchVars);
 }
 
 TEST_F(AssignmentTest, assign_sets_values) {
-  Assignment assignment(*_solver, _neighborhood, violation, propagation::VarViewId{a},
-                        ObjectiveDirection::MINIMIZE, _solver->lowerBound(propagation::VarViewId{a}));
+  Assignment assignment(*_solver, _neighborhood, violation, a,
+                        ObjectiveDirection::MINIMIZE, _solver->lowerBound(a));
 
-  assignment.set(a, 1);
-  assignment.set(b, 2);
+  assignment.set(propagation::VarId{a}, 1);
+  assignment.set(propagation::VarId{b}, 2);
 
-  EXPECT_EQ(assignment.currentValue(propagation::VarViewId{a}), 1);
-  EXPECT_EQ(assignment.currentValue(propagation::VarViewId{b}), 2);
+  EXPECT_EQ(assignment.currentValue(a), 1);
+  EXPECT_EQ(assignment.currentValue(b), 2);
 }
 
 TEST_F(AssignmentTest, satisfies_constraints) {
-  Assignment assignment(*_solver, _neighborhood, violation, propagation::VarViewId{a},
-                        ObjectiveDirection::MINIMIZE, _solver->lowerBound(propagation::VarViewId{a}));
+  Assignment assignment(*_solver, _neighborhood, violation, a,
+                        ObjectiveDirection::MINIMIZE, _solver->lowerBound(a));
 
   EXPECT_FALSE(assignment.satisfiesConstraints());
 
   _solver->beginMove();
-  assignment.set(a, 1);
-  assignment.set(b, 2);
+  assignment.set(propagation::VarId{a}, 1);
+  assignment.set(propagation::VarId{b}, 2);
   _solver->endMove();
   _solver->beginCommit();
   _solver->endCommit();
@@ -95,8 +93,8 @@ TEST_F(AssignmentTest, initialize) {
 
   RandomProvider random{123456};
 
-  Assignment assignment(*_solver, _neighborhood, violation, propagation::VarViewId{a},
-                        ObjectiveDirection::MINIMIZE, _solver->lowerBound(propagation::VarViewId{a}));
+  Assignment assignment(*_solver, _neighborhood, violation, a,
+                        ObjectiveDirection::MINIMIZE, _solver->lowerBound(a));
 
   EXPECT_CALL(*_neighborhood, coveredVars()).WillRepeatedly(ReturnRef(vars));
   EXPECT_CALL(*_neighborhood, initialize(Ref(random), Ref(assignment)))

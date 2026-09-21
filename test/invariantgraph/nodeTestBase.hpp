@@ -225,7 +225,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->varNode(identifier);
   }
 
-  [[nodiscard]] const VarNode& varNodeConst(const std::string& identifier) const {
+  [[nodiscard]] const VarNode& varNodeConst(
+      const std::string& identifier) const {
     return _invariantGraph->varNodeConst(identifier);
   }
 
@@ -420,11 +421,11 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
         continue;
       }
       const propagation::VarId sourceId = _solver->sourceId(inputVars.at(i));
-      if (inputVals.at(i) < _solver->upperBound(propagation::VarViewId{sourceId})) {
+      if (inputVals.at(i) < _solver->upperBound(sourceId)) {
         ++inputVals.at(i);
         return i;
       }
-      inputVals.at(i) = _solver->lowerBound(propagation::VarViewId{sourceId});
+      inputVals.at(i) = _solver->lowerBound(sourceId);
     }
     return -1;
   }
@@ -489,7 +490,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVars.at(i) != propagation::NULL_ID) {
-        EXPECT_EQ(_solver->currentValue(propagation::VarViewId{_solver->sourceId(inputVars.at(i))}),
+        EXPECT_EQ(_solver->currentValue(_solver->sourceId(inputVars.at(i))),
                   vals.at(i));
       }
     }

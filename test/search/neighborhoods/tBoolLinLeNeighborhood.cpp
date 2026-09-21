@@ -36,12 +36,12 @@ class BoolLinLeNeighborhoodTest
     for (size_t i = 0; i < _vars.size(); ++i) {
       EXPECT_LE(0, _vars.at(i).domain()->lowerBound());
 
-      const Int curVal = _solver->committedValue(propagation::VarViewId{_vars.at(i).solverId()});
+      const Int curVal = _solver->committedValue(_vars.at(i).solverId());
       EXPECT_GE(curVal, _vars.at(i).domain()->lowerBound());
       EXPECT_LE(curVal, _vars.at(i).domain()->upperBound());
       curSum += curVal == 0 ? _coeffs.at(i) : 0;
 
-      const Int comVal = _solver->committedValue(propagation::VarViewId{_vars.at(i).solverId()});
+      const Int comVal = _solver->committedValue(_vars.at(i).solverId());
       EXPECT_GE(comVal, _vars.at(i).domain()->lowerBound());
       EXPECT_LE(comVal, _vars.at(i).domain()->upperBound());
       comSum += comVal == 0 ? _coeffs.at(i) : 0;
