@@ -88,7 +88,7 @@ class VesselLoading : public ::benchmark::Fixture {
 
       // Create variables
       const Int m = std::min(static_cast<Int>(conWidth[i]),
-                       static_cast<Int>(conLength[i]));
+                             static_cast<Int>(conLength[i]));
       orientation.emplace_back(solver->makeIntVar(0, 0, 1));
       left.emplace_back(
           solver->makeIntVar(0, 0, static_cast<Int>(vesselWidth) - m));

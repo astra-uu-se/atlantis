@@ -273,8 +273,8 @@ TEST_F(Element2dConstTest, Commit) {
       for (size_t j = 0; j < colIndexValues.size(); ++j) {
         const Int colIndexVal = colIndexValues.at(j);
 
-        const Timestamp ts = _solver->currentTimestamp() +
-                             i * colIndexValues.size() + j;
+        const Timestamp ts =
+            _solver->currentTimestamp() + i * colIndexValues.size() + j;
 
         ASSERT_EQ(_solver->committedValue(rowIndexVar), committedRowIndexValue);
         ASSERT_EQ(_solver->committedValue(colIndexVar), committedColIndexValue);

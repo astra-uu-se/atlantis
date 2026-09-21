@@ -109,16 +109,16 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
 
   for (const auto& idx :
        std::array<std::string, 2>{rowIdx.identifier, colIdx.identifier}) {
-    inputVarIds.emplace_back(varNode(idx).isFixed() ? propagation::VAR_VIEW_NULL_ID
-                                                    : varId(idx));
+    inputVarIds.emplace_back(
+        varNode(idx).isFixed() ? propagation::VAR_VIEW_NULL_ID : varId(idx));
     inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
                                ? varNode(idx).lowerBound()
                                : _solver->lowerBound(inputVarIds.back()));
   }
   for (const auto& row : varMatrix) {
     for (const auto& nId : row) {
-      inputVarIds.emplace_back(varNode(nId).isFixed() ? propagation::VAR_VIEW_NULL_ID
-                                                      : varId(nId));
+      inputVarIds.emplace_back(
+          varNode(nId).isFixed() ? propagation::VAR_VIEW_NULL_ID : varId(nId));
       inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
                                  ? varNode(nId).lowerBound()
                                  : _solver->lowerBound(inputVarIds.back()));

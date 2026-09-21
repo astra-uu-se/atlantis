@@ -31,7 +31,7 @@ class PropagationQueue {
   [[nodiscard]] bool empty() const { return head == nullptr; }
 
   void push(VarId id);
-  
+
   VarId pop() {
     if (head == nullptr) {
       return NULL_ID;

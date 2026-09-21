@@ -36,7 +36,8 @@ class Element2dVarTest : public InvariantTest {
   }
 
   Element2dVar& generate() {
-    varMatrix.resize(numRows, std::vector<VarViewId>(numCols, VAR_VIEW_NULL_ID));
+    varMatrix.resize(numRows,
+                     std::vector<VarViewId>(numCols, VAR_VIEW_NULL_ID));
     for (Int r = 0; r < numRows; ++r) {
       for (Int c = 0; c < numCols; ++c) {
         varMatrix.at(r).at(c) =
@@ -200,7 +201,6 @@ TEST_F(Element2dVarTest, NotifyInputChanged) {
          ++rowIndexVal) {
       for (Int colIndexVal = colIndexLb(); colIndexVal <= colIndexUb();
            ++colIndexVal) {
-
         constexpr Int i{-1};
         ++ts;
 

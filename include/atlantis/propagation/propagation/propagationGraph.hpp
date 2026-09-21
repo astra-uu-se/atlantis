@@ -15,8 +15,7 @@ class PropagationGraph {
     InvariantId invariantId;
     LocalId localId;
     ListeningInvariantData(const ListeningInvariantData& other) = default;
-    ListeningInvariantData(InvariantId t_invariantId,
-                           LocalId t_localId);
+    ListeningInvariantData(InvariantId t_invariantId, LocalId t_localId);
     ListeningInvariantData& operator=(ListeningInvariantData&& other) noexcept;
   };
 

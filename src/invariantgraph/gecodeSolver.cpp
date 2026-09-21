@@ -766,7 +766,7 @@ void GecodeSolver::gcc_low_up_closed(
   auto inputVars = intVarArgs(inputs);
 
   if (isFixedTo(reified, true)) {
-   const auto intArgCover = intArgs(cover);
+    const auto intArgCover = intArgs(cover);
     const auto lbound = intArgs(lowerBounds);
     const auto ubound = intArgs(upperBounds);
     Gecode::IntSetArgs countBounds(intArgCover.size());

@@ -14,7 +14,7 @@ class OverflowTest : public ::testing::Test {
 
   void SetUp() override {
     const std::vector<Int> limits{std::numeric_limits<Int>::min(), -1, 0, 1,
-                            std::numeric_limits<Int>::max()};
+                                  std::numeric_limits<Int>::max()};
     extrema.clear();
     extrema.resize(limits.size() * limits.size());
     for (const Int lhs : limits) {

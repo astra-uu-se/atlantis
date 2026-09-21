@@ -29,9 +29,8 @@ class fzn_table_boolTest : public FznTestBase {
     addBoolVarArray(inputs);
 
     table = *rc::gen::container<std::vector<std::vector<bool>>>(
-                       *rc::gen::inRange(1, 5),
-                       rc::gen::container<std::vector<bool>>(
-                           numVars, rc::gen::arbitrary<bool>()));
+        *rc::gen::inRange(1, 5), rc::gen::container<std::vector<bool>>(
+                                     numVars, rc::gen::arbitrary<bool>()));
 
     std::vector<bool> flatTable(table.size() * numVars);
     size_t i = 0;

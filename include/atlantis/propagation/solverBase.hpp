@@ -100,7 +100,8 @@ class SolverBase {
     return _store.constIntVar(id).upperBound();
   }
 
-  void updateBounds(const VarId id, const Int lb, const Int ub, const bool widenOnly) {
+  void updateBounds(const VarId id, const Int lb, const Int ub,
+                    const bool widenOnly) {
     _store.intVar(id).updateBounds(lb, ub, widenOnly);
   }
 
@@ -248,15 +249,18 @@ inline void SolverBase::recompute(const InvariantId invariantId) {
   return _store.invariant(invariantId).recompute(_currentTimestamp);
 }
 
-inline void SolverBase::recompute(const Timestamp ts, const InvariantId invariantId) {
+inline void SolverBase::recompute(const Timestamp ts,
+                                  const InvariantId invariantId) {
   return _store.invariant(invariantId).recompute(ts);
 }
 
-inline void SolverBase::updateValue(const Timestamp ts, const VarId id, const Int val) {
+inline void SolverBase::updateValue(const Timestamp ts, const VarId id,
+                                    const Int val) {
   _store.intVar(id).setValue(ts, val);
 }
 
-inline void SolverBase::incValue(const Timestamp ts, const VarId id, const Int inc) {
+inline void SolverBase::incValue(const Timestamp ts, const VarId id,
+                                 const Int inc) {
   _store.intVar(id).incValue(ts, inc);
 }
 

@@ -20,8 +20,9 @@ TEST(SearchControllerTest, StopsWhenThreadControllerRequestsStop) {
   EXPECT_CALL(*neighborhood, coveredVars())
       .WillRepeatedly(::testing::ReturnRef(coveredVars));
 
-  const Assignment assignment(solver, neighborhood, propagation::VAR_VIEW_NULL_ID,
-                        propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::NONE, 0);
+  const Assignment assignment(
+      solver, neighborhood, propagation::VAR_VIEW_NULL_ID,
+      propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::NONE, 0);
   const auto controllerState = std::make_shared<ThreadController>(1);
   std::shared_ptr<const bool> shouldStop{nullptr};
   SearchController controller(false, std::optional<std::chrono::milliseconds>{},

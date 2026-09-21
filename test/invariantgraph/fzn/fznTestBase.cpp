@@ -470,8 +470,8 @@ IntArg FznTestBase::addIntArg(const std::string& identifier) {
   return _addIntArg(defaultLb, defaultUb, identifier);
 }
 
-std::vector<Int> FznTestBase::addIntParArray(
-    const std::vector<Int>& pars, const std::string& identifier) {
+std::vector<Int> FznTestBase::addIntParArray(const std::vector<Int>& pars,
+                                             const std::string& identifier) {
   auto parArray = std::get<std::shared_ptr<IntVarArray>>(
       _model->addVar(std::make_shared<IntVarArray>(identifier)));
   for (Int par : pars) {
@@ -481,9 +481,9 @@ std::vector<Int> FznTestBase::addIntParArray(
   return pars;
 }
 
-std::vector<Int> FznTestBase::addIntParArray(
-    const size_t arraySize, const Int lb, const Int ub,
-    const std::string& identifier) {
+std::vector<Int> FznTestBase::addIntParArray(const size_t arraySize,
+                                             const Int lb, const Int ub,
+                                             const std::string& identifier) {
   const std::vector<Int> pars = *rc::gen::container<std::vector<Int>>(
       arraySize, rc::gen::inRange<Int>(lb, ub));
   return addIntParArray(pars, identifier);
@@ -522,8 +522,8 @@ std::shared_ptr<IntVarArray> FznTestBase::genIntVarArray(
   return genIntVarArray(arraySize, defaultLb, defaultUb, identifier, varPrefix);
 }
 
-std::vector<Int> FznTestBase::addIntParArray(
-    const size_t arraySize, const std::string& identifier) {
+std::vector<Int> FznTestBase::addIntParArray(const size_t arraySize,
+                                             const std::string& identifier) {
   return addIntParArray(arraySize, defaultLb, defaultUb, identifier);
 }
 

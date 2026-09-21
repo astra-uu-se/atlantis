@@ -55,26 +55,41 @@ class IntVar : public Var {
 
 [[gnu::always_inline]] inline void IntVar::commit() { _value.commit(); }
 
-[[gnu::always_inline]] inline void IntVar::commitValue(const Int value) { _value.commitValue(value); }
+[[gnu::always_inline]] inline void IntVar::commitValue(const Int value) {
+  _value.commitValue(value);
+}
 
-[[gnu::always_inline]] inline void IntVar::commitIf(const Timestamp timestamp) { _value.commitIf(timestamp); }
+[[gnu::always_inline]] inline void IntVar::commitIf(const Timestamp timestamp) {
+  _value.commitIf(timestamp);
+}
 
 [[gnu::always_inline]] inline bool IntVar::hasChanged(
-    const Timestamp ts) const { return _value.hasChanged(ts); }
+    const Timestamp ts) const {
+  return _value.hasChanged(ts);
+}
 
-[[gnu::always_inline]] inline Timestamp IntVar::tmpTimestamp() const { return _value.tmpTimestamp(); }
+[[gnu::always_inline]] inline Timestamp IntVar::tmpTimestamp() const {
+  return _value.tmpTimestamp();
+}
 
-[[gnu::always_inline]] inline Int IntVar::value(const Timestamp ts) const { return _value.value(ts); }
+[[gnu::always_inline]] inline Int IntVar::value(const Timestamp ts) const {
+  return _value.value(ts);
+}
 
-[[gnu::always_inline]] inline Int IntVar::committedValue() const { return _value.committedValue(); }
+[[gnu::always_inline]] inline Int IntVar::committedValue() const {
+  return _value.committedValue();
+}
 
-[[gnu::always_inline]] inline Int IntVar::lowerBound() const { return _lowerBound; }
+[[gnu::always_inline]] inline Int IntVar::lowerBound() const {
+  return _lowerBound;
+}
 
-[[gnu::always_inline]] inline Int IntVar::upperBound() const { return _upperBound; }
+[[gnu::always_inline]] inline Int IntVar::upperBound() const {
+  return _upperBound;
+}
 
 [[gnu::always_inline]] inline bool IntVar::inDomain(const Int value) const {
   return _lowerBound <= value && value <= _upperBound;
 }
-
 
 }  // namespace atlantis::propagation

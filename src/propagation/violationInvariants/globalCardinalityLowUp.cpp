@@ -131,10 +131,8 @@ void GlobalCardinalityLowUp::recompute(Timestamp timestamp) {
     if (_lowerBounds[i] < 0) {
       continue;
     }
-    shortage +=
-        std::max<Int>(0, _lowerBounds[i] - _counts[i].value(timestamp));
-    excess +=
-        std::max<Int>(0, _counts[i].value(timestamp) - _upperBounds[i]);
+    shortage += std::max<Int>(0, _lowerBounds[i] - _counts[i].value(timestamp));
+    excess += std::max<Int>(0, _counts[i].value(timestamp) - _upperBounds[i]);
   }
 
   _shortage.setValue(timestamp, shortage);

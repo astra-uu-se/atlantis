@@ -27,8 +27,8 @@ void IfThenElse::registerVars() {
 }
 
 VarViewId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
-  return VarViewId{static_cast<size_t>(_solver.value(
-      ts, _branches[_solver.value(ts, _condition) != 0]))};
+  return VarViewId{static_cast<size_t>(
+      _solver.value(ts, _branches[_solver.value(ts, _condition) != 0]))};
 }
 
 void IfThenElse::updateBounds(bool widenOnly) {

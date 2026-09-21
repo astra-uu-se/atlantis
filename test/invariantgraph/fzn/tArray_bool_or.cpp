@@ -101,10 +101,9 @@ class array_bool_orTest : public FznTestBase {
   }
 
   [[nodiscard]] bool canMove() const override {
-    return std::ranges::any_of(inputs,
-                       [&](const std::string& input) {
-                         return varId(input) != propagation::NULL_ID;
-                       });
+    return std::ranges::any_of(inputs, [&](const std::string& input) {
+      return varId(input) != propagation::NULL_ID;
+    });
   }
 
   void move(bool committedValue) override {

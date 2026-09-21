@@ -19,7 +19,8 @@ struct DomainEntry {
   DomainEntry(Int lb, Int ub);
 };
 
-inline DomainEntry::DomainEntry(const Int lb, const Int ub) : lowerBound(lb), upperBound(ub) {
+inline DomainEntry::DomainEntry(const Int lb, const Int ub)
+    : lowerBound(lb), upperBound(ub) {
   assert(lb <= ub);
 }
 

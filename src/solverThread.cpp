@@ -58,7 +58,8 @@ std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
       randomProvider, _annealingScheduleFactory->create(), assignment);
 }
 
-[[gnu::always_inline]] inline std::vector<invariantgraph::VarNodeId> SolverThread::getOutputVarNodeIds() {
+[[gnu::always_inline]] inline std::vector<invariantgraph::VarNodeId>
+SolverThread::getOutputVarNodeIds() {
   return _outputVarNodeIds;
 }
 
@@ -87,8 +88,8 @@ void SolverThread::solve() {
     // TODO: This can possibly be extracted, or restricted to one thread
     if (mapping.globalNeighborhood()->coveredVars().empty()) {
       _threadController->trySolution(
-          static_cast<Int>(_threadId), search::SavedAssignment(assignment, outputVarIds),
-          nullptr);
+          static_cast<Int>(_threadId),
+          search::SavedAssignment(assignment, outputVarIds), nullptr);
     } else {
       search::RandomProvider randomProvider(_seed);
       search::SearchProcedure search(

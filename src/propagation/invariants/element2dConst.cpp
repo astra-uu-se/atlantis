@@ -16,7 +16,7 @@ static Int numCols(const std::vector<std::vector<Int>>& matrix) {
 }
 
 inline size_t Element2dConst::safeIndex(const Int index,
-                                 const size_t pos) const noexcept {
+                                        const size_t pos) const noexcept {
   return std::max<Int>(0,
                        std::min(_dimensions[pos] - 1, index - _offsets[pos]));
 }

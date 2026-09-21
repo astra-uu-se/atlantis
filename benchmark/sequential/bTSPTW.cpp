@@ -17,7 +17,7 @@
 
 namespace atlantis::benchmark {
 class TSPTW : public ::benchmark::Fixture {
-public:
+ public:
   std::shared_ptr<propagation::Solver> solver;
   std::vector<std::vector<Int>> durations;
 

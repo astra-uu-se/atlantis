@@ -169,7 +169,8 @@ TEST(IntLinearNodeRegression, MultiInputOffsetUsesOffsetViewForOutput) {
       *graph, std::vector<Int>{1, 1}, std::vector<VarNodeId>{a, b}, out, 1));
 
   graph->close();
-  const auto mapping = std::make_shared<SolverMapping>(graph->construct(*solver));
+  const auto mapping =
+      std::make_shared<SolverMapping>(graph->construct(*solver));
 
   const auto outId = mapping->solverId(out);
   ASSERT_NE(outId, propagation::NULL_ID);

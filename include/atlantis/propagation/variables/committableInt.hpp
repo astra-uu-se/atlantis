@@ -32,8 +32,7 @@ class CommittableInt {
 
   [[nodiscard]] Int committedValue() const noexcept;
 
-  Int setValue(Timestamp newTimestamp,
-                                      Int newValue) noexcept;
+  Int setValue(Timestamp newTimestamp, Int newValue) noexcept;
 
   Int incValue(Timestamp ts, Int inc) noexcept;
   void commitValue(Int value) noexcept;
@@ -50,35 +49,41 @@ inline CommittableInt::CommittableInt(const Timestamp ts,
                                       const Int& tmpValue)
     : _tmpTimestamp(ts), _committedValue(committedValue), _tmpValue(tmpValue) {}
 
-[[gnu::always_inline]] inline bool CommittableInt::hasChanged(const Timestamp ts) const {
+[[gnu::always_inline]] inline bool CommittableInt::hasChanged(
+    const Timestamp ts) const {
   return _tmpTimestamp == ts && _committedValue != _tmpValue;
 }
 
-[[gnu::always_inline]] inline Timestamp CommittableInt::tmpTimestamp() const { return _tmpTimestamp; }
+[[gnu::always_inline]] inline Timestamp CommittableInt::tmpTimestamp() const {
+  return _tmpTimestamp;
+}
 
-[[gnu::always_inline]] inline Int CommittableInt::value(const Timestamp ts) const noexcept {
+[[gnu::always_inline]] inline Int CommittableInt::value(
+    const Timestamp ts) const noexcept {
   return ts == _tmpTimestamp ? _tmpValue : _committedValue;
 }
 
-[[gnu::always_inline]] inline Int CommittableInt::committedValue() const noexcept {
+[[gnu::always_inline]] inline Int CommittableInt::committedValue()
+    const noexcept {
   return _committedValue;
 }
 
-[[gnu::always_inline]] inline Int CommittableInt::setValue(const Timestamp newTimestamp,
-                                    const Int newValue) noexcept {
+[[gnu::always_inline]] inline Int CommittableInt::setValue(
+    const Timestamp newTimestamp, const Int newValue) noexcept {
   _tmpTimestamp = newTimestamp;
   _tmpValue = newValue;
   return _tmpValue;
 }
 
-[[gnu::always_inline]] inline Int CommittableInt::incValue(const Timestamp ts,
-                                    const Int inc) noexcept {
+[[gnu::always_inline]] inline Int CommittableInt::incValue(
+    const Timestamp ts, const Int inc) noexcept {
   _tmpValue = (ts == _tmpTimestamp ? _tmpValue : _committedValue) + inc;
   _tmpTimestamp = ts;
   return _tmpValue;
 }
 
-[[gnu::always_inline]] inline void CommittableInt::commitValue(const Int value) noexcept {
+[[gnu::always_inline]] inline void CommittableInt::commitValue(
+    const Int value) noexcept {
   _committedValue = value;
 }
 
@@ -88,7 +93,8 @@ inline CommittableInt::CommittableInt(const Timestamp ts,
   _committedValue = _tmpValue;
 }
 
-[[gnu::always_inline]] inline void CommittableInt::commitIf(const Timestamp ts) noexcept {
+[[gnu::always_inline]] inline void CommittableInt::commitIf(
+    const Timestamp ts) noexcept {
   if (_tmpTimestamp == ts) {
     _committedValue = _tmpValue;
   }

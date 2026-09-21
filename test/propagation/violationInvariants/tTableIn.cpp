@@ -103,7 +103,9 @@ class TableInTest : public InvariantTest {
     return std::ranges::min(violations);
   }
 
-  [[nodiscard]] Int actualViolation(const Timestamp ts) const { return _solver->value(ts, outputVar); }
+  [[nodiscard]] Int actualViolation(const Timestamp ts) const {
+    return _solver->value(ts, outputVar);
+  }
 };
 
 TEST_F(TableInTest, UpdateBounds) {

@@ -9,7 +9,8 @@
 namespace atlantis::search {
 
 inline std::optional<Int> getViol(const Assignment& assignment) noexcept {
-  return assignment.hasViolation() ? assignment.currentViolation() : std::optional<Int>{std::nullopt};
+  return assignment.hasViolation() ? assignment.currentViolation()
+                                   : std::optional<Int>{std::nullopt};
 }
 
 inline Int getObj(const Int obj, const bool minimize) {

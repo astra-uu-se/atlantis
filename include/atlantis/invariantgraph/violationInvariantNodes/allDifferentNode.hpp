@@ -7,11 +7,11 @@ class AllDifferentNode : public ViolationInvariantNode {
   std::vector<Int> _seenValues;
 
  public:
-  explicit AllDifferentNode(InvariantGraph& graph,
-                            VarNodeId a, VarNodeId b, VarNodeId r);
+  explicit AllDifferentNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+                            VarNodeId r);
 
-  explicit AllDifferentNode(InvariantGraph& graph,
-                            VarNodeId a, VarNodeId b, bool shouldHold = true);
+  explicit AllDifferentNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+                            bool shouldHold = true);
 
   explicit AllDifferentNode(InvariantGraph& graph,
                             std::vector<VarNodeId>&& vars, VarNodeId r);

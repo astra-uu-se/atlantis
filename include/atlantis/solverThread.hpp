@@ -49,8 +49,7 @@ class SolverThread {
   [[nodiscard]] std::unique_ptr<search::MetaHeuristic> createMetaHeuristic(
       search::RandomProvider&, const search::Assignment&) const;
 
-  [[nodiscard]] std::vector<invariantgraph::VarNodeId>
-  getOutputVarNodeIds();
+  [[nodiscard]] std::vector<invariantgraph::VarNodeId> getOutputVarNodeIds();
 };
 
 }  // namespace atlantis

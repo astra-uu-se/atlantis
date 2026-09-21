@@ -685,7 +685,8 @@ void InvariantGraph::replaceFixedVars() {
 const VarNode& InvariantGraph::varNodeConst(
     const std::string& identifier) const {
   assert(_namedVarNodeIndices.contains(identifier));
-  assert(static_cast<size_t>(_namedVarNodeIndices.at(identifier)) < _varNodes.size());
+  assert(static_cast<size_t>(_namedVarNodeIndices.at(identifier)) <
+         _varNodes.size());
   return _varNodes.at(_namedVarNodeIndices.at(identifier));
 }
 

@@ -56,7 +56,8 @@ TEST_F(AssignmentTest, search_vars_are_identified) {
                               ObjectiveDirection::MINIMIZE,
                               _solver->lowerBound(a));
 
-  const std::vector<propagation::VarId> expectedSearchVars{propagation::VarId{a}, propagation::VarId{b}, propagation::VarId{d}};
+  const std::vector<propagation::VarId> expectedSearchVars{
+      propagation::VarId{a}, propagation::VarId{b}, propagation::VarId{d}};
   EXPECT_EQ(assignment.searchVars(), expectedSearchVars);
 }
 

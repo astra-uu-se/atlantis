@@ -27,8 +27,8 @@ class NeighborhoodTestBase : public ::testing::Test {
     EXPECT_EQ(_neighborhood, nullptr);
     _neighborhood = std::make_shared<N>(std::forward<Args>(args)...);
     _assignment = std::make_shared<Assignment>(
-        *_solver, _neighborhood, propagation::VAR_VIEW_NULL_ID, propagation::VAR_VIEW_NULL_ID,
-        ObjectiveDirection::NONE, 0);
+        *_solver, _neighborhood, propagation::VAR_VIEW_NULL_ID,
+        propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::NONE, 0);
   }
 
   void initialize() {

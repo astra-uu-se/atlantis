@@ -82,7 +82,9 @@ Int SearchProcedure::run(SearchController& searchController,
 #endif
 
   do {
-    // TODO: This is where we restart. If the objective has been improved, then Gecode should recompute the fixpoint, and a new mapping should be generated.
+    // TODO: This is where we restart. If the objective has been improved, then
+    // Gecode should recompute the fixpoint, and a new mapping should be
+    // generated.
     _assignment.initialize(_random);
 
     // TODO: handle this case: this should call some separate version

@@ -28,7 +28,9 @@ class PlusTest : public InvariantTest {
         committedValue ? _solver->committedValue(y) : _solver->currentValue(y));
   }
 
-  static Int computeOutput(const Int xVal, const Int yVal) { return xVal + yVal; }
+  static Int computeOutput(const Int xVal, const Int yVal) {
+    return xVal + yVal;
+  }
 
   Plus& generate() {
     xDist = std::uniform_int_distribution<Int>(xLb, xUb);

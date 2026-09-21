@@ -228,11 +228,9 @@ TEST(IntLinEqRegression, DefinedIntVarKeepsDeclaredDomainOnImport) {
   auto x = std::make_shared<IntVar>(0, 10, "x");
   model->addVar(x);
 
-  Constraint constraint{
-      "int_eq", std::vector<Arg>{IntArg(out),
-                                            IntArg(x)}};
-  constraint.addAnnotation("defines_var", AnnotationExpression(
-                                              Annotation("out")));
+  Constraint constraint{"int_eq", std::vector<Arg>{IntArg(out), IntArg(x)}};
+  constraint.addAnnotation("defines_var",
+                           AnnotationExpression(Annotation("out")));
   model->addConstraint(std::move(constraint));
 
   const auto graph = std::make_shared<FznInvariantGraph>(true);
@@ -275,11 +273,10 @@ TEST(IntLinEqRegression, DefinedVarDomainDoesNotConflictWithDefinition) {
   vars->append(c);
   vars->append(d);
 
-  Constraint constraint{
-      "int_lin_eq",
-      std::vector<Arg>{coeffs, vars, IntArg(Int{0})}};
-  constraint.addAnnotation("defines_var", AnnotationExpression(
-                                              Annotation("out")));
+  Constraint constraint{"int_lin_eq",
+                        std::vector<Arg>{coeffs, vars, IntArg(Int{0})}};
+  constraint.addAnnotation("defines_var",
+                           AnnotationExpression(Annotation("out")));
   model->addConstraint(std::move(constraint));
 
   auto graph = std::make_shared<FznInvariantGraph>(true);
@@ -301,11 +298,9 @@ TEST(IntLinEqRegression, NonLinearDefinedIntVarDoesNotGetFullIntRange) {
   auto x = std::make_shared<IntVar>(0, 10, "x");
   model->addVar(x);
 
-  Constraint constraint{
-      "int_eq", std::vector<Arg>{IntArg(out),
-                                            IntArg(x)}};
-  constraint.addAnnotation("defines_var", AnnotationExpression(
-                                              Annotation("out")));
+  Constraint constraint{"int_eq", std::vector<Arg>{IntArg(out), IntArg(x)}};
+  constraint.addAnnotation("defines_var",
+                           AnnotationExpression(Annotation("out")));
   model->addConstraint(std::move(constraint));
 
   const auto graph = std::make_shared<FznInvariantGraph>(true);

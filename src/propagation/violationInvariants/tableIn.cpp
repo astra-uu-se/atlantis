@@ -110,8 +110,10 @@ void TableIn::notifyInputChanged(const Timestamp ts, const LocalId id) {
     return;
   }
   assert(0 <= _solver.value(ts, VarViewId{_violationId}));
-  assert(_solver.value(ts, VarViewId{_violationId}) <= static_cast<Int>(_varArray.size()));
-  assert(_violationCounts.at(_solver.value(ts, VarViewId{_violationId})).value(ts) > 0);
+  assert(_solver.value(ts, VarViewId{_violationId}) <=
+         static_cast<Int>(_varArray.size()));
+  assert(_violationCounts.at(_solver.value(ts, VarViewId{_violationId}))
+             .value(ts) > 0);
   assert(std::all_of(
       _violationCounts.begin(),
       _violationCounts.begin() + _solver.value(ts, VarViewId{_violationId}),
@@ -155,7 +157,8 @@ void TableIn::notifyInputChanged(const Timestamp ts, const LocalId id) {
     assert(_violationCounts.at(violation + 1).value(ts) > 0);
     updateValue(ts, _violationId, violation + 1);
   }
-  assert(_violationCounts.at(_solver.value(ts, VarViewId{_violationId})).value(ts) > 0);
+  assert(_violationCounts.at(_solver.value(ts, VarViewId{_violationId}))
+             .value(ts) > 0);
   assert(std::all_of(
       _violationCounts.begin(),
       _violationCounts.begin() + _solver.value(ts, VarViewId{_violationId}),

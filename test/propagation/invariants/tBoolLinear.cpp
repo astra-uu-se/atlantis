@@ -269,8 +269,10 @@ RC_GTEST_FIXTURE_PROP(BoolLinearTest, ShouldAlwaysBeSum,
                       (Int aCoef, Int aVal, Int bCoef, Int bVal, Int cCoef,
                        Int cVal)) {
   _solver->open();
-  constexpr Int globalLb = std::numeric_limits<Int>::min() / static_cast<Int>(3);
-  constexpr Int globalUb = std::numeric_limits<Int>::max() / static_cast<Int>(3);
+  constexpr Int globalLb =
+      std::numeric_limits<Int>::min() / static_cast<Int>(3);
+  constexpr Int globalUb =
+      std::numeric_limits<Int>::max() / static_cast<Int>(3);
 
   aCoef = std::clamp(aCoef, globalLb, globalUb);
   bCoef = std::clamp(bCoef, globalLb, globalUb);

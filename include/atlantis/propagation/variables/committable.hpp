@@ -30,8 +30,7 @@ class Committable {
 
   void init(Timestamp ts, T value) noexcept;
 
-  void init(Timestamp ts, T committedValue,
-                                   T newValue) noexcept;
+  void init(Timestamp ts, T committedValue, T newValue) noexcept;
 
   void commitValue(T value) noexcept;
 
@@ -43,7 +42,8 @@ Committable<T>::Committable(const Timestamp ts, T value)
     : _tmpTimestamp(ts), _committedValue(value), _tmpValue(value) {}
 
 template <class T>
-[[gnu::always_inline]] inline bool Committable<T>::hasChanged(const Timestamp ts) const {
+[[gnu::always_inline]] inline bool Committable<T>::hasChanged(
+    const Timestamp ts) const {
   return _tmpTimestamp == ts && _committedValue != _tmpValue;
 }
 
@@ -52,7 +52,8 @@ template <class T>
   return _tmpTimestamp;
 }
 template <class T>
-[[gnu::always_inline]] inline T Committable<T>::get(const Timestamp currentTimestamp) const noexcept {
+[[gnu::always_inline]] inline T Committable<T>::get(
+    const Timestamp currentTimestamp) const noexcept {
   return currentTimestamp == _tmpTimestamp ? _tmpValue : _committedValue;
 }
 template <class T>
@@ -64,28 +65,33 @@ template <class T>
   return _tmpValue;
 }
 template <class T>
-[[gnu::always_inline]] inline T Committable<T>::set(const Timestamp ts, T newValue) noexcept {
+[[gnu::always_inline]] inline T Committable<T>::set(const Timestamp ts,
+                                                    T newValue) noexcept {
   _tmpTimestamp = ts;
   _tmpValue = newValue;
   return _tmpValue;
 }
 template <class T>
-[[gnu::always_inline]] inline void Committable<T>::init(const Timestamp ts, T value) noexcept {
+[[gnu::always_inline]] inline void Committable<T>::init(const Timestamp ts,
+                                                        T value) noexcept {
   init(ts, value, value);
 }
 template <class T>
-[[gnu::always_inline]] inline void Committable<T>::init(const Timestamp ts, T committedValue,
-                          T newValue) noexcept {
+[[gnu::always_inline]] inline void Committable<T>::init(const Timestamp ts,
+                                                        T committedValue,
+                                                        T newValue) noexcept {
   _tmpTimestamp = ts;
   _committedValue = committedValue;
   _tmpValue = newValue;
 }
 template <class T>
-[[gnu::always_inline]] inline void Committable<T>::commitValue(T value) noexcept {
+[[gnu::always_inline]] inline void Committable<T>::commitValue(
+    T value) noexcept {
   _committedValue = value;
 }
 template <class T>
-[[gnu::always_inline]] inline void Committable<T>::commitIf(const Timestamp ts) noexcept {
+[[gnu::always_inline]] inline void Committable<T>::commitIf(
+    const Timestamp ts) noexcept {
   if (_tmpTimestamp == ts) {
     _committedValue = _tmpValue;
   }

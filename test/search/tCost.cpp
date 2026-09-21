@@ -44,31 +44,33 @@ class CostTest : public ::testing::Test {
 
 TEST_F(CostTest, constructor) {
   const auto costs = generateCosts();
-  const std::vector<std::optional<Int>> violation{std::nullopt,
-                                            {5},
-                                            std::nullopt,
-                                            std::nullopt,
-                                            std::nullopt,
-                                            {std::numeric_limits<Int>::max()},
-                                            {std::numeric_limits<Int>::max()},
-                                            {std::numeric_limits<Int>::max()},
-                                            std::nullopt,
-                                            std::nullopt,
-                                            {5},
-                                            {5}};
+  const std::vector<std::optional<Int>> violation{
+      std::nullopt,
+      {5},
+      std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      {std::numeric_limits<Int>::max()},
+      {std::numeric_limits<Int>::max()},
+      {std::numeric_limits<Int>::max()},
+      std::nullopt,
+      std::nullopt,
+      {5},
+      {5}};
 
-  const std::vector<std::optional<Int>> objective{std::nullopt,
-                                            std::nullopt,
-                                            std::nullopt,
-                                            {std::numeric_limits<Int>::max()},
-                                            {std::numeric_limits<Int>::max()},
-                                            std::nullopt,
-                                            {std::numeric_limits<Int>::max()},
-                                            {std::numeric_limits<Int>::max()},
-                                            {1},
-                                            {-1},
-                                            {1},
-                                            {-1}};
+  const std::vector<std::optional<Int>> objective{
+      std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      {std::numeric_limits<Int>::max()},
+      {std::numeric_limits<Int>::max()},
+      std::nullopt,
+      {std::numeric_limits<Int>::max()},
+      {std::numeric_limits<Int>::max()},
+      {1},
+      {-1},
+      {1},
+      {-1}};
 
   EXPECT_EQ(costs.size(), violation.size());
   EXPECT_EQ(costs.size(), objective.size());
@@ -103,9 +105,11 @@ TEST_F(CostTest, assignment) {
       Assignment(solver, neighborhood, propagation::VAR_VIEW_NULL_ID,
                  propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::NONE, 0),
       Assignment(solver, neighborhood, propagation::VAR_VIEW_NULL_ID,
-                 propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::MINIMIZE, 2),
+                 propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::MINIMIZE,
+                 2),
       Assignment(solver, neighborhood, propagation::VAR_VIEW_NULL_ID,
-                 propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::MAXIMIZE, 10),
+                 propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::MAXIMIZE,
+                 10),
       Assignment(solver, neighborhood, violVar, propagation::VAR_VIEW_NULL_ID,
                  ObjectiveDirection::NONE, 0),
       Assignment(solver, neighborhood, violVar, propagation::VAR_VIEW_NULL_ID,

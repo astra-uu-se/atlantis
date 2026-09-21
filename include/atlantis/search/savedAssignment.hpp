@@ -18,7 +18,9 @@ class SavedAssignment {
       const Assignment& assignment,
       const std::vector<propagation::VarViewId>& outputVars);
 
-  [[gnu::always_inline]] [[nodiscard]] Cost cost() const noexcept { return _cost; }
+  [[gnu::always_inline]] [[nodiscard]] Cost cost() const noexcept {
+    return _cost;
+  }
 
   [[nodiscard]] const std::vector<Int>& outputValues() const noexcept {
     return _outputValues;

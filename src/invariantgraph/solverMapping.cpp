@@ -19,7 +19,8 @@ propagation::VarViewId SolverMapping::setInvariantIntermediateId(
                                      std::vector<propagation::VarViewId>{});
   }
   if (index >= _invariantIntermediateIds[id].size()) {
-    _invariantIntermediateIds[id].resize(index + 1, propagation::VAR_VIEW_NULL_ID);
+    _invariantIntermediateIds[id].resize(index + 1,
+                                         propagation::VAR_VIEW_NULL_ID);
   }
   return _invariantIntermediateIds[id][index] = solverId;
 }
@@ -41,7 +42,8 @@ propagation::VarViewId SolverMapping::setImplicitIntermediateId(
                                     std::vector<propagation::VarViewId>{});
   }
   if (index >= _implicitIntermediateIds[id].size()) {
-    _implicitIntermediateIds[id].resize(index + 1, propagation::VAR_VIEW_NULL_ID);
+    _implicitIntermediateIds[id].resize(index + 1,
+                                        propagation::VAR_VIEW_NULL_ID);
   }
   return _implicitIntermediateIds[id][index] = solverId;
 }

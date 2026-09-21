@@ -20,8 +20,7 @@ class Element2dConst : public Invariant {
   std::array<const Int, 2> _offsets;
   VarId _output;
 
-  [[nodiscard]] size_t safeIndex(Int index,
-                                 size_t pos) const noexcept;
+  [[nodiscard]] size_t safeIndex(Int index, size_t pos) const noexcept;
 
   [[nodiscard]] size_t safeIndex1(Int index) const noexcept;
 
