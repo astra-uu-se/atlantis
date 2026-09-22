@@ -22,7 +22,7 @@
 
 namespace atlantis {
 
-SolverThread::SolverThread(FznBackend& backend, size_t threadId)
+SolverThread::SolverThread(FznBackend& backend, const size_t threadId)
     : SolverThread(backend.invariantGraph(), backend.outputVarNodeIds(),
                    backend.problemType(), backend.annealingScheduleFactory(),
                    threadId, backend.threadController(), backend.searchType(),
@@ -37,7 +37,7 @@ SolverThread::SolverThread(
         annealingScheduleFactory,
     const size_t threadId,
     const std::shared_ptr<search::ThreadController>& controller,
-    search::SearchType searchType, const std::uint_fast32_t seed,
+    const search::SearchType searchType, const std::uint_fast32_t seed,
     const std::optional<std::chrono::milliseconds> timeLimit,
     const std::shared_ptr<const bool>& shouldStop)
     : _invariantGraph(invariantGraph),

@@ -43,7 +43,7 @@ TableInNode::TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
 
 TableInNode::TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
                          const std::vector<std::vector<bool>>& table,
-                         VarNodeId reified)
+                         const VarNodeId reified)
     : TableInNode(graph, std::move(vars), boolToViol(table), reified, true) {}
 
 TableInNode::TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,

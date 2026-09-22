@@ -24,7 +24,7 @@ class ExtremeStatic : public ::benchmark::Fixture {
   std::mt19937 gen;
   std::uniform_int_distribution<Int> staticVarValueDist;
   std::uniform_int_distribution<Int> staticVarIndexDist;
-  size_t numInputs;
+  size_t numInputs{0};
   Int lb{0};
   Int ub{0};
 

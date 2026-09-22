@@ -11,7 +11,8 @@ namespace atlantis::propagation {
 
 namespace {
 
-std::optional<size_t> countIndex(Int value, Int offset, size_t size) {
+std::optional<size_t> countIndex(const Int value, const Int offset,
+                                 const size_t size) {
   if (value < offset) {
     return std::nullopt;
   }
@@ -24,7 +25,7 @@ std::optional<size_t> countIndex(Int value, Int offset, size_t size) {
 
 }  // namespace
 
-Count::Count(SolverBase& solver, VarId output, VarViewId needle,
+Count::Count(SolverBase& solver, const VarId output, const VarViewId needle,
              std::vector<VarViewId>&& varArray)
     : Invariant(solver),
       _output(output),
@@ -32,13 +33,13 @@ Count::Count(SolverBase& solver, VarId output, VarViewId needle,
       _vars(std::move(varArray)),
       _offset(0) {}
 
-Count::Count(SolverBase& solver, VarViewId output, VarViewId needle,
+Count::Count(SolverBase& solver, const VarViewId output, const VarViewId needle,
              std::vector<VarViewId>&& varArray)
     : Count(solver, VarId{output}, needle, std::move(varArray)) {
   assert(output.isVar());
 }
 
-inline void Count::increaseCount(Timestamp ts, Int value) {
+inline void Count::increaseCount(const Timestamp ts, const Int value) {
   const auto index = countIndex(value, _offset, _counts.size());
   if (!index.has_value()) {
     return;
@@ -48,7 +49,7 @@ inline void Count::increaseCount(Timestamp ts, Int value) {
   _counts[*index].incValue(ts, 1);
 }
 
-inline void Count::decreaseCount(Timestamp ts, Int value) {
+inline void Count::decreaseCount(const Timestamp ts, const Int value) {
   const auto index = countIndex(value, _offset, _counts.size());
   if (!index.has_value()) {
     return;
@@ -58,7 +59,7 @@ inline void Count::decreaseCount(Timestamp ts, Int value) {
   _counts[*index].incValue(ts, -1);
 }
 
-inline signed char Count::count(Timestamp ts, Int value) const {
+inline signed char Count::count(const Timestamp ts, const Int value) const {
   const auto index = countIndex(value, _offset, _counts.size());
   if (!index.has_value()) {
     return 0;
@@ -76,11 +77,11 @@ void Count::registerVars() {
   registerDefinedVar(_output);
 }
 
-void Count::updateBounds(bool widenOnly) {
+void Count::updateBounds(const bool widenOnly) {
   _solver.updateBounds(_output, 0, static_cast<Int>(_vars.size()), widenOnly);
 }
 
-void Count::close(Timestamp ts) {
+void Count::close(const Timestamp ts) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
@@ -97,7 +98,7 @@ void Count::close(Timestamp ts) {
   _offset = lb;
 }
 
-void Count::recompute(Timestamp ts) {
+void Count::recompute(const Timestamp ts) {
   for (CommittableInt& c : _counts) {
     c.setValue(ts, 0);
   }
@@ -110,7 +111,7 @@ void Count::recompute(Timestamp ts) {
   updateValue(ts, _output, count(ts, _solver.value(ts, _needle)));
 }
 
-void Count::notifyInputChanged(Timestamp ts, LocalId id) {
+void Count::notifyInputChanged(const Timestamp ts, const LocalId id) {
   if (id == _vars.size()) {
     updateValue(ts, _output, count(ts, _solver.value(ts, _needle)));
     return;
@@ -126,7 +127,7 @@ void Count::notifyInputChanged(Timestamp ts, LocalId id) {
   updateValue(ts, _output, count(ts, _solver.value(ts, _needle)));
 }
 
-VarViewId Count::nextInput(Timestamp ts) {
+VarViewId Count::nextInput(const Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _vars.size()) {
     return _vars[index];
@@ -137,12 +138,12 @@ VarViewId Count::nextInput(Timestamp ts) {
   return VAR_VIEW_NULL_ID;
 }
 
-void Count::notifyCurrentInputChanged(Timestamp ts) {
+void Count::notifyCurrentInputChanged(const Timestamp ts) {
   assert(static_cast<size_t>(_state.value(ts)) <= _vars.size());
   notifyInputChanged(ts, static_cast<size_t>(_state.value(ts)));
 }
 
-void Count::commit(Timestamp ts) {
+void Count::commit(const Timestamp ts) {
   Invariant::commit(ts);
 
   for (CommittableInt& committableInt : _counts) {

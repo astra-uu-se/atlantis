@@ -7,7 +7,8 @@
 
 namespace atlantis::propagation {
 
-AllDifferentExcept::AllDifferentExcept(SolverBase& solver, VarId violationId,
+AllDifferentExcept::AllDifferentExcept(SolverBase& solver,
+                                       const VarId violationId,
                                        std::vector<VarViewId>&& vars,
                                        const std::vector<Int>& ignored)
     : AllDifferent(solver, violationId, std::move(vars)) {
@@ -22,7 +23,7 @@ AllDifferentExcept::AllDifferentExcept(SolverBase& solver, VarId violationId,
 }
 
 AllDifferentExcept::AllDifferentExcept(SolverBase& solver,
-                                       VarViewId violationId,
+                                       const VarViewId violationId,
                                        std::vector<VarViewId>&& vars,
                                        const std::vector<Int>& ignored)
     : AllDifferentExcept(solver, VarId{violationId}, std::move(vars), ignored) {
@@ -35,7 +36,7 @@ bool AllDifferentExcept::isIgnored(const Int val) const {
          _ignored[val - _ignoredOffset];
 }
 
-void AllDifferentExcept::recompute(Timestamp ts) {
+void AllDifferentExcept::recompute(const Timestamp ts) {
   for (CommittableInt& c : _counts) {
     c.setValue(ts, 0);
   }
@@ -50,7 +51,8 @@ void AllDifferentExcept::recompute(Timestamp ts) {
   updateValue(ts, _violationId, violInc);
 }
 
-void AllDifferentExcept::notifyInputChanged(Timestamp ts, LocalId id) {
+void AllDifferentExcept::notifyInputChanged(const Timestamp ts,
+                                            const LocalId id) {
   assert(id < _vars.size());
   const Int newValue = _solver.value(ts, _vars[id]);
   const Int committedValue = _solver.committedValue(_vars[id]);

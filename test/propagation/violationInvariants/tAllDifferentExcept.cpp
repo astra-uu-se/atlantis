@@ -15,7 +15,7 @@ class AllDifferentExceptTest : public InvariantTest {
   std::uniform_int_distribution<Int> inputVarDist;
   std::unordered_set<Int> ignoredSet;
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = committedValue ? _solver->committedValue(inputVars.at(i))
@@ -24,7 +24,7 @@ class AllDifferentExceptTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  Int computeOutput(Timestamp ts) const {
+  Int computeOutput(const Timestamp ts) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = _solver->value(ts, inputVars.at(i));
@@ -313,27 +313,27 @@ class MockAllDifferentExcept : public AllDifferentExcept {
     registered = true;
     AllDifferentExcept::registerVars();
   }
-  explicit MockAllDifferentExcept(SolverBase& solver, VarViewId outputVar,
+  explicit MockAllDifferentExcept(SolverBase& solver, const VarViewId outputVar,
                                   std::vector<VarViewId>&& vars,
                                   const std::vector<Int>& ignored)
       : AllDifferentExcept(solver, outputVar, std::move(vars), ignored) {
     EXPECT_TRUE(outputVar.isVar());
 
-    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, recompute).WillByDefault([this](const Timestamp timestamp) {
       return AllDifferentExcept::recompute(timestamp);
     });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, nextInput).WillByDefault([this](const Timestamp timestamp) {
       return AllDifferentExcept::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp) {
+        .WillByDefault([this](const Timestamp timestamp) {
           AllDifferentExcept::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+        .WillByDefault([this](const Timestamp timestamp, const LocalId id) {
           AllDifferentExcept::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, commit).WillByDefault([this](const Timestamp timestamp) {
       AllDifferentExcept::commit(timestamp);
     });
   }

@@ -19,11 +19,11 @@ std::array<std::vector<Int>, 2>&& translateBoolTable(
   if (table.front()[inputColumn] == 0) {
     std::swap(table.front(), table.back());
   }
-  for (size_t r = 0; r < table.size(); ++r) {
-    for (size_t c = inputColumn; c + 1 < table[r].size(); ++c) {
-      table[r][c] = table[r][c + 1];
+  for (auto & row : table) {
+    for (size_t c = inputColumn; c + 1 < row.size(); ++c) {
+      row[c] = row[c + 1];
     }
-    table[r].resize(table[r].size() - 1);
+    row.resize(row.size() - 1);
   }
   return std::move(table);
 }

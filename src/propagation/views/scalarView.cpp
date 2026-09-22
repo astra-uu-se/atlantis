@@ -7,11 +7,11 @@
 
 namespace atlantis::propagation {
 
-ScalarView::ScalarView(SolverBase& solver, VarViewId parentId, Int factor,
-                       Int offset)
+ScalarView::ScalarView(SolverBase& solver, const VarViewId parentId, const Int factor,
+                       const Int offset)
     : IntView(solver, parentId), _factor(factor), _offset(offset) {}
 
-Int ScalarView::value(Timestamp ts) {
+Int ScalarView::value(const Timestamp ts) {
   return overflow::saturatingAdd(
       overflow::saturatingMul(_factor, _solver.value(ts, _parentId)), _offset);
 }

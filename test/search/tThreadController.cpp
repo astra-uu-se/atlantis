@@ -21,7 +21,7 @@ TEST(ThreadControllerTest, RethrowsRecordedFatalError) {
     FAIL() << "Expected a fatal error to be rethrown";
   } catch (const std::runtime_error& e) {
     EXPECT_NE(std::string(e.what()).find("boom"), std::string::npos);
-    EXPECT_NE(std::string(e.what()).find("7"), std::string::npos);
+    EXPECT_NE(std::string(e.what()).find('7'), std::string::npos);
   }
 }
 

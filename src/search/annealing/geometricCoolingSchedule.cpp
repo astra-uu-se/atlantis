@@ -5,14 +5,14 @@
 namespace atlantis::search {
 
 GeometricCoolingSchedule::GeometricCoolingSchedule(
-    double coolingRate, UInt successiveFutileRoundsThreshold)
+    const double coolingRate, const UInt successiveFutileRoundsThreshold)
     : _coolingRate(coolingRate),
       _successiveFutileRoundsThreshold(successiveFutileRoundsThreshold) {
   assert(coolingRate < 1.0);
   assert(successiveFutileRoundsThreshold > 0);
 }
 
-void GeometricCoolingSchedule::start(double initialTemperature) {
+void GeometricCoolingSchedule::start(const double initialTemperature) {
   assert(initialTemperature != 0.0);
   _temperature = initialTemperature;
   _successiveFutileRounds = 0;

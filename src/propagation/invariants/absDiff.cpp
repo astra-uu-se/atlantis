@@ -7,10 +7,12 @@
 
 namespace atlantis::propagation {
 
-AbsDiff::AbsDiff(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
+AbsDiff::AbsDiff(SolverBase& solver, const VarId output, const VarViewId x,
+                 const VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
 
-AbsDiff::AbsDiff(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
+AbsDiff::AbsDiff(SolverBase& solver, const VarViewId output, const VarViewId x,
+                 const VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {
   assert(output.isVar());
 }
@@ -23,7 +25,7 @@ void AbsDiff::registerVars() {
   _solver.registerInvariantInput(_id, _y, 0, false);
 }
 
-void AbsDiff::updateBounds(bool widenOnly) {
+void AbsDiff::updateBounds(const bool widenOnly) {
   const Int xLb = _solver.lowerBound(_x);
   const Int xUb = _solver.upperBound(_x);
   const Int yLb = _solver.lowerBound(_y);
@@ -42,15 +44,15 @@ void AbsDiff::updateBounds(bool widenOnly) {
   _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
-void AbsDiff::recompute(Timestamp ts) {
+void AbsDiff::recompute(const Timestamp ts) {
   updateValue(ts, _output,
               overflow::saturatingAbsDiff(_solver.value(ts, _x),
                                           _solver.value(ts, _y)));
 }
 
-void AbsDiff::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void AbsDiff::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
 
-VarViewId AbsDiff::nextInput(Timestamp ts) {
+VarViewId AbsDiff::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -61,5 +63,5 @@ VarViewId AbsDiff::nextInput(Timestamp ts) {
   }
 }
 
-void AbsDiff::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void AbsDiff::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 }  // namespace atlantis::propagation

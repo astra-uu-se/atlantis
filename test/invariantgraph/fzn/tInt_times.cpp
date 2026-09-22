@@ -99,7 +99,7 @@ class int_timesTest : public FznTestBase {
         [&](const auto vId) { return vId != propagation::NULL_ID; });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (varId(a) != propagation::NULL_ID && randBool()) {
       changeValue(a, committedValue);
     }

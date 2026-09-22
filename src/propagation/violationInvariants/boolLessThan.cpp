@@ -9,6 +9,7 @@ namespace atlantis::propagation {
 
 /**
  * Constraint x = y
+ * @param solver solver the invariant is posted in
  * @param violationId id for the violationCount
  * @param x variable of lhs
  * @param y variable of rhs
@@ -40,9 +41,11 @@ void BoolLessThan::recompute(const Timestamp ts) {
                                       _solver.value(ts, _y)));
 }
 
-void BoolLessThan::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void BoolLessThan::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 
-VarViewId BoolLessThan::nextInput(Timestamp ts) {
+VarViewId BoolLessThan::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -53,5 +56,7 @@ VarViewId BoolLessThan::nextInput(Timestamp ts) {
   }
 }
 
-void BoolLessThan::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void BoolLessThan::notifyCurrentInputChanged(const Timestamp ts) {
+  recompute(ts);
+}
 }  // namespace atlantis::propagation

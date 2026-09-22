@@ -6,10 +6,12 @@
 
 namespace atlantis::propagation {
 
-Plus::Plus(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
+Plus::Plus(SolverBase& solver, const VarId output, const VarViewId x,
+           const VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
 
-Plus::Plus(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
+Plus::Plus(SolverBase& solver, const VarViewId output, const VarViewId x,
+           const VarViewId y)
     : Plus(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
@@ -21,17 +23,17 @@ void Plus::registerVars() {
   registerDefinedVar(_output);
 }
 
-void Plus::updateBounds(bool widenOnly) {
+void Plus::updateBounds(const bool widenOnly) {
   _solver.updateBounds(_output, _solver.lowerBound(_x) + _solver.lowerBound(_y),
                        _solver.upperBound(_x) + _solver.upperBound(_y),
                        widenOnly);
 }
 
-void Plus::recompute(Timestamp ts) {
+void Plus::recompute(const Timestamp ts) {
   updateValue(ts, _output, _solver.value(ts, _x) + _solver.value(ts, _y));
 }
 
-VarViewId Plus::nextInput(Timestamp ts) {
+VarViewId Plus::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -42,8 +44,8 @@ VarViewId Plus::nextInput(Timestamp ts) {
   }
 }
 
-void Plus::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void Plus::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 
-void Plus::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void Plus::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
 
 }  // namespace atlantis::propagation

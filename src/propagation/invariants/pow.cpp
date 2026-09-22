@@ -9,11 +9,12 @@
 
 namespace atlantis::propagation {
 
-Pow::Pow(SolverBase& solver, VarId output, VarViewId base, VarViewId exponent)
+Pow::Pow(SolverBase& solver, const VarId output, const VarViewId base,
+         const VarViewId exponent)
     : Invariant(solver), _output(output), _base(base), _exponent(exponent) {}
 
-Pow::Pow(SolverBase& solver, VarViewId output, VarViewId base,
-         VarViewId exponent)
+Pow::Pow(SolverBase& solver, const VarViewId output, const VarViewId base,
+         const VarViewId exponent)
     : Pow(solver, VarId{output}, base, exponent) {
   assert(output.isVar());
 }
@@ -26,7 +27,7 @@ void Pow::registerVars() {
   registerDefinedVar(_output);
 }
 
-void Pow::updateBounds(bool widenOnly) {
+void Pow::updateBounds(const bool widenOnly) {
   const Int baseLb = _solver.lowerBound(_base);
   const Int baseUb = _solver.upperBound(_base);
 
@@ -84,14 +85,14 @@ void Pow::updateBounds(bool widenOnly) {
   _solver.updateBounds(_output, outLb, outUb, widenOnly);
 }
 
-void Pow::recompute(Timestamp ts) {
+void Pow::recompute(const Timestamp ts) {
   const Int baseVal = _solver.value(ts, _base);
   const Int expVal = _solver.value(ts, _exponent);
   updateValue(ts, _output,
               pow_zero_replacement(baseVal, expVal, _zeroReplacement));
 }
 
-VarViewId Pow::nextInput(Timestamp ts) {
+VarViewId Pow::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _base;
@@ -102,7 +103,7 @@ VarViewId Pow::nextInput(Timestamp ts) {
   }
 }
 
-void Pow::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void Pow::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 
-void Pow::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void Pow::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
 }  // namespace atlantis::propagation

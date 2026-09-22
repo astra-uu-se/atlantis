@@ -306,7 +306,7 @@ BENCHMARK_DEFINE_F(TSPTWAllDiff, probe_all_relocate)(::benchmark::State& st) {
   size_t probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
     for (Int i = 0; i < n; ++i) {
-      for (int j = i + 1; j < n; ++j) {
+      for (Int j = i + 1; j < n; ++j) {
         solver->beginMove();
         solver->setValue(sequence[i], solver->committedValue(sequence[j]));
         solver->setValue(sequence[j], solver->committedValue(sequence[i]));

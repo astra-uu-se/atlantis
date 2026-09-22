@@ -4,13 +4,13 @@
 
 namespace atlantis::propagation {
 
-static Int compute(Int var, Int val) { return std::max<Int>(0, val - var); }
+static Int compute(const Int var, const Int val) { return std::max<Int>(0, val - var); }
 
-GreaterEqualConst::GreaterEqualConst(SolverBase& solver, VarViewId parentId,
-                                     Int val)
+GreaterEqualConst::GreaterEqualConst(SolverBase& solver, const VarViewId parentId,
+                                     const Int val)
     : IntView(solver, parentId), _val(val) {}
 
-Int GreaterEqualConst::value(Timestamp ts) {
+Int GreaterEqualConst::value(const Timestamp ts) {
   return compute(_solver.value(ts, _parentId), _val);
 }
 

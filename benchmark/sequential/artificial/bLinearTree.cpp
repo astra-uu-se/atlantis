@@ -115,7 +115,7 @@ class LinearTree : public ::benchmark::Fixture {
   }
 };
 
-void LinearTree::probe(::benchmark::State& st, size_t numMoves) {
+void LinearTree::probe(::benchmark::State& st, const size_t numMoves) {
   size_t probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
@@ -135,7 +135,7 @@ void LinearTree::probe(::benchmark::State& st, size_t numMoves) {
       static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
-void LinearTree::probeRnd(::benchmark::State& st, size_t numMoves) {
+void LinearTree::probeRnd(::benchmark::State& st, const size_t numMoves) {
   size_t probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
@@ -156,7 +156,7 @@ void LinearTree::probeRnd(::benchmark::State& st, size_t numMoves) {
       static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
-void LinearTree::commit(::benchmark::State& st, size_t numMoves) {
+void LinearTree::commit(::benchmark::State& st, const size_t numMoves) {
   Int commits = 0;
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
@@ -177,7 +177,7 @@ void LinearTree::commit(::benchmark::State& st, size_t numMoves) {
       static_cast<double>(commits), ::benchmark::Counter::kIsRate);
 }
 
-void LinearTree::commitRnd(::benchmark::State& st, size_t numMoves) {
+void LinearTree::commitRnd(::benchmark::State& st, const size_t numMoves) {
   Int commits = 0;
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {

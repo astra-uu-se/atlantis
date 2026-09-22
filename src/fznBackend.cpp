@@ -78,7 +78,7 @@ void FznBackend::handleSolverNotifications(
 
 FznBackend::FznBackend(fznparser::Model&& model,
                        const std::uint_fast32_t threadCount,
-                       search::SearchType searchType)
+                       const search::SearchType searchType)
     : _invariantGraph(
           std::make_shared<invariantgraph::FznInvariantGraph>(true)),
       _model(std::make_shared<fznparser::Model>(std::move(model))),
@@ -96,7 +96,7 @@ FznBackend::FznBackend(fznparser::Model&& model,
 FznBackend::FznBackend(logging::Logger& logger,
                        std::filesystem::path&& modelFile,
                        const uint_fast32_t threadCount,
-                       search::SearchType searchType)
+                       const search::SearchType searchType)
     : FznBackend(logger.timedFunction<fznparser::Model>(
                      "parsing FlatZinc",
                      [&] {

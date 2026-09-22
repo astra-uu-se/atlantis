@@ -8,8 +8,8 @@ namespace atlantis::propagation {
 
 Store::Store() = default;
 
-VarViewId Store::createIntVar(Timestamp ts, Int initValue, Int lowerBound,
-                              Int upperBound) {
+VarViewId Store::createIntVar(const Timestamp ts, const Int initValue, const Int lowerBound,
+                              const Int upperBound) {
   const VarId vId(_intVars.size());
   _intVars.emplace_back(ts, vId, initValue, lowerBound, upperBound);
   return {vId, false};
@@ -27,38 +27,37 @@ VarViewId Store::createIntViewFromPtr(const std::shared_ptr<IntView>& ptr) {
   const VarViewId newId(_intViews.size(), true);
   ptr->setId(ViewId{newId});
   const VarViewId parentId = ptr->parentId();
-  const VarViewId source = parentId.isVar()
-                               ? parentId
-                               : VarViewId{_intViewSourceId[size_t{parentId}]};
+  const VarId source =
+      parentId.isVar() ? VarId{parentId} : _intViewSourceId[size_t{parentId}];
   _intViews.emplace_back(ptr);
-  _intViewSourceId.emplace_back(VarId{source});
+  _intViewSourceId.emplace_back(source);
   return newId;
 }
 
-IntVar& Store::intVar(VarId id) { return _intVars[id]; }
+IntVar& Store::intVar(const VarId id) { return _intVars[id]; }
 
-const IntVar& Store::constIntVar(VarId id) const { return _intVars.at(id); }
+const IntVar& Store::constIntVar(const VarId id) const { return _intVars.at(id); }
 
-IntView& Store::intView(ViewId id) { return *(_intViews[id]); }
+IntView& Store::intView(const ViewId id) { return *(_intViews[id]); }
 
-const IntView& Store::constIntView(ViewId id) const {
+const IntView& Store::constIntView(const ViewId id) const {
   return *(_intViews.at(id));
 }
 
-VarId Store::sourceId(VarViewId id) const noexcept {
+VarId Store::sourceId(const VarViewId id) const noexcept {
   return id == NULL_ID ? NULL_ID
                        : (id.isVar() ? VarId{id} : intViewSourceId(VarId{id}));
 }
 
-VarId Store::intViewSourceId(ViewId id) const {
+VarId Store::intViewSourceId(const ViewId id) const {
   return _intViewSourceId.at(id);
 }
 
-Invariant& Store::invariant(InvariantId invariantId) {
+Invariant& Store::invariant(const InvariantId invariantId) {
   return *(_invariants[invariantId]);
 }
 
-const Invariant& Store::constInvariant(InvariantId invariantId) const {
+const Invariant& Store::constInvariant(const InvariantId invariantId) const {
   return *(_invariants.at(invariantId));
 }
 
@@ -77,8 +76,8 @@ size_t Store::numVars() const { return _intVars.size(); }
 
 size_t Store::numInvariants() const { return _invariants.size(); }
 
-VarId Store::dynamicInputVar(Timestamp ts,
-                             InvariantId invariantId) const noexcept {
+VarId Store::dynamicInputVar(const Timestamp ts,
+                             const InvariantId invariantId) const noexcept {
   return sourceId(_invariants.at(invariantId)->dynamicInputVar(ts));
 }
 

@@ -12,12 +12,12 @@ namespace atlantis::propagation {
  * @param x variable of lhs
  * @param y parameter of rhs
  */
-PowDomain::PowDomain(SolverBase& solver, VarId violationId, VarViewId x,
-                     VarViewId y)
+PowDomain::PowDomain(SolverBase& solver, const VarId violationId,
+                     const VarViewId x, const VarViewId y)
     : ViolationInvariant(solver, violationId), _x(x), _y(y) {}
 
-PowDomain::PowDomain(SolverBase& solver, VarViewId violationId, VarViewId x,
-                     VarViewId y)
+PowDomain::PowDomain(SolverBase& solver, const VarViewId violationId,
+                     const VarViewId x, const VarViewId y)
     : PowDomain(solver, VarId{violationId}, x, y) {
   assert(violationId.isVar());
 }
@@ -29,7 +29,7 @@ void PowDomain::registerVars() {
   registerDefinedVar(_violationId);
 }
 
-void PowDomain::updateBounds(bool widenOnly) {
+void PowDomain::updateBounds(const bool widenOnly) {
   const Int xLb = _solver.lowerBound(_x);
   const Int xUb = _solver.upperBound(_x);
   const Int yLb = _solver.lowerBound(_y);
@@ -41,14 +41,16 @@ void PowDomain::updateBounds(bool widenOnly) {
   _solver.updateBounds(_violationId, lb, ub, widenOnly);
 }
 
-void PowDomain::recompute(Timestamp ts) {
+void PowDomain::recompute(const Timestamp ts) {
   updateValue(ts, _violationId,
               _solver.value(ts, _x) == 0 && _solver.value(ts, _y) < 0 ? 1 : 0);
 }
 
-void PowDomain::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void PowDomain::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 
-VarViewId PowDomain::nextInput(Timestamp ts) {
+VarViewId PowDomain::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -59,10 +61,10 @@ VarViewId PowDomain::nextInput(Timestamp ts) {
   }
 }
 
-void PowDomain::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void PowDomain::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 
-[[nodiscard]] bool PowDomain::shouldPost(const SolverBase& solver, VarViewId x,
-                                         VarViewId y) {
+[[nodiscard]] bool PowDomain::shouldPost(const SolverBase& solver,
+                                         const VarViewId x, const VarViewId y) {
   return solver.lowerBound(x) <= 0 && 0 <= solver.upperBound(x) &&
          solver.lowerBound(y) < 0;
 }

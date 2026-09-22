@@ -20,7 +20,7 @@ std::vector<std::vector<bool>> transpose(
   return t;
 }
 
-BoolTableIn::BoolTableIn(SolverBase& solver, VarId violationId,
+BoolTableIn::BoolTableIn(SolverBase& solver, const VarId violationId,
                          std::vector<VarViewId>&& vars,
                          const std::vector<std::vector<bool>>& table)
     : ViolationInvariant(solver, violationId),
@@ -29,7 +29,7 @@ BoolTableIn::BoolTableIn(SolverBase& solver, VarId violationId,
       _rowViolations(_transposed.front().size(), {NULL_TIMESTAMP, -1, -1}),
       _violationCounts(_varArray.size() + 1, {NULL_TIMESTAMP, -1, -1}) {}
 
-BoolTableIn::BoolTableIn(SolverBase& solver, VarViewId violationId,
+BoolTableIn::BoolTableIn(SolverBase& solver, const VarViewId violationId,
                          std::vector<VarViewId>&& vars,
                          const std::vector<std::vector<bool>>& table)
     : BoolTableIn(solver, static_cast<VarId>(violationId), std::move(vars),
@@ -85,14 +85,12 @@ void BoolTableIn::notifyInputChanged(const Timestamp ts, const LocalId id) {
   if (newValue == committedValue) {
     return;
   }
-  assert(0 <= _solver.value(ts, VarViewId{_violationId}));
-  assert(_solver.value(ts, VarViewId{_violationId}) <=
-         static_cast<Int>(_varArray.size()));
-  assert(_violationCounts.at(_solver.value(ts, VarViewId{_violationId}))
-             .value(ts) > 0);
+  assert(0 <= _solver.value(ts, _violationId));
+  assert(_solver.value(ts, _violationId) <= static_cast<Int>(_varArray.size()));
+  assert(_violationCounts.at(_solver.value(ts, _violationId)).value(ts) > 0);
   assert(std::all_of(
       _violationCounts.begin(),
-      _violationCounts.begin() + _solver.value(ts, VarViewId{_violationId}),
+      _violationCounts.begin() + _solver.value(ts, _violationId),
       [&](const CommittableInt& count) { return count.value(ts) == 0; }));
   Int minViolation = static_cast<Int>(_varArray.size());
   for (size_t r = 0; r < _transposed[id].size(); ++r) {

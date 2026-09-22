@@ -8,7 +8,7 @@
 
 namespace atlantis::benchmark {
 
-inline propagation::PropagationMode intToPropagationMode(Int state) {
+inline propagation::PropagationMode intToPropagationMode(const Int state) {
   switch (state) {
     case 3:
     case 2:
@@ -21,7 +21,7 @@ inline propagation::PropagationMode intToPropagationMode(Int state) {
 }
 
 inline propagation::OutputToInputMarkingMode intToOutputToInputMarkingMode(
-    Int state) {
+    const Int state) {
   switch (state) {
     case 3:
       return propagation::OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION;
@@ -39,12 +39,13 @@ inline void setSolverMode(propagation::Solver& solver, const Int state) {
   solver.setOutputToInputMarkingMode(intToOutputToInputMarkingMode(state));
 }
 
-inline size_t rand_in_range(size_t minInclusive, size_t maxInclusive,
+inline size_t rand_in_range(const size_t minInclusive,
+                            const size_t maxInclusive,
                             std::mt19937& rng) {
   return std::uniform_int_distribution<size_t>(minInclusive, maxInclusive)(rng);
 }
 
-inline bool all_in_range(size_t minInclusive, size_t maxExclusive,
+inline bool all_in_range(const size_t minInclusive, const size_t maxExclusive,
                          std::function<bool(size_t)>&& predicate) {
   std::vector<size_t> vec(maxExclusive - minInclusive);
   std::iota(vec.begin(), vec.end(), minInclusive);

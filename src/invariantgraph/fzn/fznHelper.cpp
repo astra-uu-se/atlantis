@@ -8,7 +8,7 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-std::string arg_type_to_string(const std::type_info& t, bool isVar) {
+std::string arg_type_to_string(const std::type_info& t, const bool isVar) {
   // Arg:
   if (t == typeid(fznparser::BoolArg) ||
       t == typeid(std::shared_ptr<fznparser::BoolArg>) ||
@@ -156,7 +156,8 @@ bool constraintIdentifierIsReified(const fznparser::Constraint& constraint) {
   return hasSuffix(constraint.identifier(), "_reif");
 }
 
-void verifyNumArguments(const fznparser::Constraint& constraint, size_t size) {
+void verifyNumArguments(const fznparser::Constraint& constraint,
+                        const size_t size) {
   if (constraint.arguments().size() != size) {
     throw FznArgumentException("Constraint " + constraint.identifier() +
                                " expects " + std::to_string(size) +

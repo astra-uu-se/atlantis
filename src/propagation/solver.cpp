@@ -85,7 +85,7 @@ void Solver::close() {
 }
 
 //---------------------Registration---------------------
-void Solver::enqueueDefinedVar(VarId id) {
+void Solver::enqueueDefinedVar(const VarId id) {
   assert(id < _isEnqueued.size());
   if (_isEnqueued[id]) {
     return;
@@ -94,7 +94,7 @@ void Solver::enqueueDefinedVar(VarId id) {
   _isEnqueued[id] = true;
 }
 
-void Solver::enqueueDefinedVar(VarId id, size_t layer) {
+void Solver::enqueueDefinedVar(const VarId id, const size_t layer) {
   assert(id < _isEnqueued.size());
   if (_isEnqueued[id]) {
     return;
@@ -113,17 +113,20 @@ void Solver::enqueueDefinedVar(VarId id, size_t layer) {
   _isEnqueued[id] = true;
 }
 
-void Solver::registerInvariantInput(InvariantId invariantId, VarViewId inputId,
-                                    LocalId localId, bool isDynamicInput) {
+void Solver::registerInvariantInput(const InvariantId invariantId,
+                                    const VarViewId inputId,
+                                    const LocalId localId,
+                                    const bool isDynamicInput) {
   _propGraph.registerInvariantInput(invariantId, sourceId(inputId), localId,
                                     isDynamicInput);
 }
 
-void Solver::registerDefinedVar(VarId definedVarId, InvariantId invariantId) {
+void Solver::registerDefinedVar(const VarId definedVarId,
+                                const InvariantId invariantId) {
   _propGraph.registerDefinedVar(definedVarId, invariantId);
 }
 
-void Solver::registerVar(VarId id) {
+void Solver::registerVar(const VarId id) {
   _numVars++;
   _propGraph.registerVar(id);
   _outputToInputExplorer.registerVar(id);
@@ -131,7 +134,7 @@ void Solver::registerVar(VarId id) {
   _isEnqueued.emplace_back(false);
 }
 
-void Solver::registerInvariant(InvariantId invariantId) {
+void Solver::registerInvariant(const InvariantId invariantId) {
   _propGraph.registerInvariant(invariantId);
   _outputToInputExplorer.registerInvariant(invariantId);
 }
@@ -183,7 +186,7 @@ void Solver::beginProbe() {
   _solverState = SolverState::PROBE;
 }
 
-void Solver::query(VarViewId id) {
+void Solver::query(const VarViewId id) {
   assert(!_isOpen);
   assert(_solverState != SolverState::IDLE &&
          _solverState != SolverState::PROCESSING);
@@ -419,7 +422,7 @@ void Solver::computeBounds() {
 
   // Search variables might now have been computed yet
   for (VarId varId = 0; varId < numVars(); ++varId) {
-    if (definingInvariant(VarViewId{varId}) == NULL_ID) {
+    if (definingInvariant(varId) == NULL_ID) {
       for (const PropagationGraph::ListeningInvariantData&
                listeningInvariantData : listeningInvariantData(varId)) {
         --inputsToCompute[listeningInvariantData.invariantId];
@@ -427,7 +430,7 @@ void Solver::computeBounds() {
     }
   }
 
-  auto cmp = [&](InvariantId a, InvariantId b) {
+  auto cmp = [&](const InvariantId a, const InvariantId b) {
     if (inputsToCompute[a] == inputsToCompute[b]) {
       return a < b;
     }
@@ -499,7 +502,7 @@ size_t Solver::numVars() const { return _propGraph.numVars(); }
 
 size_t Solver::numInvariants() const { return _propGraph.numInvariants(); }
 
-InvariantId Solver::definingInvariant(VarId id) const {
+InvariantId Solver::definingInvariant(const VarId id) const {
   return _propGraph.definingInvariant(id);
 }
 
@@ -507,28 +510,37 @@ InvariantId Solver::definingInvariant(VarViewId id) const {
   return _propGraph.definingInvariant(id.isView() ? sourceId(id) : VarId{id});
 }
 
-const std::vector<VarId>& Solver::varsDefinedBy(InvariantId invariantId) const {
+const std::vector<VarId>& Solver::varsDefinedBy(
+    const InvariantId invariantId) const {
   return _propGraph.varsDefinedBy(invariantId);
 }
 
 const std::vector<PropagationGraph::ListeningInvariantData>&
-Solver::listeningInvariantData(VarId id) const {
+Solver::listeningInvariantData(const VarId id) const {
   return _propGraph.listeningInvariantData(id);
 }
 
-VarId Solver::nextInput(InvariantId invariantId) {
+VarId Solver::nextInput(const InvariantId invariantId) {
   return sourceId(_store.invariant(invariantId).nextInput(_currentTimestamp));
 }
-void Solver::notifyCurrentInputChanged(InvariantId invariantId) {
+void Solver::notifyCurrentInputChanged(const InvariantId invariantId) {
   _store.invariant(invariantId).notifyCurrentInputChanged(_currentTimestamp);
 }
 
-void Solver::setValue(Timestamp ts, VarViewId id, Int val) {
+void Solver::setValue(const Timestamp ts, const VarViewId id, const Int val) {
   assert(id.isVar());
   setValue(ts, VarId{id}, val);
 }
 
-void Solver::setValue(Timestamp ts, VarId id, Int val) {
+void Solver::setValue(const VarId id, const Int val) {
+  setValue(_currentTimestamp, id, val);
+}
+
+void Solver::setValue(const VarViewId id, const Int val) {
+  setValue(_currentTimestamp, id, val);
+}
+
+void Solver::setValue(const Timestamp ts, const VarId id, const Int val) {
   assert(_propGraph.isSearchVar(id));
 
   IntVar& var = _store.intVar(id);
@@ -548,7 +560,7 @@ void Solver::setValue(Timestamp ts, VarId id, Int val) {
   enqueueDefinedVar(id);
 }
 
-void Solver::setPropagationMode(PropagationMode propMode) {
+void Solver::setPropagationMode(const PropagationMode propMode) {
   if (!_isOpen) {
     throw SolverClosedException(
         "Cannot set propagation mode when model is closed");
@@ -560,7 +572,8 @@ OutputToInputMarkingMode Solver::outputToInputMarkingMode() const {
   return _outputToInputExplorer.outputToInputMarkingMode();
 }
 
-void Solver::setOutputToInputMarkingMode(OutputToInputMarkingMode markingMode) {
+void Solver::setOutputToInputMarkingMode(
+    const OutputToInputMarkingMode markingMode) {
   if (!_isOpen) {
     throw SolverClosedException(
         "Cannot set output-to-input marking mode when model is closed");
@@ -573,7 +586,7 @@ const std::vector<VarId>& Solver::searchVars() const {
 }
 
 const std::vector<std::pair<VarId, bool>>& Solver::inputVars(
-    InvariantId invariantId) const {
+    const InvariantId invariantId) const {
   return _propGraph.inputVars(invariantId);
 }
 

@@ -11,7 +11,6 @@
 #include "atlantis/propagation/invariants/boolOr.hpp"
 #include "atlantis/propagation/invariants/min.hpp"
 #include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/views/notEqualConst.hpp"
 
 namespace atlantis::invariantgraph {
 

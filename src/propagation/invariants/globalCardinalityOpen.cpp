@@ -11,7 +11,7 @@
 
 namespace atlantis::propagation {
 
-inline bool all_in_range(Int start, Int stop,
+inline bool all_in_range(const Int start, const Int stop,
                          std::function<bool(Int)>&& predicate) {
   std::vector<Int> vec(stop - start);
   for (Int i = 0; i < stop - start; ++i) {
@@ -54,7 +54,7 @@ void GlobalCardinalityOpen::registerVars() {
   }
 }
 
-std::optional<size_t> GlobalCardinalityOpen::coverIndex(Int value) const {
+std::optional<size_t> GlobalCardinalityOpen::coverIndex(const Int value) const {
   if (value < _offset) {
     return std::nullopt;
   }
@@ -91,14 +91,14 @@ inline void GlobalCardinalityOpen::increaseCountAndUpdateOutput(
   }
 }
 
-void GlobalCardinalityOpen::updateBounds(bool widenOnly) {
+void GlobalCardinalityOpen::updateBounds(const bool widenOnly) {
   for (const VarId output : _outputs) {
     _solver.updateBounds(output, 0, static_cast<Int>(_inputs.size()),
                          widenOnly);
   }
 }
 
-void GlobalCardinalityOpen::close(Timestamp timestamp) {
+void GlobalCardinalityOpen::close(const Timestamp timestamp) {
   const auto [lb, ub] = std::minmax_element(_cover.begin(), _cover.end());
   _offset = *lb;
   _coverVarIndex.resize(overflow::saturatingIntervalSize(*lb, *ub), -1);
@@ -110,7 +110,7 @@ void GlobalCardinalityOpen::close(Timestamp timestamp) {
   _counts.resize(_outputs.size(), CommittableInt(timestamp, 0));
 }
 
-void GlobalCardinalityOpen::recompute(Timestamp timestamp) {
+void GlobalCardinalityOpen::recompute(const Timestamp timestamp) {
   for (CommittableInt& c : _counts) {
     c.setValue(timestamp, 0);
   }
@@ -124,8 +124,8 @@ void GlobalCardinalityOpen::recompute(Timestamp timestamp) {
   }
 }
 
-void GlobalCardinalityOpen::notifyInputChanged(Timestamp timestamp,
-                                               LocalId localId) {
+void GlobalCardinalityOpen::notifyInputChanged(const Timestamp timestamp,
+                                               const LocalId localId) {
   assert(localId < _inputs.size());
   const Int newValue = _solver.value(timestamp, _inputs[localId]);
   const Int committedValue = _solver.committedValue(_inputs[localId]);
@@ -136,7 +136,7 @@ void GlobalCardinalityOpen::notifyInputChanged(Timestamp timestamp,
   increaseCountAndUpdateOutput(timestamp, newValue);
 }
 
-VarViewId GlobalCardinalityOpen::nextInput(Timestamp timestamp) {
+VarViewId GlobalCardinalityOpen::nextInput(const Timestamp timestamp) {
   const auto index = static_cast<size_t>(_state.incValue(timestamp, 1));
   assert(0 <= _state.value(timestamp));
   if (index < _inputs.size()) {
@@ -145,12 +145,13 @@ VarViewId GlobalCardinalityOpen::nextInput(Timestamp timestamp) {
   return VAR_VIEW_NULL_ID;
 }
 
-void GlobalCardinalityOpen::notifyCurrentInputChanged(Timestamp timestamp) {
+void GlobalCardinalityOpen::notifyCurrentInputChanged(
+    const Timestamp timestamp) {
   assert(static_cast<size_t>(_state.value(timestamp)) < _inputs.size());
   notifyInputChanged(timestamp, _state.value(timestamp));
 }
 
-void GlobalCardinalityOpen::commit(Timestamp timestamp) {
+void GlobalCardinalityOpen::commit(const Timestamp timestamp) {
   Invariant::commit(timestamp);
 
   for (CommittableInt& count : _counts) {

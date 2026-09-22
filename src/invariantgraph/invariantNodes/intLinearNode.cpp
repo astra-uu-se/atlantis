@@ -20,10 +20,10 @@ namespace atlantis::invariantgraph {
 
 IntLinearNode::IntLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars,
-                             const VarNodeId output, const Int offset)
+                             const VarNodeId output, const Int rhsOffset)
     : InvariantNode(graph, {output}, std::move(vars)),
       _coeffs(std::move(coeffs)),
-      _rhsOffset(offset) {}
+      _rhsOffset(rhsOffset) {}
 
 void IntLinearNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);

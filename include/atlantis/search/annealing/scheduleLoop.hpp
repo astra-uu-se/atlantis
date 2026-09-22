@@ -21,15 +21,13 @@ class ScheduleLoop : public AnnealingSchedule {
 
  public:
   explicit ScheduleLoop(std::unique_ptr<AnnealingSchedule>&& schedule,
-                        UInt maximumConsecutiveFutileRounds)
-      : _schedule(std::move(schedule)),
-        _maximumConsecutiveFutileRounds(maximumConsecutiveFutileRounds) {}
+                        UInt maximumConsecutiveFutileRounds);
 
   void start(double initialTemperature) override;
   void nextRound(const std::shared_ptr<RoundStatistics>& statistics) override;
   double temperature() override;
   bool frozen() override;
-  [[nodiscard]] AnnealingSchedule& inner() { return *_schedule; }
+  [[nodiscard]] AnnealingSchedule& inner();
 };
 
 }  // namespace atlantis::search

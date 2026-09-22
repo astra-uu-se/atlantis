@@ -29,10 +29,10 @@ inline size_t Element2dVar::safeIndex2(const Int index) const noexcept {
   return safeIndex(index, 1);
 }
 
-Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarViewId index1,
-                           VarViewId index2,
+Element2dVar::Element2dVar(SolverBase& solver, const VarId output,
+                           const VarViewId index1, const VarViewId index2,
                            std::vector<std::vector<VarViewId>>&& varMatrix,
-                           Int offset1, Int offset2)
+                           const Int offset1, const Int offset2)
     : Invariant(solver),
       _varMatrix(std::move(varMatrix)),
       _indices{index1, index2},
@@ -40,10 +40,10 @@ Element2dVar::Element2dVar(SolverBase& solver, VarId output, VarViewId index1,
       _offsets{offset1, offset2},
       _output(output) {}
 
-Element2dVar::Element2dVar(SolverBase& solver, VarViewId output,
-                           VarViewId index1, VarViewId index2,
+Element2dVar::Element2dVar(SolverBase& solver, const VarViewId output,
+                           const VarViewId index1, const VarViewId index2,
                            std::vector<std::vector<VarViewId>>&& varMatrix,
-                           Int offset1, Int offset2)
+                           const Int offset1, const Int offset2)
     : Element2dVar(solver, VarId{output}, index1, index2, std::move(varMatrix),
                    offset1, offset2) {
   assert(output.isVar());
@@ -61,7 +61,7 @@ void Element2dVar::registerVars() {
   registerDefinedVar(_output);
 }
 
-void Element2dVar::updateBounds(bool widenOnly) {
+void Element2dVar::updateBounds(const bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
@@ -92,12 +92,12 @@ void Element2dVar::updateBounds(bool widenOnly) {
   _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
-VarViewId Element2dVar::dynamicInputVar(Timestamp ts) const noexcept {
+VarViewId Element2dVar::dynamicInputVar(const Timestamp ts) const noexcept {
   return _varMatrix[safeIndex1(_solver.value(ts, _indices[0]))]
                    [safeIndex2(_solver.value(ts, _indices[1]))];
 }
 
-void Element2dVar::recompute(Timestamp ts) {
+void Element2dVar::recompute(const Timestamp ts) {
   assert(safeIndex1(_solver.value(ts, _indices[0])) <
          static_cast<size_t>(_dimensions[0]));
   assert(safeIndex2(_solver.value(ts, _indices[1])) <
@@ -108,9 +108,11 @@ void Element2dVar::recompute(Timestamp ts) {
                                 [safeIndex2(_solver.value(ts, _indices[1]))]));
 }
 
-void Element2dVar::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void Element2dVar::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 
-VarViewId Element2dVar::nextInput(Timestamp ts) {
+VarViewId Element2dVar::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _indices[0];
@@ -129,5 +131,7 @@ VarViewId Element2dVar::nextInput(Timestamp ts) {
   }
 }
 
-void Element2dVar::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void Element2dVar::notifyCurrentInputChanged(const Timestamp ts) {
+  recompute(ts);
+}
 }  // namespace atlantis::propagation

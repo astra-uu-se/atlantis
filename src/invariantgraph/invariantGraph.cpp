@@ -107,7 +107,7 @@ static std::vector<std::vector<VarNodeId>> SCC(const InvariantGraph& graph) {
 static std::vector<VarNodeId> findCycle(
     const InvariantGraph& graph, const std::vector<VarNodeId>& component,
     const size_t componentIndex, const std::vector<size_t>& componentOfVar,
-    bool findDynCycles) {
+    const bool findDynCycles) {
   std::vector<VarNodeId> stack;
   std::vector<Int> discoverTime(componentOfVar.size(), -1);
   std::vector<VarNodeId> outputOf(componentOfVar.size(), NULL_NODE_ID);
@@ -400,7 +400,7 @@ VarNodeId InvariantGraph::retrieveIntVarNode(const std::string& identifier) {
   return _namedVarNodeIndices.at(identifier);
 }
 
-VarNodeId InvariantGraph::retrieveIntVarNode(Int i,
+VarNodeId InvariantGraph::retrieveIntVarNode(const Int i,
                                              const std::string& identifier) {
   const VarNodeId inputVarNodeId = retrieveIntVarNode(i);
   if (!containsVarNode(identifier)) {
@@ -690,7 +690,7 @@ const VarNode& InvariantGraph::varNodeConst(
   return _varNodes.at(_namedVarNodeIndices.at(identifier));
 }
 
-const VarNode& InvariantGraph::varNodeConst(VarNodeId id) const {
+const VarNode& InvariantGraph::varNodeConst(const VarNodeId id) const {
   assert(size_t{id} < _varNodes.size());
   return _varNodes.at(size_t{id});
 }
@@ -718,14 +718,14 @@ VarNodeId InvariantGraph::varNodeId(const std::string& identifier) const {
   return _namedVarNodeIndices.at(identifier);
 }
 
-VarNodeId InvariantGraph::varNodeId(bool val) const {
+VarNodeId InvariantGraph::varNodeId(const bool val) const {
   if (!containsVarNode(val)) {
     return VarNodeId{NULL_NODE_ID};
   }
   return _boolVarNodeIndices.at(val ? 1 : 0);
 }
 
-VarNodeId InvariantGraph::varNodeId(Int val) const {
+VarNodeId InvariantGraph::varNodeId(const Int val) const {
   if (!containsVarNode(val)) {
     return VarNodeId{NULL_NODE_ID};
   }
@@ -1205,7 +1205,7 @@ void InvariantGraph::createImplicitConstraints(SolverBase& solver,
       assert(std::ranges::all_of(
           implicitConstraintNode->outputVarNodeIds().begin(),
           implicitConstraintNode->outputVarNodeIds().end(),
-          [&](VarNodeId varNodeId) {
+          [&](const VarNodeId varNodeId) {
             return mapping.solverId(varNodeId) != propagation::NULL_ID;
           }));
       implicitConstraintNode->registerNode(solver, mapping);
@@ -1340,7 +1340,7 @@ void InvariantGraph::updateDomains() {
   }
 }
 
-void InvariantGraph::sanity([[maybe_unused]] bool oneDefInv) {
+void InvariantGraph::sanity([[maybe_unused]] const bool oneDefInv) {
 #ifndef NDEBUG
   assert(varNodeConst(_boolVarNodeIndices.at(0)).isFixed());
   assert(varNodeConst(_boolVarNodeIndices.at(0)).inDomain(bool{false}));

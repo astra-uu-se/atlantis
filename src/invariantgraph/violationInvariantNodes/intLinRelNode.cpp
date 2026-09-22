@@ -50,12 +50,12 @@ IntLinRelNode::IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
 
 IntLinRelNode::IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars,
-                             const RelationType relType, const Int bound,
+                             const RelationType relType, const Int rhs,
                              const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
       _relType(relType),
       _coeffs(std::move(coeffs)),
-      _rhs(bound) {}
+      _rhs(rhs) {}
 
 void IntLinRelNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);

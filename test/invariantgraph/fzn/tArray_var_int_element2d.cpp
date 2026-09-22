@@ -62,7 +62,7 @@ class array_var_int_element2dTest : public FznTestBase {
     markOutputVar(output);
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const Int row = intVal(rowIdx, committedValue) - rowOffset;
     const Int col = intVal(colIdx, committedValue) - colOffset;
     const Int expected = intVal(inputs.at(row).at(col));
@@ -172,7 +172,7 @@ class array_var_int_element2dTest : public FznTestBase {
            });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (randBool()) {
       changeValue(rowIdx, committedValue);
     }

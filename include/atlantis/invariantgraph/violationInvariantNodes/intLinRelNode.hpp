@@ -17,7 +17,7 @@ class IntLinRelNode : public ViolationInvariantNode {
                 Int rhs, bool shouldHold = true);
 
   IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                std::vector<VarNodeId>&& vars, RelationType relType, Int bound,
+                std::vector<VarNodeId>&& vars, RelationType relType, Int rhs,
                 VarNodeId reified);
 
   void init(InvariantNodeId) override;

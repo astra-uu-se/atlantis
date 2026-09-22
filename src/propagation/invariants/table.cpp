@@ -35,9 +35,9 @@ std::vector<std::vector<Int>>&& removeInputColumn(
   return std::move(table);
 }
 
-Table::Table(SolverBase& solver, std::vector<VarId>&& outputVars,
+Table::Table(SolverBase& solver, const std::vector<VarId>&& outputVars,
              const VarViewId inputVar, std::vector<std::vector<Int>>&& table,
-             size_t inputColumn)
+             const size_t inputColumn)
     : Invariant(solver),
       _inputVar(inputVar),
       _outputVars(std::move(outputVars)),
@@ -51,9 +51,9 @@ Table::Table(SolverBase& solver, std::vector<VarId>&& outputVars,
   assert(_valToRow.size() == _table.size());
 }
 
-Table::Table(SolverBase& solver, std::vector<VarViewId>&& outputVars,
+Table::Table(SolverBase& solver, const std::vector<VarViewId>&& outputVars,
              const VarViewId inputVar, std::vector<std::vector<Int>>&& table,
-             size_t inputColumn)
+             const size_t inputColumn)
     : Table(solver, toVarIds(std::move(outputVars)), inputVar, std::move(table),
             inputColumn) {}
 
@@ -88,7 +88,7 @@ void Table::updateBounds(const bool widenOnly) {
   }
 }
 
-void Table::close(const Timestamp) {
+void Table::close(Timestamp) {
   // reduce the size of _valToVars:
   std::vector<Int> valsToRemove;
   valsToRemove.clear();
@@ -105,7 +105,7 @@ void Table::close(const Timestamp) {
   }
 }
 
-void Table::recompute(const Timestamp ts, bool forceRecompute) {
+void Table::recompute(const Timestamp ts, const bool forceRecompute) {
   const Int val = _solver.value(ts, _inputVar);
   if (!forceRecompute && val == _solver.committedValue(_inputVar)) {
     return;

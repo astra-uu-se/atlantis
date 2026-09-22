@@ -2,7 +2,7 @@
 
 namespace atlantis::propagation {
 
-PriorityList::PriorityList(size_t size)
+PriorityList::PriorityList(const size_t size)
     : _minimum(NULL_TIMESTAMP, 0), _maximum(NULL_TIMESTAMP, 0) {
   _list.reserve(size);
   for (size_t i = 0; i < size; i++) {
@@ -12,15 +12,15 @@ PriorityList::PriorityList(size_t size)
 
 size_t PriorityList::size() const noexcept { return _list.size(); }
 
-Int PriorityList::minPriority(Timestamp ts) const noexcept {
+Int PriorityList::minPriority(const Timestamp ts) const noexcept {
   return _list[_minimum.get(ts)].get(ts);
 }
 
-Int PriorityList::maxPriority(Timestamp ts) const noexcept {
+Int PriorityList::maxPriority(const Timestamp ts) const noexcept {
   return _list[_maximum.get(ts)].get(ts);
 }
 
-void PriorityList::commitIf(Timestamp ts) {
+void PriorityList::commitIf(const Timestamp ts) {
   for (auto& node : _list) {
     node.commitIf(ts);
   }
@@ -29,7 +29,7 @@ void PriorityList::commitIf(Timestamp ts) {
   _maximum.commitIf(ts);
 }
 
-void PriorityList::updatePriority(Timestamp ts, size_t idx, Int newValue) {
+void PriorityList::updatePriority(const Timestamp ts, const size_t idx, const Int newValue) {
   const auto oldValue = _list[idx].get(ts);
   if (oldValue == newValue) {
     return;
@@ -52,7 +52,7 @@ void PriorityList::updatePriority(Timestamp ts, size_t idx, Int newValue) {
   }
 }
 
-void PriorityList::computeMaximum(Timestamp ts) {
+void PriorityList::computeMaximum(const Timestamp ts) {
   size_t maximumIdx = 0;
   for (size_t idx = 1; idx < size(); idx++) {
     if (_list[idx].get(ts) > _list[maximumIdx].get(ts)) {
@@ -63,7 +63,7 @@ void PriorityList::computeMaximum(Timestamp ts) {
   _maximum.set(ts, maximumIdx);
 }
 
-void PriorityList::computeMinimum(Timestamp ts) {
+void PriorityList::computeMinimum(const Timestamp ts) {
   size_t minimumIdx = 0;
   for (size_t idx = 1; idx < size(); idx++) {
     if (_list[idx].get(ts) < _list[minimumIdx].get(ts)) {

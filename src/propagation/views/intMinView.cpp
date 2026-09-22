@@ -6,10 +6,10 @@
 
 namespace atlantis::propagation {
 
-IntMinView::IntMinView(SolverBase& solver, VarViewId parentId, Int min)
+IntMinView::IntMinView(SolverBase& solver, const VarViewId parentId, const Int min)
     : IntView(solver, parentId), _min(min) {}
 
-Int IntMinView::value(Timestamp ts) {
+Int IntMinView::value(const Timestamp ts) {
   return std::min<Int>(_min, _solver.value(ts, _parentId));
 }
 

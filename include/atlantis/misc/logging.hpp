@@ -12,7 +12,7 @@ namespace atlantis::logging {
 enum LogLevel { debug = 0, info = 1, warning = 2, error = 3 };
 extern LogLevel globalLogLevel;
 
-inline void setLogLevel(LogLevel newLogLevel) { globalLogLevel = newLogLevel; }
+inline void setLogLevel(const LogLevel newLogLevel) { globalLogLevel = newLogLevel; }
 
 struct None {};
 
@@ -48,7 +48,7 @@ void printList(std::ostream& os, const Pair<Begin, Last>& data) {
 }
 
 template <typename List>
-void log(LogLevel logLevel, const char* file, int line,
+void log(const LogLevel logLevel, const char* file, const int line,
          const LogData<List>& data) {
   if (globalLogLevel > logLevel) {
     return;

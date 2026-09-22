@@ -104,7 +104,7 @@ class TSP : public ::benchmark::Fixture {
     timeToPred.clear();
   }
 
-  [[nodiscard]] bool isTourValid(bool committedValue) const {
+  [[nodiscard]] bool isTourValid(const bool committedValue) const {
     std::vector<bool> visited(n, false);
     Int cur = 0;
     Int numVisited = 0;

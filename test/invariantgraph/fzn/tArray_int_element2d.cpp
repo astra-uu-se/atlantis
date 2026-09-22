@@ -76,7 +76,7 @@ class array_int_element2dTest : public FznTestBase {
     markOutputVar(output);
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const Int rowIdxVal = intVal(rowIndex, committedValue);
     const Int colIdxVal = intVal(colIndex, committedValue);
     const Int expected =
@@ -191,7 +191,7 @@ class array_int_element2dTest : public FznTestBase {
     return !isFixed(rowIndex) || !isFixed(colIndex);
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (!isFixed(rowIndex) && randBool()) {
       changeValue(rowIndex, committedValue);
     }

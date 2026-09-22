@@ -14,7 +14,7 @@ class AllDifferentTest : public InvariantTest {
   Int inputVarUb{10};
   std::uniform_int_distribution<Int> inputVarDist;
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = committedValue ? _solver->committedValue(inputVars.at(i))
@@ -23,7 +23,7 @@ class AllDifferentTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  [[nodiscard]] Int computeOutput(Timestamp ts) const {
+  [[nodiscard]] Int computeOutput(const Timestamp ts) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = _solver->value(ts, inputVars.at(i));
@@ -282,26 +282,26 @@ class MockAllDifferent : public AllDifferent {
     registered = true;
     AllDifferent::registerVars();
   }
-  explicit MockAllDifferent(SolverBase& solver, VarViewId outputVar,
+  explicit MockAllDifferent(SolverBase& solver, const VarViewId outputVar,
                             std::vector<VarViewId>&& t_vars)
       : AllDifferent(solver, outputVar, std::move(t_vars)) {
     EXPECT_TRUE(outputVar.isVar());
 
-    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, recompute).WillByDefault([this](const Timestamp timestamp) {
       return AllDifferent::recompute(timestamp);
     });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, nextInput).WillByDefault([this](const Timestamp timestamp) {
       return AllDifferent::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp) {
+        .WillByDefault([this](const Timestamp timestamp) {
           AllDifferent::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+        .WillByDefault([this](const Timestamp timestamp, const LocalId id) {
           AllDifferent::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, commit).WillByDefault([this](const Timestamp timestamp) {
       AllDifferent::commit(timestamp);
     });
   }

@@ -4,15 +4,15 @@
 
 namespace atlantis::propagation {
 
-static Int compute(Int val, Int lb, Int ub) {
+static Int compute(const Int val, const Int lb, const Int ub) {
   return lb <= val && val <= ub ? 0 : 1;
 }
 
-InIntervalConst::InIntervalConst(SolverBase& solver, VarViewId parentId, Int lb,
-                                 Int ub)
+InIntervalConst::InIntervalConst(SolverBase& solver, const VarViewId parentId, const Int lb,
+                                 const Int ub)
     : IntView(solver, parentId), _lb(lb), _ub(ub) {}
 
-Int InIntervalConst::value(Timestamp ts) {
+Int InIntervalConst::value(const Timestamp ts) {
   const Int val = compute(_solver.value(ts, _parentId), _lb, _ub);
   return val;
 }

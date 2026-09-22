@@ -28,10 +28,10 @@ inline size_t Element2dConst::safeIndex1(const Int index) const noexcept {
 inline size_t Element2dConst::safeIndex2(const Int index) const noexcept {
   return safeIndex(index, 1);
 }
-Element2dConst::Element2dConst(SolverBase& solver, VarId output,
-                               VarViewId index1, VarViewId index2,
+Element2dConst::Element2dConst(SolverBase& solver, const VarId output,
+                               const VarViewId index1, const VarViewId index2,
                                std::vector<std::vector<Int>>&& matrix,
-                               Int offset1, Int offset2)
+                               const Int offset1, const Int offset2)
     : Invariant(solver),
       _matrix(std::move(matrix)),
       _indices{index1, index2},
@@ -39,10 +39,10 @@ Element2dConst::Element2dConst(SolverBase& solver, VarId output,
       _offsets{offset1, offset2},
       _output(output) {}
 
-Element2dConst::Element2dConst(SolverBase& solver, VarViewId output,
-                               VarViewId index1, VarViewId index2,
+Element2dConst::Element2dConst(SolverBase& solver, const VarViewId output,
+                               const VarViewId index1, const VarViewId index2,
                                std::vector<std::vector<Int>>&& matrix,
-                               Int offset1, Int offset2)
+                               const Int offset1, const Int offset2)
     : Element2dConst(solver, VarId{output}, index1, index2, std::move(matrix),
                      offset1, offset2) {
   assert(output.isVar());
@@ -55,7 +55,7 @@ void Element2dConst::registerVars() {
   registerDefinedVar(_output);
 }
 
-void Element2dConst::updateBounds(bool widenOnly) {
+void Element2dConst::updateBounds(const bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
@@ -84,7 +84,7 @@ void Element2dConst::updateBounds(bool widenOnly) {
   _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
-void Element2dConst::recompute(Timestamp ts) {
+void Element2dConst::recompute(const Timestamp ts) {
   assert(safeIndex1(_solver.value(ts, _indices[0])) <
          static_cast<size_t>(_dimensions[0]));
   assert(safeIndex2(_solver.value(ts, _indices[1])) <
@@ -95,11 +95,11 @@ void Element2dConst::recompute(Timestamp ts) {
                      [safeIndex2(_solver.value(ts, _indices[1]))]);
 }
 
-void Element2dConst::notifyInputChanged(Timestamp ts, LocalId) {
+void Element2dConst::notifyInputChanged(const Timestamp ts, LocalId) {
   recompute(ts);
 }
 
-VarViewId Element2dConst::nextInput(Timestamp ts) {
+VarViewId Element2dConst::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _indices[0];
@@ -110,5 +110,7 @@ VarViewId Element2dConst::nextInput(Timestamp ts) {
   }
 }
 
-void Element2dConst::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void Element2dConst::notifyCurrentInputChanged(const Timestamp ts) {
+  recompute(ts);
+}
 }  // namespace atlantis::propagation

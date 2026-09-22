@@ -10,8 +10,8 @@
 
 namespace atlantis::propagation {
 
-Min::Min(SolverBase& solver, VarId output, std::vector<VarViewId>&& varArray,
-         Int limit)
+Min::Min(SolverBase& solver, const VarId output,
+         std::vector<VarViewId>&& varArray, const Int limit)
     : Invariant(solver),
       _output(output),
       _varArray(std::move(varArray)),
@@ -23,7 +23,8 @@ Min::Min(SolverBase& solver, VarId output, std::vector<VarViewId>&& varArray,
       _updatedMin(NULL_TIMESTAMP, std::numeric_limits<Int>::max()),
       _limit(limit) {}
 
-Min::Min(SolverBase& solver, VarId output, std::vector<VarViewId>&& varArray)
+Min::Min(SolverBase& solver, const VarId output,
+         std::vector<VarViewId>&& varArray)
     : Min(solver, output, std::move(varArray),
           std::numeric_limits<Int>::min()) {}
 
@@ -33,8 +34,8 @@ Min::Min(SolverBase& solver, VarViewId output,
   assert(output.isVar());
 }
 
-Min::Min(SolverBase& solver, VarViewId output,
-         std::vector<VarViewId>&& varArray, Int limit)
+Min::Min(SolverBase& solver, const VarViewId output,
+         std::vector<VarViewId>&& varArray, const Int limit)
     : Min(solver, VarId{output}, std::move(varArray), limit) {
   assert(output.isVar());
 }
@@ -47,7 +48,7 @@ void Min::registerVars() {
   registerDefinedVar(_output);
 }
 
-void Min::updateBounds(bool widenOnly) {
+void Min::updateBounds(const bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::max();
   for (const VarViewId& input : _varArray) {
@@ -58,12 +59,12 @@ void Min::updateBounds(bool widenOnly) {
                        widenOnly);
 }
 
-void Min::close(Timestamp ts) {
+void Min::close(const Timestamp ts) {
   // sort indices:
   std::vector<size_t> idx(_varArray.size());
   std::iota(idx.begin(), idx.end(), 0);
 
-  std::ranges::stable_sort(idx, [&](size_t i1, size_t i2) {
+  std::ranges::stable_sort(idx, [&](const size_t i1, const size_t i2) {
     return _solver.value(ts, _varArray[i1]) < _solver.value(ts, _varArray[i2]);
   });
 
@@ -78,7 +79,7 @@ void Min::close(Timestamp ts) {
   _updatedMin.setValue(ts, std::numeric_limits<Int>::max());
 }
 
-void Min::recompute(Timestamp ts) {
+void Min::recompute(const Timestamp ts) {
   close(ts);
   assert(0 <= _listHead.value(ts) &&
          _listHead.value(ts) < static_cast<Int>(_varArray.size()));
@@ -92,7 +93,7 @@ void Min::recompute(Timestamp ts) {
   updateValue(ts, _output, _solver.value(ts, _varArray[_listHead.value(ts)]));
 }
 
-void Min::notifyInputChanged(Timestamp ts, LocalId id) {
+void Min::notifyInputChanged(const Timestamp ts, const LocalId id) {
   assert(id < _varArray.size());
 
   const Int prev = _linkedList[id].first.value(ts);
@@ -128,22 +129,22 @@ void Min::notifyInputChanged(Timestamp ts, LocalId id) {
   }
 }
 
-VarViewId Min::nextInput(Timestamp ts) {
+VarViewId Min::nextInput(const Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index == 0 ||
       (index < _varArray.size() && _solver.value(ts, _varArray[index - 1]) !=
                                        _solver.lowerBound(_output))) {
-    return VarViewId{_varArray[index]};
+    return _varArray[index];
   }
   return VAR_VIEW_NULL_ID;  // Done
 }
 
-void Min::notifyCurrentInputChanged(Timestamp ts) {
+void Min::notifyCurrentInputChanged(const Timestamp ts) {
   notifyInputChanged(ts, _state.value(ts));
 }
 
-void Min::commit(Timestamp ts) {
+void Min::commit(const Timestamp ts) {
   Invariant::commit(ts);
   close(ts);
   for (size_t i = 0; i < _varArray.size(); ++i) {

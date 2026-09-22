@@ -5,10 +5,10 @@
 
 namespace atlantis::propagation {
 
-IntOffsetView::IntOffsetView(SolverBase& solver, VarViewId parentId, Int offset)
+IntOffsetView::IntOffsetView(SolverBase& solver, const VarViewId parentId, const Int offset)
     : IntView(solver, parentId), _offset(offset) {}
 
-Int IntOffsetView::value(Timestamp ts) {
+Int IntOffsetView::value(const Timestamp ts) {
   return overflow::saturatingAdd(_offset, _solver.value(ts, _parentId));
 }
 

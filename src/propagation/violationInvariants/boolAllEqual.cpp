@@ -9,13 +9,13 @@ namespace atlantis::propagation {
 /**
  * @param violationId id for the violationCount
  */
-BoolAllEqual::BoolAllEqual(SolverBase& solver, VarId violationId,
+BoolAllEqual::BoolAllEqual(SolverBase& solver, const VarId violationId,
                            std::vector<VarViewId>&& vars)
     : ViolationInvariant(solver, violationId),
       _vars(std::move(vars)),
       _numTrue(NULL_TIMESTAMP, 0) {}
 
-BoolAllEqual::BoolAllEqual(SolverBase& solver, VarViewId violationId,
+BoolAllEqual::BoolAllEqual(SolverBase& solver, const VarViewId violationId,
                            std::vector<VarViewId>&& vars)
     : BoolAllEqual(solver, VarId{violationId}, std::move(vars)) {
   assert(violationId.isVar());
@@ -29,12 +29,12 @@ void BoolAllEqual::registerVars() {
   registerDefinedVar(_violationId);
 }
 
-void BoolAllEqual::updateBounds(bool widenOnly) {
+void BoolAllEqual::updateBounds(const bool widenOnly) {
   _solver.updateBounds(_violationId, 0, static_cast<Int>(_vars.size()) / 2,
                        widenOnly);
 }
 
-void BoolAllEqual::recompute(Timestamp ts) {
+void BoolAllEqual::recompute(const Timestamp ts) {
   Int numTrue = 0;
   for (const auto& var : _vars) {
     numTrue += _solver.value(ts, var) == 0 ? 1 : 0;
@@ -48,7 +48,7 @@ void BoolAllEqual::recompute(Timestamp ts) {
               std::min(numTrue, static_cast<Int>(_vars.size()) - numTrue));
 }
 
-void BoolAllEqual::notifyInputChanged(Timestamp ts, LocalId id) {
+void BoolAllEqual::notifyInputChanged(const Timestamp ts, const LocalId id) {
   assert(id < _vars.size());
   const bool newValue = _solver.value(ts, _vars[id]) == 0;
   const bool committedValue = _solver.committedValue(_vars[id]) == 0;
@@ -67,7 +67,7 @@ void BoolAllEqual::notifyInputChanged(Timestamp ts, LocalId id) {
                        static_cast<Int>(_vars.size()) - _numTrue.value(ts)));
 }
 
-VarViewId BoolAllEqual::nextInput(Timestamp ts) {
+VarViewId BoolAllEqual::nextInput(const Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _vars.size()) {
     return _vars[index];
@@ -75,12 +75,12 @@ VarViewId BoolAllEqual::nextInput(Timestamp ts) {
   return VAR_VIEW_NULL_ID;
 }
 
-void BoolAllEqual::notifyCurrentInputChanged(Timestamp ts) {
+void BoolAllEqual::notifyCurrentInputChanged(const Timestamp ts) {
   assert(static_cast<size_t>(_state.value(ts)) < _vars.size());
   notifyInputChanged(ts, static_cast<size_t>(_state.value(ts)));
 }
 
-void BoolAllEqual::commit(Timestamp ts) {
+void BoolAllEqual::commit(const Timestamp ts) {
   Invariant::commit(ts);
 
   _numTrue.commitIf(ts);

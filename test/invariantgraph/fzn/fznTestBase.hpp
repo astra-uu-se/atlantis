@@ -31,33 +31,9 @@ enum struct BoolArgState : unsigned char {
 };
 enum struct IntArgState : unsigned char { PAR = 0, FIXED = 1, VAR = 2 };
 
-inline std::ostream& operator<<(std::ostream& os, BoolArgState state) {
-  switch (state) {
-    case BoolArgState::PAR_FALSE:
-      return os << "BoolArgState::PAR_FALSE";
-    case BoolArgState::PAR_TRUE:
-      return os << "BoolArgState::PAR_TRUE";
-    case BoolArgState::FIXED_FALSE:
-      return os << "BoolArgState::FIXED_FALSE";
-    case BoolArgState::FIXED_TRUE:
-      return os << "BoolArgState::FIXED_TRUE";
-    case BoolArgState::VAR:
-    default:
-      return os << "BoolArgState::VAR";
-  }
-}
+std::ostream& operator<<(std::ostream& os, BoolArgState state);
 
-inline std::ostream& operator<<(std::ostream& os, IntArgState state) {
-  switch (state) {
-    case IntArgState::PAR:
-      return os << "IntArgState::PAR";
-    case IntArgState::FIXED:
-      return os << "IntArgState::FIXED";
-    case IntArgState::VAR:
-    default:
-      return os << "IntArgState::VAR";
-  }
-}
+std::ostream& operator<<(std::ostream& os, IntArgState state);
 
 }  // namespace atlantis::testing
 

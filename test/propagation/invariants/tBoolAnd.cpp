@@ -18,11 +18,11 @@ class BoolAndTest : public InvariantTest {
   std::uniform_int_distribution<Int> xDist;
   std::uniform_int_distribution<Int> yDist;
 
-  [[nodiscard]] Int computeOutput(Timestamp ts) const {
+  [[nodiscard]] Int computeOutput(const Timestamp ts) const {
     return computeOutput(_solver->value(ts, x), _solver->value(ts, y));
   }
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     return computeOutput(
         committedValue ? _solver->committedValue(x) : _solver->currentValue(x),
         committedValue ? _solver->committedValue(y) : _solver->currentValue(y));
@@ -240,26 +240,26 @@ class MockBoolAnd : public BoolAnd {
     registered = true;
     BoolAnd::registerVars();
   }
-  explicit MockBoolAnd(SolverBase& solver, VarViewId output, VarViewId x,
-                       VarViewId y)
+  explicit MockBoolAnd(SolverBase& solver, const VarViewId output,
+                       const VarViewId x, const VarViewId y)
       : BoolAnd(solver, output, x, y) {
     EXPECT_TRUE(output.isVar());
 
-    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, recompute).WillByDefault([this](const Timestamp timestamp) {
       return BoolAnd::recompute(timestamp);
     });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, nextInput).WillByDefault([this](const Timestamp timestamp) {
       return BoolAnd::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp) {
+        .WillByDefault([this](const Timestamp timestamp) {
           BoolAnd::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+        .WillByDefault([this](const Timestamp timestamp, const LocalId id) {
           BoolAnd::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, commit).WillByDefault([this](Timestamp const timestamp) {
       BoolAnd::commit(timestamp);
     });
   }

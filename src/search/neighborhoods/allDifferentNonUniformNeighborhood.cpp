@@ -12,7 +12,7 @@
 namespace atlantis::search::neighborhoods {
 
 AllDifferentNonUniformNeighborhood::AllDifferentNonUniformNeighborhood(
-    std::vector<SearchVar>&& vars, Int domainLb, Int domainUb)
+    std::vector<SearchVar>&& vars, const Int domainLb, const Int domainUb)
     : _vars(std::move(vars)),
       _varIndices(_vars.size()),
       _domainOffset(domainLb),
@@ -37,7 +37,7 @@ AllDifferentNonUniformNeighborhood::AllDifferentNonUniformNeighborhood(
 }
 
 static bool bipartiteMatching(
-    size_t varIndex, const std::vector<std::vector<size_t>>& forwardArcs,
+    const size_t varIndex, const std::vector<std::vector<size_t>>& forwardArcs,
     std::vector<size_t>& matching, std::vector<bool>& visited) {
   assert(varIndex < forwardArcs.size());
   assert(matching.size() == visited.size());
@@ -109,7 +109,7 @@ void AllDifferentNonUniformNeighborhood::initialize(RandomProvider& random,
     }
     assert(std::ranges::all_of(
         varVisited.begin(), varVisited.end(),
-        [&](size_t varIndex) { return varVisited.at(varIndex); }));
+        [&](const size_t varIndex) { return varVisited.at(varIndex); }));
   }
 #endif
   for (size_t valueIndex = 0; valueIndex < _valueIndexToVarIndex.size();
@@ -172,8 +172,8 @@ size_t AllDifferentNonUniformNeighborhood::randomMove(RandomProvider& random,
 }
 
 bool AllDifferentNonUniformNeighborhood::canSwap(
-    const Assignment& assignment, size_t var1Index,
-    size_t value2Index) const noexcept {
+    const Assignment& assignment, const size_t var1Index,
+    const size_t value2Index) const noexcept {
   // var 1:
   assert(var1Index < _vars.size());
   assert(_valueIndexToVarIndex.at(toValueIndex(assignment.committedValue(
@@ -199,8 +199,7 @@ bool AllDifferentNonUniformNeighborhood::canSwap(
 }
 
 size_t AllDifferentNonUniformNeighborhood::swapValues(Assignment& assignment,
-                                                      size_t var1Index,
-                                                      size_t value2Index) {
+                                                      const size_t var1Index, const size_t value2Index) {
   // var 1:
   assert(var1Index < _vars.size());
   const auto var1 = _vars[var1Index].solverId();
@@ -234,8 +233,7 @@ size_t AllDifferentNonUniformNeighborhood::swapValues(Assignment& assignment,
 }
 
 size_t AllDifferentNonUniformNeighborhood::assignValue(Assignment& assignment,
-                                                       size_t varIndex,
-                                                       size_t newValueIndex) {
+                                                       const size_t varIndex, const size_t newValueIndex) {
   assert(newValueIndex < _valueIndexToVarIndex.size());
   assert(_valueIndexToVarIndex[newValueIndex] == _vars.size());
   assert(varIndex < _vars.size());

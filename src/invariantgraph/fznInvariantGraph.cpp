@@ -89,7 +89,7 @@ DomainType domainType(const fznparser::IntVar& var) {
   return domainType(var.annotations(), defaultDomainType);
 }
 
-FznInvariantGraph::FznInvariantGraph(bool breakDynamicCycles)
+FznInvariantGraph::FznInvariantGraph(const bool breakDynamicCycles)
     : InvariantGraph(breakDynamicCycles) {}
 
 void FznInvariantGraph::build(const fznparser::Model& model) {
@@ -360,7 +360,7 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
 
   assert(std::ranges::all_of(constraintIsProcessed.begin(),
                              constraintIsProcessed.end(),
-                             [](bool b) { return b; }));
+                             [](const bool b) { return b; }));
 
   if (model.hasObjective()) {
     if (std::holds_alternative<std::shared_ptr<fznparser::BoolVar>>(

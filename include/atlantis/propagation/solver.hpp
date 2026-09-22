@@ -74,9 +74,9 @@ class Solver : public SolverBase {
   void setValue(Timestamp, VarId, Int val);
   void setValue(Timestamp, VarViewId, Int val);
 
-  void setValue(VarId id, Int val) { setValue(_currentTimestamp, id, val); }
+  void setValue(VarId id, Int val);
 
-  void setValue(VarViewId id, Int val) { setValue(_currentTimestamp, id, val); }
+  void setValue(VarViewId id, Int val);
 
   void beginProbe();
   void endProbe();

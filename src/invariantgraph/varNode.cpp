@@ -18,7 +18,7 @@
 
 namespace atlantis::invariantgraph {
 
-std::string toString(VarNodeId varNodeId) {
+std::string toString(const VarNodeId varNodeId) {
   return "ATLANTIS_INTRODUCED_" + std::to_string(varNodeId);
 }
 
@@ -84,7 +84,7 @@ void VarNode::setConstraintVarId(const ConstraintVarId constraintVarId) {
   _constraintSolverId = constraintVarId;
 }
 
-void VarNode::replaceDomain(const std::shared_ptr<SearchDomain> newDomain) {
+void VarNode::replaceDomain(const std::shared_ptr<SearchDomain>& newDomain) {
   _domain = newDomain;
 }
 
@@ -105,7 +105,7 @@ bool VarNode::isIntVar() const noexcept { return _isIntVar; }
 
 bool VarNode::isViolationVar() const noexcept { return _isViolationVar; }
 
-void VarNode::setIsViolationVar(bool isViolVar) {
+void VarNode::setIsViolationVar(const bool isViolVar) {
   if (_isIntVar && isViolVar) {
     throw std::runtime_error("Cannot set violation var on IntVar");
   }
@@ -266,23 +266,23 @@ void VarNode::tightenDomainType(const DomainType domainType) {
   _domainType = std::max(_domainType, domainType);
 }
 
-void VarNode::setDomainType(DomainType domainType) { _domainType = domainType; }
+void VarNode::setDomainType(const DomainType domainType) { _domainType = domainType; }
 
-bool VarNode::inDomain(Int val) const {
+bool VarNode::inDomain(const Int val) const {
   if (!isIntVar()) {
     throw std::runtime_error("inDomain(Int) called on BoolVar");
   }
   return _domain->contains(val);
 }
 
-bool VarNode::inDomain(bool val) const {
+bool VarNode::inDomain(const bool val) const {
   if (isIntVar()) {
     throw std::runtime_error("inDomain(bool) called on IntVar");
   }
   return val ? lowerBound() == 0 : upperBound() > 0;
 }
 
-void VarNode::removeValue(Int val, bool tightenDomainState) {
+void VarNode::removeValue(const Int val, const bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValue(Int) called on BoolVar");
   }
@@ -296,7 +296,7 @@ void VarNode::removeValue(Int val, bool tightenDomainState) {
   }
 }
 
-void VarNode::removeValuesBelow(Int newLowerBound, bool tightenDomainState) {
+void VarNode::removeValuesBelow(const Int newLowerBound, const bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesBelow(Int) called on BoolVar");
   }
@@ -307,7 +307,7 @@ void VarNode::removeValuesBelow(Int newLowerBound, bool tightenDomainState) {
   }
 }
 
-void VarNode::removeValuesAbove(Int newUpperBound, bool tightenDomainState) {
+void VarNode::removeValuesAbove(const Int newUpperBound, const bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesAbove(Int) called on BoolVar");
   }
@@ -319,7 +319,7 @@ void VarNode::removeValuesAbove(Int newUpperBound, bool tightenDomainState) {
 }
 
 void VarNode::removeValues(const SortedUniqueVector& values,
-                           bool tightenDomainState) {
+                           const bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
@@ -338,7 +338,7 @@ void VarNode::removeValues(const SortedUniqueVector& values,
 }
 
 void VarNode::removeAllValuesExcept(const SortedUniqueVector& values,
-                                    bool tightenDomainState) {
+                                    const bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error(
         "removeValues(const std::vector<Int>&) called on BoolVar");
@@ -353,7 +353,7 @@ void VarNode::removeAllValuesExcept(const SortedUniqueVector& values,
   }
 }
 
-void VarNode::fixToValue(Int val, bool tightenDomainState) {
+void VarNode::fixToValue(const Int val, const bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error("fixToValue(Int) called on BoolVar");
   }
@@ -363,9 +363,9 @@ void VarNode::fixToValue(Int val, bool tightenDomainState) {
   }
 }
 
-void VarNode::removeValue(bool val) { return fixToValue(!val); }
+void VarNode::removeValue(const bool val) { return fixToValue(!val); }
 
-void VarNode::fixToValue(bool val) {
+void VarNode::fixToValue(const bool val) {
   if (isIntVar()) {
     throw std::runtime_error("fixToValue(bool) called on IntVar");
   }
@@ -373,7 +373,7 @@ void VarNode::fixToValue(bool val) {
   tightenDomainType(DomainType::DOM_FIXED);
 }
 
-std::vector<DomainEntry> VarNode::constrainedDomain(Int lb, Int ub) const {
+std::vector<DomainEntry> VarNode::constrainedDomain(const Int lb, const Int ub) const {
   return _domain->createDomainEntries(lb, ub);
 }
 
@@ -402,8 +402,8 @@ InvariantNodeId VarNode::outputOf() const {
   return *_outputOf.begin();
 }
 
-void VarNode::markAsInputFor(InvariantNodeId listeningInvNodeId,
-                             bool isStaticInput) {
+void VarNode::markAsInputFor(const InvariantNodeId listeningInvNodeId,
+                             const bool isStaticInput) {
   if (isStaticInput) {
     _staticInputTo.emplace_back(listeningInvNodeId);
   } else {
@@ -415,8 +415,8 @@ void VarNode::unmarkOutputTo(const InvariantNodeId definingInvNodeId) {
   _outputOf.erase(definingInvNodeId);
 }
 
-void VarNode::unmarkAsInputFor(InvariantNodeId listeningInvariant,
-                               bool isStaticInput) {
+void VarNode::unmarkAsInputFor(const InvariantNodeId listeningInvariant,
+                               const bool isStaticInput) {
   if (isStaticInput) {
     for (Int i = static_cast<Int>(_staticInputTo.size()) - 1; i >= 0; --i) {
       if (_staticInputTo[i] == listeningInvariant) {

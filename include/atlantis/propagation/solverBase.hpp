@@ -24,13 +24,11 @@ class SolverBase {
   Store _store;
 
   void incValue(Timestamp, VarId, Int inc);
-  void incValue(VarId id, Int val) { incValue(_currentTimestamp, id, val); }
+  void incValue(VarId id, Int val);
 
   void updateValue(Timestamp, VarId, Int val);
 
-  [[gnu::always_inline]] void updateValue(VarId id, Int val) {
-    updateValue(_currentTimestamp, id, val);
-  }
+  [[gnu::always_inline]] void updateValue(VarId id, Int val);
 
   virtual void registerDefinedVar(VarId definedVarId,
                                   InvariantId invariantId) = 0;

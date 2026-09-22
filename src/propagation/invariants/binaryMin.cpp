@@ -6,11 +6,11 @@
 
 namespace atlantis::propagation {
 
-BinaryMin::BinaryMin(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
+BinaryMin::BinaryMin(SolverBase& solver, const VarId output, const VarViewId x, const VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
 
-BinaryMin::BinaryMin(SolverBase& solver, VarViewId output, VarViewId x,
-                     VarViewId y)
+BinaryMin::BinaryMin(SolverBase& solver, const VarViewId output, const VarViewId x,
+                     const VarViewId y)
     : BinaryMin(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
@@ -22,18 +22,18 @@ void BinaryMin::registerVars() {
   registerDefinedVar(_output);
 }
 
-void BinaryMin::updateBounds(bool widenOnly) {
+void BinaryMin::updateBounds(const bool widenOnly) {
   _solver.updateBounds(
       _output, std::min(_solver.lowerBound(_x), _solver.lowerBound(_y)),
       std::min(_solver.upperBound(_x), _solver.upperBound(_y)), widenOnly);
 }
 
-void BinaryMin::recompute(Timestamp ts) {
+void BinaryMin::recompute(const Timestamp ts) {
   updateValue(ts, _output,
               std::min(_solver.value(ts, _x), _solver.value(ts, _y)));
 }
 
-VarViewId BinaryMin::nextInput(Timestamp ts) {
+VarViewId BinaryMin::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
@@ -44,7 +44,7 @@ VarViewId BinaryMin::nextInput(Timestamp ts) {
   }
 }
 
-void BinaryMin::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void BinaryMin::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 
-void BinaryMin::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void BinaryMin::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
 }  // namespace atlantis::propagation

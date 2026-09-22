@@ -110,7 +110,7 @@ const std::vector<VarNodeId>& InvariantNode::dynamicInputVarNodeIds() const {
   return _dynamicInputVarNodeIds;
 }
 
-void InvariantNode::init(InvariantNodeId id) {
+void InvariantNode::init(const InvariantNodeId id) {
   if (_state != InvariantNodeState::UNINITIALIZED) {
     return;
   }
@@ -133,7 +133,7 @@ propagation::VarViewId InvariantNode::violationVarId(
   return propagation::VAR_VIEW_NULL_ID;
 }
 
-void InvariantNode::eraseStaticInputVarNode(size_t index) {
+void InvariantNode::eraseStaticInputVarNode(const size_t index) {
   if (index >= _staticInputVarNodeIds.size()) {
     throw InvariantGraphException(
         "InvariantNode::eraseStaticInputVarNode: index out of bounds");
@@ -142,7 +142,7 @@ void InvariantNode::eraseStaticInputVarNode(size_t index) {
                                static_cast<Int>(index));
 }
 
-void InvariantNode::eraseDynamicInputVarNode(size_t index) {
+void InvariantNode::eraseDynamicInputVarNode(const size_t index) {
   if (index >= _dynamicInputVarNodeIds.size()) {
     throw InvariantGraphException(
         "InvariantNode::eraseDynamicInputVarNode: index out of bounds");
@@ -164,8 +164,8 @@ void InvariantNode::deactivate() {
   setState(InvariantNodeState::SUBSUMED);
 }
 
-void InvariantNode::replaceDefinedVar(VarNodeId oldOutputVarNodeId,
-                                      VarNodeId newOutputVarNodeId) {
+void InvariantNode::replaceDefinedVar(const VarNodeId oldOutputVarNodeId,
+                                      const VarNodeId newOutputVarNodeId) {
   // Replace all occurrences:
   for (auto& _outputVarNodeId : _outputVarNodeIds) {
     if (_outputVarNodeId == oldOutputVarNodeId) {
@@ -176,7 +176,7 @@ void InvariantNode::replaceDefinedVar(VarNodeId oldOutputVarNodeId,
   _invariantGraph.varNode(newOutputVarNodeId).markOutputTo(_id);
 }
 
-void InvariantNode::removeStaticInputVarNode(VarNodeId retrieveVarNodeId) {
+void InvariantNode::removeStaticInputVarNode(const VarNodeId retrieveVarNodeId) {
   // remove all occurrences:
   for (Int i = static_cast<Int>(_staticInputVarNodeIds.size()) - 1; i >= 0;
        --i) {
@@ -187,7 +187,7 @@ void InvariantNode::removeStaticInputVarNode(VarNodeId retrieveVarNodeId) {
   _invariantGraph.varNode(retrieveVarNodeId).unmarkAsInputFor(_id, true);
 }
 
-void InvariantNode::removeStaticInputAtIndex(size_t index) {
+void InvariantNode::removeStaticInputAtIndex(const size_t index) {
   // remove all occurrences:
   assert(index < _staticInputVarNodeIds.size());
   const VarNodeId vId = _staticInputVarNodeIds[index];
@@ -200,7 +200,7 @@ void InvariantNode::removeStaticInputAtIndex(size_t index) {
   }
 }
 
-void InvariantNode::removeDynamicInputVarNode(VarNodeId retrieveVarNodeId) {
+void InvariantNode::removeDynamicInputVarNode(const VarNodeId retrieveVarNodeId) {
   // remove all occurrences:
   for (Int i = static_cast<Int>(_dynamicInputVarNodeIds.size()) - 1; i >= 0;
        --i) {
@@ -211,7 +211,7 @@ void InvariantNode::removeDynamicInputVarNode(VarNodeId retrieveVarNodeId) {
   _invariantGraph.varNode(retrieveVarNodeId).unmarkAsInputFor(_id, false);
 }
 
-void InvariantNode::removeDynamicInputAtIndex(size_t index) {
+void InvariantNode::removeDynamicInputAtIndex(const size_t index) {
   // remove all occurrences:
   assert(index < _dynamicInputVarNodeIds.size());
   const VarNodeId vId = _dynamicInputVarNodeIds[index];
@@ -257,8 +257,8 @@ void InvariantNode::removeOutputAtIndex(const size_t index) {
   }
 }
 
-void InvariantNode::replaceStaticInputVarNode(VarNodeId oldInputVarNodeId,
-                                              VarNodeId newInputVarNodeId) {
+void InvariantNode::replaceStaticInputVarNode(const VarNodeId oldInputVarNodeId,
+                                              const VarNodeId newInputVarNodeId) {
   // Replace all occurrences:
   bool wasInput = false;
   for (auto& sVarId : _staticInputVarNodeIds) {
@@ -270,15 +270,15 @@ void InvariantNode::replaceStaticInputVarNode(VarNodeId oldInputVarNodeId,
   assert(wasInput ==
          std::ranges::any_of(
              _invariantGraph.varNode(oldInputVarNodeId).staticInputTo(),
-             [&](InvariantNodeId invId) { return invId == _id; }));
+             [&](const InvariantNodeId invId) { return invId == _id; }));
   if (wasInput) {
     _invariantGraph.varNode(oldInputVarNodeId).unmarkAsInputFor(_id, true);
     _invariantGraph.varNode(newInputVarNodeId).markAsInputFor(_id, true);
   }
 }
 
-void InvariantNode::replaceDynamicInputVarNode(VarNodeId oldInputVarNodeId,
-                                               VarNodeId newInputVarNodeId) {
+void InvariantNode::replaceDynamicInputVarNode(const VarNodeId oldInputVarNodeId,
+                                               const VarNodeId newInputVarNodeId) {
   // Replace all occurrences:
   bool wasInput = false;
   for (auto& dVarId : _dynamicInputVarNodeIds) {
@@ -290,7 +290,7 @@ void InvariantNode::replaceDynamicInputVarNode(VarNodeId oldInputVarNodeId,
   assert(wasInput ==
          std::ranges::any_of(
              _invariantGraph.varNode(oldInputVarNodeId).dynamicInputTo(),
-             [&](InvariantNodeId invId) { return invId == _id; }));
+             [&](const InvariantNodeId invId) { return invId == _id; }));
   if (wasInput) {
     _invariantGraph.varNode(oldInputVarNodeId).unmarkAsInputFor(_id, false);
     _invariantGraph.varNode(newInputVarNodeId).markAsInputFor(_id, false);
@@ -347,7 +347,7 @@ InvariantNode::splitOutputVarNodes() {
 }
 
 propagation::VarViewId InvariantNode::makeSolverVar(
-    VarNodeId varNodeId, Int initialValue, propagation::SolverBase& solver,
+    const VarNodeId varNodeId, const Int initialValue, propagation::SolverBase& solver,
     SolverMapping& mapping) const {
   const auto& varNode = _invariantGraph.varNodeConst(varNodeId);
   if (mapping.solverId(varNodeId) == propagation::NULL_ID) {
@@ -361,12 +361,12 @@ propagation::VarViewId InvariantNode::makeSolverVar(
 }
 
 propagation::VarViewId InvariantNode::makeSolverVar(
-    VarNodeId varNodeId, propagation::SolverBase& solver,
+    const VarNodeId varNodeId, propagation::SolverBase& solver,
     SolverMapping& mapping) const {
   return makeSolverVar(varNodeId, 0, solver, mapping);
 }
 
-void InvariantNode::markOutputTo(VarNodeId varNodeId, bool registerHere) {
+void InvariantNode::markOutputTo(const VarNodeId varNodeId, const bool registerHere) {
   _invariantGraph.varNode(varNodeId).markOutputTo(_id);
 
   if (registerHere) {
@@ -374,7 +374,7 @@ void InvariantNode::markOutputTo(VarNodeId varNodeId, bool registerHere) {
   }
 }
 
-void InvariantNode::markStaticInputTo(VarNodeId varNodeId, bool registerHere) {
+void InvariantNode::markStaticInputTo(const VarNodeId varNodeId, const bool registerHere) {
   _invariantGraph.varNode(varNodeId).markAsInputFor(_id, true);
 
   if (registerHere) {
@@ -382,7 +382,7 @@ void InvariantNode::markStaticInputTo(VarNodeId varNodeId, bool registerHere) {
   }
 }
 
-void InvariantNode::markDynamicInputTo(VarNodeId varNodeId, bool registerHere) {
+void InvariantNode::markDynamicInputTo(const VarNodeId varNodeId, const bool registerHere) {
   _invariantGraph.varNode(varNodeId).markAsInputFor(_id, false);
 
   if (registerHere) {

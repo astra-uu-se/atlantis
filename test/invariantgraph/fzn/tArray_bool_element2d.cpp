@@ -161,7 +161,7 @@ class array_bool_element2dTest : public FznTestBase {
     return !isFixed(rowIndex) || !isFixed(colIndex);
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (!isFixed(rowIndex) && randBool()) {
       changeValue(rowIndex, committedValue);
     }

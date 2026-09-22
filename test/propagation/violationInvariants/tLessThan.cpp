@@ -18,17 +18,17 @@ class LessThanTest : public InvariantTest {
   std::uniform_int_distribution<Int> xDist;
   std::uniform_int_distribution<Int> yDist;
 
-  [[nodiscard]] Int computeOutput(Timestamp ts) const {
+  [[nodiscard]] Int computeOutput(const Timestamp ts) const {
     return computeOutput(_solver->value(ts, x), _solver->value(ts, y));
   }
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     return computeOutput(
         committedValue ? _solver->committedValue(x) : _solver->currentValue(x),
         committedValue ? _solver->committedValue(y) : _solver->currentValue(y));
   }
 
-  static Int computeOutput(Int xVal, Int yVal) {
+  static Int computeOutput(const Int xVal, const Int yVal) {
     if (xVal < yVal) {
       return 0;
     }
@@ -203,13 +203,13 @@ RC_GTEST_FIXTURE_PROP(LessThanTest, rapidcheck, ()) {
   constexpr Int lb = Int{-1} << 31;
   constexpr Int ub = Int{1} << 31;
 
-  const auto xBounds = genBounds(lb, ub);
-  xLb = xBounds.first;
-  xUb = xBounds.second;
+  const auto [xFst, xSnd] = genBounds(lb, ub);
+  xLb = xFst;
+  xUb = xSnd;
 
-  const auto yBounds = genBounds(lb, ub);
-  yLb = yBounds.first;
-  yUb = yBounds.second;
+  const auto [yFst, ySnd] = genBounds(lb, ub);
+  yLb = yFst;
+  yUb = ySnd;
 
   generate();
 
@@ -255,26 +255,26 @@ class MockLessThan : public LessThan {
     registered = true;
     LessThan::registerVars();
   }
-  explicit MockLessThan(SolverBase& solver, VarViewId outputVar, VarViewId x,
-                        VarViewId y)
+  explicit MockLessThan(SolverBase& solver, const VarViewId outputVar, const VarViewId x,
+                        const VarViewId y)
       : LessThan(solver, outputVar, x, y) {
     EXPECT_TRUE(outputVar.isVar());
 
-    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, recompute).WillByDefault([this](const Timestamp timestamp) {
       return LessThan::recompute(timestamp);
     });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, nextInput).WillByDefault([this](const Timestamp timestamp) {
       return LessThan::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp) {
+        .WillByDefault([this](const Timestamp timestamp) {
           LessThan::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+        .WillByDefault([this](const Timestamp timestamp, const LocalId id) {
           LessThan::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, commit).WillByDefault([this](const Timestamp timestamp) {
       LessThan::commit(timestamp);
     });
   }

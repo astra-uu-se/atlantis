@@ -164,7 +164,7 @@ class TSPTW : public ::benchmark::Fixture {
     violations.clear();
   }
 
-  [[nodiscard]] bool isTourValid(bool committedValue) const {
+  [[nodiscard]] bool isTourValid(const bool committedValue) const {
     std::vector<bool> visited(n + 1, false);
     // n is the dummy location
     Int cur = n;

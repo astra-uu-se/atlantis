@@ -70,7 +70,7 @@ class int_lin_neTest : public FznTestBase {
     return {lb, ub};
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     Int sum = 0;
     for (size_t i = 0; i < coeffs.size(); ++i) {
       if (coeffs.at(i) != 0) {
@@ -167,7 +167,7 @@ class int_lin_neTest : public FznTestBase {
     });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : inputs) {
       if (varId(input) != propagation::NULL_ID && randBool()) {
         changeValue(input, committedValue);

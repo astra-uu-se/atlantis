@@ -12,7 +12,7 @@
 
 namespace atlantis::propagation {
 
-inline bool all_in_range(size_t start, size_t stop,
+inline bool all_in_range(const size_t start, const size_t stop,
                          std::function<bool(size_t)>&& predicate) {
   std::vector<size_t> vec(stop - start);
   for (size_t i = 0; i < stop - start; ++i) {
@@ -79,13 +79,13 @@ static std::vector<std::vector<VarId>> SCC(const PropagationGraph& graph) {
               components);
     }
   }
-  assert(std::ranges::all_of(discoverTime, [&](Int i) { return i >= 0; }));
+  assert(std::ranges::all_of(discoverTime, [&](const Int i) { return i >= 0; }));
   return components;
 }
 
 static void partitionIntoLayersUtil(
     const PropagationGraph& graph,
-    const std::vector<std::vector<VarId>>& components, VarId varId,
+    const std::vector<std::vector<VarId>>& components, const VarId varId,
     const std::vector<size_t>& componentOfVar, std::vector<bool>& visited,
     std::vector<VarId>& layerOfVar, std::vector<bool>& layerHasSCC) {
   visited[varId] = true;
@@ -205,7 +205,7 @@ static std::vector<bool> partitionIntoLayersUsingSCC(
 
 static bool hasStaticCycle(const PropagationGraph& graph,
                            const std::vector<VarId>& component,
-                           size_t componentIndex,
+                           const size_t componentIndex,
                            const std::vector<size_t>& componentOfVar) {
   std::vector<VarId> stack;
   std::vector<Int> discoverTime(graph.numVars(), -1);
@@ -245,7 +245,7 @@ static bool hasStaticCycle(const PropagationGraph& graph,
 
 static bool hasUndeterminableDynamicCycle(
     const PropagationGraph& graph, const std::vector<VarId>& component,
-    size_t componentIndex, const std::vector<size_t>& componentOfVar) {
+    const size_t componentIndex, const std::vector<size_t>& componentOfVar) {
   for (const VarId outputId : component) {
     const auto defInv = graph.definingInvariant(outputId);
     if (defInv == NULL_ID || !graph.isDynamicInvariant(defInv)) {
@@ -392,217 +392,6 @@ void topologicallyOrderUtil(
   inFrontier[index] = false;
 }
 
-bool PropagationGraph::PriorityCmp::operator()(const VarId left,
-                                               const VarId right) const {
-  return graph.varPosition(left) > graph.varPosition(right);
-}
-PropagationGraph::PropagationGraph(const Store& store, size_t expectedSize)
-    : _store(store) {
-  _definingInvariant.reserve(expectedSize);
-  _varsDefinedByInvariant.reserve(expectedSize);
-  _inputVars.reserve(expectedSize);
-  _isDynamicInvariant.reserve(expectedSize);
-  _listeningInvariantData.reserve(expectedSize);
-  _varLayerIndex.reserve(expectedSize);
-  _topologicalNumber.reserve(expectedSize);
-}
-
-void PropagationGraph::registerInvariant(
-    [[maybe_unused]] InvariantId invariantId) {
-  // Everything must be registered in sequence.
-  assert(invariantId == _varsDefinedByInvariant.size());
-  assert(invariantId == _isDynamicInvariant.size());
-  assert(invariantId == _inputVars.size());
-
-  _varsDefinedByInvariant.emplace_back();
-  _isDynamicInvariant.emplace_back(false);
-  _inputVars.emplace_back();
-  ++_numInvariants;
-}
-
-void PropagationGraph::registerVar([[maybe_unused]] VarId id) {
-  assert(id == _definingInvariant.size());
-  assert(id == _listeningInvariantData.size());
-  assert(id == _varLayerIndex.size());
-  assert(id == _topologicalNumber.size());
-
-  _definingInvariant.emplace_back(NULL_ID);
-  _listeningInvariantData.emplace_back();
-  _varLayerIndex.emplace_back();
-  _topologicalNumber.emplace_back();
-  ++_numVars;
-}
-
-void PropagationGraph::registerInvariantInput(InvariantId invariantId,
-                                              VarId inputVarId, LocalId localId,
-                                              bool isDynamicInput) {
-  assert(invariantId != NULL_ID && inputVarId != NULL_ID);
-  assert(inputVarId < _definingInvariant.size());
-  if (_definingInvariant[inputVarId] == invariantId) {
-    return;
-  }
-  assert(invariantId < _isDynamicInvariant.size());
-  _isDynamicInvariant[invariantId] =
-      _isDynamicInvariant[invariantId] || isDynamicInput;
-
-  assert(inputVarId < _listeningInvariantData.size());
-  _listeningInvariantData[inputVarId].emplace_back(invariantId, localId);
-
-  assert(invariantId < _inputVars.size());
-  _inputVars[invariantId].emplace_back(inputVarId, isDynamicInput);
-}
-
-void PropagationGraph::registerDefinedVar(VarId varId,
-                                          InvariantId invariantId) {
-  assert(varId != NULL_ID && invariantId != NULL_ID);
-  if (_definingInvariant.at(varId) != NULL_ID) {
-    throw VarAlreadyDefinedException(
-        "Variable " + std::to_string(varId) + " already defined by invariant " +
-        std::to_string(_definingInvariant.at(varId)));
-  }
-  size_t index = _listeningInvariantData[varId].size();
-  for (size_t i = 0; i < _listeningInvariantData[varId].size(); ++i) {
-    if (_listeningInvariantData[varId][i].invariantId == invariantId) {
-      index = i;
-      break;
-    }
-  }
-  if (index < _listeningInvariantData[varId].size()) {
-    _listeningInvariantData[varId].erase(
-        _listeningInvariantData[varId].begin() + static_cast<Int>(index));
-    assert(std::ranges::all_of(_listeningInvariantData[varId].begin(),
-                               _listeningInvariantData[varId].end(),
-                               [&](const ListeningInvariantData& data) {
-                                 return data.invariantId != invariantId;
-                               }));
-  }
-  _definingInvariant[varId] = invariantId;
-  _varsDefinedByInvariant[invariantId].push_back(varId);
-}
-void PropagationGraph::topologicallyOrder(const Timestamp ts,
-                                          const size_t layer) {
-  topologicallyOrder(ts, layer, true);
-}
-size_t PropagationGraph::numVars() const {
-  return _numVars;  // this ignores null var
-}
-size_t PropagationGraph::numInvariants() const {
-  return _numInvariants;  // this ignores null invariant
-}
-bool PropagationGraph::isEvaluationVar(const VarId id) const {
-  assert(id < _isEvaluationVar.size());
-  return _isEvaluationVar[id];
-}
-bool PropagationGraph::isSearchVar(const VarId id) const {
-  assert(id < _isSearchVar.size());
-  return _isSearchVar.at(id);
-}
-bool PropagationGraph::isDynamicInvariant(InvariantId id) const {
-  assert(id < _isDynamicInvariant.size());
-  return _isDynamicInvariant[id];
-}
-InvariantId PropagationGraph::definingInvariant(VarId id) const {
-  // Returns NULL_ID if id is a search variable (not defined by an invariant)
-  return _definingInvariant.at(id);
-}
-const std::vector<VarId>& PropagationGraph::varsDefinedBy(
-    const InvariantId invariantId) const {
-  return _varsDefinedByInvariant.at(invariantId);
-}
-const std::vector<PropagationGraph::ListeningInvariantData>&
-PropagationGraph::listeningInvariantData(const VarId id) const {
-  return _listeningInvariantData.at(id);
-}
-const std::vector<std::pair<VarId, bool>>& PropagationGraph::inputVars(
-    const InvariantId invariantId) const {
-  return _inputVars.at(invariantId);
-}
-VarId PropagationGraph::dynamicInputVar(
-    const Timestamp ts, const InvariantId invariantId) const noexcept {
-  return _store.dynamicInputVar(ts, invariantId);
-}
-const std::vector<VarId>& PropagationGraph::searchVars() const {
-  return _searchVars;
-}
-const std::vector<VarId>& PropagationGraph::evaluationVars() const {
-  return _evaluationVars;
-}
-void PropagationGraph::clearPropagationQueue() {
-  while (!_propagationQueue.empty()) {
-    _propagationQueue.pop();
-  }
-}
-bool PropagationGraph::propagationQueueEmpty() const {
-  return _propagationQueue.empty();
-}
-VarId PropagationGraph::dequeuePropagationQueue() {
-  const VarId id = _propagationQueue.top();
-  _propagationQueue.pop();
-  return id;
-}
-bool PropagationGraph::hasDynamicCycle() const noexcept {
-  return _hasDynamicCycle;
-}
-bool PropagationGraph::hasDynamicCycle(const size_t layer) const {
-  assert(layer < _layerHasDynamicCycle.size());
-  return _layerHasDynamicCycle[layer];
-}
-size_t PropagationGraph::numLayers() const noexcept {
-  return _varsInLayer.size();
-}
-size_t PropagationGraph::numVarsInLayer(const size_t layer) const noexcept {
-  assert(layer < numLayers());
-  return _varsInLayer[layer].size();
-}
-const std::vector<VarId>& PropagationGraph::varsInLayer(
-    const size_t layer) const noexcept {
-  return _varsInLayer[layer];
-}
-size_t PropagationGraph::varLayer(const VarId id) const {
-  return _varLayerIndex.at(id).layer;
-}
-size_t PropagationGraph::invariantLayer(const InvariantId invariantId) const {
-  assert(!varsDefinedBy(invariantId).empty());
-  return _varLayerIndex.at(varsDefinedBy(invariantId).front()).layer;
-}
-size_t PropagationGraph::varPosition(const VarId id) const {
-  return _topologicalNumber[id];
-}
-size_t PropagationGraph::invariantPosition(
-    const InvariantId invariantId) const {
-  assert(!_varsDefinedByInvariant.at(invariantId).empty());
-  return _topologicalNumber.at(_varsDefinedByInvariant.at(invariantId).front());
-}
-void PropagationGraph::enqueuePropagationQueue(const VarId id) {
-  _propagationQueue.push(id);
-}
-
-void PropagationGraph::close(Timestamp ts) {
-  _isSearchVar.resize(numVars());
-  _isEvaluationVar.resize(numVars());
-  _evaluationVars.clear();
-  _searchVars.clear();
-  for (size_t i = 0; i < numVars(); ++i) {
-    _isEvaluationVar[i] = (_listeningInvariantData.at(i).empty());
-    _isSearchVar[i] = (_definingInvariant.at(i) == NULL_ID);
-    if (_isEvaluationVar[i]) {
-      _evaluationVars.emplace_back(i);
-    }
-    if (_isSearchVar[i]) {
-      _searchVars.emplace_back(i);
-    }
-  }
-
-  partitionIntoLayers();
-  topologicallyOrder(ts);
-  // Reset propagation queue data structure.
-
-  _propagationQueue.init();
-  for (VarId vId = 0; vId < numVars(); ++vId) {
-    _propagationQueue.initVar(vId, varPosition(vId));
-  }
-}
-
 PropagationGraph::ListeningInvariantData::ListeningInvariantData(
     const InvariantId t_invariantId, const LocalId t_localId)
     : invariantId(t_invariantId), localId(t_localId) {}
@@ -613,6 +402,7 @@ PropagationGraph::ListeningInvariantData::operator=(
   localId = other.localId;
   return *this;
 }
+
 /**
  * Computes a topological sort from a dependency graph with cycles by
  * non-deterministically ignoring one edge in each cycle.
@@ -759,8 +549,9 @@ void PropagationGraph::partitionIntoLayers() {
  * Variables that are in the same propagation layer will (most of the time)
  * share key-value.
  */
-void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
-                                          bool updatePriorityQueue) {
+void PropagationGraph::topologicallyOrder(const Timestamp ts,
+                                          const size_t layer,
+                                          const bool updatePriorityQueue) {
   assert(layer < numLayers());
   for (const VarId varId : _varsInLayer[layer]) {
     _topologicalNumber[varId] = numVars();
@@ -802,9 +593,221 @@ void PropagationGraph::topologicallyOrder(Timestamp ts, size_t layer,
   }
 }
 
-void PropagationGraph::topologicallyOrder(Timestamp ts) {
+void PropagationGraph::topologicallyOrder(const Timestamp ts) {
   for (size_t layer = 0; layer < numLayers(); ++layer) {
     topologicallyOrder(ts, layer, false);
   }
+}
+
+bool PropagationGraph::PriorityCmp::operator()(const VarId left,
+                                               const VarId right) const {
+  return graph.varPosition(left) > graph.varPosition(right);
+}
+PropagationGraph::PropagationGraph(const Store& store,
+                                   const size_t expectedSize)
+    : _store(store) {
+  _definingInvariant.reserve(expectedSize);
+  _varsDefinedByInvariant.reserve(expectedSize);
+  _inputVars.reserve(expectedSize);
+  _isDynamicInvariant.reserve(expectedSize);
+  _listeningInvariantData.reserve(expectedSize);
+  _varLayerIndex.reserve(expectedSize);
+  _topologicalNumber.reserve(expectedSize);
+}
+void PropagationGraph::close(const Timestamp ts) {
+  _isSearchVar.resize(numVars());
+  _isEvaluationVar.resize(numVars());
+  _evaluationVars.clear();
+  _searchVars.clear();
+  for (size_t i = 0; i < numVars(); ++i) {
+    _isEvaluationVar[i] = (_listeningInvariantData.at(i).empty());
+    _isSearchVar[i] = (_definingInvariant.at(i) == NULL_ID);
+    if (_isEvaluationVar[i]) {
+      _evaluationVars.emplace_back(i);
+    }
+    if (_isSearchVar[i]) {
+      _searchVars.emplace_back(i);
+    }
+  }
+
+  partitionIntoLayers();
+  topologicallyOrder(ts);
+  // Reset propagation queue data structure.
+
+  _propagationQueue.init();
+  for (VarId vId = 0; vId < numVars(); ++vId) {
+    _propagationQueue.initVar(vId, varPosition(vId));
+  }
+}
+void PropagationGraph::registerInvariant(
+    [[maybe_unused]] const InvariantId invariantId) {
+  // Everything must be registered in sequence.
+  assert(invariantId == _varsDefinedByInvariant.size());
+  assert(invariantId == _isDynamicInvariant.size());
+  assert(invariantId == _inputVars.size());
+
+  _varsDefinedByInvariant.emplace_back();
+  _isDynamicInvariant.emplace_back(false);
+  _inputVars.emplace_back();
+  ++_numInvariants;
+}
+void PropagationGraph::registerVar([[maybe_unused]] const VarId id) {
+  assert(id == _definingInvariant.size());
+  assert(id == _listeningInvariantData.size());
+  assert(id == _varLayerIndex.size());
+  assert(id == _topologicalNumber.size());
+
+  _definingInvariant.emplace_back(NULL_ID);
+  _listeningInvariantData.emplace_back();
+  _varLayerIndex.emplace_back();
+  _topologicalNumber.emplace_back();
+  ++_numVars;
+}
+void PropagationGraph::registerInvariantInput(const InvariantId invariantId,
+                                              const VarId inputVarId,
+                                              const LocalId localId,
+                                              bool isDynamicInput) {
+  assert(invariantId != NULL_ID && inputVarId != NULL_ID);
+  assert(inputVarId < _definingInvariant.size());
+  if (_definingInvariant[inputVarId] == invariantId) {
+    return;
+  }
+  assert(invariantId < _isDynamicInvariant.size());
+  _isDynamicInvariant[invariantId] =
+      _isDynamicInvariant[invariantId] || isDynamicInput;
+
+  assert(inputVarId < _listeningInvariantData.size());
+  _listeningInvariantData[inputVarId].emplace_back(invariantId, localId);
+
+  assert(invariantId < _inputVars.size());
+  _inputVars[invariantId].emplace_back(inputVarId, isDynamicInput);
+}
+void PropagationGraph::registerDefinedVar(const VarId varId,
+                                          const InvariantId invariantId) {
+  assert(varId != NULL_ID && invariantId != NULL_ID);
+  if (_definingInvariant.at(varId) != NULL_ID) {
+    throw VarAlreadyDefinedException(
+        "Variable " + std::to_string(varId) + " already defined by invariant " +
+        std::to_string(_definingInvariant.at(varId)));
+  }
+  size_t index = _listeningInvariantData[varId].size();
+  for (size_t i = 0; i < _listeningInvariantData[varId].size(); ++i) {
+    if (_listeningInvariantData[varId][i].invariantId == invariantId) {
+      index = i;
+      break;
+    }
+  }
+  if (index < _listeningInvariantData[varId].size()) {
+    _listeningInvariantData[varId].erase(
+        _listeningInvariantData[varId].begin() + static_cast<Int>(index));
+    assert(std::ranges::all_of(_listeningInvariantData[varId].begin(),
+                               _listeningInvariantData[varId].end(),
+                               [&](const ListeningInvariantData& data) {
+                                 return data.invariantId != invariantId;
+                               }));
+  }
+  _definingInvariant[varId] = invariantId;
+  _varsDefinedByInvariant[invariantId].push_back(varId);
+}
+void PropagationGraph::topologicallyOrder(const Timestamp ts,
+                                          const size_t layer) {
+  topologicallyOrder(ts, layer, true);
+}
+size_t PropagationGraph::numVars() const {
+  return _numVars;  // this ignores null var
+}
+size_t PropagationGraph::numInvariants() const {
+  return _numInvariants;  // this ignores null invariant
+}
+bool PropagationGraph::isEvaluationVar(const VarId id) const {
+  assert(id < _isEvaluationVar.size());
+  return _isEvaluationVar[id];
+}
+bool PropagationGraph::isSearchVar(const VarId id) const {
+  assert(id < _isSearchVar.size());
+  return _isSearchVar.at(id);
+}
+bool PropagationGraph::isDynamicInvariant(const InvariantId id) const {
+  assert(id < _isDynamicInvariant.size());
+  return _isDynamicInvariant[id];
+}
+InvariantId PropagationGraph::definingInvariant(const VarId id) const {
+  // Returns NULL_ID if id is a search variable (not defined by an invariant)
+  return _definingInvariant.at(id);
+}
+const std::vector<VarId>& PropagationGraph::varsDefinedBy(
+    const InvariantId invariantId) const {
+  return _varsDefinedByInvariant.at(invariantId);
+}
+const std::vector<PropagationGraph::ListeningInvariantData>&
+PropagationGraph::listeningInvariantData(const VarId id) const {
+  return _listeningInvariantData.at(id);
+}
+const std::vector<std::pair<VarId, bool>>& PropagationGraph::inputVars(
+    const InvariantId invariantId) const {
+  return _inputVars.at(invariantId);
+}
+VarId PropagationGraph::dynamicInputVar(
+    const Timestamp ts, const InvariantId invariantId) const noexcept {
+  return _store.dynamicInputVar(ts, invariantId);
+}
+const std::vector<VarId>& PropagationGraph::searchVars() const {
+  return _searchVars;
+}
+const std::vector<VarId>& PropagationGraph::evaluationVars() const {
+  return _evaluationVars;
+}
+void PropagationGraph::clearPropagationQueue() {
+  while (!_propagationQueue.empty()) {
+    _propagationQueue.pop();
+  }
+}
+bool PropagationGraph::propagationQueueEmpty() const {
+  return _propagationQueue.empty();
+}
+VarId PropagationGraph::dequeuePropagationQueue() {
+  const VarId id = _propagationQueue.top();
+  _propagationQueue.pop();
+  return id;
+}
+bool PropagationGraph::hasDynamicCycle() const noexcept {
+  return _hasDynamicCycle;
+}
+bool PropagationGraph::hasDynamicCycle(const size_t layer) const {
+  assert(layer < _layerHasDynamicCycle.size());
+  return _layerHasDynamicCycle[layer];
+}
+size_t PropagationGraph::numLayers() const noexcept {
+  return _varsInLayer.size();
+}
+size_t PropagationGraph::numVarsInLayer(const size_t layer) const noexcept {
+  assert(layer < numLayers());
+  return _varsInLayer[layer].size();
+}
+
+const std::vector<VarId>& PropagationGraph::varsInLayer(
+    const size_t layer) const noexcept {
+  return _varsInLayer[layer];
+}
+
+size_t PropagationGraph::varLayer(const VarId id) const {
+  return _varLayerIndex.at(id).layer;
+}
+size_t PropagationGraph::invariantLayer(const InvariantId invariantId) const {
+  assert(!varsDefinedBy(invariantId).empty());
+  return _varLayerIndex.at(varsDefinedBy(invariantId).front()).layer;
+}
+size_t PropagationGraph::varPosition(const VarId id) const {
+  return _topologicalNumber[id];
+}
+
+size_t PropagationGraph::invariantPosition(
+    const InvariantId invariantId) const {
+  assert(!_varsDefinedByInvariant.at(invariantId).empty());
+  return _topologicalNumber.at(_varsDefinedByInvariant.at(invariantId).front());
+}
+
+void PropagationGraph::enqueuePropagationQueue(const VarId id) {
+  _propagationQueue.push(id);
 }
 }  // namespace atlantis::propagation

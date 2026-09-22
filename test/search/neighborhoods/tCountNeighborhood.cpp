@@ -32,15 +32,15 @@ class CountNeighborhoodTest : public NeighborhoodTestBase<CountNeighborhood> {
   void expectHolds() const {
     size_t curAmount = 0;
     size_t comAmount = 0;
-    for (size_t i = 0; i < _vars.size(); ++i) {
-      const Int curVal = _assignment->currentValue(_vars.at(i).solverId());
-      EXPECT_GE(curVal, _vars.at(i).domain()->lowerBound());
-      EXPECT_LE(curVal, _vars.at(i).domain()->upperBound());
+    for (const auto & searchVar : _vars) {
+      const Int curVal = _assignment->currentValue(searchVar.solverId());
+      EXPECT_GE(curVal, searchVar.domain()->lowerBound());
+      EXPECT_LE(curVal, searchVar.domain()->upperBound());
       curAmount += curVal == needle ? 1 : 0;
 
-      const Int comVal = _assignment->committedValue(_vars.at(i).solverId());
-      EXPECT_GE(comVal, _vars.at(i).domain()->lowerBound());
-      EXPECT_LE(comVal, _vars.at(i).domain()->upperBound());
+      const Int comVal = _assignment->committedValue(searchVar.solverId());
+      EXPECT_GE(comVal, searchVar.domain()->lowerBound());
+      EXPECT_LE(comVal, searchVar.domain()->upperBound());
       comAmount += comVal == needle ? 1 : 0;
     }
 

@@ -63,7 +63,7 @@ class VarNode {
 
   void setConstraintVarId(ConstraintVarId constraintVarId);
 
-  void replaceDomain(std::shared_ptr<SearchDomain> newDomain);
+  void replaceDomain(const std::shared_ptr<SearchDomain>& newDomain);
 
   [[nodiscard]] std::shared_ptr<const SearchDomain> constDomain()
       const noexcept;

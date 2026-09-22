@@ -13,12 +13,12 @@ namespace atlantis::invariantgraph {
 
 CircuitImplicitNode::CircuitImplicitNode(InvariantGraph& graph,
                                          std::vector<VarNodeId>&& vars,
-                                         Int offset)
+                                         const Int offset)
     : ImplicitConstraintNode(graph, std::move(vars)), _offset(offset) {
   assert(InvariantNode::outputVarNodeIds().size() > 1);
 }
 
-void CircuitImplicitNode::init(InvariantNodeId id) {
+void CircuitImplicitNode::init(const InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),

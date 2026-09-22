@@ -18,7 +18,7 @@ class CountTest : public InvariantTest {
   std::uniform_int_distribution<Int> haystackVarDist;
   std::uniform_int_distribution<Int> needleVarDist;
 
-  Count& generate(bool generateInputVars = true) {
+  Count& generate(const bool generateInputVars = true) {
     haystackVarDist =
         std::uniform_int_distribution<Int>(haystackVarLb, haystackVarUb);
     needleVarDist =
@@ -47,7 +47,7 @@ class CountTest : public InvariantTest {
     return invariant;
   }
 
-  [[nodiscard]] Int computeOutput(Timestamp ts) const {
+  [[nodiscard]] Int computeOutput(const Timestamp ts) const {
     std::vector<Int> values(haystackVars.size(), 0);
     for (size_t i = 0; i < haystackVars.size(); ++i) {
       values.at(i) = _solver->value(ts, haystackVars.at(i));
@@ -55,7 +55,7 @@ class CountTest : public InvariantTest {
     return computeOutput(_solver->value(ts, needleVar), values);
   }
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     std::vector<Int> values(haystackVars.size(), 0);
     for (size_t i = 0; i < haystackVars.size(); ++i) {
       values.at(i) = committedValue
@@ -67,7 +67,7 @@ class CountTest : public InvariantTest {
                          values);
   }
 
-  static Int computeOutput(Int needleVal, const std::vector<Int>& values) {
+  static Int computeOutput(const Int needleVal, const std::vector<Int>& values) {
     Int count = 0;
     for (const Int value : values) {
       if (value == needleVal) {
@@ -316,26 +316,27 @@ class MockCount : public Count {
     registered = true;
     Count::registerVars();
   }
-  explicit MockCount(SolverBase& solver, VarViewId output, VarViewId needleVar,
+  explicit MockCount(SolverBase& solver, const VarViewId output,
+                     const VarViewId needleVar,
                      std::vector<VarViewId>&& varArray)
       : Count(solver, output, needleVar, std::move(varArray)) {
     EXPECT_TRUE(output.isVar());
 
-    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, recompute).WillByDefault([this](const Timestamp timestamp) {
       return Count::recompute(timestamp);
     });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, nextInput).WillByDefault([this](const Timestamp timestamp) {
       return Count::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp) {
+        .WillByDefault([this](const Timestamp timestamp) {
           Count::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+        .WillByDefault([this](const Timestamp timestamp, const LocalId id) {
           Count::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, commit).WillByDefault([this](const Timestamp timestamp) {
       Count::commit(timestamp);
     });
   }

@@ -4,16 +4,17 @@
 
 namespace atlantis::propagation {
 
-IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarViewId condition,
-                       VarViewId thenVar, VarViewId elseVar)
+IfThenElse::IfThenElse(SolverBase& solver, const VarId output,
+                       const VarViewId condition, const VarViewId thenVar,
+                       const VarViewId elseVar)
     : Invariant(solver),
       _output(output),
       _condition(condition),
       _branches({thenVar, elseVar}) {}
 
-IfThenElse::IfThenElse(SolverBase& solver, VarViewId output,
-                       VarViewId condition, VarViewId thenVar,
-                       VarViewId elseVar)
+IfThenElse::IfThenElse(SolverBase& solver, const VarViewId output,
+                       const VarViewId condition, const VarViewId thenVar,
+                       const VarViewId elseVar)
     : IfThenElse(solver, VarId{output}, condition, thenVar, elseVar) {
   assert(output.isVar());
 }
@@ -26,12 +27,11 @@ void IfThenElse::registerVars() {
   registerDefinedVar(_output);
 }
 
-VarViewId IfThenElse::dynamicInputVar(Timestamp ts) const noexcept {
-  return VarViewId{static_cast<size_t>(
-      _solver.value(ts, _branches[_solver.value(ts, _condition) != 0]))};
+VarViewId IfThenElse::dynamicInputVar(const Timestamp ts) const noexcept {
+  return _branches[_solver.value(ts, _condition) != 0];
 }
 
-void IfThenElse::updateBounds(bool widenOnly) {
+void IfThenElse::updateBounds(const bool widenOnly) {
   if (_solver.lowerBound(_condition) == 0 &&
       _solver.upperBound(_condition) == 0) {
     _solver.updateBounds(_output, _solver.lowerBound(_branches[0]),
@@ -49,7 +49,7 @@ void IfThenElse::updateBounds(bool widenOnly) {
   }
 }
 
-void IfThenElse::recompute(Timestamp ts) {
+void IfThenElse::recompute(const Timestamp ts) {
   updateValue(
       ts, _output,
       _solver.value(
@@ -57,9 +57,11 @@ void IfThenElse::recompute(Timestamp ts) {
           _branches[static_cast<size_t>(_solver.value(ts, _condition) != 0)]));
 }
 
-void IfThenElse::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void IfThenElse::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 
-VarViewId IfThenElse::nextInput(Timestamp ts) {
+VarViewId IfThenElse::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _condition;
@@ -70,5 +72,7 @@ VarViewId IfThenElse::nextInput(Timestamp ts) {
   }
 }
 
-void IfThenElse::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void IfThenElse::notifyCurrentInputChanged(const Timestamp ts) {
+  recompute(ts);
+}
 }  // namespace atlantis::propagation

@@ -69,15 +69,15 @@ class bool_notTest : public FznTestBase {
 RC_GTEST_FIXTURE_PROP(bool_notTest, RapidCheck, ()) { rapidCheck(); }
 
 TEST(BoolNotRegression, DefinedVarWithLiteralNegationDoesNotCrash) {
-  const auto model = std::make_shared<fznparser::Model>();
-  auto input = std::make_shared<fznparser::BoolVar>("input");
+  const auto model = std::make_shared<Model>();
+  auto input = std::make_shared<BoolVar>("input");
   model->addVar(input);
 
-  fznparser::Constraint constraint{
-      "bool_not", std::vector<fznparser::Arg>{fznparser::BoolArg(input),
-                                              fznparser::BoolArg(false)}};
-  constraint.addAnnotation("defines_var", fznparser::AnnotationExpression(
-                                              fznparser::Annotation("input")));
+  Constraint constraint{
+      "bool_not", std::vector<Arg>{BoolArg(input),
+                                              BoolArg(false)}};
+  constraint.addAnnotation("defines_var", AnnotationExpression(
+                                              Annotation("input")));
   model->addConstraint(std::move(constraint));
 
   const auto graph = std::make_shared<FznInvariantGraph>(true);

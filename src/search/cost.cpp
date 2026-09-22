@@ -53,7 +53,7 @@ Cost::Cost() : _violation(std::nullopt), _objective(std::nullopt) {}
 Cost::Cost(Int violationDegree)
     : _violation(violationDegree), _objective(std::nullopt) {}
 
-Cost::Cost(const bool hasViolation, ObjectiveDirection direction)
+Cost::Cost(const bool hasViolation, const ObjectiveDirection direction)
     : _violation(hasViolation
                      ? std::optional<Int>{std::numeric_limits<Int>::max()}
                      : std::optional<Int>{std::nullopt}),

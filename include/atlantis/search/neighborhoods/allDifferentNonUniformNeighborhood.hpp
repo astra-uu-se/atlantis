@@ -55,12 +55,13 @@ class AllDifferentNonUniformNeighborhood : public Neighborhood {
   size_t assignValue(Assignment&, size_t varIndex, size_t newValueIndex);
 
  private:
-  [[nodiscard]] Int toValue(size_t valueIndex) const noexcept {
+  [[nodiscard]] Int toValue(const size_t valueIndex) const noexcept {
     assert(valueIndex < _valueIndexToVarIndex.size());
     assert(_valueIndexToVarIndex.at(valueIndex) <= _vars.size());
     return static_cast<Int>(valueIndex) + _domainOffset;
   }
-  [[nodiscard]] size_t toValueIndex(Int value) const noexcept {
+
+  [[nodiscard]] size_t toValueIndex(const Int value) const noexcept {
     assert(value >= _domainOffset);
     assert(static_cast<size_t>(value - _domainOffset) <
            _valueIndexToVarIndex.size());
@@ -68,13 +69,16 @@ class AllDifferentNonUniformNeighborhood : public Neighborhood {
                static_cast<size_t>(value - _domainOffset)) <= _vars.size());
     return static_cast<size_t>(value - _domainOffset);
   }
-  [[nodiscard]] bool isValueIndexOccupied(size_t valueIndex) const noexcept {
+
+  [[nodiscard]] bool isValueIndexOccupied(
+      const size_t valueIndex) const noexcept {
     assert(valueIndex < _valueIndexToVarIndex.size());
     assert(_valueIndexToVarIndex.at(valueIndex) <= _vars.size());
     return _valueIndexToVarIndex[valueIndex] < _vars.size();
   }
-  [[nodiscard]] bool inDomain(size_t varIndex,
-                              size_t valueIndex) const noexcept {
+
+  [[nodiscard]] bool inDomain(const size_t varIndex,
+                              const size_t valueIndex) const noexcept {
     assert(varIndex < _inDomain.size());
     assert(valueIndex < _inDomain.at(varIndex).size());
     return _inDomain[varIndex][valueIndex];
@@ -82,7 +86,7 @@ class AllDifferentNonUniformNeighborhood : public Neighborhood {
 
 #ifndef NDEBUG
   [[nodiscard]] bool sanity(const Assignment& assignment,
-                            bool committedValue) const {
+                            const bool committedValue) const {
     for (size_t varIndex = 0; varIndex < _vars.size(); ++varIndex) {
       const Int value =
           committedValue

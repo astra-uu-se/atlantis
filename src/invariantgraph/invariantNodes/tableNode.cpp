@@ -226,7 +226,7 @@ void TableNode::updateState() {
   }
 }
 
-bool TableNode::constrainsOutput(VarNodeId outputVarNodeId) const {
+bool TableNode::constrainsOutput(const VarNodeId outputVarNodeId) const {
   for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
     if (outputVarNodeIds().at(i) != outputVarNodeId) {
       continue;

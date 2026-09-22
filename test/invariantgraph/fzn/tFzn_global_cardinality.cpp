@@ -14,9 +14,6 @@
 
 namespace atlantis::testing {
 
-using ::testing::AtLeast;
-using ::testing::AtMost;
-
 using namespace atlantis::invariantgraph;
 using namespace atlantis::invariantgraph::fzn;
 

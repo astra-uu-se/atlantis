@@ -18,7 +18,6 @@ namespace atlantis::invariantgraph {
 VarNodeId CountNode::needle() const {
   return _fixedNeedle.has_value() ? NULL_NODE_ID
                                   : staticInputVarNodeIds()[needleIndex()];
-  ;
 }
 
 size_t CountNode::needleIndex() const { return numInputVars(); }

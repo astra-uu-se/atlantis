@@ -18,7 +18,6 @@ using namespace atlantis::invariantgraph::fzn;
 
 class int_maxTest : public FznTestBase {
  public:
-  std::vector<VarNodeId> inputVarNodeIds{};
   std::vector<std::string> inputs{"i_1", "i_2"};
   std::string output{"output"};
 
@@ -38,7 +37,7 @@ class int_maxTest : public FznTestBase {
     return ub;
   }
 
-  Int getValue(bool committedValue) const {
+  Int getValue(const bool committedValue) const {
     Int result = intVal(inputs.front(), committedValue);
     for (size_t i = 1; i < inputs.size(); ++i) {
       const Int v = intVal(inputs.at(i), committedValue);
@@ -87,7 +86,7 @@ class int_maxTest : public FznTestBase {
         inputs, [&](const std::string& input) { return !isFixed(input); });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : inputs) {
       if (!isFixed(input) && randBool()) {
         changeValue(input, committedValue);

@@ -12,7 +12,7 @@ namespace atlantis::testing {
 using namespace fznparser;
 using namespace atlantis::invariantgraph;
 
-std::string to_string(bool v) { return v ? "true" : "false"; }
+std::string to_string(const bool v) { return v ? "true" : "false"; }
 
 void FznTestBase::SetUp() {
   _model = std::make_shared<Model>();
@@ -77,7 +77,7 @@ propagation::VarViewId FznTestBase::varId(const VarNodeId vId) const {
   return _solverMapping->solverId(vId);
 }
 
-void FznTestBase::setValue(const std::string& identifier, Int val) const {
+void FznTestBase::setValue(const std::string& identifier, const Int val) const {
   _solver->setValue(varId(identifier), val);
 }
 Int FznTestBase::currentValue(const std::string& identifier) const {
@@ -549,13 +549,13 @@ std::shared_ptr<BoolVar> FznTestBase::genBoolVar(
   }
 }
 
-std::vector<Int> FznTestBase::genDomain(size_t size) const {
+std::vector<Int> FznTestBase::genDomain(const size_t size) const {
   RC_ASSERT(size < static_cast<size_t>(defaultUb - defaultLb + 2));
   return *rc::gen::unique<std::vector<Int>>(
       size, rc::gen::inRange<Int>(defaultLb, defaultUb + 1));
 }
 
-std::vector<Int> FznTestBase::genDomain(IntArgState state) const {
+std::vector<Int> FznTestBase::genDomain(const IntArgState state) const {
   const size_t size =
       state != IntArgState::VAR
           ? 1
@@ -975,4 +975,30 @@ void FznTestBase::rapidCheck(const bool reachesFixpoint,
   }
 }
 
+std::ostream& operator<<(std::ostream& os, const BoolArgState state) {
+  switch (state) {
+    case BoolArgState::PAR_FALSE:
+      return os << "BoolArgState::PAR_FALSE";
+    case BoolArgState::PAR_TRUE:
+      return os << "BoolArgState::PAR_TRUE";
+    case BoolArgState::FIXED_FALSE:
+      return os << "BoolArgState::FIXED_FALSE";
+    case BoolArgState::FIXED_TRUE:
+      return os << "BoolArgState::FIXED_TRUE";
+    case BoolArgState::VAR:
+    default:
+      return os << "BoolArgState::VAR";
+  }
+}
+std::ostream& operator<<(std::ostream& os, const IntArgState state) {
+  switch (state) {
+    case IntArgState::PAR:
+      return os << "IntArgState::PAR";
+    case IntArgState::FIXED:
+      return os << "IntArgState::FIXED";
+    case IntArgState::VAR:
+    default:
+      return os << "IntArgState::VAR";
+  }
+}
 }  // namespace atlantis::testing

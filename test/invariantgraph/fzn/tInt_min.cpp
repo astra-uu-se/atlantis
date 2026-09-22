@@ -18,7 +18,6 @@ using namespace atlantis::invariantgraph::fzn;
 
 class int_minTest : public FznTestBase {
  public:
-  std::vector<VarNodeId> inputVarNodeIds{};
   std::vector<std::string> inputs{"i_0", "i_1"};
   std::string output{"output"};
 
@@ -87,7 +86,7 @@ class int_minTest : public FznTestBase {
         inputs, [&](const std::string& input) { return !isFixed(input); });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : inputs) {
       if (!isFixed(input) && randBool()) {
         changeValue(input, committedValue);

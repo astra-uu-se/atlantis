@@ -22,7 +22,7 @@ class ModViewTest : public ViewTest {
     _solver->close();
   }
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     return (committedValue ? _solver->committedValue(inputVar)
                            : _solver->currentValue(inputVar)) %
            denominator;

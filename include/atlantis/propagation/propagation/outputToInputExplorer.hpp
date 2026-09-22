@@ -80,13 +80,14 @@ class OutputToInputExplorer {
   void close();
 };
 
-inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
+inline void OutputToInputExplorer::registerForPropagation(Timestamp,
+                                                          const VarId id) {
   pushVarStack(id);
 }
 
 inline void OutputToInputExplorer::clearRegisteredVars() { _varStackIdx = 0; }
 
-inline void OutputToInputExplorer::pushVarStack(VarId id) {
+inline void OutputToInputExplorer::pushVarStack(const VarId id) {
   _varStack[_varStackIdx++] = id;
 }
 inline void OutputToInputExplorer::popVarStack() { --_varStackIdx; }
@@ -94,7 +95,7 @@ inline VarId OutputToInputExplorer::peekVarStack() const {
   return _varStack[_varStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::pushInvariantStack(InvariantId invariantId) {
+inline void OutputToInputExplorer::pushInvariantStack(const InvariantId invariantId) {
   assert(invariantId < _invariantIsOnStack.size());
   if (_invariantIsOnStack[invariantId]) {
     throw DynamicCycleException();

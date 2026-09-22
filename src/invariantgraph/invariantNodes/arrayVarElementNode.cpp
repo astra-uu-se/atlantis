@@ -74,9 +74,8 @@ void ArrayVarElementNode::updateState() {
   }
 
   std::vector<bool> indexIsSupported(dynamicInputVarNodeIds().size(), false);
-  for (auto iter = staticInputVarNodeConst(0).constDomain()->begin();
-       iter != staticInputVarNodeConst(0).constDomain()->end(); ++iter) {
-    const Int index = *iter - _offset;
+  for (const Int val : *staticInputVarNodeConst(0).constDomain()) {
+    const Int index = val - _offset;
     assert(0 <= index);
     assert(index < static_cast<Int>(dynamicInputVarNodeIds().size()));
     indexIsSupported[index] = true;
@@ -119,15 +118,12 @@ bool ArrayVarElementNode::constrainsOutput(VarNodeId) const {
     const Int index = *indexIter - _offset;
     if (index < 0) {
       continue;
-      ;
     }
     if (static_cast<Int>(dynamicInputVarNodeIds().size()) < index) {
       break;
     }
-    for (auto valIter = dynamicInputVarNodeConst(index).constDomain()->begin();
-         valIter != dynamicInputVarNodeConst(index).constDomain()->end();
-         ++valIter) {
-      values.emplace_back(*valIter);
+    for (long val : *dynamicInputVarNodeConst(index).constDomain()) {
+      values.emplace_back(val);
     }
   }
   const SortedUniqueVector sortedVals(std::move(values));
