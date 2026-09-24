@@ -8,8 +8,8 @@ namespace atlantis::propagation {
 
 Store::Store() = default;
 
-VarViewId Store::createIntVar(const Timestamp ts, const Int initValue, const Int lowerBound,
-                              const Int upperBound) {
+VarViewId Store::createIntVar(const Timestamp ts, const Int initValue,
+                              const Int lowerBound, const Int upperBound) {
   const VarId vId(_intVars.size());
   _intVars.emplace_back(ts, vId, initValue, lowerBound, upperBound);
   return {vId, false};
@@ -36,7 +36,9 @@ VarViewId Store::createIntViewFromPtr(const std::shared_ptr<IntView>& ptr) {
 
 IntVar& Store::intVar(const VarId id) { return _intVars[id]; }
 
-const IntVar& Store::constIntVar(const VarId id) const { return _intVars.at(id); }
+const IntVar& Store::constIntVar(const VarId id) const {
+  return _intVars.at(id);
+}
 
 IntView& Store::intView(const ViewId id) { return *(_intViews[id]); }
 

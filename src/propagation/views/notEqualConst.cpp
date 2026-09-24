@@ -4,7 +4,8 @@
 
 namespace atlantis::propagation {
 
-NotEqualConst::NotEqualConst(SolverBase& solver, const VarViewId parentId, const Int val)
+NotEqualConst::NotEqualConst(SolverBase& solver, const VarViewId parentId,
+                             const Int val)
     : IntView(solver, parentId), _val(val) {}
 
 Int NotEqualConst::value(const Timestamp ts) {

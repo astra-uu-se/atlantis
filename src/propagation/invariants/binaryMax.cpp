@@ -10,8 +10,8 @@ BinaryMax::BinaryMax(SolverBase& solver, const VarId output, const VarViewId x,
                      const VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
 
-BinaryMax::BinaryMax(SolverBase& solver, const VarViewId output, const VarViewId x,
-                     const VarViewId y)
+BinaryMax::BinaryMax(SolverBase& solver, const VarViewId output,
+                     const VarViewId x, const VarViewId y)
     : BinaryMax(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
@@ -47,5 +47,7 @@ VarViewId BinaryMax::nextInput(const Timestamp ts) {
 
 void BinaryMax::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 
-void BinaryMax::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
+void BinaryMax::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 }  // namespace atlantis::propagation

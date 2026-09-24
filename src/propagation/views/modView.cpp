@@ -4,7 +4,8 @@
 
 namespace atlantis::propagation {
 
-ModView::ModView(SolverBase& solver, const VarViewId parentId, const Int denominator)
+ModView::ModView(SolverBase& solver, const VarViewId parentId,
+                 const Int denominator)
     : IntView(solver, parentId), _denominator(std::abs(denominator)) {
   if (_denominator == 0) {
     throw std::invalid_argument("Denominator cannot be zero");

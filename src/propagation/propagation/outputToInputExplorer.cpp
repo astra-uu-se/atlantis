@@ -151,11 +151,9 @@ bool OutputToInputExplorer::isMarked(const VarId id) {
 template void OutputToInputExplorer::preprocessVarStack<
     OutputToInputMarkingMode::NONE>(Timestamp ts);
 template void OutputToInputExplorer::preprocessVarStack<
-    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>(
-    Timestamp ts);
+    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>(Timestamp ts);
 template void OutputToInputExplorer::preprocessVarStack<
-    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>(
-    Timestamp ts);
+    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>(Timestamp ts);
 template <OutputToInputMarkingMode MarkingMode>
 void OutputToInputExplorer::preprocessVarStack(const Timestamp ts) {
   size_t newStackSize = 0;
@@ -250,11 +248,9 @@ void OutputToInputExplorer::registerInvariant(
 template void OutputToInputExplorer::propagate<OutputToInputMarkingMode::NONE>(
     Timestamp ts);
 template void OutputToInputExplorer::propagate<
-    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>(
-    Timestamp ts);
+    OutputToInputMarkingMode::OUTPUT_TO_INPUT_STATIC>(Timestamp ts);
 template void OutputToInputExplorer::propagate<
-    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>(
-    Timestamp ts);
+    OutputToInputMarkingMode::INPUT_TO_OUTPUT_EXPLORATION>(Timestamp ts);
 
 template <OutputToInputMarkingMode MarkingMode>
 void OutputToInputExplorer::propagate(const Timestamp ts) {

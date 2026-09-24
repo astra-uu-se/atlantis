@@ -29,7 +29,8 @@ void PriorityList::commitIf(const Timestamp ts) {
   _maximum.commitIf(ts);
 }
 
-void PriorityList::updatePriority(const Timestamp ts, const size_t idx, const Int newValue) {
+void PriorityList::updatePriority(const Timestamp ts, const size_t idx,
+                                  const Int newValue) {
   const auto oldValue = _list[idx].get(ts);
   if (oldValue == newValue) {
     return;

@@ -28,7 +28,9 @@ class BoolOrTest : public InvariantTest {
         committedValue ? _solver->committedValue(y) : _solver->currentValue(y));
   }
 
-  static Int computeOutput(const Int xVal, const Int yVal) { return std::min(xVal, yVal); }
+  static Int computeOutput(const Int xVal, const Int yVal) {
+    return std::min(xVal, yVal);
+  }
 
   BoolOr& generate() {
     xDist = std::uniform_int_distribution<Int>(xLb, xUb);
@@ -238,8 +240,8 @@ class MockBoolOr : public BoolOr {
     registered = true;
     BoolOr::registerVars();
   }
-  explicit MockBoolOr(SolverBase& solver, const VarViewId output, const VarViewId x,
-                      const VarViewId y)
+  explicit MockBoolOr(SolverBase& solver, const VarViewId output,
+                      const VarViewId x, const VarViewId y)
       : BoolOr(solver, output, x, y) {
     EXPECT_TRUE(output.isVar());
 

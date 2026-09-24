@@ -79,7 +79,8 @@ static std::vector<std::vector<VarId>> SCC(const PropagationGraph& graph) {
               components);
     }
   }
-  assert(std::ranges::all_of(discoverTime, [&](const Int i) { return i >= 0; }));
+  assert(
+      std::ranges::all_of(discoverTime, [&](const Int i) { return i >= 0; }));
   return components;
 }
 

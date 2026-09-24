@@ -255,8 +255,8 @@ class MockLessThan : public LessThan {
     registered = true;
     LessThan::registerVars();
   }
-  explicit MockLessThan(SolverBase& solver, const VarViewId outputVar, const VarViewId x,
-                        const VarViewId y)
+  explicit MockLessThan(SolverBase& solver, const VarViewId outputVar,
+                        const VarViewId x, const VarViewId y)
       : LessThan(solver, outputVar, x, y) {
     EXPECT_TRUE(outputVar.isVar());
 

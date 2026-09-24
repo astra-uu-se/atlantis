@@ -9,7 +9,8 @@ static Int compute(const Int var, const Int val) {
   return overflow::saturatingAbsDiff(var, val);
 }
 
-EqualConst::EqualConst(SolverBase& solver, const VarViewId parentId, const Int val)
+EqualConst::EqualConst(SolverBase& solver, const VarViewId parentId,
+                       const Int val)
     : IntView(solver, parentId), _val(val) {}
 
 Int EqualConst::value(const Timestamp ts) {

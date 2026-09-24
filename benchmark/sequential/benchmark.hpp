@@ -40,8 +40,7 @@ inline void setSolverMode(propagation::Solver& solver, const Int state) {
 }
 
 inline size_t rand_in_range(const size_t minInclusive,
-                            const size_t maxInclusive,
-                            std::mt19937& rng) {
+                            const size_t maxInclusive, std::mt19937& rng) {
   return std::uniform_int_distribution<size_t>(minInclusive, maxInclusive)(rng);
 }
 

@@ -198,8 +198,8 @@ bool AllDifferentNonUniformNeighborhood::canSwap(
       toValueIndex(assignment.committedValue(_vars[var1Index].solverId())));
 }
 
-size_t AllDifferentNonUniformNeighborhood::swapValues(Assignment& assignment,
-                                                      const size_t var1Index, const size_t value2Index) {
+size_t AllDifferentNonUniformNeighborhood::swapValues(
+    Assignment& assignment, const size_t var1Index, const size_t value2Index) {
   // var 1:
   assert(var1Index < _vars.size());
   const auto var1 = _vars[var1Index].solverId();
@@ -232,8 +232,8 @@ size_t AllDifferentNonUniformNeighborhood::swapValues(Assignment& assignment,
   return 2;
 }
 
-size_t AllDifferentNonUniformNeighborhood::assignValue(Assignment& assignment,
-                                                       const size_t varIndex, const size_t newValueIndex) {
+size_t AllDifferentNonUniformNeighborhood::assignValue(
+    Assignment& assignment, const size_t varIndex, const size_t newValueIndex) {
   assert(newValueIndex < _valueIndexToVarIndex.size());
   assert(_valueIndexToVarIndex[newValueIndex] == _vars.size());
   assert(varIndex < _vars.size());

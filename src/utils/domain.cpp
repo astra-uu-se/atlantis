@@ -72,8 +72,8 @@ static bool isSubsetOf(const std::vector<Int>& subset, const Int supersetLb,
          sortedVectorIsInterval(subset);
 }
 
-static bool isSubsetOf(const Int subsetLb, const Int subsetUb, const Int supersetLb,
-                       const Int supersetUb) {
+static bool isSubsetOf(const Int subsetLb, const Int subsetUb,
+                       const Int supersetLb, const Int supersetUb) {
   assert(subsetLb <= subsetUb);
   assert(supersetLb <= supersetUb);
   return supersetLb <= subsetLb && subsetUb <= supersetUb;

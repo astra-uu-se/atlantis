@@ -11,8 +11,7 @@
 namespace atlantis::search::neighborhoods {
 
 CountNeighborhood::CountNeighborhood(std::vector<SearchVar>&& vars,
-                                     const Int needle,
-                                     const size_t amount)
+                                     const Int needle, const size_t amount)
     : _vars(std::move(vars)),
       _needle(needle),
       _amount(amount),

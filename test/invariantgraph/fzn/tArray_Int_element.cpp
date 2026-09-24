@@ -105,7 +105,9 @@ class array_int_elementTest : public FznTestBase {
     return varId(idx) != propagation::NULL_ID;
   }
 
-  void move(const bool committedValue) override { changeValue(idx, committedValue); }
+  void move(const bool committedValue) override {
+    changeValue(idx, committedValue);
+  }
 
   void query() override {
     _solver->query(totalViolationVarId() != propagation::NULL_ID

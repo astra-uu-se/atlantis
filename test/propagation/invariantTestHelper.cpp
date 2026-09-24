@@ -20,9 +20,8 @@ using ::testing::AtMost;
 
 using namespace atlantis::propagation;
 
-
-VarViewId InvariantTest::makeIntVar(
-    const Int lb, const Int ub, std::uniform_int_distribution<Int>& dist) {
+VarViewId InvariantTest::makeIntVar(const Int lb, const Int ub,
+                                    std::uniform_int_distribution<Int>& dist) {
   const Int val = generateState == GenerateState::RANDOM
                       ? dist(gen)
                       : (generateState == GenerateState::LB ? lb : ub);
@@ -99,8 +98,8 @@ std::vector<VarViewId> InvariantTest::makeVars(
   return vars;
 }
 
-std::vector<VarViewId> InvariantTest::makeVars(const size_t numVars, const Int lb,
-                                                      const Int ub) {
+std::vector<VarViewId> InvariantTest::makeVars(const size_t numVars,
+                                               const Int lb, const Int ub) {
   EXPECT_LE(lb, ub);
   std::vector<VarViewId> vars;
   vars.reserve(numVars);
@@ -187,8 +186,8 @@ Int InvariantTest::increaseNextVal(const std::vector<VarViewId>& varIds,
 }
 
 void InvariantTest::setVarVals(const Timestamp ts,
-                                      const std::vector<VarViewId>& inputVars,
-                                      const std::vector<Int>& vals) {
+                               const std::vector<VarViewId>& inputVars,
+                               const std::vector<Int>& vals) {
   EXPECT_EQ(inputVars.size(), vals.size());
   for (size_t i = 0; i < inputVars.size(); ++i) {
     if (inputVars.at(i) != NULL_ID) {
@@ -223,4 +222,4 @@ std::pair<Int, Int> InvariantTest::genBounds(const Int lb, const Int ub) {
       [](const std::pair<Int, Int>& p) { return p.first <= p.second; });
 }
 
-}
+}  // namespace atlantis::testing

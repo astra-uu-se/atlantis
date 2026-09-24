@@ -260,8 +260,7 @@ class MockAbsDiff : public AbsDiff {
     AbsDiff::registerVars();
   }
   explicit MockAbsDiff(SolverBase& solver, const VarViewId output,
-                       const VarViewId x,
-                       const VarViewId y)
+                       const VarViewId x, const VarViewId y)
       : AbsDiff(solver, output, x, y) {
     EXPECT_TRUE(output.isVar());
 

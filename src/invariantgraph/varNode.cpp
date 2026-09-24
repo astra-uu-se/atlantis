@@ -266,7 +266,9 @@ void VarNode::tightenDomainType(const DomainType domainType) {
   _domainType = std::max(_domainType, domainType);
 }
 
-void VarNode::setDomainType(const DomainType domainType) { _domainType = domainType; }
+void VarNode::setDomainType(const DomainType domainType) {
+  _domainType = domainType;
+}
 
 bool VarNode::inDomain(const Int val) const {
   if (!isIntVar()) {
@@ -296,7 +298,8 @@ void VarNode::removeValue(const Int val, const bool tightenDomainState) {
   }
 }
 
-void VarNode::removeValuesBelow(const Int newLowerBound, const bool tightenDomainState) {
+void VarNode::removeValuesBelow(const Int newLowerBound,
+                                const bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesBelow(Int) called on BoolVar");
   }
@@ -307,7 +310,8 @@ void VarNode::removeValuesBelow(const Int newLowerBound, const bool tightenDomai
   }
 }
 
-void VarNode::removeValuesAbove(const Int newUpperBound, const bool tightenDomainState) {
+void VarNode::removeValuesAbove(const Int newUpperBound,
+                                const bool tightenDomainState) {
   if (!isIntVar()) {
     throw std::runtime_error("removeValuesAbove(Int) called on BoolVar");
   }
@@ -373,7 +377,8 @@ void VarNode::fixToValue(const bool val) {
   tightenDomainType(DomainType::DOM_FIXED);
 }
 
-std::vector<DomainEntry> VarNode::constrainedDomain(const Int lb, const Int ub) const {
+std::vector<DomainEntry> VarNode::constrainedDomain(const Int lb,
+                                                    const Int ub) const {
   return _domain->createDomainEntries(lb, ub);
 }
 

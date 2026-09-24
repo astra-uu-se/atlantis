@@ -7,8 +7,8 @@
 
 namespace atlantis::propagation {
 
-ScalarView::ScalarView(SolverBase& solver, const VarViewId parentId, const Int factor,
-                       const Int offset)
+ScalarView::ScalarView(SolverBase& solver, const VarViewId parentId,
+                       const Int factor, const Int offset)
     : IntView(solver, parentId), _factor(factor), _offset(offset) {}
 
 Int ScalarView::value(const Timestamp ts) {

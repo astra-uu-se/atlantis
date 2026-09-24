@@ -5,7 +5,8 @@
 namespace atlantis::propagation {
 
 IfThenElseConst::IfThenElseConst(SolverBase& solver, const VarViewId parentId,
-                                 const Int thenVal, const Int elseVal, const Int condVal)
+                                 const Int thenVal, const Int elseVal,
+                                 const Int condVal)
     : IntView(solver, parentId), _values{thenVal, elseVal}, _condVal(condVal) {}
 
 Int IfThenElseConst::value(const Timestamp ts) {

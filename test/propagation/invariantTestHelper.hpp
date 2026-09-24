@@ -201,5 +201,4 @@ class InvariantTest : public ::testing::Test {
   }
 };
 
-
 }  // namespace atlantis::testing

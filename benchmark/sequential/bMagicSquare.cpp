@@ -184,8 +184,8 @@ BENCHMARK_DEFINE_F(MagicSquare, probe_all_swap)(::benchmark::State& st) {
       }
     }
   }
-  st.counters["probes_per_second"] = ::benchmark::Counter(
-      probes, ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] =
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
 //*

@@ -67,7 +67,8 @@ class CountTest : public InvariantTest {
                          values);
   }
 
-  static Int computeOutput(const Int needleVal, const std::vector<Int>& values) {
+  static Int computeOutput(const Int needleVal,
+                           const std::vector<Int>& values) {
     Int count = 0;
     for (const Int value : values) {
       if (value == needleVal) {

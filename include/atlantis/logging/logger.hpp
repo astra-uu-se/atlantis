@@ -131,7 +131,8 @@ class Logger {
 };
 
 template <typename Action>
-void Logger::beginScopeProcedure(const Level level, LogScopeWrapper& logScopeWrapper,
+void Logger::beginScopeProcedure(const Level level,
+                                 LogScopeWrapper& logScopeWrapper,
                                  Action&& action) {
   logScopeWrapper.begin(*this, level);
   action();
@@ -150,7 +151,8 @@ ReturnType Logger::beginScopeFunction(const Level level,
 }
 
 template <typename Action>
-void Logger::timedProcedure(const Level level, const char* title, Action&& action) {
+void Logger::timedProcedure(const Level level, const char* title,
+                            Action&& action) {
   TimedLogScopeWrapper wrapper(title);
   beginScopeProcedure<Action>(level, wrapper, std::forward<Action>(action));
 }
@@ -179,7 +181,8 @@ ReturnType Logger::indentedFunction(const Level level, const char* title,
 }
 
 template <typename... T>
-void Logger::log(const Level level, fmt::format_string<T...> format, T&&... args) {
+void Logger::log(const Level level, fmt::format_string<T...> format,
+                 T&&... args) {
   if (level <= _maxLevel) {
     fmt::print(_ostream, "{:<7} {: >{}}{}\n",
                fmt::format("[{}]", levelString(level)), "", _indentation,

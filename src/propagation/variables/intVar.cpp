@@ -12,10 +12,12 @@ IntVar::IntVar(const Int lowerBound, const Int upperBound)
 IntVar::IntVar(const VarId id, const Int lowerBound, const Int upperBound)
     : IntVar(id, 0, lowerBound, upperBound) {}
 
-IntVar::IntVar(const VarId id, const Int initValue, const Int lowerBound, const Int upperBound)
+IntVar::IntVar(const VarId id, const Int initValue, const Int lowerBound,
+               const Int upperBound)
     : IntVar(NULL_TIMESTAMP, id, initValue, lowerBound, upperBound) {}
 
-IntVar::IntVar(const Timestamp ts, const VarId id, const Int initValue, const Int lowerBound, const Int upperBound)
+IntVar::IntVar(const Timestamp ts, const VarId id, const Int initValue,
+               const Int lowerBound, const Int upperBound)
     // todo: We need both a timestamp-zero (when
     // initialisation happens) but also a dummy timestamp.
     : Var(id),
@@ -31,7 +33,8 @@ IntVar::IntVar(const Timestamp ts, const VarId id, const Int initValue, const In
   }
 }
 
-void IntVar::updateBounds(const Int lowerBound, const Int upperBound, const bool widenOnly) {
+void IntVar::updateBounds(const Int lowerBound, const Int upperBound,
+                          const bool widenOnly) {
   _lowerBound = widenOnly ? std::min(_lowerBound, lowerBound) : lowerBound;
   _upperBound = widenOnly ? std::max(_upperBound, upperBound) : upperBound;
   if (_lowerBound > _upperBound) {

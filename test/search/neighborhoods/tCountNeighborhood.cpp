@@ -32,7 +32,7 @@ class CountNeighborhoodTest : public NeighborhoodTestBase<CountNeighborhood> {
   void expectHolds() const {
     size_t curAmount = 0;
     size_t comAmount = 0;
-    for (const auto & searchVar : _vars) {
+    for (const auto& searchVar : _vars) {
       const Int curVal = _assignment->currentValue(searchVar.solverId());
       EXPECT_GE(curVal, searchVar.domain()->lowerBound());
       EXPECT_LE(curVal, searchVar.domain()->upperBound());

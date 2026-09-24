@@ -95,7 +95,8 @@ inline VarId OutputToInputExplorer::peekVarStack() const {
   return _varStack[_varStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::pushInvariantStack(const InvariantId invariantId) {
+inline void OutputToInputExplorer::pushInvariantStack(
+    const InvariantId invariantId) {
   assert(invariantId < _invariantIsOnStack.size());
   if (_invariantIsOnStack[invariantId]) {
     throw DynamicCycleException();

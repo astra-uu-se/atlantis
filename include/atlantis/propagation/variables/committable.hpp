@@ -66,27 +66,26 @@ template <class T>
 }
 template <class T>
 [[gnu::always_inline]] T Committable<T>::set(const Timestamp ts,
-                                                    T newValue) noexcept {
+                                             T newValue) noexcept {
   _tmpTimestamp = ts;
   _tmpValue = newValue;
   return _tmpValue;
 }
 template <class T>
 [[gnu::always_inline]] void Committable<T>::init(const Timestamp ts,
-                                                        T value) noexcept {
+                                                 T value) noexcept {
   init(ts, value, value);
 }
 template <class T>
 [[gnu::always_inline]] void Committable<T>::init(const Timestamp ts,
-                                                        T committedValue,
-                                                        T newValue) noexcept {
+                                                 T committedValue,
+                                                 T newValue) noexcept {
   _tmpTimestamp = ts;
   _committedValue = committedValue;
   _tmpValue = newValue;
 }
 template <class T>
-[[gnu::always_inline]] void Committable<T>::commitValue(
-    T value) noexcept {
+[[gnu::always_inline]] void Committable<T>::commitValue(T value) noexcept {
   _committedValue = value;
 }
 template <class T>

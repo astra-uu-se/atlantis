@@ -6,11 +6,12 @@
 
 namespace atlantis::propagation {
 
-BinaryMin::BinaryMin(SolverBase& solver, const VarId output, const VarViewId x, const VarViewId y)
+BinaryMin::BinaryMin(SolverBase& solver, const VarId output, const VarViewId x,
+                     const VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
 
-BinaryMin::BinaryMin(SolverBase& solver, const VarViewId output, const VarViewId x,
-                     const VarViewId y)
+BinaryMin::BinaryMin(SolverBase& solver, const VarViewId output,
+                     const VarViewId x, const VarViewId y)
     : BinaryMin(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
@@ -46,5 +47,7 @@ VarViewId BinaryMin::nextInput(const Timestamp ts) {
 
 void BinaryMin::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 
-void BinaryMin::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
+void BinaryMin::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 }  // namespace atlantis::propagation

@@ -18,7 +18,8 @@ class InDomainTest : public ::testing::Test {
   std::mt19937 gen;
   std::default_random_engine rng;
 
-  static Int computeOutput(const Int val, const std::vector<DomainEntry>& domain) {
+  static Int computeOutput(const Int val,
+                           const std::vector<DomainEntry>& domain) {
     Int viol = std::numeric_limits<Int>::max();
     for (const auto& [lb, ub] : domain) {
       if (lb <= val && val <= ub) {
