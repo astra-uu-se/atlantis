@@ -2,7 +2,12 @@
 
 namespace atlantis::search {
 
-void ScheduleLoop::start(double initialTemperature) {
+ScheduleLoop::ScheduleLoop(std::unique_ptr<AnnealingSchedule>&& schedule,
+                           const UInt maximumConsecutiveFutileRounds)
+    : _schedule(std::move(schedule)),
+      _maximumConsecutiveFutileRounds(maximumConsecutiveFutileRounds) {}
+
+void ScheduleLoop::start(const double initialTemperature) {
   _schedule->start(initialTemperature);
   _consecutiveFutileIterations = 0;
 }
@@ -37,5 +42,7 @@ double ScheduleLoop::temperature() { return _schedule->temperature(); }
 bool ScheduleLoop::frozen() {
   return _consecutiveFutileIterations >= _maximumConsecutiveFutileRounds;
 }
+
+AnnealingSchedule& ScheduleLoop::inner() { return *_schedule; }
 
 }  // namespace atlantis::search

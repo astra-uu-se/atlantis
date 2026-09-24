@@ -10,12 +10,13 @@
 
 namespace atlantis::invariantgraph {
 
-IntModViewNode::IntModViewNode(InvariantGraph& graph, VarNodeId staticInput,
-                               VarNodeId output, Int denominator)
+IntModViewNode::IntModViewNode(InvariantGraph& graph,
+                               const VarNodeId staticInput,
+                               const VarNodeId output, const Int denominator)
     : InvariantNode(graph, {output}, {staticInput}),
       _denominator(std::abs(denominator)) {}
 
-void IntModViewNode::init(InvariantNodeId id) {
+void IntModViewNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
   assert(invariantGraphConst()
              .varNodeConst(outputVarNodeIds().front())
@@ -24,6 +25,7 @@ void IntModViewNode::init(InvariantNodeId id) {
              .varNodeConst(staticInputVarNodeIds().front())
              .isIntVar());
 }
+
 void IntModViewNode::postConstraint() {
   InvariantNode::postConstraint();
   const auto den = invariantGraph().retrieveIntVarNode(_denominator);
@@ -36,6 +38,10 @@ void IntModViewNode::updateState() {
   if (staticInputVarNodeConst(0).isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+bool IntModViewNode::constrainsOutput(VarNodeId) const {
+  return !outputVarNodeConst(0).constDomain()->contains(0, _denominator - 1);
 }
 
 void IntModViewNode::registerOutputVars(propagation::SolverBase& solver,

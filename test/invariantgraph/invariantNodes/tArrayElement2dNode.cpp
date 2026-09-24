@@ -80,6 +80,7 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
       }
       outputVar.domain = std::pair<Int, Int>{lb - 1, ub + 1};
       retrieveIntVarNode(outputVar);
+      markOutputVar(outputVar);
       createInvariantNode(*_invariantGraph, varNodeId(rowIdxVar),
                           varNodeId(colIdxVar),
                           std::vector<std::vector<Int>>{intMatrix},
@@ -88,6 +89,7 @@ class ArrayElement2dNodeTestFixture : public NodeTestBase<ArrayElement2dNode> {
       // bool version of element
       outputVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(outputVar);
+      markOutputVar(outputVar);
       createInvariantNode(*_invariantGraph, varNodeId(rowIdxVar),
                           varNodeId(colIdxVar),
                           std::vector<std::vector<bool>>(boolMatrix),

@@ -43,6 +43,7 @@ class IntLeNodeTestFixture : public NodeTestBase<IntRelNode> {
     if (isReified()) {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeId(aVar),
                           RelationType::REL_TYPE_LE, varNodeId(bVar),
                           varNodeId(reifiedVar));

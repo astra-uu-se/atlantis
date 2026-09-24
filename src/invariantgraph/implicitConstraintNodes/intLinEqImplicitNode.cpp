@@ -12,7 +12,7 @@ namespace atlantis::invariantgraph {
 IntLinEqImplicitNode::IntLinEqImplicitNode(InvariantGraph& graph,
                                            std::vector<Int>&& coeffs,
                                            std::vector<VarNodeId>&& inputVars,
-                                           Int offset)
+                                           const Int offset)
     : ImplicitConstraintNode(graph, std::move(inputVars)),
       _coeffs(std::move(coeffs)),
       _offset(offset) {
@@ -21,7 +21,7 @@ IntLinEqImplicitNode::IntLinEqImplicitNode(InvariantGraph& graph,
                              [&](const Int c) { return std::abs(c) == 1; }));
 }
 
-void IntLinEqImplicitNode::init(InvariantNodeId id) {
+void IntLinEqImplicitNode::init(const InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),

@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class CountTest : public InvariantTest {
- public:
+ protected:
   Int haystackSize{3};
   std::vector<VarViewId> haystackVars;
   VarViewId needleVar{NULL_ID};
@@ -18,7 +18,7 @@ class CountTest : public InvariantTest {
   std::uniform_int_distribution<Int> haystackVarDist;
   std::uniform_int_distribution<Int> needleVarDist;
 
-  Count& generate(bool generateInputVars = true) {
+  Count& generate(const bool generateInputVars = true) {
     haystackVarDist =
         std::uniform_int_distribution<Int>(haystackVarLb, haystackVarUb);
     needleVarDist =
@@ -47,7 +47,7 @@ class CountTest : public InvariantTest {
     return invariant;
   }
 
-  [[nodiscard]] Int computeOutput(Timestamp ts) const {
+  [[nodiscard]] Int computeOutput(const Timestamp ts) const {
     std::vector<Int> values(haystackVars.size(), 0);
     for (size_t i = 0; i < haystackVars.size(); ++i) {
       values.at(i) = _solver->value(ts, haystackVars.at(i));
@@ -55,7 +55,7 @@ class CountTest : public InvariantTest {
     return computeOutput(_solver->value(ts, needleVar), values);
   }
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     std::vector<Int> values(haystackVars.size(), 0);
     for (size_t i = 0; i < haystackVars.size(); ++i) {
       values.at(i) = committedValue
@@ -67,7 +67,8 @@ class CountTest : public InvariantTest {
                          values);
   }
 
-  static Int computeOutput(Int needleVal, const std::vector<Int>& values) {
+  static Int computeOutput(const Int needleVal,
+                           const std::vector<Int>& values) {
     Int count = 0;
     for (const Int value : values) {
       if (value == needleVal) {
@@ -92,16 +93,16 @@ TEST_F(CountTest, UpdateBounds) {
 
   for (const auto& [yLb, yUb] : boundVec) {
     EXPECT_LE(yLb, yUb);
-    _solver->updateBounds(VarId(needleVar), yLb, yUb, false);
+    _solver->updateBounds(VarId{needleVar}, yLb, yUb, false);
     for (const auto& [aLb, aUb] : boundVec) {
       EXPECT_LE(aLb, aUb);
-      _solver->updateBounds(VarId(haystackVars.at(0)), aLb, aUb, false);
+      _solver->updateBounds(VarId{haystackVars.at(0)}, aLb, aUb, false);
       for (const auto& [bLb, bUb] : boundVec) {
         EXPECT_LE(bLb, bUb);
-        _solver->updateBounds(VarId(haystackVars.at(1)), bLb, bUb, false);
+        _solver->updateBounds(VarId{haystackVars.at(1)}, bLb, bUb, false);
         for (const auto& [cLb, cUb] : boundVec) {
           EXPECT_LE(cLb, cUb);
-          _solver->updateBounds(VarId(haystackVars.at(2)), cLb, cUb, false);
+          _solver->updateBounds(VarId{haystackVars.at(2)}, cLb, cUb, false);
           invariant.updateBounds(false);
 
           ASSERT_GE(0, _solver->lowerBound(outputVar));
@@ -117,7 +118,7 @@ TEST_F(CountTest, Recompute) {
 
   haystackSize = 3;
 
-  const std::pair<Int, Int> inputBound{-1, 1};
+  constexpr std::pair<Int, Int> inputBound{-1, 1};
   const std::vector<std::pair<Int, Int>> haystackBounds(haystackSize,
                                                         inputBound);
 
@@ -224,7 +225,7 @@ TEST_F(CountTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + i;
     for (size_t j = 0; j < committedValues.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -240,7 +241,7 @@ TEST_F(CountTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputVar);
@@ -248,9 +249,9 @@ TEST_F(CountTest, Commit) {
 
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
     committedValues.at(i) = _solver->value(ts, inputVars.at(i));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -273,9 +274,10 @@ RC_GTEST_FIXTURE_PROP(CountTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
@@ -315,26 +317,27 @@ class MockCount : public Count {
     registered = true;
     Count::registerVars();
   }
-  explicit MockCount(SolverBase& solver, VarViewId output, VarViewId needleVar,
+  explicit MockCount(SolverBase& solver, const VarViewId output,
+                     const VarViewId needleVar,
                      std::vector<VarViewId>&& varArray)
       : Count(solver, output, needleVar, std::move(varArray)) {
     EXPECT_TRUE(output.isVar());
 
-    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, recompute).WillByDefault([this](const Timestamp timestamp) {
       return Count::recompute(timestamp);
     });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, nextInput).WillByDefault([this](const Timestamp timestamp) {
       return Count::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp) {
+        .WillByDefault([this](const Timestamp timestamp) {
           Count::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+        .WillByDefault([this](const Timestamp timestamp, const LocalId id) {
           Count::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, commit).WillByDefault([this](const Timestamp timestamp) {
       Count::commit(timestamp);
     });
   }

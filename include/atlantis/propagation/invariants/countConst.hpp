@@ -6,7 +6,7 @@ namespace atlantis::propagation {
 
 /**
  * Invariant for:
- * output <- number of occurences of needle in _vars
+ * output <- number of occurrences of needle in _vars
  *
  */
 

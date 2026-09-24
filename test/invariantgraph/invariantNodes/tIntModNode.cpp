@@ -35,6 +35,7 @@ class IntModNodeTestFixture : public NodeTestBase<IntModNode> {
     retrieveIntVarNode(numeratorVar);
     retrieveIntVarNode(denominatorVar);
     retrieveIntVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(numeratorVar),
                         varNodeId(denominatorVar), varNodeId(outputVar));

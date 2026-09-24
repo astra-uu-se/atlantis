@@ -15,15 +15,15 @@ class PropQueue : public ::benchmark::Fixture {
   std::random_device rd;
   std::mt19937 gen;
 
-  std::uniform_int_distribution<> distribution;
+  std::uniform_int_distribution<size_t> distribution;
   size_t queueSize{0};
 
   void SetUp(const ::benchmark::State& st) override {
-    queueSize = size_t(st.range(0));
+    queueSize = static_cast<size_t>(st.range(0));
 
     gen = std::mt19937(rd());
 
-    distribution = std::uniform_int_distribution<>{1, int(queueSize)};
+    distribution = std::uniform_int_distribution<size_t>{1, queueSize};
   }
 };
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "atlantis/search/objective.hpp"
 #include "atlantis/search/searchStatistics.hpp"
 #include "savedAssignment.hpp"
 #include "threadController.hpp"
@@ -46,7 +45,7 @@ class SearchProcedure {
 
   // Returns true iff the was communication to other threads.
   bool onAccepted(const std::shared_ptr<CounterStatistic>& improvingSolutions,
-                  std::unique_ptr<MetaHeuristic>&& metaHeuristic);
+                  MetaHeuristic& metaHeuristic);
 
  public:
   SearchProcedure(

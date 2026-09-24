@@ -74,9 +74,9 @@ class Solver : public SolverBase {
   void setValue(Timestamp, VarId, Int val);
   void setValue(Timestamp, VarViewId, Int val);
 
-  void setValue(VarId id, Int val) { setValue(_currentTimestamp, id, val); }
+  void setValue(VarId id, Int val);
 
-  void setValue(VarViewId id, Int val) { setValue(_currentTimestamp, id, val); }
+  void setValue(VarViewId id, Int val);
 
   void beginProbe();
   void endProbe();
@@ -87,6 +87,7 @@ class Solver : public SolverBase {
 
   size_t numVars() const;
   size_t numInvariants() const;
+  InvariantId definingInvariant(VarId id) const;
 
   [[nodiscard]] const std::vector<VarId>& searchVars() const;
   [[nodiscard]] const std::unordered_set<VarId>& modifiedSearchVar() const;
@@ -111,7 +112,7 @@ class Solver : public SolverBase {
   void notifyCurrentInputChanged(InvariantId);
 
   /**
-   * Register that a variable is a input to an invariant
+   * Register that a variable is an input to an invariant
    * @param invariantId the invariant
    * @param inputId the id of the variable
    * @param localId the id of the variable in the invariant

@@ -68,7 +68,7 @@ TEST_F(IfThenElseTest, UpdateBounds) {
 
   for (const auto& [cLb, cUb] : cBounds) {
     EXPECT_LE(cLb, cUb);
-    _solver->updateBounds(VarId(conditionVar), cLb, cUb, false);
+    _solver->updateBounds(VarId{conditionVar}, cLb, cUb, false);
     invariant.updateBounds(false);
     if (cLb == 0 && cUb == 0) {
       EXPECT_EQ(_solver->lowerBound(outputVar), _solver->lowerBound(thenVar));
@@ -134,8 +134,8 @@ TEST_F(IfThenElseTest, NextInput) {
 
   const std::vector<VarViewId> inputVars{conditionVar, thenVar, elseVar};
 
-  const size_t minVarId = size_t(getMinVarViewId(inputVars));
-  const size_t maxVarId = size_t(getMaxVarViewId(inputVars));
+  const size_t minVarId = size_t{getMinVarViewId(inputVars)};
+  const size_t maxVarId = size_t{getMaxVarViewId(inputVars)};
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
@@ -143,7 +143,7 @@ TEST_F(IfThenElseTest, NextInput) {
     // First input is conditionVar,
     // Second input is thenVar if conditionVar = 0, otherwise elseVar:
     for (size_t i = 0; i < 2; ++i) {
-      const size_t varId = size_t(invariant.nextInput(ts));
+      const size_t varId = size_t{invariant.nextInput(ts)};
       EXPECT_NE(varId, NULL_ID);
       EXPECT_LE(minVarId, varId);
       EXPECT_GE(maxVarId, varId);
@@ -153,9 +153,9 @@ TEST_F(IfThenElseTest, NextInput) {
     EXPECT_EQ(invariant.nextInput(ts), NULL_ID);
     const Int conditionVal = _solver->value(ts, conditionVar);
 
-    EXPECT_TRUE(notified.at(size_t(conditionVar)));
-    EXPECT_TRUE(notified.at(size_t(conditionVal == 0 ? thenVar : elseVar)));
-    EXPECT_FALSE(notified.at(size_t(conditionVal != 0 ? thenVar : elseVar)));
+    EXPECT_TRUE(notified.at(size_t{conditionVar}));
+    EXPECT_TRUE(notified.at(size_t{conditionVal == 0 ? thenVar : elseVar}));
+    EXPECT_FALSE(notified.at(size_t{conditionVal != 0 ? thenVar : elseVar}));
   }
 }
 
@@ -201,7 +201,7 @@ TEST_F(IfThenElseTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + 1 + i;
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -216,7 +216,7 @@ TEST_F(IfThenElseTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputVar);
@@ -224,9 +224,9 @@ TEST_F(IfThenElseTest, Commit) {
 
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -253,9 +253,10 @@ RC_GTEST_FIXTURE_PROP(IfThenElseTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {

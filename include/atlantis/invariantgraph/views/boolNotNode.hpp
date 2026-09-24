@@ -6,15 +6,19 @@ namespace atlantis::invariantgraph {
 
 class BoolNotNode : public InvariantNode {
  public:
-  BoolNotNode(InvariantGraph& graph,
-
-              VarNodeId staticInput, VarNodeId output);
+  BoolNotNode(InvariantGraph& graph, VarNodeId staticInput, VarNodeId output);
 
   void init(InvariantNodeId) override;
 
   void postConstraint() override;
 
   void updateState() override;
+
+  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+
+  [[nodiscard]] bool canBeReplaced() const override;
+
+  bool replace() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

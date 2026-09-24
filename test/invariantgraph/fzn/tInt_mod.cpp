@@ -39,6 +39,7 @@ class int_modTest : public FznTestBase {
     addIntArg(remainder);
     constraintIdentifier = "int_mod";
     generateConstraint();
+    markOutputVar(remainder);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {

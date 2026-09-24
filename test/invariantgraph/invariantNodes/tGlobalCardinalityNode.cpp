@@ -65,6 +65,9 @@ class GlobalCardinalityNodeTestFixture
                               static_cast<Int>(inputVars.size()), true);
       retrieveIntVarNode(outputVars.back());
     }
+    for (const auto& outputVar : outputVars) {
+      markOutputVar(outputVar);
+    }
 
     createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                         std::vector<Int>{cover}, varNodeIds(outputVars));
@@ -130,8 +133,8 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
 
   std::vector<propagation::VarViewId> outputIds;
   for (const auto& var : outputVars) {
-    outputIds.emplace_back(varNode(var).isFixed() ? propagation::NULL_ID
-                                                  : varId(var));
+    outputIds.emplace_back(
+        varNode(var).isFixed() ? propagation::VAR_VIEW_NULL_ID : varId(var));
   }
   if (shouldBeSubsumed()) {
     return;
@@ -141,8 +144,8 @@ TEST_P(GlobalCardinalityNodeTestFixture, propagation) {
   std::vector<Int> inputVals;
 
   for (const auto& var : inputVars) {
-    inputVarIds.emplace_back(varNode(var).isFixed() ? propagation::NULL_ID
-                                                    : varId(var));
+    inputVarIds.emplace_back(
+        varNode(var).isFixed() ? propagation::VAR_VIEW_NULL_ID : varId(var));
     inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
                                ? varNode(var).lowerBound()
                                : _solver->lowerBound(inputVarIds.back()));

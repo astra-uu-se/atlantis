@@ -8,16 +8,17 @@ class BoolLinearNode : public InvariantNode {
   Int _rhsOffset{0};
 
  public:
-  BoolLinearNode(InvariantGraph& graph,
-
-                 std::vector<Int>&& coeffs, std::vector<VarNodeId>&& vars,
-                 VarNodeId output, Int rhsOffset = 0);
+  BoolLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
+                 std::vector<VarNodeId>&& vars, VarNodeId output,
+                 Int rhsOffset = 0);
 
   void init(InvariantNodeId) override;
 
   void postConstraint() override;
 
   void updateState() override;
+
+  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

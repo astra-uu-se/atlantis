@@ -19,9 +19,9 @@ using ::testing::AtMost;
 class fzn_gccTest : public FznTestBase {
  public:
   std::vector<std::string> inputs{};
-  std::vector<std::string> cover{};
+  std::vector<Int> cover{};
   std::string reified{"reified"};
-  std::vector<std::pair<size_t, std::string>> coverDuplicates{};
+  std::vector<std::pair<size_t, Int>> coverDuplicates{};
 
   virtual void fixGenerate() {
     std::vector<bool> firstOrDistinct(cover.size(), true);
@@ -29,12 +29,11 @@ class fzn_gccTest : public FznTestBase {
       if (!firstOrDistinct.at(i)) {
         continue;
       }
-      const Int iCov = intVal(cover.at(i));
       for (size_t j = i + 1; j < cover.size(); ++j) {
         if (!firstOrDistinct.at(j)) {
           continue;
         }
-        if (iCov == intVal(cover.at(j))) {
+        if (cover.at(i) == cover.at(j)) {
           firstOrDistinct.at(j) = false;
           coverDuplicates.emplace_back(cover.size(), cover.at(j));
         }
@@ -46,9 +45,9 @@ class fzn_gccTest : public FznTestBase {
       }
     }
     for (size_t dupIndex = 0; dupIndex < coverDuplicates.size(); ++dupIndex) {
-      const Int dupVal = intVal(coverDuplicates.at(dupIndex).second);
+      const Int dupVal = coverDuplicates.at(dupIndex).second;
       for (size_t covIndex = 0; covIndex < cover.size(); ++covIndex) {
-        if (intVal(cover.at(covIndex)) == dupVal) {
+        if (cover.at(covIndex) == dupVal) {
           coverDuplicates.at(dupIndex).first = covIndex;
         }
       }
@@ -58,8 +57,7 @@ class fzn_gccTest : public FznTestBase {
   [[nodiscard]] std::vector<std::pair<Int, Int>> getBounds() const {
     std::vector<std::pair<Int, Int>> bounds{};
     bounds.reserve(cover.size());
-    for (const std::string& covIdentifier : cover) {
-      const Int needle = intVal(covIdentifier);
+    for (const Int needle : cover) {
       Int lb = 0;
       Int ub = 0;
       for (const auto& input : inputs) {

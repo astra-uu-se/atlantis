@@ -49,6 +49,8 @@ class TableInNode : public ViolationInvariantNode {
 
   [[nodiscard]] bool replace() override;
 
+  [[nodiscard]] std::pair<size_t, size_t> implicitRank() const override;
+
   [[nodiscard]] bool canBeMadeImplicit() const override;
 
   [[nodiscard]] bool makeImplicit() override;

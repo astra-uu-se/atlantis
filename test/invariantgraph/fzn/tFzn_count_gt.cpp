@@ -82,11 +82,12 @@ class fzn_count_gtTest : public fzn_countTest {
     const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier = isReified ? "fzn_count_gt_reif" : "fzn_count_gt";
     if (isReified) {
-      addBoolArg(BoolArgState::VAR, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool canMove() const override {

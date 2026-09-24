@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class ModViewTest : public ViewTest {
- public:
+ protected:
   Int denominator{1};
 
   void SetUp() override {
@@ -22,7 +22,7 @@ class ModViewTest : public ViewTest {
     _solver->close();
   }
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     return (committedValue ? _solver->committedValue(inputVar)
                            : _solver->currentValue(inputVar)) %
            denominator;
@@ -41,7 +41,7 @@ TEST_F(ModViewTest, bounds) {
     for (const auto& [inputLb, inputUb] : bounds) {
       EXPECT_LE(inputLb, inputUb);
 
-      _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
+      _solver->updateBounds(VarId{inputVar}, inputLb, inputUb, false);
       if (inputLb >= 0) {
         EXPECT_EQ(_solver->lowerBound(outputVar), 0);
       } else {
@@ -66,9 +66,10 @@ RC_GTEST_FIXTURE_PROP(ModViewTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       _solver->setValue(inputVar, inputVarDist(gen));

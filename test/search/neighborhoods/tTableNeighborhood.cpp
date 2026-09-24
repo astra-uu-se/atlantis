@@ -13,7 +13,7 @@ class TableNeighborhoodTest : public NeighborhoodTestBase<TableNeighborhood> {
   std::vector<SearchVar> _vars;
   std::vector<std::vector<Int>> _table;
 
-  void expectHolds() {
+  void expectHolds() const {
     std::vector<Int> curVals(_vars.size());
     std::vector<Int> comVals(_vars.size());
 

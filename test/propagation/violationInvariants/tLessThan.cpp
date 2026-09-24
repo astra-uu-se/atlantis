@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class LessThanTest : public InvariantTest {
- public:
+ protected:
   VarViewId x{NULL_ID};
   VarViewId y{NULL_ID};
   Int xLb{-2};
@@ -18,17 +18,17 @@ class LessThanTest : public InvariantTest {
   std::uniform_int_distribution<Int> xDist;
   std::uniform_int_distribution<Int> yDist;
 
-  [[nodiscard]] Int computeOutput(Timestamp ts) const {
+  [[nodiscard]] Int computeOutput(const Timestamp ts) const {
     return computeOutput(_solver->value(ts, x), _solver->value(ts, y));
   }
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     return computeOutput(
         committedValue ? _solver->committedValue(x) : _solver->currentValue(x),
         committedValue ? _solver->committedValue(y) : _solver->currentValue(y));
   }
 
-  static Int computeOutput(Int xVal, Int yVal) {
+  static Int computeOutput(const Int xVal, const Int yVal) {
     if (xVal < yVal) {
       return 0;
     }
@@ -60,10 +60,10 @@ TEST_F(LessThanTest, UpdateBounds) {
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_LE(xLb, xUb);
-    _solver->updateBounds(VarId(x), xLb, xUb, false);
+    _solver->updateBounds(VarId{x}, xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_LE(yLb, yUb);
-      _solver->updateBounds(VarId(y), yLb, yUb, false);
+      _solver->updateBounds(VarId{y}, yLb, yUb, false);
       invariant.updateBounds(false);
       std::vector<Int> violations;
       for (Int xVal = xLb; xVal <= xUb; ++xVal) {
@@ -166,7 +166,7 @@ TEST_F(LessThanTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + 1 + i;
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -179,7 +179,7 @@ TEST_F(LessThanTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputVar);
@@ -187,9 +187,9 @@ TEST_F(LessThanTest, Commit) {
 
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -200,23 +200,24 @@ TEST_F(LessThanTest, Commit) {
 RC_GTEST_FIXTURE_PROP(LessThanTest, rapidcheck, ()) {
   _solver->open();
 
-  const Int lb = Int{-1} << 31;
-  const Int ub = Int{1} << 31;
+  constexpr Int lb = Int{-1} << 31;
+  constexpr Int ub = Int{1} << 31;
 
-  const auto xBounds = genBounds(lb, ub);
-  xLb = xBounds.first;
-  xUb = xBounds.second;
+  const auto [xFst, xSnd] = genBounds(lb, ub);
+  xLb = xFst;
+  xUb = xSnd;
 
-  const auto yBounds = genBounds(lb, ub);
-  yLb = yBounds.first;
-  yUb = yBounds.second;
+  const auto [yFst, ySnd] = genBounds(lb, ub);
+  yLb = yFst;
+  yUb = ySnd;
 
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
@@ -254,26 +255,26 @@ class MockLessThan : public LessThan {
     registered = true;
     LessThan::registerVars();
   }
-  explicit MockLessThan(SolverBase& solver, VarViewId outputVar, VarViewId x,
-                        VarViewId y)
+  explicit MockLessThan(SolverBase& solver, const VarViewId outputVar,
+                        const VarViewId x, const VarViewId y)
       : LessThan(solver, outputVar, x, y) {
     EXPECT_TRUE(outputVar.isVar());
 
-    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, recompute).WillByDefault([this](const Timestamp timestamp) {
       return LessThan::recompute(timestamp);
     });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, nextInput).WillByDefault([this](const Timestamp timestamp) {
       return LessThan::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp) {
+        .WillByDefault([this](const Timestamp timestamp) {
           LessThan::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+        .WillByDefault([this](const Timestamp timestamp, const LocalId id) {
           LessThan::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, commit).WillByDefault([this](const Timestamp timestamp) {
       LessThan::commit(timestamp);
     });
   }

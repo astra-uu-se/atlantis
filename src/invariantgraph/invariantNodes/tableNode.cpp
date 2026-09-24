@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "../implicitRanks.hpp"
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/tableImplicitNode.hpp"
@@ -78,6 +79,23 @@ void TableNode::postConstraint() {
   }
   return invariantGraph().constraintSolver().fzn_table_bool(
       inputs, violToBool(_table), true);
+}
+
+void TableNode::removeOutputVarNode(const VarNodeId outputVarNodeId) {
+  for (Int i = static_cast<Int>(outputVarNodeIds().size()) - 1; i >= 0; --i) {
+    if (outputVarNodeIds().at(i) == outputVarNodeId) {
+      removeColumn(i + 1);
+    }
+  }
+  InvariantNode::removeOutputVarNode(outputVarNodeId);
+  assert(_table.empty() || outputVarNodeIds().size() + 1 == numCols());
+}
+
+void TableNode::removeOutputAtIndex(const size_t index) {
+  assert(_table.empty() || index + 1 < numCols());
+  removeColumn(index + 1);
+  InvariantNode::removeOutputAtIndex(index);
+  assert(_table.empty() || outputVarNodeIds().size() + 1 == numCols());
 }
 
 size_t TableNode::numCols() const { return _table.front().size(); }
@@ -180,7 +198,6 @@ void TableNode::removeColumns() {
     if (!outputVarNodeConst(index).isFixed()) {
       continue;
     }
-    removeColumn(c);
     removeOutputAtIndex(index);
   }
 }
@@ -207,6 +224,28 @@ void TableNode::updateState() {
   if (_table.empty() || _table.front().empty()) {
     throw InconsistencyException("TableNode::updateState: Table is empty");
   }
+}
+
+bool TableNode::constrainsOutput(const VarNodeId outputVarNodeId) const {
+  for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
+    if (outputVarNodeIds().at(i) != outputVarNodeId) {
+      continue;
+    }
+    std::vector<Int> vals(_table.size());
+    for (size_t r = 0; r < _table.size(); ++r) {
+      vals[r] = _table[r][i + 1];
+    }
+    const SortedUniqueVector sortedVals(std::move(vals));
+    if (!outputVarNodeConst(i).constDomain()->contains(sortedVals)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::pair<size_t, size_t> TableNode::implicitRank() const {
+  return {rank::IMPLICIT_RANK_TABLE,
+          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
 }
 
 bool TableNode::canBeMadeImplicit() const {

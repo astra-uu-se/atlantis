@@ -29,7 +29,7 @@ void Equal::registerVars() {
   registerDefinedVar(_violationId);
 }
 
-void Equal::updateBounds(bool widenOnly) {
+void Equal::updateBounds(const bool widenOnly) {
   const Int xLb = _solver.lowerBound(_x);
   const Int xUb = _solver.upperBound(_x);
   const Int yLb = _solver.lowerBound(_y);
@@ -48,7 +48,7 @@ void Equal::updateBounds(bool widenOnly) {
   _solver.updateBounds(_violationId, lb, ub, widenOnly);
 }
 
-void Equal::recompute(Timestamp ts) {
+void Equal::recompute(const Timestamp ts) {
   updateValue(ts, _violationId,
               overflow::saturatingAbsDiff(_solver.value(ts, _x),
                                           _solver.value(ts, _y)));
@@ -63,9 +63,9 @@ VarViewId Equal::nextInput(const Timestamp ts) {
     case 1:
       return _y;
     default:
-      return NULL_ID;
+      return VAR_VIEW_NULL_ID;
   }
 }
 
-void Equal::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void Equal::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 }  // namespace atlantis::propagation

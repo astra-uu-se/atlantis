@@ -4,10 +4,10 @@
 
 namespace atlantis::propagation {
 
-IntAbsView::IntAbsView(SolverBase& solver, VarViewId parentId)
+IntAbsView::IntAbsView(SolverBase& solver, const VarViewId parentId)
     : IntView(solver, parentId) {}
 
-Int IntAbsView::value(Timestamp ts) {
+Int IntAbsView::value(const Timestamp ts) {
   return std::abs(_solver.value(ts, _parentId));
 }
 

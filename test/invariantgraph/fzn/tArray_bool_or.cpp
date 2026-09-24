@@ -97,16 +97,16 @@ class array_bool_orTest : public FznTestBase {
     addBoolVarArray(inputs);
     addBoolArg(output);
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool canMove() const override {
-    return std::any_of(inputs.begin(), inputs.end(),
-                       [&](const std::string& input) {
-                         return varId(input) != propagation::NULL_ID;
-                       });
+    return std::ranges::any_of(inputs, [&](const std::string& input) {
+      return varId(input) != propagation::NULL_ID;
+    });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : inputs) {
       if (varId(input) != propagation::NULL_ID && randBool()) {
         changeValue(input, committedValue);

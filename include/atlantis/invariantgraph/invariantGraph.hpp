@@ -121,6 +121,8 @@ class InvariantGraph {
   virtual VarNodeId retrieveIntVarNode(const std::shared_ptr<SearchDomain>& dom,
                                        const std::string& identifier);
 
+  void setObjective(VarNodeId, ObjectiveDirection);
+
   [[nodiscard]] VarNode& varNode(const std::string& identifier);
 
   [[nodiscard]] VarNode& varNode(VarNodeId id);
@@ -184,6 +186,9 @@ class InvariantGraph {
   void replaceFixedVars();
 
   void replaceInvariantNodes();
+  void deactivateUnusedInvariantNodes();
+
+  void makeImplicitConstraintNodes();
 
   [[nodiscard]] InvariantGraphRoot& root() const;
 

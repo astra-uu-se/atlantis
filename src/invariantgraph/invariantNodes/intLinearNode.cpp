@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "../implicitRanks.hpp"
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/intLinEqImplicitNode.hpp"
@@ -19,10 +20,10 @@ namespace atlantis::invariantgraph {
 
 IntLinearNode::IntLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars,
-                             const VarNodeId output, const Int offset)
+                             const VarNodeId output, const Int rhsOffset)
     : InvariantNode(graph, {output}, std::move(vars)),
       _coeffs(std::move(coeffs)),
-      _rhsOffset(offset) {}
+      _rhsOffset(rhsOffset) {}
 
 void IntLinearNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
@@ -79,6 +80,19 @@ void IntLinearNode::updateState() {
     assert(outputVarNode(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+bool IntLinearNode::constrainsOutput(VarNodeId) const {
+  const Int lb = linearLb(invariantGraphConst(), _coeffs,
+                          staticInputVarNodeIds(), _rhsOffset);
+  const Int ub = linearUb(invariantGraphConst(), _coeffs,
+                          staticInputVarNodeIds(), _rhsOffset);
+  return !outputVarNodeConst(0).constDomain()->contains(lb, ub);
+}
+
+std::pair<size_t, size_t> IntLinearNode::implicitRank() const {
+  return {rank::IMPLICIT_RANK_BOOL_LIN_EQ,
+          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
 }
 
 bool IntLinearNode::canBeMadeImplicit() const {

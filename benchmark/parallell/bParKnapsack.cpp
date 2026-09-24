@@ -4,7 +4,6 @@
 #include <chrono>
 #include <filesystem>
 #include <iostream>
-#include <random>
 #include <string>
 #include <utility>
 #include <vector>
@@ -30,7 +29,7 @@ class ParKnapsack : public ::benchmark::Fixture {
   logging::Logger logger{stdout, logging::Level::LVL_ERROR};
 
   static void populateInstances() {
-    instances = createInstances(std::string(FZN_DIR) + "/knapsack");
+    instances = createInstances(std::string(FZN_DIR) + "/benchmark/knapsack");
   }
 
   static size_t size() { return instances.size(); }

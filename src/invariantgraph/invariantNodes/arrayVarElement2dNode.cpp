@@ -191,6 +191,40 @@ void ArrayVarElement2dNode::updateState() {
   }
 }
 
+bool ArrayVarElement2dNode::constrainsOutput(VarNodeId) const {
+  std::vector<Int> values;
+  values.reserve(outputVarNodeConst(0).constDomain()->size());
+  for (auto rowIter = varNodeConst(rowIdx()).constDomain()->begin();
+       rowIter != varNodeConst(rowIdx()).constDomain()->end(); ++rowIter) {
+    const Int r = *rowIter - _rowOffset;
+    if (r < 0) {
+      continue;
+      ;
+    }
+    if (static_cast<Int>(_numRows) < r) {
+      break;
+    }
+    for (auto colIter = varNodeConst(colIdx()).constDomain()->begin();
+         colIter != varNodeConst(colIdx()).constDomain()->end(); ++colIter) {
+      const Int c = *colIter - _colOffset;
+      if (c < 0) {
+        continue;
+        ;
+      }
+      if (static_cast<Int>(numCols()) < c) {
+        break;
+      }
+      for (auto valIter = varNodeConst(at(r, c, false)).constDomain()->begin();
+           valIter != varNodeConst(at(r, c, false)).constDomain()->end();
+           ++valIter) {
+        values.emplace_back(*valIter);
+      }
+    }
+  }
+  const SortedUniqueVector sortedVals(std::move(values));
+  return !outputVarNodeConst(0).constDomain()->contains(sortedVals);
+}
+
 void ArrayVarElement2dNode::registerOutputVars(propagation::SolverBase& solver,
                                                SolverMapping& mapping) const {
   makeSolverVar(outputVarNodeIds().front(), solver, mapping);

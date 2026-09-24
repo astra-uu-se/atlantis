@@ -104,7 +104,7 @@ class TSP : public ::benchmark::Fixture {
     timeToPred.clear();
   }
 
-  [[nodiscard]] bool isTourValid(bool committedValue) const {
+  [[nodiscard]] bool isTourValid(const bool committedValue) const {
     std::vector<bool> visited(n, false);
     Int cur = 0;
     Int numVisited = 0;
@@ -120,7 +120,7 @@ class TSP : public ::benchmark::Fixture {
     return numVisited == n;
   }
 
-  Int computeDistance() {
+  [[nodiscard]] Int computeDistance() const {
     Int tot = 0;
     for (Int i = 0; i < n; ++i) {
       tot += durations.at(i).at(solver->currentValue(pred.at(i)));

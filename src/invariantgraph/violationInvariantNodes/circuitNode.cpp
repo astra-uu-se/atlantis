@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "../implicitRanks.hpp"
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
@@ -53,6 +54,11 @@ void CircuitNode::updateState() {
   if (allFixed) {
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+std::pair<size_t, size_t> CircuitNode::implicitRank() const {
+  return {rank::IMPLICIT_RANK_CIRCUIT,
+          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
 }
 
 bool CircuitNode::canBeMadeImplicit() const {

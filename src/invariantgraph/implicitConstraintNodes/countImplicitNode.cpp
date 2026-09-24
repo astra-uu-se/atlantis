@@ -20,7 +20,7 @@ CountImplicitNode::CountImplicitNode(InvariantGraph& graph,
       _needle(needle),
       _amount(amount) {}
 
-void CountImplicitNode::init(InvariantNodeId id) {
+void CountImplicitNode::init(const InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
   assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
     return invariantGraphConst()

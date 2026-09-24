@@ -69,7 +69,7 @@ class FznBackend {
 
  public:
   explicit FznBackend(
-      fznparser::Model&& model, const std::uint_fast32_t threadCount,
+      fznparser::Model&& model, std::uint_fast32_t threadCount,
       search::SearchType searchType = search::SearchType::BEAMSEARCH);
 
   FznBackend(logging::Logger& logger, std::filesystem::path&& modelFile,
@@ -79,82 +79,51 @@ class FznBackend {
   void solve(logging::Logger&);
   void join(logging::Logger&);
 
-  void setTimelimit(std::optional<std::chrono::milliseconds> timeLimit) {
-    _timelimit = timeLimit;
-  }
+  void setTimelimit(std::optional<std::chrono::milliseconds> timeLimit);
 
-  void setShouldStop(const std::shared_ptr<const bool>& shouldStop) {
-    _shouldStop = shouldStop;
-  }
+  void setShouldStop(const std::shared_ptr<const bool>& shouldStop);
 
   [[nodiscard]] std::shared_ptr<const search::AnnealingScheduleFactory>
-  annealingScheduleFactory() const {
-    return _annealingScheduleFactory;
-  }
+  annealingScheduleFactory() const;
 
   [[nodiscard]] std::shared_ptr<const invariantgraph::FznInvariantGraph>
-  invariantGraph() const {
-    return _invariantGraph;
-  }
+  invariantGraph() const;
 
-  [[nodiscard]] std::vector<invariantgraph::VarNodeId> outputVarNodeIds()
-      const {
-    return _fznOutput->varNodeIds();
-  }
+  [[nodiscard]] std::vector<invariantgraph::VarNodeId> outputVarNodeIds() const;
 
-  [[nodiscard]] fznparser::ProblemType problemType() const {
-    return _model->solveType().problemType();
-  }
+  [[nodiscard]] fznparser::ProblemType problemType() const;
 
-  [[nodiscard]] std::shared_ptr<search::ThreadController> threadController() {
-    return _threadController;
-  }
+  [[nodiscard]] std::shared_ptr<search::ThreadController> threadController();
 
-  [[nodiscard]] search::SearchType searchType() const { return _searchType; }
+  [[nodiscard]] search::SearchType searchType() const;
 
-  [[nodiscard]] std::uint_fast32_t seed() const { return _seed; }
+  [[nodiscard]] std::uint_fast32_t seed() const;
 
-  [[nodiscard]] std::optional<std::chrono::milliseconds> timelimit() const {
-    return _timelimit;
-  }
+  [[nodiscard]] std::optional<std::chrono::milliseconds> timelimit() const;
 
-  [[nodiscard]] std::shared_ptr<const bool> shouldStop() const {
-    return _shouldStop;
-  }
+  [[nodiscard]] std::shared_ptr<const bool> shouldStop() const;
 
   [[nodiscard]] std::function<
       void(const search::SavedAssignment&,
            const std::optional<
                std::vector<std::shared_ptr<search::SearchStatistics>>>&)>
-  onSolution() const {
-    return _onSolution;
-  }
+  onSolution() const;
 
-  [[nodiscard]] const std::function<void(SolveOutcome)>& onFinish() const {
-    return _onFinish;
-  };
+  [[nodiscard]] const std::function<void(SolveOutcome)>& onFinish() const;
 
   void setAnnealingScheduleFactory(
-      const std::shared_ptr<search::AnnealingScheduleFactory>& factory) {
-    _annealingScheduleFactory = factory;
-  }
+      const std::shared_ptr<search::AnnealingScheduleFactory>& factory);
 
-  void setRandomSeed(std::uint_fast32_t seed) { _seed = seed; }
+  void setRandomSeed(std::uint_fast32_t seed);
 
   void setOnSolution(
       const std::function<void(const search::SavedAssignment&,
                                const std::optional<std::vector<std::shared_ptr<
-                                   search::SearchStatistics>>>&)>& onSolution) {
-    _onSolution = onSolution;
-  }
+                                   search::SearchStatistics>>>&)>& onSolution);
 
-  void setDotFilePath(std::filesystem::path&& path) {
-    _dotFilePath = std::optional(std::move(path));
-  }
+  void setDotFilePath(std::filesystem::path&& path);
 
-  void setOnFinish(const std::function<void(SolveOutcome)>& onFinish) {
-    _onFinish = onFinish;
-  }
+  void setOnFinish(const std::function<void(SolveOutcome)>& onFinish);
 };
 
 }  // namespace atlantis

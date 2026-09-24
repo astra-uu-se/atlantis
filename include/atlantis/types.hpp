@@ -16,10 +16,13 @@ enum class ObjectiveDirection : char { MINIMIZE = 1, MAXIMIZE = -1, NONE = 0 };
 struct DomainEntry {
   Int lowerBound;
   Int upperBound;
-  DomainEntry(const Int lb, const Int ub) : lowerBound(lb), upperBound(ub) {
-    assert(lb <= ub);
-  }
+  DomainEntry(Int lb, Int ub);
 };
+
+inline DomainEntry::DomainEntry(const Int lb, const Int ub)
+    : lowerBound(lb), upperBound(ub) {
+  assert(lb <= ub);
+}
 
 enum class RelationType : signed char {
   REL_TYPE_EQ,  // Equality

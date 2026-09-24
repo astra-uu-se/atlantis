@@ -27,10 +27,8 @@ class ScheduleSequence : public AnnealingSchedule {
   void nextRound(const std::shared_ptr<RoundStatistics>& statistics) override;
   double temperature() override;
   bool frozen() override;
-  [[nodiscard]] size_t size() const { return _schedules.size(); }
-  [[nodiscard]] AnnealingSchedule& at(size_t index) {
-    return *(_schedules.at(index));
-  }
+  [[nodiscard]] size_t size() const;
+  [[nodiscard]] AnnealingSchedule& at(size_t index);
 };
 
 }  // namespace atlantis::search

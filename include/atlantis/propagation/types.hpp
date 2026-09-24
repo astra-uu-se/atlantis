@@ -21,10 +21,9 @@ struct VarViewId {
   static constexpr size_t VIEW_MASK =
       (size_t{1} << (sizeof(size_t) * CHAR_BIT - 1));
 
-  VarViewId(size_t i) : id(i == NULL_ID ? i : (i & ~VIEW_MASK)) {}
+  explicit VarViewId(size_t i);
 
-  VarViewId(size_t i, bool isView)
-      : id(i == NULL_ID ? i : (isView ? (i | VIEW_MASK) : (i & ~VIEW_MASK))) {}
+  VarViewId(size_t i, bool isView);
 
   [[nodiscard]] bool isView() const {
     return id != NULL_ID && (id & VIEW_MASK) != size_t{0};
@@ -34,17 +33,13 @@ struct VarViewId {
     return id != NULL_ID && (id & VIEW_MASK) == size_t{0};
   }
 
-  [[nodiscard]] bool operator==(size_t other) const {
-    return size_t(id) == other;
-  }
+  [[nodiscard]] bool operator==(size_t other) const;
 
   [[nodiscard]] bool operator==(const VarViewId& other) const {
     return id == other.id;
   }
 
-  [[nodiscard]] bool operator!=(size_t other) const {
-    return !operator==(other);
-  }
+  [[nodiscard]] bool operator!=(size_t other) const;
 
   [[nodiscard]] bool operator!=(const VarViewId& other) const {
     return !operator==(other);
@@ -54,6 +49,22 @@ struct VarViewId {
     return id == NULL_ID ? id : (id & ~VIEW_MASK);
   }
 };
+
+inline VarViewId::VarViewId(const size_t i)
+    : id(i == NULL_ID ? i : (i & ~VIEW_MASK)) {}
+
+inline VarViewId::VarViewId(const size_t i, const bool isView)
+    : id(i == NULL_ID ? i : (isView ? (i | VIEW_MASK) : (i & ~VIEW_MASK))) {}
+
+inline bool VarViewId::operator==(const size_t other) const {
+  return size_t{id} == other;
+}
+
+inline bool VarViewId::operator!=(const size_t other) const {
+  return !operator==(other);
+}
+
+[[maybe_unused]] static VarViewId VAR_VIEW_NULL_ID{NULL_ID};
 
 enum class CommitMode : bool { NO_COMMIT, COMMIT };
 enum class PropagationMode : bool { INPUT_TO_OUTPUT, OUTPUT_TO_INPUT };

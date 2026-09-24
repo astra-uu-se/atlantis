@@ -66,6 +66,7 @@ class IntLinearNodeTestFixture : public NodeTestBase<IntLinearNode> {
     outputVar.domain = std::pair<Int, Int>(minSum, maxSum);
 
     retrieveIntVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                         varNodeIds(inputVars), varNodeId(outputVar));
@@ -153,8 +154,8 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(ParamData{}, ParamData{InvariantNodeAction::SUBSUME}));
 
 TEST(IntLinearNodeRegression, MultiInputOffsetUsesOffsetViewForOutput) {
-  auto solver = std::make_shared<propagation::Solver>();
-  auto graph = std::make_shared<InvariantGraph>();
+  const auto solver = std::make_shared<propagation::Solver>();
+  const auto graph = std::make_shared<InvariantGraph>();
   graph->open();
 
   const auto a =
@@ -168,7 +169,8 @@ TEST(IntLinearNodeRegression, MultiInputOffsetUsesOffsetViewForOutput) {
       *graph, std::vector<Int>{1, 1}, std::vector<VarNodeId>{a, b}, out, 1));
 
   graph->close();
-  auto mapping = std::make_shared<SolverMapping>(graph->construct(*solver));
+  const auto mapping =
+      std::make_shared<SolverMapping>(graph->construct(*solver));
 
   const auto outId = mapping->solverId(out);
   ASSERT_NE(outId, propagation::NULL_ID);

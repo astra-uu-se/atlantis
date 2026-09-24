@@ -31,19 +31,21 @@ Int Var::val() const {
   return std::get<std::pair<Int, Int>>(domain).first;
 }
 void Var::fixToValue(const bool value) { fixToValue(Int{value ? 1 : 0}); }
-ParamData::ParamData(InvariantNodeAction a, ViolationInvariantType vt, int d)
+ParamData::ParamData(const InvariantNodeAction a,
+                     const ViolationInvariantType vt, const int d)
     : action(a), violType(vt), data(d) {}
-ParamData::ParamData(InvariantNodeAction a, ViolationInvariantType vt)
+ParamData::ParamData(const InvariantNodeAction a,
+                     const ViolationInvariantType vt)
     : action(a), violType(vt), data(0) {}
-ParamData::ParamData(InvariantNodeAction a, int d)
+ParamData::ParamData(const InvariantNodeAction a, const int d)
     : action(a), violType(ViolationInvariantType::CONSTANT_TRUE), data(d) {}
-ParamData::ParamData(InvariantNodeAction a)
+ParamData::ParamData(const InvariantNodeAction a)
     : action(a), violType(ViolationInvariantType::CONSTANT_TRUE), data(0) {}
-ParamData::ParamData(ViolationInvariantType vt, int d)
+ParamData::ParamData(const ViolationInvariantType vt, const int d)
     : action(InvariantNodeAction::NONE), violType(vt), data(d) {}
-ParamData::ParamData(ViolationInvariantType vt)
+ParamData::ParamData(const ViolationInvariantType vt)
     : action(InvariantNodeAction::NONE), violType(vt), data(0) {}
-ParamData::ParamData(int d)
+ParamData::ParamData(const int d)
     : action(InvariantNodeAction::NONE),
       violType(ViolationInvariantType::CONSTANT_TRUE),
       data(d) {}

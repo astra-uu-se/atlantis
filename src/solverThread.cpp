@@ -14,7 +14,6 @@
 #include "atlantis/search/assignment.hpp"
 #include "atlantis/search/metaheuristic.hpp"
 #include "atlantis/search/neighborhoods/neighborhoodCombinator.hpp"
-#include "atlantis/search/objective.hpp"
 #include "atlantis/search/randomProvider.hpp"
 #include "atlantis/search/savedAssignment.hpp"
 #include "atlantis/search/searchController.hpp"
@@ -23,7 +22,7 @@
 
 namespace atlantis {
 
-SolverThread::SolverThread(FznBackend& backend, size_t threadId)
+SolverThread::SolverThread(FznBackend& backend, const size_t threadId)
     : SolverThread(backend.invariantGraph(), backend.outputVarNodeIds(),
                    backend.problemType(), backend.annealingScheduleFactory(),
                    threadId, backend.threadController(), backend.searchType(),
@@ -38,7 +37,7 @@ SolverThread::SolverThread(
         annealingScheduleFactory,
     const size_t threadId,
     const std::shared_ptr<search::ThreadController>& controller,
-    search::SearchType searchType, const std::uint_fast32_t seed,
+    const search::SearchType searchType, const std::uint_fast32_t seed,
     const std::optional<std::chrono::milliseconds> timeLimit,
     const std::shared_ptr<const bool>& shouldStop)
     : _invariantGraph(invariantGraph),
@@ -57,6 +56,11 @@ std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
     const search::Assignment& assignment) const {
   return std::make_unique<search::Annealer>(
       randomProvider, _annealingScheduleFactory->create(), assignment);
+}
+
+[[gnu::always_inline]] inline std::vector<invariantgraph::VarNodeId>
+SolverThread::getOutputVarNodeIds() {
+  return _outputVarNodeIds;
 }
 
 void SolverThread::solve() {
@@ -84,13 +88,13 @@ void SolverThread::solve() {
     // TODO: This can possibly be extracted, or restricted to one thread
     if (mapping.globalNeighborhood()->coveredVars().empty()) {
       _threadController->trySolution(
-          _threadId, search::SavedAssignment(assignment, outputVarIds),
-          nullptr);
+          static_cast<Int>(_threadId),
+          search::SavedAssignment(assignment, outputVarIds), nullptr);
     } else {
       search::RandomProvider randomProvider(_seed);
       search::SearchProcedure search(
           randomProvider, assignment, mapping.globalNeighborhood(), _searchType,
-          _threadController, outputVarIds, _threadId);
+          _threadController, outputVarIds, static_cast<Int>(_threadId));
 
       search::SearchController searchController(
           mapping.objectiveDirection() == ObjectiveDirection::NONE, _timelimit,

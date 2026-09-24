@@ -53,8 +53,6 @@ void ArrayIntMaximumNode::updateState() {
   const Int outputLb = outputVarNodeConst(0).lowerBound();
   const Int outputUb = outputVarNodeConst(0).upperBound();
 
-  std::optional<VarNodeId> equalityVarNodeId{std::nullopt};
-
   for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
        --i) {
     const Int inputLb = staticInputVarNodeConst(i).lowerBound();
@@ -66,27 +64,32 @@ void ArrayIntMaximumNode::updateState() {
         return;
       }
       removeStaticInputAtIndex(i);
-    } else if (inputUb < outputLb) {
+    }
+  }
+  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
+       --i) {
+    if (staticInputVarNodeConst(i).upperBound() <= _lowerBound) {
       removeStaticInputAtIndex(i);
-    } else if (outputLb <= inputLb && inputUb <= outputUb) {
-      equalityVarNodeId = equalityVarNodeId.has_value()
-                              ? NULL_NODE_ID
-                              : staticInputVarNodeIds().at(i);
     }
   }
-  if (equalityVarNodeId.has_value() && *equalityVarNodeId != NULL_NODE_ID) {
-    while (staticInputVarNodeIds().size() > 1) {
-      const size_t index =
-          staticInputVarNodeIds().size() -
-          (staticInputVarNodeIds().back() == *equalityVarNodeId ? 2 : 1);
-      removeStaticInputAtIndex(index);
-    }
-  }
-
+  assert(_lowerBound <= outputLb);
   if (staticInputVarNodeIds().empty()) {
     outputVarNode(0).tightenDomainType();
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+bool ArrayIntMaximumNode::constrainsOutput(VarNodeId) const {
+  Int lb = std::numeric_limits<Int>::min();
+  Int ub = std::numeric_limits<Int>::min();
+  for (const auto vId : staticInputVarNodeIds()) {
+    lb = std::max(lb, varNodeConst(vId).lowerBound());
+    ub = std::max(ub, varNodeConst(vId).upperBound());
+  }
+  if (lb < _lowerBound) {
+    return true;
+  }
+  return !outputVarNodeConst(0).constDomain()->contains(lb, ub);
 }
 
 bool ArrayIntMaximumNode::canBeReplaced() const {

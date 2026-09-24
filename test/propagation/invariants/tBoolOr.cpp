@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class BoolOrTest : public InvariantTest {
- public:
+ protected:
   VarViewId x{NULL_ID};
   VarViewId y{NULL_ID};
   Int xLb{0};
@@ -18,17 +18,19 @@ class BoolOrTest : public InvariantTest {
   std::uniform_int_distribution<Int> xDist;
   std::uniform_int_distribution<Int> yDist;
 
-  [[nodiscard]] Int computeOutput(Timestamp ts) const {
+  [[nodiscard]] Int computeOutput(const Timestamp ts) const {
     return computeOutput(_solver->value(ts, x), _solver->value(ts, y));
   }
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     return computeOutput(
         committedValue ? _solver->committedValue(x) : _solver->currentValue(x),
         committedValue ? _solver->committedValue(y) : _solver->currentValue(y));
   }
 
-  static Int computeOutput(Int xVal, Int yVal) { return std::min(xVal, yVal); }
+  static Int computeOutput(const Int xVal, const Int yVal) {
+    return std::min(xVal, yVal);
+  }
 
   BoolOr& generate() {
     xDist = std::uniform_int_distribution<Int>(xLb, xUb);
@@ -55,10 +57,10 @@ TEST_F(BoolOrTest, UpdateBounds) {
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_LE(xLb, xUb);
-    _solver->updateBounds(VarId(x), xLb, xUb, false);
+    _solver->updateBounds(VarId{x}, xLb, xUb, false);
     for (const auto& [yLb, yUb] : boundVec) {
       EXPECT_LE(yLb, yUb);
-      _solver->updateBounds(VarId(y), yLb, yUb, false);
+      _solver->updateBounds(VarId{y}, yLb, yUb, false);
       invariant.updateBounds(false);
 
       EXPECT_EQ(_solver->lowerBound(outputVar), std::min(xLb, yLb));
@@ -158,7 +160,7 @@ TEST_F(BoolOrTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + 1 + i;
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -171,7 +173,7 @@ TEST_F(BoolOrTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputVar);
@@ -179,9 +181,9 @@ TEST_F(BoolOrTest, Commit) {
 
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -198,9 +200,10 @@ RC_GTEST_FIXTURE_PROP(BoolOrTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
@@ -237,26 +240,26 @@ class MockBoolOr : public BoolOr {
     registered = true;
     BoolOr::registerVars();
   }
-  explicit MockBoolOr(SolverBase& solver, VarViewId output, VarViewId x,
-                      VarViewId y)
+  explicit MockBoolOr(SolverBase& solver, const VarViewId output,
+                      const VarViewId x, const VarViewId y)
       : BoolOr(solver, output, x, y) {
     EXPECT_TRUE(output.isVar());
 
-    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, recompute).WillByDefault([this](const Timestamp timestamp) {
       return BoolOr::recompute(timestamp);
     });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, nextInput).WillByDefault([this](const Timestamp timestamp) {
       return BoolOr::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp) {
+        .WillByDefault([this](const Timestamp timestamp) {
           BoolOr::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+        .WillByDefault([this](const Timestamp timestamp, const LocalId id) {
           BoolOr::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, commit).WillByDefault([this](const Timestamp timestamp) {
       BoolOr::commit(timestamp);
     });
   }

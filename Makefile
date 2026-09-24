@@ -46,24 +46,15 @@ export MZN_SOLVER_PATH=${BUILD_DIR}
 define compile_mzn
 	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 		${MZN_MODEL_DIR}/$(1).mzn \
-		--fzn ${FZN_MODEL_DIR}/$(1).fzn \
-		--no-output-ozn
-	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c --use-gecode \
-		${MZN_MODEL_DIR}/$(1).mzn \
-		--fzn ${FZN_MODEL_DIR}/$(1)_gecode.fzn \
+		--fzn ${FZN_MODEL_DIR}/test/$(1).fzn \
 		--no-output-ozn
 endef
 
 define compile_mzn_dzn
 	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 		${MZN_MODEL_DIR}/$(1).mzn \
-		${MZN_MODEL_DIR}/$(2).dzn \
-		--fzn ${FZN_MODEL_DIR}/$(3).fzn \
-		--no-output-ozn
-	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c --use-gecode \
-		${MZN_MODEL_DIR}/$(1).mzn \
-		${MZN_MODEL_DIR}/$(2).dzn \
-		--fzn ${FZN_MODEL_DIR}/$(3)_gecode.fzn \
+		${DZN_DIR}/$(2).dzn \
+		--fzn ${FZN_MODEL_DIR}/test/$(3).fzn \
 		--no-output-ozn
 endef
 
@@ -71,12 +62,7 @@ define compile_mzn_param
 	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 		${MZN_MODEL_DIR}/$(1).mzn \
 		-D $(2) \
-		--fzn ${FZN_MODEL_DIR}/$(1).fzn \
-		--no-output-ozn
-	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c --use-gecode \
-		${MZN_MODEL_DIR}/$(1).mzn \
-		-D $(2) \
-		--fzn ${FZN_MODEL_DIR}/$(1)_gecode.fzn \
+		--fzn ${FZN_MODEL_DIR}/test/$(1).fzn \
 		--no-output-ozn
 endef
 
@@ -244,71 +230,72 @@ benchmark-par: build-benchmarks run-benchmark-par
 .PHONY: all
 all: clean build build-tests build-benchmarks
 
-.PHONY: fzn
-fzn:
+.PHONY: fzn-test
+fzn-test:
+	mkdir -p ${FZN_MODEL_DIR}/test
 	@$(call compile_mzn,comp_domain_ann)
 	@$(call compile_mzn,simple_minimize)
 	@$(call compile_mzn,all_different_minimize)
 	@$(call compile_mzn_dzn,car_sequencing,car_sequencing,car_sequencing)
 	@$(call compile_mzn_dzn,tsp_alldiff,tsp_17,tsp_alldiff)
 	@$(call compile_mzn_dzn,tsp,tsp_17,tsp)
-	@$(call compile_mzn_dzn,tsp,tsp_201,tsp_201)
 	@$(call compile_mzn_dzn,tsptw_alldiff,tsptw_6,tsptw_6)
+	@$(call compile_mzn_dzn,knap,knapsack/f1_l-d_kp_10_269,f1_l-d_kp_10_269)
+	@$(call compile_mzn_dzn,knap_bool,knapsack/f1_l-d_kp_10_269,f1_l-d_kp_10_269_bool)
+	@$(call compile_mzn_dzn,eternity-ls-opt,eternity_16x16_actual,eternity_16x16_actual)
+	@$(call compile_mzn_dzn,JSP0,jobshop/12-12-0-1_7,jsp-12-12-0-1_7)
 	@$(call compile_mzn_param,magic_square,n=3)
 	@$(call compile_mzn_param,n_queens,n=16)
 
 .PHONY: fzn-benchmark
 fzn-benchmark:
-	mkdir -p ${FZN_MODEL_DIR}/tsp
+	mkdir -p ${FZN_MODEL_DIR}/benchmark
+	mkdir -p ${FZN_MODEL_DIR}/benchmark/tsp
 	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/*001.*), \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/tsp.mzn \
 			${dzn_file} \
-			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
+			--fzn ${FZN_MODEL_DIR}/benchmark/tsp/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
 	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/n100w140.*.*), \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/tsp.mzn \
 			${dzn_file} \
-			--fzn ${FZN_MODEL_DIR}/tsp/$$(basename ${dzn_file} .dzn).fzn \
+			--fzn ${FZN_MODEL_DIR}/benchmark/tsp/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
-	mkdir -p ${FZN_MODEL_DIR}/tsptw
+	mkdir -p ${FZN_MODEL_DIR}/benchmark/tsptw
 	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/*001.*), \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/tsptw_alldiff.mzn \
 			${dzn_file} \
-			--fzn ${FZN_MODEL_DIR}/tsptw/$$(basename ${dzn_file} .dzn).fzn \
+			--fzn ${FZN_MODEL_DIR}/benchmark/tsptw/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
 	$(foreach dzn_file, $(wildcard ${DZN_DIR}/DumasExtended/n100w140.*.*), \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/tsptw_alldiff.mzn \
 			${dzn_file} \
-			--fzn ${FZN_MODEL_DIR}/tsptw/$$(basename ${dzn_file} .dzn).fzn \
+			--fzn ${FZN_MODEL_DIR}/benchmark/tsptw/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
-	mkdir -p ${FZN_MODEL_DIR}/n_queens
+	mkdir -p ${FZN_MODEL_DIR}/benchmark/n_queens
 	$(foreach queens, 8 16 20 24 32 48 64 128 192 256 512 768 1024 2048, \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/n_queens.mzn \
 			-D n=${queens} \
-			--fzn ${FZN_MODEL_DIR}/n_queens/${queens}.fzn \
+			--fzn ${FZN_MODEL_DIR}/benchmark/n_queens/${queens}.fzn \
 			--no-output-ozn;)
-	mkdir -p ${FZN_MODEL_DIR}/knapsack
+	mkdir -p ${FZN_MODEL_DIR}/benchmark/knapsack
 	$(foreach dzn_file, $(wildcard ${DZN_DIR}/knapsack/*), \
 		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
 			${MZN_MODEL_DIR}/knap.mzn \
 			${dzn_file} \
-			--fzn ${FZN_MODEL_DIR}/knapsack/$$(basename ${dzn_file} .dzn).fzn \
+			--fzn ${FZN_MODEL_DIR}/benchmark/knapsack/$$(basename ${dzn_file} .dzn).fzn \
 			--no-output-ozn;)
-	$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
-		${MZN_MODEL_DIR}/knap_bool.mzn \
-		${DZN_DIR}/knapsack/f1_l-d_kp_10_269.dzn \
-		--fzn ${FZN_MODEL_DIR}/knapsack/f1_l-d_kp_10_269_bool.fzn \
-		--no-output-ozn
+	mkdir -p ${FZN_MODEL_DIR}/benchmark/jobshop
 	$(foreach dzn_file, $(wildcard ${DZN_DIR}/jobshop/*.dzn), \
     		$(MZN) --solver ${MZN_SOLVER_PATH}/atlantis.msc -c \
     			${MZN_MODEL_DIR}/JSP0.mzn \
     			${dzn_file} \
-    			--fzn ${FZN_MODEL_DIR}/jobshop/$$(basename ${dzn_file} .dzn).fzn \
+    			--fzn ${FZN_MODEL_DIR}/benchmark/jobshop/$$(basename ${dzn_file} .dzn).fzn \
     			--no-output-ozn;)
 
 .PHONY: clang-format

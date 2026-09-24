@@ -133,7 +133,7 @@ class ElementVarTree : public ::benchmark::Fixture {
   }
 };
 
-void ElementVarTree::probe(::benchmark::State& st, size_t numMoves) {
+void ElementVarTree::probe(::benchmark::State& st, const size_t numMoves) {
   size_t probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
@@ -153,7 +153,8 @@ void ElementVarTree::probe(::benchmark::State& st, size_t numMoves) {
       static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
-void ElementVarTree::probeStatic(::benchmark::State& st, size_t numMoves) {
+void ElementVarTree::probeStatic(::benchmark::State& st,
+                                 const size_t numMoves) {
   size_t probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {
@@ -173,7 +174,7 @@ void ElementVarTree::probeStatic(::benchmark::State& st, size_t numMoves) {
       static_cast<double>(probes), ::benchmark::Counter::kIsRate);
 }
 
-void ElementVarTree::commit(::benchmark::State& st, size_t numMoves) {
+void ElementVarTree::commit(::benchmark::State& st, const size_t numMoves) {
   size_t commits = 0;
   for ([[maybe_unused]] const auto& _ : st) {
     for (size_t i = 0; i < numMoves; ++i) {

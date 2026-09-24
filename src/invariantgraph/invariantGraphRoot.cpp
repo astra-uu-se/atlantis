@@ -37,7 +37,7 @@ void InvariantGraphRoot::registerNode(propagation::SolverBase&,
                 std::move(searchVars)));
 }
 
-void InvariantGraphRoot::addSearchVarNode(VarNodeId vId) {
+void InvariantGraphRoot::addSearchVarNode(const VarNodeId vId) {
   markOutputTo(vId, true);
   assert(outputVarNodeIds().back() == vId);
 }

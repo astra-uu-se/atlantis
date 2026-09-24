@@ -24,7 +24,7 @@ class AllDifferentNonUniformNeighborhoodTest
   Int domainUb{*std::ranges::max_element(_domains.front().begin(),
                                          _domains.front().end())};
 
-  void expectHolds() {
+  void expectHolds() const {
     if (_vars.empty()) {
       return;
     }

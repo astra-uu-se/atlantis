@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <memory>
-#include <vector>
 
 #include "atlantis/propagation/solver.hpp"
 #include "atlantis/propagation/views/violation2BoolView.hpp"
@@ -26,8 +25,8 @@ TEST_F(BoolViewTest, CreateBoolView) {
   const auto viewOfView =
       _solver->makeIntView<Violation2BoolView>(*_solver, viewOfVar);
 
-  EXPECT_EQ(_solver->committedValue(viewOfVar), Int(1));
-  EXPECT_EQ(_solver->committedValue(viewOfView), Int(1));
+  EXPECT_EQ(_solver->committedValue(viewOfVar), 1);
+  EXPECT_EQ(_solver->committedValue(viewOfView), 1);
 
   _solver->close();
 }
@@ -38,13 +37,13 @@ TEST_F(BoolViewTest, ComputeBounds) {
 
   const auto va = _solver->makeIntView<Violation2BoolView>(*_solver, a);
 
-  EXPECT_EQ(_solver->lowerBound(va), Int{0});
-  EXPECT_EQ(_solver->upperBound(va), Int{1});
+  EXPECT_EQ(_solver->lowerBound(va), 0);
+  EXPECT_EQ(_solver->upperBound(va), 1);
 
   _solver->close();
 
-  EXPECT_EQ(_solver->lowerBound(va), Int{0});
-  EXPECT_EQ(_solver->upperBound(va), Int{1});
+  EXPECT_EQ(_solver->lowerBound(va), 0);
+  EXPECT_EQ(_solver->upperBound(va), 1);
 }
 
 TEST_F(BoolViewTest, RecomputeBoolView) {
@@ -54,11 +53,11 @@ TEST_F(BoolViewTest, RecomputeBoolView) {
   const auto viewOfVarId =
       _solver->makeIntView<Violation2BoolView>(*_solver, a);
 
-  EXPECT_EQ(_solver->currentValue(viewOfVarId), Int(1));
+  EXPECT_EQ(_solver->currentValue(viewOfVarId), 1);
 
   _solver->close();
 
-  EXPECT_EQ(_solver->currentValue(viewOfVarId), Int(1));
+  EXPECT_EQ(_solver->currentValue(viewOfVarId), 1);
 
   _solver->beginMove();
   _solver->setValue(a, 0);
@@ -68,7 +67,7 @@ TEST_F(BoolViewTest, RecomputeBoolView) {
   _solver->query(a);
   _solver->endProbe();
 
-  EXPECT_EQ(_solver->currentValue(viewOfVarId), Int(0));
+  EXPECT_EQ(_solver->currentValue(viewOfVarId), 0);
 }
 
 }  // namespace atlantis::testing

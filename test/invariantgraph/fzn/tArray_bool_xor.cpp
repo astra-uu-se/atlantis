@@ -45,6 +45,7 @@ class array_bool_xorTest : public FznTestBase {
     addBoolVarArray(inputs);
     addBoolPar(reified, true);
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
@@ -87,7 +88,7 @@ class array_bool_xorTest : public FznTestBase {
     });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : inputs) {
       if (varId(input) != propagation::NULL_ID && randBool()) {
         changeValue(input, committedValue);

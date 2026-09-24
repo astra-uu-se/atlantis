@@ -20,8 +20,7 @@ class Invariant {
   size_t _level{0};
   InvariantId _id{NULL_ID};
 
-  explicit Invariant(SolverBase& solver, Int nullState = -1)
-      : _solver(solver), _state(NULL_TIMESTAMP, nullState) {}
+  explicit Invariant(SolverBase& solver, Int nullState = -1);
 
   /**
    * Register to the solver that variable is defined by the invariant.
@@ -45,19 +44,17 @@ class Invariant {
    * @brief The level of the invariant in the invariant graph
    */
   [[nodiscard]] size_t level() const noexcept { return _level; }
-  void setLevel(size_t newLevel) noexcept { _level = newLevel; }
+  void setLevel(size_t newLevel) noexcept;
 
-  [[nodiscard]] virtual VarViewId dynamicInputVar(Timestamp) const noexcept {
-    return NULL_ID;
-  }
+  [[nodiscard]] virtual VarViewId dynamicInputVar(Timestamp) const noexcept;
 
-  [[nodiscard]] InvariantId id() const noexcept { return _id; }
+  [[nodiscard]] InvariantId id() const noexcept;
 
-  void setId(InvariantId id) { _id = id; }
+  void setId(InvariantId id);
 
   /**
    * Preconditions for initialisation:
-   * 1) The invariant has been registered in an solver and has a valid ID.
+   * 1) The invariant has been registered in a solver and has a valid ID.
    *
    * 2) All variables have valid ids (i.solver., they have been
    * registered)
@@ -106,10 +103,8 @@ class Invariant {
 
   virtual void commit(Timestamp) {}
 
-  [[nodiscard]] VarId primaryDefinedVar() const { return _primaryDefinedVar; }
-  [[nodiscard]] const std::vector<VarId>& nonPrimaryDefinedVars() const {
-    return _definedVars;
-  }
+  [[nodiscard]] VarId primaryDefinedVar() const;
+  [[nodiscard]] const std::vector<VarId>& nonPrimaryDefinedVars() const;
 };
 
 }  // namespace atlantis::propagation

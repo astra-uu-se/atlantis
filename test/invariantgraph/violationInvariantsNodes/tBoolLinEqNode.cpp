@@ -68,6 +68,7 @@ class BoolLinEqNodeTestFixture : public NodeTestBase<BoolLinRelNode> {
     if (isReified()) {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>(coeffs),
                           varNodeIds(inputVars), RelationType::REL_TYPE_EQ,
                           bound, varNodeId(reifiedVar));

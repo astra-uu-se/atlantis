@@ -8,30 +8,36 @@
 
 namespace atlantis::propagation {
 
-ElementVar::ElementVar(SolverBase& solver, VarId output, VarViewId index,
-                       std::vector<VarViewId>&& varArray, Int offset)
+inline size_t ElementVar::safeIndex(const Int index) const noexcept {
+  return std::max<Int>(
+      0, std::min(static_cast<Int>(_varArray.size()) - 1, index - _offset));
+}
+ElementVar::ElementVar(SolverBase& solver, const VarId output,
+                       const VarViewId index, std::vector<VarViewId>&& varArray,
+                       const Int offset)
     : Invariant(solver),
       _output(output),
       _index(index),
       _varArray(std::move(varArray)),
       _offset(offset) {}
 
-ElementVar::ElementVar(SolverBase& solver, VarViewId output, VarViewId index,
-                       std::vector<VarViewId>&& varArray, Int offset)
-    : ElementVar(solver, VarId(output), index, std::move(varArray), offset) {
+ElementVar::ElementVar(SolverBase& solver, const VarViewId output,
+                       const VarViewId index, std::vector<VarViewId>&& varArray,
+                       const Int offset)
+    : ElementVar(solver, VarId{output}, index, std::move(varArray), offset) {
   assert(output.isVar());
 }
 
 void ElementVar::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _index, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _index, 0, false);
   for (const VarViewId& input : _varArray) {
-    _solver.registerInvariantInput(_id, input, LocalId(0), true);
+    _solver.registerInvariantInput(_id, input, 0, true);
   }
   registerDefinedVar(_output);
 }
 
-void ElementVar::updateBounds(bool widenOnly) {
+void ElementVar::updateBounds(const bool widenOnly) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
   Int iLb = std::max<Int>(_offset, _solver.lowerBound(_index));
@@ -50,20 +56,22 @@ void ElementVar::updateBounds(bool widenOnly) {
   _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
-void ElementVar::recompute(Timestamp ts) {
+void ElementVar::recompute(const Timestamp ts) {
   assert(safeIndex(_solver.value(ts, _index)) < _varArray.size());
   updateValue(
       ts, _output,
       _solver.value(ts, _varArray[safeIndex(_solver.value(ts, _index))]));
 }
 
-VarViewId ElementVar::dynamicInputVar(Timestamp ts) const noexcept {
+VarViewId ElementVar::dynamicInputVar(const Timestamp ts) const noexcept {
   return _varArray[safeIndex(_solver.value(ts, _index))];
 }
 
-void ElementVar::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void ElementVar::notifyInputChanged(const Timestamp ts, LocalId) {
+  recompute(ts);
+}
 
-VarViewId ElementVar::nextInput(Timestamp ts) {
+VarViewId ElementVar::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _index;
@@ -72,9 +80,11 @@ VarViewId ElementVar::nextInput(Timestamp ts) {
       return _varArray[safeIndex(_solver.value(ts, _index))];
     }
     default:
-      return NULL_ID;  // Done
+      return VAR_VIEW_NULL_ID;  // Done
   }
 }
 
-void ElementVar::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void ElementVar::notifyCurrentInputChanged(const Timestamp ts) {
+  recompute(ts);
+}
 }  // namespace atlantis::propagation

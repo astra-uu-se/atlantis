@@ -7,6 +7,7 @@
 
 #include "./fznTestBase.hpp"
 #include "atlantis/invariantgraph/fzn/bool_clause.hpp"
+#include "atlantis/invariantgraph/views/boolNotNode.hpp"
 
 namespace atlantis::testing {
 
@@ -21,7 +22,7 @@ class bool_clauseTest : public FznTestBase {
   std::vector<std::string> inputsA{};
   std::vector<std::string> inputsB{};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const bool expected =
         std::ranges::any_of(inputsA,
                             [&](const auto& input) {
@@ -62,12 +63,14 @@ class bool_clauseTest : public FznTestBase {
 
   void generate() override {
     constraintIdentifier = "bool_clause";
+
     const size_t sizeA = *rc::gen::inRange(0, 3);
-    const size_t sizeB = *rc::gen::inRange(0, 3);
     inputsA.reserve(sizeA);
     for (size_t i = 0; i < sizeA; i++) {
       inputsA.emplace_back("b_a_" + std::to_string(i));
     }
+
+    const size_t sizeB = *rc::gen::inRange(0, 3);
     inputsB.reserve(sizeB);
     for (size_t i = 0; i < sizeB; i++) {
       inputsB.emplace_back("b_b_" + std::to_string(i));
@@ -75,6 +78,9 @@ class bool_clauseTest : public FznTestBase {
     addBoolVarArray(inputsA, "b_arr_a");
     addBoolVarArray(inputsB, "b_arr_b");
     generateConstraint();
+    for (const auto& input : inputsB) {
+      markOutputVar(input);
+    }
   }
 
   [[nodiscard]] bool canMove() const override {
@@ -87,14 +93,31 @@ class bool_clauseTest : public FznTestBase {
            });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : inputsA) {
       if (varId(input) != propagation::NULL_ID && randBool()) {
         changeValue(input, committedValue);
       }
     }
     for (const auto& input : inputsB) {
-      if (varId(input) != propagation::NULL_ID && randBool()) {
+      if (varId(input) == NULL_NODE_ID) {
+        continue;
+      }
+      const auto& vNode = varNodeConst(input);
+      if (vNode.definingNodes().size() == 1 && vNode.outputOf().isInvariant()) {
+        try {
+          const auto& defInv = dynamic_cast<const BoolNotNode&>(
+              _invariantGraph->invariantNode(vNode.outputOf()));
+          const auto source = defInv.staticInputVarNodeIds().front();
+          if (varId(source) != propagation::NULL_ID && randBool()) {
+            changeValue(source, committedValue);
+          }
+        } catch (const std::bad_cast&) {
+        }
+        continue;
+      }
+
+      if (randBool()) {
         changeValue(input, committedValue);
       }
     }

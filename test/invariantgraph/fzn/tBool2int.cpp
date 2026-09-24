@@ -60,6 +60,11 @@ class bool2intTest : public FznTestBase {
 
     constraintIdentifier = "bool2int";
     generateConstraint();
+    if (boolArg.isParameter() && boolDefinesInt) {
+      markOutputVar(boolVar);
+    } else if (intArg.isParameter() && !boolDefinesInt) {
+      markOutputVar(intVar);
+    }
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {

@@ -4,11 +4,12 @@
 
 namespace atlantis::propagation {
 
-IfThenElseConst::IfThenElseConst(SolverBase& solver, VarViewId parentId,
-                                 Int thenVal, Int elseVal, Int condVal)
+IfThenElseConst::IfThenElseConst(SolverBase& solver, const VarViewId parentId,
+                                 const Int thenVal, const Int elseVal,
+                                 const Int condVal)
     : IntView(solver, parentId), _values{thenVal, elseVal}, _condVal(condVal) {}
 
-Int IfThenElseConst::value(Timestamp ts) {
+Int IfThenElseConst::value(const Timestamp ts) {
   return _values[_solver.value(ts, _parentId) == _condVal ? 0 : 1];
 }
 

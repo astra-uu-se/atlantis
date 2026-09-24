@@ -225,7 +225,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->varNode(identifier);
   }
 
-  [[nodiscard]] const VarNode& varNodeConst(const std::string& identifier) {
+  [[nodiscard]] const VarNode& varNodeConst(
+      const std::string& identifier) const {
     return _invariantGraph->varNodeConst(identifier);
   }
 
@@ -248,7 +249,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   [[nodiscard]] propagation::VarViewId varId(
       const std::string& identifier) const {
     return _solverMapping == nullptr
-               ? propagation::NULL_ID
+               ? propagation::VAR_VIEW_NULL_ID
                : _solverMapping->solverId(
                      _invariantGraph->varNodeId(identifier));
   }
@@ -258,7 +259,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   [[nodiscard]] propagation::VarViewId varId(const VarNodeId varNodeId) const {
-    return _solverMapping == nullptr ? propagation::NULL_ID
+    return _solverMapping == nullptr ? propagation::VAR_VIEW_NULL_ID
                                      : _solverMapping->solverId(varNodeId);
   }
 
@@ -292,13 +293,13 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       _solver->open();
     }
     for (const VarNodeId varNodeId : invNode().staticInputVarNodeIds()) {
-      if (visited.contains(size_t(varNodeId))) {
+      if (visited.contains(size_t{varNodeId})) {
         EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
       } else {
         if (!varNode(varNodeId).isFixed()) {
           EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
         }
-        visited.emplace(size_t(varNodeId));
+        visited.emplace(size_t{varNodeId});
       }
       if (varId(varNodeId) == propagation::NULL_ID) {
         const auto& [lb, ub] = varNode(varNodeId).bounds();
@@ -308,13 +309,13 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
     }
     for (const VarNodeId varNodeId : invNode().dynamicInputVarNodeIds()) {
-      if (visited.contains(size_t(varNodeId))) {
+      if (visited.contains(size_t{varNodeId})) {
         EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
       } else {
         if (!varNode(varNodeId).isFixed()) {
           EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
         }
-        visited.emplace(size_t(varNodeId));
+        visited.emplace(size_t{varNodeId});
       }
       if (varId(varNodeId) == propagation::NULL_ID) {
         const auto& [lb, ub] = varNode(varNodeId).bounds();
@@ -331,7 +332,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
 
   [[nodiscard]] propagation::VarViewId solverVarId(
       const VarNodeId varNodeId) const {
-    return _solverMapping == nullptr ? propagation::NULL_ID
+    return _solverMapping == nullptr ? propagation::VAR_VIEW_NULL_ID
                                      : _solverMapping->solverId(varNodeId);
   }
 
@@ -341,17 +342,17 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       EXPECT_TRUE(solverVarId(varNodeId).isVar());
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       if (!varNode(varNodeId).isFixed()) {
-        EXPECT_FALSE(registered.at(size_t(solverVarId(varNodeId))));
+        EXPECT_FALSE(registered.at(size_t{solverVarId(varNodeId)}));
       }
-      registered.at(size_t(solverVarId(varNodeId))) = true;
+      registered.at(size_t{solverVarId(varNodeId)}) = true;
     }
     for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
       EXPECT_TRUE(solverVarId(varNodeId).isVar());
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       if (!varNode(varNodeId).isFixed()) {
-        EXPECT_FALSE(registered.at(size_t(solverVarId(varNodeId))));
+        EXPECT_FALSE(registered.at(size_t{solverVarId(varNodeId)}));
       }
-      registered.at(size_t(solverVarId(varNodeId))) = true;
+      registered.at(size_t{solverVarId(varNodeId)}) = true;
     }
     for (const bool r : registered) {
       EXPECT_TRUE(r);
@@ -419,11 +420,12 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       if (inputVars.at(i) == propagation::NULL_ID) {
         continue;
       }
-      if (inputVals.at(i) < _solver->upperBound(inputVars.at(i))) {
+      const propagation::VarId sourceId = _solver->sourceId(inputVars.at(i));
+      if (inputVals.at(i) < _solver->upperBound(sourceId)) {
         ++inputVals.at(i);
         return i;
       }
-      inputVals.at(i) = _solver->lowerBound(inputVars.at(i));
+      inputVals.at(i) = _solver->lowerBound(sourceId);
     }
     return -1;
   }
@@ -457,7 +459,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (varId(inputVars.at(i)) != propagation::NULL_ID) {
-        _solver->setValue(varId(inputVars.at(i)), vals.at(i));
+        _solver->setValue(_solver->sourceId(varId(inputVars.at(i))),
+                          vals.at(i));
       }
     }
   }
@@ -467,7 +470,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVars.at(i) != propagation::NULL_ID) {
-        _solver->setValue(inputVars.at(i), vals.at(i));
+        _solver->setValue(_solver->sourceId(inputVars.at(i)), vals.at(i));
       }
     }
   }
@@ -487,7 +490,8 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     EXPECT_EQ(inputVars.size(), vals.size());
     for (size_t i = 0; i < inputVars.size(); ++i) {
       if (inputVars.at(i) != propagation::NULL_ID) {
-        EXPECT_EQ(_solver->currentValue(inputVars.at(i)), vals.at(i));
+        EXPECT_EQ(_solver->currentValue(_solver->sourceId(inputVars.at(i))),
+                  vals.at(i));
       }
     }
   }
@@ -499,6 +503,15 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       outputVals.at(i) = _solver->currentValue(outputVars.at(i));
     }
   }
+
+  void markOutputVar(const std::string& identifier) {
+    const auto vId = varNodeId(identifier);
+    if (vId != NULL_NODE_ID) {
+      varNode(vId).setIsOutputVar(true);
+    }
+  }
+
+  void markOutputVar(const Var& v) { markOutputVar(v.identifier); }
 };
 
 }  // namespace atlantis::testing

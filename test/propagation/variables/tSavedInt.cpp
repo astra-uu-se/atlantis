@@ -30,7 +30,7 @@ TEST_F(CommittableIntTest, CommittableIntConstructor) {
 
   // Random timestamp
   const Timestamp initTimestamp = std::max(0, distribution(gen));
-  // Random inital value
+  // Random initial value
   const Int value = distribution(gen);
 
   const CommittableInt committableInt(initTimestamp, value);

@@ -20,7 +20,6 @@ class Element2dConstTest : public InvariantTest {
   VarViewId rowIndexVar{NULL_ID};
   VarViewId colIndexVar{NULL_ID};
   VarViewId outputVar{NULL_ID};
-  std::vector<VarViewId> inputVars;
 
   std::uniform_int_distribution<Int> parDist;
   std::uniform_int_distribution<Int> rowIndexVarDist;
@@ -31,7 +30,6 @@ class Element2dConstTest : public InvariantTest {
   [[nodiscard]] Int colIndexLb() const { return colOffset; }
   [[nodiscard]] Int colIndexUb() const { return colOffset + numCols - 1; }
 
- public:
   void SetUp() override {
     InvariantTest::SetUp();
 
@@ -116,13 +114,13 @@ TEST_F(Element2dConstTest, UpdateBounds) {
          ++minRowIndex) {
       for (Int maxRowIndex = rowIndexUb(); maxRowIndex >= minRowIndex;
            --maxRowIndex) {
-        _solver->updateBounds(VarId(rowIndexVar), minRowIndex, maxRowIndex,
+        _solver->updateBounds(VarId{rowIndexVar}, minRowIndex, maxRowIndex,
                               false);
         for (Int minColIndex = colIndexLb(); minColIndex <= colIndexUb();
              ++minColIndex) {
           for (Int maxColIndex = colIndexUb(); maxColIndex >= minColIndex;
                --maxColIndex) {
-            _solver->updateBounds(VarId(colIndexVar), minColIndex, maxColIndex,
+            _solver->updateBounds(VarId{colIndexVar}, minColIndex, maxColIndex,
                                   false);
             invariant.updateBounds(false);
             Int minVal = std::numeric_limits<Int>::max();
@@ -236,7 +234,7 @@ TEST_F(Element2dConstTest, NotifyCurrentInputChanged) {
       const Int rowIndexVal = rowIndexValues.at(i);
       for (size_t j = 0; j < colIndexValues.size(); ++j) {
         const Int colIndexVal = colIndexValues.at(j);
-        const Timestamp ts = t0 + Timestamp(i * colIndexValues.size() + j);
+        const Timestamp ts = t0 + i * colIndexValues.size() + j;
 
         EXPECT_EQ(invariant.nextInput(ts), rowIndexVar);
         _solver->setValue(ts, rowIndexVar, rowIndexVal);
@@ -275,8 +273,8 @@ TEST_F(Element2dConstTest, Commit) {
       for (size_t j = 0; j < colIndexValues.size(); ++j) {
         const Int colIndexVal = colIndexValues.at(j);
 
-        const Timestamp ts = _solver->currentTimestamp() +
-                             Timestamp(i * colIndexValues.size() + j);
+        const Timestamp ts =
+            _solver->currentTimestamp() + i * colIndexValues.size() + j;
 
         ASSERT_EQ(_solver->committedValue(rowIndexVar), committedRowIndexValue);
         ASSERT_EQ(_solver->committedValue(colIndexVar), committedColIndexValue);
@@ -285,7 +283,7 @@ TEST_F(Element2dConstTest, Commit) {
         _solver->setValue(ts, rowIndexVar, rowIndexVal);
 
         // notify row index change
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(ts, 0);
 
         // incremental value from row index
         Int notifiedOutput = _solver->value(ts, outputVar);
@@ -297,7 +295,7 @@ TEST_F(Element2dConstTest, Commit) {
         _solver->setValue(ts, colIndexVar, colIndexVal);
 
         // notify col index change
-        invariant.notifyInputChanged(ts, LocalId(0));
+        invariant.notifyInputChanged(ts, 0);
 
         // incremental value from col index
         notifiedOutput = _solver->value(ts, outputVar);
@@ -305,11 +303,11 @@ TEST_F(Element2dConstTest, Commit) {
 
         ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-        _solver->commitIf(ts, VarId(rowIndexVar));
+        _solver->commitIf(ts, VarId{rowIndexVar});
         committedRowIndexValue = _solver->value(ts, rowIndexVar);
-        _solver->commitIf(ts, VarId(colIndexVar));
+        _solver->commitIf(ts, VarId{colIndexVar});
         committedColIndexValue = _solver->value(ts, colIndexVar);
-        _solver->commitIf(ts, VarId(outputVar));
+        _solver->commitIf(ts, VarId{outputVar});
 
         invariant.commit(ts);
         invariant.recompute(ts + 1);
@@ -331,9 +329,10 @@ RC_GTEST_FIXTURE_PROP(Element2dConstTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {

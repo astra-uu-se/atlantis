@@ -20,7 +20,7 @@ std::vector<std::vector<bool>> transpose(
   return t;
 }
 
-BoolTableIn::BoolTableIn(SolverBase& solver, VarId violationId,
+BoolTableIn::BoolTableIn(SolverBase& solver, const VarId violationId,
                          std::vector<VarViewId>&& vars,
                          const std::vector<std::vector<bool>>& table)
     : ViolationInvariant(solver, violationId),
@@ -29,7 +29,7 @@ BoolTableIn::BoolTableIn(SolverBase& solver, VarId violationId,
       _rowViolations(_transposed.front().size(), {NULL_TIMESTAMP, -1, -1}),
       _violationCounts(_varArray.size() + 1, {NULL_TIMESTAMP, -1, -1}) {}
 
-BoolTableIn::BoolTableIn(SolverBase& solver, VarViewId violationId,
+BoolTableIn::BoolTableIn(SolverBase& solver, const VarViewId violationId,
                          std::vector<VarViewId>&& vars,
                          const std::vector<std::vector<bool>>& table)
     : BoolTableIn(solver, static_cast<VarId>(violationId), std::move(vars),
@@ -114,7 +114,7 @@ VarViewId BoolTableIn::nextInput(const Timestamp ts) {
   if (index < _varArray.size()) {
     return _varArray[index];
   }
-  return NULL_ID;
+  return VAR_VIEW_NULL_ID;
 }
 
 void BoolTableIn::notifyCurrentInputChanged(const Timestamp ts) {

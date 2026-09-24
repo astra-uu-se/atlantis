@@ -35,7 +35,7 @@ class array_var_bool_elementTest : public FznTestBase {
     }
     const Int lb =
         std::vector<Int>{-1024, -1, 0, 1, 1024}.at(*rc::gen::inRange(0, 5));
-    addIntArg(lb, size + lb - 1, idx);
+    _addIntArg(lb, size + lb - 1, idx);
 
     offset = lowerBound(idx);
     addBoolVarArray(inputs);
@@ -44,9 +44,10 @@ class array_var_bool_elementTest : public FznTestBase {
       addArg(offset);
     }
     generateConstraint();
+    markOutputVar(output);
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const Int idxVal = intVal(idx, committedValue);
     const bool expected = boolVal(inputs.at(idxVal - offset));
     const bool actual = boolVal(output, committedValue);
@@ -106,7 +107,7 @@ class array_var_bool_elementTest : public FznTestBase {
            });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (randBool()) {
       changeValue(idx, committedValue);
     }

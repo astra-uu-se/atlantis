@@ -5,14 +5,15 @@
 
 namespace atlantis::propagation {
 
-static Int compute(Int var, Int val) {
+static Int compute(const Int var, const Int val) {
   return overflow::saturatingAbsDiff(var, val);
 }
 
-EqualConst::EqualConst(SolverBase& solver, VarViewId parentId, Int val)
+EqualConst::EqualConst(SolverBase& solver, const VarViewId parentId,
+                       const Int val)
     : IntView(solver, parentId), _val(val) {}
 
-Int EqualConst::value(Timestamp ts) {
+Int EqualConst::value(const Timestamp ts) {
   return compute(_solver.value(ts, _parentId), _val);
 }
 
@@ -24,7 +25,7 @@ Int EqualConst::lowerBound() const {
   const Int lb = _solver.lowerBound(_parentId);
   const Int ub = _solver.upperBound(_parentId);
   if (lb <= _val && _val <= ub) {
-    return Int(0);
+    return 0;
   }
   return std::min(compute(lb, _val), compute(ub, _val));
 }

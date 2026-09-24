@@ -72,6 +72,7 @@ class ArrayVarElement2dNodeTestFixture
       outputVar.domain = std::pair<Int, Int>(0, 1);
       retrieveBoolVarNode(outputVar);
     }
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(rowIdx), varNodeId(colIdx),
                         varNodeIds(varMatrix), varNodeId(outputVar), rowOffset,
@@ -108,16 +109,16 @@ TEST_P(ArrayVarElement2dNodeTestFixture, propagation) {
 
   for (const auto& idx :
        std::array<std::string, 2>{rowIdx.identifier, colIdx.identifier}) {
-    inputVarIds.emplace_back(varNode(idx).isFixed() ? propagation::NULL_ID
-                                                    : varId(idx));
+    inputVarIds.emplace_back(
+        varNode(idx).isFixed() ? propagation::VAR_VIEW_NULL_ID : varId(idx));
     inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
                                ? varNode(idx).lowerBound()
                                : _solver->lowerBound(inputVarIds.back()));
   }
   for (const auto& row : varMatrix) {
     for (const auto& nId : row) {
-      inputVarIds.emplace_back(varNode(nId).isFixed() ? propagation::NULL_ID
-                                                      : varId(nId));
+      inputVarIds.emplace_back(
+          varNode(nId).isFixed() ? propagation::VAR_VIEW_NULL_ID : varId(nId));
       inputVals.emplace_back(inputVarIds.back() == propagation::NULL_ID
                                  ? varNode(nId).lowerBound()
                                  : _solver->lowerBound(inputVarIds.back()));
@@ -154,7 +155,7 @@ INSTANTIATE_TEST_SUITE_P(
                       ParamData{InvariantNodeAction::REPLACE, 3}));
 
 TEST(ArrayVarElement2dNodeRegression, ReplaceHandlesReducedMatrixOffsets) {
-  auto graph = std::make_shared<InvariantGraph>();
+  const auto graph = std::make_shared<InvariantGraph>();
   graph->open();
 
   const auto rowIdx =
@@ -184,7 +185,7 @@ TEST(ArrayVarElement2dNodeRegression, ReplaceHandlesReducedMatrixOffsets) {
 }
 
 TEST(ArrayVarElement2dNodeRegression, ReplaceUniformInputMatrix) {
-  auto graph = std::make_shared<FznInvariantGraph>();
+  const auto graph = std::make_shared<FznInvariantGraph>();
   graph->open();
 
   const auto input =

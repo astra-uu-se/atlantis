@@ -29,7 +29,6 @@ class ViewTest : public ::testing::Test {
 
   VarViewId outputVar{NULL_ID};
 
- public:
   void makeInputVar() {
     inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
     inputVar = _solver->makeIntVar(inputVarDist(gen), inputVarLb, inputVarUb);

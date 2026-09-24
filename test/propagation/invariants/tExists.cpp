@@ -7,7 +7,7 @@ using rc::gen::inRange;
 using namespace atlantis::propagation;
 
 class ExistsTest : public InvariantTest {
- public:
+ protected:
   Int numInputVars{3};
   Int inputVarLb{0};
   Int inputVarUb{5};
@@ -66,13 +66,13 @@ TEST_F(ExistsTest, UpdateBounds) {
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_LE(aLb, aUb);
-    _solver->updateBounds(VarId(inputVars.at(0)), aLb, aUb, false);
+    _solver->updateBounds(VarId{inputVars.at(0)}, aLb, aUb, false);
     for (const auto& [bLb, bUb] : boundVec) {
       EXPECT_LE(bLb, bUb);
-      _solver->updateBounds(VarId(inputVars.at(1)), bLb, bUb, false);
+      _solver->updateBounds(VarId{inputVars.at(1)}, bLb, bUb, false);
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_LE(cLb, cUb);
-        _solver->updateBounds(VarId(inputVars.at(2)), cLb, cUb, false);
+        _solver->updateBounds(VarId{inputVars.at(2)}, cLb, cUb, false);
         invariant.updateBounds(false);
 
         ASSERT_EQ(std::min(aLb, std::min(bLb, cLb)),
@@ -128,8 +128,8 @@ TEST_F(ExistsTest, NextInput) {
   for (const auto& id : inputVars) {
     EXPECT_TRUE(id.isVar());
   }
-  const auto minVarId = size_t(getMinVarViewId(inputVars));
-  const auto maxVarId = size_t(getMaxVarViewId(inputVars));
+  const auto minVarId = size_t{getMinVarViewId(inputVars)};
+  const auto maxVarId = size_t{getMaxVarViewId(inputVars)};
 
   for (Int i = 0; i < numInputVars; ++i) {
     const Timestamp ts =
@@ -139,7 +139,7 @@ TEST_F(ExistsTest, NextInput) {
     }
     std::vector<bool> notified(maxVarId - minVarId + 1, false);
     for (Int j = 0; j <= i; ++j) {
-      const size_t varId = size_t(invariant.nextInput(ts));
+      const size_t varId = size_t{invariant.nextInput(ts)};
       EXPECT_NE(varId, NULL_ID);
       EXPECT_LE(minVarId, varId);
       EXPECT_GE(maxVarId, varId);
@@ -191,7 +191,7 @@ TEST_F(ExistsTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + i;
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -204,7 +204,7 @@ TEST_F(ExistsTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputVar);
@@ -212,9 +212,9 @@ TEST_F(ExistsTest, Commit) {
 
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -228,9 +228,10 @@ RC_GTEST_FIXTURE_PROP(ExistsTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
@@ -301,7 +302,7 @@ TEST_F(ExistsTest, SolverIntegration) {
       _solver->open();
     }
     std::vector<VarViewId> args;
-    const Int numArgs = 10;
+    constexpr Int numArgs = 10;
     for (Int value = 1; value <= numArgs; ++value) {
       args.push_back(_solver->makeIntVar(value, 1, numArgs));
     }

@@ -14,22 +14,24 @@ namespace atlantis::propagation {
  * @param y second violation variable
  * @param output result
  */
-BoolXor::BoolXor(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
+BoolXor::BoolXor(SolverBase& solver, const VarId output, const VarViewId x,
+                 const VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
 
-BoolXor::BoolXor(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
-    : BoolXor(solver, VarId(output), x, y) {
+BoolXor::BoolXor(SolverBase& solver, const VarViewId output, const VarViewId x,
+                 const VarViewId y)
+    : BoolXor(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
 
 void BoolXor::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, LocalId(0), false);
-  _solver.registerInvariantInput(_id, _y, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _x, 0, false);
+  _solver.registerInvariantInput(_id, _y, 0, false);
   registerDefinedVar(_output);
 }
 
-void BoolXor::updateBounds(bool widenOnly) {
+void BoolXor::updateBounds(const bool widenOnly) {
   Int lb = 0;
   Int ub = 1;
   const bool xIsZero = _solver.upperBound(_x) == 0;
@@ -46,24 +48,24 @@ void BoolXor::updateBounds(bool widenOnly) {
   _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
-void BoolXor::recompute(Timestamp ts) {
+void BoolXor::recompute(const Timestamp ts) {
   updateValue(
       ts, _output,
       (_solver.value(ts, _x) == 0) == (_solver.value(ts, _y) == 0) ? 1 : 0);
 }
 
-void BoolXor::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void BoolXor::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
 
-VarViewId BoolXor::nextInput(Timestamp ts) {
+VarViewId BoolXor::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
     case 1:
       return _y;
     default:
-      return NULL_ID;
+      return VAR_VIEW_NULL_ID;
   }
 }
 
-void BoolXor::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void BoolXor::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 }  // namespace atlantis::propagation

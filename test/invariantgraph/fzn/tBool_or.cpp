@@ -21,7 +21,7 @@ class bool_orTest : public FznTestBase {
   std::vector<std::string> inputs{"b_1", "b_2"};
   std::string output{"output"};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const bool expected = std::ranges::any_of(inputs, [&](const auto& input) {
       return boolVal(input, committedValue);
     });
@@ -94,6 +94,7 @@ class bool_orTest : public FznTestBase {
     addBoolArg(inputs.back());
     addBoolArg(output);
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool canMove() const override {
@@ -102,7 +103,7 @@ class bool_orTest : public FznTestBase {
     });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : inputs) {
       if (varId(input) != propagation::NULL_ID && randBool()) {
         changeValue(input, committedValue);

@@ -21,7 +21,7 @@ class bool_andTest : public FznTestBase {
   std::vector<std::string> inputs{"b_1", "b_2"};
   std::string output = "output";
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const bool expected =
         std::ranges::all_of(inputs, [&](const std::string& input) {
           return boolVal(input, committedValue);
@@ -94,6 +94,7 @@ class bool_andTest : public FznTestBase {
     addBoolArg(inputs.back());
     addBoolArg(output);
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool canMove() const override {

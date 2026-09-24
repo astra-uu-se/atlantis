@@ -2,9 +2,11 @@
 
 #include <utility>
 
+#include "../implicitRanks.hpp"
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
+#include "atlantis/invariantgraph/implicitConstraintNodes/linLeImplicitNode.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
@@ -48,12 +50,12 @@ IntLinRelNode::IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
 
 IntLinRelNode::IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
                              std::vector<VarNodeId>&& vars,
-                             const RelationType relType, const Int bound,
+                             const RelationType relType, const Int rhs,
                              const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
       _relType(relType),
       _coeffs(std::move(coeffs)),
-      _rhs(bound) {}
+      _rhs(rhs) {}
 
 void IntLinRelNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
@@ -150,18 +152,55 @@ void IntLinRelNode::updateState() {
   }
   if (sameCoeff) {
     const Int c = std::abs(_coeffs.front());
-    if ((_relType == RelationType::REL_TYPE_EQ ||
-         _relType == RelationType::REL_TYPE_NE) &&
-        _rhs % c != 0) {
-      assert(_relType == RelationType::REL_TYPE_NE);
-      setState(InvariantNodeState::SUBSUMED);
+    for (long& coeff : _coeffs) {
+      assert(coeff != 0);
+      coeff = coeff > 0 ? 1 : -1;
+    }
+    if (_relType == RelationType::REL_TYPE_EQ ||
+        _relType == RelationType::REL_TYPE_NE) {
+      if (_rhs % c != 0) {
+        assert(_relType == RelationType::REL_TYPE_NE);
+        setState(InvariantNodeState::SUBSUMED);
+        return;
+      }
+      _rhs /= c;
       return;
     }
-    for (long& coeff : _coeffs) {
-      coeff /= c;
+    // Note that all coefficients are now +/- 1, therefore this destructive
+    // modification to _rhs will be performed only once:
+    assert(_relType == RelationType::REL_TYPE_LE);
+    if (_rhs >= 0 || std::abs(_rhs) % c == 0) {
+      _rhs /= c;
+      return;
     }
-    _rhs /= c;
+    _rhs = (_rhs / c) - 1;
   }
+}
+
+std::pair<size_t, size_t> IntLinRelNode::implicitRank() const {
+  return {rank::IMPLICIT_RANK_INT_LIN_LE, staticInputVarNodeIds().size()};
+}
+
+bool IntLinRelNode::canBeMadeImplicit() const {
+  if (state() != InvariantNodeState::ACTIVE || isReified() ||
+      _relType != RelationType::REL_TYPE_LE) {
+    return false;
+  }
+  assert(shouldHold());
+  return std::ranges::all_of(staticInputVarNodeIds(), [&](const auto& id) {
+    return varNodeConst(id).definingNodes().empty();
+  });
+}
+
+bool IntLinRelNode::makeImplicit() {
+  if (!canBeMadeImplicit()) {
+    return false;
+  }
+  invariantGraph().addImplicitConstraintNode(
+      std::make_shared<LinLeImplicitNode>(
+          invariantGraph(), std::move(_coeffs),
+          std::vector<VarNodeId>{staticInputVarNodeIds()}, _rhs));
+  return true;
 }
 
 void IntLinRelNode::registerOutputVars(propagation::SolverBase& solver,

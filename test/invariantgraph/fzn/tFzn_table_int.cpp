@@ -42,16 +42,23 @@ class fzn_table_intTest : public FznTestBase {
 
     addArg(flatTable);
 
-    const bool isReified = true ? true : *rc::gen::arbitrary<bool>();
+    const bool isReified = *rc::gen::arbitrary<bool>();
     constraintIdentifier =
         isReified ? "fzn_table_int_flat_reif" : "fzn_table_int_flat";
 
     if (isReified) {
-      addBoolArg(BoolArgState::FIXED_FALSE, reified);
+      addBoolArg(reified);
     } else {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    if (isFixed(reified)) {
+      for (const auto& input : inputs) {
+        markOutputVar(input);
+      }
+    } else {
+      markOutputVar(reified);
+    }
   }
 
   [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
@@ -180,7 +187,8 @@ class fzn_table_intRegressionTest : public FznTestBase {
 
   void generate() override {}
 
-  void buildConstraint(const std::string& identifier, bool reifiedConstraint) {
+  void buildConstraint(const std::string& identifier,
+                       const bool reifiedConstraint) {
     addIntVarArray({IntArgState::VAR, IntArgState::VAR},
                    std::vector<std::string>{"x0", "x1"});
 
@@ -200,6 +208,12 @@ class fzn_table_intRegressionTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    if (reifiedConstraint) {
+      markOutputVar(reified);
+    } else {
+      markOutputVar("x0");
+      markOutputVar("x1");
+    }
     closeInvariantGraph();
   }
 

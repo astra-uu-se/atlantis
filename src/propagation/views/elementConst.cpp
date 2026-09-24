@@ -7,11 +7,15 @@
 
 namespace atlantis::propagation {
 
-ElementConst::ElementConst(SolverBase& solver, VarViewId parentId,
-                           std::vector<Int>&& array, Int offset)
+inline size_t ElementConst::safeIndex(const Int index) const noexcept {
+  return std::max<Int>(
+      0, std::min<Int>(static_cast<Int>(_array.size()) - 1, index - _offset));
+}
+ElementConst::ElementConst(SolverBase& solver, const VarViewId parentId,
+                           std::vector<Int>&& array, const Int offset)
     : IntView(solver, parentId), _array(std::move(array)), _offset(offset) {}
 
-Int ElementConst::value(Timestamp ts) {
+Int ElementConst::value(const Timestamp ts) {
   assert(safeIndex(_solver.value(ts, _parentId)) < _array.size());
   return _array[safeIndex(_solver.value(ts, _parentId))];
 }

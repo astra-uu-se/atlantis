@@ -8,7 +8,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class EqualConstTest : public ViewTest {
- public:
+ protected:
   Int value{0};
 
   [[nodiscard]] Int computeOutput(bool committedValue = false) const {
@@ -48,7 +48,7 @@ TEST_F(EqualConstTest, bounds) {
     const auto& [expectedLb, expectedUb] = expected.at(i);
     EXPECT_LE(expectedLb, expectedUb);
 
-    _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
+    _solver->updateBounds(VarId{inputVar}, inputLb, inputUb, false);
 
     EXPECT_EQ(_solver->lowerBound(outputVar), expectedLb);
     EXPECT_EQ(_solver->upperBound(outputVar), expectedUb);
@@ -65,9 +65,10 @@ RC_GTEST_FIXTURE_PROP(EqualConstTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       _solver->setValue(inputVar, inputVarDist(gen));

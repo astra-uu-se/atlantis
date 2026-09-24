@@ -104,8 +104,8 @@ BENCHMARK_DEFINE_F(AllInterval, probe_single_swap)(::benchmark::State& st) {
 BENCHMARK_DEFINE_F(AllInterval, probe_all_swap)(::benchmark::State& st) {
   size_t probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
-    for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
-      for (size_t j = i + 1; j < static_cast<size_t>(n); ++j) {
+    for (size_t i = 0; i < n; ++i) {
+      for (size_t j = i + 1; j < n; ++j) {
         const Int oldI = _solver->committedValue(inputVarIds[i]);
         const Int oldJ = _solver->committedValue(inputVarIds[j]);
         _solver->beginMove();

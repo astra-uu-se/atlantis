@@ -16,7 +16,6 @@
 #include "benchmark.hpp"
 
 namespace atlantis::benchmark {
-
 class TSPTW : public ::benchmark::Fixture {
  public:
   std::shared_ptr<propagation::Solver> solver;
@@ -165,7 +164,7 @@ class TSPTW : public ::benchmark::Fixture {
     violations.clear();
   }
 
-  [[nodiscard]] bool isTourValid(bool committedValue) const {
+  [[nodiscard]] bool isTourValid(const bool committedValue) const {
     std::vector<bool> visited(n + 1, false);
     // n is the dummy location
     Int cur = n;
@@ -182,7 +181,7 @@ class TSPTW : public ::benchmark::Fixture {
     return numVisited == n + 1;
   }
 
-  Int computeDistance() {
+  [[nodiscard]] Int computeDistance() const {
     Int tot = 0;
     for (Int i = 0; i < n + 1; ++i) {
       tot += durations.at(i).at(solver->currentValue(pred.at(i)));

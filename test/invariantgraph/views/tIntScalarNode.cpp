@@ -31,6 +31,7 @@ class IntScalarNodeTestFixture : public NodeTestBase<IntScalarNode> {
         std::pair<Int, Int>{lb * factor + offset, ub * factor + offset};
     retrieveIntVarNode(inputVar);
     retrieveIntVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVar),
                         varNodeId(outputVar), factor, offset);

@@ -43,7 +43,7 @@ TableInNode::TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
 
 TableInNode::TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
                          const std::vector<std::vector<bool>>& table,
-                         VarNodeId reified)
+                         const VarNodeId reified)
     : TableInNode(graph, std::move(vars), boolToViol(table), reified, true) {}
 
 TableInNode::TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
@@ -238,6 +238,10 @@ bool TableInNode::replace() {
                                   staticInputVarNodeIds().at(inputColIndex),
                                   std::move(_table), inputColIndex));
   return true;
+}
+
+std::pair<size_t, size_t> TableInNode::implicitRank() const {
+  return {10000, staticInputVarNodeIds().size() + outputVarNodeIds().size()};
 }
 
 bool TableInNode::canBeMadeImplicit() const {

@@ -4,15 +4,18 @@
 
 namespace atlantis::propagation {
 
-ModView::ModView(SolverBase& solver, VarViewId parentId, Int denominator)
+ModView::ModView(SolverBase& solver, const VarViewId parentId,
+                 const Int denominator)
     : IntView(solver, parentId), _denominator(std::abs(denominator)) {
   if (_denominator == 0) {
     throw std::invalid_argument("Denominator cannot be zero");
   }
 }
 
-Int ModView::value(Timestamp ts) {
-  return _solver.value(ts, _parentId) % _denominator;
+Int ModView::value(const Timestamp ts) {
+  const Int parentVal = _solver.value(ts, _parentId);
+  const Int remainder = parentVal % _denominator;
+  return remainder;
 }
 
 Int ModView::committedValue() {
