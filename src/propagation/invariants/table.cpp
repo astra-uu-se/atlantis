@@ -35,7 +35,7 @@ std::vector<std::vector<Int>>&& removeInputColumn(
   return std::move(table);
 }
 
-Table::Table(SolverBase& solver, const std::vector<VarId>&& outputVars,
+Table::Table(SolverBase& solver, std::vector<VarId>&& outputVars,
              const VarViewId inputVar, std::vector<std::vector<Int>>&& table,
              const size_t inputColumn)
     : Invariant(solver),
@@ -51,7 +51,7 @@ Table::Table(SolverBase& solver, const std::vector<VarId>&& outputVars,
   assert(_valToRow.size() == _table.size());
 }
 
-Table::Table(SolverBase& solver, const std::vector<VarViewId>&& outputVars,
+Table::Table(SolverBase& solver, std::vector<VarViewId>&& outputVars,
              const VarViewId inputVar, std::vector<std::vector<Int>>&& table,
              const size_t inputColumn)
     : Table(solver, toVarIds(std::move(outputVars)), inputVar, std::move(table),

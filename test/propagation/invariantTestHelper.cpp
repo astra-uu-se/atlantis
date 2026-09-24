@@ -1,5 +1,18 @@
 #include "./invariantTestHelper.hpp"
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <rapidcheck/gtest.h>
+
+#include <random>
+#include <ranges>
+#include <vector>
+
+#include "atlantis/propagation/invariants/invariant.hpp"
+#include "atlantis/propagation/solver.hpp"
+#include "atlantis/propagation/types.hpp"
+#include "atlantis/types.hpp"
+
 namespace atlantis::testing {
 
 using ::testing::AtLeast;
@@ -8,13 +21,14 @@ using ::testing::AtMost;
 using namespace atlantis::propagation;
 
 
-inline VarViewId InvariantTest::makeIntVar(
+VarViewId InvariantTest::makeIntVar(
     const Int lb, const Int ub, std::uniform_int_distribution<Int>& dist) {
   const Int val = generateState == GenerateState::RANDOM
                       ? dist(gen)
                       : (generateState == GenerateState::LB ? lb : ub);
   return _solver->makeIntVar(val, lb, ub);
 }
+
 std::vector<Int> InvariantTest::createInputVals(
     const std::vector<VarViewId>& inputVars) const {
   std::vector<Int> inputVals(inputVars.size());
@@ -85,7 +99,7 @@ std::vector<VarViewId> InvariantTest::makeVars(
   return vars;
 }
 
-inline std::vector<VarViewId> InvariantTest::makeVars(const size_t numVars, const Int lb,
+std::vector<VarViewId> InvariantTest::makeVars(const size_t numVars, const Int lb,
                                                       const Int ub) {
   EXPECT_LE(lb, ub);
   std::vector<VarViewId> vars;
@@ -172,7 +186,7 @@ Int InvariantTest::increaseNextVal(const std::vector<VarViewId>& varIds,
   return -1;
 }
 
-inline void InvariantTest::setVarVals(const Timestamp ts,
+void InvariantTest::setVarVals(const Timestamp ts,
                                       const std::vector<VarViewId>& inputVars,
                                       const std::vector<Int>& vals) {
   EXPECT_EQ(inputVars.size(), vals.size());
@@ -202,7 +216,7 @@ void InvariantTest::notifyInputsChanged(
   }
 }
 
-inline std::pair<Int, Int> InvariantTest::genBounds(const Int lb, const Int ub) {
+std::pair<Int, Int> InvariantTest::genBounds(const Int lb, const Int ub) {
   return *rc::gen::suchThat(
       rc::gen::pair<Int, Int>(rc::gen::inRange<Int>(lb, ub),
                               rc::gen::inRange<Int>(lb, ub)),

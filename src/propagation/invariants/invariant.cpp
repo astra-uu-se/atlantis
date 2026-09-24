@@ -29,7 +29,7 @@ void Invariant::incValue(const Timestamp ts, const VarId id,
 void Invariant::setLevel(const size_t newLevel) noexcept { _level = newLevel; }
 
 VarViewId Invariant::dynamicInputVar(Timestamp) const noexcept {
-    return VAR_VIEW_NULL_ID}
+    return VAR_VIEW_NULL_ID; }
 
 InvariantId Invariant::id() const noexcept {
   return _id;
