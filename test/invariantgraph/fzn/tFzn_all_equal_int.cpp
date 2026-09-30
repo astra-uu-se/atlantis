@@ -91,6 +91,7 @@ class fzn_all_equal_intTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
@@ -186,7 +187,7 @@ class fzn_all_equal_intTest : public FznTestBase {
         inputs, [&](const std::string& input) { return !isFixed(input); });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : inputs) {
       if (!isFixed(input) && randBool()) {
         changeValue(input, committedValue);

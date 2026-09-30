@@ -8,7 +8,7 @@
 
 namespace atlantis::propagation {
 
-BoolLinear::BoolLinear(SolverBase& solver, VarId output,
+BoolLinear::BoolLinear(SolverBase& solver, const VarId output,
                        std::vector<Int>&& coeffs,
                        std::vector<VarViewId>&& violArray)
     : Invariant(solver),
@@ -16,22 +16,22 @@ BoolLinear::BoolLinear(SolverBase& solver, VarId output,
       _coeffs(std::move(coeffs)),
       _violArray(std::move(violArray)) {}
 
-BoolLinear::BoolLinear(SolverBase& solver, VarViewId output,
+BoolLinear::BoolLinear(SolverBase& solver, const VarViewId output,
                        std::vector<Int>&& coeffs,
                        std::vector<VarViewId>&& violArray)
-    : BoolLinear(solver, VarId(output), std::move(coeffs),
+    : BoolLinear(solver, VarId{output}, std::move(coeffs),
                  std::move(violArray)) {
   assert(output.isVar());
 }
 
-BoolLinear::BoolLinear(SolverBase& solver, VarId output,
+BoolLinear::BoolLinear(SolverBase& solver, const VarId output,
                        std::vector<VarViewId>&& violArray)
     : BoolLinear(solver, output, std::vector<Int>(violArray.size(), 1),
                  std::move(violArray)) {}
 
-BoolLinear::BoolLinear(SolverBase& solver, VarViewId output,
+BoolLinear::BoolLinear(SolverBase& solver, const VarViewId output,
                        std::vector<VarViewId>&& violArray)
-    : BoolLinear(solver, VarId(output), std::vector<Int>(violArray.size(), 1),
+    : BoolLinear(solver, VarId{output}, std::vector<Int>(violArray.size(), 1),
                  std::move(violArray)) {
   assert(output.isVar());
 }
@@ -47,7 +47,7 @@ void BoolLinear::registerVars() {
   registerDefinedVar(_output);
 }
 
-void BoolLinear::updateBounds(bool widenOnly) {
+void BoolLinear::updateBounds(const bool widenOnly) {
   // precondition: this invariant must be registered with the solver before it
   // is initialised.
   Int lb = 0;
@@ -69,7 +69,7 @@ void BoolLinear::updateBounds(bool widenOnly) {
   _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
-void BoolLinear::recompute(Timestamp ts) {
+void BoolLinear::recompute(const Timestamp ts) {
   Int totalSum = 0;
   for (size_t i = 0; i < _violArray.size(); ++i) {
     const Int val = _solver.value(ts, _violArray[i]) == 0 ? 1 : 0;
@@ -92,16 +92,16 @@ void BoolLinear::notifyInputChanged(const Timestamp ts, const LocalId id) {
   incValue(ts, _output, prod);
 }
 
-VarViewId BoolLinear::nextInput(Timestamp ts) {
+VarViewId BoolLinear::nextInput(const Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index < _violArray.size()) {
     return _violArray[index];
   }
-  return NULL_ID;  // Done
+  return VAR_VIEW_NULL_ID;  // Done
 }
 
-void BoolLinear::notifyCurrentInputChanged(Timestamp ts) {
+void BoolLinear::notifyCurrentInputChanged(const Timestamp ts) {
   assert(_state.value(ts) != -1);
   notifyInputChanged(ts, _state.value(ts));
 }

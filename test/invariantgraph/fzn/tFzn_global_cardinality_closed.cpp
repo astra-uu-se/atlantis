@@ -30,11 +30,10 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
     std::unordered_map<Int, std::vector<size_t>> valToIndices;
     valToIndices.reserve(cover.size());
     for (size_t i = 0; i < cover.size(); ++i) {
-      const Int needle = intVal(cover.at(i), committedValue);
-      if (valToIndices.contains(needle)) {
-        valToIndices.at(needle).emplace_back(i);
+      if (valToIndices.contains(cover.at(i))) {
+        valToIndices.at(cover.at(i)).emplace_back(i);
       } else {
-        valToIndices.emplace(needle, std::vector<size_t>{i});
+        valToIndices.emplace(cover.at(i), std::vector<size_t>{i});
       }
     }
 
@@ -96,10 +95,8 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
     }
 
     const size_t coverSize = *rc::gen::inRange<size_t>(0, 4);
-    cover.reserve(coverSize);
-    for (size_t i = 0; i < coverSize; ++i) {
-      cover.emplace_back("cover_" + std::to_string(i));
-    }
+    cover = *rc::gen::container<std::vector<Int>>(
+        coverSize, rc::gen::inRange<size_t>(defaultLb, defaultUb + 1));
 
     outputs.reserve(coverSize);
     for (size_t i = 0; i < coverSize; ++i) {
@@ -107,7 +104,7 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
     }
 
     addIntVarArray(inputs, "inputs");
-    addIntVarArray(std::vector(cover.size(), IntArgState::PAR), cover, "cover");
+    addIntParArray(cover, "cover");
     addIntVarArray(outputs, "outputs");
 
     const bool isReified = *rc::gen::arbitrary<bool>();
@@ -120,6 +117,16 @@ class fzn_global_cardinality_closedTest : public fzn_gcc_countTest {
     }
     fixGenerate();
     generateConstraint();
+    for (const auto& output : outputs) {
+      markOutputVar(output);
+    }
+    if (isFixed(reified)) {
+      for (const auto& output : outputs) {
+        markOutputVar(output);
+      }
+    } else {
+      markOutputVar(reified);
+    }
   }
 
   void query() override {

@@ -58,7 +58,7 @@ class ThreadController {
   [[nodiscard]] std::optional<std::pair<size_t, SavedAssignment>> loadSolution(
       size_t solutionId) const;
 
-  void recordFatalError(std::exception_ptr error, Int threadId,
+  void recordFatalError(const std::exception_ptr& error, Int threadId,
                         std::string_view context);
 
   void requestStop();

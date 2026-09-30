@@ -26,6 +26,13 @@ class array_int_element2dTest : public FznTestBase {
   Int colOffset{1};
 
   Int getValue(const Int rowValue, const Int colValue) const {
+    RC_ASSERT(rowValue - rowOffset >= 0);
+    RC_ASSERT(rowValue - rowOffset < static_cast<Int>(parameters.size()));
+    RC_ASSERT(colValue - colOffset >= 0);
+    RC_ASSERT(parameters.empty() ||
+              colValue - colOffset <
+                  static_cast<Int>(parameters.front().size()));
+
     return parameters.at(rowValue - rowOffset).at(colValue - colOffset);
   }
 
@@ -38,10 +45,10 @@ class array_int_element2dTest : public FznTestBase {
                                : "array_int_element2d_nonshifted_flat";
 
     const Int rowLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(rowLb, numRows + rowLb - 1, rowIndex);
+    _addIntArg(rowLb, numRows + rowLb - 1, rowIndex);
 
     const Int colLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(colLb, numCols + colLb - 1, colIndex);
+    _addIntArg(colLb, numCols + colLb - 1, colIndex);
 
     parameters = *rc::gen::container<std::vector<std::vector<Int>>>(
         numRows, rc::gen::container<std::vector<Int>>(
@@ -57,7 +64,7 @@ class array_int_element2dTest : public FznTestBase {
 
     addArg(flatPars);
 
-    addIntArg(-1, -1, output);
+    addIntArg(output);
 
     addArg(numRows);
     rowOffset = lowerBound(rowIndex);
@@ -66,9 +73,10 @@ class array_int_element2dTest : public FznTestBase {
     addArg(colOffset);
 
     generateConstraint();
+    markOutputVar(output);
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const Int rowIdxVal = intVal(rowIndex, committedValue);
     const Int colIdxVal = intVal(colIndex, committedValue);
     const Int expected =
@@ -109,7 +117,7 @@ class array_int_element2dTest : public FznTestBase {
               return outputNode.inDomain(getValue(intVal(rowIndex), colVal));
             });
       }
-      return !outputNode.inDomain(getValue(intVal(colIndex), intVal(rowIndex)));
+      return !outputNode.inDomain(getValue(intVal(rowIndex), intVal(colIndex)));
     }
     if (!isFixed(rowIndex)) {
       const auto& rowIdxNode = varNodeConst(rowIndex);
@@ -183,7 +191,7 @@ class array_int_element2dTest : public FznTestBase {
     return !isFixed(rowIndex) || !isFixed(colIndex);
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (!isFixed(rowIndex) && randBool()) {
       changeValue(rowIndex, committedValue);
     }

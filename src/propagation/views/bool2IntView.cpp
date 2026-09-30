@@ -4,12 +4,12 @@
 
 namespace atlantis::propagation {
 
-static Int convert(Int value) { return value == 0 ? 1 : 0; }
+static Int convert(const Int value) { return value == 0 ? 1 : 0; }
 
 Bool2IntView::Bool2IntView(SolverBase& solver, const VarViewId parentId)
     : IntView(solver, parentId) {}
 
-Int Bool2IntView::value(Timestamp ts) {
+Int Bool2IntView::value(const Timestamp ts) {
   assert(0 <= _solver.value(ts, _parentId));
   return convert(_solver.value(ts, _parentId));
 }

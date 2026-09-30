@@ -14,14 +14,12 @@ namespace atlantis::propagation {
  */
 
 class ElementVar : public Invariant {
-  VarId _output, _index;
+  VarId _output;
+  VarViewId _index;
   std::vector<VarViewId> _varArray;
   Int _offset;
 
-  [[nodiscard]] size_t safeIndex(Int index) const noexcept {
-    return std::max<Int>(
-        0, std::min(static_cast<Int>(_varArray.size()) - 1, index - _offset));
-  }
+  [[nodiscard]] size_t safeIndex(Int index) const noexcept;
 
  public:
   explicit ElementVar(SolverBase&, VarId output, VarViewId index,

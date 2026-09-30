@@ -30,7 +30,7 @@ class ParNQueens : public ::benchmark::Fixture {
   logging::Logger logger{stdout, logging::Level::LVL_ERROR};
 
   static void populateInstances() {
-    instances = createInstances(std::string(FZN_DIR) + "/n_queens");
+    instances = createInstances(std::string(FZN_DIR) + "/benchmark/n_queens");
   }
 
   static size_t size() { return instances.size(); }

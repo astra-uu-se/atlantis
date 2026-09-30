@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class IntDivTest : public InvariantTest {
- public:
+ protected:
   VarViewId numerator{NULL_ID};
   VarViewId denominator{NULL_ID};
   Int numeratorLb{-2};
@@ -22,12 +22,12 @@ class IntDivTest : public InvariantTest {
     return denominatorLb < 0 && denominatorUb <= 0 ? -1 : 1;
   }
 
-  [[nodiscard]] Int computeOutput(Timestamp ts) const {
+  [[nodiscard]] Int computeOutput(const Timestamp ts) const {
     return computeOutput(_solver->value(ts, numerator),
                          _solver->value(ts, denominator));
   }
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     Int denVal = committedValue ? _solver->committedValue(denominator)
                                 : _solver->currentValue(denominator);
     if (denVal == 0) {
@@ -38,8 +38,8 @@ class IntDivTest : public InvariantTest {
            denVal;
   }
 
-  [[nodiscard]] Int computeOutput(Int numerator, Int denominator) const {
-    return numerator / (denominator == 0 ? zeroReplacement() : denominator);
+  [[nodiscard]] Int computeOutput(const Int num, const Int den) const {
+    return num / (den == 0 ? zeroReplacement() : den);
   }
 
   IntDiv& generate(bool denominatorZero = false) {
@@ -72,10 +72,10 @@ TEST_F(IntDivTest, UpdateBounds) {
 
   for (const auto& [nomLb, nomUb] : boundVec) {
     EXPECT_LE(nomLb, nomUb);
-    _solver->updateBounds(VarId(numerator), nomLb, nomUb, false);
+    _solver->updateBounds(VarId{numerator}, nomLb, nomUb, false);
     for (const auto& [denLb, denUb] : boundVec) {
       EXPECT_LE(denLb, denUb);
-      _solver->updateBounds(VarId(denominator), denLb, denUb, false);
+      _solver->updateBounds(VarId{denominator}, denLb, denUb, false);
       _solver->open();
       invariant.updateBounds(false);
       _solver->close();
@@ -158,7 +158,7 @@ TEST_F(IntDivTest, NextInput) {
 TEST_F(IntDivTest, NotifyCurrentInputChanged) {
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{numerator, denominator};
+  const std::vector<VarViewId> inputVars{numerator, denominator};
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
@@ -190,7 +190,7 @@ TEST_F(IntDivTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + 1 + i;
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -204,7 +204,7 @@ TEST_F(IntDivTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputVar);
@@ -212,9 +212,9 @@ TEST_F(IntDivTest, Commit) {
 
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -240,7 +240,7 @@ TEST_F(IntDivTest, ZeroDenominator) {
       if (method == 0) {
         invariant.recompute(_solver->currentTimestamp());
       } else {
-        invariant.notifyInputChanged(_solver->currentTimestamp(), LocalId(1));
+        invariant.notifyInputChanged(_solver->currentTimestamp(), 1);
       }
       EXPECT_EQ(expected, _solver->currentValue(outputVar));
     }
@@ -265,9 +265,10 @@ RC_GTEST_FIXTURE_PROP(IntDivTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {

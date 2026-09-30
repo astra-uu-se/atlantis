@@ -52,6 +52,13 @@ class fzn_table_boolTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    if (!isFixed(reified)) {
+      markOutputVar(reified);
+    } else {
+      for (const auto& input : inputs) {
+        markOutputVar(input);
+      }
+    }
   }
 
   [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
@@ -122,6 +129,16 @@ class fzn_table_boolTest : public FznTestBase {
     if (!isFixed(reified)) {
       return false;
     }
+    const bool subsumed =
+        std::ranges::all_of(inputs, [&](const std::string& input) {
+          return varNodeId(input) == NULL_NODE_ID ||
+                 varNodeConst(input).isFixed() ||
+                 varNodeConst(input).staticInputTo().empty();
+        });
+    if (subsumed) {
+      return true;
+    }
+
     if (table.empty()) {
       return !boolVal(reified);
     }
@@ -173,15 +190,18 @@ RC_GTEST_FIXTURE_PROP(fzn_table_boolTest, RapidCheck, ()) {
 }
 
 class fzn_table_boolRegressionTest : public FznTestBase {
+ protected:
+  void SetUp() override { FznTestBase::SetUp(); }
+
  public:
+  void generate() override {}
   std::vector<std::string> inputs{"i_0", "i_1", "i_2"};
   std::string reified{"reified"};
   std::vector<std::vector<bool>> table{
       {true, false, false}, {true, false, true}, {true, true, false}};
 
-  void generate() override {}
-
-  void buildConstraint(const std::string& identifier, bool reifiedConstraint) {
+  void buildConstraint(const std::string& identifier,
+                       const bool reifiedConstraint) {
     addBoolVarArray(
         {BoolArgState::FIXED_TRUE, BoolArgState::VAR, BoolArgState::VAR},
         inputs);
@@ -204,8 +224,6 @@ class fzn_table_boolRegressionTest : public FznTestBase {
     generateConstraint();
     closeInvariantGraph();
   }
-
-  void SetUp() override { FznTestBase::SetUp(); }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {
     std::vector<bool> vals(inputs.size());

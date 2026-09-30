@@ -4,45 +4,63 @@
 
 namespace atlantis::testing {
 
-static std::unordered_set<Int> solutions() {
-  const Int capacity = 269;
-  const std::vector<Int> weights{95, 4, 60, 32, 23, 72, 80, 62, 65, 46};
-  // we are maximizing, the objective has its sign inverted:
-  const std::vector<Int> gains{-55, -10, -47, -5, -4, -50, -8, -61, -85, -87};
-  std::vector<std::vector<std::vector<Int>>> matrix(
-      weights.size(),
-      std::vector<std::vector<Int>>(capacity + 1, std::vector<Int>()));
-  for (size_t i = 0; i < weights.size(); ++i) {
-    matrix.at(i).at(0).emplace_back(0);
+static void knapsackSolutions(const search::SavedAssignment& sol,
+                              const Int trueVal,
+                              std::optional<Int>& foundOptimum) {
+  EXPECT_FALSE(sol.cost().hasViolation());
+
+  constexpr Int capacity = 269;
+  constexpr std::array<Int, 10> weight{95, 4, 60, 32, 23, 72, 80, 62, 65, 46};
+  constexpr std::array<Int, 10> profit{55, 10, 47, 5, 4, 50, 8, 61, 85, 87};
+  const std::vector<Int>& outputs = sol.outputValues();
+  Int totalWeight = 0;
+  Int totalProfit = 0;
+  EXPECT_EQ(outputs.size(), weight.size());
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    totalWeight += outputs.at(i) == trueVal ? weight[i] : 0;
+    totalProfit += outputs.at(i) == trueVal ? profit[i] : 0;
   }
-  if (weights.at(0) <= capacity) {
-    matrix.at(0).at(weights.at(0)).emplace_back(gains.at(0));
+  const Int actualProfit = std::abs(sol.cost().objective());
+  EXPECT_LE(totalWeight, capacity);
+  EXPECT_EQ(totalProfit, actualProfit);
+  if (!sol.cost().hasViolation() && totalWeight <= capacity &&
+      totalProfit == actualProfit) {
+    foundOptimum = actualProfit;
   }
-  for (size_t i = 1; i < weights.size(); ++i) {
-    for (Int c = 0; c <= capacity; ++c) {
-      matrix.at(i).at(c) = matrix.at(i - 1).at(c);
-      if (weights.at(i) <= c) {
-        for (const Int g : matrix.at(i - 1).at(c - weights.at(i))) {
-          matrix.at(i).at(c).emplace_back(g + gains.at(i));
-        }
-      }
-    }
-  }
-  std::unordered_set<Int> solutions;
-  for (Int c = 0; c <= capacity; ++c) {
-    for (Int g : matrix.back().at(c)) {
-      solutions.insert(g);
-    }
-  }
-  return solutions;
 }
 
-TEST(FznKnapsack, DISABLED_Solve) {
-  testModelFile("knapsack/f1_l-d_kp_10_269.fzn", solutions());
+TEST(FznKnapsack, Solve) {
+  std::optional<Int> foundOptimum{};
+  const auto onSolution =
+      [&foundOptimum](
+          const search::SavedAssignment& sol,
+          const std::optional<
+              std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
+        knapsackSolutions(sol, 1, foundOptimum);
+      };
+  const auto& onFinish =
+      [&foundOptimum](const FznBackend::SolveOutcome outcome) {
+        EXPECT_EQ(outcome == FznBackend::SolveOutcome::SATISFIABLE,
+                  foundOptimum.has_value());
+      };
+  testModelFile("test/f1_l-d_kp_10_269.fzn", onSolution, onFinish);
 }
 
-TEST(FznKnapsack, DISABLED_SolveBool) {
-  testModelFile("knapsack/f1_l-d_kp_10_269_bool.fzn", solutions());
+TEST(FznKnapsack, SolveBool) {
+  std::optional<Int> foundOptimum{};
+  const auto onSolution =
+      [&foundOptimum](
+          const search::SavedAssignment& sol,
+          const std::optional<
+              std::vector<std::shared_ptr<search::SearchStatistics>>>&) {
+        knapsackSolutions(sol, 0, foundOptimum);
+      };
+  const auto& onFinish =
+      [&foundOptimum](const FznBackend::SolveOutcome outcome) {
+        EXPECT_EQ(outcome == FznBackend::SolveOutcome::SATISFIABLE,
+                  foundOptimum.has_value());
+      };
+  testModelFile("test/f1_l-d_kp_10_269_bool.fzn", onSolution, onFinish);
 }
 
 }  // namespace atlantis::testing

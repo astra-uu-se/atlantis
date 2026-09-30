@@ -30,7 +30,7 @@ class ParTSP : public ::benchmark::Fixture {
   logging::Logger logger{stdout, logging::Level::LVL_ERROR};
 
   static void populateInstances() {
-    instances = createInstances(std::string(FZN_DIR) + "/tsp");
+    instances = createInstances(std::string(FZN_DIR) + "/benchmark/tsp");
   }
 
   static size_t size() { return instances.size(); }

@@ -3,63 +3,68 @@
 namespace atlantis::invariantgraph {
 
 propagation::VarViewId SolverMapping::invariantIntermediateId(
-    size_t id, size_t index) const {
+    const size_t id, const size_t index) const {
   if (id >= _invariantIntermediateIds.size() ||
       index >= _invariantIntermediateIds[id].size()) {
-    return propagation::NULL_ID;
+    return propagation::VAR_VIEW_NULL_ID;
   }
   return _invariantIntermediateIds[id][index];
 }
 
 propagation::VarViewId SolverMapping::setInvariantIntermediateId(
-    size_t id, size_t index, propagation::VarViewId solverId) {
+    const size_t id, const size_t index,
+    const propagation::VarViewId solverId) {
   assert(solverId != propagation::NULL_ID);
   if (id >= _invariantIntermediateIds.size()) {
     _invariantIntermediateIds.resize(id + 1,
                                      std::vector<propagation::VarViewId>{});
   }
   if (index >= _invariantIntermediateIds[id].size()) {
-    _invariantIntermediateIds[id].resize(index + 1, propagation::NULL_ID);
+    _invariantIntermediateIds[id].resize(index + 1,
+                                         propagation::VAR_VIEW_NULL_ID);
   }
   return _invariantIntermediateIds[id][index] = solverId;
 }
 
 propagation::VarViewId SolverMapping::implicitIntermediateId(
-    size_t id, size_t index) const {
+    const size_t id, const size_t index) const {
   if (id >= _implicitIntermediateIds.size() ||
       index >= _implicitIntermediateIds[id].size()) {
-    return propagation::NULL_ID;
+    return propagation::VAR_VIEW_NULL_ID;
   }
   return _implicitIntermediateIds[id][index];
 }
 
 propagation::VarViewId SolverMapping::setImplicitIntermediateId(
-    size_t id, size_t index, propagation::VarViewId solverId) {
+    const size_t id, const size_t index,
+    const propagation::VarViewId solverId) {
   assert(solverId != propagation::NULL_ID);
   if (id >= _implicitIntermediateIds.size()) {
     _implicitIntermediateIds.resize(id + 1,
                                     std::vector<propagation::VarViewId>{});
   }
   if (index >= _implicitIntermediateIds[id].size()) {
-    _implicitIntermediateIds[id].resize(index + 1, propagation::NULL_ID);
+    _implicitIntermediateIds[id].resize(index + 1,
+                                        propagation::VAR_VIEW_NULL_ID);
   }
   return _implicitIntermediateIds[id][index] = solverId;
 }
 
-propagation::VarViewId SolverMapping::solverId(VarNodeId varNodeId) const {
+propagation::VarViewId SolverMapping::solverId(
+    const VarNodeId varNodeId) const {
   assert(varNodeId != NULL_NODE_ID);
-  if (size_t(varNodeId) >= _solverIds.size()) {
-    return propagation::NULL_ID;
+  if (varNodeId >= _solverIds.size()) {
+    return propagation::VAR_VIEW_NULL_ID;
   }
-  return _solverIds[size_t(varNodeId)];
+  return _solverIds[varNodeId];
 }
 propagation::VarViewId SolverMapping::domainViolationId(
-    VarNodeId varNodeId) const {
+    const VarNodeId varNodeId) const {
   assert(varNodeId != NULL_NODE_ID);
-  if (size_t(varNodeId) >= _domainViolationIds.size()) {
-    return propagation::NULL_ID;
+  if (varNodeId >= _domainViolationIds.size()) {
+    return propagation::VAR_VIEW_NULL_ID;
   }
-  return _domainViolationIds[size_t(varNodeId)];
+  return _domainViolationIds[varNodeId];
 }
 
 propagation::VarViewId SolverMapping::totalViolationId() const {
@@ -71,29 +76,29 @@ propagation::VarViewId SolverMapping::objectiveId() const {
 }
 
 void SolverMapping::setSolverId(const VarNodeId& varNodeId,
-                                propagation::VarViewId solverId) {
+                                const propagation::VarViewId solverId) {
   assert(varNodeId != NULL_NODE_ID);
   assert(solverId != propagation::NULL_ID);
-  if (_solverIds.size() <= size_t(varNodeId)) {
-    _solverIds.resize(size_t(varNodeId) + 1, propagation::NULL_ID);
+  if (_solverIds.size() <= varNodeId) {
+    _solverIds.resize(varNodeId + 1, propagation::VAR_VIEW_NULL_ID);
   }
   _solverIds[varNodeId] = solverId;
 }
-void SolverMapping::setDomainViolationId(const VarNodeId& varNodeId,
-                                         propagation::VarViewId solverId) {
+void SolverMapping::setDomainViolationId(
+    const VarNodeId& varNodeId, const propagation::VarViewId solverId) {
   assert(varNodeId != NULL_NODE_ID);
   assert(solverId != propagation::NULL_ID);
-  if (_domainViolationIds.size() <= size_t(varNodeId)) {
-    _domainViolationIds.resize(size_t(varNodeId) + 1, propagation::NULL_ID);
+  if (_domainViolationIds.size() <= varNodeId) {
+    _domainViolationIds.resize(varNodeId + 1, propagation::VAR_VIEW_NULL_ID);
   }
-  _domainViolationIds[size_t(varNodeId)] = solverId;
+  _domainViolationIds[varNodeId] = solverId;
 }
 
-void SolverMapping::setTotalViolationId(propagation::VarViewId solverId) {
+void SolverMapping::setTotalViolationId(const propagation::VarViewId solverId) {
   _totalViolationId = solverId;
 }
 
-void SolverMapping::setObjectiveId(propagation::VarViewId solverId) {
+void SolverMapping::setObjectiveId(const propagation::VarViewId solverId) {
   _objectiveId = solverId;
 }
 
@@ -116,12 +121,12 @@ SolverMapping::neighborhood(const InvariantNodeId id) {
 propagation::VarViewId SolverMapping::violationId(InvariantNodeId id) const {
   assert(id != NULL_NODE_ID);
   if (id.isImplicitConstraint() || size_t{id} >= _violationIds.size()) {
-    return propagation::NULL_ID;
+    return propagation::VAR_VIEW_NULL_ID;
   }
   return _violationIds[size_t{id}];
 }
 void SolverMapping::setViolationId(InvariantNodeId id,
-                                   propagation::VarViewId solverId) {
+                                   const propagation::VarViewId solverId) {
   assert(id != NULL_NODE_ID);
   assert(solverId != propagation::NULL_ID);
   if (id.isImplicitConstraint()) {
@@ -129,21 +134,23 @@ void SolverMapping::setViolationId(InvariantNodeId id,
     return;
   }
   if (size_t{id} >= _violationIds.size()) {
-    _violationIds.resize(size_t{id} + 1, propagation::NULL_ID);
+    _violationIds.resize(size_t{id} + 1, propagation::VAR_VIEW_NULL_ID);
   }
   _violationIds[size_t{id}] = solverId;
 }
 propagation::VarViewId SolverMapping::intermediateId(InvariantNodeId id,
-                                                     size_t index) const {
+                                                     const size_t index) const {
   assert(id != NULL_NODE_ID);
   return id.isInvariant() ? invariantIntermediateId(size_t{id}, index)
                           : implicitIntermediateId(size_t{id}, index);
 }
-propagation::VarViewId SolverMapping::intermediateId(InvariantNodeId id) const {
+propagation::VarViewId SolverMapping::intermediateId(
+    const InvariantNodeId id) const {
   return intermediateId(id, 0);
 }
 propagation::VarViewId SolverMapping::setIntermediateId(
-    InvariantNodeId id, size_t index, propagation::VarViewId solverId) {
+    InvariantNodeId id, const size_t index,
+    const propagation::VarViewId solverId) {
   assert(id != NULL_NODE_ID);
   assert(solverId != propagation::NULL_ID);
   return id.isInvariant()
@@ -152,7 +159,7 @@ propagation::VarViewId SolverMapping::setIntermediateId(
 }
 
 propagation::VarViewId SolverMapping::setIntermediateId(
-    InvariantNodeId id, propagation::VarViewId solverId) {
+    InvariantNodeId id, const propagation::VarViewId solverId) {
   assert(id != NULL_NODE_ID);
   assert(solverId != propagation::NULL_ID);
   return id.isInvariant() ? setInvariantIntermediateId(size_t{id}, 0, solverId)
@@ -193,13 +200,13 @@ Int SolverMapping::objectiveOptimalValue() const {
   return _objectiveOptimalValue;
 }
 
-void SolverMapping::setObjectiveOptimalValue(Int value) {
+void SolverMapping::setObjectiveOptimalValue(const Int value) {
   _objectiveOptimalValue = value;
 }
 ObjectiveDirection SolverMapping::objectiveDirection() const {
   return _objectiveDirection;
 }
-void SolverMapping::setObjectiveDirection(ObjectiveDirection direction) {
+void SolverMapping::setObjectiveDirection(const ObjectiveDirection direction) {
   _objectiveDirection = direction;
 }
 

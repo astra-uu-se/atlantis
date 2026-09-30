@@ -104,7 +104,7 @@ VarViewId Linear::nextInput(const Timestamp ts) {
   if (index < _varArray.size()) {
     return _varArray[index];
   }
-  return NULL_ID;  // Done
+  return VAR_VIEW_NULL_ID;  // Done
 }
 
 void Linear::notifyCurrentInputChanged(const Timestamp ts) {

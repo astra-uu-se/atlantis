@@ -24,8 +24,9 @@ void ImplicitConstraintNode::registerOutputVars(propagation::SolverBase& solver,
   }
 }
 
-void ImplicitConstraintNode::init(InvariantNodeId id) {
+void ImplicitConstraintNode::init(const InvariantNodeId id) {
   InvariantNode::init(id);
 }
+bool ImplicitConstraintNode::constrainsOutput(VarNodeId) const { return true; }
 
 }  // namespace atlantis::invariantgraph

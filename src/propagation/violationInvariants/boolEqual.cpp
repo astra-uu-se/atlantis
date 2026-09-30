@@ -17,7 +17,7 @@ BoolEqual::BoolEqual(SolverBase& solver, const VarId violationId,
 
 BoolEqual::BoolEqual(SolverBase& solver, const VarViewId violationId,
                      const VarViewId x, const VarViewId y)
-    : BoolEqual(solver, VarId(violationId), x, y) {
+    : BoolEqual(solver, VarId{violationId}, x, y) {
   assert(violationId.isVar());
 }
 
@@ -35,7 +35,7 @@ void BoolEqual::updateBounds(const bool widenOnly) {
 void BoolEqual::recompute(const Timestamp ts) {
   updateValue(
       ts, _violationId,
-      (_solver.value(ts, _x) == 0) == (_solver.value(ts, _y) == 0) ? 0 : 1);
+      ((_solver.value(ts, _x) == 0) == (_solver.value(ts, _y) == 0)) ? 0 : 1);
 }
 
 void BoolEqual::notifyInputChanged(const Timestamp ts, LocalId) {
@@ -49,7 +49,7 @@ VarViewId BoolEqual::nextInput(const Timestamp ts) {
     case 1:
       return _y;
     default:
-      return NULL_ID;
+      return VAR_VIEW_NULL_ID;
   }
 }
 

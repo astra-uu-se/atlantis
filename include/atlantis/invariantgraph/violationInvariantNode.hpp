@@ -9,11 +9,7 @@ namespace atlantis::invariantgraph {
  * propagation solver.
  */
 class ViolationInvariantNode : public InvariantNode {
-  // Bounds will be recomputed by the solver.
   bool _isReified;
-
-  // If the violation invariant is not reified, then this boolean indicates if
-  // the violation invariant should hold or not:
   bool _shouldHold;
 
   void updateReified();
@@ -36,6 +32,7 @@ class ViolationInvariantNode : public InvariantNode {
                                            SolverMapping&) const;
 
   [[nodiscard]] VarNode& reifiedVarNode();
+
   [[nodiscard]] const VarNode& reifiedVarNodeConst() const;
 
   [[nodiscard]] bool shouldHold() const noexcept;
@@ -67,6 +64,8 @@ class ViolationInvariantNode : public InvariantNode {
 
   [[nodiscard]] bool isReified() const override;
 
+  [[nodiscard]] bool isViolationInvariant() const override;
+
   [[nodiscard]] propagation::VarViewId violationVarId(
       const SolverMapping&) const override;
 
@@ -75,6 +74,8 @@ class ViolationInvariantNode : public InvariantNode {
   void postConstraint() override;
 
   void updateState() override;
+
+  [[nodiscard]] bool constrainsOutput(VarNodeId) const override;
 };
 
 }  // namespace atlantis::invariantgraph

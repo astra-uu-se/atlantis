@@ -47,9 +47,11 @@ class Assignment {
    * Get the current value of a variable in the assignment.
    */
   [[nodiscard]] Int currentValue(propagation::VarViewId) const;
+  [[nodiscard]] Int currentValue(propagation::VarId var) const;
 
   [[nodiscard]] std::unordered_map<propagation::VarId, Int> currentValues()
       const;
+  [[nodiscard]] Int committedValue(propagation::VarId var) const;
 
   /**
    * Get the committed value of a variable in the assignment.
@@ -76,11 +78,11 @@ class Assignment {
 
   [[nodiscard]] ObjectiveDirection objectiveDirection() const;
 
-  [[nodiscard]] Cost getCost() const;
+  [[nodiscard]] Cost cost() const;
 
-  [[nodiscard]] bool hasViolation() const;
+  [[nodiscard]] bool hasViolation() const noexcept;
 
-  [[nodiscard]] bool hasObjective() const;
+  [[nodiscard]] bool hasObjective() const noexcept;
 
   void setAssignment(const SavedAssignment& saved);
 };

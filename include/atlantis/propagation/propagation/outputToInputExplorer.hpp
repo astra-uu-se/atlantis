@@ -80,13 +80,14 @@ class OutputToInputExplorer {
   void close();
 };
 
-inline void OutputToInputExplorer::registerForPropagation(Timestamp, VarId id) {
+inline void OutputToInputExplorer::registerForPropagation(Timestamp,
+                                                          const VarId id) {
   pushVarStack(id);
 }
 
 inline void OutputToInputExplorer::clearRegisteredVars() { _varStackIdx = 0; }
 
-inline void OutputToInputExplorer::pushVarStack(VarId id) {
+inline void OutputToInputExplorer::pushVarStack(const VarId id) {
   _varStack[_varStackIdx++] = id;
 }
 inline void OutputToInputExplorer::popVarStack() { --_varStackIdx; }
@@ -94,7 +95,8 @@ inline VarId OutputToInputExplorer::peekVarStack() const {
   return _varStack[_varStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::pushInvariantStack(InvariantId invariantId) {
+inline void OutputToInputExplorer::pushInvariantStack(
+    const InvariantId invariantId) {
   assert(invariantId < _invariantIsOnStack.size());
   if (_invariantIsOnStack[invariantId]) {
     throw DynamicCycleException();
@@ -111,10 +113,12 @@ inline InvariantId OutputToInputExplorer::peekInvariantStack() const {
   return _invariantStack[_invariantStackIdx - 1];
 }
 
-inline void OutputToInputExplorer::setComputed(Timestamp ts, VarId id) {
+inline void OutputToInputExplorer::setComputed(const Timestamp ts,
+                                               const VarId id) {
   _varComputedAt[size_t{id}] = ts;
 }
-inline bool OutputToInputExplorer::isComputed(Timestamp ts, VarId id) const {
+inline bool OutputToInputExplorer::isComputed(const Timestamp ts,
+                                              const VarId id) const {
   return _varComputedAt.at(size_t{id}) == ts;
 }
 
@@ -124,7 +128,7 @@ OutputToInputExplorer::outputToInputMarkingMode() const {
 }
 
 inline void OutputToInputExplorer::setOutputToInputMarkingMode(
-    OutputToInputMarkingMode markingMode) {
+    const OutputToInputMarkingMode markingMode) {
   _outputToInputMarkingMode = markingMode;
 }
 

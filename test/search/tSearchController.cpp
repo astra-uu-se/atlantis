@@ -15,14 +15,15 @@ using namespace atlantis::search;
 
 TEST(SearchControllerTest, StopsWhenThreadControllerRequestsStop) {
   propagation::Solver solver;
-  auto neighborhood = std::make_shared<MockNeighborhood>();
+  const auto neighborhood = std::make_shared<MockNeighborhood>();
   static const std::vector<SearchVar> coveredVars{};
   EXPECT_CALL(*neighborhood, coveredVars())
       .WillRepeatedly(::testing::ReturnRef(coveredVars));
 
-  Assignment assignment(solver, neighborhood, propagation::NULL_ID,
-                        propagation::NULL_ID, ObjectiveDirection::NONE, 0);
-  auto controllerState = std::make_shared<ThreadController>(1);
+  const Assignment assignment(
+      solver, neighborhood, propagation::VAR_VIEW_NULL_ID,
+      propagation::VAR_VIEW_NULL_ID, ObjectiveDirection::NONE, 0);
+  const auto controllerState = std::make_shared<ThreadController>(1);
   std::shared_ptr<const bool> shouldStop{nullptr};
   SearchController controller(false, std::optional<std::chrono::milliseconds>{},
                               shouldStop, controllerState);

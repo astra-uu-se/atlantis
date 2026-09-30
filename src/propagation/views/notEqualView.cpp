@@ -3,7 +3,7 @@
 
 namespace atlantis::propagation {
 
-Int NotEqualConst::value(Timestamp ts) {
+Int NotEqualConst::value(const Timestamp ts) {
   return _solver.value(ts, _parentId) == _val;
 }
 

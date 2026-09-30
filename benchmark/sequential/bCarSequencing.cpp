@@ -63,7 +63,7 @@ class CarSequencing : public ::benchmark::Fixture {
       for (size_t o = 0; o < classFeatureCount; ++o) {
         carData.at(c).at(o) = true;
       }
-      std::shuffle(carData.at(c).begin(), carData.at(c).end(), rng);
+      std::ranges::shuffle(carData.at(c), rng);
     }
 
     for (size_t o = 0; o < numFeatures; ++o) {
@@ -173,8 +173,6 @@ class CarSequencing : public ::benchmark::Fixture {
 
     _solver->close();
   }
-
-  void sanity() const {}
 
   void TearDown(const ::benchmark::State&) override {
     sequence.clear();

@@ -68,6 +68,7 @@ class ArrayBoolAndNodeTestFixture : public NodeTestBase<ArrayBoolAndNode> {
     if (isReified()) {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           varNodeId(reifiedVar.identifier));
     } else {

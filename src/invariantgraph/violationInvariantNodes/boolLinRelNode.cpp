@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "../implicitRanks.hpp"
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/implicitConstraintNodes/boolLinLeImplicitNode.hpp"
@@ -60,14 +61,10 @@ BoolLinRelNode::BoolLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
 void BoolLinRelNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   updateRelType();
-  assert(
-      !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+  assert(!isReified() || !varNodeConst(reifiedViolationNodeId()).isIntVar());
   assert(std::ranges::none_of(
       staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      [&](const VarNodeId vId) { return varNodeConst(vId).isIntVar(); }));
 }
 
 void BoolLinRelNode::postConstraint() {
@@ -150,19 +147,37 @@ void BoolLinRelNode::updateState() {
   }
   if (sameCoeff) {
     const Int c = std::abs(_coeffs.front());
-    if ((_relType == RelationType::REL_TYPE_EQ ||
-         _relType == RelationType::REL_TYPE_NE) &&
-        _rhs % c != 0) {
-      assert(!isReified());
-      assert(_relType == RelationType::REL_TYPE_NE);
-      setState(InvariantNodeState::SUBSUMED);
+    for (long& coeff : _coeffs) {
+      assert(coeff != 0);
+      coeff = coeff > 0 ? 1 : -1;
+    }
+    if (_relType == RelationType::REL_TYPE_EQ ||
+        _relType == RelationType::REL_TYPE_NE) {
+      if (_rhs % c != 0) {
+        assert(!isReified());
+        assert(_relType == RelationType::REL_TYPE_NE);
+        setState(InvariantNodeState::SUBSUMED);
+        return;
+      }
+      _rhs /= c;
       return;
     }
-    for (long& coeff : _coeffs) {
-      coeff /= c;
+    // Note that all coefficients are now +/- 1, therefore this destructive
+    // modification to _rhs will be performed only once:
+    assert(_relType == RelationType::REL_TYPE_LE);
+    if (_rhs >= 0 || std::abs(_rhs) % c == 0) {
+      _rhs /= c;
+      return;
     }
-    _rhs /= c;
+    _rhs = (_rhs / c) - 1;
   }
+}
+
+std::pair<size_t, size_t> BoolLinRelNode::implicitRank() const {
+  return {_relType == RelationType::REL_TYPE_EQ
+              ? rank::IMPLICIT_RANK_BOOL_LIN_EQ
+              : rank::IMPLICIT_RANK_BOOL_LIN_LE,
+          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
 }
 
 bool BoolLinRelNode::canBeMadeImplicit() const {
@@ -173,10 +188,9 @@ bool BoolLinRelNode::canBeMadeImplicit() const {
   if (_relType == RelationType::REL_TYPE_NE) {
     return false;
   }
-  const bool allSourceVars =
-      std::ranges::all_of(staticInputVarNodeIds(), [&](const auto& id) {
-        return invariantGraphConst().varNodeConst(id).definingNodes().empty();
-      });
+  const bool allSourceVars = std::ranges::all_of(
+      staticInputVarNodeIds(),
+      [&](const auto& id) { return varNodeConst(id).definingNodes().empty(); });
   if (_relType == RelationType::REL_TYPE_EQ) {
     return allSourceVars &&
            std::ranges::all_of(_coeffs, [&](const Int c) { return c == 1; });

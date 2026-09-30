@@ -24,7 +24,7 @@ class set_inTest : public FznTestBase {
   std::string set{"set"};
   std::string reified{"reified"};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const auto& is = intSetVal(set);
 
     const bool expected =
@@ -41,7 +41,7 @@ class set_inTest : public FznTestBase {
   void generate() override {
     const auto is = *rc::gen::arbitrary<IntArgState>();
     auto dom = genDomain(is);
-    addIntArg(is, dom, input);
+    _addIntArg(is, dom, input);
     addIntSetPar(domain, std::move(dom));
     addIntSetArg(set);
     const bool isReified = *rc::gen::arbitrary<bool>();
@@ -52,6 +52,7 @@ class set_inTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
@@ -96,7 +97,7 @@ class set_inTest : public FznTestBase {
     return varId(input) != propagation::NULL_ID;
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (randBool()) {
       changeValue(input, committedValue);
     }

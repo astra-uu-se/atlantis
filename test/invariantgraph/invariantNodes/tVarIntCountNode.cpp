@@ -68,6 +68,8 @@ class VarIntCountNodeTestFixture : public NodeTestBase<CountNode> {
     retrieveIntVarNode(needleVar);
     retrieveIntVarNode(outputVar);
 
+    markOutputVar(outputVar);
+
     createInvariantNode(*_invariantGraph, varNodeId(outputVar),
                         varNodeIds(inputVars), varNodeId(needleVar));
   }

@@ -101,6 +101,7 @@ class BoolAllEqualNodeTestFixture : public NodeTestBase<BoolAllEqualNode> {
     if (isReified()) {
       reifiedVar.domain = std::pair<Int, Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           varNodeId(reifiedVar), !shouldBeReplaced());
     } else {
@@ -143,11 +144,11 @@ TEST_P(BoolAllEqualNodeTestFixture, application) {
   for (const auto& identifier : inputVars) {
     EXPECT_TRUE(varId(identifier).isVar());
     EXPECT_THAT(_solver->searchVars(),
-                ::testing::Contains(size_t(varId(identifier))));
+                ::testing::Contains(size_t{varId(identifier)}));
   }
 
   EXPECT_GE(_solver->numVars(),
-            size_t(invNode().violationVarId(*_solverMapping)));
+            size_t{invNode().violationVarId(*_solverMapping)});
 
   EXPECT_EQ(_solver->numInvariants(), 1);
 }

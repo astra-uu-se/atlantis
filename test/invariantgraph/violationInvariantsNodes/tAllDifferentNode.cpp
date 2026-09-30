@@ -65,6 +65,7 @@ class AllDifferentNodeTestFixture : public NodeTestBase<AllDifferentNode> {
     if (isReified()) {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           varNodeId(reifiedVar));
     } else {
@@ -79,7 +80,7 @@ TEST_P(AllDifferentNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
+  const std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
 
   EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
 
@@ -118,10 +119,10 @@ TEST_P(AllDifferentNodeTestFixture, application) {
   for (const auto& input : inputVars) {
     EXPECT_TRUE(varId(input).isVar());
     EXPECT_THAT(_solver->searchVars(),
-                ::testing::Contains(size_t(varId(input))));
+                ::testing::Contains(size_t{varId(input)}));
   }
 
-  EXPECT_GE(_solver->numVars(), size_t(violationId));
+  EXPECT_GE(_solver->numVars(), size_t{violationId});
 
   // alldifferent
   EXPECT_EQ(_solver->numInvariants(), 1);

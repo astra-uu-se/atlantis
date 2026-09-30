@@ -33,23 +33,24 @@ class array_int_elementTest : public FznTestBase {
 
     const Int lb =
         std::vector<Int>{-1024, -1, 0, 1, 1024}.at(*rc::gen::inRange(0, 5));
-    addIntArg(lb, size + lb - 1, idx);
+    _addIntArg(lb, size + lb - 1, idx);
 
     parameters = *rc::gen::container<std::vector<Int>>(
         size, rc::gen::inRange<Int>(-1, 2));
     addArg(parameters);
 
-    addIntArg(std::ranges::min(parameters), std::ranges::max(parameters),
-              output);
+    _addIntArg(std::ranges::min(parameters), std::ranges::max(parameters),
+               output);
 
     offset = lowerBound(idx);
     if (useOffset) {
       addArg(offset);
     }
     generateConstraint();
+    markOutputVar(output);
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const Int idxVal = intVal(idx, committedValue);
     const Int expected = parameters.at(idxVal - offset);
     const Int actual = intVal(output, committedValue);
@@ -104,7 +105,9 @@ class array_int_elementTest : public FznTestBase {
     return varId(idx) != propagation::NULL_ID;
   }
 
-  void move(bool committedValue) override { changeValue(idx, committedValue); }
+  void move(const bool committedValue) override {
+    changeValue(idx, committedValue);
+  }
 
   void query() override {
     _solver->query(totalViolationVarId() != propagation::NULL_ID

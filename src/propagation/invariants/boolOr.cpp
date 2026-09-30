@@ -14,44 +14,47 @@ namespace atlantis::propagation {
  * @param y second violation variable
  * @param output result
  */
-BoolOr::BoolOr(SolverBase& solver, VarId output, VarViewId x, VarViewId y)
+BoolOr::BoolOr(SolverBase& solver, const VarId output, const VarViewId x,
+               const VarViewId y)
     : Invariant(solver), _output(output), _x(x), _y(y) {}
 
-BoolOr::BoolOr(SolverBase& solver, VarViewId output, VarViewId x, VarViewId y)
-    : BoolOr(solver, VarId(output), x, y) {
+BoolOr::BoolOr(SolverBase& solver, const VarViewId output, const VarViewId x,
+               const VarViewId y)
+    : BoolOr(solver, VarId{output}, x, y) {
   assert(output.isVar());
 }
 
 void BoolOr::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _x, LocalId(0), false);
-  _solver.registerInvariantInput(_id, _y, LocalId(0), false);
+  _solver.registerInvariantInput(_id, _x, 0, false);
+  _solver.registerInvariantInput(_id, _y, 0, false);
   registerDefinedVar(_output);
 }
 
-void BoolOr::updateBounds(bool widenOnly) {
+void BoolOr::updateBounds(const bool widenOnly) {
   _solver.updateBounds(
       _output, std::min(_solver.lowerBound(_x), _solver.lowerBound(_y)),
       std::min(_solver.upperBound(_x), _solver.upperBound(_y)), widenOnly);
 }
 
-void BoolOr::recompute(Timestamp ts) {
-  updateValue(ts, _output,
-              std::min(_solver.value(ts, _x), _solver.value(ts, _y)));
+void BoolOr::recompute(const Timestamp ts) {
+  const Int xVal = _solver.value(ts, _x);
+  const Int yVal = _solver.value(ts, _y);
+  updateValue(ts, _output, std::min(xVal, yVal));
 }
 
-void BoolOr::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void BoolOr::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
 
-VarViewId BoolOr::nextInput(Timestamp ts) {
+VarViewId BoolOr::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _x;
     case 1:
       return _y;
     default:
-      return NULL_ID;
+      return VAR_VIEW_NULL_ID;
   }
 }
 
-void BoolOr::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void BoolOr::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 }  // namespace atlantis::propagation

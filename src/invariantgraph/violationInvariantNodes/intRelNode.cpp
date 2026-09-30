@@ -149,7 +149,6 @@ void IntRelNode::updateState() {
       if (!_fixedRhs.has_value()) {
         staticInputVarNode(1).tightenDomainType(DomainType::DOM_LOWER_BOUND);
       }
-      return;
     }
   }
 }

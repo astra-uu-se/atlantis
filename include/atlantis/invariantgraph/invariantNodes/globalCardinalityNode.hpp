@@ -18,7 +18,13 @@ class GlobalCardinalityNode : public InvariantNode {
 
   void postConstraint() override;
 
+  void removeOutputVarNode(VarNodeId) override;
+
+  void removeOutputAtIndex(size_t) override;
+
   void updateState() override;
+
+  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 

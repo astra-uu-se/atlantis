@@ -91,15 +91,7 @@ class Queens : public ::benchmark::Fixture {
     q_offset_plus.clear();
   }
 
-  std::string instanceToString() {
-    std::string str = "Queens: ";
-    for (auto q : queens) {
-      str += std::to_string(solver->committedValue(q)) + ", ";
-    }
-    return str;
-  }
-
-  inline bool sanity() const {
+  bool sanity() const {
     return all_in_range(0, n - 1, [&](const size_t i) {
       return all_in_range(i + 1, n, [&](const size_t j) {
         return solver->committedValue(queens.at(i)) !=

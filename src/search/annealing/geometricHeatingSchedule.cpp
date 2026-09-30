@@ -5,14 +5,14 @@
 namespace atlantis::search {
 
 GeometricHeatingSchedule::GeometricHeatingSchedule(
-    double heatingRate, double minimumUphillAcceptanceRatio)
+    const double heatingRate, const double minimumUphillAcceptanceRatio)
     : _heatingRate(heatingRate),
       _minimumUphillAcceptanceRatio(minimumUphillAcceptanceRatio) {
   assert(heatingRate >= 1.0);
   assert(minimumUphillAcceptanceRatio > 0);
 }
 
-void GeometricHeatingSchedule::start(double initialTemperature) {
+void GeometricHeatingSchedule::start(const double initialTemperature) {
   assert(initialTemperature != 0.0);
 
   _temperature = initialTemperature;

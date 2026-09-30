@@ -7,7 +7,7 @@ using namespace atlantis::propagation;
 using ::testing::ContainerEq;
 
 class TableTest : public InvariantTest {
- public:
+ protected:
   size_t numRows{5};
   size_t numOutputVars{3};
   size_t inputColIndex{0};
@@ -82,7 +82,7 @@ class TableTest : public InvariantTest {
     return {table.at(row)};
   }
 
-  std::vector<Int> actualRow(const Timestamp ts) {
+  std::vector<Int> actualRow(const Timestamp ts) const {
     std::vector<Int> vals(numOutputVars + 1);
     for (size_t c = 0; c < numOutputVars + 1; ++c) {
       const VarViewId vId =
@@ -93,7 +93,7 @@ class TableTest : public InvariantTest {
     return vals;
   }
 
-  std::vector<Int> actualRow(bool committedValue = false) {
+  std::vector<Int> actualRow(const bool committedValue = false) const {
     std::vector<Int> vals;
     vals.reserve(numOutputVars + 1);
     for (size_t c = 0; c < numOutputVars + 1; ++c) {
@@ -171,7 +171,7 @@ TEST_F(TableTest, NextInput) {
 
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{inputVar};
+  const std::vector<VarViewId> inputVars{inputVar};
   expectNextInput(inputVars, invariant);
 }
 
@@ -203,9 +203,10 @@ RC_GTEST_FIXTURE_PROP(TableTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     std::vector<Int> expected = expectedRow(true);
     std::vector<Int> actual = actualRow(true);
     RC_ASSERT(expected.size() == outputVars.size() + 1);

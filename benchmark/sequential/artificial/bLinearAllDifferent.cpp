@@ -26,7 +26,7 @@ class LinearAllDifferent : public ::benchmark::Fixture {
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_shared<propagation::Solver>();
-    bool overlappingLinears = state.range(0) != 0;
+    const bool overlappingLinears = state.range(0) != 0;
     std::vector<propagation::VarViewId> linearOutputVars;
     size_t increment;
 
@@ -78,8 +78,8 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, probe_single_swap)
 (::benchmark::State& st) {
   Int probes = 0;
   for ([[maybe_unused]] const auto& _ : st) {
-    size_t i = decionVarIndexDist(gen);
-    size_t j = decionVarIndexDist(gen);
+    const size_t i = decionVarIndexDist(gen);
+    const size_t j = decionVarIndexDist(gen);
 
     // Perform random swap
     solver->beginMove();
@@ -129,8 +129,8 @@ BENCHMARK_DEFINE_F(LinearAllDifferent, commit_single_swap)
 (::benchmark::State& st) {
   size_t commits = 0;
   for ([[maybe_unused]] const auto& _ : st) {
-    size_t i = decionVarIndexDist(gen);
-    size_t j = decionVarIndexDist(gen);
+    const size_t i = decionVarIndexDist(gen);
+    const size_t j = decionVarIndexDist(gen);
 
     // Perform random swap
     solver->beginMove();

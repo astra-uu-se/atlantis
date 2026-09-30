@@ -56,6 +56,7 @@ class BoolLtNodeTestFixture : public NodeTestBase<BoolRelNode> {
     if (isReified()) {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeId(aVar),
                           RelationType::REL_TYPE_LT, varNodeId(bVar),
                           varNodeId(reifiedVar));

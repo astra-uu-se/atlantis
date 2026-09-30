@@ -90,24 +90,28 @@ void ViolationInvariantNode::fixReified(bool shouldHold) {
 
 bool ViolationInvariantNode::isReified() const { return _isReified; }
 
+bool ViolationInvariantNode::isViolationInvariant() const {
+  return !isReified();
+}
+
 void ViolationInvariantNode::updateReified() {
   if (isReified() &&
       invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isFixed()) {
     _shouldHold = invariantGraph()
                       .varNodeConst(reifiedViolationNodeId())
                       .inDomain(bool{true});
+    const VarNodeId reifViolId = reifiedViolationNodeId();
+    // _isReified must be changed *before* removing the output variable
+    _isReified = false;
     if (!outputVarNodeIds().empty()) {
-      assert(outputVarNodeIds().front() == reifiedViolationNodeId());
+      assert(outputVarNodeIds().front() == reifViolId);
       const bool isAlsoOutput = std::ranges::any_of(
           outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-          [this](const VarNodeId oId) {
-            return oId == reifiedViolationNodeId();
-          });
+          [reifViolId](const VarNodeId oId) { return oId == reifViolId; });
       if (!isAlsoOutput) {
-        removeOutputVarNode(reifiedViolationNodeId());
+        removeOutputVarNode(reifViolId);
       }
     }
-    _isReified = false;
   }
   InvariantNode::updateState();
 }
@@ -127,6 +131,10 @@ VarNodeId ViolationInvariantNode::reifiedViolationNodeId() const {
 void ViolationInvariantNode::postConstraint() { updateReified(); }
 
 void ViolationInvariantNode::updateState() { updateReified(); }
+
+bool ViolationInvariantNode::constrainsOutput(VarNodeId) const {
+  return !isReified();
+}
 
 propagation::VarViewId ViolationInvariantNode::setViolationVarId(
     propagation::VarViewId varId, SolverMapping& mapping) const {

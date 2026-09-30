@@ -86,7 +86,11 @@ void GlobalCardinalityClosedNode::updateState() {
       for (Int dupIndex = static_cast<Int>(_cover.size()) - 1; dupIndex > index;
            --dupIndex) {
         if (_cover[index] == _cover[dupIndex]) {
+          _countOffsets[index] += _countOffsets[dupIndex];
+
           _cover.erase(_cover.begin() + dupIndex);
+          _countOffsets.erase(_countOffsets.begin() + dupIndex);
+
           const VarNodeId duplicateNodeId = outputVarNodeIds().at(dupIndex);
           removeOutputAtIndex(dupIndex);
           invariantGraph().replaceVarNode(duplicateNodeId,
@@ -163,7 +167,8 @@ bool GlobalCardinalityClosedNode::replace() {
   if (!isReified() && shouldHold()) {
     invariantGraph().addInvariantNode(std::make_shared<GlobalCardinalityNode>(
         invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
-        std::vector<Int>{_cover}, std::vector<VarNodeId>{outputVarNodeIds()}));
+        std::vector<Int>{_cover}, std::vector<VarNodeId>{outputVarNodeIds()},
+        std::move(_countOffsets)));
     return true;
   }
 

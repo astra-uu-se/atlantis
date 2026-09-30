@@ -32,7 +32,7 @@ class int_neTest : public FznTestBase {
     return intVal(a, committedValue) != intVal(b, committedValue);
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const bool expected = computeExpected(committedValue);
     const bool actual = boolVal(reified, committedValue);
 
@@ -54,6 +54,7 @@ class int_neTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {

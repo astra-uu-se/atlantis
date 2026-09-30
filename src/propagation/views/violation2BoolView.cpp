@@ -6,12 +6,13 @@
 
 namespace atlantis::propagation {
 
-static Int convert(Int value) { return std::min<Int>(value, 1); }
+static Int convert(const Int value) { return std::min<Int>(value, 1); }
 
-Violation2BoolView::Violation2BoolView(SolverBase& solver, VarViewId parentId)
+Violation2BoolView::Violation2BoolView(SolverBase& solver,
+                                       const VarViewId parentId)
     : IntView(solver, parentId) {}
 
-Int Violation2BoolView::value(Timestamp ts) {
+Int Violation2BoolView::value(const Timestamp ts) {
   return convert(_solver.value(ts, _parentId));
 }
 

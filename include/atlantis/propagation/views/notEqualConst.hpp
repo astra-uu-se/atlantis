@@ -9,8 +9,7 @@ class NotEqualConst : public IntView {
   Int _val;
 
  public:
-  explicit NotEqualConst(SolverBase& solver, VarViewId parentId, Int val)
-      : IntView(solver, parentId), _val(val) {}
+  explicit NotEqualConst(SolverBase& solver, VarViewId parentId, Int val);
 
   [[nodiscard]] Int value(Timestamp) override;
   [[nodiscard]] Int committedValue() override;

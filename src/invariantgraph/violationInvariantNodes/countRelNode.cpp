@@ -329,7 +329,7 @@ void CountRelNode::registerOutputVars(propagation::SolverBase& solver,
       if (_fixedBound.has_value()) {
         setViolationVarId(makeSolverConstIntRelation(
                               solver, mapping.intermediateId(id()), _relType,
-                              *_fixedBound + _boundOffset, shouldHold(), true),
+                              *_fixedBound, shouldHold(), true),
                           mapping);
       } else {
         setViolationVarId(
@@ -349,7 +349,7 @@ void CountRelNode::registerNode(propagation::SolverBase& solver,
     return;
   }
   std::vector<propagation::VarViewId> solverVars(numInputVars(),
-                                                 propagation::NULL_ID);
+                                                 propagation::VAR_VIEW_NULL_ID);
   for (size_t i = 0; i < numInputVars(); ++i) {
     solverVars[i] = mapping.solverId(staticInputVarNodeIds()[i]);
   }

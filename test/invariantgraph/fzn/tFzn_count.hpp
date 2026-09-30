@@ -70,7 +70,7 @@ class fzn_countTest : public FznTestBase {
            });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     std::unordered_set<InvariantNodeId, InvariantNodeIdHash>
         implicitConstraints;
     std::vector<bool> hasImplicitConstraints(inputs.size(), false);

@@ -68,6 +68,7 @@ class GlobalCardinalityLowUpNodeTestFixture
     if (isReified()) {
       reifiedVar.domain = std::vector<Int>{0, 1};
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                           std::vector<Int>{cover}, std::vector<Int>{low},
                           std::vector<Int>{up}, varNodeId(reifiedVar));

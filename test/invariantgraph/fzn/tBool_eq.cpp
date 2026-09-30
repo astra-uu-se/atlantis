@@ -45,6 +45,7 @@ class bool_eqTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
@@ -70,7 +71,7 @@ class bool_eqTest : public FznTestBase {
     return varId(a) != propagation::NULL_ID || varId(b) != propagation::NULL_ID;
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : std::array{a, b}) {
       if (varId(input) != propagation::NULL_ID && randBool()) {
         changeValue(input, committedValue);

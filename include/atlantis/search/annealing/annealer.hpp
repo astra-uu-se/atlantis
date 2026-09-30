@@ -60,7 +60,7 @@ class Annealer : public MetaHeuristic {
 
   [[nodiscard]] Int evaluate(const Cost& cost) const;
 
-  void logRoundStatistics(logging::Logger&);
+  void logRoundStatistics(logging::Logger&) const;
 
   void setCost(const Cost& cost) override { _cost = cost; }
 };

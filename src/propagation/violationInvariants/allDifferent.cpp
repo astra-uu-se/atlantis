@@ -10,15 +10,15 @@ namespace atlantis::propagation {
 /**
  * @param violationId id for the violationCount
  */
-AllDifferent::AllDifferent(SolverBase& solver, VarId violationId,
+AllDifferent::AllDifferent(SolverBase& solver, const VarId violationId,
                            std::vector<VarViewId>&& vars)
     : ViolationInvariant(solver, violationId),
       _vars(std::move(vars)),
       _offset(0) {}
 
-AllDifferent::AllDifferent(SolverBase& solver, VarViewId violationId,
+AllDifferent::AllDifferent(SolverBase& solver, const VarViewId violationId,
                            std::vector<VarViewId>&& vars)
-    : AllDifferent(solver, VarId(violationId), std::move(vars)) {
+    : AllDifferent(solver, VarId{violationId}, std::move(vars)) {
   assert(violationId.isVar());
 }
 
@@ -33,7 +33,7 @@ std::optional<size_t> AllDifferent::countIndex(const Int value) const {
   return {delta};
 }
 
-signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
+signed char AllDifferent::increaseCount(const Timestamp ts, const Int value) {
   const auto index = countIndex(value);
   if (index.has_value()) {
     assert(_counts[*index].value(ts) + 1 >= 0);
@@ -43,7 +43,7 @@ signed char AllDifferent::increaseCount(Timestamp ts, Int value) {
   return 0;
 }
 
-signed char AllDifferent::decreaseCount(Timestamp ts, Int value) {
+signed char AllDifferent::decreaseCount(const Timestamp ts, const Int value) {
   const auto index = countIndex(value);
   if (index.has_value()) {
     assert(_counts[*index].value(ts) - 1 >= 0);
@@ -61,12 +61,12 @@ void AllDifferent::registerVars() {
   registerDefinedVar(_violationId);
 }
 
-void AllDifferent::updateBounds(bool widenOnly) {
+void AllDifferent::updateBounds(const bool widenOnly) {
   _solver.updateBounds(_violationId, 0, static_cast<Int>(_vars.size() - 1),
                        widenOnly);
 }
 
-void AllDifferent::close(Timestamp ts) {
+void AllDifferent::close(const Timestamp ts) {
   Int lb = std::numeric_limits<Int>::max();
   Int ub = std::numeric_limits<Int>::min();
 
@@ -98,7 +98,7 @@ void AllDifferent::close(Timestamp ts) {
   _offset = overlapLb;
 }
 
-void AllDifferent::recompute(Timestamp ts) {
+void AllDifferent::recompute(const Timestamp ts) {
   for (CommittableInt& c : _counts) {
     c.setValue(ts, 0);
   }
@@ -110,7 +110,7 @@ void AllDifferent::recompute(Timestamp ts) {
   updateValue(ts, _violationId, violInc);
 }
 
-void AllDifferent::notifyInputChanged(Timestamp ts, LocalId id) {
+void AllDifferent::notifyInputChanged(const Timestamp ts, const LocalId id) {
   assert(id < _vars.size());
   const Int newValue = _solver.value(ts, _vars[id]);
   const Int committedValue = _solver.committedValue(_vars[id]);
@@ -121,20 +121,20 @@ void AllDifferent::notifyInputChanged(Timestamp ts, LocalId id) {
            decreaseCount(ts, committedValue) + increaseCount(ts, newValue));
 }
 
-VarViewId AllDifferent::nextInput(Timestamp ts) {
+VarViewId AllDifferent::nextInput(const Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   if (index < _vars.size()) {
     return _vars[index];
   }
-  return NULL_ID;
+  return VAR_VIEW_NULL_ID;
 }
 
-void AllDifferent::notifyCurrentInputChanged(Timestamp ts) {
+void AllDifferent::notifyCurrentInputChanged(const Timestamp ts) {
   assert(static_cast<size_t>(_state.value(ts)) < _vars.size());
   notifyInputChanged(ts, static_cast<size_t>(_state.value(ts)));
 }
 
-void AllDifferent::commit(Timestamp ts) {
+void AllDifferent::commit(const Timestamp ts) {
   Invariant::commit(ts);
 
   for (CommittableInt& committableInt : _counts) {

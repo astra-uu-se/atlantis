@@ -38,7 +38,7 @@ class array_int_minimumTest : public FznTestBase {
     return ub;
   }
 
-  Int getValue(bool committedValue) const {
+  Int getValue(const bool committedValue) const {
     Int result = intVal(inputs.front(), committedValue);
     for (size_t i = 1; i < inputs.size(); ++i) {
       const Int v = intVal(inputs.at(i), committedValue);
@@ -56,6 +56,7 @@ class array_int_minimumTest : public FznTestBase {
     }
     addIntVarArray(inputs);
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {

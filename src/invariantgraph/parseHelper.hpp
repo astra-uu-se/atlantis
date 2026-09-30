@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/types.hpp"
 #include "atlantis/propagation/propagation/propagationGraph.hpp"
 #include "atlantis/sortedUniqueVector.hpp"
@@ -146,5 +147,11 @@ inline std::string relToAcronym(const RelationType relType) {
 }
 
 Int maxOverlaps(const std::vector<std::pair<Int, Int>>& intervals);
+
+Int linearLb(const InvariantGraph&, const std::vector<Int>& coeffs,
+             const std::vector<VarNodeId>& vars, Int offset = 0);
+
+Int linearUb(const InvariantGraph&, const std::vector<Int>& coeffs,
+             const std::vector<VarNodeId>& vars, Int offset = 0);
 
 }  // namespace atlantis::invariantgraph

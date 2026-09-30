@@ -19,7 +19,7 @@ Assignment::Assignment(
       _neighborhood(std::move(neighborhood)),
       _violation(violation),
       _objective(objectiveDirection == ObjectiveDirection::NONE
-                     ? propagation::NULL_ID
+                     ? propagation::VAR_VIEW_NULL_ID
                      : objective),
       _objectiveDirection(objectiveDirection),
       _objectiveOptimalValue(objectiveOptimalValue) {
@@ -82,7 +82,10 @@ void Assignment::commitLastProbe() {
   _solver.endCommit();
 }
 
-Int Assignment::currentValue(propagation::VarViewId var) const {
+Int Assignment::currentValue(const propagation::VarViewId var) const {
+  return _solver.currentValue(var);
+}
+Int Assignment::currentValue(const propagation::VarId var) const {
   return _solver.currentValue(var);
 }
 
@@ -95,7 +98,10 @@ std::unordered_map<propagation::VarId, Int> Assignment::currentValues() const {
   return saved;
 }
 
-Int Assignment::committedValue(propagation::VarViewId var) const {
+Int Assignment::committedValue(const propagation::VarId var) const {
+  return _solver.committedValue(var);
+}
+Int Assignment::committedValue(const propagation::VarViewId var) const {
   return _solver.committedValue(var);
 }
 Int Assignment::currentViolation() const {
@@ -118,7 +124,7 @@ bool Assignment::objectiveIsOptimal() const {
          _solver.committedValue(_objective) == _objectiveOptimalValue;
 }
 
-void Assignment::set(propagation::VarId searchVarId, Int val) {
+void Assignment::set(const propagation::VarId searchVarId, const Int val) {
   _solver.setValue(searchVarId, val);
 }
 
@@ -134,20 +140,20 @@ ObjectiveDirection Assignment::objectiveDirection() const {
   return _objectiveDirection;
 }
 
-Cost Assignment::getCost() const { return Cost(*this); }
+Cost Assignment::cost() const { return Cost(*this); }
 
-bool Assignment::hasObjective() const {
+bool Assignment::hasObjective() const noexcept {
   return _objective != propagation::NULL_ID;
 }
 
-bool Assignment::hasViolation() const {
+bool Assignment::hasViolation() const noexcept {
   return _violation != propagation::NULL_ID;
 }
 
 void Assignment::setAssignment(const SavedAssignment& saved) {
   const Timestamp ts = _solver.currentTimestamp();
   _solver.beginMove();
-  for (auto& [varId, value] : saved.getSearchValues()) {
+  for (auto& [varId, value] : saved.searchValues()) {
     set(varId, value);
   }
 

@@ -9,7 +9,6 @@
 #include "atlantis/invariantgraph/views/intScalarNode.hpp"
 #include "atlantis/propagation/invariants/plus.hpp"
 #include "atlantis/propagation/solverBase.hpp"
-#include "atlantis/propagation/views/intOffsetView.hpp"
 
 namespace atlantis::invariantgraph {
 
@@ -28,6 +27,7 @@ void IntPlusNode::init(const InvariantNodeId id) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
 }
+
 void IntPlusNode::postConstraint() {
   InvariantNode::postConstraint();
   constraintSolver().int_plus(staticInputVarNodeConst(0).constraintVarId(),
@@ -54,6 +54,14 @@ void IntPlusNode::updateState() {
     assert(outputVarNodeConst(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+bool IntPlusNode::constrainsOutput(VarNodeId) const {
+  const Int lb = staticInputVarNodeConst(0).lowerBound() +
+                 staticInputVarNodeConst(1).lowerBound();
+  const Int ub = staticInputVarNodeConst(0).upperBound() +
+                 staticInputVarNodeConst(1).upperBound();
+  return !outputVarNodeConst(0).constDomain()->contains(lb, ub);
 }
 
 bool IntPlusNode::canBeReplaced() const {

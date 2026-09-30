@@ -41,7 +41,7 @@ TEST_F(Bool2IntViewTest, bounds) {
     const auto& [expectedLb, expectedUb] = expected.at(i);
     EXPECT_LE(expectedLb, expectedUb);
 
-    _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
+    _solver->updateBounds(VarId{inputVar}, inputLb, inputUb, false);
 
     EXPECT_EQ(_solver->lowerBound(outputVar), expectedLb);
     EXPECT_EQ(_solver->upperBound(outputVar), expectedUb);

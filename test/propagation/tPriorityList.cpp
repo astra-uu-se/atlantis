@@ -41,7 +41,7 @@ class PriorityListTest : public ::testing::Test {
 
   static void updateUniform(Timestamp ts, PriorityList& priorityList) {
     for (size_t idx = 0; idx < priorityList.size(); ++idx) {
-      priorityList.updatePriority(ts, idx, Int(ts));
+      priorityList.updatePriority(ts, idx, static_cast<Int>(ts));
     }
   }
 };
@@ -58,7 +58,7 @@ TEST_F(PriorityListTest, Constructor) {
 }
 
 TEST_F(PriorityListTest, SimpleUpdatePriority) {
-  const size_t size = 100;
+  constexpr size_t size = 100;
   Timestamp ts;
   PriorityList priorityList(size);
 
@@ -74,8 +74,8 @@ TEST_F(PriorityListTest, SimpleUpdatePriority) {
   }
   for (ts = 1; ts < 10; ++ts) {
     updateUniform(ts, priorityList);
-    EXPECT_EQ(priorityList.minPriority(ts), Int(ts));
-    EXPECT_EQ(priorityList.maxPriority(ts), Int(ts));
+    EXPECT_EQ(priorityList.minPriority(ts), ts);
+    EXPECT_EQ(priorityList.maxPriority(ts), ts);
   }
 
   for (ts = 1; ts < 10; ++ts) {
@@ -88,15 +88,15 @@ TEST_F(PriorityListTest, SimpleUpdatePriority) {
     EXPECT_EQ(priorityList.maxPriority(ts), 100);
 
     updateUniform(ts, priorityList);
-    EXPECT_EQ(priorityList.minPriority(ts), Int(ts));
-    EXPECT_EQ(priorityList.maxPriority(ts), Int(ts));
+    EXPECT_EQ(priorityList.minPriority(ts), ts);
+    EXPECT_EQ(priorityList.maxPriority(ts), ts);
   }
 }
 
 TEST_F(PriorityListTest, RandomUpdatePriority) {
   for (size_t n = 0; n < 1000; ++n) {
-    const size_t size = 100;
-    const Timestamp ts = 1;
+    constexpr size_t size = 100;
+    constexpr Timestamp ts = 1;
     std::uniform_int_distribution<> distribution(
         std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
 
@@ -116,24 +116,24 @@ TEST_F(PriorityListTest, RandomUpdatePriority) {
 }
 
 TEST_F(PriorityListTest, CommitIf) {
-  const size_t size = 100;
+  constexpr size_t size = 100;
   PriorityList priorityList(size);
   Timestamp ts = 1;
 
-  updateForward(ts, priorityList, Int(ts));
+  updateForward(ts, priorityList, static_cast<Int>(ts));
   priorityList.commitIf(ts);
-  EXPECT_EQ(priorityList.minPriority(ts), 1 + Int(ts));
-  EXPECT_EQ(priorityList.maxPriority(ts), 100 + Int(ts));
-  EXPECT_EQ(priorityList.minPriority(ts + 1), 1 + Int(ts));
-  EXPECT_EQ(priorityList.maxPriority(ts + 1), 100 + Int(ts));
+  EXPECT_EQ(priorityList.minPriority(ts), 1 + ts);
+  EXPECT_EQ(priorityList.maxPriority(ts), 100 + ts);
+  EXPECT_EQ(priorityList.minPriority(ts + 1), 1 + ts);
+  EXPECT_EQ(priorityList.maxPriority(ts + 1), 100 + ts);
 
   for (ts = 2; ts < 10; ++ts) {
-    updateForward(ts, priorityList, Int(ts));
-    EXPECT_EQ(priorityList.minPriority(ts), 1 + Int(ts));
-    EXPECT_EQ(priorityList.maxPriority(ts), 100 + Int(ts));
+    updateForward(ts, priorityList, static_cast<Int>(ts));
+    EXPECT_EQ(priorityList.minPriority(ts), 1 + ts);
+    EXPECT_EQ(priorityList.maxPriority(ts), 100 + ts);
     priorityList.commitIf(ts);
-    EXPECT_EQ(priorityList.minPriority(ts + 1), 1 + Int(ts));
-    EXPECT_EQ(priorityList.maxPriority(ts + 1), 100 + Int(ts));
+    EXPECT_EQ(priorityList.minPriority(ts + 1), 1 + ts);
+    EXPECT_EQ(priorityList.maxPriority(ts + 1), 100 + ts);
   }
 }
 

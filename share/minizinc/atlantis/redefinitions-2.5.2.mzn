@@ -9,9 +9,9 @@ predicate array_var_bool_element2d_nonshifted(var int: row_idx,
     array[int] of var bool: x_flat = array1d(x);
     bool: all_params = is_fixed(x_flat);
   } in if all_params then 
-    array_bool_element2d_nonshifted_flat(row_idx, col_idx, x_flat, c, num_rows, row_offset, col_offset)
+    array_bool_element2d_nonshifted_flat(row_idx, col_idx, x_flat, c, num_rows, row_offset, col_offset) :: defines_var(c)
   else 
-    array_var_bool_element2d_nonshifted_flat(row_idx, col_idx, x_flat, c, num_rows, row_offset, col_offset)
+    array_var_bool_element2d_nonshifted_flat(row_idx, col_idx, x_flat, c, num_rows, row_offset, col_offset) :: defines_var(c)
   endif; 
 
 predicate array_bool_element2d_nonshifted_flat(var int: row_idx,
@@ -41,9 +41,9 @@ predicate array_var_int_element2d_nonshifted(var int: row_idx,
     array[int] of var int: x_flat = array1d(x);
     bool: all_params = is_fixed(x_flat);
   } in if all_params then 
-    array_int_element2d_nonshifted_flat(row_idx, col_idx, x_flat, c, num_rows, row_offset, col_offset)
+    array_int_element2d_nonshifted_flat(row_idx, col_idx, x_flat, c, num_rows, row_offset, col_offset) :: defines_var(c)
   else 
-    array_var_int_element2d_nonshifted_flat(row_idx, col_idx, x_flat, c, num_rows, row_offset, col_offset)
+    array_var_int_element2d_nonshifted_flat(row_idx, col_idx, x_flat, c, num_rows, row_offset, col_offset) :: defines_var(c)
   endif;
 
 predicate array_int_element2d_nonshifted_flat(var int: row_idx,

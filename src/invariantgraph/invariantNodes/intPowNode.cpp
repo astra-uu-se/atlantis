@@ -26,6 +26,7 @@ void IntPowNode::init(const InvariantNodeId id) {
         return invariantGraphConst().varNodeConst(vId).isIntVar();
       }));
 }
+
 void IntPowNode::postConstraint() {
   InvariantNode::postConstraint();
   constraintSolver().int_pow(varNodeConst(base()).constraintVarId(),
@@ -61,9 +62,11 @@ void IntPowNode::registerNode(propagation::SolverBase& solver,
 }
 
 VarNodeId IntPowNode::base() const { return staticInputVarNodeIds().front(); }
+
 VarNodeId IntPowNode::exponent() const {
   return staticInputVarNodeIds().back();
 }
+
 VarNodeId IntPowNode::power() const { return outputVarNodeIds().front(); }
 
 std::string IntPowNode::dotLangIdentifier() const { return "int_pow"; }

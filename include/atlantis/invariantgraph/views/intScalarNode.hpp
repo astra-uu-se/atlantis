@@ -16,6 +16,12 @@ class IntScalarNode : public InvariantNode {
 
   void updateState() override;
 
+  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+
+  [[nodiscard]] bool canBeReplaced() const override;
+
+  bool replace() override;
+
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 

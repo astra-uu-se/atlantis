@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class ElementConstTest : public ViewTest {
- public:
+ protected:
   Int numValues = 4;
   Int offset{1};
 
@@ -69,7 +69,7 @@ TEST_F(ElementConstTest, bounds) {
 
     for (Int minIndex = indexLb(); minIndex <= indexUb(); ++minIndex) {
       for (Int maxIndex = indexUb(); maxIndex >= minIndex; --maxIndex) {
-        _solver->updateBounds(VarId(inputVar), minIndex, maxIndex, false);
+        _solver->updateBounds(VarId{inputVar}, minIndex, maxIndex, false);
 
         Int minVal = std::numeric_limits<Int>::max();
         Int maxVal = std::numeric_limits<Int>::min();
@@ -93,9 +93,10 @@ RC_GTEST_FIXTURE_PROP(ElementConstTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       _solver->setValue(inputVar, inputVarDist(gen));

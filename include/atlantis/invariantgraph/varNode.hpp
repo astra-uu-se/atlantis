@@ -24,15 +24,16 @@ class SolverMapping;
 
 class VarNode {
   VarNodeId _varNodeId;
-  ConstraintVarId _constraintSolverId{NULL_NODE_ID};
-  bool _isIntVar;
   DomainType _domainType{DomainType::DOM_DOMAIN};
-  std::shared_ptr<SearchDomain> _domain{nullptr};
+  bool _isViolationVar{false};
+  bool _isOutputVar{false};
+  bool _isIntVar;
+  ConstraintVarId _constraintSolverId{NULL_NODE_ID};
 
+  std::shared_ptr<SearchDomain> _domain{nullptr};
   std::vector<InvariantNodeId> _staticInputTo;
   std::vector<InvariantNodeId> _dynamicInputTo;
   std::unordered_set<InvariantNodeId, InvariantNodeIdHash> _outputOf;
-  bool _isViolationVar{false};
   std::optional<std::string> _identifier;
 
  public:
@@ -62,7 +63,7 @@ class VarNode {
 
   void setConstraintVarId(ConstraintVarId constraintVarId);
 
-  void replaceDomain(std::shared_ptr<SearchDomain> newDomain);
+  void replaceDomain(const std::shared_ptr<SearchDomain>& newDomain);
 
   [[nodiscard]] std::shared_ptr<const SearchDomain> constDomain()
       const noexcept;
@@ -85,7 +86,11 @@ class VarNode {
 
   void fixToValue(bool);
 
-  void setIsViolationVar(bool isViolVar);
+  void setIsViolationVar(bool);
+
+  [[nodiscard]] bool isOutputVar() const noexcept;
+
+  void setIsOutputVar(bool);
 
   void removeValue(Int, bool tightenDomainState = true);
 

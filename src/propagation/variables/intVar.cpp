@@ -6,17 +6,18 @@
 
 namespace atlantis::propagation {
 
-IntVar::IntVar(Int lowerBound, Int upperBound)
+IntVar::IntVar(const Int lowerBound, const Int upperBound)
     : IntVar(NULL_ID, lowerBound, upperBound) {}
 
-IntVar::IntVar(VarId id, Int lowerBound, Int upperBound)
+IntVar::IntVar(const VarId id, const Int lowerBound, const Int upperBound)
     : IntVar(id, 0, lowerBound, upperBound) {}
 
-IntVar::IntVar(VarId id, Int initValue, Int lowerBound, Int upperBound)
+IntVar::IntVar(const VarId id, const Int initValue, const Int lowerBound,
+               const Int upperBound)
     : IntVar(NULL_TIMESTAMP, id, initValue, lowerBound, upperBound) {}
 
-IntVar::IntVar(Timestamp ts, VarId id, Int initValue, Int lowerBound,
-               Int upperBound)
+IntVar::IntVar(const Timestamp ts, const VarId id, const Int initValue,
+               const Int lowerBound, const Int upperBound)
     // todo: We need both a timestamp-zero (when
     // initialisation happens) but also a dummy timestamp.
     : Var(id),
@@ -32,7 +33,8 @@ IntVar::IntVar(Timestamp ts, VarId id, Int initValue, Int lowerBound,
   }
 }
 
-void IntVar::updateBounds(Int lowerBound, Int upperBound, bool widenOnly) {
+void IntVar::updateBounds(const Int lowerBound, const Int upperBound,
+                          const bool widenOnly) {
   _lowerBound = widenOnly ? std::min(_lowerBound, lowerBound) : lowerBound;
   _upperBound = widenOnly ? std::max(_upperBound, upperBound) : upperBound;
   if (_lowerBound > _upperBound) {

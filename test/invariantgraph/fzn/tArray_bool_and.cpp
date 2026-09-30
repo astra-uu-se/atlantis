@@ -98,6 +98,7 @@ class array_bool_andTest : public FznTestBase {
     addBoolVarArray(inputs);
     addBoolArg(output);
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool canMove() const override {
@@ -106,7 +107,7 @@ class array_bool_andTest : public FznTestBase {
     });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : inputs) {
       if (varId(input) != propagation::NULL_ID && randBool()) {
         changeValue(input, committedValue);

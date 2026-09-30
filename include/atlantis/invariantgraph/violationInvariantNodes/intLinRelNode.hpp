@@ -17,7 +17,7 @@ class IntLinRelNode : public ViolationInvariantNode {
                 Int rhs, bool shouldHold = true);
 
   IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                std::vector<VarNodeId>&& vars, RelationType relType, Int bound,
+                std::vector<VarNodeId>&& vars, RelationType relType, Int rhs,
                 VarNodeId reified);
 
   void init(InvariantNodeId) override;
@@ -25,6 +25,12 @@ class IntLinRelNode : public ViolationInvariantNode {
   void postConstraint() override;
 
   void updateState() override;
+
+  [[nodiscard]] std::pair<size_t, size_t> implicitRank() const override;
+
+  [[nodiscard]] bool canBeMadeImplicit() const override;
+
+  bool makeImplicit() override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

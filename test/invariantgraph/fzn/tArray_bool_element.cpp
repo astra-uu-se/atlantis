@@ -34,7 +34,7 @@ class array_bool_elementTest : public FznTestBase {
         size, rc::gen::arbitrary<bool>());
     const Int lb =
         std::vector<Int>{-1024, -1, 0, 1, 1024}.at(*rc::gen::inRange(0, 5));
-    addIntArg(lb, size + lb - 1, idx);
+    _addIntArg(lb, size + lb - 1, idx);
 
     offset = lowerBound(idx);
     addArg(parameters);
@@ -43,6 +43,7 @@ class array_bool_elementTest : public FznTestBase {
       addArg(offset);
     }
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
@@ -101,7 +102,9 @@ class array_bool_elementTest : public FznTestBase {
     return varId(idx) != propagation::NULL_ID;
   }
 
-  void move(bool committedValue) override { changeValue(idx, committedValue); }
+  void move(const bool committedValue) override {
+    changeValue(idx, committedValue);
+  }
 
   void query() override {
     _solver->query(totalViolationVarId() != propagation::NULL_ID

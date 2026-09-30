@@ -10,7 +10,8 @@
 
 namespace atlantis::propagation {
 
-Max::Max(SolverBase& solver, VarId output, std::vector<VarViewId>&& varArray)
+Max::Max(SolverBase& solver, const VarId output,
+         std::vector<VarViewId>&& varArray)
     : Invariant(solver),
       _output(output),
       _varArray(std::move(varArray)),
@@ -22,9 +23,9 @@ Max::Max(SolverBase& solver, VarId output, std::vector<VarViewId>&& varArray)
       _updatedMax(NULL_TIMESTAMP, std::numeric_limits<Int>::min()),
       _limit(std::numeric_limits<Int>::max()) {}
 
-Max::Max(SolverBase& solver, VarViewId output,
+Max::Max(SolverBase& solver, const VarViewId output,
          std::vector<VarViewId>&& varArray)
-    : Max(solver, VarId(output), std::move(varArray)) {
+    : Max(solver, VarId{output}, std::move(varArray)) {
   assert(output.isVar());
 }
 
@@ -36,7 +37,7 @@ void Max::registerVars() {
   registerDefinedVar(_output);
 }
 
-void Max::updateBounds(bool widenOnly) {
+void Max::updateBounds(const bool widenOnly) {
   Int lb = std::numeric_limits<Int>::min();
   Int ub = std::numeric_limits<Int>::min();
   for (const VarViewId& input : _varArray) {
@@ -47,12 +48,12 @@ void Max::updateBounds(bool widenOnly) {
                        widenOnly);
 }
 
-void Max::close(Timestamp ts) {
+void Max::close(const Timestamp ts) {
   // sort indices:
   std::vector<size_t> idx(_varArray.size());
   std::iota(idx.begin(), idx.end(), 0);
 
-  std::ranges::stable_sort(idx, [&](size_t i1, size_t i2) {
+  std::ranges::stable_sort(idx, [&](const size_t i1, const size_t i2) {
     return _solver.value(ts, _varArray[i1]) > _solver.value(ts, _varArray[i2]);
   });
 
@@ -67,7 +68,7 @@ void Max::close(Timestamp ts) {
   _updatedMax.setValue(ts, std::numeric_limits<Int>::min());
 }
 
-void Max::recompute(Timestamp ts) {
+void Max::recompute(const Timestamp ts) {
   close(ts);
   assert(0 <= _listHead.value(ts) &&
          _listHead.value(ts) < static_cast<Int>(_varArray.size()));
@@ -81,7 +82,7 @@ void Max::recompute(Timestamp ts) {
   updateValue(ts, _output, _solver.value(ts, _varArray[_listHead.value(ts)]));
 }
 
-void Max::notifyInputChanged(Timestamp ts, LocalId id) {
+void Max::notifyInputChanged(const Timestamp ts, const LocalId id) {
   assert(id < _varArray.size());
 
   const Int prev = _linkedList[id].first.value(ts);
@@ -117,7 +118,7 @@ void Max::notifyInputChanged(Timestamp ts, LocalId id) {
   }
 }
 
-VarViewId Max::nextInput(Timestamp ts) {
+VarViewId Max::nextInput(const Timestamp ts) {
   const auto index = static_cast<size_t>(_state.incValue(ts, 1));
   assert(0 <= _state.value(ts));
   if (index == 0 ||
@@ -125,14 +126,14 @@ VarViewId Max::nextInput(Timestamp ts) {
                                        _solver.upperBound(_output))) {
     return _varArray[index];
   }
-  return NULL_ID;  // Done
+  return VAR_VIEW_NULL_ID;  // Done
 }
 
-void Max::notifyCurrentInputChanged(Timestamp ts) {
+void Max::notifyCurrentInputChanged(const Timestamp ts) {
   notifyInputChanged(ts, _state.value(ts));
 }
 
-void Max::commit(Timestamp ts) {
+void Max::commit(const Timestamp ts) {
   Invariant::commit(ts);
   close(ts);
   for (size_t i = 0; i < _varArray.size(); ++i) {

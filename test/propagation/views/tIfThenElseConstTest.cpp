@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class IfThenElseConstTest : public ViewTest {
- public:
+ protected:
   Int thenVal{0};
   Int elseVal{0};
   Int condVal{0};
@@ -48,7 +48,7 @@ TEST_F(IfThenElseConstTest, Bounds) {
     condVal = cv;
     generate();
     for (const auto& [inputLb, inputUb] : bounds) {
-      _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
+      _solver->updateBounds(VarId{inputVar}, inputLb, inputUb, false);
 
       if (inputLb == condVal && condVal == inputUb) {
         // always then;

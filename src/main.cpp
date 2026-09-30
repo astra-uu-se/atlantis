@@ -10,7 +10,7 @@
 
 atlantis::logging::Level getLogLevel(const cxxopts::ParseResult&);
 
-int main(int argc, char* argv[]) {
+int main(const int argc, char* argv[]) {
   try {
     cxxopts::Options options(
         argv[0], "Constraint-based local search backend for MiniZinc.");

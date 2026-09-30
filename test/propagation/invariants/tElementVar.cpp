@@ -21,7 +21,6 @@ class ElementVarTest : public InvariantTest {
   [[nodiscard]] Int indexLb() const { return offset; }
   [[nodiscard]] Int indexUb() const { return offset + numDynamicVars - 1; }
 
- public:
   void SetUp() override {
     InvariantTest::SetUp();
     dynamicInputDist = std::uniform_int_distribution<Int>(
@@ -37,7 +36,7 @@ class ElementVarTest : public InvariantTest {
     if (!_solver->isOpen()) {
       _solver->open();
     }
-    dynamicInputs.resize(numDynamicVars, NULL_ID);
+    dynamicInputs.resize(numDynamicVars, VAR_VIEW_NULL_ID);
     for (Int i = 0; i < numDynamicVars; ++i) {
       dynamicInputs.at(i) =
           makeIntVar(std::numeric_limits<Int>::min(),
@@ -92,7 +91,7 @@ TEST_F(ElementVarTest, UpdateBounds) {
 
     for (Int minIndex = indexLb(); minIndex <= indexUb(); ++minIndex) {
       for (Int maxIndex = indexUb(); maxIndex >= minIndex; --maxIndex) {
-        _solver->updateBounds(VarId(indexVar), minIndex, maxIndex, false);
+        _solver->updateBounds(VarId{indexVar}, minIndex, maxIndex, false);
         invariant.updateBounds(false);
         Int minVal = std::numeric_limits<Int>::max();
         Int maxVal = std::numeric_limits<Int>::min();
@@ -147,7 +146,7 @@ TEST_F(ElementVarTest, NotifyInputChanged) {
       _solver->setValue(ts, indexVar, indexVal);
 
       const Int expectedOutput = computeOutput(ts);
-      invariant.notifyInputChanged(ts, LocalId(numDynamicVars));
+      invariant.notifyInputChanged(ts, numDynamicVars);
       EXPECT_EQ(expectedOutput, _solver->value(ts, outputVar));
     }
   }
@@ -185,7 +184,7 @@ TEST_F(ElementVarTest, NotifyCurrentInputChanged) {
 
     for (size_t i = 0; i < indexValues.size(); ++i) {
       const Int indexVal = indexValues.at(i);
-      const Timestamp ts = t0 + Timestamp(i);
+      const Timestamp ts = t0 + i;
       EXPECT_EQ(invariant.nextInput(ts), indexVar);
       _solver->setValue(ts, indexVar, indexVal);
       invariant.notifyCurrentInputChanged(ts);
@@ -225,7 +224,7 @@ TEST_F(ElementVarTest, Commit) {
 
     for (size_t i = 0; i < indexValues.size(); ++i) {
       const Int indexVal = indexValues.at(i);
-      const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+      const Timestamp ts = _solver->currentTimestamp() + i;
       ASSERT_EQ(_solver->committedValue(indexVar), committedIndexValue);
       for (size_t j = 0; j < dynamicInputs.size(); ++j) {
         ASSERT_EQ(_solver->committedValue(dynamicInputs.at(j)),
@@ -236,7 +235,7 @@ TEST_F(ElementVarTest, Commit) {
       _solver->setValue(ts, indexVar, indexVal);
 
       // notify indexVar change
-      invariant.notifyInputChanged(ts, LocalId(0));
+      invariant.notifyInputChanged(ts, 0);
 
       // incremental value from indexVar
       Int notifiedOutput = _solver->value(ts, outputVar);
@@ -252,7 +251,7 @@ TEST_F(ElementVarTest, Commit) {
       } while (_solver->value(ts, curInput) == oldInputVal);
 
       // notify input change
-      invariant.notifyInputChanged(ts, LocalId(indexVal));
+      invariant.notifyInputChanged(ts, indexVal);
 
       // incremental value from input
       notifiedOutput = _solver->value(ts, outputVar);
@@ -260,12 +259,12 @@ TEST_F(ElementVarTest, Commit) {
 
       ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-      _solver->commitIf(ts, VarId(indexVar));
+      _solver->commitIf(ts, VarId{indexVar});
       committedIndexValue = _solver->value(ts, indexVar);
-      _solver->commitIf(ts, VarId(curInput));
+      _solver->commitIf(ts, VarId{curInput});
       committedInputValues.at(zeroBasedIndex(indexVal)) =
           _solver->value(ts, curInput);
-      _solver->commitIf(ts, VarId(outputVar));
+      _solver->commitIf(ts, VarId{outputVar});
 
       invariant.commit(ts);
       invariant.recompute(ts + 1);
@@ -297,9 +296,10 @@ RC_GTEST_FIXTURE_PROP(ElementVarTest, rapidcheck, ()) {
   dists.emplace_back(indexDist);
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {

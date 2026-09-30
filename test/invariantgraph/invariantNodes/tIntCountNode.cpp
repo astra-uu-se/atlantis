@@ -79,6 +79,7 @@ class IntCountNodeTestFixture : public NodeTestBase<CountNode> {
       retrieveIntVarNode(var);
     }
     retrieveIntVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(outputVar),
                         varNodeIds(inputVars), needle);
@@ -89,7 +90,7 @@ TEST_P(IntCountNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
+  const std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
 
   EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
   EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));

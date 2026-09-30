@@ -1,16 +1,12 @@
 #include <benchmark/benchmark.h>
 
-#include <exception>
 #include <iostream>
 #include <random>
 #include <utility>
 #include <vector>
 
-#include "atlantis/propagation/invariants/absDiff.hpp"
 #include "atlantis/propagation/invariants/linear.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
-#include "atlantis/propagation/violationInvariants/allDifferent.hpp"
-#include "atlantis/propagation/violationInvariants/equal.hpp"
 #include "benchmark.hpp"
 
 namespace atlantis::benchmark {
@@ -26,7 +22,7 @@ class MagicSquare : public ::benchmark::Fixture {
   std::uniform_int_distribution<Int> distribution;
   Int n{0};
 
-  propagation::VarViewId totalViolation = propagation::NULL_ID;
+  propagation::VarViewId totalViolation{propagation::VAR_VIEW_NULL_ID};
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_shared<propagation::Solver>();
@@ -35,7 +31,7 @@ class MagicSquare : public ::benchmark::Fixture {
     if (n < 0) {
       throw std::runtime_error("n must be non-negative.");
     }
-    Int n2 = n * n;
+    const Int n2 = n * n;
     gen = std::mt19937(rd());
 
     const Int magicSum = (n * n * (n * n + 1) / 2) / n;
@@ -115,7 +111,7 @@ class MagicSquare : public ::benchmark::Fixture {
     // total violation
     assert(2 + 2 * static_cast<size_t>(n) == violations.size());
     Int maxViol = 0;
-    for (propagation::VarViewId viol : violations) {
+    for (const propagation::VarViewId viol : violations) {
       maxViol += solver->upperBound(viol);
     }
 
@@ -130,7 +126,7 @@ class MagicSquare : public ::benchmark::Fixture {
     flat.clear();
   }
 
-  [[nodiscard]] inline bool sanity() const {
+  [[nodiscard]] bool sanity() const {
     return all_in_range(0, flat.size() - 1, [&](const size_t i) {
       return all_in_range(i + 1, flat.size(), [&](const size_t j) {
         return solver->committedValue(flat.at(i)) !=
@@ -188,8 +184,8 @@ BENCHMARK_DEFINE_F(MagicSquare, probe_all_swap)(::benchmark::State& st) {
       }
     }
   }
-  st.counters["probes_per_second"] = ::benchmark::Counter(
-      static_cast<double>(probes), ::benchmark::Counter::kIsRate);
+  st.counters["probes_per_second"] =
+      ::benchmark::Counter(probes, ::benchmark::Counter::kIsRate);
 }
 
 //*

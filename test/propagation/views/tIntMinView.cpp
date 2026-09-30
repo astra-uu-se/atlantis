@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class IntMinViewTest : public ViewTest {
- public:
+ protected:
   Int value{0};
 
   void SetUp() override {
@@ -41,7 +41,7 @@ TEST_F(IntMinViewTest, bounds) {
     for (const auto& [inputLb, inputUb] : bounds) {
       EXPECT_LE(inputLb, inputUb);
 
-      _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
+      _solver->updateBounds(VarId{inputVar}, inputLb, inputUb, false);
 
       const Int expectedLb = std::min<Int>(v, inputLb);
       const Int expectedUb = std::min<Int>(v, inputUb);
@@ -62,9 +62,10 @@ RC_GTEST_FIXTURE_PROP(IntMinViewTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       _solver->setValue(inputVar, inputVarDist(gen));

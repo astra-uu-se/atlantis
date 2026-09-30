@@ -32,16 +32,6 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
     return _paramData.data % static_cast<Int>(inputVars.size());
   }
 
-  [[nodiscard]] bool colIsFixed(const size_t col) const {
-    EXPECT_LE(col, inputVars.size());
-    std::unordered_set<Int> colVals;
-    colVals.reserve(table.size());
-    for (const auto& row : table) {
-      colVals.insert(row.at(col));
-    }
-    return colVals.size() == 1;
-  }
-
   [[nodiscard]] bool isViolating(const bool isRegistered = false) const {
     std::vector<Int> colVals;
     colVals.reserve(inputVars.size());
@@ -85,15 +75,6 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
       lb = std::min(lb, Int{boolTable.at(j).at(i) ? 0 : 1});
     }
     return lb;
-  }
-
-  [[nodiscard]] Int colUb(size_t i) const {
-    EXPECT_TRUE(isIntTable());
-    Int ub = intTable.front().at(i);
-    for (size_t j = 1; j < intTable.size(); ++j) {
-      ub = std::max(ub, intTable.at(j).at(i));
-    }
-    return ub;
   }
 
   void SetUp() override {
@@ -158,6 +139,7 @@ class TableInNodeTestFixture : public NodeTestBase<TableInNode> {
       if (isReified()) {
         reifiedVar.domain = std::vector<Int>{0, 1};
         retrieveBoolVarNode(reifiedVar);
+        markOutputVar(reifiedVar);
         createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                             std::vector<std::vector<Int>>{table},
                             varNodeId(reifiedVar));
@@ -223,13 +205,13 @@ TEST_P(TableInNodeTestFixture, propagation) {
       std::make_shared<SolverMapping>(_invariantGraph->construct(*_solver));
 
   if (shouldBeMadeImplicit()) {
-    for (Int i = 0; i < static_cast<Int>(inputVars.size()); ++i) {
-      if (varNode(inputVars.at(i)).isFixed()) {
+    for (const auto& inputVar : inputVars) {
+      if (varNode(inputVar).isFixed()) {
         continue;
       }
       EXPECT_TRUE(std::ranges::contains(
           _solver->searchVars().begin(), _solver->searchVars().end(),
-          static_cast<propagation::VarId>(varId(inputVars.at(i)))));
+          static_cast<propagation::VarId>(varId(inputVar))));
     }
     return;
   }
@@ -250,11 +232,11 @@ TEST_P(TableInNodeTestFixture, propagation) {
     return;
   }
   if (shouldBeReplaced()) {
-    for (Int i = 0; i < static_cast<Int>(inputVars.size()); ++i) {
-      if (varNode(inputVars.at(i)).isFixed()) {
+    for (const auto& inputVar : inputVars) {
+      if (varNode(inputVar).isFixed()) {
         continue;
       }
-      EXPECT_NE(varId(inputVars.at(i)), propagation::NULL_ID);
+      EXPECT_NE(varId(inputVar), propagation::NULL_ID);
     }
     return;
   }

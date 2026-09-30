@@ -45,11 +45,11 @@ class array_var_bool_element2dTest : public FznTestBase {
       }
     }
     const Int rowIdxLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(rowIdxLb, numRows + rowIdxLb - 1, rowIdx);
+    _addIntArg(rowIdxLb, numRows + rowIdxLb - 1, rowIdx);
     rowOffset = lowerBound(rowIdx);
 
     const Int colIdxLb = *rc::gen::element(-1024, -1, 0, 1, 1024);
-    addIntArg(colIdxLb, numCols + colIdxLb - 1, colIdx);
+    _addIntArg(colIdxLb, numCols + colIdxLb - 1, colIdx);
     colOffset = lowerBound(colIdx);
 
     addBoolVarArray(flatMatrix);
@@ -59,9 +59,10 @@ class array_var_bool_element2dTest : public FznTestBase {
     addArg(colOffset);
 
     generateConstraint();
+    markOutputVar(output);
   }
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const Int row = intVal(rowIdx, committedValue) - rowOffset;
     const Int col = intVal(colIdx, committedValue) - colOffset;
     const bool expected = boolVal(inputs.at(row).at(col));
@@ -171,7 +172,7 @@ class array_var_bool_element2dTest : public FznTestBase {
            });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (randBool()) {
       changeValue(rowIdx, committedValue);
     }

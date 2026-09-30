@@ -8,16 +8,16 @@
 
 namespace atlantis::propagation {
 
-IntDiv::IntDiv(SolverBase& solver, VarId output, VarViewId numerator,
-               VarViewId denominator)
+IntDiv::IntDiv(SolverBase& solver, const VarId output,
+               const VarViewId numerator, const VarViewId denominator)
     : Invariant(solver),
       _output(output),
       _numerator(numerator),
       _denominator(denominator) {}
 
-IntDiv::IntDiv(SolverBase& solver, VarViewId output, VarViewId numerator,
-               VarViewId denominator)
-    : IntDiv(solver, VarId(output), numerator, denominator) {
+IntDiv::IntDiv(SolverBase& solver, const VarViewId output,
+               const VarViewId numerator, const VarViewId denominator)
+    : IntDiv(solver, VarId{output}, numerator, denominator) {
   assert(output.isVar());
 }
 
@@ -28,7 +28,7 @@ void IntDiv::registerVars() {
   registerDefinedVar(_output);
 }
 
-void IntDiv::updateBounds(bool widenOnly) {
+void IntDiv::updateBounds(const bool widenOnly) {
   const Int nomLb = _solver.lowerBound(_numerator);
   const Int nomUb = _solver.upperBound(_numerator);
   const Int denLb = _solver.lowerBound(_denominator);
@@ -73,7 +73,7 @@ void IntDiv::close(Timestamp) {
   _zeroReplacement = (denLb < 0 && denUb <= 0) ? -1 : 1;
 }
 
-void IntDiv::recompute(Timestamp ts) {
+void IntDiv::recompute(const Timestamp ts) {
   assert(_zeroReplacement != 0);
   const Int denominator = _solver.value(ts, _denominator);
   updateValue(ts, _output,
@@ -81,18 +81,18 @@ void IntDiv::recompute(Timestamp ts) {
                   (denominator != 0 ? denominator : _zeroReplacement));
 }
 
-VarViewId IntDiv::nextInput(Timestamp ts) {
+VarViewId IntDiv::nextInput(const Timestamp ts) {
   switch (_state.incValue(ts, 1)) {
     case 0:
       return _numerator;
     case 1:
       return _denominator;
     default:
-      return NULL_ID;
+      return VAR_VIEW_NULL_ID;
   }
 }
 
-void IntDiv::notifyCurrentInputChanged(Timestamp ts) { recompute(ts); }
+void IntDiv::notifyCurrentInputChanged(const Timestamp ts) { recompute(ts); }
 
-void IntDiv::notifyInputChanged(Timestamp ts, LocalId) { recompute(ts); }
+void IntDiv::notifyInputChanged(const Timestamp ts, LocalId) { recompute(ts); }
 }  // namespace atlantis::propagation

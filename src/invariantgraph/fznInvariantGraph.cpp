@@ -89,7 +89,7 @@ DomainType domainType(const fznparser::IntVar& var) {
   return domainType(var.annotations(), defaultDomainType);
 }
 
-FznInvariantGraph::FznInvariantGraph(bool breakDynamicCycles)
+FznInvariantGraph::FznInvariantGraph(const bool breakDynamicCycles)
     : InvariantGraph(breakDynamicCycles) {}
 
 void FznInvariantGraph::build(const fznparser::Model& model) {
@@ -134,6 +134,7 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::BoolVar& var) {
         "Input IntVar must be a parameter or have an identifier");
   }
 
+  varNode(nId).setIsOutputVar(var.isOutput());
   if (var.isOutput() && !var.identifier().empty() &&
       !_outputIdentifiers.contains(var.identifier())) {
     _outputIdentifiers.emplace(var.identifier());
@@ -171,6 +172,7 @@ VarNodeId FznInvariantGraph::retrieveVarNode(const fznparser::IntVar& var) {
         "Input IntVar must be a parameter or have an identifier");
   }
 
+  varNode(nId).setIsOutputVar(var.isOutput());
   if (var.isOutput() && !var.identifier().empty() &&
       !_outputIdentifiers.contains(var.identifier())) {
     _outputIdentifiers.emplace(var.identifier());
@@ -204,6 +206,9 @@ std::vector<VarNodeId> FznInvariantGraph::retrieveVarNodes(
                       array->at(i))));
   }
 
+  for (const auto nId : varNodeIds) {
+    varNode(nId).setIsOutputVar(array->isOutput());
+  }
   if (array->isOutput() && !array->identifier().empty() &&
       !_outputIdentifiers.contains(array->identifier())) {
     _outputIdentifiers.emplace(array->identifier());
@@ -228,6 +233,9 @@ std::vector<VarNodeId> FznInvariantGraph::retrieveVarNodes(
                       array->at(i))));
   }
 
+  for (const auto nId : varNodeIds) {
+    varNode(nId).setIsOutputVar(array->isOutput());
+  }
   if (array->isOutput() && !array->identifier().empty() &&
       !_outputIdentifiers.contains(array->identifier())) {
     _outputIdentifiers.emplace(array->identifier());
@@ -324,7 +332,7 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
   std::unordered_set<std::string> definedVars;
   std::vector<bool> constraintIsProcessed(model.constraints().size(), false);
 
-  std::vector<std::function<bool(const fznparser::Constraint&)>>
+  const std::vector<std::function<bool(const fznparser::Constraint&)>>
       invariantNodeCreators{
           [&](const fznparser::Constraint& c) { return makeInvariantNode(c); },
           [&](const fznparser::Constraint& c) {
@@ -352,7 +360,7 @@ void FznInvariantGraph::createNodes(const fznparser::Model& model) {
 
   assert(std::ranges::all_of(constraintIsProcessed.begin(),
                              constraintIsProcessed.end(),
-                             [](bool b) { return b; }));
+                             [](const bool b) { return b; }));
 
   if (model.hasObjective()) {
     if (std::holds_alternative<std::shared_ptr<fznparser::BoolVar>>(

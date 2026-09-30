@@ -14,24 +14,24 @@ class PrioQueue : public ::benchmark::Fixture {
   std::random_device rd;
   std::mt19937 gen;
 
-  std::uniform_int_distribution<> distribution;
+  std::uniform_int_distribution<size_t> distribution;
   size_t queueSize{0};
   std::vector<size_t> order;
 
   struct PriorityCmp {
     std::vector<size_t>& order;
     explicit PriorityCmp(std::vector<size_t>& o) : order(o) {}
-    bool operator()(size_t left, size_t right) {
+    bool operator()(const size_t left, const size_t right) const {
       return order[left] > order[right];
     }
   };
 
   void SetUp(const ::benchmark::State& st) override {
-    queueSize = size_t(st.range(0));
+    queueSize = static_cast<size_t>(st.range(0));
 
     gen = std::mt19937(rd());
 
-    distribution = std::uniform_int_distribution<>{1, int(queueSize)};
+    distribution = std::uniform_int_distribution<size_t>{1, queueSize};
   }
 };
 

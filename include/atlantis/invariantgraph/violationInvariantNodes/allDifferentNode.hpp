@@ -7,20 +7,16 @@ class AllDifferentNode : public ViolationInvariantNode {
   std::vector<Int> _seenValues;
 
  public:
-  explicit AllDifferentNode(InvariantGraph& graph,
+  explicit AllDifferentNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+                            VarNodeId r);
 
-                            VarNodeId a, VarNodeId b, VarNodeId r);
-
-  explicit AllDifferentNode(InvariantGraph& graph,
-
-                            VarNodeId a, VarNodeId b, bool shouldHold = true);
+  explicit AllDifferentNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+                            bool shouldHold = true);
 
   explicit AllDifferentNode(InvariantGraph& graph,
-
                             std::vector<VarNodeId>&& vars, VarNodeId r);
 
   explicit AllDifferentNode(InvariantGraph& graph,
-
                             std::vector<VarNodeId>&& vars,
                             bool shouldHold = true);
 
@@ -29,6 +25,8 @@ class AllDifferentNode : public ViolationInvariantNode {
   void postConstraint() override;
 
   void updateState() override;
+
+  [[nodiscard]] std::pair<size_t, size_t> implicitRank() const override;
 
   [[nodiscard]] bool canBeMadeImplicit() const override;
 

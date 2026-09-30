@@ -8,11 +8,9 @@
 
 namespace atlantis::search {
 
-inline std::optional<Int> getViol(const Assignment& assignment) {
-  if (!assignment.hasViolation()) {
-    return std::nullopt;
-  }
-  return assignment.currentViolation();
+inline std::optional<Int> getViol(const Assignment& assignment) noexcept {
+  return assignment.hasViolation() ? assignment.currentViolation()
+                                   : std::optional<Int>{std::nullopt};
 }
 
 inline Int getObj(const Int obj, const bool minimize) {
@@ -55,7 +53,7 @@ Cost::Cost() : _violation(std::nullopt), _objective(std::nullopt) {}
 Cost::Cost(Int violationDegree)
     : _violation(violationDegree), _objective(std::nullopt) {}
 
-Cost::Cost(const bool hasViolation, ObjectiveDirection direction)
+Cost::Cost(const bool hasViolation, const ObjectiveDirection direction)
     : _violation(hasViolation
                      ? std::optional<Int>{std::numeric_limits<Int>::max()}
                      : std::optional<Int>{std::nullopt}),

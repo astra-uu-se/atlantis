@@ -21,9 +21,9 @@ using namespace atlantis::invariantgraph::fzn;
 
 class fzn_count_neqTest : public fzn_countTest {
  public:
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     RC_LOG() << "-----" << std::endl
-             << "FznCountEqTest::isSatisfied(" << to_string(committedValue)
+             << "FznCountNeqTest::isSatisfied(" << to_string(committedValue)
              << ")" << std::endl;
     Int count = 0;
     if (!inputs.empty()) {
@@ -107,6 +107,11 @@ class fzn_count_neqTest : public fzn_countTest {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    if (!isFixed(reified)) {
+      markOutputVar(reified);
+    } else if (isFixedTo(reified, bool{false})) {
+      markOutputVar(bound);
+    }
   }
 
   [[nodiscard]] bool canMove() const override {
@@ -116,7 +121,7 @@ class fzn_count_neqTest : public fzn_countTest {
            });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (varId(needle) != propagation::NULL_ID && randBool()) {
       changeValue(needle, committedValue);
     }

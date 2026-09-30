@@ -7,7 +7,7 @@
 
 namespace atlantis {
 
-inline Int pow(Int base, Int power) {
+inline Int pow(const Int base, const Int power) {
   if (power == 0) {
     return 1;
   }
@@ -33,7 +33,8 @@ inline Int pow(Int base, Int power) {
   return result;
 }
 
-inline Int pow_zero_replacement(Int base, Int power, Int zeroReplacement) {
+inline Int pow_zero_replacement(Int base, const Int power,
+                                const Int zeroReplacement) {
   if (power == 0) {
     return 1;
   }

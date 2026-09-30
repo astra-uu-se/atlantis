@@ -11,7 +11,7 @@
 namespace atlantis::search::neighborhoods {
 
 CircuitNeighborhood::CircuitNeighborhood(std::vector<SearchVar>&& vars,
-                                         Int offset)
+                                         const Int offset)
     : _vars(std::move(vars)), _offset(offset) {}
 
 void CircuitNeighborhood::initialize(RandomProvider& random,
@@ -75,8 +75,8 @@ void CircuitNeighborhood::initialize(RandomProvider& random,
   assignment.set(_vars[curNodeIdx].solverId(), idx2Node(availableIndices[0]));
 }
 
-static size_t determineNewNext(RandomProvider& random, size_t node,
-                               size_t oldNext, size_t numVars) {
+static size_t determineNewNext(RandomProvider& random, const size_t node,
+                               const size_t oldNext, const size_t numVars) {
   assert(numVars >= 3);
   // Based on https://stackoverflow.com/a/39631885.
   // Note: Random.next(n) returns an integer between 0..n-1
@@ -122,12 +122,12 @@ size_t CircuitNeighborhood::randomMove(RandomProvider& random,
   return 3;
 }
 
-Int CircuitNeighborhood::idx2Node(size_t nodeIdx) const noexcept {
+Int CircuitNeighborhood::idx2Node(const size_t nodeIdx) const noexcept {
   // Account for index sets starting at _offset instead of 0.
   return static_cast<Int>(nodeIdx) + _offset;
 }
 
-size_t CircuitNeighborhood::node2Idx(Int node) const noexcept {
+size_t CircuitNeighborhood::node2Idx(const Int node) const noexcept {
   // Account for index sets starting at _offset instead of 0.
   assert(node >= _offset);
   return static_cast<size_t>(node - _offset);

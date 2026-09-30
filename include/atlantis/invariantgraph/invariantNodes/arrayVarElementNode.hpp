@@ -18,6 +18,8 @@ class ArrayVarElementNode : public InvariantNode {
 
   void updateState() override;
 
+  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+
   [[nodiscard]] bool canBeReplaced() const override;
 
   [[nodiscard]] bool replace() override;

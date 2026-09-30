@@ -13,7 +13,7 @@ class AllDifferentUniformNeighborhoodTest
  public:
   std::vector<SearchVar> _vars;
 
-  void expectHolds() {
+  void expectHolds() const {
     std::unordered_map<Int, bool> holdsCurVal;
     std::unordered_map<Int, bool> holdsComVal;
     holdsCurVal.reserve(_vars.size());

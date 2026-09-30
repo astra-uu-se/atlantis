@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class NotEqualConstTest : public ViewTest {
- public:
+ protected:
   Int value{0};
 
   void SetUp() override {
@@ -42,7 +42,7 @@ TEST_F(NotEqualConstTest, bounds) {
     for (const auto& [inputLb, inputUb] : bounds) {
       EXPECT_LE(inputLb, inputUb);
 
-      _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
+      _solver->updateBounds(VarId{inputVar}, inputLb, inputUb, false);
 
       Int expectedLb;
       Int expectedUb;
@@ -74,9 +74,10 @@ RC_GTEST_FIXTURE_PROP(NotEqualConstTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       _solver->setValue(inputVar, inputVarDist(gen));

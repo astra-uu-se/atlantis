@@ -12,15 +12,16 @@
 
 namespace atlantis::invariantgraph {
 
-InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
-                               Int ub, VarNodeId r)
+InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNodeId input,
+                               const Int lb, const Int ub, const VarNodeId r)
     : ViolationInvariantNode(graph, {input}, r), _lb(lb), _ub(ub) {}
 
-InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
-                               Int ub, bool shouldHold)
+InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNodeId input,
+                               const Int lb, const Int ub,
+                               const bool shouldHold)
     : ViolationInvariantNode(graph, {input}, shouldHold), _lb(lb), _ub(ub) {}
 
-void InIntervalNode::init(InvariantNodeId id) {
+void InIntervalNode::init(const InvariantNodeId id) {
   ViolationInvariantNode::init(id);
   assert(
       !isReified() ||

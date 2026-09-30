@@ -55,6 +55,7 @@ class IntTimesNodeTestFixture : public NodeTestBase<IntTimesNode> {
       retrieveIntVarNode(var);
     }
     retrieveIntVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVars.at(0)),
                         varNodeId(inputVars.at(1)), varNodeId(outputVar));

@@ -14,9 +14,14 @@ class IntLinearNode : public InvariantNode {
                 Int rhsOffset = 0);
 
   void init(InvariantNodeId) override;
+
   void postConstraint() override;
 
   void updateState() override;
+
+  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+
+  [[nodiscard]] std::pair<size_t, size_t> implicitRank() const override;
 
   [[nodiscard]] bool canBeMadeImplicit() const override;
 

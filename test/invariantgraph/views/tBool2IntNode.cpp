@@ -30,6 +30,7 @@ class Bool2IntNodeTestFixture : public NodeTestBase<Bool2IntNode> {
 
     retrieveBoolVarNode(inputVar);
     retrieveIntVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVar),
                         varNodeId(outputVar));

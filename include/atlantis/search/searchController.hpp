@@ -26,21 +26,27 @@ class SearchController {
  public:
   template <typename Rep, typename Period>
   explicit SearchController(
-      const bool isSatisfactionProblem,
+      bool isSatisfactionProblem,
       std::optional<std::chrono::duration<Rep, Period>> timeout,
       std::shared_ptr<const bool>& shouldStop,
-      const std::shared_ptr<ThreadController>& threadController)
-      : _timeout(
-            timeout.has_value()
-                ? std::optional<std::chrono::milliseconds>(
-                      std::chrono::duration_cast<std::chrono::milliseconds>(
-                          *timeout))
-                : std::nullopt),
-        _shouldStop(shouldStop),
-        _isSatisfactionProblem(isSatisfactionProblem),
-        _threadController(threadController) {}
+      const std::shared_ptr<ThreadController>& threadController);
 
   bool shouldRun(const Assignment&);
 };
+
+template <typename Rep, typename Period>
+SearchController::SearchController(
+    const bool isSatisfactionProblem,
+    std::optional<std::chrono::duration<Rep, Period>> timeout,
+    std::shared_ptr<const bool>& shouldStop,
+    const std::shared_ptr<ThreadController>& threadController)
+    : _timeout(timeout.has_value()
+                   ? std::optional<std::chrono::milliseconds>(
+                         std::chrono::duration_cast<std::chrono::milliseconds>(
+                             *timeout))
+                   : std::nullopt),
+      _shouldStop(shouldStop),
+      _isSatisfactionProblem(isSatisfactionProblem),
+      _threadController(threadController) {}
 
 }  // namespace atlantis::search

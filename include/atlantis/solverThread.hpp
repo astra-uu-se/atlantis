@@ -5,7 +5,6 @@
 
 #include "atlantis/invariantgraph/fznInvariantGraph.hpp"
 #include "atlantis/logging/logger.hpp"
-#include "atlantis/search/objective.hpp"
 #include "atlantis/types.hpp"
 #include "search/annealing/annealingScheduleFactory.hpp"
 #include "search/savedAssignment.hpp"
@@ -50,10 +49,7 @@ class SolverThread {
   [[nodiscard]] std::unique_ptr<search::MetaHeuristic> createMetaHeuristic(
       search::RandomProvider&, const search::Assignment&) const;
 
-  [[gnu::always_inline]] [[nodiscard]] std::vector<invariantgraph::VarNodeId>
-  getOutputVarNodeIds() {
-    return _outputVarNodeIds;
-  }
+  [[nodiscard]] std::vector<invariantgraph::VarNodeId> getOutputVarNodeIds();
 };
 
 }  // namespace atlantis

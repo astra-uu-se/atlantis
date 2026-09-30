@@ -14,7 +14,7 @@ namespace atlantis::search::neighborhoods {
 
 IntLinLeNeighborhood::IntLinLeNeighborhood(std::vector<Int>&& coeffs,
                                            std::vector<SearchVar>&& vars,
-                                           Int bound)
+                                           const Int bound)
     : _coeffs(coeffs),
       _vars(std::move(vars)),
       _indices(_vars.size()),

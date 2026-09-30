@@ -23,7 +23,6 @@ class LinearTest : public InvariantTest {
   VarViewId outputVar{NULL_ID};
   std::uniform_int_distribution<Int> inputVarDist;
 
- public:
   void SetUp() override {
     InvariantTest::SetUp();
     numInputVars = 100;
@@ -137,7 +136,7 @@ TEST_F(LinearTest, UpdateBounds) {
 
   std::vector<std::pair<Int, Int>> boundVec{
       {-250, -150}, {-100, 0}, {-50, 50}, {0, 100}, {150, 250}};
-  std::vector<Int> coefVec{-1000, -1, 0, 1, 1000};
+  const std::vector<Int> coefVec{-1000, -1, 0, 1, 1000};
 
   inputVarLb = boundVec.front().first;
   inputVarUb = boundVec.back().second;
@@ -155,13 +154,13 @@ TEST_F(LinearTest, UpdateBounds) {
 
         for (const auto& [aLb, aUb] : boundVec) {
           EXPECT_LE(aLb, aUb);
-          _solver->updateBounds(VarId(inputVars.at(0)), aLb, aUb, false);
+          _solver->updateBounds(VarId{inputVars.at(0)}, aLb, aUb, false);
           for (const auto& [bLb, bUb] : boundVec) {
             EXPECT_LE(bLb, bUb);
-            _solver->updateBounds(VarId(inputVars.at(1)), bLb, bUb, false);
+            _solver->updateBounds(VarId{inputVars.at(1)}, bLb, bUb, false);
             for (const auto& [cLb, cUb] : boundVec) {
               EXPECT_LE(cLb, cUb);
-              _solver->updateBounds(VarId(inputVars.at(2)), cLb, cUb, false);
+              _solver->updateBounds(VarId{inputVars.at(2)}, cLb, cUb, false);
               invariant.updateBounds(false);
 
               const Int aMin = std::min(overflow::saturatingMul(aLb, aCoef),
@@ -292,7 +291,7 @@ TEST_F(LinearTest, Commit) {
     _solver->setValue(ts, inputVars.at(i), newVal);
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputVar);
@@ -300,9 +299,9 @@ TEST_F(LinearTest, Commit) {
 
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -312,14 +311,14 @@ TEST_F(LinearTest, Commit) {
 
 RC_GTEST_FIXTURE_PROP(LinearTest, rapidcheck, ()) {
   _solver->open();
-  numInputVars = true ? 1 : *rc::gen::inRange(1, 100);
+  numInputVars = *rc::gen::inRange(1, 100);
 
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     std::vector<std::optional<Int>> vals(numInputVars, std::nullopt);

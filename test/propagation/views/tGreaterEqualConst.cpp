@@ -6,7 +6,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class GreaterEqualConstTest : public ViewTest {
- public:
+ protected:
   Int value{0};
 
   void SetUp() override {
@@ -24,7 +24,7 @@ class GreaterEqualConstTest : public ViewTest {
     _solver->close();
   }
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     return std::max<Int>(
         0, value - (committedValue ? _solver->committedValue(inputVar)
                                    : _solver->currentValue(inputVar)));
@@ -43,7 +43,7 @@ TEST_F(GreaterEqualConstTest, bounds) {
     for (const auto& [inputLb, inputUb] : bounds) {
       EXPECT_LE(inputLb, inputUb);
 
-      _solver->updateBounds(VarId(inputVar), inputLb, inputUb, false);
+      _solver->updateBounds(VarId{inputVar}, inputLb, inputUb, false);
 
       const Int expectedLb = std::max<Int>(0, value - inputUb);
       const Int expectedUb = std::max<Int>(0, value - inputLb);
@@ -64,9 +64,10 @@ RC_GTEST_FIXTURE_PROP(GreaterEqualConstTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     for (size_t p = 0; p <= numProbes; ++p) {
       _solver->beginMove();
       _solver->setValue(inputVar, inputVarDist(gen));

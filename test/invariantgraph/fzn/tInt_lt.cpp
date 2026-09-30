@@ -22,7 +22,7 @@ class int_ltTest : public FznTestBase {
   std::string b{"i_2"};
   std::string reified{"reified"};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const bool expected = intVal(a, committedValue) < intVal(b, committedValue);
     const bool actual = boolVal(reified, committedValue);
 
@@ -44,6 +44,7 @@ class int_ltTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
@@ -70,7 +71,7 @@ class int_ltTest : public FznTestBase {
     return varId(a) != propagation::NULL_ID || varId(b) != propagation::NULL_ID;
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     for (const auto& input : std::array{a, b}) {
       if (varId(input) != propagation::NULL_ID && randBool()) {
         changeValue(input, committedValue);

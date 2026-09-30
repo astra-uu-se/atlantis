@@ -1,6 +1,5 @@
 #include "atlantis/search/threadController.hpp"
 
-#include <iostream>
 #include <sstream>
 
 namespace atlantis::search {
@@ -65,7 +64,7 @@ SavedAssignment ThreadController::solution() const {
 }
 
 std::optional<std::pair<size_t, SavedAssignment>>
-ThreadController::loadSolution(size_t solutionId) const {
+ThreadController::loadSolution(const size_t solutionId) const {
   std::lock_guard lock(_lock);
   if (solutionId >= _curSolutionId || !_solution.has_value()) {
     return {};
@@ -73,9 +72,9 @@ ThreadController::loadSolution(size_t solutionId) const {
   return std::make_pair(_curSolutionId.load(), _solution.value());
 }
 
-void ThreadController::recordFatalError(std::exception_ptr error,
+void ThreadController::recordFatalError(const std::exception_ptr& error,
                                         const Int threadId,
-                                        std::string_view context) {
+                                        const std::string_view context) {
   if (error == nullptr) {
     return;
   }

@@ -35,7 +35,7 @@ class array_var_int_elementTest : public FznTestBase {
     }
     const Int lb =
         std::vector<Int>{-1024, -1, 0, 1, 1024}.at(*rc::gen::inRange(0, 5));
-    addIntArg(lb, size + lb - 1, idx);
+    _addIntArg(lb, size + lb - 1, idx);
 
     offset = lowerBound(idx);
     addIntVarArray(inputs);
@@ -44,6 +44,7 @@ class array_var_int_elementTest : public FznTestBase {
       addArg(offset);
     }
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool isSatisfied(bool committedValue) const override {

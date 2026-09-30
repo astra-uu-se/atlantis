@@ -15,13 +15,17 @@ class IntPowNode : public InvariantNode {
 
   void updateState() override;
 
+  [[nodiscard]] bool constrainsOutput(VarNodeId) const override { return true; }
+
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   [[nodiscard]] VarNodeId base() const;
+
   [[nodiscard]] VarNodeId exponent() const;
+
   [[nodiscard]] VarNodeId power() const;
 
   [[nodiscard]] std::string dotLangIdentifier() const override;

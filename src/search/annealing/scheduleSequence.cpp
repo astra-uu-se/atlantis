@@ -4,7 +4,7 @@
 
 namespace atlantis::search {
 
-void ScheduleSequence::start(double initialTemperature) {
+void ScheduleSequence::start(const double initialTemperature) {
   assert(initialTemperature != 0.0);
 
   _currentSchedule = 0;
@@ -33,6 +33,12 @@ double ScheduleSequence::temperature() {
 
 bool ScheduleSequence::frozen() {
   return _currentSchedule >= _schedules.size();
+}
+
+size_t ScheduleSequence::size() const { return _schedules.size(); }
+
+AnnealingSchedule& ScheduleSequence::at(const size_t index) {
+  return *(_schedules.at(index));
 }
 
 AnnealingSchedule& ScheduleSequence::currentSchedule() {

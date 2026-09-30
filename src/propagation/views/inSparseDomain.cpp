@@ -8,7 +8,7 @@
 
 namespace atlantis::propagation {
 
-inline bool all_in_range(size_t start, size_t stop,
+inline bool all_in_range(const size_t start, const size_t stop,
                          std::function<bool(size_t)>&& predicate) {
   std::vector<size_t> vec(stop - start);
   for (size_t i = 0; i < stop - start; ++i) {
@@ -17,7 +17,7 @@ inline bool all_in_range(size_t start, size_t stop,
   return std::ranges::all_of(vec.begin(), vec.end(), std::move(predicate));
 }
 
-InSparseDomain::InSparseDomain(SolverBase& solver, VarViewId parentId,
+InSparseDomain::InSparseDomain(SolverBase& solver, const VarViewId parentId,
                                const std::vector<DomainEntry>& domain)
     : IntView(solver, parentId), _offset(domain.front().lowerBound) {
   assert(!domain.empty());
@@ -38,7 +38,7 @@ InSparseDomain::InSparseDomain(SolverBase& solver, VarViewId parentId,
   }
 }
 
-Int InSparseDomain::value(Timestamp ts) {
+Int InSparseDomain::value(const Timestamp ts) {
   const Int val = _solver.value(ts, _parentId);
   if (val < _offset) {
     return _offset - val;

@@ -10,8 +10,10 @@ struct PropagationListNode {
   PropagationListNode* next{nullptr};
 
   PropagationListNode() : PropagationListNode(NULL_ID, 0) {}
-  PropagationListNode(VarId t_id, size_t t_priority)
-      : id(t_id), priority(t_priority) {}
+  PropagationListNode(VarId t_id, size_t t_priority);
 };
+inline PropagationListNode::PropagationListNode(const VarId t_id,
+                                                const size_t t_priority)
+    : id(t_id), priority(t_priority) {}
 
 }  // namespace atlantis::propagation

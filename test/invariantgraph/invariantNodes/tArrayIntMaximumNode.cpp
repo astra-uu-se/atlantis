@@ -49,6 +49,7 @@ class ArrayIntMaximumNodeTestFixture
     }
     outputVar.domain = std::pair<Int, Int>(-5, 5);
     retrieveIntVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeIds(inputVars),
                         varNodeId(outputVar));

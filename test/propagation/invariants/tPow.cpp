@@ -7,7 +7,7 @@ namespace atlantis::testing {
 using namespace atlantis::propagation;
 
 class PowTest : public InvariantTest {
- public:
+ protected:
   VarViewId base{NULL_ID};
   VarViewId exponent{NULL_ID};
   Int baseLb{-2};
@@ -65,10 +65,10 @@ TEST_F(PowTest, UpdateBounds) {
 
   for (const auto& [baseLb, baseUb] : boundVec) {
     EXPECT_LE(baseLb, baseUb);
-    _solver->updateBounds(VarId(base), baseLb, baseUb, false);
+    _solver->updateBounds(VarId{base}, baseLb, baseUb, false);
     for (const auto& [expLb, expUb] : boundVec) {
       EXPECT_LE(expLb, expUb);
-      _solver->updateBounds(VarId(exponent), expLb, expUb, false);
+      _solver->updateBounds(VarId{exponent}, expLb, expUb, false);
       _solver->open();
       _solver->close();
       for (Int baseVal = baseLb; baseVal <= baseUb; ++baseVal) {
@@ -142,7 +142,7 @@ TEST_F(PowTest, NextInput) {
 TEST_F(PowTest, NotifyCurrentInputChanged) {
   auto& invariant = generate();
 
-  std::vector<VarViewId> inputVars{base, exponent};
+  const std::vector<VarViewId> inputVars{base, exponent};
 
   for (Timestamp ts = _solver->currentTimestamp() + 1;
        ts < _solver->currentTimestamp() + 4; ++ts) {
@@ -173,7 +173,7 @@ TEST_F(PowTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(1 + i);
+    const Timestamp ts = _solver->currentTimestamp() + 1 + i;
     for (size_t j = 0; j < inputVars.size(); ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -187,7 +187,7 @@ TEST_F(PowTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedOutput = _solver->value(ts, outputVar);
@@ -195,9 +195,9 @@ TEST_F(PowTest, Commit) {
 
     ASSERT_EQ(notifiedOutput, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -222,9 +222,10 @@ RC_GTEST_FIXTURE_PROP(PowTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {

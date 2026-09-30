@@ -32,6 +32,7 @@ class IntAbsNodeTestFixture : public NodeTestBase<IntAbsNode> {
 
     retrieveIntVarNode(inputVar);
     retrieveIntVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVar),
                         varNodeId(outputVar));

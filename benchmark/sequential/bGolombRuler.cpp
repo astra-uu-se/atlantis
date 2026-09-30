@@ -71,7 +71,7 @@ class GolombRuler : public ::benchmark::Fixture {
     assert(differences.size() == ((markCount - 1) * (markCount)) / 2);
 
     Int maxViol = 0;
-    for (propagation::VarViewId viol : differences) {
+    for (const propagation::VarViewId viol : differences) {
       maxViol += solver->upperBound(viol);
     }
 

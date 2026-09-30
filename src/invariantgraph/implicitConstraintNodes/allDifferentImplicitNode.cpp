@@ -19,7 +19,7 @@ AllDifferentImplicitNode::AllDifferentImplicitNode(
     InvariantGraph& graph, std::vector<VarNodeId>&& inputVars)
     : ImplicitConstraintNode(graph, std::move(inputVars)) {}
 
-void AllDifferentImplicitNode::init(InvariantNodeId id) {
+void AllDifferentImplicitNode::init(const InvariantNodeId id) {
   ImplicitConstraintNode::init(id);
   assert(std::ranges::all_of(
       outputVarNodeIds().begin(), outputVarNodeIds().end(),

@@ -22,28 +22,29 @@ class int_plusTest : public FznTestBase {
   std::string b{"b"};
   std::string sum{"sum"};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
-    RC_LOG() << "-----" << std::endl << "FznTestBase::isSatisfied()";
-    const Int aVal = intVal(a);
-    const Int bVal = intVal(b);
-    const Int sumVal = intVal(sum);
-    RC_LOG() << aVal << " + " << bVal << " == " << sumVal << " ("
-             << (aVal + bVal) << " == " << sumVal << ')' << std::endl;
-    const bool expected = aVal + bVal == sumVal;
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
+    RC_LOG() << "-----" << std::endl << "int_plus::isSatisfied()";
+    const Int aVal = intVal(a, committedValue);
+    const Int bVal = intVal(b, committedValue);
+    const Int actualSum = intVal(sum, committedValue);
+    RC_LOG() << aVal << " + " << bVal << " == " << actualSum << " ("
+             << (aVal + bVal) << " == " << actualSum << ')' << std::endl;
+    const Int expectedSum = aVal + bVal;
 
-    const bool inDom = inDomain(sum, sumVal);
+    const bool inDom = inDomain(sum, expectedSum);
+    const bool equals = expectedSum == actualSum;
     const bool isSolution = violation(committedValue) == 0;
-    RC_ASSERT(inDom == isSolution);
-    RC_ASSERT(expected);
-    return expected;
+    RC_ASSERT((inDom && equals) == isSolution);
+    return (inDom && equals) == isSolution;
   }
 
   void generate() override {
-    addIntArg(IntArgState::FIXED, -1, -1, a);
-    addIntArg(IntArgState::VAR, b);
-    addIntArg(IntArgState::VAR, sum);
+    addIntArg(a);
+    addIntArg(b);
+    addIntArg(sum);
     constraintIdentifier = "int_plus";
     generateConstraint();
+    markOutputVar(sum);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
@@ -78,7 +79,7 @@ class int_plusTest : public FznTestBase {
         [&](const auto vId) { return vId != propagation::NULL_ID; });
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (varId(a) != propagation::NULL_ID && randBool()) {
       changeValue(a, committedValue);
     }

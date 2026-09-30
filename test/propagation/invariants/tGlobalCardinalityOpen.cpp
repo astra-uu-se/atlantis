@@ -7,7 +7,7 @@ using namespace atlantis::propagation;
 using ::testing::ContainerEq;
 
 class GlobalCardinalityOpenTest : public InvariantTest {
- public:
+ protected:
   Int numInputVars{3};
 
   Int inputVarLb{-2};
@@ -97,17 +97,7 @@ class GlobalCardinalityOpenTest : public InvariantTest {
     return counts;
   }
 
-  std::vector<Int> actualOutputs(bool committedValue = false) {
-    std::vector<Int> vals;
-    vals.reserve(outputVars.size());
-    for (const auto& varId : outputVars) {
-      vals.emplace_back(committedValue ? _solver->committedValue(varId)
-                                       : _solver->currentValue(varId));
-    }
-    return vals;
-  }
-
-  std::vector<Int> actualOutputs(Timestamp ts) {
+  [[nodiscard]] std::vector<Int> actualOutputs(const Timestamp ts) const {
     std::vector<Int> vals;
     vals.reserve(outputVars.size());
     for (const auto& varId : outputVars) {
@@ -118,8 +108,8 @@ class GlobalCardinalityOpenTest : public InvariantTest {
 };
 
 TEST_F(GlobalCardinalityOpenTest, UpdateBounds) {
-  const Int lb = 0;
-  const Int ub = 2;
+  constexpr Int lb = 0;
+  constexpr Int ub = 2;
 
   auto& invariant = generate();
   for (const VarViewId& output : outputVars) {
@@ -213,7 +203,7 @@ TEST_F(GlobalCardinalityOpenTest, NextInput) {
   numInputVars = 100;
   inputVarLb = 0;
   inputVarUb = numInputVars - 1;
-  const Int coverSize = 10;
+  constexpr Int coverSize = 10;
 
   cover.resize(coverSize);
   std::iota(cover.begin(), cover.end(), inputVarLb);
@@ -224,10 +214,10 @@ TEST_F(GlobalCardinalityOpenTest, NextInput) {
 }
 
 TEST_F(GlobalCardinalityOpenTest, NotifyCurrentInputChanged) {
-  const Int numinputVars = 100;
+  constexpr Int numInputVars = 100;
   inputVarLb = 0;
-  inputVarUb = numinputVars - 1;
-  const Int coverSize = 10;
+  inputVarUb = numInputVars - 1;
+  constexpr Int coverSize = 10;
 
   cover.resize(coverSize);
   std::iota(cover.begin(), cover.end(), inputVarLb);
@@ -256,7 +246,7 @@ TEST_F(GlobalCardinalityOpenTest, Commit) {
   numInputVars = 1000;
   inputVarLb = 0;
   inputVarUb = numInputVars - 1;
-  const Int coverSize = 10;
+  constexpr Int coverSize = 10;
 
   cover.resize(coverSize);
   std::iota(cover.begin(), cover.end(), inputVarLb);
@@ -276,7 +266,7 @@ TEST_F(GlobalCardinalityOpenTest, Commit) {
   std::vector<Int> notifiedOutputValues(coverSize, -1);
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + i;
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -289,7 +279,7 @@ TEST_F(GlobalCardinalityOpenTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     for (size_t j = 0; j < outputVars.size(); ++j) {
@@ -302,10 +292,10 @@ TEST_F(GlobalCardinalityOpenTest, Commit) {
                 _solver->value(ts, outputVars.at(j)));
     }
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
     for (const VarViewId& o : outputVars) {
-      _solver->commitIf(ts, VarId(o));
+      _solver->commitIf(ts, VarId{o});
     }
 
     invariant.commit(ts);
@@ -332,9 +322,10 @@ RC_GTEST_FIXTURE_PROP(GlobalCardinalityOpenTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     std::vector<Int> expected = computeOutputs(true);
     RC_ASSERT(expected.size() == outputVars.size());
     for (size_t i = 0; i < cover.size(); ++i) {
@@ -419,16 +410,16 @@ TEST_F(GlobalCardinalityOpenTest, SolverIntegration) {
     if (!_solver->isOpen()) {
       _solver->open();
     }
-    const Int numinputVars = 10;
+    constexpr Int numInputVars = 10;
 
     std::vector<VarViewId> inputVars;
-    for (Int value = 0; value < numinputVars; ++value) {
+    for (Int value = 0; value < numInputVars; ++value) {
       inputVars.push_back(_solver->makeIntVar(0, -100, 100));
     }
     std::vector<Int> cover{1, 2, 3};
     std::vector<VarViewId> outputVars;
     for (size_t i = 0; i < cover.size(); ++i) {
-      outputVars.push_back(_solver->makeIntVar(0, 0, numinputVars));
+      outputVars.push_back(_solver->makeIntVar(0, 0, numInputVars));
     }
     const VarViewId modifiedVarId = inputVars.front();
     const VarViewId queryVarId = outputVars.front();
@@ -436,7 +427,7 @@ TEST_F(GlobalCardinalityOpenTest, SolverIntegration) {
         &_solver->makeInvariant<MockGlobalCardinalityOpen>(
             *_solver, std::move(outputVars), std::move(inputVars),
             std::move(cover)),
-        {propMode, markingMode, numinputVars + 1, modifiedVarId, 1,
+        {propMode, markingMode, numInputVars + 1, modifiedVarId, 1,
          queryVarId});
   }
 }

@@ -80,12 +80,12 @@ bool IntDivNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  auto& dNode = varNode(denominator());
+  const auto& dNode = varNode(denominator());
   if (dNode.isFixed() && dNode.lowerBound() == 1) {
     invariantGraph().replaceVarNode(quotient(), numerator());
     return true;
   }
-  auto& nNode = varNode(numerator());
+  const auto& nNode = varNode(numerator());
   assert((!nNode.isFixed() || !dNode.isFixed()) &&
          varNode(quotient()).isFixed() &&
          varNode(quotient()).lowerBound() == 0);
@@ -171,6 +171,17 @@ void IntDivNode::registerNode(propagation::SolverBase& solver,
                               SolverMapping& mapping) const {
   assert(mapping.solverId(quotient()) != propagation::NULL_ID);
   assert(mapping.solverId(quotient()).isVar());
+  assert(varNodeConst(denominator()).lowerBound() != 0 ||
+         varNodeConst(denominator()).upperBound() != 0);
+  const propagation::VarViewId denominatorSolverId =
+      mapping.solverId(denominator());
+  if (denominatorSolverId.isVar() &&
+      solver.lowerBound(denominatorSolverId) == 0 &&
+      solver.upperBound(denominatorSolverId) == 0) {
+    solver.updateBounds(static_cast<propagation::VarId>(denominatorSolverId),
+                        varNodeConst(denominator()).lowerBound(),
+                        varNodeConst(denominator()).upperBound(), true);
+  }
 
   solver.makeInvariant<propagation::IntDiv>(
       solver, mapping.solverId(quotient()), mapping.solverId(numerator()),

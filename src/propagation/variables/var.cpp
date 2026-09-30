@@ -2,6 +2,6 @@
 
 namespace atlantis::propagation {
 
-Var::Var(VarId id) : _id(id) {}
+Var::Var(const VarId id) : _id(id) {}
 
 }  // namespace atlantis::propagation

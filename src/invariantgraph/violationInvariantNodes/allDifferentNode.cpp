@@ -3,6 +3,7 @@
 #include <limits>
 #include <utility>
 
+#include "../implicitRanks.hpp"
 #include "../parseHelper.hpp"
 #include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/fzn/fzn_all_different_int.hpp"
@@ -109,6 +110,11 @@ void AllDifferentNode::updateState() {
   if (staticInputVarNodeIds().size() <= 1) {
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+std::pair<size_t, size_t> AllDifferentNode::implicitRank() const {
+  return {rank::IMPLICIT_RANK_ALL_DIFFERENT,
+          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
 }
 
 bool AllDifferentNode::canBeMadeImplicit() const {

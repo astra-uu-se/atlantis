@@ -57,6 +57,7 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
       // int version of element
       outputVar.domain = std::pair<Int, Int>{-2, 1};
       retrieveIntVarNode(outputVar);
+      markOutputVar(outputVar);
       createInvariantNode(*_invariantGraph, std::vector<Int>{parArray},
                           varNodeId(idxVar), varNodeId(outputVar), offsetIdx);
     } else {
@@ -68,6 +69,7 @@ class ArrayElementNodeTestFixture : public NodeTestBase<ArrayElementNode> {
       for (size_t i = 0; i < parArray.size(); ++i) {
         boolArray.at(i) = intParToBool(parArray.at(i));
       }
+      markOutputVar(outputVar);
       createInvariantNode(*_invariantGraph, std::move(boolArray),
                           varNodeId(idxVar), varNodeId(outputVar), offsetIdx);
     }
@@ -151,7 +153,7 @@ INSTANTIATE_TEST_SUITE_P(
                       ParamData{InvariantNodeAction::REPLACE, 1}));
 
 TEST(ArrayElementNodeRegression, UpdateStatePrunesOutOfRangeIndexValues) {
-  auto graph = std::make_shared<InvariantGraph>();
+  const auto graph = std::make_shared<InvariantGraph>();
   graph->open();
 
   const auto idx =

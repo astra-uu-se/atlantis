@@ -29,6 +29,7 @@ class IntModViewNodeTestFixture : public NodeTestBase<IntModViewNode> {
     outputVar.domain = std::pair<Int, Int>{0, 5};
     retrieveIntVarNode(inputVar);
     retrieveIntVarNode(outputVar);
+    markOutputVar(outputVar);
 
     createInvariantNode(*_invariantGraph, varNodeId(inputVar),
                         varNodeId(outputVar), denominator);

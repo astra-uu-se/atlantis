@@ -5,6 +5,7 @@
 #include "atlantis/invariantgraph/constraintSolver.hpp"
 #include "atlantis/invariantgraph/invariantGraph.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/views/bool2IntNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/int2BoolView.hpp"
 #include "atlantis/utils/domains.hpp"
@@ -24,6 +25,7 @@ void Int2BoolNode::init(const InvariantNodeId id) {
              .varNodeConst(staticInputVarNodeIds().front())
              .isIntVar());
 }
+
 void Int2BoolNode::postConstraint() {
   InvariantNode::postConstraint();
   constraintSolver().bool2int(outputVarNodeConst(0).constraintVarId(),
@@ -35,6 +37,40 @@ void Int2BoolNode::updateState() {
   if (varNodeConst(input()).isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }
+}
+
+bool Int2BoolNode::constrainsOutput(VarNodeId) const {
+  if (staticInputVarNodeConst(0).inDomain(Int{0}) &&
+      !outputVarNodeConst(0).inDomain(bool{false})) {
+    return true;
+  }
+  if (staticInputVarNodeConst(0).inDomain(Int{1}) &&
+      !outputVarNodeConst(0).inDomain(bool{true})) {
+    return true;
+  }
+  return false;
+}
+
+bool Int2BoolNode::canBeReplaced() const {
+  if (state() != InvariantNodeState::ACTIVE) {
+    return false;
+  }
+  return varNodeConst(staticInputVarNodeIds().front()).staticInputTo().size() ==
+             1 &&
+         varNodeConst(staticInputVarNodeIds().front())
+             .definingNodes()
+             .empty() &&
+         !varNodeConst(outputVarNodeIds().front()).staticInputTo().empty();
+}
+
+bool Int2BoolNode::replace() {
+  if (!canBeReplaced()) {
+    return false;
+  }
+  invariantGraph().addInvariantNode(std::make_shared<Bool2IntNode>(
+      invariantGraph(), outputVarNodeIds().front(),
+      staticInputVarNodeIds().front()));
+  return true;
 }
 
 void Int2BoolNode::registerOutputVars(propagation::SolverBase& solver,

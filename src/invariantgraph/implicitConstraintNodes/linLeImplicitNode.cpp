@@ -14,7 +14,7 @@ namespace atlantis::invariantgraph {
 LinLeImplicitNode::LinLeImplicitNode(InvariantGraph& graph,
                                      std::vector<Int>&& coeffs,
                                      std::vector<VarNodeId>&& inputVars,
-                                     Int bound)
+                                     const Int bound)
     : ImplicitConstraintNode(graph, std::move(inputVars)),
       _coeffs(std::move(coeffs)),
       _bound(bound),

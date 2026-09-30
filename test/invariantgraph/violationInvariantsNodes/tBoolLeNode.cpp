@@ -65,6 +65,7 @@ class BoolLeNodeTestFixture : public NodeTestBase<BoolRelNode> {
 
     if (isReified()) {
       retrieveBoolVarNode(reifiedVar);
+      markOutputVar(reifiedVar);
       createInvariantNode(*_invariantGraph, varNodeId(aVar),
                           RelationType::REL_TYPE_LE, varNodeId(bVar),
                           varNodeId(reifiedVar));

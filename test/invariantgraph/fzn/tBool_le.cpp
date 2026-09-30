@@ -22,7 +22,7 @@ class bool_leTest : public FznTestBase {
   std::string b{"b_2"};
   std::string reified{"reified"};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const bool expected = (boolVal(a, committedValue) ? 1 : 0) <=
                           (boolVal(b, committedValue) ? 1 : 0);
     const bool actual = boolVal(reified, committedValue);
@@ -45,6 +45,7 @@ class bool_leTest : public FznTestBase {
       addBoolPar(reified, true);
     }
     generateConstraint();
+    markOutputVar(reified);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {

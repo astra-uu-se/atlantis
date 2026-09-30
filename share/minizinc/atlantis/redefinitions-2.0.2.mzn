@@ -11,8 +11,9 @@ predicate array_var_bool_element_nonshifted(var int: idx,
   let {
     int: offset = min(index_set(x));
     bool: all_params = is_fixed(x);
-  } in if all_params then array_bool_element_offset(idx, x, c, offset)
-    else array_var_bool_element_offset(idx, x, c, offset) endif;
+  } in if all_params then array_bool_element_offset(idx, x, c, offset) :: defines_var(c)
+    else array_var_bool_element_offset(idx, x, c, offset) :: defines_var(c)
+    endif;
 
 predicate array_bool_element_offset(var int: idx,
                                     array [int] of var bool: x,
@@ -28,8 +29,9 @@ predicate array_var_int_element_nonshifted(var int: idx,
   let {
     int: offset = min(index_set(x));
     bool: all_params = is_fixed(x);
-  } in if all_params then array_int_element_offset(idx, x, c, offset)
-    else array_var_int_element_offset(idx, x, c, offset) endif;
+  } in if all_params then array_int_element_offset(idx, x, c, offset) :: defines_var(c)
+    else array_var_int_element_offset(idx, x, c, offset) :: defines_var(c)
+    endif;
 
 predicate array_int_element_offset(var int: idx,
                                    array [int] of var int: x,

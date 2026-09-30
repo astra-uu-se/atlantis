@@ -9,7 +9,7 @@ using namespace atlantis::search::neighborhoods;
 
 class BoolLinLeNeighborhoodTest
     : public NeighborhoodTestBase<BinaryLinLeNeighborhood<true>> {
- public:
+ protected:
   Int numVars = 4;
   RandomProvider _random{123456789};
 
@@ -26,7 +26,6 @@ class BoolLinLeNeighborhoodTest
                          std::make_shared<SearchDomain>(0, 1));
       _coeffs.emplace_back((i % 2 == 0 ? 2 : -2) * (i + 1));
     }
-
     createNeighborhood(std::vector<Int>{_coeffs}, std::vector<SearchVar>{_vars},
                        _bound);
   }

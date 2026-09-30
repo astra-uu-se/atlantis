@@ -27,7 +27,7 @@ std::vector<std::unordered_map<Int, std::vector<size_t>>> generateTrueRows(
   return valToRows;
 }
 
-TableIn::TableIn(SolverBase& solver, VarId violationId,
+TableIn::TableIn(SolverBase& solver, const VarId violationId,
                  std::vector<VarViewId>&& vars,
                  const std::vector<std::vector<Int>>& table)
     : ViolationInvariant(solver, violationId),
@@ -36,7 +36,7 @@ TableIn::TableIn(SolverBase& solver, VarId violationId,
       _rowViolations(table.size(), {NULL_TIMESTAMP, -1, -1}),
       _violationCounts(_varArray.size() + 1, {NULL_TIMESTAMP, -1, -1}) {}
 
-TableIn::TableIn(SolverBase& solver, VarViewId violationId,
+TableIn::TableIn(SolverBase& solver, const VarViewId violationId,
                  std::vector<VarViewId>&& vars,
                  const std::vector<std::vector<Int>>& table)
     : TableIn(solver, static_cast<VarId>(violationId), std::move(vars), table) {
@@ -55,7 +55,7 @@ void TableIn::updateBounds(const bool widenOnly) {
                        widenOnly);
 }
 
-void TableIn::close(const Timestamp) {
+void TableIn::close(Timestamp) {
   // reduce the size of _valToVars:
   std::vector<Int> valsToRemove;
   for (size_t c = 0; c < _varArray.size(); ++c) {
@@ -167,7 +167,7 @@ VarViewId TableIn::nextInput(const Timestamp ts) {
   if (index < _varArray.size()) {
     return _varArray[index];
   }
-  return NULL_ID;
+  return VAR_VIEW_NULL_ID;
 }
 
 void TableIn::notifyCurrentInputChanged(const Timestamp ts) {

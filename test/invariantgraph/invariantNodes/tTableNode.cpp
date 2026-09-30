@@ -137,6 +137,9 @@ class TableNodeTestFixture : public NodeTestBase<TableNode> {
     if (!shouldBeMadeImplicit()) {
       _invariantGraph->root().addSearchVarNode(varNodeId(inputVar));
     }
+    for (const auto& outputVar : outputVars) {
+      markOutputVar(outputVar);
+    }
 
     if (isIntTable()) {
       createInvariantNode(
@@ -200,7 +203,7 @@ TEST_P(TableNodeTestFixture, propagation) {
   if (shouldBeMadeImplicit()) {
     if (!varNode(inputVar).isFixed()) {
       EXPECT_TRUE(std::ranges::contains(
-          _solver->searchVars().begin(), _solver->searchVars().end(),
+          _solver->searchVars(),
           static_cast<propagation::VarId>(varId(inputVar))));
     }
     for (Int i = 0; i < static_cast<Int>(outputVars.size()); ++i) {
@@ -208,7 +211,7 @@ TEST_P(TableNodeTestFixture, propagation) {
         continue;
       }
       EXPECT_TRUE(std::ranges::contains(
-          _solver->searchVars().begin(), _solver->searchVars().end(),
+          _solver->searchVars(),
           static_cast<propagation::VarId>(varId(outputVars.at(i)))));
     }
     return;

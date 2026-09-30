@@ -14,7 +14,7 @@ class AllDifferentTest : public InvariantTest {
   Int inputVarUb{10};
   std::uniform_int_distribution<Int> inputVarDist;
 
-  [[nodiscard]] Int computeOutput(bool committedValue = false) const {
+  [[nodiscard]] Int computeOutput(const bool committedValue = false) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = committedValue ? _solver->committedValue(inputVars.at(i))
@@ -23,7 +23,7 @@ class AllDifferentTest : public InvariantTest {
     return computeOutput(values);
   }
 
-  [[nodiscard]] Int computeOutput(Timestamp ts) const {
+  [[nodiscard]] Int computeOutput(const Timestamp ts) const {
     std::vector<Int> values(inputVars.size(), 0);
     for (size_t i = 0; i < inputVars.size(); ++i) {
       values.at(i) = _solver->value(ts, inputVars.at(i));
@@ -79,13 +79,13 @@ TEST_F(AllDifferentTest, UpdateBounds) {
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_LE(aLb, aUb);
-    _solver->updateBounds(VarId(inputVars.at(0)), aLb, aUb, false);
+    _solver->updateBounds(VarId{inputVars.at(0)}, aLb, aUb, false);
     for (const auto& [bLb, bUb] : boundVec) {
       EXPECT_LE(bLb, bUb);
-      _solver->updateBounds(VarId(inputVars.at(1)), bLb, bUb, false);
+      _solver->updateBounds(VarId{inputVars.at(1)}, bLb, bUb, false);
       for (const auto& [cLb, cUb] : boundVec) {
         EXPECT_LE(cLb, cUb);
-        _solver->updateBounds(VarId(inputVars.at(2)), cLb, cUb, false);
+        _solver->updateBounds(VarId{inputVars.at(2)}, cLb, cUb, false);
         invariant.updateBounds(false);
         ASSERT_EQ(0, _solver->lowerBound(outputVar));
         ASSERT_EQ(inputVars.size() - 1, _solver->upperBound(outputVar));
@@ -199,7 +199,7 @@ TEST_F(AllDifferentTest, Commit) {
   EXPECT_EQ(_solver->currentValue(outputVar), computeOutput());
 
   for (const size_t i : indices) {
-    const Timestamp ts = _solver->currentTimestamp() + Timestamp(i);
+    const Timestamp ts = _solver->currentTimestamp() + Timestamp{i};
     for (Int j = 0; j < numInputVars; ++j) {
       // Check that we do not accidentally commit:
       ASSERT_EQ(_solver->committedValue(inputVars.at(j)),
@@ -212,7 +212,7 @@ TEST_F(AllDifferentTest, Commit) {
     } while (oldVal == _solver->value(ts, inputVars.at(i)));
 
     // notify changes
-    invariant.notifyInputChanged(ts, LocalId(i));
+    invariant.notifyInputChanged(ts, i);
 
     // incremental value
     const Int notifiedViolation = _solver->value(ts, outputVar);
@@ -220,9 +220,9 @@ TEST_F(AllDifferentTest, Commit) {
 
     ASSERT_EQ(notifiedViolation, _solver->value(ts, outputVar));
 
-    _solver->commitIf(ts, VarId(inputVars.at(i)));
-    committedValues.at(i) = _solver->value(ts, VarId(inputVars.at(i)));
-    _solver->commitIf(ts, VarId(outputVar));
+    _solver->commitIf(ts, VarId{inputVars.at(i)});
+    committedValues.at(i) = _solver->value(ts, inputVars.at(i));
+    _solver->commitIf(ts, VarId{outputVar});
 
     invariant.commit(ts);
     invariant.recompute(ts + 1);
@@ -242,9 +242,10 @@ RC_GTEST_FIXTURE_PROP(AllDifferentTest, rapidcheck, ()) {
   generate();
 
   constexpr size_t numCommits = 3;
-  constexpr size_t numProbes = 3;
 
   for (size_t c = 0; c < numCommits; ++c) {
+    constexpr size_t numProbes = 3;
+
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
@@ -281,26 +282,26 @@ class MockAllDifferent : public AllDifferent {
     registered = true;
     AllDifferent::registerVars();
   }
-  explicit MockAllDifferent(SolverBase& solver, VarViewId outputVar,
+  explicit MockAllDifferent(SolverBase& solver, const VarViewId outputVar,
                             std::vector<VarViewId>&& t_vars)
       : AllDifferent(solver, outputVar, std::move(t_vars)) {
     EXPECT_TRUE(outputVar.isVar());
 
-    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, recompute).WillByDefault([this](const Timestamp timestamp) {
       return AllDifferent::recompute(timestamp);
     });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, nextInput).WillByDefault([this](const Timestamp timestamp) {
       return AllDifferent::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp) {
+        .WillByDefault([this](const Timestamp timestamp) {
           AllDifferent::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+        .WillByDefault([this](const Timestamp timestamp, const LocalId id) {
           AllDifferent::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, commit).WillByDefault([this](const Timestamp timestamp) {
       AllDifferent::commit(timestamp);
     });
   }

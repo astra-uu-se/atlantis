@@ -60,25 +60,15 @@ class Logger {
   const size_t INDENTATION_SIZE = 2;
 
  public:
-  Logger(FILE* location, Level level) : _ostream(location), _maxLevel(level) {}
+  Logger(FILE* location, Level level);
 
   template <typename Action>
   void beginScopeProcedure(Level level, LogScopeWrapper& logScopeWrapper,
-                           Action&& action) {
-    logScopeWrapper.begin(*this, level);
-    action();
-    logScopeWrapper.end(*this, level);
-  }
+                           Action&& action);
 
   template <typename ReturnType, typename Action>
   ReturnType beginScopeFunction(Level level, LogScopeWrapper& logScopeWrapper,
-                                Action&& action) {
-    logScopeWrapper.begin(*this, level);
-    assert(!std::is_void_v<ReturnType>);
-    ReturnType value = action();
-    logScopeWrapper.end(*this, level);
-    return value;
-  }
+                                Action&& action);
 
   template <typename Action>
   void timedProcedure(const char* title, Action&& action) {
@@ -93,39 +83,19 @@ class Logger {
   }
 
   template <typename Action>
-  void timedProcedure(Level level, const char* title, Action&& action) {
-    TimedLogScopeWrapper wrapper(title);
-    beginScopeProcedure<Action>(level, wrapper, std::forward<Action>(action));
-  }
+  void timedProcedure(Level level, const char* title, Action&& action);
 
   template <typename ReturnType, typename Action>
-  ReturnType timedFunction(Level level, const char* title, Action&& action) {
-    TimedLogScopeWrapper wrapper(title);
-    return beginScopeFunction<ReturnType, Action>(level, wrapper,
-                                                  std::forward<Action>(action));
-  }
+  ReturnType timedFunction(Level level, const char* title, Action&& action);
 
   template <typename Action>
-  void indentedProcedure(Level level, const char* title, Action&& action) {
-    IndentedLogScopeWrapper wrapper(title);
-    beginScopeProcedure<Action>(level, wrapper, std::forward<Action>(action));
-  }
+  void indentedProcedure(Level level, const char* title, Action&& action);
 
   template <typename ReturnType, typename Action>
-  ReturnType indentedFunction(Level level, const char* title, Action&& action) {
-    IndentedLogScopeWrapper wrapper(title);
-    return beginScopeFunction<ReturnType, Action>(level, wrapper,
-                                                  std::forward<Action>(action));
-  }
+  ReturnType indentedFunction(Level level, const char* title, Action&& action);
 
   template <typename... T>
-  void log(Level level, fmt::format_string<T...> format, T&&... args) {
-    if (level <= _maxLevel) {
-      fmt::print(_ostream, "{:<7} {: >{}}{}\n",
-                 fmt::format("[{}]", levelString(level)), "", _indentation,
-                 fmt::format(format, std::forward<T>(args)...));
-    }
-  }
+  void log(Level level, fmt::format_string<T...> format, T&&... args);
 
   template <typename... T>
   void trace(fmt::format_string<T...> format, T&&... args) {
@@ -157,22 +127,67 @@ class Logger {
   void decreaseIndentation() noexcept { _indentation -= INDENTATION_SIZE; }
 
  private:
-  static const char* levelString(Level level) {
-    switch (level) {
-      case Level::LVL_ERROR:
-        return "ERROR";
-      case Level::LVL_WARNING:
-        return "WARNING";
-      case Level::LVL_INFO:
-        return "INFO";
-      case Level::LVL_DEBUG:
-        return "DEBUG";
-      case Level::LVL_TRACE:
-        return "TRACE";
-    }
-
-    return "";
-  }
+  static const char* levelString(Level level);
 };
+
+template <typename Action>
+void Logger::beginScopeProcedure(const Level level,
+                                 LogScopeWrapper& logScopeWrapper,
+                                 Action&& action) {
+  logScopeWrapper.begin(*this, level);
+  action();
+  logScopeWrapper.end(*this, level);
+}
+
+template <typename ReturnType, typename Action>
+ReturnType Logger::beginScopeFunction(const Level level,
+                                      LogScopeWrapper& logScopeWrapper,
+                                      Action&& action) {
+  logScopeWrapper.begin(*this, level);
+  assert(!std::is_void_v<ReturnType>);
+  ReturnType value = action();
+  logScopeWrapper.end(*this, level);
+  return value;
+}
+
+template <typename Action>
+void Logger::timedProcedure(const Level level, const char* title,
+                            Action&& action) {
+  TimedLogScopeWrapper wrapper(title);
+  beginScopeProcedure<Action>(level, wrapper, std::forward<Action>(action));
+}
+
+template <typename ReturnType, typename Action>
+ReturnType Logger::timedFunction(const Level level, const char* title,
+                                 Action&& action) {
+  TimedLogScopeWrapper wrapper(title);
+  return beginScopeFunction<ReturnType, Action>(level, wrapper,
+                                                std::forward<Action>(action));
+}
+
+template <typename Action>
+void Logger::indentedProcedure(const Level level, const char* title,
+                               Action&& action) {
+  IndentedLogScopeWrapper wrapper(title);
+  beginScopeProcedure<Action>(level, wrapper, std::forward<Action>(action));
+}
+
+template <typename ReturnType, typename Action>
+ReturnType Logger::indentedFunction(const Level level, const char* title,
+                                    Action&& action) {
+  IndentedLogScopeWrapper wrapper(title);
+  return beginScopeFunction<ReturnType, Action>(level, wrapper,
+                                                std::forward<Action>(action));
+}
+
+template <typename... T>
+void Logger::log(const Level level, fmt::format_string<T...> format,
+                 T&&... args) {
+  if (level <= _maxLevel) {
+    fmt::print(_ostream, "{:<7} {: >{}}{}\n",
+               fmt::format("[{}]", levelString(level)), "", _indentation,
+               fmt::format(format, std::forward<T>(args)...));
+  }
+}
 
 }  // namespace atlantis::logging

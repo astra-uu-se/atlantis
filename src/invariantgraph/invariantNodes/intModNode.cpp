@@ -21,6 +21,7 @@ void IntModNode::init(const InvariantNodeId id) {
   assert(varNodeConst(numerator()).isIntVar());
   assert(varNodeConst(denominator()).isIntVar());
 }
+
 void IntModNode::postConstraint() {
   InvariantNode::postConstraint();
   constraintSolver().int_mod(varNodeConst(numerator()).constraintVarId(),

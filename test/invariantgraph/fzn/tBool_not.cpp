@@ -21,7 +21,7 @@ class bool_notTest : public FznTestBase {
   std::string input{"input"};
   std::string output{"output"};
 
-  [[nodiscard]] bool isSatisfied(bool committedValue) const override {
+  [[nodiscard]] bool isSatisfied(const bool committedValue) const override {
     const bool expected = !boolVal(input, committedValue);
     const bool actual = boolVal(output, committedValue);
 
@@ -37,6 +37,7 @@ class bool_notTest : public FznTestBase {
     addBoolArg(output);
     constraintIdentifier = "bool_not";
     generateConstraint();
+    markOutputVar(output);
   }
 
   [[nodiscard]] bool alwaysSatisfied() const override {
@@ -52,7 +53,7 @@ class bool_notTest : public FznTestBase {
     return varId(input) != propagation::NULL_ID;
   }
 
-  void move(bool committedValue) override {
+  void move(const bool committedValue) override {
     if (varId(input) != propagation::NULL_ID && randBool()) {
       changeValue(input, committedValue);
     }
@@ -68,18 +69,17 @@ class bool_notTest : public FznTestBase {
 RC_GTEST_FIXTURE_PROP(bool_notTest, RapidCheck, ()) { rapidCheck(); }
 
 TEST(BoolNotRegression, DefinedVarWithLiteralNegationDoesNotCrash) {
-  auto model = std::make_shared<fznparser::Model>();
-  auto input = std::make_shared<fznparser::BoolVar>("input");
+  const auto model = std::make_shared<Model>();
+  auto input = std::make_shared<BoolVar>("input");
   model->addVar(input);
 
-  fznparser::Constraint constraint{
-      "bool_not", std::vector<fznparser::Arg>{fznparser::BoolArg(input),
-                                              fznparser::BoolArg(false)}};
-  constraint.addAnnotation("defines_var", fznparser::AnnotationExpression(
-                                              fznparser::Annotation("input")));
+  Constraint constraint{"bool_not",
+                        std::vector<Arg>{BoolArg(input), BoolArg(false)}};
+  constraint.addAnnotation("defines_var",
+                           AnnotationExpression(Annotation("input")));
   model->addConstraint(std::move(constraint));
 
-  auto graph = std::make_shared<FznInvariantGraph>(true);
+  const auto graph = std::make_shared<FznInvariantGraph>(true);
   graph->open();
 
   EXPECT_NO_THROW(graph->build(*model));
