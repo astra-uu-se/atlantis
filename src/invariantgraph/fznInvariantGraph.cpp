@@ -97,15 +97,15 @@ void FznInvariantGraph::build(const fznparser::Model& model) {
 
   if (model.hasObjective()) {
     const fznparser::Var& modelObjective = model.objective();
-    _objectiveVarNodeId = varNodeId(modelObjective.identifier());
-    if (_objectiveVarNodeId == NULL_NODE_ID) {
+    _objectiveVarNode = varNodeId(modelObjective.identifier());
+    if (_objectiveVarNode == NULL_NODE_ID) {
       if (std::holds_alternative<std::shared_ptr<fznparser::BoolVar>>(
               modelObjective)) {
-        _objectiveVarNodeId = retrieveVarNode(
+        _objectiveVarNode = retrieveVarNode(
             *std::get<std::shared_ptr<fznparser::BoolVar>>(modelObjective));
       } else if (std::holds_alternative<std::shared_ptr<fznparser::IntVar>>(
                      modelObjective)) {
-        _objectiveVarNodeId = retrieveVarNode(
+        _objectiveVarNode = retrieveVarNode(
             *std::get<std::shared_ptr<fznparser::IntVar>>(modelObjective));
       } else {
         throw FznException("Objective variable is not a BoolVar or IntVar");

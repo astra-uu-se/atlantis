@@ -1,5 +1,7 @@
 #include "atlantis/invariantgraph/solverMapping.hpp"
 
+#include "atlantis/invariantgraph/varNode.hpp"
+
 namespace atlantis::invariantgraph {
 
 propagation::VarViewId SolverMapping::invariantIntermediateId(
@@ -75,7 +77,7 @@ propagation::VarViewId SolverMapping::objectiveId() const {
   return _objectiveId;
 }
 
-void SolverMapping::setSolverId(const VarNodeId& varNodeId,
+void SolverMapping::setSolverId(const VarNodeId varNodeId,
                                 const propagation::VarViewId solverId) {
   assert(varNodeId != NULL_NODE_ID);
   assert(solverId != propagation::NULL_ID);
@@ -85,7 +87,7 @@ void SolverMapping::setSolverId(const VarNodeId& varNodeId,
   _solverIds[varNodeId] = solverId;
 }
 void SolverMapping::setDomainViolationId(
-    const VarNodeId& varNodeId, const propagation::VarViewId solverId) {
+    const VarNodeId varNodeId, const propagation::VarViewId solverId) {
   assert(varNodeId != NULL_NODE_ID);
   assert(solverId != propagation::NULL_ID);
   if (_domainViolationIds.size() <= varNodeId) {
@@ -125,6 +127,7 @@ propagation::VarViewId SolverMapping::violationId(InvariantNodeId id) const {
   }
   return _violationIds[size_t{id}];
 }
+
 void SolverMapping::setViolationId(InvariantNodeId id,
                                    const propagation::VarViewId solverId) {
   assert(id != NULL_NODE_ID);

@@ -20,44 +20,50 @@ class SolverBase;  // forward declaration
 }
 
 namespace atlantis::invariantgraph {
+class InvariantNode;
 class SolverMapping;
 
-class VarNode {
-  VarNodeId _varNodeId;
+class VarNode : public std::enable_shared_from_this<VarNode> {
   DomainType _domainType{DomainType::DOM_DOMAIN};
   bool _isViolationVar{false};
   bool _isOutputVar{false};
   bool _isIntVar;
   ConstraintVarId _constraintSolverId{NULL_NODE_ID};
+  VarNodeId _mappingId{NULL_NODE_ID};
 
   std::shared_ptr<SearchDomain> _domain{nullptr};
-  std::vector<InvariantNodeId> _staticInputTo;
-  std::vector<InvariantNodeId> _dynamicInputTo;
-  std::unordered_set<InvariantNodeId, InvariantNodeIdHash> _outputOf;
+  std::vector<std::shared_ptr<InvariantNode>> _staticInputTo;
+  std::vector<std::shared_ptr<InvariantNode>> _dynamicInputTo;
+  std::unordered_set<std::shared_ptr<InvariantNode>> _outputOf;
   std::optional<std::string> _identifier;
 
  public:
   explicit VarNode(
-      VarNodeId, bool isIntVar,
+      bool isIntVar,
       ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
       DomainType = DomainType::DOM_RANGE);
 
   explicit VarNode(
-      VarNodeId, bool isIntVar, const std::shared_ptr<SearchDomain>& domain,
+      bool isIntVar, const std::shared_ptr<SearchDomain>& domain,
       ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
       DomainType = DomainType::DOM_DOMAIN);
 
   explicit VarNode(
-      const std::string& identifier, VarNodeId, bool isIntVar,
+      const std::string& identifier, bool isIntVar,
       ConstraintVarId constraintVarId = ConstraintVarId{NULL_NODE_ID},
       DomainType = DomainType::DOM_RANGE);
 
-  explicit VarNode(const std::string& identifier, VarNodeId, bool isIntVar,
+  explicit VarNode(const std::string& identifier, bool isIntVar,
                    const std::shared_ptr<SearchDomain>& domain,
                    ConstraintVarId constraintVarId = {NULL_NODE_ID, false},
                    DomainType = DomainType::DOM_DOMAIN);
 
-  VarNodeId varNodeId() const noexcept;
+  std::shared_ptr<VarNode> ptr();
+
+  std::shared_ptr<const VarNode> constPtr() const;
+
+  void setMappingId(size_t) noexcept;
+  size_t mappingId() const noexcept;
 
   ConstraintVarId constraintVarId() const noexcept;
 
@@ -120,24 +126,24 @@ class VarNode {
 
   [[nodiscard]] std::pair<Int, Int> bounds() const;
 
-  [[nodiscard]] const std::vector<InvariantNodeId>& staticInputTo()
+  [[nodiscard]] const std::vector<std::shared_ptr<InvariantNode>>& staticInputTo()
       const noexcept;
 
-  [[nodiscard]] const std::vector<InvariantNodeId>& dynamicInputTo()
+  [[nodiscard]] const std::vector<std::shared_ptr<InvariantNode>>& dynamicInputTo()
       const noexcept;
 
-  [[nodiscard]] const std::unordered_set<InvariantNodeId, InvariantNodeIdHash>&
+  [[nodiscard]] const std::unordered_set<std::shared_ptr<InvariantNode>>&
   definingNodes() const noexcept;
 
-  [[nodiscard]] InvariantNodeId outputOf() const;
+  [[nodiscard]] std::shared_ptr<InvariantNode> outputOf() const;
 
-  void markAsInputFor(InvariantNodeId listeningInvNodeId, bool isStaticInput);
+  void markAsInputFor(const std::shared_ptr<InvariantNode>& listeningInvariant, bool isStaticInput);
 
-  void unmarkOutputTo(InvariantNodeId definingInvNodeId);
+  void markOutputTo(const std::shared_ptr<InvariantNode>& definingInvariant);
 
-  void unmarkAsInputFor(InvariantNodeId listeningInvariant, bool isStaticInput);
+  void unmarkAsInputFor(const InvariantNode& listeningInvariant, bool isStaticInput);
 
-  void markOutputTo(InvariantNodeId definingInvariant);
+  void unmarkOutputTo(const std::shared_ptr<InvariantNode>& definingInvNodeId);
 
   [[nodiscard]] std::optional<Int> constantValue() const noexcept;
 

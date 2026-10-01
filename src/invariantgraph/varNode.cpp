@@ -17,18 +17,14 @@
 #include "atlantis/utils/domains.hpp"
 
 namespace atlantis::invariantgraph {
+class InvariantNode;
 
-std::string toString(const VarNodeId varNodeId) {
-  return "ATLANTIS_INTRODUCED_" + std::to_string(varNodeId);
-}
-
-VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
+VarNode::VarNode(const std::string& identifier,
                  const bool isIntVar,
                  const std::shared_ptr<SearchDomain>& domain,
                  const ConstraintVarId constraintVarId,
                  const DomainType domainType)
-    : _varNodeId(varNodeId),
-      _domainType(domainType),
+    : _domainType(domainType),
       _isIntVar(isIntVar),
       _constraintSolverId(constraintVarId),
       _domain(domain),
@@ -36,11 +32,26 @@ VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
   assert(_domain != nullptr);
 }
 
-VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
+std::shared_ptr<VarNode> VarNode::ptr() {
+  return shared_from_this();
+}
+
+std::shared_ptr<const VarNode> VarNode::constPtr() const {
+  return shared_from_this();
+}
+
+void VarNode::setMappingId(const size_t id) noexcept {
+  _mappingId = id;
+}
+
+size_t VarNode::mappingId() const noexcept {
+  return _mappingId;
+}
+
+VarNode::VarNode(const std::string& identifier,
                  const bool isIntVar, const ConstraintVarId constraintVarId,
                  const DomainType domainType)
-    : _varNodeId(varNodeId),
-      _domainType(domainType),
+    : _domainType(domainType),
       _isIntVar(isIntVar),
       _constraintSolverId(constraintVarId),
       _domain(std::make_shared<SearchDomain>(0, 1)),
@@ -48,11 +59,10 @@ VarNode::VarNode(const std::string& identifier, const VarNodeId varNodeId,
   assert(!isIntVar);
 }
 
-VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar,
+VarNode::VarNode(const bool isIntVar,
                  const ConstraintVarId constraintVarId,
                  const DomainType domainType)
-    : _varNodeId(varNodeId),
-      _domainType(domainType),
+    : _domainType(domainType),
       _isIntVar(isIntVar),
       _constraintSolverId(constraintVarId),
       _domain(std::make_shared<SearchDomain>(0, 1)),
@@ -60,20 +70,17 @@ VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar,
   assert(!isIntVar);
 }
 
-VarNode::VarNode(const VarNodeId varNodeId, const bool isIntVar,
+VarNode::VarNode(const bool isIntVar,
                  const std::shared_ptr<SearchDomain>& domain,
                  const ConstraintVarId constraintVarId,
                  const DomainType domainType)
-    : _varNodeId(varNodeId),
-      _domainType(domainType),
+    : _domainType(domainType),
       _isIntVar(isIntVar),
       _constraintSolverId(constraintVarId),
       _domain(domain),
       _identifier(std::nullopt) {
   assert(_domain != nullptr);
 }
-
-VarNodeId VarNode::varNodeId() const noexcept { return _varNodeId; }
 
 ConstraintVarId VarNode::constraintVarId() const noexcept {
   return _constraintSolverId;
@@ -120,8 +127,8 @@ void VarNode::setIsOutputVar(const bool isOutputVar) {
 
 propagation::VarViewId VarNode::postDomainConstraint(
     propagation::SolverBase& solver, SolverMapping& mapping) const {
-  if (mapping.domainViolationId(varNodeId()) != propagation::NULL_ID) {
-    return mapping.domainViolationId(varNodeId());
+  if (mapping.domainViolationId(_mappingId) != propagation::NULL_ID) {
+    return mapping.domainViolationId(_mappingId);
   }
   if (_domainType == DomainType::DOM_NONE ||
       ((staticInputTo().empty() || dynamicInputTo().empty()) &&
@@ -132,12 +139,12 @@ propagation::VarViewId VarNode::postDomainConstraint(
     throw std::runtime_error("Domain type is fixed but domain is not fixed");
   }
 
-  if (mapping.solverId(varNodeId()) == propagation::NULL_ID) {
+  if (mapping.solverId(_mappingId) == propagation::NULL_ID) {
     throw std::runtime_error("VarNode has no varId");
   }
 
-  const Int solverLb = solver.lowerBound(mapping.solverId(varNodeId()));
-  const Int solverUb = solver.upperBound(mapping.solverId(varNodeId()));
+  const Int solverLb = solver.lowerBound(mapping.solverId(_mappingId));
+  const Int solverUb = solver.upperBound(mapping.solverId(_mappingId));
 
   if (!isIntVar()) {
     const bool holdsTrue = solverLb <= 0 && 0 <= solverUb;
@@ -151,68 +158,68 @@ propagation::VarViewId VarNode::postDomainConstraint(
     }
     if (inDomain(bool{true})) {
       mapping.setDomainViolationId(
-          varNodeId(), solver.makeIntView<propagation::EqualConst>(
-                           solver, mapping.solverId(varNodeId()), 0));
+          _mappingId, solver.makeIntView<propagation::EqualConst>(
+                           solver, mapping.solverId(_mappingId), 0));
     } else {
       mapping.setDomainViolationId(
-          varNodeId(), solver.makeIntView<propagation::NotEqualConst>(
-                           solver, mapping.solverId(varNodeId()), 0));
+          _mappingId, solver.makeIntView<propagation::NotEqualConst>(
+                           solver, mapping.solverId(_mappingId), 0));
     }
-    return mapping.domainViolationId(varNodeId());
+    return mapping.domainViolationId(_mappingId);
   }
 
   if (_domainType == DomainType::DOM_FIXED || _domain->isFixed()) {
     if (solverLb == lowerBound() && solverUb == lowerBound()) {
-      return mapping.domainViolationId(varNodeId());
+      return mapping.domainViolationId(_mappingId);
     }
     mapping.setDomainViolationId(
-        varNodeId(), solver.makeIntView<propagation::EqualConst>(
-                         solver, mapping.solverId(varNodeId()), lowerBound()));
-    return mapping.domainViolationId(varNodeId());
+        _mappingId, solver.makeIntView<propagation::EqualConst>(
+                         solver, mapping.solverId(_mappingId), lowerBound()));
+    return mapping.domainViolationId(_mappingId);
   }
 
   if (_domainType == DomainType::DOM_LOWER_BOUND) {
     if (solverLb >= lowerBound()) {
-      return mapping.domainViolationId(varNodeId());
+      return mapping.domainViolationId(_mappingId);
     }
     mapping.setDomainViolationId(
-        varNodeId(), solver.makeIntView<propagation::GreaterEqualConst>(
-                         solver, mapping.solverId(varNodeId()), lowerBound()));
-    return mapping.domainViolationId(varNodeId());
+        _mappingId, solver.makeIntView<propagation::GreaterEqualConst>(
+                         solver, mapping.solverId(_mappingId), lowerBound()));
+    return mapping.domainViolationId(_mappingId);
   }
 
   if (_domainType == DomainType::DOM_UPPER_BOUND) {
     if (solverUb <= upperBound()) {
-      return mapping.domainViolationId(varNodeId());
+      return mapping.domainViolationId(_mappingId);
     }
     mapping.setDomainViolationId(
-        varNodeId(), solver.makeIntView<propagation::LessEqualConst>(
-                         solver, mapping.solverId(varNodeId()), upperBound()));
-    return mapping.domainViolationId(varNodeId());
+        _mappingId, solver.makeIntView<propagation::LessEqualConst>(
+                         solver, mapping.solverId(_mappingId), upperBound()));
+    return mapping.domainViolationId(_mappingId);
   }
 
   if (_domainType == DomainType::DOM_RANGE) {
     if (lowerBound() <= solverLb && solverUb <= upperBound()) {
-      return mapping.domainViolationId(varNodeId());
+      return mapping.domainViolationId(_mappingId);
     }
     mapping.setDomainViolationId(
-        varNodeId(),
+        _mappingId,
         solver.makeIntView<propagation::InIntervalConst>(
-            solver, mapping.solverId(varNodeId()), lowerBound(), upperBound()));
-    return mapping.domainViolationId(varNodeId());
+            solver, mapping.solverId(_mappingId), lowerBound(), upperBound()));
+    return mapping.domainViolationId(_mappingId);
   }
   assert(_domainType == DomainType::DOM_DOMAIN);
 
   if (_domain->contains(solverLb, solverUb)) {
-    return mapping.domainViolationId(varNodeId());
+    return mapping.domainViolationId(_mappingId);
   }
 
   if (_domain->isInterval()) {
     mapping.setDomainViolationId(
-        varNodeId(),
+        _mappingId,
         solver.makeIntView<propagation::InIntervalConst>(
-            solver, mapping.solverId(varNodeId()), lowerBound(), upperBound()));
-    return mapping.domainViolationId(varNodeId());
+            solver, mapping.solverId(_mappingId), lowerBound(), upperBound()));
+    return mapping.domainViolationId(_mappingId);
   }
 
   std::vector<DomainEntry> domain =
@@ -225,16 +232,16 @@ propagation::VarViewId VarNode::postDomainConstraint(
   // domain.size() - 1 = number of "holes" in the domain:
   if (domain.size() > 2 && interval < 1000) {
     mapping.setDomainViolationId(
-        varNodeId(),
+        _mappingId,
         solver.makeIntView<propagation::InSparseDomain>(
-            solver, mapping.solverId(varNodeId()), std::move(domain)));
+            solver, mapping.solverId(_mappingId), std::move(domain)));
   } else {
     mapping.setDomainViolationId(
-        varNodeId(),
+        _mappingId,
         solver.makeIntView<propagation::InDomain>(
-            solver, mapping.solverId(varNodeId()), std::move(domain)));
+            solver, mapping.solverId(_mappingId), std::move(domain)));
   }
-  return mapping.domainViolationId(varNodeId());
+  return mapping.domainViolationId(_mappingId);
 }
 
 Int VarNode::lowerBound() const { return _domain->lowerBound(); }
@@ -384,22 +391,22 @@ std::vector<DomainEntry> VarNode::constrainedDomain(const Int lb,
 
 std::pair<Int, Int> VarNode::bounds() const { return _domain->bounds(); }
 
-const std::vector<InvariantNodeId>& VarNode::staticInputTo() const noexcept {
+const std::vector<std::shared_ptr<InvariantNode>>& VarNode::staticInputTo() const noexcept {
   return _staticInputTo;
 }
 
-const std::vector<InvariantNodeId>& VarNode::dynamicInputTo() const noexcept {
+const std::vector<std::shared_ptr<InvariantNode>>& VarNode::dynamicInputTo() const noexcept {
   return _dynamicInputTo;
 }
 
-const std::unordered_set<InvariantNodeId, InvariantNodeIdHash>&
+const std::unordered_set<std::shared_ptr<InvariantNode>>&
 VarNode::definingNodes() const noexcept {
   return _outputOf;
 }
 
-InvariantNodeId VarNode::outputOf() const {
+std::shared_ptr<InvariantNode> VarNode::outputOf() const {
   if (_outputOf.empty()) {
-    return InvariantNodeId{NULL_NODE_ID};
+    return nullptr;
   }
   if (_outputOf.size() != 1) {
     throw std::runtime_error("VarNode is not an output var");
@@ -407,38 +414,37 @@ InvariantNodeId VarNode::outputOf() const {
   return *_outputOf.begin();
 }
 
-void VarNode::markAsInputFor(const InvariantNodeId listeningInvNodeId,
+void VarNode::markAsInputFor(const std::shared_ptr<InvariantNode>& listeningInvariant,
                              const bool isStaticInput) {
   if (isStaticInput) {
-    _staticInputTo.emplace_back(listeningInvNodeId);
+    _staticInputTo.emplace_back(listeningInvariant);
   } else {
-    _dynamicInputTo.emplace_back(listeningInvNodeId);
+    _dynamicInputTo.emplace_back(listeningInvariant);
   }
 }
 
-void VarNode::unmarkOutputTo(const InvariantNodeId definingInvNodeId) {
+void VarNode::unmarkOutputTo(const std::shared_ptr<InvariantNode>& definingInvNodeId) {
   _outputOf.erase(definingInvNodeId);
 }
 
-void VarNode::unmarkAsInputFor(const InvariantNodeId listeningInvariant,
+void VarNode::unmarkAsInputFor(const InvariantNode& listeningInvariant,
                                const bool isStaticInput) {
   if (isStaticInput) {
     for (Int i = static_cast<Int>(_staticInputTo.size()) - 1; i >= 0; --i) {
-      if (_staticInputTo[i] == listeningInvariant) {
+      if (_staticInputTo[i].get() == &listeningInvariant) {
         _staticInputTo.erase(_staticInputTo.begin() + i);
       }
     }
   } else {
     for (Int i = static_cast<Int>(_dynamicInputTo.size()) - 1; i >= 0; --i) {
-      if (_dynamicInputTo[i] == listeningInvariant) {
+      if (_dynamicInputTo[i].get() == &listeningInvariant) {
         _dynamicInputTo.erase(_dynamicInputTo.begin() + i);
       }
     }
   }
 }
 
-void VarNode::markOutputTo(InvariantNodeId definingInvariant) {
-  assert(definingInvariant != NULL_NODE_ID);
+void VarNode::markOutputTo(const std::shared_ptr<InvariantNode>& definingInvariant) {
   _outputOf.emplace(definingInvariant);
 }
 
@@ -449,8 +455,7 @@ std::optional<Int> VarNode::constantValue() const noexcept {
 
 std::ostream& VarNode::dotLangIdentifier(std::ostream& o,
                                          const std::string& identifier) const {
-  o << _varNodeId;
-  return o << " [label=\"" << identifier << "\"];" << std::endl;
+  return o << reinterpret_cast<size_t>(this) << " [label=\"" << identifier << "\"];" << std::endl;
 }
 
 }  // namespace atlantis::invariantgraph

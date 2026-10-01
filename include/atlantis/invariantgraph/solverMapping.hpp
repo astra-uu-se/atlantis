@@ -7,6 +7,7 @@
 #include "atlantis/search/neighborhoods/neighborhood.hpp"
 
 namespace atlantis::invariantgraph {
+class VarNode;
 
 class SolverMapping {
   std::vector<propagation::VarViewId> _solverIds{};
@@ -47,9 +48,9 @@ class SolverMapping {
 
   [[nodiscard]] propagation::VarViewId objectiveId() const;
 
-  void setSolverId(const VarNodeId& varNodeId, propagation::VarViewId solverId);
+  void setSolverId(VarNodeId varNodeId, propagation::VarViewId solverId);
 
-  void setDomainViolationId(const VarNodeId& varNodeId,
+  void setDomainViolationId(VarNodeId varNodeId,
                             propagation::VarViewId solverId);
 
   void setTotalViolationId(propagation::VarViewId solverId);

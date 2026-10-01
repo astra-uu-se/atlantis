@@ -22,30 +22,25 @@ class InvariantGraph;  // forward declaration;
  * view.
  */
 
-class InvariantNode {
-  InvariantNodeId _id{NULL_NODE_ID};
+class InvariantNode : public std::enable_shared_from_this<InvariantNode> {
   InvariantNodeState _state{InvariantNodeState::UNINITIALIZED};
   InvariantGraph& _invariantGraph;
+  InvariantNodeId _mappingId{NULL_NODE_ID};
 
  protected:
-  std::vector<VarNodeId> _outputVarNodeIds;
-  std::vector<VarNodeId> _staticInputVarNodeIds;
-  std::vector<VarNodeId> _dynamicInputVarNodeIds;
+  std::vector<std::shared_ptr<VarNode>> _outputVarNodes;
+  std::vector<std::shared_ptr<VarNode>> _staticInputVarNodes;
+  std::vector<std::shared_ptr<VarNode>> _dynamicInputVarNodes;
 
-  [[nodiscard]] VarNode& varNode(VarNodeId);
-  [[nodiscard]] const VarNode& varNodeConst(VarNodeId) const;
-  [[nodiscard]] VarNode& outputVarNode(size_t index);
-  [[nodiscard]] const VarNode& outputVarNodeConst(size_t index) const;
-  [[nodiscard]] VarNode& staticInputVarNode(size_t index);
-  [[nodiscard]] const VarNode& staticInputVarNodeConst(size_t index) const;
-  [[nodiscard]] VarNode& dynamicInputVarNode(size_t index);
-  [[nodiscard]] const VarNode& dynamicInputVarNodeConst(size_t index) const;
+  explicit InvariantNode(InvariantGraph& invariantGraph,
+                         std::vector<std::shared_ptr<VarNode>>&& outputIds,
+                         std::vector<std::shared_ptr<VarNode>>&& staticInputIds = {},
+                         std::vector<std::shared_ptr<VarNode>>&& dynamicInputIds = {});
+
+
 
  public:
-  explicit InvariantNode(InvariantGraph& invariantGraph,
-                         std::vector<VarNodeId>&& outputIds,
-                         std::vector<VarNodeId>&& staticInputIds = {},
-                         std::vector<VarNodeId>&& dynamicInputIds = {});
+  std::shared_ptr<InvariantNode> getPtr();
 
   virtual ~InvariantNode() = default;
 
@@ -57,9 +52,11 @@ class InvariantNode {
 
   [[nodiscard]] const ConstraintSolver& constraintSolverConst() const;
 
-  [[nodiscard]] InvariantNodeId id() const;
+  virtual void init();
 
-  virtual void init(InvariantNodeId);
+  void setMappingId(InvariantNodeId);
+
+  InvariantNodeId mappingId() const;
 
   virtual void postConstraint();
 
@@ -70,7 +67,7 @@ class InvariantNode {
   virtual void updateState();
 
   [[nodiscard]] virtual bool constrainsOutput(
-      VarNodeId outputVarNodeId) const = 0;
+      const VarNode& outputVarNode) const = 0;
 
   [[nodiscard]] virtual bool canBeReplaced() const;
 
@@ -95,28 +92,28 @@ class InvariantNode {
   /**
    * @return The variable nodes defined by this node.
    */
-  [[nodiscard]] const std::vector<VarNodeId>& outputVarNodeIds() const;
+  [[nodiscard]] const std::vector<std::shared_ptr<VarNode>>& outputVarNodes() const;
 
-  [[nodiscard]] const std::vector<VarNodeId>& staticInputVarNodeIds() const;
+  [[nodiscard]] const std::vector<std::shared_ptr<VarNode>>& staticInputVarNodes() const;
 
-  [[nodiscard]] const std::vector<VarNodeId>& dynamicInputVarNodeIds() const;
+  [[nodiscard]] const std::vector<std::shared_ptr<VarNode>>& dynamicInputVarNodes() const;
 
   void setState(InvariantNodeState);
 
   void deactivate();
 
-  void replaceDefinedVar(VarNodeId oldOutputVarNodeId,
-                         VarNodeId newOutputVarNodeId);
+  void replaceDefinedVar(VarNode& oldOutputVarNode,
+                         const std::shared_ptr<VarNode>& newOutputVarNode);
 
-  void removeStaticInputVarNode(VarNodeId);
+  void removeStaticInputVarNode(VarNode&);
 
   void removeStaticInputAtIndex(size_t);
 
-  void removeDynamicInputVarNode(VarNodeId);
+  void removeDynamicInputVarNode(VarNode&);
 
   void removeDynamicInputAtIndex(size_t);
 
-  virtual void removeOutputVarNode(VarNodeId);
+  virtual void removeOutputVarNode(VarNode&);
 
   virtual void removeOutputAtIndex(size_t);
 
@@ -124,28 +121,28 @@ class InvariantNode {
 
   void eraseDynamicInputVarNode(size_t index);
 
-  void replaceStaticInputVarNode(VarNodeId oldInputVarNodeId,
-                                 VarNodeId newInputVarNodeId);
+  void replaceStaticInputVarNode(VarNode& oldStaticVar,
+                                 const std::shared_ptr<VarNode>& newStaticVar);
 
-  void replaceDynamicInputVarNode(VarNodeId oldInputVarNodeId,
-                                  VarNodeId newInputVarNodeId);
+  void replaceDynamicInputVarNode(VarNode& oldDynamicVar,
+                                  const std::shared_ptr<VarNode>& newDynamicVar);
 
-  [[nodiscard]] std::vector<std::pair<VarNodeId, VarNodeId>>
+  [[nodiscard]] std::vector<std::pair<std::shared_ptr<VarNode>, std::shared_ptr<VarNode>>>
   splitOutputVarNodes();
 
-  propagation::VarViewId makeSolverVar(VarNodeId varNodeId,
+  propagation::VarViewId makeSolverVar(const VarNode& varNode,
                                        propagation::SolverBase&,
                                        SolverMapping&) const;
 
-  propagation::VarViewId makeSolverVar(VarNodeId varNodeId, Int initialValue,
+  propagation::VarViewId makeSolverVar(const VarNode& varNode, Int initialValue,
                                        propagation::SolverBase&,
                                        SolverMapping&) const;
 
-  void markOutputTo(VarNodeId varNodeId, bool registerHere);
+  void markOutputTo(const std::shared_ptr<VarNode>& varNode, bool registerHere);
 
-  void markStaticInputTo(VarNodeId varNodeId, bool registerHere);
+  void markStaticInputTo(const std::shared_ptr<VarNode>& varNode, bool registerHere);
 
-  void markDynamicInputTo(VarNodeId varNodeId, bool registerHere);
+  void markDynamicInputTo(const std::shared_ptr<VarNode>& varNode, bool registerHere);
 
   virtual void registerOutputVars(propagation::SolverBase&,
                                   SolverMapping&) const = 0;
