@@ -9,14 +9,15 @@ class IntScalarNode : public InvariantNode {
   Int _offset;
 
  public:
-  IntScalarNode(InvariantGraph& graph, VarNodeId staticInput, VarNodeId output,
+  IntScalarNode(InvariantGraph& graph, VarNode& staticInput, VarNode& output,
                 Int factor, Int offset);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(
+      const VarNode& outputVarNode) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 
@@ -27,8 +28,8 @@ class IntScalarNode : public InvariantNode {
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] VarNodeId input() const noexcept {
-    return staticInputVarNodeIds().front();
+  [[nodiscard]] VarNode& input() const noexcept {
+    return staticInputVarNodes().front();
   }
 
   std::ostream& dotLangEntry(std::ostream&) const override;

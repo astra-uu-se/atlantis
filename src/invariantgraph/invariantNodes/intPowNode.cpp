@@ -11,20 +11,17 @@
 
 namespace atlantis::invariantgraph {
 
-IntPowNode::IntPowNode(InvariantGraph& graph, const VarNodeId base,
-                       const VarNodeId exponent, const VarNodeId power)
+IntPowNode::IntPowNode(InvariantGraph& graph, VarNode& base, VarNode& exponent,
+                       VarNode& power)
     : InvariantNode(graph, {power}, {base, exponent}) {}
 
-void IntPowNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
-  assert(invariantGraphConst()
-             .varNodeConst(outputVarNodeIds().front())
-             .isIntVar());
+void IntPowNode::init() {
+  InvariantNode::init();
+  assert(
+      invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
   assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodes().begin(), staticInputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
 }
 
 void IntPowNode::postConstraint() {
@@ -43,31 +40,35 @@ void IntPowNode::updateState() {
 
 void IntPowNode::registerOutputVars(propagation::SolverBase& solver,
                                     SolverMapping& mapping) const {
-  makeSolverVar(outputVarNodeIds().front(), solver, mapping);
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  makeSolverVar(outputVarNodes().front(), solver, mapping);
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void IntPowNode::registerNode(propagation::SolverBase& solver,
                               SolverMapping& mapping) const {
-  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
+  assert(mapping.solverId(outputVarNodes().front()) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodes().front()).isVar());
 
   solver.makeInvariant<propagation::Pow>(
-      solver, mapping.solverId(outputVarNodeIds().front()),
+      solver, mapping.solverId(outputVarNodes().front()),
       mapping.solverId(base()), mapping.solverId(exponent()));
 }
 
-VarNodeId IntPowNode::base() const { return staticInputVarNodeIds().front(); }
-
-VarNodeId IntPowNode::exponent() const {
-  return staticInputVarNodeIds().back();
+const std::shared_ptr<VarNode>& IntPowNode::base() const {
+  return staticInputVarNodes().front();
 }
 
-VarNodeId IntPowNode::power() const { return outputVarNodeIds().front(); }
+const std::shared_ptr<VarNode>& IntPowNode::exponent() const {
+  return staticInputVarNodes().back();
+}
+
+const std::shared_ptr<VarNode>& IntPowNode::power() const {
+  return outputVarNodes().front();
+}
 
 std::string IntPowNode::dotLangIdentifier() const { return "int_pow"; }
 

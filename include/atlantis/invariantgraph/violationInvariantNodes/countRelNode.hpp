@@ -16,9 +16,9 @@ class CountRelNode : public ViolationInvariantNode {
   Int _boundOffset{0};
   RelationType _relType;
 
-  [[nodiscard]] VarNodeId needle() const;
+  [[nodiscard]] VarNode& needle() const;
   [[nodiscard]] size_t needleIndex() const;
-  [[nodiscard]] VarNodeId bound() const;
+  [[nodiscard]] VarNode& bound() const;
   [[nodiscard]] size_t boundIndex() const;
   [[nodiscard]] size_t numInputVars() const;
 
@@ -35,37 +35,42 @@ class CountRelNode : public ViolationInvariantNode {
    * otherwise
    */
   CountRelNode(InvariantGraph& graph, Int amount, RelationType relationType,
-               std::vector<VarNodeId>&& vars, Int needle,
+               std::vector<std::shared_ptr<VarNode>>&& vars, Int needle,
                bool shouldHold = true);
 
   CountRelNode(InvariantGraph& graph, Int amount, RelationType relationType,
-               std::vector<VarNodeId>&& vars, Int needle, VarNodeId reified);
+               std::vector<std::shared_ptr<VarNode>>&& vars, Int needle,
+               VarNode& reified);
 
-  CountRelNode(InvariantGraph& graph, VarNodeId amount,
-               RelationType relationType, std::vector<VarNodeId>&& vars,
-               Int needle, bool shouldHold = true);
+  CountRelNode(InvariantGraph& graph, VarNode& amount,
+               RelationType relationType,
+               std::vector<std::shared_ptr<VarNode>>&& vars, Int needle,
+               bool shouldHold = true);
 
-  CountRelNode(InvariantGraph& graph, VarNodeId amount,
-               RelationType relationType, std::vector<VarNodeId>&& vars,
-               Int needle, VarNodeId reified);
+  CountRelNode(InvariantGraph& graph, VarNode& amount,
+               RelationType relationType,
+               std::vector<std::shared_ptr<VarNode>>&& vars, Int needle,
+               VarNode& reified);
 
   CountRelNode(InvariantGraph& graph, Int amount, RelationType relationType,
-               std::vector<VarNodeId>&& vars, VarNodeId needle,
+               std::vector<std::shared_ptr<VarNode>>&& vars, VarNode& needle,
                bool shouldHold = true);
 
   CountRelNode(InvariantGraph& graph, Int amount, RelationType relationType,
-               std::vector<VarNodeId>&& vars, VarNodeId needle,
-               VarNodeId reified);
+               std::vector<std::shared_ptr<VarNode>>&& vars, VarNode& needle,
+               VarNode& reified);
 
-  CountRelNode(InvariantGraph& graph, VarNodeId amount,
-               RelationType relationType, std::vector<VarNodeId>&& vars,
-               VarNodeId needle, bool shouldHold = true);
+  CountRelNode(InvariantGraph& graph, VarNode& amount,
+               RelationType relationType,
+               std::vector<std::shared_ptr<VarNode>>&& vars, VarNode& needle,
+               bool shouldHold = true);
 
-  CountRelNode(InvariantGraph& graph, VarNodeId amount,
-               RelationType relationType, std::vector<VarNodeId>&& vars,
-               VarNodeId needle, VarNodeId reified);
+  CountRelNode(InvariantGraph& graph, VarNode& amount,
+               RelationType relationType,
+               std::vector<std::shared_ptr<VarNode>>&& vars, VarNode& needle,
+               VarNode& reified);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

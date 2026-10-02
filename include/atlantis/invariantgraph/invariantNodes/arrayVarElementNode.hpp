@@ -8,17 +8,18 @@ class ArrayVarElementNode : public InvariantNode {
   Int _offset;
 
  public:
-  ArrayVarElementNode(InvariantGraph& graph, VarNodeId idx,
-                      std::vector<VarNodeId>&& varVector, VarNodeId output,
-                      Int offset);
+  ArrayVarElementNode(InvariantGraph& graph, VarNode& idx,
+                      std::vector<std::shared_ptr<VarNode>>&& varVector,
+                      VarNode& output, Int offset);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(
+      VarNode& outputVarNode) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 
@@ -29,8 +30,8 @@ class ArrayVarElementNode : public InvariantNode {
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] VarNodeId idx() const noexcept {
-    return staticInputVarNodeIds().front();
+  [[nodiscard]] VarNode& idx() const noexcept {
+    return *staticInputVarNodes().front();
   }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;

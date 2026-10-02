@@ -13,14 +13,14 @@ class IntLinRelNode : public ViolationInvariantNode {
 
  public:
   IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                std::vector<VarNodeId>&& vars, RelationType relationType,
-                Int rhs, bool shouldHold = true);
+                std::vector<std::shared_ptr<VarNode>>&& vars,
+                RelationType relationType, Int rhs, bool shouldHold = true);
 
   IntLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                std::vector<VarNodeId>&& vars, RelationType relType, Int rhs,
-                VarNodeId reified);
+                std::vector<std::shared_ptr<VarNode>>&& vars,
+                RelationType relType, Int rhs, VarNode& reified);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

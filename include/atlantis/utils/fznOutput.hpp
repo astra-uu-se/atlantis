@@ -13,16 +13,17 @@ namespace atlantis {
 
 struct FznOutputVar {
   std::string identifier;
-  std::variant<invariantgraph::VarNodeId, Int> var;
-  FznOutputVar(std::string ident,
-               const std::variant<invariantgraph::VarNodeId, Int>& var0)
+  std::variant<std::shared_ptr<invariantgraph::VarNode>, Int> var;
+  FznOutputVar(
+      std::string ident,
+      const std::variant<std::shared_ptr<invariantgraph::VarNode>, Int>& var0)
       : identifier(std::move(ident)), var(var0) {}
 };
 
 struct FznOutputVarArray {
   std::string identifier;
   std::vector<Int> indexSetSizes;
-  std::vector<std::variant<invariantgraph::VarNodeId, Int>> vars;
+  std::vector<std::variant<std::shared_ptr<invariantgraph::VarNode>, Int>> vars;
   FznOutputVarArray(std::string id, std::vector<Int>&& setSizes)
       : identifier(std::move(id)), indexSetSizes(std::move(setSizes)) {}
 };
@@ -45,7 +46,8 @@ class FznOutput {
   void appendBoolVarArray(FznOutputVarArray&&);
   void appendIntVarArray(FznOutputVarArray&&);
 
-  [[nodiscard]] std::vector<invariantgraph::VarNodeId> varNodeIds() const;
+  [[nodiscard]] std::vector<std::shared_ptr<invariantgraph::VarNode>>
+  varNodeIds() const;
 
   void displaySolution(std::ostream&, const std::vector<Int>& solverVals) const;
 };

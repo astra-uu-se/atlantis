@@ -7,12 +7,12 @@ class CircuitNode : public ViolationInvariantNode {
   Int _offset;
 
  public:
-  explicit CircuitNode(InvariantGraph& graph, std::vector<VarNodeId>&&,
-                       Int offset);
+  explicit CircuitNode(InvariantGraph& graph,
+                       std::vector<std::shared_ptr<VarNode>>&&, Int offset);
 
   void postConstraint() override;
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void updateState() override;
 

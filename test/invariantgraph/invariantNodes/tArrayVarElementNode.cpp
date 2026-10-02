@@ -143,7 +143,8 @@ TEST(ArrayVarElementNodeRegression, FixedBoolOutputPrunesIncompatibleIndices) {
 
   const auto nodeId =
       graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
-          graph, idx, std::vector<VarNodeId>{x1, x2}, output, 1));
+          graph, idx, std::vector<std::shared_ptr<VarNode>>{x1, x2}, output,
+          1));
   auto& node = dynamic_cast<ArrayVarElementNode&>(graph.invariantNode(nodeId));
   graph.constraintSolver().fixPoint();
   graph.updateDomains();
@@ -164,7 +165,8 @@ TEST(ArrayVarElementNodeRegression, FixedIndexAndOutputPruneSelectedChild) {
 
   const auto nodeId =
       graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
-          graph, idx, std::vector<VarNodeId>{x1, x2}, output, 1));
+          graph, idx, std::vector<std::shared_ptr<VarNode>>{x1, x2}, output,
+          1));
   auto& node = dynamic_cast<ArrayVarElementNode&>(graph.invariantNode(nodeId));
   graph.constraintSolver().fixPoint();
   graph.updateDomains();
@@ -186,7 +188,8 @@ TEST(ArrayVarElementNodeRegression, SameDynamicVars) {
 
   const auto nodeId =
       graph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
-          graph, idx, std::vector<VarNodeId>{xId, xId, xId}, outputId, 1));
+          graph, idx, std::vector<std::shared_ptr<VarNode>>{xId, xId, xId},
+          outputId, 1));
   auto& node = dynamic_cast<ArrayVarElementNode&>(graph.invariantNode(nodeId));
   graph.constraintSolver().fixPoint();
   graph.updateDomains();

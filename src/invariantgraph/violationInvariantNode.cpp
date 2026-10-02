@@ -9,13 +9,13 @@
 
 namespace atlantis::invariantgraph {
 
-static std::vector<VarNodeId> combine(VarNodeId reifiedId,
-                                      std::vector<VarNodeId>&& outputIds) {
-  if (reifiedId == NULL_NODE_ID) {
-    return std::move(outputIds);
+static std::vector<std::shared_ptr<VarNode>> combine(const std::shared_ptr<VarNode>& reified,
+                                      std::vector<std::shared_ptr<VarNode>>&& outputs) {
+  if (reified == nullptr) {
+    return std::move(outputs);
   }
-  outputIds.insert(outputIds.begin(), reifiedId);
-  return std::move(outputIds);
+  outputs.insert(outputs.begin(), reified);
+  return std::move(outputs);
 }
 
 /**
@@ -24,47 +24,48 @@ static std::vector<VarNodeId> combine(VarNodeId reifiedId,
  */
 
 ViolationInvariantNode::ViolationInvariantNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
-    std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedViolationId,
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& outputs,
+    std::vector<std::shared_ptr<VarNode>>&& staticInputs, const std::shared_ptr<VarNode>& reifiedViolation,
     bool shouldHold)
-    : InvariantNode(graph, combine(reifiedViolationId, std::move(outputIds)),
-                    std::move(staticInputIds)),
-      _isReified(reifiedViolationId != NULL_NODE_ID),
+    : InvariantNode(graph, combine(reifiedViolation, std::move(outputs)),
+                    std::move(staticInputs)),
+      _isReified(reifiedViolation != nullptr),
       _shouldHold(shouldHold) {
   assert((!ViolationInvariantNode::isReified() &&
-          reifiedViolationId == NULL_NODE_ID) ||
-         (reifiedViolationId != NULL_NODE_ID &&
-          InvariantNode::outputVarNodeIds().front() == reifiedViolationId));
+          reifiedViolation == nullptr) ||
+         (reifiedViolation != nullptr &&
+          InvariantNode::outputVarNodes().front() == reifiedViolation));
 }
 
 ViolationInvariantNode::ViolationInvariantNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
-    std::vector<VarNodeId>&& staticInputIds, VarNodeId reifiedViolationId)
-    : ViolationInvariantNode(graph, std::move(outputIds),
-                             std::move(staticInputIds), reifiedViolationId,
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& outputs,
+    std::vector<std::shared_ptr<VarNode>>&& staticInputs, VarNode& reifiedViolation)
+    : ViolationInvariantNode(graph, std::move(outputs),
+                             std::move(staticInputs), reifiedViolation.ptr(),
                              true) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
-    VarNodeId reifiedViolationId)
-    : ViolationInvariantNode(graph, {}, std::move(staticInputIds),
-                             reifiedViolationId, true) {}
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& staticInputs,
+    VarNode& reifiedViolation)
+    : ViolationInvariantNode(graph, {}, std::move(staticInputs),
+                             reifiedViolation.ptr(), true) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& outputIds,
-    std::vector<VarNodeId>&& staticInputIds, bool shouldHold)
-    : ViolationInvariantNode(graph, std::move(outputIds),
-                             std::move(staticInputIds), VarNodeId{NULL_NODE_ID},
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& outputs,
+    std::vector<std::shared_ptr<VarNode>>&& staticInputs,
+    const bool shouldHold)
+    : ViolationInvariantNode(graph, std::move(outputs),
+                             std::move(staticInputs), nullptr,
                              shouldHold) {}
 
 ViolationInvariantNode::ViolationInvariantNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& staticInputIds,
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& staticInputs,
     bool shouldHold)
-    : ViolationInvariantNode(graph, {}, std::move(staticInputIds),
-                             VarNodeId{NULL_NODE_ID}, shouldHold) {}
+    : ViolationInvariantNode(graph, {}, std::move(staticInputs),
+                             nullptr, shouldHold) {}
 
-void ViolationInvariantNode::init(InvariantNodeId id) {
-  InvariantNode::init(id);
+void ViolationInvariantNode::init() {
+  InvariantNode::init();
 }
 
 bool ViolationInvariantNode::shouldHold() const noexcept { return _shouldHold; }
@@ -73,17 +74,9 @@ void ViolationInvariantNode::setShouldHold(const bool sh) noexcept {
   _shouldHold = sh;
 }
 
-VarNode& ViolationInvariantNode::reifiedVarNode() {
-  return varNode(reifiedViolationNodeId());
-}
-
-const VarNode& ViolationInvariantNode::reifiedVarNodeConst() const {
-  return varNodeConst(reifiedViolationNodeId());
-}
-
 void ViolationInvariantNode::fixReified(bool shouldHold) {
   if (isReified()) {
-    invariantGraph().varNode(reifiedViolationNodeId()).fixToValue(shouldHold);
+    reifiedViolationNode()->fixToValue(shouldHold);
     updateReified();
   }
 }
@@ -96,20 +89,18 @@ bool ViolationInvariantNode::isViolationInvariant() const {
 
 void ViolationInvariantNode::updateReified() {
   if (isReified() &&
-      invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isFixed()) {
-    _shouldHold = invariantGraph()
-                      .varNodeConst(reifiedViolationNodeId())
-                      .inDomain(bool{true});
-    const VarNodeId reifViolId = reifiedViolationNodeId();
+      reifiedViolationNode()->isFixed()) {
+    _shouldHold = reifiedViolationNode()->inDomain(bool{true});
+    const auto& reifViol = reifiedViolationNode();
     // _isReified must be changed *before* removing the output variable
     _isReified = false;
-    if (!outputVarNodeIds().empty()) {
-      assert(outputVarNodeIds().front() == reifViolId);
+    if (!outputVarNodes().empty()) {
+      assert(outputVarNodes().front() == reifViol);
       const bool isAlsoOutput = std::ranges::any_of(
-          outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-          [reifViolId](const VarNodeId oId) { return oId == reifViolId; });
+          outputVarNodes().begin() + 1, outputVarNodes().end(),
+          [reifViol](const auto& other) { return other == reifViol; });
       if (!isAlsoOutput) {
-        removeOutputVarNode(reifViolId);
+        removeOutputVarNode(*reifViol);
       }
     }
   }
@@ -119,46 +110,46 @@ void ViolationInvariantNode::updateReified() {
 propagation::VarViewId ViolationInvariantNode::violationVarId(
     const SolverMapping& mapping) const {
   if (isReified()) {
-    return mapping.solverId(outputVarNodeIds().front());
+    return mapping.solverId(outputVarNodes().front()->mappingId());
   }
-  return mapping.violationId(id());
+  return mapping.violationId(mappingId());
 }
 
-VarNodeId ViolationInvariantNode::reifiedViolationNodeId() const {
-  return isReified() ? outputVarNodeIds().front() : VarNodeId{NULL_NODE_ID};
+std::shared_ptr<VarNode> ViolationInvariantNode::reifiedViolationNode() {
+  return isReified() ? outputVarNodes().front() : std::shared_ptr<VarNode>{nullptr};
 }
 
 void ViolationInvariantNode::postConstraint() { updateReified(); }
 
 void ViolationInvariantNode::updateState() { updateReified(); }
 
-bool ViolationInvariantNode::constrainsOutput(VarNodeId) const {
+bool ViolationInvariantNode::constrainsOutput(const VarNode&) const {
   return !isReified();
 }
 
 propagation::VarViewId ViolationInvariantNode::setViolationVarId(
-    propagation::VarViewId varId, SolverMapping& mapping) const {
+    const propagation::VarViewId varId, SolverMapping& mapping) const {
   if (isReified()) {
-    if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
-      mapping.setSolverId(outputVarNodeIds().front(), varId);
+    if (mapping.solverId(outputVarNodes().front()->mappingId()) == propagation::NULL_ID) {
+      mapping.setSolverId(outputVarNodes().front()->mappingId(), varId);
     }
-    return mapping.solverId(outputVarNodeIds().front());
+    return mapping.solverId(outputVarNodes().front()->mappingId());
   }
-  if (mapping.violationId(id()) == propagation::NULL_ID) {
-    mapping.setViolationId(id(), varId);
+  if (mapping.violationId(mappingId()) == propagation::NULL_ID) {
+    mapping.setViolationId(mappingId(), varId);
   }
-  return mapping.violationId(id());
+  return mapping.violationId(mappingId());
 }
 
 propagation::VarViewId ViolationInvariantNode::registerViolation(
     Int initialValue, propagation::SolverBase& solver,
     SolverMapping& mapping) const {
   if (isReified()) {
-    if (mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID) {
-      return mapping.solverId(outputVarNodeIds().front());
+    if (mapping.solverId(outputVarNodes().front()->mappingId()) != propagation::NULL_ID) {
+      return mapping.solverId(outputVarNodes().front()->mappingId());
     }
-  } else if (mapping.violationId(id()) != propagation::NULL_ID) {
-    return mapping.violationId(id());
+  } else if (mapping.violationId(mappingId()) != propagation::NULL_ID) {
+    return mapping.violationId(mappingId());
   }
   return setViolationVarId(
       solver.makeIntVar(initialValue, initialValue, initialValue), mapping);

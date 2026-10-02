@@ -19,38 +19,34 @@
 namespace atlantis::invariantgraph {
 
 IntLinearNode::IntLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                             std::vector<VarNodeId>&& vars,
-                             const VarNodeId output, const Int rhsOffset)
+                             std::vector<std::shared_ptr<VarNode>>&& vars,
+                             VarNode& output, const Int rhsOffset)
     : InvariantNode(graph, {output}, std::move(vars)),
       _coeffs(std::move(coeffs)),
       _rhsOffset(rhsOffset) {}
 
-void IntLinearNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
-  assert(invariantGraphConst()
-             .varNodeConst(outputVarNodeIds().front())
-             .isIntVar());
+void IntLinearNode::init() {
+  InvariantNode::init();
+  assert(
+      invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
   assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodes().begin(), staticInputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
 }
 
 void IntLinearNode::postConstraint() {
   InvariantNode::postConstraint();
   constraintSolver().int_lin_eq(
-      _coeffs,
-      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      _coeffs, toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
       outputVarNodeConst(0).constraintVarId(), _rhsOffset);
 }
 
 void IntLinearNode::updateState() {
   // Remove duplicates:
-  for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
-    for (Int j = static_cast<Int>(staticInputVarNodeIds().size()) - 1; j > i;
+  for (Int i = 0; i < static_cast<Int>(staticInputVarNodes().size()); ++i) {
+    for (Int j = static_cast<Int>(staticInputVarNodes().size()) - 1; j > i;
          --j) {
-      if (staticInputVarNodeIds().at(i) == staticInputVarNodeIds().at(j)) {
+      if (staticInputVarNodes().at(i) == staticInputVarNodes().at(j)) {
         _coeffs.at(i) += _coeffs.at(j);
         _coeffs.erase(_coeffs.begin() + j);
         eraseStaticInputVarNode(j);
@@ -59,11 +55,11 @@ void IntLinearNode::updateState() {
   }
 
   std::vector<Int> indicesToRemove;
-  indicesToRemove.reserve(staticInputVarNodeIds().size());
+  indicesToRemove.reserve(staticInputVarNodes().size());
 
-  for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
+  for (Int i = 0; i < static_cast<Int>(staticInputVarNodes().size()); ++i) {
     const auto& inputNode =
-        invariantGraphConst().varNodeConst(staticInputVarNodeIds().at(i));
+        invariantGraphConst().varNodeConst(staticInputVarNodes().at(i));
     if (inputNode.isFixed() || _coeffs.at(i) == 0) {
       // var i is fixed: reduce the RHS:
       _rhsOffset -= _coeffs.at(i) * inputNode.lowerBound();
@@ -72,43 +68,43 @@ void IntLinearNode::updateState() {
   }
 
   for (Int i = static_cast<Int>(indicesToRemove.size()) - 1; i >= 0; --i) {
-    removeStaticInputVarNode(staticInputVarNodeIds().at(indicesToRemove.at(i)));
+    removeStaticInputVarNode(staticInputVarNodes().at(indicesToRemove.at(i)));
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
 
-  if (staticInputVarNodeIds().empty()) {
+  if (staticInputVarNodes().empty()) {
     assert(outputVarNode(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-bool IntLinearNode::constrainsOutput(VarNodeId) const {
-  const Int lb = linearLb(invariantGraphConst(), _coeffs,
-                          staticInputVarNodeIds(), _rhsOffset);
-  const Int ub = linearUb(invariantGraphConst(), _coeffs,
-                          staticInputVarNodeIds(), _rhsOffset);
+bool IntLinearNode::constrainsOutput(VarNode&) const {
+  const Int lb = linearLb(invariantGraphConst(), _coeffs, staticInputVarNodes(),
+                          _rhsOffset);
+  const Int ub = linearUb(invariantGraphConst(), _coeffs, staticInputVarNodes(),
+                          _rhsOffset);
   return !outputVarNodeConst(0).constDomain()->contains(lb, ub);
 }
 
 std::pair<size_t, size_t> IntLinearNode::implicitRank() const {
   return {rank::IMPLICIT_RANK_BOOL_LIN_EQ,
-          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
+          staticInputVarNodes().size() + outputVarNodes().size()};
 }
 
 bool IntLinearNode::canBeMadeImplicit() const {
   return std::ranges::all_of(
              _coeffs.begin(), _coeffs.end(),
              [](const Int& coeff) { return std::abs(coeff) == 1; }) &&
-         std::ranges::all_of(staticInputVarNodeIds().begin(),
-                             staticInputVarNodeIds().end(),
-                             [&](const VarNodeId vId) {
+         std::ranges::all_of(staticInputVarNodes().begin(),
+                             staticInputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
                                return invariantGraphConst()
                                    .varNodeConst(vId)
                                    .definingNodes()
                                    .empty();
                              }) &&
          invariantGraphConst()
-             .varNodeConst(outputVarNodeIds().front())
+             .varNodeConst(outputVarNodes().front())
              .definingNodes()
              .empty();
 }
@@ -120,8 +116,8 @@ bool IntLinearNode::makeImplicit() {
 
   _coeffs.emplace_back(-1);
 
-  std::vector<VarNodeId> inputVarNodeIds(staticInputVarNodeIds());
-  inputVarNodeIds.emplace_back(outputVarNodeIds().front());
+  std::vector<std::shared_ptr<VarNode>> inputVarNodeIds(staticInputVarNodes());
+  inputVarNodeIds.emplace_back(outputVarNodes().front());
 
   invariantGraph().addImplicitConstraintNode(
       std::make_shared<IntLinEqImplicitNode>(
@@ -133,20 +129,20 @@ bool IntLinearNode::makeImplicit() {
 
 void IntLinearNode::registerOutputVars(propagation::SolverBase& solver,
                                        SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().size() == 1) {
+  if (staticInputVarNodes().size() == 1) {
     // The rhs offset needs to be reduced from the lhs sum to equal the output:
     mapping.setSolverId(
-        outputVarNodeIds().front(),
+        outputVarNodes().front(),
         solver.makeIntView<propagation::ScalarView>(
-            solver, mapping.solverId(staticInputVarNodeIds().front()),
+            solver, mapping.solverId(staticInputVarNodes().front()),
             _coeffs.front(), -_rhsOffset));
     return;
   }
-  if (!staticInputVarNodeIds().empty()) {
+  if (!staticInputVarNodes().empty()) {
     if (_rhsOffset != 0) {
       if (mapping.intermediateId(id()) == propagation::NULL_ID) {
         const auto& outputNode =
-            invariantGraphConst().varNodeConst(outputVarNodeIds().front());
+            invariantGraphConst().varNodeConst(outputVarNodes().front());
         const Int intermediateLb =
             overflow::saturatingSub(outputNode.lowerBound(), _rhsOffset);
         const Int intermediateUb =
@@ -157,44 +153,44 @@ void IntLinearNode::registerOutputVars(propagation::SolverBase& solver,
                                     intermediateLb, intermediateUb));
       }
       mapping.setSolverId(
-          outputVarNodeIds().front(),
+          outputVarNodes().front(),
           solver.makeIntView<propagation::IntOffsetView>(
               solver, mapping.intermediateId(id()), -_rhsOffset));
     } else {
-      makeSolverVar(outputVarNodeIds().front(), solver, mapping);
-      assert(mapping.solverId(outputVarNodeIds().front()).isVar());
+      makeSolverVar(outputVarNodes().front(), solver, mapping);
+      assert(mapping.solverId(outputVarNodes().front()).isVar());
     }
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void IntLinearNode::registerNode(propagation::SolverBase& solver,
                                  SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().size() <= 1) {
+  if (staticInputVarNodes().size() <= 1) {
     return;
   }
-  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodes().front()) != propagation::NULL_ID);
   assert(mapping.intermediateId(id()) == propagation::NULL_ID
-             ? mapping.solverId(outputVarNodeIds().front()).isVar()
-             : mapping.solverId(outputVarNodeIds().front()).isView());
+             ? mapping.solverId(outputVarNodes().front()).isVar()
+             : mapping.solverId(outputVarNodes().front()).isView());
   assert(mapping.intermediateId(id()) == propagation::NULL_ID ||
          mapping.intermediateId(id()).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   std::ranges::transform(
-      staticInputVarNodeIds(), std::back_inserter(solverVars),
-      [&](const VarNodeId varNodeId) {
+      staticInputVarNodes(), std::back_inserter(solverVars),
+      [&](const std::shared_ptr<VarNode>& varNodeId) {
         assert(mapping.solverId(varNodeId) != propagation::NULL_ID);
         return mapping.solverId(varNodeId);
       });
   solver.makeInvariant<propagation::Linear>(
       solver,
       mapping.intermediateId(id()) == propagation::NULL_ID
-          ? mapping.solverId(outputVarNodeIds().front())
+          ? mapping.solverId(outputVarNodes().front())
           : mapping.intermediateId(id()),
       std::vector<Int>(_coeffs), std::move(solverVars));
 }

@@ -30,15 +30,15 @@ class BoolLinLeImplicitNodeTestFixture
 };
 
 TEST_P(BoolLinLeImplicitNodeTestFixture, construction) {
-  EXPECT_EQ(invNode().outputVarNodeIds(), varNodeIds(inputVars));
+  EXPECT_EQ(invNode().outputVarNodes(), varNodeIds(inputVars));
 }
 
 TEST_P(BoolLinLeImplicitNodeTestFixture, application) {
   _solver->open();
   _solverMapping = std::make_shared<SolverMapping>();
   invNode().registerOutputVars(*_solver, *_solverMapping);
-  for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
+  for (const auto& outputVarNode : invNode().outputVarNodes()) {
+    EXPECT_NE(varId(outputVarNode), propagation::NULL_ID);
   }
   invNode().registerNode(*_solver, *_solverMapping);
   _solver->close();

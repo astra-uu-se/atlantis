@@ -80,17 +80,18 @@ TEST_P(AllDifferentNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  const std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
+  const std::vector<std::shared_ptr<VarNode>> expectedInputs =
+      varNodeIds(inputVars);
 
-  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
+  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodes()));
 
   if (isReified()) {
     EXPECT_TRUE(invNode().isReified());
-    EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), varNodeId(reifiedVar));
+    EXPECT_NE(invNode().reifiedViolationNode(), NULL_NODE_ID);
+    EXPECT_EQ(invNode().reifiedViolationNode(), varNodeId(reifiedVar));
   } else {
     EXPECT_FALSE(invNode().isReified());
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
+    EXPECT_EQ(invNode().reifiedViolationNode(), NULL_NODE_ID);
   }
 }
 
@@ -100,17 +101,17 @@ TEST_P(AllDifferentNodeTestFixture, application) {
   addInputVarsToSolver();
   EXPECT_EQ(_solverMapping->violationId(_invNodeId), propagation::NULL_ID);
   if (invNode().isReified()) {
-    EXPECT_EQ(invNode().outputVarNodeIds().size(), size_t{1});
-    EXPECT_EQ(_solverMapping->solverId(invNode().outputVarNodeIds().front()),
+    EXPECT_EQ(invNode().outputVarNodes().size(), size_t{1});
+    EXPECT_EQ(_solverMapping->solverId(invNode().outputVarNodes().front()),
               propagation::NULL_ID);
   }
   invNode().registerOutputVars(*_solver, *_solverMapping);
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+  for (const auto& outputVarNodeId : invNode().outputVarNodes()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   const propagation::VarViewId violationId =
       invNode().isReified()
-          ? _solverMapping->solverId(invNode().outputVarNodeIds().front())
+          ? _solverMapping->solverId(invNode().outputVarNodes().front())
           : _solverMapping->violationId(_invNodeId);
   EXPECT_NE(violationId, propagation::NULL_ID);
   invNode().registerNode(*_solver, *_solverMapping);

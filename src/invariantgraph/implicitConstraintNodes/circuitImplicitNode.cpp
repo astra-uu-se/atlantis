@@ -11,82 +11,78 @@
 
 namespace atlantis::invariantgraph {
 
-CircuitImplicitNode::CircuitImplicitNode(InvariantGraph& graph,
-                                         std::vector<VarNodeId>&& vars,
-                                         const Int offset)
+CircuitImplicitNode::CircuitImplicitNode(
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& vars,
+    const Int offset)
     : ImplicitConstraintNode(graph, std::move(vars)), _offset(offset) {
-  assert(InvariantNode::outputVarNodeIds().size() > 1);
+  assert(InvariantNode::outputVarNodes().size() > 1);
 }
 
-void CircuitImplicitNode::init(const InvariantNodeId id) {
-  ImplicitConstraintNode::init(id);
+void CircuitImplicitNode::init() {
+  ImplicitConstraintNode::init();
   assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      outputVarNodes().begin(), outputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vNode) { return vNode->isIntVar(); }));
 }
 
 void CircuitImplicitNode::updateDomainTypes() {
   std::vector<Int> freeIndices;
-  freeIndices.reserve(outputVarNodeIds().size());
-  for (const auto& nId : outputVarNodeIds()) {
-    const auto& varNode = invariantGraphConst().varNodeConst(nId);
-    if (varNode.isFixed()) {
-      freeIndices.emplace_back(varNode.constDomain()->lowerBound());
+  freeIndices.reserve(outputVarNodes().size());
+  for (const auto& nId : outputVarNodes()) {
+    const auto& varNode = nId;
+    if (varNode->isFixed()) {
+      freeIndices.emplace_back(varNode->constDomain()->lowerBound());
     }
   }
 
-  for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
-    const auto vId = outputVarNodeIds().at(i);
-    auto& varNode = invariantGraph().varNode(vId);
-    assert(vId != propagation::NULL_ID);
+  for (size_t i = 0; i < outputVarNodes().size(); ++i) {
+    const auto vId = outputVarNodes().at(i);
+    auto& varNode = vId;
+    assert(vId != nullptr);
 
-    if (varNode.constDomain()->isFixed()) {
-      varNode.setDomainType(DomainType::DOM_NONE);
+    if (varNode->constDomain()->isFixed()) {
+      varNode->setDomainType(DomainType::DOM_NONE);
       continue;
     }
 
     bool enforceDomain = false;
-    for (Int val = 0; val <= static_cast<Int>(outputVarNodeIds().size());
-         ++val) {
+    for (Int val = 0; val <= static_cast<Int>(outputVarNodes().size()); ++val) {
       if (val == (static_cast<Int>(i) - 1) ||
           std::ranges::any_of(freeIndices.begin(), freeIndices.end(),
                               [&](const Int& index) { return index == val; })) {
         continue;
       }
-      if (!varNode.constDomain()->contains(val)) {
+      if (!varNode->constDomain()->contains(val)) {
         enforceDomain = true;
         break;
       }
     }
-    varNode.setDomainType(enforceDomain ? DomainType::DOM_DOMAIN
+    varNode->setDomainType(enforceDomain ? DomainType::DOM_DOMAIN
                                         : DomainType::DOM_NONE);
   }
 }
 
 void CircuitImplicitNode::registerNode(propagation::SolverBase&,
                                        SolverMapping& mapping) const {
-  assert(!mapping.hasNeighborhood(id()));
+  assert(!mapping.hasNeighborhood(mappingId()));
 
   std::vector<search::SearchVar> searchVars;
-  searchVars.reserve(outputVarNodeIds().size());
+  searchVars.reserve(outputVarNodes().size());
   std::vector<Int> freeIndices;
-  freeIndices.reserve(outputVarNodeIds().size());
-  for (const auto& nId : outputVarNodeIds()) {
-    const auto& varNode = invariantGraphConst().varNodeConst(nId);
-    if (varNode.isFixed()) {
-      freeIndices.emplace_back(varNode.constDomain()->lowerBound());
+  freeIndices.reserve(outputVarNodes().size());
+  for (const auto& nId : outputVarNodes()) {
+    const auto& varNode = nId;
+    if (varNode->isFixed()) {
+      freeIndices.emplace_back(varNode->constDomain()->lowerBound());
     }
   }
 
-  for (const size_t vId : outputVarNodeIds()) {
-    const auto& varNode = invariantGraphConst().varNodeConst(vId);
-    assert(vId != propagation::NULL_ID);
-    searchVars.emplace_back(mapping.solverId(vId), varNode.constDomain());
+  for (const auto& vNode : outputVarNodes()) {
+    assert(vNode != nullptr);
+    searchVars.emplace_back(mapping.solverId(vNode->mappingId()), vNode->constDomain());
   }
   mapping.setNeighborhood(
-      id(), std::make_shared<search::neighborhoods::CircuitNeighborhood>(
+      mappingId(), std::make_shared<search::neighborhoods::CircuitNeighborhood>(
                 std::move(searchVars), _offset));
 }
 

@@ -25,7 +25,8 @@ class ImplicitConstraintNode;
 
 class InvariantGraph {
   std::vector<std::shared_ptr<VarNode>> _varNodes;
-  std::unordered_map<std::string, std::shared_ptr<VarNode>> _namedVarNodeIndices;
+  std::unordered_map<std::string, std::shared_ptr<VarNode>>
+      _namedVarNodeIndices;
   std::unordered_map<Int, std::shared_ptr<VarNode>> _intVarNodeIndices;
   std::array<std::shared_ptr<VarNode>, 2> _boolVarNodes;
   std::shared_ptr<ConstraintSolver> _constraintSolver;
@@ -67,8 +68,6 @@ class InvariantGraph {
 
   [[nodiscard]] const ConstraintSolver& constraintSolverConst() const;
 
-  [[nodiscard]] virtual VarNodeId nextVarNodeId() const;
-
   [[nodiscard]] virtual bool containsVarNode(const std::string&) const;
 
   [[nodiscard]] virtual bool containsVarNode(Int) const;
@@ -77,13 +76,13 @@ class InvariantGraph {
 
   virtual VarNode& retrieveBoolVarNode(DomainType);
 
-  virtual VarNodeId retrieveBoolVarNode() {
+  virtual VarNode& retrieveBoolVarNode() {
     return retrieveBoolVarNode(DomainType::DOM_RANGE);
   }
 
-  virtual VarNode retrieveBoolVarNode(const std::string&, DomainType);
+  virtual VarNode& retrieveBoolVarNode(const std::string&, DomainType);
 
-  virtual VarNodeId retrieveBoolVarNode(const std::string& identifier) {
+  virtual VarNode& retrieveBoolVarNode(const std::string& identifier) {
     return retrieveBoolVarNode(identifier, DomainType::DOM_RANGE);
   }
 
@@ -96,7 +95,7 @@ class InvariantGraph {
   virtual VarNode& retrieveBoolVarNode(const std::shared_ptr<SearchDomain>&,
                                        DomainType);
 
-  virtual VarNodeId retrieveBoolVarNode(
+  virtual VarNode& retrieveBoolVarNode(
       const std::shared_ptr<SearchDomain>& dom) {
     return retrieveBoolVarNode(dom, DomainType::DOM_RANGE);
   }
@@ -126,36 +125,12 @@ class InvariantGraph {
 
   [[nodiscard]] VarNode& varNode(const std::string& identifier);
 
-  [[nodiscard]] VarNode& varNode(VarNodeId id);
-
   [[nodiscard]] VarNode& varNode(Int value);
 
   [[nodiscard]] const VarNode& varNodeConst(const std::string&) const;
 
-  [[nodiscard]] const VarNode& varNodeConst(VarNodeId id) const;
-
-  [[nodiscard]] const InvariantNode& invariantNodeConst(InvariantNodeId) const;
-
   [[nodiscard]] const std::vector<std::shared_ptr<ImplicitConstraintNode>>&
   implicitConstraintNodes() const;
-
-  [[nodiscard]] VarNodeId varNodeId(bool val) const;
-
-  [[nodiscard]] VarNodeId varNodeId(Int val) const;
-
-  [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const;
-
-  [[nodiscard]] bool containsInvariantNode(InvariantNodeId) const;
-
-  [[nodiscard]] bool containsImplicitConstraintNode(InvariantNodeId) const;
-
-  [[nodiscard]] InvariantNode& invariantNode(InvariantNodeId);
-
-  [[nodiscard]] ImplicitConstraintNode& implicitConstraintNode(InvariantNodeId);
-
-  [[nodiscard]] InvariantNodeId nextInvariantNodeId() const;
-
-  [[nodiscard]] InvariantNodeId nextImplicitNodeId() const;
 
   std::shared_ptr<InvariantNode> addInvariantNode(
       std::shared_ptr<InvariantNode>&&);

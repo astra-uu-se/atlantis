@@ -108,7 +108,7 @@ class bool_clauseTest : public FznTestBase {
         try {
           const auto& defInv = dynamic_cast<const BoolNotNode&>(
               _invariantGraph->invariantNode(vNode.outputOf()));
-          const auto source = defInv.staticInputVarNodeIds().front();
+          const auto source = defInv.staticInputVarNodes().front();
           if (varId(source) != propagation::NULL_ID && randBool()) {
             changeValue(source, committedValue);
           }

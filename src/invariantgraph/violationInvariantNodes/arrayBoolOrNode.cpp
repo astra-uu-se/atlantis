@@ -14,41 +14,44 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, const VarNodeId a,
-                                 const VarNodeId b, const VarNodeId reified)
-    : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, reified) {}
+ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, VarNode& a, VarNode& b,
+                                 VarNode& reified)
+    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b},
+                             reified) {}
 
-ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, const VarNodeId a,
-                                 const VarNodeId b, const bool shouldHold)
-    : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
+ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph, VarNode& a, VarNode& b,
+                                 const bool shouldHold)
+    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b},
+                             shouldHold) {}
 
 ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph,
-                                 std::vector<VarNodeId>&& inputs,
-                                 const VarNodeId reified)
+                                 std::vector<std::shared_ptr<VarNode>>&& inputs,
+                                 VarNode& reified)
     : ViolationInvariantNode(graph, std::move(inputs), reified) {}
 
 ArrayBoolOrNode::ArrayBoolOrNode(InvariantGraph& graph,
-                                 std::vector<VarNodeId>&& inputs,
+                                 std::vector<std::shared_ptr<VarNode>>&& inputs,
                                  const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(inputs), shouldHold) {}
 
-void ArrayBoolOrNode::init(const InvariantNodeId id) {
-  ViolationInvariantNode::init(id);
+void ArrayBoolOrNode::init() {
+  ViolationInvariantNode::init();
   assert(!isReified() || !reifiedVarNodeConst().isIntVar());
-  assert(std::ranges::none_of(
-      staticInputVarNodeIds(),
-      [&](const VarNodeId vId) { return varNodeConst(vId).isIntVar(); }));
+  assert(std::ranges::none_of(staticInputVarNodes(),
+                              [&](const std::shared_ptr<VarNode>& vId) {
+                                return varNodeConst(vId).isIntVar();
+                              }));
 }
 
 void ArrayBoolOrNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
     constraintSolver().array_bool_or(
-        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
         reifiedVarNodeConst().constraintVarId());
   } else {
     constraintSolver().array_bool_or(
-        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
         shouldHold());
   }
 }
@@ -59,13 +62,13 @@ void ArrayBoolOrNode::updateState() {
     bool alwaysHolds = false;
     if (shouldHold()) {
       alwaysHolds = std::ranges::any_of(
-          staticInputVarNodeIds(), [&](const VarNodeId vId) {
+          staticInputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
             return varNodeConst(vId).isFixed() &&
                    varNodeConst(vId).inDomain(true);
           });
     } else {
       alwaysHolds = std::ranges::all_of(
-          staticInputVarNodeIds(), [&](const VarNodeId vId) {
+          staticInputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
             return varNodeConst(vId).isFixed() &&
                    varNodeConst(vId).inDomain(false);
           });
@@ -76,9 +79,9 @@ void ArrayBoolOrNode::updateState() {
     }
   }
 
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
-  for (const auto& id : staticInputVarNodeIds()) {
+  std::vector<std::shared_ptr<VarNode>> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodes().size());
+  for (const auto& id : staticInputVarNodes()) {
     if (varNodeConst(id).isFixed()) {
       varsToRemove.emplace_back(id);
     }
@@ -87,41 +90,42 @@ void ArrayBoolOrNode::updateState() {
     removeStaticInputVarNode(id);
   }
 
-  if (staticInputVarNodeIds().empty()) {
+  if (staticInputVarNodes().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 bool ArrayBoolOrNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE && isReified() &&
-         staticInputVarNodeIds().size() == 1;
+         staticInputVarNodes().size() == 1;
 }
 
 bool ArrayBoolOrNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (staticInputVarNodeIds().size() == 1 && isReified()) {
-    invariantGraph().replaceVarNode(reifiedViolationNodeId(),
-                                    staticInputVarNodeIds().front());
+  if (staticInputVarNodes().size() == 1 && isReified()) {
+    invariantGraph().replaceVarNode(reifiedViolationNode(),
+                                    staticInputVarNodes().front());
   }
   return true;
 }
 
 void ArrayBoolOrNode::registerOutputVars(propagation::SolverBase& solver,
                                          SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().size() > 1 && shouldHold() &&
+  if (staticInputVarNodes().size() > 1 && shouldHold() &&
       violationVarId(mapping) == propagation::NULL_ID) {
     registerViolation(solver, mapping);
   }
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return mapping.solverId(vId) != propagation::NULL_ID;
-  }));
+  assert(std::ranges::all_of(
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return mapping.solverId(vId) != propagation::NULL_ID;
+      }));
 }
 
 void ArrayBoolOrNode::registerNode(propagation::SolverBase& solver,
                                    SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().size() <= 1 || (!isReified() && !shouldHold())) {
+  if (staticInputVarNodes().size() <= 1 || (!isReified() && !shouldHold())) {
     return;
   }
   assert(violationVarId(mapping) != propagation::NULL_ID);
@@ -130,7 +134,7 @@ void ArrayBoolOrNode::registerNode(propagation::SolverBase& solver,
 
   std::vector<propagation::VarViewId> solverVars;
   std::ranges::transform(
-      staticInputVarNodeIds(), std::back_inserter(solverVars),
+      staticInputVarNodes(), std::back_inserter(solverVars),
       [&](const auto& node) { return mapping.solverId(node); });
 
   if (solverVars.size() == 2) {

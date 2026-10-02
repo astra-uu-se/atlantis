@@ -9,15 +9,16 @@ class BoolClauseNode : public ViolationInvariantNode {
 
  public:
   explicit BoolClauseNode(InvariantGraph& graph,
-                          std::vector<VarNodeId>&& posVars,
-                          std::vector<VarNodeId>&& negVars, VarNodeId r);
+                          std::vector<std::shared_ptr<VarNode>>&& posVars,
+                          std::vector<std::shared_ptr<VarNode>>&& negVars,
+                          VarNode& r);
 
   explicit BoolClauseNode(InvariantGraph& graph,
-                          std::vector<VarNodeId>&& posVars,
-                          std::vector<VarNodeId>&& negVars,
+                          std::vector<std::shared_ptr<VarNode>>&& posVars,
+                          std::vector<std::shared_ptr<VarNode>>&& negVars,
                           bool shouldHold = true);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

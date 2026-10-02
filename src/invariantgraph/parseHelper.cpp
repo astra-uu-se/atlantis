@@ -25,34 +25,39 @@
 
 namespace atlantis::invariantgraph {
 
-std::vector<VarNodeId>&& append(std::vector<VarNodeId>&& vars, VarNodeId fst,
-                                VarNodeId snd) {
-  if (fst != NULL_NODE_ID) {
+std::vector<std::shared_ptr<VarNode>>&& append(
+    std::vector<std::shared_ptr<VarNode>>&& vars,
+    const std::shared_ptr<VarNode>& fst, const std::shared_ptr<VarNode>& snd) {
+  if (fst != nullptr) {
     vars.emplace_back(fst);
   }
-  if (snd != NULL_NODE_ID) {
+  if (snd != nullptr) {
     vars.emplace_back(snd);
   }
   return std::move(vars);
 }
 
-std::vector<VarNodeId>&& append(std::vector<VarNodeId>&& vars, VarNodeId var) {
-  if (var != NULL_NODE_ID) {
+std::vector<std::shared_ptr<VarNode>>&& append(
+    std::vector<std::shared_ptr<VarNode>>&& vars,
+    const std::shared_ptr<VarNode>& var) {
+  if (var != nullptr) {
     vars.emplace_back(var);
   }
   return std::move(vars);
 }
 
-std::vector<VarNodeId> concat(const std::vector<VarNodeId>& fst,
-                              const std::vector<VarNodeId>& snd) {
-  std::vector<VarNodeId> res;
+std::vector<std::shared_ptr<VarNode>> concat(
+    const std::vector<std::shared_ptr<VarNode>>& fst,
+    const std::vector<std::shared_ptr<VarNode>>& snd) {
+  std::vector<std::shared_ptr<VarNode>> res;
   res.reserve(fst.size() + snd.size());
   res.insert(res.end(), fst.begin(), fst.end());
   res.insert(res.end(), snd.begin(), snd.end());
   return res;
 }
 
-SortedUniqueVector duplicateVarNodeIndices(const std::vector<VarNodeId>& vIds) {
+SortedUniqueVector duplicateVarNodeIndices(
+    const std::vector<std::shared_ptr<VarNode>>& vIds) {
   std::vector<bool> isDuplicate(vIds.size(), false);
   size_t numDuplicates = 0;
   for (size_t i = 0; i < vIds.size(); ++i) {
@@ -78,7 +83,7 @@ SortedUniqueVector duplicateVarNodeIndices(const std::vector<VarNodeId>& vIds) {
 
 static std::vector<std::pair<size_t, Int>> allDifferent(
     InvariantGraph& invariantGraph,
-    const std::vector<VarNodeId>& inputVarNodeIds) {
+    const std::vector<std::shared_ptr<VarNode>>& inputVarNodeIds) {
   // pruned[i] = <index, value> where index is the index of the static
   // variable with singleton domain {value}.
   std::vector<std::pair<size_t, Int>> fixed;
@@ -114,15 +119,15 @@ static std::vector<std::pair<size_t, Int>> allDifferent(
   return fixed;
 }
 
-std::vector<VarNodeId> pruneAllDifferentFree(
+std::vector<std::shared_ptr<VarNode>> pruneAllDifferentFree(
     InvariantGraph& invariantGraph,
-    const std::vector<VarNodeId>& inputVarNodeIds) {
+    const std::vector<std::shared_ptr<VarNode>>& inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
   std::vector<bool> isFree(inputVarNodeIds.size(), true);
   for (const auto& index : std::views::keys(fixed)) {
     isFree[index] = false;
   }
-  std::vector<VarNodeId> freeVars;
+  std::vector<std::shared_ptr<VarNode>> freeVars;
   freeVars.reserve(inputVarNodeIds.size() - fixed.size());
   for (size_t i = 0; i < inputVarNodeIds.size(); ++i) {
     if (isFree[i]) {
@@ -132,11 +137,11 @@ std::vector<VarNodeId> pruneAllDifferentFree(
   return freeVars;
 }
 
-std::vector<VarNodeId> pruneAllDifferentFixed(
+std::vector<std::shared_ptr<VarNode>> pruneAllDifferentFixed(
     InvariantGraph& invariantGraph,
-    const std::vector<VarNodeId>& inputVarNodeIds) {
+    const std::vector<std::shared_ptr<VarNode>>& inputVarNodeIds) {
   const auto fixed = allDifferent(invariantGraph, inputVarNodeIds);
-  std::vector<VarNodeId> fixedVars;
+  std::vector<std::shared_ptr<VarNode>> fixedVars;
   fixedVars.reserve(fixed.size());
   for (const size_t index : std::views::keys(fixed)) {
     fixedVars.emplace_back(inputVarNodeIds[index]);
@@ -166,7 +171,7 @@ bool removeFirstOccurrence(std::vector<size_t>& vector, const size_t val) {
 }
 std::vector<ConstraintVarId> toConstraintVarIds(
     const InvariantGraph& invariantGraph,
-    const std::vector<VarNodeId>& varNodeIds) {
+    const std::vector<std::shared_ptr<VarNode>>& varNodeIds) {
   std::vector<ConstraintVarId> constraintVarIds(varNodeIds.size(),
                                                 ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < varNodeIds.size(); ++i) {
@@ -178,26 +183,27 @@ std::vector<ConstraintVarId> toConstraintVarIds(
 
 void postAllEqualOnReplacedVars(
     InvariantGraph& invariantGraph,
-    std::vector<std::pair<VarNodeId, VarNodeId>>&& replacedVarNodeIds) {
-  while (!replacedVarNodeIds.empty()) {
-    const auto [oldVarNodeId, newVarNodeId] = replacedVarNodeIds.front();
-    assert(oldVarNodeId != newVarNodeId);
-    std::vector<VarNodeId> duplicates;
-    duplicates.reserve(2 * replacedVarNodeIds.size());
-    duplicates.emplace_back(oldVarNodeId);
-    duplicates.emplace_back(newVarNodeId);
-    for (size_t i = replacedVarNodeIds.size() - 1; i > 0; i--) {
-      if (replacedVarNodeIds[i].first != oldVarNodeId) {
+    std::vector<std::pair<std::shared_ptr<VarNode>, std::shared_ptr<VarNode>>>&&
+        replacedVarNodes) {
+  while (!replacedVarNodes.empty()) {
+    const auto& [oldVarNode, newVarNode] = replacedVarNodes.front();
+    assert(oldVarNode != newVarNode);
+    std::vector<std::shared_ptr<VarNode>> duplicates;
+    duplicates.reserve(2 * replacedVarNodes.size());
+    duplicates.emplace_back(oldVarNode);
+    duplicates.emplace_back(newVarNode);
+    for (size_t i = replacedVarNodes.size() - 1; i > 0; i--) {
+      if (replacedVarNodes[i].first != oldVarNode) {
         continue;
       }
-      duplicates.emplace_back(replacedVarNodeIds[i].second);
-      std::swap(replacedVarNodeIds[i], replacedVarNodeIds.back());
-      replacedVarNodeIds.pop_back();
+      duplicates.emplace_back(replacedVarNodes[i].second);
+      std::swap(replacedVarNodes[i], replacedVarNodes.back());
+      replacedVarNodes.pop_back();
     }
-    std::swap(replacedVarNodeIds.front(), replacedVarNodeIds.back());
-    replacedVarNodeIds.pop_back();
-    if (!invariantGraph.varNodeConst(oldVarNodeId).isFixed()) {
-      if (invariantGraph.varNodeConst(oldVarNodeId).isIntVar()) {
+    std::swap(replacedVarNodes.front(), replacedVarNodes.back());
+    replacedVarNodes.pop_back();
+    if (!invariantGraph.varNodeConst(oldVarNode).isFixed()) {
+      if (invariantGraph.varNodeConst(oldVarNode).isIntVar()) {
         invariantGraph.addInvariantNode(std::make_shared<IntAllEqualNode>(
             invariantGraph, std::move(duplicates), true, true));
       } else {
@@ -208,9 +214,10 @@ void postAllEqualOnReplacedVars(
   }
 }
 
-std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
-    const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
-    const std::vector<Int>& cover, std::vector<Int>& offsets) {
+std::pair<std::vector<std::shared_ptr<VarNode>>, SortedUniqueVector>
+gccUpdateState(const InvariantGraph& invariantGraph,
+               const std::vector<std::shared_ptr<VarNode>>& inputs,
+               const std::vector<Int>& cover, std::vector<Int>& offsets) {
   std::vector<bool> shouldBeRemoved(inputs.size(), false);
   std::vector<bool> coverIntersectsDomains(cover.size(), false);
 
@@ -233,7 +240,7 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
         shouldBeRemoved[inputIndex] || !domainIntersectsCover;
   }
 
-  std::vector<VarNodeId> varsToRemove;
+  std::vector<std::shared_ptr<VarNode>> varsToRemove;
   varsToRemove.reserve(inputs.size());
   for (size_t i = 0; i < inputs.size(); ++i) {
     if (shouldBeRemoved[i]) {
@@ -250,7 +257,7 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     }
   }
 
-  return std::pair<std::vector<VarNodeId>, SortedUniqueVector>{
+  return std::pair<std::vector<std::shared_ptr<VarNode>>, SortedUniqueVector>{
       varsToRemove, SortedUniqueVector(std::move(coverIndicesToRemove))};
 }
 
@@ -491,10 +498,11 @@ std::vector<std::vector<Int>> violToInt(
   return intToViol(viols);
 }
 
-std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
-    const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
-    const std::vector<Int>& cover, std::vector<Int>& lowerBounds,
-    std::vector<Int>& upperBounds) {
+std::pair<std::vector<std::shared_ptr<VarNode>>, SortedUniqueVector>
+gccUpdateState(const InvariantGraph& invariantGraph,
+               const std::vector<std::shared_ptr<VarNode>>& inputs,
+               const std::vector<Int>& cover, std::vector<Int>& lowerBounds,
+               std::vector<Int>& upperBounds) {
   std::vector<bool> coverIntersectsDomains(cover.size(), false);
   std::vector<bool> shouldBeRemoved(inputs.size(), false);
 
@@ -519,7 +527,7 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
         shouldBeRemoved[inputIndex] || !domainIntersectsCover;
   }
 
-  std::vector<VarNodeId> varsToRemove;
+  std::vector<std::shared_ptr<VarNode>> varsToRemove;
   varsToRemove.reserve(cover.size());
 
   for (Int i = static_cast<Int>(inputs.size()) - 1; i >= 0; --i) {
@@ -537,38 +545,39 @@ std::pair<std::vector<VarNodeId>, SortedUniqueVector> gccUpdateState(
     }
   }
 
-  return std::pair<std::vector<VarNodeId>, SortedUniqueVector>{
+  return std::pair<std::vector<std::shared_ptr<VarNode>>, SortedUniqueVector>{
       varsToRemove, SortedUniqueVector(std::move(coverIndicesToRemove))};
 }
 bool gccIsClosed(const InvariantGraph& invariantGraph,
-                 const std::vector<VarNodeId>& inputs,
+                 const std::vector<std::shared_ptr<VarNode>>& inputs,
                  const std::vector<Int>& cover) {
   const SortedUniqueVector suv(std::vector<Int>{cover});
-  return std::ranges::none_of(inputs, [&](const VarNodeId vId) {
-    return invariantGraph.varNodeConst(vId).constDomain()->isDisjoint(suv);
+  return std::ranges::none_of(inputs, [&](const std::shared_ptr<VarNode>& var) {
+    return var->constDomain()->isDisjoint(suv);
   });
 }
-std::vector<std::pair<Int, Int>> gccBounds(const InvariantGraph& invariantGraph,
-                                           const std::vector<VarNodeId>& inputs,
-                                           const std::vector<Int>& cover) {
+std::vector<std::pair<Int, Int>> gccBounds(
+    const InvariantGraph& invariantGraph,
+    const std::vector<std::shared_ptr<VarNode>>& inputs,
+    const std::vector<Int>& cover) {
   const std::vector<Int> offsets(cover.size(), 0);
   return gccBounds(invariantGraph, inputs, cover, offsets);
 }
 
-std::vector<std::pair<Int, Int>> gccBounds(const InvariantGraph& invariantGraph,
-                                           const std::vector<VarNodeId>& inputs,
-                                           const std::vector<Int>& cover,
-                                           const std::vector<Int>& offsets) {
+std::vector<std::pair<Int, Int>> gccBounds(
+    const InvariantGraph& invariantGraph,
+    const std::vector<std::shared_ptr<VarNode>>& inputs,
+    const std::vector<Int>& cover, const std::vector<Int>& offsets) {
   assert(offsets.size() == cover.size());
   std::vector<std::pair<Int, Int>> result(cover.size());
   for (size_t i = 0; i < cover.size(); ++i) {
     result[i].first = offsets[i];
     result[i].second = offsets[i];
   }
-  for (const VarNodeId vId : inputs) {
+  for (const auto& var : inputs) {
     for (size_t i = 0; i < cover.size(); ++i) {
-      if (invariantGraph.varNodeConst(vId).constDomain()->contains(cover[i])) {
-        if (invariantGraph.varNodeConst(vId).isFixed()) {
+      if (var->constDomain()->contains(cover[i])) {
+        if (var->isFixed()) {
           ++result[i].first;
         }
         ++result[i].second;
@@ -611,7 +620,8 @@ Int maxOverlaps(const std::vector<std::pair<Int, Int>>& intervals) {
 }
 
 Int linearLb(const InvariantGraph& invariantGraph,
-             const std::vector<Int>& coeffs, const std::vector<VarNodeId>& vars,
+             const std::vector<Int>& coeffs,
+             const std::vector<std::shared_ptr<VarNode>>& vars,
              const Int offset) {
   Int lb = offset;
   assert(coeffs.size() == vars.size());
@@ -637,7 +647,8 @@ Int linearLb(const InvariantGraph& invariantGraph,
 }
 
 Int linearUb(const InvariantGraph& invariantGraph,
-             const std::vector<Int>& coeffs, const std::vector<VarNodeId>& vars,
+             const std::vector<Int>& coeffs,
+             const std::vector<std::shared_ptr<VarNode>>& vars,
              const Int offset) {
   Int ub = offset;
   assert(coeffs.size() == vars.size());

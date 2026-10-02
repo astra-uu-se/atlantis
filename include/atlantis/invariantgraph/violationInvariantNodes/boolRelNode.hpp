@@ -9,13 +9,13 @@ class BoolRelNode : public ViolationInvariantNode {
   std::optional<bool> _fixedRhs{std::nullopt};
 
  public:
-  BoolRelNode(InvariantGraph& graph, VarNodeId a, RelationType, VarNodeId b,
-              VarNodeId r);
+  BoolRelNode(InvariantGraph& graph, VarNode& a, RelationType, VarNode& b,
+              VarNode& r);
 
-  BoolRelNode(InvariantGraph& graph, VarNodeId a, RelationType, VarNodeId b,
+  BoolRelNode(InvariantGraph& graph, VarNode& a, RelationType, VarNode& b,
               bool shouldHold = true);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

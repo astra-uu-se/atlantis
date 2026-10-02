@@ -25,20 +25,20 @@ void verifyNumArguments(const fznparser::Constraint& constraint, size_t size);
 std::vector<Int> getFixedValues(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray);
 
-std::vector<bool> getFixedBoolValues(const InvariantGraph&,
-                                     const std::vector<VarNodeId>&);
+std::vector<bool> getFixedBoolValues(
+    const std::vector<std::shared_ptr<VarNode>>&);
 
 std::vector<bool> getFixedValues(
     const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray);
 
-std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+std::vector<std::shared_ptr<VarNode>> retrieveUnfixedVarNodeIds(
     FznInvariantGraph&, const std::shared_ptr<fznparser::IntVarArray>&);
 
-std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+std::vector<std::shared_ptr<VarNode>> retrieveUnfixedVarNodeIds(
     FznInvariantGraph&, const std::shared_ptr<fznparser::BoolVarArray>&);
 
-std::vector<VarNodeId> getUnfixedVarNodeIds(const InvariantGraph&,
-                                            const std::vector<VarNodeId>&);
+std::vector<std::shared_ptr<VarNode>> getUnfixedVarNodeIds(
+    const std::vector<std::shared_ptr<VarNode>>&);
 
 void verifyAllDifferent(
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray);
@@ -54,8 +54,8 @@ std::pair<Int, Int> linBounds(const std::vector<Int>&,
 std::pair<Int, Int> linBounds(const std::vector<Int>&,
                               const std::shared_ptr<fznparser::IntVarArray>&);
 
-std::pair<Int, Int> linBounds(FznInvariantGraph&, const std::vector<Int>&,
-                              const std::vector<VarNodeId>&);
+std::pair<Int, Int> linBounds(const std::vector<Int>&,
+                              const std::vector<std::shared_ptr<VarNode>>&);
 
 template <typename T>
 std::shared_ptr<T> getArgArray(const fznparser::Arg& argArray) {

@@ -6,8 +6,8 @@ namespace atlantis::invariantgraph {
 class TableNode : public InvariantNode {
   std::vector<std::vector<Int>> _table;
 
-  [[nodiscard]] VarNodeId numCols() const;
-  [[nodiscard]] VarNodeId colVar(size_t index) const;
+  [[nodiscard]] VarNode& numCols() const;
+  [[nodiscard]] VarNode& colVar(size_t index) const;
 
   void removeColumn(size_t colIndex);
 
@@ -16,19 +16,21 @@ class TableNode : public InvariantNode {
   void removeRows();
 
  public:
-  explicit TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
-                     VarNodeId input, std::vector<std::vector<Int>>&& table,
+  explicit TableNode(InvariantGraph& graph,
+                     std::vector<std::shared_ptr<VarNode>>&& outputs,
+                     VarNode& input, std::vector<std::vector<Int>>&& table,
                      size_t inputColumnIndex);
-  explicit TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
-                     VarNodeId input,
+  explicit TableNode(InvariantGraph& graph,
+                     std::vector<std::shared_ptr<VarNode>>&& outputs,
+                     VarNode& input,
                      const std::vector<std::vector<bool>>& table,
                      size_t inputColumnIndex);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
-  void removeOutputVarNode(VarNodeId) override;
+  void removeOutputVarNode(VarNode&) override;
 
   void removeOutputAtIndex(size_t) override;
 
@@ -39,7 +41,8 @@ class TableNode : public InvariantNode {
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(
+      const VarNode& outputVarNode) const override;
 
   [[nodiscard]] std::pair<size_t, size_t> implicitRank() const override;
 

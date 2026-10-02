@@ -168,9 +168,9 @@ TEST_P(TableInNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), isReified() ? 1 : 0);
+  EXPECT_EQ(invNode().outputVarNodes().size(), isReified() ? 1 : 0);
 
-  EXPECT_THAT(invNode().staticInputVarNodeIds(),
+  EXPECT_THAT(invNode().staticInputVarNodes(),
               ::testing::ContainerEq(varNodeIds(inputVars)));
 }
 

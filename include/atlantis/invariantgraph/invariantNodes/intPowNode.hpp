@@ -6,27 +6,29 @@ namespace atlantis::invariantgraph {
 
 class IntPowNode : public InvariantNode {
  public:
-  IntPowNode(InvariantGraph& graph, VarNodeId base, VarNodeId exponent,
-             VarNodeId power);
+  IntPowNode(InvariantGraph& graph, VarNode& base, VarNode& exponent,
+             VarNode& power);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId) const override { return true; }
+  [[nodiscard]] bool constrainsOutput(const VarNode&) const override {
+    return true;
+  }
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] VarNodeId base() const;
+  [[nodiscard]] VarNode& base() const;
 
-  [[nodiscard]] VarNodeId exponent() const;
+  [[nodiscard]] VarNode& exponent() const;
 
-  [[nodiscard]] VarNodeId power() const;
+  [[nodiscard]] VarNode& power() const;
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

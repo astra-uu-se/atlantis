@@ -9,13 +9,13 @@ class IntRelNode : public ViolationInvariantNode {
   std::optional<Int> _fixedRhs{std::nullopt};
 
  public:
-  IntRelNode(InvariantGraph& graph, VarNodeId a, RelationType, VarNodeId b,
-             VarNodeId r);
+  IntRelNode(InvariantGraph& graph, VarNode& a, RelationType, VarNode& b,
+             VarNode& r);
 
-  IntRelNode(InvariantGraph& graph, VarNodeId a, RelationType, VarNodeId b,
+  IntRelNode(InvariantGraph& graph, VarNode& a, RelationType, VarNode& b,
              bool shouldHold = true);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

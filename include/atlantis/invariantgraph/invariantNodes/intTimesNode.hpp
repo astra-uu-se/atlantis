@@ -8,16 +8,16 @@ class IntTimesNode : public InvariantNode {
   std::optional<Int> _scalar;
 
  public:
-  IntTimesNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-               VarNodeId output);
+  IntTimesNode(InvariantGraph& graph, VarNode& a, VarNode& b, VarNode& output);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(
+      const VarNode& outputVarNode) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 

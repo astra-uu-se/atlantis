@@ -8,16 +8,16 @@ class IntPlusNode : public InvariantNode {
   Int _offset{0};
 
  public:
-  IntPlusNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-              VarNodeId output);
+  IntPlusNode(InvariantGraph& graph, VarNode& a, VarNode& b, VarNode& output);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(
+      VarNode& outputVarNode) const override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
@@ -28,11 +28,11 @@ class IntPlusNode : public InvariantNode {
 
   bool replace() override;
 
-  [[nodiscard]] VarNodeId a() const noexcept {
-    return staticInputVarNodeIds().front();
+  [[nodiscard]] VarNode& a() const noexcept {
+    return *staticInputVarNodes().front();
   }
-  [[nodiscard]] VarNodeId b() const noexcept {
-    return staticInputVarNodeIds().back();
+  [[nodiscard]] VarNode& b() const noexcept {
+    return *staticInputVarNodes().back();
   }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;

@@ -11,21 +11,19 @@
 
 namespace atlantis::invariantgraph {
 
-IntScalarNode::IntScalarNode(InvariantGraph& graph, const VarNodeId staticInput,
-                             const VarNodeId output, const Int factor,
+IntScalarNode::IntScalarNode(InvariantGraph& graph, VarNode& staticInput,
+                             VarNode& output, const Int factor,
                              const Int offset)
     : InvariantNode(graph, {output}, {staticInput}),
       _factor(factor),
       _offset(offset) {}
 
-void IntScalarNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
-  assert(invariantGraphConst()
-             .varNodeConst(outputVarNodeIds().front())
-             .isIntVar());
-  assert(invariantGraph()
-             .varNodeConst(staticInputVarNodeIds().front())
-             .isIntVar());
+void IntScalarNode::init() {
+  InvariantNode::init();
+  assert(
+      invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
+  assert(
+      invariantGraph().varNodeConst(staticInputVarNodes().front()).isIntVar());
 }
 
 void IntScalarNode::updateState() {
@@ -34,12 +32,12 @@ void IntScalarNode::updateState() {
     return;
   }
   if (_factor == 1 && _offset == 0) {
-    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                    staticInputVarNodeIds().front());
+    invariantGraph().replaceVarNode(outputVarNodes().front(),
+                                    staticInputVarNodes().front());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
-bool IntScalarNode::constrainsOutput(VarNodeId) const {
+bool IntScalarNode::constrainsOutput(VarNode&) const {
   const Int a = overflow::saturatingAdd(
       overflow::saturatingMul(staticInputVarNodeConst(0).lowerBound(), _factor),
       _offset);
@@ -56,12 +54,10 @@ bool IntScalarNode::canBeReplaced() const {
     return false;
   }
 
-  return varNodeConst(staticInputVarNodeIds().front()).staticInputTo().size() ==
+  return varNodeConst(staticInputVarNodes().front()).staticInputTo().size() ==
              1 &&
-         varNodeConst(staticInputVarNodeIds().front())
-             .definingNodes()
-             .empty() &&
-         !varNodeConst(outputVarNodeIds().front()).staticInputTo().empty();
+         varNodeConst(staticInputVarNodes().front()).definingNodes().empty() &&
+         !varNodeConst(outputVarNodes().front()).staticInputTo().empty();
 }
 
 bool IntScalarNode::replace() {
@@ -69,25 +65,24 @@ bool IntScalarNode::replace() {
     return false;
   }
   invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(
-      invariantGraph(), outputVarNodeIds().front(),
-      staticInputVarNodeIds().front(), _factor,
-      overflow::saturatingSub(0, _offset)));
+      invariantGraph(), outputVarNodes().front(), staticInputVarNodes().front(),
+      _factor, overflow::saturatingSub(0, _offset)));
   return true;
 }
 
 void IntScalarNode::registerOutputVars(propagation::SolverBase& solver,
                                        SolverMapping& mapping) const {
-  if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
+  if (mapping.solverId(outputVarNodes().front()) == propagation::NULL_ID) {
     mapping.setSolverId(
-        outputVarNodeIds().front(),
+        outputVarNodes().front(),
         solver.makeIntView<propagation::ScalarView>(
             solver, mapping.solverId(input()), _factor, _offset));
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void IntScalarNode::registerNode(propagation::SolverBase&,
@@ -103,8 +98,8 @@ std::ostream& IntScalarNode::dotLangEdges(std::ostream& o) const {
            ? ""
            : ((_offset < 0 ? "- " : "+ ") + std::to_string(std::abs(_offset))));
 
-  return o << staticInputVarNodeIds().front() << " -> "
-           << outputVarNodeIds().front() << "[label=\"" << label << "\"];"
+  return o << staticInputVarNodes().front() << " -> "
+           << outputVarNodes().front() << "[label=\"" << label << "\"];"
            << std::endl;
 }
 

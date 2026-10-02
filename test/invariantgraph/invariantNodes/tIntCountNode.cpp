@@ -90,15 +90,17 @@ TEST_P(IntCountNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  const std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
+  const std::vector<std::shared_ptr<VarNode>> expectedInputs =
+      varNodeIds(inputVars);
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds(), expectedInputs);
-  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
+  EXPECT_EQ(invNode().staticInputVarNodes(), expectedInputs);
+  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodes()));
 
-  const std::vector<VarNodeId> expectedOutputs{varNodeId(outputVar)};
+  const std::vector<std::shared_ptr<VarNode>> expectedOutputs{
+      varNodeId(outputVar)};
 
-  EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
-  EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodeIds()));
+  EXPECT_EQ(invNode().outputVarNodes(), expectedOutputs);
+  EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodes()));
 }
 
 TEST_P(IntCountNodeTestFixture, updateState) {

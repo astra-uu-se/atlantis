@@ -6,12 +6,12 @@ namespace atlantis::invariantgraph {
 
 class BoolOrNode : public ViolationInvariantNode {
  public:
-  BoolOrNode(InvariantGraph& graph, VarNodeId a, VarNodeId b, VarNodeId r);
+  BoolOrNode(InvariantGraph& graph, VarNode& a, VarNode& b, VarNode& r);
 
-  BoolOrNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+  BoolOrNode(InvariantGraph& graph, VarNode& a, VarNode& b,
              bool shouldHold = true);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
@@ -26,11 +26,11 @@ class BoolOrNode : public ViolationInvariantNode {
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] VarNodeId a() const noexcept {
-    return staticInputVarNodeIds().front();
+  [[nodiscard]] VarNode& a() const noexcept {
+    return staticInputVarNodes().front();
   }
-  [[nodiscard]] VarNodeId b() const noexcept {
-    return staticInputVarNodeIds().back();
+  [[nodiscard]] VarNode& b() const noexcept {
+    return staticInputVarNodes().back();
   }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;

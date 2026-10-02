@@ -14,8 +14,8 @@
 namespace atlantis::invariantgraph {
 
 ArrayElement2dNode::ArrayElement2dNode(
-    InvariantGraph& graph, const VarNodeId rowIdx, const VarNodeId colIdx,
-    std::vector<std::vector<Int>>&& parMatrix, const VarNodeId output,
+    InvariantGraph& graph, VarNode& rowIdx, VarNode& colIdx,
+    std::vector<std::vector<Int>>&& parMatrix, VarNode& output,
     const Int rowOffset, const Int colOffset, const bool isIntMatrix)
     : InvariantNode(graph, {output}, {rowIdx, colIdx}),
       _parMatrix(std::move(parMatrix)),
@@ -24,14 +24,14 @@ ArrayElement2dNode::ArrayElement2dNode(
       _isIntMatrix(isIntMatrix) {}
 
 ArrayElement2dNode::ArrayElement2dNode(
-    InvariantGraph& graph, const VarNodeId rowIdx, const VarNodeId colIdx,
-    const std::vector<std::vector<bool>>& parMatrix, const VarNodeId output,
+    InvariantGraph& graph, VarNode& rowIdx, VarNode& colIdx,
+    const std::vector<std::vector<bool>>& parMatrix, VarNode& output,
     const Int rowOffset, const Int colOffset)
     : ArrayElement2dNode(graph, rowIdx, colIdx, boolToViol(parMatrix), output,
                          rowOffset, colOffset, false) {}
 
-void ArrayElement2dNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
+void ArrayElement2dNode::init() {
+  InvariantNode::init();
   assert(_isIntMatrix == outputVarNode(0).isIntVar());
 }
 
@@ -81,7 +81,7 @@ void ArrayElement2dNode::updateState() {
       }
     }
     if (allSatisfying) {
-      for (const auto vId : staticInputVarNodeIds()) {
+      for (const auto vId : staticInputVarNodes()) {
         varNode(vId).tightenDomainType();
       }
       setState(InvariantNodeState::SUBSUMED);
@@ -89,7 +89,7 @@ void ArrayElement2dNode::updateState() {
   }
 }
 
-bool ArrayElement2dNode::constrainsOutput(VarNodeId) const {
+bool ArrayElement2dNode::constrainsOutput(VarNode&) const {
   std::vector<Int> values;
   values.reserve(_parMatrix.size() *
                  (_parMatrix.empty() ? 0 : _parMatrix.front().size()));
@@ -136,7 +136,7 @@ bool ArrayElement2dNode::replace() {
 
     invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
         invariantGraph(), std::move(_parMatrix.at(rowIndex)), colIdx(),
-        outputVarNodeIds().front(), _colOffset));
+        outputVarNodes().front(), _colOffset));
     _parMatrix.clear();
     return true;
   }
@@ -151,30 +151,31 @@ bool ArrayElement2dNode::replace() {
   _parMatrix.clear();
   invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
       invariantGraph(), std::move(parMatrixCol), rowIdx(),
-      outputVarNodeIds().front(), _rowOffset));
+      outputVarNodes().front(), _rowOffset));
   return true;
 }
 
 void ArrayElement2dNode::registerOutputVars(propagation::SolverBase& solver,
                                             SolverMapping& mapping) const {
-  if (!staticInputVarNodeIds().empty()) {
-    makeSolverVar(outputVarNodeIds().front(), solver, mapping);
+  if (!staticInputVarNodes().empty()) {
+    makeSolverVar(outputVarNodes().front(), solver, mapping);
   }
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return mapping.solverId(vId) != propagation::NULL_ID;
-  }));
+  assert(std::ranges::all_of(
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return mapping.solverId(vId) != propagation::NULL_ID;
+      }));
 }
 
 void ArrayElement2dNode::registerNode(propagation::SolverBase& solver,
                                       SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().empty()) {
+  if (staticInputVarNodes().empty()) {
     return;
   }
-  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
+  assert(mapping.solverId(outputVarNodes().front()) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodes().front()).isVar());
 
   solver.makeInvariant<propagation::Element2dConst>(
-      solver, mapping.solverId(outputVarNodeIds().front()),
+      solver, mapping.solverId(outputVarNodes().front()),
       mapping.solverId(rowIdx()), mapping.solverId(colIdx()),
       std::vector<std::vector<Int>>{_parMatrix}, _rowOffset, _colOffset);
 }

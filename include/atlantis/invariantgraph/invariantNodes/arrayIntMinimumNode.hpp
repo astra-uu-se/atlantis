@@ -7,14 +7,14 @@ class ArrayIntMinimumNode : public InvariantNode {
   Int _upperBound;
 
  public:
-  explicit ArrayIntMinimumNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-                               VarNodeId output);
+  explicit ArrayIntMinimumNode(InvariantGraph& graph, VarNode& a, VarNode& b,
+                               VarNode& output);
 
   explicit ArrayIntMinimumNode(InvariantGraph& graph,
+                               std::vector<std::shared_ptr<VarNode>>&& vars,
+                               VarNode& output);
 
-                               std::vector<VarNodeId>&& vars, VarNodeId output);
-
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
@@ -23,7 +23,8 @@ class ArrayIntMinimumNode : public InvariantNode {
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(
+      VarNode& outputVarNode) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 

@@ -79,12 +79,14 @@ TEST_P(IntLinearNodeTestFixture, construction) {
 
   EXPECT_THAT(invNode().coeffs(), ContainerEq(coeffs));
 
-  const std::vector<VarNodeId> expectedInputs = varNodeIds(inputVars);
-  EXPECT_THAT(invNode().staticInputVarNodeIds(), ContainerEq(expectedInputs));
+  const std::vector<std::shared_ptr<VarNode>> expectedInputs =
+      varNodeIds(inputVars);
+  EXPECT_THAT(invNode().staticInputVarNodes(), ContainerEq(expectedInputs));
 
-  const std::vector<VarNodeId> expectedOutputs{varNodeId(outputVar)};
+  const std::vector<std::shared_ptr<VarNode>> expectedOutputs{
+      varNodeId(outputVar)};
 
-  EXPECT_THAT(invNode().outputVarNodeIds(), ContainerEq(expectedOutputs));
+  EXPECT_THAT(invNode().outputVarNodes(), ContainerEq(expectedOutputs));
 }
 
 TEST_P(IntLinearNodeTestFixture, updateState) {
@@ -166,7 +168,8 @@ TEST(IntLinearNodeRegression, MultiInputOffsetUsesOffsetViewForOutput) {
       graph->retrieveIntVarNode(std::make_shared<SearchDomain>(1, 3), "out");
 
   graph->addInvariantNode(std::make_shared<IntLinearNode>(
-      *graph, std::vector<Int>{1, 1}, std::vector<VarNodeId>{a, b}, out, 1));
+      *graph, std::vector<Int>{1, 1},
+      std::vector<std::shared_ptr<VarNode>>{a, b}, out, 1));
 
   graph->close();
   const auto mapping =

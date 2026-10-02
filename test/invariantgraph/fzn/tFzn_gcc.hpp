@@ -84,8 +84,7 @@ class fzn_gccTest : public FznTestBase {
   }
 
   void move(const bool committedValue) override {
-    std::unordered_set<InvariantNodeId, InvariantNodeIdHash>
-        implicitConstraints;
+    std::unordered_set<InvariantNode*> implicitConstraints;
     std::vector<bool> hasImplicitConstraints(inputs.size(), false);
     implicitConstraints.reserve(inputs.size());
     for (size_t i = 0; i < inputs.size(); ++i) {
@@ -93,9 +92,9 @@ class fzn_gccTest : public FznTestBase {
         const auto& defNodes = varNodeConst(inputs.at(i)).definingNodes();
         if (!defNodes.empty()) {
           RC_ASSERT(defNodes.size() == size_t{1});
-          const InvariantNodeId implId = *defNodes.begin();
-          RC_ASSERT(implId.isImplicitConstraint());
-          implicitConstraints.emplace(implId);
+          const auto implNode = *defNodes.begin();
+          RC_ASSERT(implNode.isImplicitConstraint());
+          implicitConstraints.emplace(implNode);
           hasImplicitConstraints.at(i) = true;
         }
       }
@@ -108,8 +107,7 @@ class fzn_gccTest : public FznTestBase {
       }
     }
 
-    for (const InvariantNodeId implId : implicitConstraints) {
-      auto implNode = _solverMapping->neighborhood(implId);
+    for (const auto implNode : implicitConstraints) {
       RC_ASSERT(implNode != nullptr);
       implNode->randomMove(*_randomProvider, *_assignment);
     }

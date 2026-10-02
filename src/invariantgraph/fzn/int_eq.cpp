@@ -8,7 +8,7 @@
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_eq(FznInvariantGraph& graph, VarNodeId a, VarNodeId b) {
+bool int_eq(FznInvariantGraph& graph, VarNode& a, VarNode& b) {
   graph.addInvariantNode(std::make_shared<IntAllEqualNode>(graph, a, b, false));
   return true;
 }

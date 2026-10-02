@@ -9,10 +9,10 @@ using namespace atlantis::invariantgraph;
 class AllDifferentImplicitNodeTestFixture
     : public NodeTestBase<AllDifferentImplicitNode> {
  protected:
-  VarNodeId a{NULL_NODE_ID};
-  VarNodeId b{NULL_NODE_ID};
-  VarNodeId c{NULL_NODE_ID};
-  VarNodeId d{NULL_NODE_ID};
+  std::shared_ptr<VarNode> a{nullptr};
+  std::shared_ptr<VarNode> b{nullptr};
+  std::shared_ptr<VarNode> c{nullptr};
+  std::shared_ptr<VarNode> d{nullptr};
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -21,24 +21,24 @@ class AllDifferentImplicitNodeTestFixture
     c = retrieveIntVarNode(2, 7, "c");
     d = retrieveIntVarNode(2, 7, "d");
 
-    std::vector<VarNodeId> vars{a, b, c, d};
+    std::vector<std::shared_ptr<VarNode>> vars{a, b, c, d};
 
     createImplicitConstraintNode(*_invariantGraph, std::move(vars));
   }
 };
 
 TEST_P(AllDifferentImplicitNodeTestFixture, construction) {
-  const std::vector<VarNodeId> expectedVars{a, b, c, d};
+  const std::vector<std::shared_ptr<VarNode>> expectedVars{a, b, c, d};
 
-  EXPECT_EQ(invNode().outputVarNodeIds(), expectedVars);
+  EXPECT_EQ(invNode().outputVarNodes(), expectedVars);
 }
 
 TEST_P(AllDifferentImplicitNodeTestFixture, application) {
   _solver->open();
   _solverMapping = std::make_shared<SolverMapping>();
   invNode().registerOutputVars(*_solver, *_solverMapping);
-  for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
+  for (const auto& outputVarNod : invNode().outputVarNodes()) {
+    EXPECT_NE(varId(outputVarNod), propagation::NULL_ID);
   }
   invNode().registerNode(*_solver, *_solverMapping);
   _solver->close();

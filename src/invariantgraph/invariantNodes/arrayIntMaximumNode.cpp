@@ -15,37 +15,34 @@
 
 namespace atlantis::invariantgraph {
 
-ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph,
-                                         const VarNodeId a, const VarNodeId b,
-                                         const VarNodeId output)
-    : ArrayIntMaximumNode(graph, std::vector<VarNodeId>{a, b}, output) {}
+ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph, VarNode& a,
+                                         VarNode& b, VarNode& output)
+    : ArrayIntMaximumNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b},
+                          output) {}
 
-ArrayIntMaximumNode::ArrayIntMaximumNode(InvariantGraph& graph,
-                                         std::vector<VarNodeId>&& vars,
-                                         const VarNodeId output)
+ArrayIntMaximumNode::ArrayIntMaximumNode(
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& vars,
+    VarNode& output)
     : InvariantNode(graph, {output}, std::move(vars)),
       _lowerBound(std::numeric_limits<Int>::min()) {}
 
-void ArrayIntMaximumNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
+void ArrayIntMaximumNode::init() {
+  InvariantNode::init();
   assert(outputVarNode(0).isIntVar());
   assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodes().begin(), staticInputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
 }
 
 void ArrayIntMaximumNode::postConstraint() {
   constraintSolver().array_int_maximum(
-      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
       outputVarNode(0).constraintVarId());
 }
 
 void ArrayIntMaximumNode::updateState() {
   InvariantNode::updateState();
-  const auto duplicateIndices =
-      duplicateVarNodeIndices(staticInputVarNodeIds());
+  const auto duplicateIndices = duplicateVarNodeIndices(staticInputVarNodes());
   for (Int i = static_cast<Int>(duplicateIndices->size() - 1); i >= 0; --i) {
     removeStaticInputAtIndex(i);
   }
@@ -53,7 +50,7 @@ void ArrayIntMaximumNode::updateState() {
   const Int outputLb = outputVarNodeConst(0).lowerBound();
   const Int outputUb = outputVarNodeConst(0).upperBound();
 
-  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
+  for (Int i = static_cast<Int>(staticInputVarNodes().size()) - 1; i >= 0;
        --i) {
     const Int inputLb = staticInputVarNodeConst(i).lowerBound();
     const Int inputUb = staticInputVarNodeConst(i).upperBound();
@@ -66,23 +63,23 @@ void ArrayIntMaximumNode::updateState() {
       removeStaticInputAtIndex(i);
     }
   }
-  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
+  for (Int i = static_cast<Int>(staticInputVarNodes().size()) - 1; i >= 0;
        --i) {
     if (staticInputVarNodeConst(i).upperBound() <= _lowerBound) {
       removeStaticInputAtIndex(i);
     }
   }
   assert(_lowerBound <= outputLb);
-  if (staticInputVarNodeIds().empty()) {
+  if (staticInputVarNodes().empty()) {
     outputVarNode(0).tightenDomainType();
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-bool ArrayIntMaximumNode::constrainsOutput(VarNodeId) const {
+bool ArrayIntMaximumNode::constrainsOutput(VarNode&) const {
   Int lb = std::numeric_limits<Int>::min();
   Int ub = std::numeric_limits<Int>::min();
-  for (const auto vId : staticInputVarNodeIds()) {
+  for (const auto vId : staticInputVarNodes()) {
     lb = std::max(lb, varNodeConst(vId).lowerBound());
     ub = std::max(ub, varNodeConst(vId).upperBound());
   }
@@ -96,7 +93,7 @@ bool ArrayIntMaximumNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE) {
     return false;
   }
-  if (staticInputVarNodeIds().size() == 1 &&
+  if (staticInputVarNodes().size() == 1 &&
       _lowerBound <= staticInputVarNodeConst(0).lowerBound()) {
     return true;
   }
@@ -110,64 +107,65 @@ bool ArrayIntMaximumNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (staticInputVarNodeIds().size() == 1 &&
+  if (staticInputVarNodes().size() == 1 &&
       _lowerBound <= staticInputVarNodeConst(0).lowerBound()) {
-    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                    staticInputVarNodeIds().front());
+    invariantGraph().replaceVarNode(outputVarNodes().front(),
+                                    staticInputVarNodes().front());
     return true;
   }
-  assert(outputVarNodeIds().size() == 1 && outputVarNodeConst(0).isFixed());
+  assert(outputVarNodes().size() == 1 && outputVarNodeConst(0).isFixed());
   invariantGraph().addInvariantNode(std::make_shared<CountRelNode>(
       invariantGraph(), Int{1}, RelationType::REL_TYPE_LE,
-      std::vector<VarNodeId>{staticInputVarNodeIds()},
+      std::vector<std::shared_ptr<VarNode>>{staticInputVarNodes()},
       outputVarNodeConst(0).lowerBound(), true));
   return true;
 }
 
 void ArrayIntMaximumNode::registerOutputVars(propagation::SolverBase& solver,
                                              SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().size() == 1) {
+  if (staticInputVarNodes().size() == 1) {
     mapping.setSolverId(
-        outputVarNodeIds().front(),
+        outputVarNodes().front(),
         solver.makeIntView<propagation::IntMaxView>(
-            solver, mapping.solverId(staticInputVarNodeIds().front()),
+            solver, mapping.solverId(staticInputVarNodes().front()),
             _lowerBound));
-  } else if (!staticInputVarNodeIds().empty()) {
+  } else if (!staticInputVarNodes().empty()) {
     if (_lowerBound > staticInputVarNodeConst(0).lowerBound()) {
       mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
       mapping.setSolverId(
-          outputVarNodeIds().front(),
+          outputVarNodes().front(),
           solver.makeIntView<propagation::IntMaxView>(
               solver, mapping.intermediateId(id()), _lowerBound));
     } else {
-      makeSolverVar(outputVarNodeIds().front(), solver, mapping);
+      makeSolverVar(outputVarNodes().front(), solver, mapping);
     }
   }
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return mapping.solverId(vId) != propagation::NULL_ID;
-  }));
+  assert(std::ranges::all_of(
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return mapping.solverId(vId) != propagation::NULL_ID;
+      }));
 }
 
 void ArrayIntMaximumNode::registerNode(propagation::SolverBase& solver,
                                        SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().size() <= 1) {
+  if (staticInputVarNodes().size() <= 1) {
     return;
   }
   std::vector<propagation::VarViewId> solverVars;
-  solverVars.reserve(staticInputVarNodeIds().size());
+  solverVars.reserve(staticInputVarNodes().size());
   std::ranges::transform(
-      staticInputVarNodeIds(), std::back_inserter(solverVars),
+      staticInputVarNodes(), std::back_inserter(solverVars),
       [&](const auto& node) { return mapping.solverId(node); });
 
-  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodes().front()) != propagation::NULL_ID);
   assert(mapping.intermediateId(id()) != propagation::NULL_ID
-             ? mapping.solverId(outputVarNodeIds().front()).isView()
-             : mapping.solverId(outputVarNodeIds().front()).isVar());
+             ? mapping.solverId(outputVarNodes().front()).isView()
+             : mapping.solverId(outputVarNodes().front()).isVar());
   solver.makeInvariant<propagation::Max>(
       solver,
       mapping.intermediateId(id()) != propagation::NULL_ID
           ? mapping.intermediateId(id())
-          : mapping.solverId(outputVarNodeIds().front()),
+          : mapping.solverId(outputVarNodes().front()),
       std::move(solverVars));
 }
 

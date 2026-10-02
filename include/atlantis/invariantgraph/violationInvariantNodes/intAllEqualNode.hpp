@@ -11,19 +11,19 @@ class IntAllEqualNode : public ViolationInvariantNode {
   bool _breaksCycle;
 
  public:
-  explicit IntAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-                           VarNodeId r, bool breaksCycle = false);
+  explicit IntAllEqualNode(InvariantGraph& graph, VarNode& a, VarNode& b,
+                           VarNode& r, bool breaksCycle = false);
 
-  explicit IntAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+  explicit IntAllEqualNode(InvariantGraph& graph, VarNode& a, VarNode& b,
                            bool shouldHold = true, bool breaksCycle = false);
 
-  explicit IntAllEqualNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                           VarNodeId r, bool breaksCycle = false);
+  explicit IntAllEqualNode(InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& vars,
+                           VarNode& r, bool breaksCycle = false);
 
-  explicit IntAllEqualNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+  explicit IntAllEqualNode(InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& vars,
                            bool shouldHold = true, bool breaksCycle = false);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

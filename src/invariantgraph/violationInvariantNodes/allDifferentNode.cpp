@@ -21,39 +21,38 @@
 
 namespace atlantis::invariantgraph {
 
-AllDifferentNode::AllDifferentNode(InvariantGraph& graph, const VarNodeId a,
-                                   const VarNodeId b, const VarNodeId r)
-    : AllDifferentNode(graph, std::vector<VarNodeId>{a, b}, r) {}
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph, VarNode& a,
+                                   VarNode& b, const VarNode& r)
+    : AllDifferentNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b}, r) {}
 
-AllDifferentNode::AllDifferentNode(InvariantGraph& graph, const VarNodeId a,
-                                   const VarNodeId b, const bool shouldHold)
-    : AllDifferentNode(graph, std::vector<VarNodeId>{a, b}, shouldHold) {}
+AllDifferentNode::AllDifferentNode(InvariantGraph& graph, VarNode& a,
+                                   VarNode& b, const bool shouldHold)
+    : AllDifferentNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b},
+                       shouldHold) {}
 
 AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
-                                   std::vector<VarNodeId>&& vars,
-                                   const VarNodeId r)
+                                   std::vector<std::shared_ptr<VarNode>>&& vars,
+                                   const VarNode& r)
     : ViolationInvariantNode(graph, std::move(vars), r) {}
 
 AllDifferentNode::AllDifferentNode(InvariantGraph& graph,
-                                   std::vector<VarNodeId>&& vars,
+                                   std::vector<std::shared_ptr<VarNode>>&& vars,
                                    const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold) {}
 
-void AllDifferentNode::init(const InvariantNodeId id) {
-  ViolationInvariantNode::init(id);
+void AllDifferentNode::init() {
+  ViolationInvariantNode::init();
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+      !invariantGraphConst().varNodeConst(reifiedViolationNode()).isIntVar());
   assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodes().begin(), staticInputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
 }
 
 void AllDifferentNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
-  if (staticInputVarNodeIds().size() == 2) {
+  if (staticInputVarNodes().size() == 2) {
     if (isReified()) {
       return constraintSolver().int_ne_reif(
           staticInputVarNodeConst(0).constraintVarId(),
@@ -66,11 +65,11 @@ void AllDifferentNode::postConstraint() {
   }
   if (isReified()) {
     return constraintSolver().fzn_all_different_int_reif(
-        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
         reifiedVarNodeConst().constraintVarId());
   }
   return constraintSolver().fzn_all_different_int(
-      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
       shouldHold());
 }
 
@@ -79,10 +78,10 @@ void AllDifferentNode::updateState() {
   if (isReified()) {
     return;
   }
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
+  std::vector<std::shared_ptr<VarNode>> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodes().size());
   if (!shouldHold()) {
-    for (const auto vId : staticInputVarNodeIds()) {
+    for (const auto vId : staticInputVarNodes()) {
       if (!varNodeConst(vId).isFixed()) {
         continue;
       }
@@ -96,7 +95,7 @@ void AllDifferentNode::updateState() {
       varsToRemove.emplace_back(vId);
     }
   } else {
-    for (const auto vId : staticInputVarNodeIds()) {
+    for (const auto vId : staticInputVarNodes()) {
       if (varNodeConst(vId).isFixed()) {
         varsToRemove.emplace_back(vId);
       }
@@ -107,20 +106,20 @@ void AllDifferentNode::updateState() {
     removeStaticInputVarNode(vId);
   }
 
-  if (staticInputVarNodeIds().size() <= 1) {
+  if (staticInputVarNodes().size() <= 1) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 std::pair<size_t, size_t> AllDifferentNode::implicitRank() const {
   return {rank::IMPLICIT_RANK_ALL_DIFFERENT,
-          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
+          staticInputVarNodes().size() + outputVarNodes().size()};
 }
 
 bool AllDifferentNode::canBeMadeImplicit() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
          shouldHold() &&
-         std::ranges::all_of(staticInputVarNodeIds(), [&](const auto& id) {
+         std::ranges::all_of(staticInputVarNodes(), [&](const auto& id) {
            return invariantGraphConst()
                .varNodeConst(id)
                .definingNodes()
@@ -134,13 +133,14 @@ bool AllDifferentNode::makeImplicit() {
   }
   invariantGraph().addImplicitConstraintNode(
       std::make_shared<AllDifferentImplicitNode>(
-          invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
+          invariantGraph(),
+          std::vector<std::shared_ptr<VarNode>>{staticInputVarNodes()}));
   return true;
 }
 
 bool AllDifferentNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
-         !shouldHold() && staticInputVarNodeIds().size() <= 2;
+         !shouldHold() && staticInputVarNodes().size() <= 2;
 }
 
 bool AllDifferentNode::replace() {
@@ -148,18 +148,19 @@ bool AllDifferentNode::replace() {
     return false;
   }
   assert(invariantGraphConst()
-             .varNodeConst(staticInputVarNodeIds().front())
+             .varNodeConst(staticInputVarNodes().front())
              .isIntVar());
   invariantGraph().addInvariantNode(std::make_shared<IntAllEqualNode>(
-      invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()}));
+      invariantGraph(),
+      std::vector<std::shared_ptr<VarNode>>{staticInputVarNodes()}));
   return true;
 }
 
 void AllDifferentNode::registerOutputVars(propagation::SolverBase& solver,
                                           SolverMapping& mapping) const {
   assert(state() == InvariantNodeState::ACTIVE);
-  assert(!staticInputVarNodeIds().empty());
-  if (!staticInputVarNodeIds().empty() &&
+  assert(!staticInputVarNodes().empty());
+  if (!staticInputVarNodes().empty() &&
       violationVarId(mapping) == propagation::NULL_ID) {
     if (shouldHold()) {
       registerViolation(solver, mapping);
@@ -171,18 +172,18 @@ void AllDifferentNode::registerOutputVars(propagation::SolverBase& solver,
                         mapping);
     }
   }
-  assert(outputVarNodeIds().size() <= 1);
-  assert(outputVarNodeIds().empty() ||
-         std::ranges::all_of(
-             outputVarNodeIds().begin(), outputVarNodeIds().end(),
-             [&](const VarNodeId vId) {
-               return mapping.solverId(vId) != propagation::NULL_ID;
-             }));
+  assert(outputVarNodes().size() <= 1);
+  assert(outputVarNodes().empty() ||
+         std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void AllDifferentNode::registerNode(propagation::SolverBase& solver,
                                     SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().empty()) {
+  if (staticInputVarNodes().empty()) {
     return;
   }
   assert(violationVarId(mapping) != propagation::NULL_ID);
@@ -191,9 +192,9 @@ void AllDifferentNode::registerNode(propagation::SolverBase& solver,
                       : mapping.intermediateId(id()).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
-  solverVars.reserve(staticInputVarNodeIds().size());
-  std::ranges::transform(staticInputVarNodeIds().begin(),
-                         staticInputVarNodeIds().end(),
+  solverVars.reserve(staticInputVarNodes().size());
+  std::ranges::transform(staticInputVarNodes().begin(),
+                         staticInputVarNodes().end(),
                          std::back_inserter(solverVars),
                          [&](const auto& id) { return mapping.solverId(id); });
 

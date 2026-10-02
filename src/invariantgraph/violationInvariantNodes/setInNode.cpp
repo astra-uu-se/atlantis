@@ -17,25 +17,23 @@
 
 namespace atlantis::invariantgraph {
 
-SetInNode::SetInNode(InvariantGraph& graph, const VarNodeId input,
-                     std::vector<Int>&& values, const VarNodeId r)
+SetInNode::SetInNode(InvariantGraph& graph, VarNode& input,
+                     std::vector<Int>&& values, const VarNode& r)
     : ViolationInvariantNode(graph, {input}, r), _values(std::move(values)) {}
 
-SetInNode::SetInNode(InvariantGraph& graph, const VarNodeId input,
+SetInNode::SetInNode(InvariantGraph& graph, VarNode& input,
                      std::vector<Int>&& values, const bool shouldHold)
     : ViolationInvariantNode(graph, {input}, shouldHold),
       _values(std::move(values)) {}
 
-void SetInNode::init(const InvariantNodeId id) {
-  ViolationInvariantNode::init(id);
+void SetInNode::init() {
+  ViolationInvariantNode::init();
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+      !invariantGraphConst().varNodeConst(reifiedViolationNode()).isIntVar());
   assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodes().begin(), staticInputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
 }
 void SetInNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
@@ -61,7 +59,7 @@ void SetInNode::registerOutputVars(propagation::SolverBase& solver,
   assert(isReified());
   if (violationVarId(mapping) == propagation::NULL_ID) {
     const propagation::VarViewId input =
-        mapping.solverId(staticInputVarNodeIds().front());
+        mapping.solverId(staticInputVarNodes().front());
     if (_values->size() == 1) {
       setViolationVarId(
           makeSolverConstIntRelation(solver, input, RelationType::REL_TYPE_EQ,
@@ -103,11 +101,11 @@ void SetInNode::registerOutputVars(propagation::SolverBase& solver,
       }
     }
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void SetInNode::registerNode(propagation::SolverBase&, SolverMapping&) const {}

@@ -75,7 +75,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   std::shared_ptr<propagation::Solver> _solver{nullptr};
   std::shared_ptr<SolverMapping> _solverMapping{nullptr};
   std::shared_ptr<InvariantGraph> _invariantGraph{nullptr};
-  InvariantNodeId _invNodeId = InvariantNodeId{NULL_NODE_ID};
+  std::shared_ptr<InvariantNode> _invNodeId{nullptr};
 
   [[nodiscard]] bool shouldBeSubsumed() const {
     return _paramData.action == InvariantNodeAction::SUBSUME;
@@ -127,18 +127,18 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
         _invariantGraph->implicitConstraintNode(_invNodeId));
   }
 
-  [[nodiscard]] std::vector<VarNodeId> varNodeIds(
+  [[nodiscard]] std::vector<std::shared_ptr<VarNode>> varNodeIds(
       const std::vector<std::string>& vars) const {
-    std::vector<VarNodeId> ids(vars.size());
+    std::vector<std::shared_ptr<VarNode>> ids(vars.size());
     for (size_t i = 0; i < vars.size(); ++i) {
       ids[i] = varNodeId(vars[i]);
     }
     return ids;
   }
 
-  [[nodiscard]] std::vector<std::vector<VarNodeId>> varNodeIds(
+  [[nodiscard]] std::vector<std::vector<std::shared_ptr<VarNode>>> varNodeIds(
       const std::vector<std::vector<std::string>>& vars) const {
-    std::vector<std::vector<VarNodeId>> ids(vars.size());
+    std::vector<std::vector<std::shared_ptr<VarNode>>> ids(vars.size());
     for (size_t i = 0; i < vars.size(); ++i) {
       ids.at(i).resize(vars.at(i).size());
       for (size_t j = 0; j < vars.at(i).size(); ++j) {
@@ -148,18 +148,18 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return ids;
   }
 
-  [[nodiscard]] std::vector<VarNodeId> varNodeIds(
+  [[nodiscard]] std::vector<std::shared_ptr<VarNode>> varNodeIds(
       const std::vector<Var>& vars) const {
-    std::vector<VarNodeId> ids(vars.size());
+    std::vector<std::shared_ptr<VarNode>> ids(vars.size());
     for (size_t i = 0; i < vars.size(); ++i) {
       ids[i] = varNodeId(vars.at(i));
     }
     return ids;
   }
 
-  [[nodiscard]] std::vector<std::vector<VarNodeId>> varNodeIds(
+  [[nodiscard]] std::vector<std::vector<std::shared_ptr<VarNode>>> varNodeIds(
       const std::vector<std::vector<Var>>& vars) const {
-    std::vector<std::vector<VarNodeId>> ids(vars.size());
+    std::vector<std::vector<std::shared_ptr<VarNode>>> ids(vars.size());
     for (size_t i = 0; i < vars.size(); ++i) {
       ids.at(i).resize(vars.at(i).size());
       for (size_t j = 0; j < vars.at(i).size(); ++j) {
@@ -169,23 +169,24 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return ids;
   }
 
-  VarNodeId retrieveIntVarNode(Int lb, Int ub, const std::string& identifier) {
+  std::shared_ptr<VarNode> retrieveIntVarNode(Int lb, Int ub,
+                                              const std::string& identifier) {
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(lb, ub), identifier);
   }
 
-  VarNodeId retrieveIntVarNode(std::vector<Int>&& vals,
-                               const std::string& identifier) {
+  std::shared_ptr<VarNode> retrieveIntVarNode(std::vector<Int>&& vals,
+                                              const std::string& identifier) {
     assert(!vals.empty());
     return _invariantGraph->retrieveIntVarNode(
         std::make_shared<SearchDomain>(std::move(vals)), identifier);
   }
 
-  VarNodeId retrieveIntVarNode(const Int val) {
+  std::shared_ptr<VarNode> retrieveIntVarNode(const Int val) {
     return _invariantGraph->retrieveIntVarNode(val);
   }
 
-  VarNodeId retrieveIntVarNode(const Var& var) {
+  std::shared_ptr<VarNode> retrieveIntVarNode(const Var& var) {
     if (std::holds_alternative<std::vector<Int>>(var.domain)) {
       return retrieveIntVarNode(
           std::vector<Int>{std::get<std::vector<Int>>(var.domain)},
@@ -196,29 +197,22 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
                               var.identifier);
   }
 
-  VarNodeId retrieveBoolVarNode(const std::string& identifier) {
+  std::shared_ptr<VarNode> retrieveBoolVarNode(const std::string& identifier) {
     return _invariantGraph->retrieveBoolVarNode(identifier);
   }
 
-  VarNodeId retrieveBoolVarNode(const bool val, const std::string& identifier) {
+  std::shared_ptr<VarNode> retrieveBoolVarNode(const bool val,
+                                               const std::string& identifier) {
     return _invariantGraph->retrieveBoolVarNode(val, identifier);
   }
 
-  VarNodeId retrieveBoolVarNode(const Var& var) {
+  std::shared_ptr<VarNode> retrieveBoolVarNode(const Var& var) {
     EXPECT_FALSE(var.empty());
     EXPECT_LE(var.size(), 2);
     if (var.size() == 1) {
       return retrieveBoolVarNode(var.val(), var.identifier);
     }
     return retrieveBoolVarNode(var.identifier);
-  }
-
-  [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const {
-    return _invariantGraph->varNodeId(identifier);
-  }
-
-  [[nodiscard]] VarNodeId varNodeId(const Var& var) const {
-    return varNodeId(var.identifier);
   }
 
   [[nodiscard]] VarNode& varNode(const std::string& identifier) {
@@ -238,29 +232,21 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
     return _invariantGraph->varNodeConst(var.identifier);
   }
 
-  [[nodiscard]] VarNode& varNode(const VarNodeId varNodeId) {
-    return _invariantGraph->varNode(varNodeId);
-  }
-
-  [[nodiscard]] const VarNode& varNodeConst(const VarNodeId varNodeId) const {
-    return _invariantGraph->varNodeConst(varNodeId);
-  }
-
   [[nodiscard]] propagation::VarViewId varId(
       const std::string& identifier) const {
     return _solverMapping == nullptr
                ? propagation::VAR_VIEW_NULL_ID
-               : _solverMapping->solverId(
-                     _invariantGraph->varNodeId(identifier));
+               : _solverMapping->solverId(varNode(identifier)->mappingId());
   }
 
   [[nodiscard]] propagation::VarViewId varId(const Var& var) const {
     return varId(var.identifier);
   }
 
-  [[nodiscard]] propagation::VarViewId varId(const VarNodeId varNodeId) const {
-    return _solverMapping == nullptr ? propagation::VAR_VIEW_NULL_ID
-                                     : _solverMapping->solverId(varNodeId);
+  [[nodiscard]] propagation::VarViewId varId(const VarNode& varNode) const {
+    return _solverMapping == nullptr
+               ? propagation::VAR_VIEW_NULL_ID
+               : _solverMapping->solverId(varNode.mappingId());
   }
 
   [[nodiscard]] std::vector<propagation::VarViewId> varIds(
@@ -274,7 +260,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   [[nodiscard]] std::vector<propagation::VarViewId> varIds(
-      const std::vector<VarNodeId>& varNodeIds) const {
+      const std::vector<std::shared_ptr<VarNode>>& varNodeIds) const {
     std::vector<propagation::VarViewId> ids;
     ids.reserve(varNodeIds.size());
     for (const auto& id : varNodeIds) {
@@ -285,44 +271,44 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
 
   void addInputVarsToSolver() {
     EXPECT_EQ(_solver->numVars(), 0);
-    std::unordered_set<size_t> visited;
-    visited.reserve(invNode().staticInputVarNodeIds().size() +
-                    invNode().dynamicInputVarNodeIds().size());
+    std::unordered_set<*VarNode> visited;
+    visited.reserve(invNode().staticInputVarNodes().size() +
+                    invNode().dynamicInputVarNodes().size());
     const bool solverWasClosed = !_solver->isOpen();
     if (solverWasClosed) {
       _solver->open();
     }
-    for (const VarNodeId varNodeId : invNode().staticInputVarNodeIds()) {
-      if (visited.contains(size_t{varNodeId})) {
-        EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
+    for (const auto& varNode : invNode().staticInputVarNodes()) {
+      if (visited.contains(varNode.get())) {
+        EXPECT_NE(varId(varNode), propagation::NULL_ID);
       } else {
-        if (!varNode(varNodeId).isFixed()) {
-          EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
+        if (!varNode->isFixed()) {
+          EXPECT_EQ(varId(varNode), propagation::NULL_ID);
         }
-        visited.emplace(size_t{varNodeId});
+        visited.emplace(varNode.get());
       }
-      if (varId(varNodeId) == propagation::NULL_ID) {
-        const auto& [lb, ub] = varNode(varNodeId).bounds();
+      if (varId(varNode) == propagation::NULL_ID) {
+        const auto& [lb, ub] = varNode->bounds();
         EXPECT_NE(_solverMapping, nullptr);
-        _solverMapping->setSolverId(varNodeId, _solver->makeIntVar(lb, lb, ub));
+        _solverMapping->setSolverId(varNode, _solver->makeIntVar(lb, lb, ub));
       }
-      EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
+      EXPECT_NE(varId(varNode), propagation::NULL_ID);
     }
-    for (const VarNodeId varNodeId : invNode().dynamicInputVarNodeIds()) {
-      if (visited.contains(size_t{varNodeId})) {
-        EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
+    for (const auto& varNode : invNode().dynamicInputVarNodes()) {
+      if (visited.contains(varNode.get())) {
+        EXPECT_NE(varId(varNode), propagation::NULL_ID);
       } else {
-        if (!varNode(varNodeId).isFixed()) {
-          EXPECT_EQ(varId(varNodeId), propagation::NULL_ID);
+        if (!varNode->isFixed()) {
+          EXPECT_EQ(varId(varNode), propagation::NULL_ID);
         }
-        visited.emplace(size_t{varNodeId});
+        visited.emplace(varNode.get());
       }
-      if (varId(varNodeId) == propagation::NULL_ID) {
-        const auto& [lb, ub] = varNode(varNodeId).bounds();
+      if (varId(varNode) == propagation::NULL_ID) {
+        const auto& [lb, ub] = varNode->bounds();
         EXPECT_NE(_solverMapping, nullptr);
-        _solverMapping->setSolverId(varNodeId, _solver->makeIntVar(lb, lb, ub));
+        _solverMapping->setSolverId(varNode, _solver->makeIntVar(lb, lb, ub));
       }
-      EXPECT_NE(varId(varNodeId), propagation::NULL_ID);
+      EXPECT_NE(varId(varNode), propagation::NULL_ID);
     }
     expectInputsRegistered(invNode());
     if (solverWasClosed) {
@@ -331,14 +317,15 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   [[nodiscard]] propagation::VarViewId solverVarId(
-      const VarNodeId varNodeId) const {
-    return _solverMapping == nullptr ? propagation::VAR_VIEW_NULL_ID
-                                     : _solverMapping->solverId(varNodeId);
+      const VarNode& varNode) const {
+    return _solverMapping == nullptr
+               ? propagation::VAR_VIEW_NULL_ID
+               : _solverMapping->solverId(varNode.mappingId());
   }
 
   void expectInputsRegistered(const InvariantNode& invNode) {
     std::vector<bool> registered(_solver->numVars(), false);
-    for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
+    for (const auto& varNodeId : invNode.staticInputVarNodes()) {
       EXPECT_TRUE(solverVarId(varNodeId).isVar());
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       if (!varNode(varNodeId).isFixed()) {
@@ -346,7 +333,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       }
       registered.at(size_t{solverVarId(varNodeId)}) = true;
     }
-    for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
+    for (const auto& varNodeId : invNode.dynamicInputVarNodes()) {
       EXPECT_TRUE(solverVarId(varNodeId).isVar());
       EXPECT_NE(solverVarId(varNodeId), propagation::NULL_ID);
       if (!varNode(varNodeId).isFixed()) {
@@ -360,7 +347,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   void expectInputTo(const InvariantNode& invNode) const {
-    for (const auto& varNodeId : invNode.staticInputVarNodeIds()) {
+    for (const auto& varNodeId : invNode.staticInputVarNodes()) {
       bool found = false;
       for (const auto& invNodeId :
            _invariantGraph->varNode(varNodeId).staticInputTo()) {
@@ -371,7 +358,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
       }
       EXPECT_TRUE(found);
     }
-    for (const auto& varNodeId : invNode.dynamicInputVarNodeIds()) {
+    for (const auto& varNodeId : invNode.dynamicInputVarNodes()) {
       bool found = false;
       for (const auto& invNodeId :
            _invariantGraph->varNode(varNodeId).dynamicInputTo()) {
@@ -385,7 +372,7 @@ class NodeTestBase : public ::testing::TestWithParam<ParamData> {
   }
 
   void expectOutputOf(const InvariantNode& invNode) const {
-    for (const auto& varNodeId : invNode.outputVarNodeIds()) {
+    for (const auto& varNodeId : invNode.outputVarNodes()) {
       EXPECT_EQ(_invariantGraph->varNode(varNodeId).outputOf(), invNode.id());
     }
   }

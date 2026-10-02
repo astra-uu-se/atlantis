@@ -14,20 +14,27 @@ namespace atlantis::invariantgraph {
 class SolverMapping;
 class InvariantGraph;
 
-std::vector<VarNodeId>&& append(std::vector<VarNodeId>&&, VarNodeId, VarNodeId);
+std::vector<std::shared_ptr<VarNode>>&& append(
+    std::vector<std::shared_ptr<VarNode>>&&, std::shared_ptr<VarNode>&,
+    std::shared_ptr<VarNode>&);
 
-std::vector<VarNodeId>&& append(std::vector<VarNodeId>&&, VarNodeId);
+std::vector<std::shared_ptr<VarNode>>&& append(
+    std::vector<std::shared_ptr<VarNode>>&&, std::shared_ptr<VarNode>&);
 
-std::vector<VarNodeId> concat(const std::vector<VarNodeId>&,
-                              const std::vector<VarNodeId>&);
+std::vector<std::shared_ptr<VarNode>> concat(
+    const std::vector<std::shared_ptr<VarNode>>&,
+    const std::vector<std::shared_ptr<VarNode>>&);
 
-SortedUniqueVector duplicateVarNodeIndices(const std::vector<VarNodeId>&);
+SortedUniqueVector duplicateVarNodeIndices(
+    const std::vector<std::shared_ptr<VarNode>>&);
 
-std::vector<VarNodeId> pruneAllDifferentFree(
-    InvariantGraph&, const std::vector<VarNodeId>& staticInputVarNodeIds);
+std::vector<std::shared_ptr<VarNode>> pruneAllDifferentFree(
+    InvariantGraph&,
+    const std::vector<std::shared_ptr<VarNode>>& staticInputVarNodes);
 
-std::vector<VarNodeId> pruneAllDifferentFixed(
-    InvariantGraph&, const std::vector<VarNodeId>& staticInputVarNodeIds);
+std::vector<std::shared_ptr<VarNode>> pruneAllDifferentFixed(
+    InvariantGraph&,
+    const std::vector<std::shared_ptr<VarNode>>& staticInputVarNodes);
 
 std::vector<Int> toIntVector(const std::vector<bool>& argument);
 
@@ -36,34 +43,40 @@ std::vector<Int> toIntVector(const std::vector<bool>& argument);
  */
 bool removeFirstOccurrence(std::vector<size_t>&, size_t);
 
-std::vector<ConstraintVarId> toConstraintVarIds(const InvariantGraph&,
-                                                const std::vector<VarNodeId>&);
+std::vector<ConstraintVarId> toConstraintVarIds(
+    const InvariantGraph&, const std::vector<std::shared_ptr<VarNode>>&);
 
 void postAllEqualOnReplacedVars(
     InvariantGraph& invariantGraph,
-    std::vector<std::pair<VarNodeId, VarNodeId>>&& replacedVarNodeIds);
+    std::vector<std::pair<std::shared_ptr<VarNode>, std::shared_ptr<VarNode>>>&&
+        replacedVarNodes);
 
-[[nodiscard]] std::pair<std::vector<VarNodeId>, SortedUniqueVector>
+[[nodiscard]] std::pair<std::vector<std::shared_ptr<VarNode>>,
+                        SortedUniqueVector>
 gccUpdateState(const InvariantGraph& invariantGraph,
-               const std::vector<VarNodeId>& inputs,
+               const std::vector<std::shared_ptr<VarNode>>& inputs,
                const std::vector<Int>& cover, std::vector<Int>& offsets);
 
-[[nodiscard]] std::pair<std::vector<VarNodeId>, SortedUniqueVector>
+[[nodiscard]] std::pair<std::vector<std::shared_ptr<VarNode>>,
+                        SortedUniqueVector>
 gccUpdateState(const InvariantGraph& invariantGraph,
-               const std::vector<VarNodeId>& inputs,
+               const std::vector<std::shared_ptr<VarNode>>& inputs,
                const std::vector<Int>& cover, std::vector<Int>& lowerBounds,
                std::vector<Int>& upperBounds);
 
-[[nodiscard]] bool gccIsClosed(const InvariantGraph& invariantGraph,
-                               const std::vector<VarNodeId>& inputs,
-                               const std::vector<Int>& cover);
-
-[[nodiscard]] std::vector<std::pair<Int, Int>> gccBounds(
-    const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
+[[nodiscard]] bool gccIsClosed(
+    const InvariantGraph& invariantGraph,
+    const std::vector<std::shared_ptr<VarNode>>& inputs,
     const std::vector<Int>& cover);
 
 [[nodiscard]] std::vector<std::pair<Int, Int>> gccBounds(
-    const InvariantGraph& invariantGraph, const std::vector<VarNodeId>& inputs,
+    const InvariantGraph& invariantGraph,
+    const std::vector<std::shared_ptr<VarNode>>& inputs,
+    const std::vector<Int>& cover);
+
+[[nodiscard]] std::vector<std::pair<Int, Int>> gccBounds(
+    const InvariantGraph& invariantGraph,
+    const std::vector<std::shared_ptr<VarNode>>& inputs,
     const std::vector<Int>& cover, const std::vector<Int>& offsets);
 
 propagation::VarViewId makeSolverConstIntRelation(
@@ -149,9 +162,9 @@ inline std::string relToAcronym(const RelationType relType) {
 Int maxOverlaps(const std::vector<std::pair<Int, Int>>& intervals);
 
 Int linearLb(const InvariantGraph&, const std::vector<Int>& coeffs,
-             const std::vector<VarNodeId>& vars, Int offset = 0);
+             const std::vector<std::shared_ptr<VarNode>>& vars, Int offset = 0);
 
 Int linearUb(const InvariantGraph&, const std::vector<Int>& coeffs,
-             const std::vector<VarNodeId>& vars, Int offset = 0);
+             const std::vector<std::shared_ptr<VarNode>>& vars, Int offset = 0);
 
 }  // namespace atlantis::invariantgraph

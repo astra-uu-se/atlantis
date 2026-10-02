@@ -89,7 +89,8 @@ class FznBackend {
   [[nodiscard]] std::shared_ptr<const invariantgraph::FznInvariantGraph>
   invariantGraph() const;
 
-  [[nodiscard]] std::vector<invariantgraph::VarNodeId> outputVarNodeIds() const;
+  [[nodiscard]] std::vector<std::shared_ptr<invariantgraph::VarNode>>
+  outputVarNodes() const;
 
   [[nodiscard]] fznparser::ProblemType problemType() const;
 

@@ -19,11 +19,11 @@ TEST(InvariantGraphTest, apply_result) {
   InvariantGraph invariantGraph;
   propagation::Solver solver;
 
-  const VarNodeId a = invariantGraph.retrieveIntVarNode(
+  std::shared_ptr<VarNode> a = invariantGraph.retrieveIntVarNode(
       std::make_shared<SearchDomain>(0, 10), "a");
-  const VarNodeId b = invariantGraph.retrieveIntVarNode(
+  std::shared_ptr<VarNode> b = invariantGraph.retrieveIntVarNode(
       std::make_shared<SearchDomain>(0, 10), "b");
-  const VarNodeId output = invariantGraph.retrieveIntVarNode(
+  std::shared_ptr<VarNode> output = invariantGraph.retrieveIntVarNode(
       std::make_shared<SearchDomain>(0, 10), "output");
 
   EXPECT_TRUE(invariantGraph.containsVarNode("a"));
@@ -35,7 +35,7 @@ TEST(InvariantGraphTest, apply_result) {
       std::make_shared<IntPlusNode>(invariantGraph, a, b, output));
 
   invariantGraph.addImplicitConstraintNode(std::make_shared<InvariantGraphRoot>(
-      invariantGraph, std::vector<VarNodeId>{a, b}));
+      invariantGraph, std::vector<std::shared_ptr<VarNode>>{a, b}));
 
   invariantGraph.close();
   const auto solverMapping = invariantGraph.construct(solver);
@@ -49,20 +49,20 @@ TEST(InvariantGraphTest, ApplyGraph) {
   InvariantGraph invariantGraph;
   invariantGraph.open();
 
-  const VarNodeId a1 =
+  std::shared_ptr<VarNode> a1 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId a2 =
+  std::shared_ptr<VarNode> a2 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId b1 =
+  std::shared_ptr<VarNode> b1 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId b2 =
+  std::shared_ptr<VarNode> b2 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
 
-  const VarNodeId output1 =
+  std::shared_ptr<VarNode> output1 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 20));
-  const VarNodeId output2 =
+  std::shared_ptr<VarNode> output2 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 20));
-  const VarNodeId output3 =
+  std::shared_ptr<VarNode> output3 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 40));
   invariantGraph.varNode(output3).setIsOutputVar(true);
 
@@ -104,15 +104,15 @@ TEST(InvariantGraphTest, SplitSimpleGraph) {
   InvariantGraph invariantGraph;
   invariantGraph.open();
 
-  const VarNodeId a =
+  std::shared_ptr<VarNode> a =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId b =
+  std::shared_ptr<VarNode> b =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId c =
+  std::shared_ptr<VarNode> c =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId d =
+  std::shared_ptr<VarNode> d =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId output =
+  std::shared_ptr<VarNode> output =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 20));
   invariantGraph.varNode(output).setIsOutputVar(true);
 
@@ -159,12 +159,12 @@ TEST(InvariantGraphTest, SplitGraph) {
   const size_t numInputs = 5;
   const Int lb = 0;
   const Int ub = 10;
-  const VarNodeId output = invariantGraph.retrieveIntVarNode(
+  std::shared_ptr<VarNode> output = invariantGraph.retrieveIntVarNode(
       std::make_shared<SearchDomain>(lb * numInputs, ub * numInputs));
   invariantGraph.varNode(output).setIsOutputVar(true);
 
-  std::vector<std::vector<VarNodeId>> varNodeIdMatrix(numInvariants,
-                                                      std::vector<VarNodeId>{});
+  std::vector<std::vector<std::shared_ptr<VarNode>>> varNodeIdMatrix(
+      numInvariants, std::vector<std::shared_ptr<VarNode>>{});
   for (size_t i = 0; i < numInvariants; ++i) {
     for (size_t j = 0; j < numInputs; ++j) {
       const std::string identifier(std::to_string(i) + "_" + std::to_string(j));
@@ -175,7 +175,7 @@ TEST(InvariantGraphTest, SplitGraph) {
 
   const std::vector<Int> coeffs(numInputs, 1);
   for (const auto& identifierArray : varNodeIdMatrix) {
-    std::vector<VarNodeId> inputVarNodeIds(identifierArray);
+    std::vector<std::shared_ptr<VarNode>> inputVarNodeIds(identifierArray);
     invariantGraph.addInvariantNode(std::make_shared<IntLinearNode>(
         invariantGraph, std::vector<Int>{coeffs}, std::move(inputVarNodeIds),
         output));
@@ -212,13 +212,13 @@ TEST(InvariantGraphTest, BreakSimpleCycle) {
   InvariantGraph invariantGraph;
   invariantGraph.open();
 
-  const VarNodeId x1 =
+  std::shared_ptr<VarNode> x1 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId x2 =
+  std::shared_ptr<VarNode> x2 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId output1 = invariantGraph.retrieveIntVarNode(
+  std::shared_ptr<VarNode> output1 = invariantGraph.retrieveIntVarNode(
       std::make_shared<SearchDomain>(0, 40), DomainType::DOM_NONE);
-  const VarNodeId output2 = invariantGraph.retrieveIntVarNode(
+  std::shared_ptr<VarNode> output2 = invariantGraph.retrieveIntVarNode(
       std::make_shared<SearchDomain>(0, 40), DomainType::DOM_NONE);
 
   invariantGraph.varNode(output1).setIsOutputVar(true);
@@ -263,27 +263,29 @@ TEST(InvariantGraphTest, BreakElementIndexCycle) {
   InvariantGraph invariantGraph;
   invariantGraph.open();
 
-  const VarNodeId x11 =
+  std::shared_ptr<VarNode> x11 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 1));
-  const VarNodeId x12 =
+  std::shared_ptr<VarNode> x12 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 1));
-  const VarNodeId x21 =
+  std::shared_ptr<VarNode> x21 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 1));
-  const VarNodeId x22 =
+  std::shared_ptr<VarNode> x22 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 1));
-  const VarNodeId output1 =
+  std::shared_ptr<VarNode> output1 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 1));
-  const VarNodeId output2 =
+  std::shared_ptr<VarNode> output2 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 1));
 
   invariantGraph.varNode(output1).setIsOutputVar(true);
   invariantGraph.varNode(output2).setIsOutputVar(true);
 
   invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
-      invariantGraph, output2, std::vector<VarNodeId>{x11, x12}, output1, 0));
+      invariantGraph, output2, std::vector<std::shared_ptr<VarNode>>{x11, x12},
+      output1, 0));
 
   invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
-      invariantGraph, output1, std::vector<VarNodeId>{x21, x22}, output2, 0));
+      invariantGraph, output1, std::vector<std::shared_ptr<VarNode>>{x21, x22},
+      output2, 0));
 
   invariantGraph.close();
   propagation::Solver solver;
@@ -305,8 +307,9 @@ TEST(InvariantGraphTest, FixedBoolDomainMismatchCreatesViolationView) {
   SolverMapping mapping;
   solver.open();
 
-  const VarNodeId fixedTrue = invariantGraph.retrieveBoolVarNode(true, true);
-  invariantGraph.varNode(fixedTrue).markOutputTo(InvariantNodeId{0, false});
+  const std::shared_ptr<VarNode>& fixedTrue =
+      invariantGraph.retrieveBoolVarNode(true, true);
+  fixedTrue->markOutputTo(invariantGraph.root());
 
   mapping.setSolverId(fixedTrue, solver.makeIntVar(1, 1, 1));
 
@@ -337,27 +340,29 @@ TEST(InvariantGraphTest, AllowDynamicCycle) {
   InvariantGraph invariantGraph;
   invariantGraph.open();
 
-  const VarNodeId idx1 =
+  std::shared_ptr<VarNode> idx1 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2));
-  const VarNodeId x1 =
+  std::shared_ptr<VarNode> x1 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId idx2 =
+  std::shared_ptr<VarNode> idx2 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(1, 2));
-  const VarNodeId x2 =
+  std::shared_ptr<VarNode> x2 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId output1 =
+  std::shared_ptr<VarNode> output1 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
-  const VarNodeId output2 =
+  std::shared_ptr<VarNode> output2 =
       invariantGraph.retrieveIntVarNode(std::make_shared<SearchDomain>(0, 10));
 
   invariantGraph.varNode(output1).setIsOutputVar(true);
   invariantGraph.varNode(output2).setIsOutputVar(true);
 
   invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
-      invariantGraph, idx1, std::vector<VarNodeId>{x1, output2}, output1, 1));
+      invariantGraph, idx1, std::vector<std::shared_ptr<VarNode>>{x1, output2},
+      output1, 1));
 
   invariantGraph.addInvariantNode(std::make_shared<ArrayVarElementNode>(
-      invariantGraph, idx2, std::vector<VarNodeId>{output1, x2}, output2, 1));
+      invariantGraph, idx2, std::vector<std::shared_ptr<VarNode>>{output1, x2},
+      output2, 1));
 
   invariantGraph.close();
   propagation::Solver solver;

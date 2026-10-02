@@ -10,24 +10,23 @@ class ArrayVarElement2dNode : public InvariantNode {
   Int _colOffset;
 
  public:
-  ArrayVarElement2dNode(InvariantGraph& graph, VarNodeId rowIdx,
-                        VarNodeId colIdx,
-                        std::vector<VarNodeId>&& flatVarMatrix,
-                        VarNodeId output, size_t numRows, Int rowOffset,
+  ArrayVarElement2dNode(InvariantGraph& graph, VarNode& rowIdx, VarNode& colIdx,
+                        std::vector<std::shared_ptr<VarNode>>&& flatVarMatrix,
+                        VarNode& output, size_t numRows, Int rowOffset,
                         Int colOffset);
 
-  ArrayVarElement2dNode(InvariantGraph& graph, VarNodeId rowIdx,
-                        VarNodeId colIdx,
-                        std::vector<std::vector<VarNodeId>>&& varMatrix,
-                        VarNodeId output, Int rowOffset, Int colOffset);
+  ArrayVarElement2dNode(
+      InvariantGraph& graph, VarNode& rowIdx, VarNode& colIdx,
+      std::vector<std::vector<std::shared_ptr<VarNode>>>&& varMatrix,
+      VarNode& output, Int rowOffset, Int colOffset);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
   void updateState() override;
 
-  bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  bool constrainsOutput(VarNode& outputVarNode) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 
@@ -38,20 +37,20 @@ class ArrayVarElement2dNode : public InvariantNode {
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] VarNodeId at(Int row, Int col, bool useOffset = true) const;
+  [[nodiscard]] VarNode& at(Int row, Int col, bool useOffset = true) const;
 
   [[nodiscard]] size_t index(Int row, Int col, bool useOffset = true) const;
 
-  [[nodiscard]] VarNodeId rowIdx() const noexcept {
-    return staticInputVarNodeIds().front();
+  [[nodiscard]] VarNode& rowIdx() const noexcept {
+    return *staticInputVarNodes().front();
   }
 
-  [[nodiscard]] VarNodeId colIdx() const noexcept {
-    return staticInputVarNodeIds().back();
+  [[nodiscard]] VarNode& colIdx() const noexcept {
+    return *staticInputVarNodes().back();
   }
 
   [[nodiscard]] size_t numCols() const noexcept {
-    return dynamicInputVarNodeIds().size() / _numRows;
+    return dynamicInputVarNodes().size() / _numRows;
   }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;

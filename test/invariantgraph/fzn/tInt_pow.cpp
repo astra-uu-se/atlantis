@@ -16,7 +16,7 @@ using namespace atlantis::invariantgraph::fzn;
 
 class int_powTest : public ::testing::Test {
  public:
-  std::vector<VarNodeId> inputVarNodeIds{};
+  std::vector<std::shared_ptr<VarNode>> inputVarNodeIds{};
   Int numInputs = 3;
 
   void SetUp() override {}

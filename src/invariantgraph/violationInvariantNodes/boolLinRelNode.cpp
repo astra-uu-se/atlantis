@@ -41,16 +41,16 @@ void BoolLinRelNode::updateRelType() {
 }
 
 BoolLinRelNode::BoolLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                               std::vector<VarNodeId>&& vars,
+                               std::vector<std::shared_ptr<VarNode>>&& vars,
                                const RelationType relType, const Int rhs,
-                               const VarNodeId reified)
+                               VarNode& reified)
     : ViolationInvariantNode(graph, std::move(vars), reified),
       _relType(relType),
       _coeffs(std::move(coeffs)),
       _rhs(rhs) {}
 
 BoolLinRelNode::BoolLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                               std::vector<VarNodeId>&& vars,
+                               std::vector<std::shared_ptr<VarNode>>&& vars,
                                const RelationType relType, const Int rhs,
                                const bool shouldHold)
     : ViolationInvariantNode(graph, std::move(vars), shouldHold),
@@ -58,13 +58,15 @@ BoolLinRelNode::BoolLinRelNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
       _coeffs(std::move(coeffs)),
       _rhs(rhs) {}
 
-void BoolLinRelNode::init(const InvariantNodeId id) {
-  ViolationInvariantNode::init(id);
+void BoolLinRelNode::init() {
+  ViolationInvariantNode::init();
   updateRelType();
-  assert(!isReified() || !varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(std::ranges::none_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) { return varNodeConst(vId).isIntVar(); }));
+  assert(!isReified() || !varNodeConst(reifiedViolationNode()).isIntVar());
+  assert(std::ranges::none_of(staticInputVarNodes().begin(),
+                              staticInputVarNodes().end(),
+                              [&](const std::shared_ptr<VarNode>& vId) {
+                                return varNodeConst(vId).isIntVar();
+                              }));
 }
 
 void BoolLinRelNode::postConstraint() {
@@ -72,12 +74,12 @@ void BoolLinRelNode::postConstraint() {
   if (isReified()) {
     constraintSolver().bool_lin_reif(
         _coeffs,
-        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
         _relType, _rhs, reifiedVarNodeConst().constraintVarId());
   } else {
     constraintSolver().bool_lin(
         _coeffs,
-        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
         _relType, _rhs, shouldHold());
   }
 }
@@ -87,10 +89,10 @@ void BoolLinRelNode::updateState() {
   updateRelType();
 
   // Remove duplicates:
-  for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
-    for (Int j = static_cast<Int>(staticInputVarNodeIds().size()) - 1; j > i;
+  for (Int i = 0; i < static_cast<Int>(staticInputVarNodes().size()); ++i) {
+    for (Int j = static_cast<Int>(staticInputVarNodes().size()) - 1; j > i;
          --j) {
-      if (staticInputVarNodeIds().at(i) == staticInputVarNodeIds().at(j)) {
+      if (staticInputVarNodes().at(i) == staticInputVarNodes().at(j)) {
         _coeffs.at(i) += _coeffs.at(j);
         _coeffs.erase(_coeffs.begin() + j);
         eraseStaticInputVarNode(j);
@@ -101,9 +103,9 @@ void BoolLinRelNode::updateState() {
   // Remove fixed inputs and inputs with a coefficient of 0 as well as update
   // _offset:
   std::vector<Int> indicesToRemove;
-  indicesToRemove.reserve(staticInputVarNodeIds().size());
+  indicesToRemove.reserve(staticInputVarNodes().size());
 
-  for (Int i = 0; i < static_cast<Int>(staticInputVarNodeIds().size()); ++i) {
+  for (Int i = 0; i < static_cast<Int>(staticInputVarNodes().size()); ++i) {
     const auto& inputNode = staticInputVarNodeConst(i);
     if (inputNode.isFixed() || _coeffs.at(i) == 0) {
       _rhs -= inputNode.inDomain(bool{true}) ? _coeffs.at(i) : 0;
@@ -112,13 +114,13 @@ void BoolLinRelNode::updateState() {
   }
 
   for (Int i = static_cast<Int>(indicesToRemove.size()) - 1; i >= 0; --i) {
-    removeStaticInputVarNode(staticInputVarNodeIds().at(indicesToRemove.at(i)));
+    removeStaticInputVarNode(staticInputVarNodes().at(indicesToRemove.at(i)));
     _coeffs.erase(_coeffs.begin() + indicesToRemove.at(i));
   }
 
   Int lb = 0;
   Int ub = 0;
-  for (size_t i = 0; i < staticInputVarNodeIds().size(); ++i) {
+  for (size_t i = 0; i < staticInputVarNodes().size(); ++i) {
     lb += std::min<Int>(0, _coeffs.at(i));
     ub += std::max<Int>(0, _coeffs.at(i));
   }
@@ -177,7 +179,7 @@ std::pair<size_t, size_t> BoolLinRelNode::implicitRank() const {
   return {_relType == RelationType::REL_TYPE_EQ
               ? rank::IMPLICIT_RANK_BOOL_LIN_EQ
               : rank::IMPLICIT_RANK_BOOL_LIN_LE,
-          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
+          staticInputVarNodes().size() + outputVarNodes().size()};
 }
 
 bool BoolLinRelNode::canBeMadeImplicit() const {
@@ -189,7 +191,7 @@ bool BoolLinRelNode::canBeMadeImplicit() const {
     return false;
   }
   const bool allSourceVars = std::ranges::all_of(
-      staticInputVarNodeIds(),
+      staticInputVarNodes(),
       [&](const auto& id) { return varNodeConst(id).definingNodes().empty(); });
   if (_relType == RelationType::REL_TYPE_EQ) {
     return allSourceVars &&
@@ -207,15 +209,16 @@ bool BoolLinRelNode::makeImplicit() {
     const auto amount = static_cast<size_t>(_rhs);
     invariantGraph().addImplicitConstraintNode(
         std::make_shared<CountImplicitNode>(
-            invariantGraph(), std::vector<VarNodeId>(staticInputVarNodeIds()),
-            0, amount));
+            invariantGraph(),
+            std::vector<std::shared_ptr<VarNode>>(staticInputVarNodes()), 0,
+            amount));
     return true;
   }
   assert(_relType == RelationType::REL_TYPE_LE);
   invariantGraph().addImplicitConstraintNode(
       std::make_shared<BoolLinLeImplicitNode>(
           invariantGraph(), std::move(_coeffs),
-          std::vector<VarNodeId>{staticInputVarNodeIds()}, _rhs));
+          std::vector<std::shared_ptr<VarNode>>{staticInputVarNodes()}, _rhs));
   return true;
 }
 
@@ -229,11 +232,11 @@ void BoolLinRelNode::registerOutputVars(propagation::SolverBase& solver,
                                    _relType, _rhs, shouldHold()),
         mapping);
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void BoolLinRelNode::registerNode(propagation::SolverBase& solver,
@@ -246,8 +249,8 @@ void BoolLinRelNode::registerNode(propagation::SolverBase& solver,
 
   std::vector<propagation::VarViewId> solverVars;
   std::ranges::transform(
-      staticInputVarNodeIds(), std::back_inserter(solverVars),
-      [&](const VarNodeId varNodeId) {
+      staticInputVarNodes(), std::back_inserter(solverVars),
+      [&](const std::shared_ptr<VarNode>& varNodeId) {
         assert(mapping.solverId(varNodeId) != propagation::NULL_ID);
         return mapping.solverId(varNodeId);
       });

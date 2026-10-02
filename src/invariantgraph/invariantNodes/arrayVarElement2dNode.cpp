@@ -15,9 +15,9 @@
 
 namespace atlantis::invariantgraph {
 
-static std::vector<VarNodeId> flatten(
-    const std::vector<std::vector<VarNodeId>>& varMatrix) {
-  std::vector<VarNodeId> flatVarMatrix;
+static std::vector<std::shared_ptr<VarNode>> flatten(
+    const std::vector<std::vector<std::shared_ptr<VarNode>>>& varMatrix) {
+  std::vector<std::shared_ptr<VarNode>> flatVarMatrix;
   flatVarMatrix.reserve(varMatrix.size() * varMatrix.front().size());
   for (const auto& varVector : varMatrix) {
     flatVarMatrix.insert(flatVarMatrix.end(), varVector.begin(),
@@ -27,8 +27,8 @@ static std::vector<VarNodeId> flatten(
 }
 
 ArrayVarElement2dNode::ArrayVarElement2dNode(
-    InvariantGraph& graph, const VarNodeId rowIdx, const VarNodeId colIdx,
-    std::vector<VarNodeId>&& flatVarMatrix, const VarNodeId output,
+    InvariantGraph& graph, VarNode& rowIdx, VarNode& colIdx,
+    std::vector<std::shared_ptr<VarNode>>&& flatVarMatrix, VarNode& output,
     const size_t numRows, const Int rowOffset, const Int colOffset)
     : InvariantNode(graph, {output}, {rowIdx, colIdx},
                     std::move(flatVarMatrix)),
@@ -37,22 +37,23 @@ ArrayVarElement2dNode::ArrayVarElement2dNode(
       _colOffset(colOffset) {}
 
 ArrayVarElement2dNode::ArrayVarElement2dNode(
-    InvariantGraph& graph, const VarNodeId rowIdx, const VarNodeId colIdx,
-    std::vector<std::vector<VarNodeId>>&& varMatrix, const VarNodeId output,
-    const Int rowOffset, const Int colOffset)
+    InvariantGraph& graph, VarNode& rowIdx, VarNode& colIdx,
+    std::vector<std::vector<std::shared_ptr<VarNode>>>&& varMatrix,
+    VarNode& output, const Int rowOffset, const Int colOffset)
     : ArrayVarElement2dNode(graph, rowIdx, colIdx, flatten(varMatrix), output,
                             varMatrix.size(), rowOffset, colOffset) {}
 
-void ArrayVarElement2dNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
-  assert(std::ranges::all_of(
-      staticInputVarNodeIds(),
-      [&](const VarNodeId node) { return varNodeConst(node).isIntVar(); }));
-  assert(
-      std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId node) {
-        return outputVarNodeConst(0).isIntVar() ==
-               varNodeConst(node).isIntVar();
-      }));
+void ArrayVarElement2dNode::init() {
+  InvariantNode::init();
+  assert(std::ranges::all_of(staticInputVarNodes(),
+                             [&](const std::shared_ptr<VarNode>& node) {
+                               return varNodeConst(node).isIntVar();
+                             }));
+  assert(std::ranges::all_of(dynamicInputVarNodes(),
+                             [&](const std::shared_ptr<VarNode>& node) {
+                               return outputVarNodeConst(0).isIntVar() ==
+                                      varNodeConst(node).isIntVar();
+                             }));
 }
 
 size_t ArrayVarElement2dNode::index(const Int row, const Int col,
@@ -72,9 +73,9 @@ size_t ArrayVarElement2dNode::index(const Int row, const Int col,
   return row * numCols() + col;
 }
 
-VarNodeId ArrayVarElement2dNode::at(const Int row, const Int col,
-                                    const bool useOffset) const {
-  return dynamicInputVarNodeIds()[index(row, col, useOffset)];
+VarNode& ArrayVarElement2dNode::at(const Int row, const Int col,
+                                   const bool useOffset) const {
+  return dynamicInputVarNodes()[index(row, col, useOffset)];
 }
 
 void ArrayVarElement2dNode::postConstraint() {
@@ -148,7 +149,7 @@ void ArrayVarElement2dNode::updateState() {
     removeDynamicInputAtIndex(indicesToRemove[i]);
   }
 
-  assert(!dynamicInputVarNodeIds().empty());
+  assert(!dynamicInputVarNodes().empty());
 
   _numRows = rowUb - rowLb + 1;
   _rowOffset = rowLb;
@@ -159,7 +160,7 @@ void ArrayVarElement2dNode::updateState() {
     return;
   }
 
-  std::vector<bool> indexIsSupported(dynamicInputVarNodeIds().size(), false);
+  std::vector<bool> indexIsSupported(dynamicInputVarNodes().size(), false);
 
   for (auto rowIter = varNodeConst(rowIdx()).constDomain()->begin();
        rowIter != varNodeConst(rowIdx()).constDomain()->end(); ++rowIter) {
@@ -168,30 +169,30 @@ void ArrayVarElement2dNode::updateState() {
       indexIsSupported[index(*rowIter, *colIter, true)] = true;
     }
   }
-  VarNodeId prevVarNodeId{NULL_NODE_ID};
-  for (const VarNodeId vId : dynamicInputVarNodeIds()) {
-    if (vId != NULL_NODE_ID) {
-      prevVarNodeId = vId;
+  std::shared_ptr<VarNode> prevVarNode{nullptr};
+  for (std::shared_ptr<VarNode>& vId : dynamicInputVarNodes()) {
+    if (vId != nullptr) {
+      prevVarNode = vId;
       break;
     }
   }
-  assert(prevVarNodeId != NULL_NODE_ID);
-  for (size_t i = 1; i < dynamicInputVarNodeIds().size(); ++i) {
+  assert(prevVarNode != nullptr);
+  for (size_t i = 1; i < dynamicInputVarNodes().size(); ++i) {
     if (indexIsSupported[i]) {
-      prevVarNodeId = dynamicInputVarNodeIds()[i];
+      prevVarNode = dynamicInputVarNodes()[i];
       continue;
     }
-    for (size_t j = i + 1; j < dynamicInputVarNodeIds().size(); ++j) {
+    for (size_t j = i + 1; j < dynamicInputVarNodes().size(); ++j) {
       if (!indexIsSupported[j] &&
-          dynamicInputVarNodeIds()[i] == dynamicInputVarNodeIds()[j]) {
+          dynamicInputVarNodes()[i] == dynamicInputVarNodes()[j]) {
         indexIsSupported[j] = true;
       }
     }
-    replaceDynamicInputVarNode(dynamicInputVarNodeIds()[i], prevVarNodeId);
+    replaceDynamicInputVarNode(dynamicInputVarNodes()[i], prevVarNode);
   }
 }
 
-bool ArrayVarElement2dNode::constrainsOutput(VarNodeId) const {
+bool ArrayVarElement2dNode::constrainsOutput(VarNode&) const {
   std::vector<Int> values;
   values.reserve(outputVarNodeConst(0).constDomain()->size());
   for (auto rowIter = varNodeConst(rowIdx()).constDomain()->begin();
@@ -227,12 +228,12 @@ bool ArrayVarElement2dNode::constrainsOutput(VarNodeId) const {
 
 void ArrayVarElement2dNode::registerOutputVars(propagation::SolverBase& solver,
                                                SolverMapping& mapping) const {
-  makeSolverVar(outputVarNodeIds().front(), solver, mapping);
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  makeSolverVar(outputVarNodes().front(), solver, mapping);
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 bool ArrayVarElement2dNode::canBeReplaced() const {
@@ -243,14 +244,15 @@ bool ArrayVarElement2dNode::canBeReplaced() const {
     return true;
   }
   const bool allFixed = std::ranges::all_of(
-      dynamicInputVarNodeIds(),
-      [&](const VarNodeId vId) { return varNodeConst(vId).isFixed(); });
+      dynamicInputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return varNodeConst(vId).isFixed();
+      });
   if (allFixed) {
     return true;
   }
-  const bool allSameVar =
-      std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId vId) {
-        return vId == dynamicInputVarNodeIds().front();
+  const bool allSameVar = std::ranges::all_of(
+      dynamicInputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return vId == dynamicInputVarNodes().front();
       });
   if (allSameVar) {
     return true;
@@ -267,20 +269,20 @@ bool ArrayVarElement2dNode::replace() {
   if (rowNodeIsFixed && colNodeIsFixed) {
     const size_t i = index(varNodeConst(rowIdx()).lowerBound(),
                            varNodeConst(colIdx()).lowerBound(), true);
-    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                    dynamicInputVarNodeIds()[i]);
+    invariantGraph().replaceVarNode(outputVarNodes().front(),
+                                    dynamicInputVarNodes()[i]);
     return true;
   }
-  const bool allSameVar =
-      std::ranges::all_of(dynamicInputVarNodeIds(), [&](const VarNodeId vId) {
-        return vId == dynamicInputVarNodeIds().front();
+  const bool allSameVar = std::ranges::all_of(
+      dynamicInputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return vId == dynamicInputVarNodes().front();
       });
   if (allSameVar) {
     const size_t i = index(varNodeConst(rowIdx()).lowerBound(),
                            varNodeConst(colIdx()).lowerBound(), true);
-    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                    dynamicInputVarNodeIds()[i]);
-    for (const VarNodeId vId : std::array{rowIdx(), colIdx()}) {
+    invariantGraph().replaceVarNode(outputVarNodes().front(),
+                                    dynamicInputVarNodes()[i]);
+    for (VarNode& vId : std::array{rowIdx(), colIdx()}) {
       if (!varNodeConst(vId).isFixed()) {
         varNode(vId).tightenDomainType(
             varNodeConst(vId).constDomain()->isInterval()
@@ -291,12 +293,13 @@ bool ArrayVarElement2dNode::replace() {
     return true;
   }
   const bool allFixed = std::ranges::all_of(
-      dynamicInputVarNodeIds(),
-      [&](const VarNodeId vId) { return varNodeConst(vId).isFixed(); });
+      dynamicInputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return varNodeConst(vId).isFixed();
+      });
   if (rowNodeIsFixed) {
     if (allFixed) {
       std::vector<Int> colPars;
-      assert(dynamicInputVarNodeIds().size() % _numRows == 0);
+      assert(dynamicInputVarNodes().size() % _numRows == 0);
       colPars.reserve(numCols());
       for (size_t c = 0; c < numCols(); ++c) {
         colPars.emplace_back(
@@ -304,18 +307,18 @@ bool ArrayVarElement2dNode::replace() {
       }
       invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
           invariantGraph(), std::move(colPars), colIdx(),
-          outputVarNodeIds().front(), _colOffset));
+          outputVarNodes().front(), _colOffset));
       return true;
     }
-    std::vector<VarNodeId> colVars;
-    assert(dynamicInputVarNodeIds().size() % _numRows == 0);
+    std::vector<std::shared_ptr<VarNode>> colVars;
+    assert(dynamicInputVarNodes().size() % _numRows == 0);
     colVars.reserve(numCols());
     for (size_t c = 0; c < numCols(); ++c) {
       colVars.emplace_back(at(0, static_cast<Int>(c), false));
     }
     invariantGraph().addInvariantNode(std::make_shared<ArrayVarElementNode>(
         invariantGraph(), colIdx(), std::move(colVars),
-        outputVarNodeIds().front(), _colOffset));
+        outputVarNodes().front(), _colOffset));
     return true;
   }
   if (colNodeIsFixed) {
@@ -328,17 +331,17 @@ bool ArrayVarElement2dNode::replace() {
       }
       invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
           invariantGraph(), std::move(rowPars), rowIdx(),
-          outputVarNodeIds().front(), _rowOffset));
+          outputVarNodes().front(), _rowOffset));
       return true;
     }
-    std::vector<VarNodeId> rowVars;
+    std::vector<std::shared_ptr<VarNode>> rowVars;
     rowVars.reserve(_numRows);
     for (size_t r = 0; r < _numRows; ++r) {
       rowVars.emplace_back(at(static_cast<Int>(r), 0, false));
     }
     invariantGraph().addInvariantNode(std::make_shared<ArrayVarElementNode>(
         invariantGraph(), rowIdx(), std::move(rowVars),
-        outputVarNodeIds().front(), _rowOffset));
+        outputVarNodes().front(), _rowOffset));
     return true;
   }
   assert(allFixed);
@@ -353,7 +356,7 @@ bool ArrayVarElement2dNode::replace() {
   }
   invariantGraph().addInvariantNode(std::make_shared<ArrayElement2dNode>(
       invariantGraph(), rowIdx(), colIdx(), std::move(parMatrix),
-      outputVarNodeIds().front(), _rowOffset, _colOffset,
+      outputVarNodes().front(), _rowOffset, _colOffset,
       outputVarNodeConst(0).isIntVar()));
   return true;
 }
@@ -370,10 +373,10 @@ void ArrayVarElement2dNode::registerNode(propagation::SolverBase& solver,
     }
   }
 
-  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
+  assert(mapping.solverId(outputVarNodes().front()) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodes().front()).isVar());
   solver.makeInvariant<propagation::Element2dVar>(
-      solver, mapping.solverId(outputVarNodeIds().front()),
+      solver, mapping.solverId(outputVarNodes().front()),
       mapping.solverId(rowIdx()), mapping.solverId(colIdx()),
       std::move(varMatrix), _rowOffset, _colOffset);
 }

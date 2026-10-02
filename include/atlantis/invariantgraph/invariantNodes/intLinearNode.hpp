@@ -10,16 +10,17 @@ class IntLinearNode : public InvariantNode {
 
  public:
   IntLinearNode(InvariantGraph& graph, std::vector<Int>&& coeffs,
-                std::vector<VarNodeId>&& vars, VarNodeId output,
+                std::vector<std::shared_ptr<VarNode>>&& vars, VarNode& output,
                 Int rhsOffset = 0);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(
+      VarNode& outputVarNode) const override;
 
   [[nodiscard]] std::pair<size_t, size_t> implicitRank() const override;
 

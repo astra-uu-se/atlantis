@@ -8,21 +8,21 @@ class BoolAllEqualNode : public ViolationInvariantNode {
   std::optional<bool> _fixedVal{std::nullopt};
 
  public:
-  explicit BoolAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-                            VarNodeId r, bool breaksCycle = false);
+  explicit BoolAllEqualNode(InvariantGraph& graph, VarNode& a, VarNode& b,
+                            VarNode& r, bool breaksCycle = false);
 
-  explicit BoolAllEqualNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+  explicit BoolAllEqualNode(InvariantGraph& graph, VarNode& a, VarNode& b,
                             bool shouldHold = true, bool breaksCycle = false);
 
   explicit BoolAllEqualNode(InvariantGraph& graph,
-                            std::vector<VarNodeId>&& vars, VarNodeId r,
-                            bool breaksCycle = false);
+                            std::vector<std::shared_ptr<VarNode>>&& vars,
+                            VarNode& r, bool breaksCycle = false);
 
   explicit BoolAllEqualNode(InvariantGraph& graph,
-                            std::vector<VarNodeId>&& vars,
+                            std::vector<std::shared_ptr<VarNode>>&& vars,
                             bool shouldHold = true, bool breaksCycle = false);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

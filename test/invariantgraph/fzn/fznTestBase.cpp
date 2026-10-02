@@ -59,22 +59,11 @@ const VarNode& FznTestBase::varNodeConst(const std::string& identifier) const {
   return _invariantGraph->varNodeConst(identifier);
 }
 
-VarNodeId FznTestBase::varNodeId(const std::string& identifier) const {
-  if (_invariantGraph->containsVarNode(identifier)) {
-    return _invariantGraph->varNodeId(identifier);
-  }
-  return NULL_NODE_ID;
-}
-
 propagation::VarViewId FznTestBase::varId(const std::string& identifier) const {
   return _invariantGraph->containsVarNode(identifier) &&
                  _solverMapping != nullptr
              ? _solverMapping->solverId(_invariantGraph->varNodeId(identifier))
              : propagation::VAR_VIEW_NULL_ID;
-}
-
-propagation::VarViewId FznTestBase::varId(const VarNodeId vId) const {
-  return _solverMapping->solverId(vId);
 }
 
 void FznTestBase::setValue(const std::string& identifier, const Int val) const {
@@ -862,17 +851,16 @@ void FznTestBase::changeValue(const std::string& identifier,
   }
 }
 
-void FznTestBase::changeValue(const VarNodeId vNodeId,
-                              const bool committedValue) {
-  if (varId(vNodeId) == propagation::NULL_ID) {
+void FznTestBase::changeValue(VarNode& varNode, const bool committedValue) {
+  if (varId(varNode) == propagation::NULL_ID) {
     return;
   }
-  const auto& dom = _invariantGraph->varNodeConst(vNodeId).constDomain();
+  const auto& dom = _invariantGraph->varNodeConst(varNode).constDomain();
   if (dom->size() <= 1) {
     return;
   }
-  const Int curVal = committedValue ? _solver->committedValue(varId(vNodeId))
-                                    : _solver->currentValue(varId(vNodeId));
+  const Int curVal = committedValue ? _solver->committedValue(varId(varNode))
+                                    : _solver->currentValue(varId(varNode));
   const size_t offset =
       std::uniform_int_distribution<size_t>(0, dom->size() - 2)(gen);
   const Int newVal = *(dom->begin() + offset);
@@ -953,8 +941,7 @@ void FznTestBase::rapidCheck(const bool reachesFixpoint,
         for (size_t i = 0;
              i < _invariantGraph->implicitConstraintNodes().size(); ++i) {
           RC_ASSERT(_solverMapping != nullptr);
-          auto neighborhood =
-              _solverMapping->neighborhood(InvariantNodeId(i, true));
+          const auto& neighborhood = _solverMapping->neighborhood(i);
           if (dynamic_cast<search::neighborhoods::NeighborhoodCombinator*>(
                   neighborhood.get()) != nullptr) {
             continue;

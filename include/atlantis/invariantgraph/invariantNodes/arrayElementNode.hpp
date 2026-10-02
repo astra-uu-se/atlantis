@@ -10,19 +10,19 @@ class ArrayElementNode : public InvariantNode {
 
  public:
   explicit ArrayElementNode(InvariantGraph& graph, std::vector<Int>&& parVector,
-                            VarNodeId idx, VarNodeId output, Int offset);
+                            VarNode& idx, VarNode& output, Int offset);
 
   explicit ArrayElementNode(InvariantGraph& graph,
-                            std::vector<bool>&& parVector, VarNodeId idx,
-                            VarNodeId output, Int offset);
+                            std::vector<bool>&& parVector, VarNode& idx,
+                            VarNode& output, Int offset);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(VarNode& outputVarNodeId) const override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

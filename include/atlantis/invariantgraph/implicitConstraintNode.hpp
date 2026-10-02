@@ -14,11 +14,12 @@ namespace atlantis::invariantgraph {
  */
 class ImplicitConstraintNode : public InvariantNode {
  public:
-  explicit ImplicitConstraintNode(InvariantGraph&, std::vector<VarNodeId>&&);
+  explicit ImplicitConstraintNode(InvariantGraph&,
+                                  std::vector<std::shared_ptr<VarNode>>&&);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(VarNode&) const override;
 
   virtual void updateDomainTypes() {};
 

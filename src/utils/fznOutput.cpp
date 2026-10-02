@@ -12,17 +12,17 @@ FznOutput::FznOutput(std::vector<FznOutputVar>&& boolVars,
       _intVarArrays(intVarArrays) {}
 
 void addVarNodeId(const FznOutputVar& var,
-                  std::vector<invariantgraph::VarNodeId>& ids) {
-  if (std::holds_alternative<invariantgraph::VarNodeId>(var.var)) {
-    ids.emplace_back(std::get<invariantgraph::VarNodeId>(var.var));
+                  std::vector<std::shared_ptr<VarNode>>& ids) {
+  if (std::holds_alternative<std::shared_ptr<VarNode>>(var.var)) {
+    ids.emplace_back(std::get<std::shared_ptr<VarNode>>(var.var));
   }
 }
 
 void addVarNodeId(const FznOutputVarArray& arr,
-                  std::vector<invariantgraph::VarNodeId>& ids) {
+                  std::vector<std::shared_ptr<VarNode>>& ids) {
   for (const auto& var : arr.vars) {
-    if (std::holds_alternative<invariantgraph::VarNodeId>(var)) {
-      ids.emplace_back(std::get<invariantgraph::VarNodeId>(var));
+    if (std::holds_alternative<std::shared_ptr<VarNode>>(var)) {
+      ids.emplace_back(std::get<std::shared_ptr<VarNode>>(var));
     }
   }
 }
@@ -43,32 +43,31 @@ void FznOutput::appendIntVarArray(FznOutputVarArray&& arr) {
   _intVarArrays.emplace_back(std::move(arr));
 }
 
-std::vector<invariantgraph::VarNodeId> FznOutput::varNodeIds() const {
-  std::vector<invariantgraph::VarNodeId> ids;
+std::vector<std::shared_ptr<VarNode>> FznOutput::varNodeIds() const {
+  std::vector<std::shared_ptr<VarNode>> varNodes;
   for (const auto& var : _boolVars) {
-    addVarNodeId(var, ids);
+    addVarNodeId(var, varNodes);
   }
   for (const auto& arr : _boolVarArrays) {
-    addVarNodeId(arr, ids);
+    addVarNodeId(arr, varNodes);
   }
   for (const auto& var : _intVars) {
-    addVarNodeId(var, ids);
+    addVarNodeId(var, varNodes);
   }
   for (const auto& arr : _intVarArrays) {
-    addVarNodeId(arr, ids);
+    addVarNodeId(arr, varNodes);
   }
-  return ids;
+  return varNodes;
 }
 
-std::string toIntString(const std::variant<invariantgraph::VarNodeId, Int>& var,
+std::string toIntString(const std::variant<std::shared_ptr<VarNode>, Int>& var,
                         std::vector<Int>::const_iterator& valIter) {
   return std::to_string(std::holds_alternative<Int>(var) ? std::get<Int>(var)
                                                          : *(valIter++));
 }
 
-std::string toBoolString(
-    const std::variant<invariantgraph::VarNodeId, Int>& var,
-    std::vector<Int>::const_iterator& valIter) {
+std::string toBoolString(const std::variant<std::shared_ptr<VarNode>, Int>& var,
+                         std::vector<Int>::const_iterator& valIter) {
   return ((std::holds_alternative<Int>(var) ? std::get<Int>(var)
                                             : *(valIter++)) == 0)
              ? "true"

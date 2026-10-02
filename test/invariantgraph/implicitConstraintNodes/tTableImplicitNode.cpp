@@ -8,10 +8,10 @@ using namespace atlantis::invariantgraph;
 
 class TableImplicitNodeTestFixture : public NodeTestBase<TableImplicitNode> {
  protected:
-  VarNodeId a{NULL_NODE_ID};
-  VarNodeId b{NULL_NODE_ID};
-  VarNodeId c{NULL_NODE_ID};
-  VarNodeId d{NULL_NODE_ID};
+  std::shared_ptr<VarNode> a{nullptr};
+  std::shared_ptr<VarNode> b{nullptr};
+  std::shared_ptr<VarNode> c{nullptr};
+  std::shared_ptr<VarNode> d{nullptr};
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -20,7 +20,7 @@ class TableImplicitNodeTestFixture : public NodeTestBase<TableImplicitNode> {
     c = retrieveIntVarNode(2, 7, "c");
     d = retrieveIntVarNode(2, 7, "d");
 
-    std::vector<VarNodeId> vars{a, b, c, d};
+    std::vector<std::shared_ptr<VarNode>> vars{a, b, c, d};
     std::vector<std::vector<Int>> table(7 - 2 + 1,
                                         std::vector<Int>(vars.size()));
     for (size_t row = 0; row < table.size(); row++) {
@@ -34,18 +34,17 @@ class TableImplicitNodeTestFixture : public NodeTestBase<TableImplicitNode> {
 };
 
 TEST_P(TableImplicitNodeTestFixture, construction) {
-  const std::vector<VarNodeId> expectedVars{a, b, c, d};
+  const std::vector<std::shared_ptr<VarNode>> expectedVars{a, b, c, d};
 
-  EXPECT_THAT(invNode().outputVarNodeIds(),
-              ::testing::ContainerEq(expectedVars));
+  EXPECT_THAT(invNode().outputVarNodes(), ::testing::ContainerEq(expectedVars));
 }
 
 TEST_P(TableImplicitNodeTestFixture, application) {
   _solver->open();
   _solverMapping = std::make_shared<SolverMapping>();
   invNode().registerOutputVars(*_solver, *_solverMapping);
-  for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
+  for (const auto& outputVarNode : invNode().outputVarNodes()) {
+    EXPECT_NE(varId(outputVarNode), propagation::NULL_ID);
   }
   invNode().registerNode(*_solver, *_solverMapping);
   _solver->close();

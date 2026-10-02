@@ -7,13 +7,13 @@ class InIntervalNode : public ViolationInvariantNode {
   Int _lb, _ub;
 
  public:
-  explicit InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
-                          Int ub, VarNodeId r);
+  explicit InIntervalNode(InvariantGraph& graph, VarNode& input, Int lb, Int ub,
+                          VarNode& r);
 
-  explicit InIntervalNode(InvariantGraph& graph, VarNodeId input, Int lb,
-                          Int ub, bool shouldHold = true);
+  explicit InIntervalNode(InvariantGraph& graph, VarNode& input, Int lb, Int ub,
+                          bool shouldHold = true);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

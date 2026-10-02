@@ -80,9 +80,9 @@ TEST_P(ArrayElementNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  EXPECT_EQ(invNode().staticInputVarNodeIds().front(), varNodeId(idxVar));
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), varNodeId(outputVar));
+  EXPECT_EQ(invNode().staticInputVarNodes().front(), varNodeId(idxVar));
+  EXPECT_EQ(invNode().outputVarNodes().size(), 1);
+  EXPECT_EQ(invNode().outputVarNodes().front(), varNodeId(outputVar));
 
   std::vector<Int> expectedAs(parArray.size());
   for (size_t i = 0; i < parArray.size(); ++i) {

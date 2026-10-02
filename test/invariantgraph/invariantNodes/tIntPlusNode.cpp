@@ -66,10 +66,10 @@ TEST_P(IntPlusNodeTestFixture, construction) {
   expectOutputOf(invNode());
 
   const auto expectedInputs = varNodeIds(inputVars);
-  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
+  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodes()));
 
-  EXPECT_EQ(invNode().outputVarNodeIds().size(), 1);
-  EXPECT_EQ(invNode().outputVarNodeIds().front(), varNodeId(outputVar));
+  EXPECT_EQ(invNode().outputVarNodes().size(), 1);
+  EXPECT_EQ(invNode().outputVarNodes().front(), varNodeId(outputVar));
 }
 
 TEST_P(IntPlusNodeTestFixture, updateState) {
@@ -121,11 +121,11 @@ TEST_P(IntPlusNodeTestFixture, propagation) {
 
   if (shouldBeReplaced()) {
     EXPECT_FALSE(varNode(outputVar).isFixed());
-    const VarNodeId addantVarNodeId =
+    const auto& addantVarNode =
         varNode(varNode(inputVars.front()).isFixed() ? inputVars.back()
                                                      : inputVars.front())
             .varNodeId();
-    EXPECT_EQ(varNode(outputVar).varNodeId(), addantVarNodeId);
+    EXPECT_EQ(outputVar, addantVarNode);
     return;
   }
 

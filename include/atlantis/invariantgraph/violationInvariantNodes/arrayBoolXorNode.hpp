@@ -8,19 +8,21 @@ class ArrayBoolXorNode : public ViolationInvariantNode {
   std::optional<bool> _containsFixedTrue{std::nullopt};
 
  public:
-  ArrayBoolXorNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-                   VarNodeId reified);
+  ArrayBoolXorNode(InvariantGraph& graph, VarNode& a, VarNode& b,
+                   VarNode& reified);
 
-  ArrayBoolXorNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+  ArrayBoolXorNode(InvariantGraph& graph, VarNode& a, VarNode& b,
                    bool shouldHold = true);
 
-  ArrayBoolXorNode(InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
-                   VarNodeId reified);
+  ArrayBoolXorNode(InvariantGraph& graph,
+                   std::vector<std::shared_ptr<VarNode>>&& inputs,
+                   VarNode& reified);
 
-  ArrayBoolXorNode(InvariantGraph& graph, std::vector<VarNodeId>&& inputs,
+  ArrayBoolXorNode(InvariantGraph& graph,
+                   std::vector<std::shared_ptr<VarNode>>&& inputs,
                    bool shouldHold = true);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

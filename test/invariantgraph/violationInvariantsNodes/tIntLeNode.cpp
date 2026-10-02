@@ -121,11 +121,11 @@ TEST_P(IntLeNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var :
-       std::array<VarNodeId, 2>{varNodeId(aVar), varNodeId(bVar)}) {
-    if (!varNode(var).isFixed()) {
-      EXPECT_NE(varId(var), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(var));
+  for (const auto& vNode : std::array<std::shared_ptr<VarNode>, 2>{
+           varNodeId(aVar), varNodeId(bVar)}) {
+    if (!vNode->isFixed()) {
+      EXPECT_NE(varId(vNode), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(vNode));
     }
   }
 

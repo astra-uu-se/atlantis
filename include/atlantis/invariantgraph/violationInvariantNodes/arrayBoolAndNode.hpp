@@ -6,19 +6,20 @@ namespace atlantis::invariantgraph {
 
 class ArrayBoolAndNode : public ViolationInvariantNode {
  public:
-  ArrayBoolAndNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-                   VarNodeId output);
+  ArrayBoolAndNode(InvariantGraph& graph, VarNode& a, VarNode& b,
+                   VarNode& output);
 
-  ArrayBoolAndNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
+  ArrayBoolAndNode(InvariantGraph& graph, VarNode& a, VarNode& b,
                    bool shouldHold = true);
 
-  ArrayBoolAndNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
-                   VarNodeId output);
+  ArrayBoolAndNode(InvariantGraph& graph,
+                   std::vector<std::shared_ptr<VarNode>>&& as, VarNode& output);
 
-  ArrayBoolAndNode(InvariantGraph& graph, std::vector<VarNodeId>&& as,
+  ArrayBoolAndNode(InvariantGraph& graph,
+                   std::vector<std::shared_ptr<VarNode>>&& as,
                    bool shouldHold = true);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

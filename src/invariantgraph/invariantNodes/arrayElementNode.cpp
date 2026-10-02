@@ -21,52 +21,50 @@ static std::vector<Int> toIntVec(std::vector<bool>&& boolVec) {
 }
 
 ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
-                                   std::vector<Int>&& parVector,
-                                   const VarNodeId idx, const VarNodeId output,
-                                   const Int offset)
-    : InvariantNode(graph, {output}, {idx}),
+                                   std::vector<Int>&& parVector, VarNode& idx,
+                                   VarNode& output, const Int offset)
+    : InvariantNode(graph, {output.ptr()}, {idx.ptr()}),
       _parVector(std::move(parVector)),
       _offset(offset) {}
 
 ArrayElementNode::ArrayElementNode(InvariantGraph& graph,
-                                   std::vector<bool>&& parVector,
-                                   const VarNodeId idx, const VarNodeId output,
-                                   const Int offset)
-    : InvariantNode(graph, {output}, {idx}),
+                                   std::vector<bool>&& parVector, VarNode& idx,
+                                   VarNode& output, const Int offset)
+    : InvariantNode(graph, {output.ptr()}, {idx.ptr()}),
       _parVector(toIntVec(std::move(parVector))),
       _offset(offset) {}
 
-void ArrayElementNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
-  assert(staticInputVarNode(0).isIntVar());
+void ArrayElementNode::init() {
+  InvariantNode::init();
+  assert(_staticInputVarNodes.front()->isIntVar());
 }
 
 void ArrayElementNode::postConstraint() {
   InvariantNode::postConstraint();
-  const auto& outputNode = outputVarNodeConst(0);
-  if (outputNode.isIntVar()) {
+  const auto& outputNode = _outputVarNodes.front();
+  if (outputNode->isIntVar()) {
     invariantGraph().constraintSolver().array_int_element(
-        staticInputVarNode(0).constraintVarId(), _parVector,
-        outputNode.constraintVarId(), _offset);
+        _staticInputVarNodes.front()->constraintVarId(), _parVector,
+        outputNode->constraintVarId(), _offset);
   } else {
     std::vector<bool> boolVector(_parVector.size());
     for (size_t i = 0; i < boolVector.size(); ++i) {
       boolVector[i] = _parVector[i] == 0;
     }
     invariantGraph().constraintSolver().array_bool_element(
-        staticInputVarNode(0).constraintVarId(), boolVector,
-        outputNode.constraintVarId(), _offset);
+        _staticInputVarNodes.front()->constraintVarId(), boolVector,
+        outputNode->constraintVarId(), _offset);
   }
 }
 
 void ArrayElementNode::updateState() {
-  if (staticInputVarNodeConst(0).isFixed()) {
-    assert(outputVarNodeConst(0).isFixed());
+  if (_staticInputVarNodes.front()->isFixed()) {
+    assert(_outputVarNodes.front()->isFixed());
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (outputVarNodeConst(0).isFixed()) {
-    const Int val = outputVarNodeConst(0).lowerBound();
+  if (_outputVarNodes.front()->isFixed()) {
+    const Int val = _outputVarNodes.front()->lowerBound();
     std::vector<Int> validIndices;
     validIndices.reserve(_parVector.size());
     for (Int i = 0; i < static_cast<Int>(_parVector.size()); ++i) {
@@ -74,17 +72,17 @@ void ArrayElementNode::updateState() {
         validIndices.emplace_back(i + _offset);
       }
     }
-    staticInputVarNode(0).domain()->removeAllValuesExcept(
+    _staticInputVarNodes.front()->domain()->removeAllValuesExcept(
         SortedUniqueVector(std::move(validIndices)));
-    staticInputVarNode(0).tightenDomainType();
+    _staticInputVarNodes.front()->tightenDomainType();
     setState(InvariantNodeState::SUBSUMED);
   }
 }
-bool ArrayElementNode::constrainsOutput(VarNodeId) const {
+bool ArrayElementNode::constrainsOutput(VarNode&) const {
   std::vector<Int> values;
   values.reserve(_parVector.size());
-  for (auto iter = staticInputVarNodeConst(0).constDomain()->begin();
-       iter != staticInputVarNodeConst(0).constDomain()->end(); ++iter) {
+  for (auto iter = _staticInputVarNodes.front()->constDomain()->begin();
+       iter != _staticInputVarNodes.front()->constDomain()->end(); ++iter) {
     const Int index = *iter - _offset;
     if (index < 0) {
       continue;
@@ -96,23 +94,24 @@ bool ArrayElementNode::constrainsOutput(VarNodeId) const {
     values.emplace_back(_parVector[index]);
   }
   const SortedUniqueVector sortedVals(std::move(values));
-  return !outputVarNodeConst(0).constDomain()->contains(sortedVals);
+  return !_outputVarNodes.front()->constDomain()->contains(sortedVals);
 }
 
 void ArrayElementNode::registerOutputVars(propagation::SolverBase& solver,
                                           SolverMapping& mapping) const {
-  if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
-    assert(mapping.solverId(staticInputVarNodeIds().front()) !=
+  if (mapping.solverId(_outputVarNodes.front()->mappingId()) == propagation::NULL_ID) {
+    assert(mapping.solverId(staticInputVarNodes().front()->mappingId()) !=
            propagation::NULL_ID);
     mapping.setSolverId(
-        outputVarNodeIds().front(),
+        _outputVarNodes.front()->mappingId(),
         solver.makeIntView<propagation::ElementConst>(
-            solver, mapping.solverId(staticInputVarNodeIds().front()),
+            solver, mapping.solverId(staticInputVarNodes().front()->mappingId()),
             std::vector<Int>(_parVector), _offset));
   }
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return mapping.solverId(vId) != propagation::NULL_ID;
-  }));
+  assert(std::ranges::all_of(
+      _outputVarNodes, [&](const std::shared_ptr<VarNode>& vNode) {
+        return mapping.solverId(vNode->mappingId()) != propagation::NULL_ID;
+      }));
 }
 
 void ArrayElementNode::registerNode(propagation::SolverBase&,

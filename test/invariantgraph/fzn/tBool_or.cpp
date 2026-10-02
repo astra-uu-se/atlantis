@@ -50,19 +50,19 @@ class bool_orTest : public FznTestBase {
       return inDomain(output, bool{true});
     }
     if (!isFixed(output)) {
-      VarNodeId unfixedVar = NULL_NODE_ID;
+      std::shared_ptr<VarNode> unfixedVar{nullptr};
       for (const std::string& input : inputs) {
         if (!isFixed(input)) {
-          if (unfixedVar == NULL_NODE_ID) {
+          if (unfixedVar == nullptr) {
             unfixedVar = varNodeId(input);
           } else {
-            unfixedVar = NULL_NODE_ID;
+            unfixedVar = nullptr;
             break;
           }
         }
       }
-      if (unfixedVar != NULL_NODE_ID) {
-        return varNodeId(output) == unfixedVar;
+      if (unfixedVar != nullptr) {
+        return varNode(output) == unfixedVar;
       }
     }
     return false;

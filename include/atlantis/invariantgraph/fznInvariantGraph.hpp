@@ -16,26 +16,26 @@ namespace atlantis::invariantgraph {
 
 class FznInvariantGraph : public InvariantGraph {
   std::unordered_set<std::string> _outputIdentifiers;
-  std::vector<std::pair<std::string, VarNodeId>> _outputBoolVars;
-  std::vector<std::pair<std::string, VarNodeId>> _outputIntVars;
+  std::vector<std::pair<std::string, std::shared_ptr<VarNode>>> _outputBoolVars;
+  std::vector<std::pair<std::string, std::shared_ptr<VarNode>>> _outputIntVars;
   std::vector<InvariantGraphOutputVarArray> _outputBoolVarArrays;
   std::vector<InvariantGraphOutputVarArray> _outputIntVarArrays;
 
  public:
   explicit FznInvariantGraph(bool breakDynamicCycles = false);
 
-  VarNodeId retrieveVarNode(const fznparser::BoolVar&);
-  VarNodeId retrieveVarNode(const std::shared_ptr<const fznparser::BoolVar>&);
-  VarNodeId retrieveVarNode(const fznparser::BoolArg&);
+  VarNode& retrieveVarNode(const fznparser::BoolVar&);
+  VarNode& retrieveVarNode(const std::shared_ptr<const fznparser::BoolVar>&);
+  VarNode& retrieveVarNode(const fznparser::BoolArg&);
 
-  std::vector<VarNodeId> retrieveVarNodes(
+  std::vector<std::shared_ptr<VarNode>> retrieveVarNodes(
       const std::shared_ptr<fznparser::BoolVarArray>&);
 
-  VarNodeId retrieveVarNode(const fznparser::IntVar&);
-  VarNodeId retrieveVarNode(const fznparser::IntArg&);
-  VarNodeId retrieveVarNode(const std::shared_ptr<const fznparser::IntVar>&);
+  VarNode& retrieveVarNode(const fznparser::IntVar&);
+  VarNode& retrieveVarNode(const fznparser::IntArg&);
+  VarNode& retrieveVarNode(const std::shared_ptr<const fznparser::IntVar>&);
 
-  std::vector<VarNodeId> retrieveVarNodes(
+  std::vector<std::shared_ptr<VarNode>> retrieveVarNodes(
       const std::shared_ptr<fznparser::IntVarArray>&);
 
   [[nodiscard]] std::vector<FznOutputVar> outputBoolVars() const noexcept;

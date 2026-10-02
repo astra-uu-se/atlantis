@@ -12,20 +12,17 @@
 
 namespace atlantis::invariantgraph {
 
-IntPlusNode::IntPlusNode(InvariantGraph& graph, const VarNodeId a,
-                         const VarNodeId b, const VarNodeId output)
+IntPlusNode::IntPlusNode(InvariantGraph& graph, VarNode& a, VarNode& b,
+                         VarNode& output)
     : InvariantNode(graph, {output}, {a, b}) {}
 
-void IntPlusNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
-  assert(invariantGraphConst()
-             .varNodeConst(outputVarNodeIds().front())
-             .isIntVar());
+void IntPlusNode::init() {
+  InvariantNode::init();
+  assert(
+      invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
   assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodes().begin(), staticInputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
 }
 
 void IntPlusNode::postConstraint() {
@@ -36,13 +33,13 @@ void IntPlusNode::postConstraint() {
 }
 
 void IntPlusNode::updateState() {
-  std::vector<VarNodeId> varsToRemove;
-  varsToRemove.reserve(staticInputVarNodeIds().size());
+  std::vector<std::shared_ptr<VarNode>> varsToRemove;
+  varsToRemove.reserve(staticInputVarNodes().size());
 
-  for (const auto& input : staticInputVarNodeIds()) {
-    if (invariantGraphConst().varNodeConst(input).isFixed()) {
+  for (const auto& input : staticInputVarNodes()) {
+    if (input.isFixed()) {
       varsToRemove.emplace_back(input);
-      _offset += invariantGraphConst().varNodeConst(input).lowerBound();
+      _offset += input.lowerBound();
     }
   }
 
@@ -50,13 +47,13 @@ void IntPlusNode::updateState() {
     removeStaticInputVarNode(input);
   }
 
-  if (staticInputVarNodeIds().empty()) {
+  if (staticInputVarNodes().empty()) {
     assert(outputVarNodeConst(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-bool IntPlusNode::constrainsOutput(VarNodeId) const {
+bool IntPlusNode::constrainsOutput(VarNode&) const {
   const Int lb = staticInputVarNodeConst(0).lowerBound() +
                  staticInputVarNodeConst(1).lowerBound();
   const Int ub = staticInputVarNodeConst(0).upperBound() +
@@ -66,49 +63,49 @@ bool IntPlusNode::constrainsOutput(VarNodeId) const {
 
 bool IntPlusNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         staticInputVarNodeIds().size() == 1;
+         staticInputVarNodes().size() == 1;
 }
 
 bool IntPlusNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  assert(staticInputVarNodeIds().size() == 1);
+  assert(staticInputVarNodes().size() == 1);
   if (_offset == 0) {
-    invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                    staticInputVarNodeIds().front());
+    invariantGraph().replaceVarNode(outputVarNodes().front(),
+                                    staticInputVarNodes().front());
     return true;
   }
   invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(
-      invariantGraph(), staticInputVarNodeIds().front(),
-      outputVarNodeIds().front(), 1, _offset));
+      invariantGraph(), staticInputVarNodes().front(), outputVarNodes().front(),
+      1, _offset));
   return true;
 }
 
 void IntPlusNode::registerOutputVars(propagation::SolverBase& solver,
                                      SolverMapping& mapping) const {
-  assert(staticInputVarNodeIds().size() == 2);
-  makeSolverVar(outputVarNodeIds().front(), solver, mapping);
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(staticInputVarNodes().size() == 2);
+  makeSolverVar(outputVarNodes().front(), solver, mapping);
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void IntPlusNode::registerNode(propagation::SolverBase& solver,
                                SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().size() <= 1) {
+  if (staticInputVarNodes().size() <= 1) {
     return;
   }
   assert(_offset == 0);
-  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
+  assert(mapping.solverId(outputVarNodes().front()) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodes().front()).isVar());
 
   solver.makeInvariant<propagation::Plus>(
-      solver, mapping.solverId(outputVarNodeIds().front()),
-      mapping.solverId(staticInputVarNodeIds().front()),
-      mapping.solverId(staticInputVarNodeIds().back()));
+      solver, mapping.solverId(outputVarNodes().front()),
+      mapping.solverId(staticInputVarNodes().front()),
+      mapping.solverId(staticInputVarNodes().back()));
 }
 
 std::string IntPlusNode::dotLangIdentifier() const { return "int_plus"; }

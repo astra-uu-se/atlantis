@@ -131,8 +131,8 @@ TEST(CircuitNodeRegression, UpdateStateRespectsZeroOffsetForTwoNodeCircuit) {
   const auto b = graph.retrieveIntVarNode(
       std::make_shared<SearchDomain>(std::vector<Int>{0}), "b");
 
-  const auto id = graph.addInvariantNode(
-      std::make_shared<CircuitNode>(graph, std::vector<VarNodeId>{a, b}, 0));
+  const auto id = graph.addInvariantNode(std::make_shared<CircuitNode>(
+      graph, std::vector<std::shared_ptr<VarNode>>{a, b}, 0));
   auto& node = dynamic_cast<CircuitNode&>(graph.invariantNode(id));
 
   EXPECT_NO_THROW(node.updateState());

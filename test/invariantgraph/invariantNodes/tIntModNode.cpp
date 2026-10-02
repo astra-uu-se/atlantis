@@ -56,17 +56,17 @@ TEST_P(IntModNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& vId : std::array<VarNodeId, 2>{varNodeId(numeratorVar),
-                                                  varNodeId(denominatorVar)}) {
-    if (!varNode(vId).isFixed()) {
-      EXPECT_NE(varId(vId), propagation::NULL_ID);
-      inputVarIds.emplace_back(varId(vId));
+  for (const auto& varNode : std::array<std::shared_ptr<VarNode>, 2>{
+           varNode(numeratorVar), varNode(denominatorVar)}) {
+    if (!varNode->isFixed()) {
+      EXPECT_NE(varId(varNode), propagation::NULL_ID);
+      inputVarIds.emplace_back(varId(varNode));
     }
   }
 
-  EXPECT_NE(varId(invNode().outputVarNodeIds().front()), propagation::NULL_ID);
+  EXPECT_NE(varId(invNode().outputVarNodes().front()), propagation::NULL_ID);
   const propagation::VarViewId outputId =
-      varId(invNode().outputVarNodeIds().front());
+      varId(invNode().outputVarNodes().front());
   EXPECT_EQ(inputVarIds.size(), 2);
 
   std::vector<Int> inputVals = makeInputVals(inputVarIds);

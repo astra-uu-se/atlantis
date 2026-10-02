@@ -10,9 +10,10 @@ namespace atlantis::invariantgraph {
 
 class AllDifferentImplicitNode : public ImplicitConstraintNode {
  public:
-  explicit AllDifferentImplicitNode(InvariantGraph&, std::vector<VarNodeId>&&);
+  explicit AllDifferentImplicitNode(InvariantGraph&,
+                                    std::vector<std::shared_ptr<VarNode>>&&);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void updateDomainTypes() override;
 

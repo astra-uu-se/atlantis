@@ -1,6 +1,7 @@
 #pragma once
 
 #include <climits>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -8,10 +9,9 @@
 #include "atlantis/types.hpp"
 
 namespace atlantis::invariantgraph {
+class VarNode;
 
 static size_t NULL_NODE_ID = ~size_t{0};
-
-using VarNodeId = size_t;
 
 struct InvariantNodeId {
   friend struct InvariantNodeIdHash;
@@ -150,18 +150,18 @@ inline bool ConstraintVarId::operator!=(const size_t other) const {
 struct InvariantGraphOutputVarArray {
   std::string identifier;
   std::vector<Int> indexSetSizes{};
-  std::vector<VarNodeId> varNodeIds{};
+  std::vector<std::shared_ptr<VarNode>> varNodes{};
 
   explicit InvariantGraphOutputVarArray(
       std::string&& m_identifier, const std::vector<Int>& m_indexSetSizes,
-      const std::vector<VarNodeId>& m_varNodeIds)
+      const std::vector<std::shared_ptr<VarNode>>& m_varNodeIds)
       : identifier(std::move(m_identifier)),
         indexSetSizes(m_indexSetSizes),
-        varNodeIds(m_varNodeIds) {}
+        varNodes(m_varNodeIds) {}
 
   explicit InvariantGraphOutputVarArray(
       const std::string& m_identifier, const std::vector<Int>& m_indexSetSizes,
-      const std::vector<VarNodeId>& m_varNodeIds)
+      const std::vector<std::shared_ptr<VarNode>>& m_varNodeIds)
       : InvariantGraphOutputVarArray(std::string(m_identifier), m_indexSetSizes,
                                      m_varNodeIds) {}
 };
@@ -170,11 +170,6 @@ enum struct InvariantNodeState : unsigned char {
   UNINITIALIZED,
   ACTIVE,
   SUBSUMED
-};
-
-struct InvariantGraphEdge {
-  InvariantNodeId invariantNodeId;
-  VarNodeId varNodeId;
 };
 
 enum struct DomainType : unsigned char {

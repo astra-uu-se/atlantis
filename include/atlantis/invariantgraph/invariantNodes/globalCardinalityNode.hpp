@@ -9,22 +9,23 @@ class GlobalCardinalityNode : public InvariantNode {
 
  public:
   explicit GlobalCardinalityNode(InvariantGraph& graph,
-                                 std::vector<VarNodeId>&& inputs,
+                                 std::vector<std::shared_ptr<VarNode>>&& inputs,
                                  std::vector<Int>&& cover,
-                                 std::vector<VarNodeId>&& counts,
+                                 std::vector<std::shared_ptr<VarNode>>&& counts,
                                  std::vector<Int>&& countOffsets = {});
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
-  void removeOutputVarNode(VarNodeId) override;
+  void removeOutputVarNode(VarNode&) override;
 
   void removeOutputAtIndex(size_t) override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(
+      VarNode& outputVarNode) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 

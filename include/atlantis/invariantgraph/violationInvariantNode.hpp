@@ -15,9 +15,9 @@ class ViolationInvariantNode : public InvariantNode {
   void updateReified();
 
   explicit ViolationInvariantNode(InvariantGraph& graph,
-                                  std::vector<VarNodeId>&& outputIds,
-                                  std::vector<VarNodeId>&& staticInputIds,
-                                  VarNodeId reifiedViolationId,
+                                  std::vector<std::shared_ptr<VarNode>>&& outputs,
+                                  std::vector<std::shared_ptr<VarNode>>&& inputs,
+                                  const std::shared_ptr<VarNode>& reifiedViolation,
                                   bool shouldHold);
 
  protected:
@@ -31,10 +31,6 @@ class ViolationInvariantNode : public InvariantNode {
   propagation::VarViewId registerViolation(propagation::SolverBase&,
                                            SolverMapping&) const;
 
-  [[nodiscard]] VarNode& reifiedVarNode();
-
-  [[nodiscard]] const VarNode& reifiedVarNodeConst() const;
-
   [[nodiscard]] bool shouldHold() const noexcept;
 
   void setShouldHold(bool sh) noexcept;
@@ -43,24 +39,24 @@ class ViolationInvariantNode : public InvariantNode {
 
  public:
   explicit ViolationInvariantNode(InvariantGraph& graph,
-                                  std::vector<VarNodeId>&& outputIds,
-                                  std::vector<VarNodeId>&& staticInputIds,
-                                  VarNodeId reifiedViolationId);
+                                  std::vector<std::shared_ptr<VarNode>>&& outputs,
+                                  std::vector<std::shared_ptr<VarNode>>&& staticInputs,
+                                  VarNode& reifiedViolation);
 
   explicit ViolationInvariantNode(InvariantGraph& graph,
-                                  std::vector<VarNodeId>&& staticInputIds,
-                                  VarNodeId reifiedViolationId);
+                                  std::vector<std::shared_ptr<VarNode>>&& staticInputs,
+                                  VarNode& reifiedViolation);
 
   explicit ViolationInvariantNode(InvariantGraph& graph,
-                                  std::vector<VarNodeId>&& outputIds,
-                                  std::vector<VarNodeId>&& staticInputIds,
+                                  std::vector<std::shared_ptr<VarNode>>&& outputs,
+                                  std::vector<std::shared_ptr<VarNode>>&& staticInputs,
                                   bool shouldHold);
 
   explicit ViolationInvariantNode(InvariantGraph& graph,
-                                  std::vector<VarNodeId>&& staticInputIds,
+                                  std::vector<std::shared_ptr<VarNode>>&& staticInputs,
                                   bool shouldHold);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   [[nodiscard]] bool isReified() const override;
 
@@ -69,13 +65,13 @@ class ViolationInvariantNode : public InvariantNode {
   [[nodiscard]] propagation::VarViewId violationVarId(
       const SolverMapping&) const override;
 
-  [[nodiscard]] VarNodeId reifiedViolationNodeId() const;
+  [[nodiscard]] std::shared_ptr<VarNode> reifiedViolationNode();
 
   void postConstraint() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(VarNode&) const override;
 };
 
 }  // namespace atlantis::invariantgraph

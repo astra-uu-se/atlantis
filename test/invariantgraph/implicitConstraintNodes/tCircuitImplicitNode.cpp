@@ -9,10 +9,10 @@ using namespace atlantis::invariantgraph;
 class CircuitImplicitNodeTestFixture
     : public NodeTestBase<CircuitImplicitNode> {
  protected:
-  VarNodeId a{NULL_NODE_ID};
-  VarNodeId b{NULL_NODE_ID};
-  VarNodeId c{NULL_NODE_ID};
-  VarNodeId d{NULL_NODE_ID};
+  std::shared_ptr<VarNode> a{nullptr};
+  std::shared_ptr<VarNode> b{nullptr};
+  std::shared_ptr<VarNode> c{nullptr};
+  std::shared_ptr<VarNode> d{nullptr};
 
   void SetUp() override {
     NodeTestBase::SetUp();
@@ -21,24 +21,24 @@ class CircuitImplicitNodeTestFixture
     c = retrieveIntVarNode(1, 4, "c");
     d = retrieveIntVarNode(1, 4, "d");
 
-    std::vector<VarNodeId> vars{a, b, c, d};
+    std::vector<std::shared_ptr<VarNode>> vars{a, b, c, d};
 
     createImplicitConstraintNode(*_invariantGraph, std::move(vars), 1);
   }
 };
 
 TEST_P(CircuitImplicitNodeTestFixture, construction) {
-  const std::vector<VarNodeId> expectedVars{a, b, c, d};
+  const std::vector<std::shared_ptr<VarNode>> expectedVars{a, b, c, d};
 
-  EXPECT_EQ(invNode().outputVarNodeIds(), expectedVars);
+  EXPECT_EQ(invNode().outputVarNodes(), expectedVars);
 }
 
 TEST_P(CircuitImplicitNodeTestFixture, application) {
   _solver->open();
   _solverMapping = std::make_shared<SolverMapping>();
   invNode().registerOutputVars(*_solver, *_solverMapping);
-  for (const VarNodeId outputVarNodeId : invNode().outputVarNodeIds()) {
-    EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
+  for (const VarNod& outputVarNode : invNode().outputVarNodes()) {
+    EXPECT_NE(varId(outputVarNode), propagation::NULL_ID);
   }
   invNode().registerNode(*_solver, *_solverMapping);
   _solver->close();

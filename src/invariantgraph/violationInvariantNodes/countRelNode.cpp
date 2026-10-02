@@ -16,17 +16,17 @@
 
 namespace atlantis::invariantgraph {
 
-VarNodeId CountRelNode::needle() const {
-  return _fixedNeedle.has_value() ? NULL_NODE_ID
-                                  : staticInputVarNodeIds()[needleIndex()];
+const std::shared_ptr<VarNode>& CountRelNode::needle() const {
+  return _fixedNeedle.has_value() ? std::shared_ptr<VarNode>{nullptr}
+                                  : staticInputVarNodes()[needleIndex()];
   ;
 }
 
 size_t CountRelNode::needleIndex() const { return numInputVars(); }
 
-VarNodeId CountRelNode::bound() const {
-  return _fixedBound.has_value() ? NULL_NODE_ID
-                                 : staticInputVarNodeIds()[boundIndex()];
+const std::shared_ptr<VarNode>& CountRelNode::bound() const {
+  return _fixedBound.has_value() ? std::shared_ptr<VarNode>{nullptr}
+                                 : staticInputVarNodes()[boundIndex()];
   ;
 }
 
@@ -35,23 +35,23 @@ size_t CountRelNode::boundIndex() const {
 }
 
 size_t CountRelNode::numInputVars() const {
-  return staticInputVarNodeIds().size() - (_fixedNeedle.has_value() ? 0 : 1) -
+  return staticInputVarNodes().size() - (_fixedNeedle.has_value() ? 0 : 1) -
          (_fixedBound.has_value() ? 0 : 1);
 }
 
 CountRelNode::CountRelNode(InvariantGraph& graph, const Int amount,
                            const RelationType relationType,
-                           std::vector<VarNodeId>&& vars, const Int needle,
-                           const bool shouldHold)
+                           std::vector<std::shared_ptr<VarNode>>&& vars,
+                           const Int needle, const bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(vars), shouldHold),
       _fixedNeedle(needle),
       _fixedBound(amount),
       _relType(relationType) {}
 
-CountRelNode::CountRelNode(InvariantGraph& graph, const VarNodeId amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, VarNode& amount,
                            const RelationType relationType,
-                           std::vector<VarNodeId>&& vars, const Int needle,
-                           const bool shouldHold)
+                           std::vector<std::shared_ptr<VarNode>>&& vars,
+                           const Int needle, const bool shouldHold)
     : ViolationInvariantNode(graph, {}, append(std::move(vars), amount),
                              shouldHold),
       _fixedNeedle(needle),
@@ -60,18 +60,18 @@ CountRelNode::CountRelNode(InvariantGraph& graph, const VarNodeId amount,
 
 CountRelNode::CountRelNode(InvariantGraph& graph, const Int amount,
                            const RelationType relationType,
-                           std::vector<VarNodeId>&& vars,
-                           const VarNodeId needle, const bool shouldHold)
+                           std::vector<std::shared_ptr<VarNode>>&& vars,
+                           VarNode& needle, const bool shouldHold)
     : ViolationInvariantNode(graph, {}, append(std::move(vars), needle),
                              shouldHold),
       _fixedNeedle(std::nullopt),
       _fixedBound(amount),
       _relType(relationType) {}
 
-CountRelNode::CountRelNode(InvariantGraph& graph, const VarNodeId amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, VarNode& amount,
                            const RelationType relationType,
-                           std::vector<VarNodeId>&& vars,
-                           const VarNodeId needle, const bool shouldHold)
+                           std::vector<std::shared_ptr<VarNode>>&& vars,
+                           VarNode& needle, const bool shouldHold)
     : ViolationInvariantNode(graph, {},
                              append(append(std::move(vars), needle), amount),
                              shouldHold),
@@ -81,17 +81,17 @@ CountRelNode::CountRelNode(InvariantGraph& graph, const VarNodeId amount,
 
 CountRelNode::CountRelNode(InvariantGraph& graph, const Int amount,
                            const RelationType relationType,
-                           std::vector<VarNodeId>&& vars, const Int needle,
-                           const VarNodeId reified)
+                           std::vector<std::shared_ptr<VarNode>>&& vars,
+                           const Int needle, VarNode& reified)
     : ViolationInvariantNode(graph, {}, std::move(vars), reified),
       _fixedNeedle(needle),
       _fixedBound(amount),
       _relType(relationType) {}
 
-CountRelNode::CountRelNode(InvariantGraph& graph, const VarNodeId amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, VarNode& amount,
                            const RelationType relationType,
-                           std::vector<VarNodeId>&& vars, const Int needle,
-                           const VarNodeId reified)
+                           std::vector<std::shared_ptr<VarNode>>&& vars,
+                           const Int needle, VarNode& reified)
     : ViolationInvariantNode(graph, {}, append(std::move(vars), amount),
                              reified),
       _fixedNeedle(needle),
@@ -100,30 +100,32 @@ CountRelNode::CountRelNode(InvariantGraph& graph, const VarNodeId amount,
 
 CountRelNode::CountRelNode(InvariantGraph& graph, const Int amount,
                            const RelationType relationType,
-                           std::vector<VarNodeId>&& vars,
-                           const VarNodeId needle, const VarNodeId reified)
+                           std::vector<std::shared_ptr<VarNode>>&& vars,
+                           VarNode& needle, VarNode& reified)
     : ViolationInvariantNode(graph, {}, append(std::move(vars), needle),
                              reified),
       _fixedNeedle(std::nullopt),
       _fixedBound(amount),
       _relType(relationType) {}
 
-CountRelNode::CountRelNode(InvariantGraph& graph, const VarNodeId amount,
+CountRelNode::CountRelNode(InvariantGraph& graph, VarNode& amount,
                            const RelationType relationType,
-                           std::vector<VarNodeId>&& vars,
-                           const VarNodeId needle, const VarNodeId reified)
+                           std::vector<std::shared_ptr<VarNode>>&& vars,
+                           VarNode& needle, VarNode& reified)
     : ViolationInvariantNode(
           graph, {}, append(append(std::move(vars), needle), amount), reified),
       _fixedNeedle(std::nullopt),
       _fixedBound(std::nullopt),
       _relType(relationType) {}
 
-void CountRelNode::init(const InvariantNodeId id) {
-  ViolationInvariantNode::init(id);
+void CountRelNode::init() {
+  ViolationInvariantNode::init();
   assert(!isReified() || !reifiedVarNodeConst().isIntVar());
-  assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) { return varNodeConst(vId).isIntVar(); }));
+  assert(std::ranges::all_of(staticInputVarNodes().begin(),
+                             staticInputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return varNodeConst(vId).isIntVar();
+                             }));
 }
 
 void CountRelNode::postConstraint() {
@@ -215,7 +217,7 @@ void CountRelNode::updateState() {
   for (const Int index : indicesToRemove) {
     removeStaticInputAtIndex(index);
   }
-  if (staticInputVarNodeIds().empty()) {
+  if (staticInputVarNodes().empty()) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
@@ -296,9 +298,9 @@ bool CountRelNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  std::vector<VarNodeId> varNodeIds(numInputVars());
+  std::vector<std::shared_ptr<VarNode>> varNodeIds(numInputVars());
   for (size_t i = 0; i < numInputVars(); ++i) {
-    varNodeIds[i] = staticInputVarNodeIds()[i];
+    varNodeIds[i] = staticInputVarNodes()[i];
   }
   if (_fixedNeedle.has_value()) {
     invariantGraph().addInvariantNode(std::make_shared<CountNode>(
@@ -337,9 +339,10 @@ void CountRelNode::registerOutputVars(propagation::SolverBase& solver,
       }
     }
   }
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return mapping.solverId(vId) != propagation::NULL_ID;
-  }));
+  assert(std::ranges::all_of(
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return mapping.solverId(vId) != propagation::NULL_ID;
+      }));
 }
 
 void CountRelNode::registerNode(propagation::SolverBase& solver,
@@ -351,7 +354,7 @@ void CountRelNode::registerNode(propagation::SolverBase& solver,
   std::vector<propagation::VarViewId> solverVars(numInputVars(),
                                                  propagation::VAR_VIEW_NULL_ID);
   for (size_t i = 0; i < numInputVars(); ++i) {
-    solverVars[i] = mapping.solverId(staticInputVarNodeIds()[i]);
+    solverVars[i] = mapping.solverId(staticInputVarNodes()[i]);
   }
   if (_fixedNeedle.has_value()) {
     solver.makeInvariant<propagation::CountConst>(

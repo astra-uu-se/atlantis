@@ -79,14 +79,15 @@ TEST_P(VarIntCountNodeTestFixture, construction) {
   expectInputTo(invNode());
   expectOutputOf(invNode());
 
-  std::vector<VarNodeId> expectedInputs{varNodeIds(inputVars)};
+  std::vector<std::shared_ptr<VarNode>> expectedInputs{varNodeIds(inputVars)};
   expectedInputs.emplace_back(varNodeId(needleVar));
-  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
+  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodes()));
 
-  const std::vector<VarNodeId> expectedOutputs{varNodeId(outputVar)};
+  const std::vector<std::shared_ptr<VarNode>> expectedOutputs{
+      varNodeId(outputVar)};
 
-  EXPECT_EQ(invNode().outputVarNodeIds(), expectedOutputs);
-  EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodeIds()));
+  EXPECT_EQ(invNode().outputVarNodes(), expectedOutputs);
+  EXPECT_THAT(expectedOutputs, ContainerEq(invNode().outputVarNodes()));
 }
 
 TEST_P(VarIntCountNodeTestFixture, makeImplicit) {

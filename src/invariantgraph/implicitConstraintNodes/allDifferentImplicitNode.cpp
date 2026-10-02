@@ -16,49 +16,47 @@
 namespace atlantis::invariantgraph {
 
 AllDifferentImplicitNode::AllDifferentImplicitNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& inputVars)
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& inputVars)
     : ImplicitConstraintNode(graph, std::move(inputVars)) {}
 
-void AllDifferentImplicitNode::init(const InvariantNodeId id) {
-  ImplicitConstraintNode::init(id);
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+void AllDifferentImplicitNode::init() {
+  ImplicitConstraintNode::init();
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& varNode) {
+                               return varNode->isIntVar();
+                             }));
 }
 
 void AllDifferentImplicitNode::updateDomainTypes() {
-  if (outputVarNodeIds().size() <= 1) {
+  if (outputVarNodes().size() <= 1) {
     return;
   }
-  assert(!outputVarNodeIds().empty());
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return invariantGraphConst().varNodeConst(vId).definingNodes().size() ==
-               1 &&
-           invariantGraphConst().varNodeConst(vId).outputOf() == id();
-  }));
+  assert(!outputVarNodes().empty());
+  assert(std::ranges::all_of(outputVarNodes(),
+                             [&](const std::shared_ptr<VarNode>& varNode) {
+                               return varNode->definingNodes().size() == 1 &&
+                                      varNode->outputOf() == id();
+                             }));
 
   const auto& domain = invariantGraphConst()
-                           .varNodeConst(outputVarNodeIds().front())
+                           .varNodeConst(outputVarNodes().front())
                            .constDomain();
 
-  const bool hasSameDomain = std::all_of(
-      outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return (*invariantGraphConst().varNodeConst(vId).constDomain()) ==
-               (*domain);
-      });
+  const bool hasSameDomain =
+      std::all_of(outputVarNodes().begin() + 1, outputVarNodes().end(),
+                  [&](const std::shared_ptr<VarNode>& varNode) {
+                    return (*varNode->constDomain()) == (*domain);
+                  });
 
-  if (hasSameDomain && domain->size() < outputVarNodeIds().size()) {
+  if (hasSameDomain && domain->size() < outputVarNodes().size()) {
     throw InconsistencyException(
         "fzn_all_different: the domain is smaller than the number of "
         "variables");
   }
 
   if (hasSameDomain) {
-    for (const auto& nId : outputVarNodeIds()) {
-      auto& varNode = invariantGraph().varNode(nId);
+    for (const auto& nId : outputVarNodes()) {
+      auto& varNode = nId;
       varNode.setDomainType(DomainType::DOM_NONE);
     }
   }
@@ -68,28 +66,27 @@ void AllDifferentImplicitNode::registerNode(propagation::SolverBase&,
                                             SolverMapping& mapping) const {
   assert(!mapping.hasNeighborhood(id()));
 
-  if (outputVarNodeIds().size() <= 1) {
+  if (outputVarNodes().size() <= 1) {
     return;
   }
-  assert(!outputVarNodeIds().empty());
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return invariantGraphConst().varNodeConst(vId).definingNodes().size() ==
-               1 &&
-           invariantGraphConst().varNodeConst(vId).outputOf() == id();
-  }));
+  assert(!outputVarNodes().empty());
+  assert(std::ranges::all_of(outputVarNodes(),
+                             [&](const std::shared_ptr<VarNode>& varNode) {
+                               return varNode->definingNodes().size() == 1 &&
+                                      varNode->outputOf() == id();
+                             }));
 
   const auto& domain = invariantGraphConst()
-                           .varNodeConst(outputVarNodeIds().front())
+                           .varNodeConst(outputVarNodes().front())
                            .constDomain();
 
-  const bool hasSameDomain = std::all_of(
-      outputVarNodeIds().begin() + 1, outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return (*invariantGraphConst().varNodeConst(vId).constDomain()) ==
-               (*domain);
-      });
+  const bool hasSameDomain =
+      std::all_of(outputVarNodes().begin() + 1, outputVarNodes().end(),
+                  [&](const std::shared_ptr<VarNode>& varNode) {
+                    return (*varNode->constDomain()) == (*domain);
+                  });
 
-  if (hasSameDomain && domain->size() < outputVarNodeIds().size()) {
+  if (hasSameDomain && domain->size() < outputVarNodes().size()) {
     throw InconsistencyException(
         "fzn_all_different: she domain is smaller than the number of "
         "variables");
@@ -97,12 +94,12 @@ void AllDifferentImplicitNode::registerNode(propagation::SolverBase&,
 
   std::vector<search::SearchVar> searchVars;
   // "malloc(): invalid size (unsorted)" exception: don't reserve
-  searchVars.reserve(outputVarNodeIds().size());
+  searchVars.reserve(outputVarNodes().size());
 
   if (hasSameDomain) {
-    for (const auto& nId : outputVarNodeIds()) {
-      const auto& varNode = invariantGraphConst().varNodeConst(nId);
-      assert(mapping.solverId(nId) != propagation::NULL_ID);
+    for (const auto& nId : outputVarNodes()) {
+      const auto& varNode =
+          nId->assert(mapping.solverId(nId) != propagation::NULL_ID);
       searchVars.emplace_back(mapping.solverId(nId), varNode.constDomain());
     }
     mapping.setNeighborhood(
@@ -113,9 +110,9 @@ void AllDifferentImplicitNode::registerNode(propagation::SolverBase&,
   }
   Int domainLb = std::numeric_limits<Int>::max();
   Int domainUb = std::numeric_limits<Int>::min();
-  for (const auto& vId : outputVarNodeIds()) {
-    const auto& varNode = invariantGraphConst().varNodeConst(vId);
-    searchVars.emplace_back(mapping.solverId(vId), varNode.constDomain());
+  for (const auto& varNode : outputVarNodes()) {
+    const auto& varNode = varNode->searchVars.emplace_back(
+        mapping.solverId(varNode), varNode.constDomain());
     domainLb = std::min<Int>(domainLb, varNode.lowerBound());
     domainUb = std::max<Int>(domainUb, varNode.upperBound());
   }

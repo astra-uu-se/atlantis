@@ -6,16 +6,18 @@ namespace atlantis::invariantgraph {
 
 class IntModNode : public InvariantNode {
  public:
-  IntModNode(InvariantGraph& graph, VarNodeId numerator, VarNodeId denominator,
-             VarNodeId remainder);
+  IntModNode(InvariantGraph& graph, VarNode& numerator, VarNode& denominator,
+             VarNode& remainder);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId) const override { return true; }
+  [[nodiscard]] bool constrainsOutput(const VarNode&) const override {
+    return true;
+  }
 
   [[nodiscard]] bool canBeReplaced() const override;
 
@@ -26,9 +28,9 @@ class IntModNode : public InvariantNode {
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] VarNodeId numerator() const;
-  [[nodiscard]] VarNodeId denominator() const;
-  [[nodiscard]] VarNodeId remainder() const;
+  [[nodiscard]] VarNode& numerator() const;
+  [[nodiscard]] VarNode& denominator() const;
+  [[nodiscard]] VarNode& remainder() const;
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

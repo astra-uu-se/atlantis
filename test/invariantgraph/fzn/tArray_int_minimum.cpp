@@ -18,7 +18,7 @@ using namespace atlantis::invariantgraph::fzn;
 
 class array_int_minimumTest : public FznTestBase {
  public:
-  std::vector<VarNodeId> inputVarNodeIds{};
+  std::vector<std::shared_ptr<VarNode>> inputVarNodeIds{};
   std::vector<std::string> inputs;
   std::string output{"output"};
 

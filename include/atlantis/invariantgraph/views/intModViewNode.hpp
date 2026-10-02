@@ -8,24 +8,25 @@ class IntModViewNode : public InvariantNode {
   Int _denominator;
 
  public:
-  IntModViewNode(InvariantGraph& graph, VarNodeId staticInput, VarNodeId output,
+  IntModViewNode(InvariantGraph& graph, VarNode& staticInput, VarNode& output,
                  Int denominator);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(
+      const VarNode& outputVarNode) const override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] VarNodeId input() const noexcept {
-    return staticInputVarNodeIds().front();
+  [[nodiscard]] VarNode& input() const noexcept {
+    return staticInputVarNodes().front();
   }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;

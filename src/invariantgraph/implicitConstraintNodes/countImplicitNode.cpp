@@ -13,26 +13,26 @@
 
 namespace atlantis::invariantgraph {
 
-CountImplicitNode::CountImplicitNode(InvariantGraph& graph,
-                                     std::vector<VarNodeId>&& inputVars,
-                                     const Int needle, const size_t amount)
+CountImplicitNode::CountImplicitNode(
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& inputVars,
+    const Int needle, const size_t amount)
     : ImplicitConstraintNode(graph, std::move(inputVars)),
       _needle(needle),
       _amount(amount) {}
 
-void CountImplicitNode::init(const InvariantNodeId id) {
-  ImplicitConstraintNode::init(id);
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return invariantGraphConst()
-               .varNodeConst(outputVarNodeIds().front())
-               .isIntVar() ==
-           invariantGraphConst().varNodeConst(vId).isIntVar();
-  }));
+void CountImplicitNode::init() {
+  ImplicitConstraintNode::init();
+  assert(std::ranges::all_of(
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return invariantGraphConst()
+                   .varNodeConst(outputVarNodes().front())
+                   .isIntVar() == vId.isIntVar();
+      }));
 }
 
 void CountImplicitNode::updateDomainTypes() {
-  for (const auto& nId : outputVarNodeIds()) {
-    auto& varNode = invariantGraph().varNode(nId);
+  for (const auto& nId : outputVarNodes()) {
+    auto& varNode = nId;
     varNode.setDomainType(DomainType::DOM_NONE);
   }
 }
@@ -40,18 +40,17 @@ void CountImplicitNode::updateDomainTypes() {
 void CountImplicitNode::registerNode(propagation::SolverBase&,
                                      SolverMapping& mapping) const {
   assert(!mapping.hasNeighborhood(id()));
-  assert(!outputVarNodeIds().empty());
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return invariantGraphConst().varNodeConst(vId).definingNodes().size() ==
-               1 &&
-           invariantGraphConst().varNodeConst(vId).outputOf() == id();
-  }));
+  assert(!outputVarNodes().empty());
+  assert(std::ranges::all_of(
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return vId.definingNodes().size() == 1 && vId.outputOf() == id();
+      }));
 
   std::vector<search::SearchVar> searchVars;
-  searchVars.reserve(outputVarNodeIds().size());
+  searchVars.reserve(outputVarNodes().size());
 
-  for (const auto& vId : outputVarNodeIds()) {
-    const auto& varNode = invariantGraphConst().varNodeConst(vId);
+  for (const auto& vId : outputVarNodes()) {
+    const auto& varNode = vId;
     searchVars.emplace_back(mapping.solverId(vId), varNode.constDomain());
   }
   mapping.setNeighborhood(

@@ -10,20 +10,17 @@
 
 namespace atlantis::invariantgraph {
 
-IntModViewNode::IntModViewNode(InvariantGraph& graph,
-                               const VarNodeId staticInput,
-                               const VarNodeId output, const Int denominator)
+IntModViewNode::IntModViewNode(InvariantGraph& graph, VarNode& staticInput,
+                               VarNode& output, const Int denominator)
     : InvariantNode(graph, {output}, {staticInput}),
       _denominator(std::abs(denominator)) {}
 
-void IntModViewNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
-  assert(invariantGraphConst()
-             .varNodeConst(outputVarNodeIds().front())
-             .isIntVar());
-  assert(invariantGraph()
-             .varNodeConst(staticInputVarNodeIds().front())
-             .isIntVar());
+void IntModViewNode::init() {
+  InvariantNode::init();
+  assert(
+      invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
+  assert(
+      invariantGraph().varNodeConst(staticInputVarNodes().front()).isIntVar());
 }
 
 void IntModViewNode::postConstraint() {
@@ -40,22 +37,22 @@ void IntModViewNode::updateState() {
   }
 }
 
-bool IntModViewNode::constrainsOutput(VarNodeId) const {
+bool IntModViewNode::constrainsOutput(VarNode&) const {
   return !outputVarNodeConst(0).constDomain()->contains(0, _denominator - 1);
 }
 
 void IntModViewNode::registerOutputVars(propagation::SolverBase& solver,
                                         SolverMapping& mapping) const {
-  if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
-    mapping.setSolverId(outputVarNodeIds().front(),
+  if (mapping.solverId(outputVarNodes().front()) == propagation::NULL_ID) {
+    mapping.setSolverId(outputVarNodes().front(),
                         solver.makeIntView<propagation::ModView>(
                             solver, mapping.solverId(input()), _denominator));
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void IntModViewNode::registerNode(propagation::SolverBase&,

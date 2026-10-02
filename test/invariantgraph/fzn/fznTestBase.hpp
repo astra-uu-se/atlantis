@@ -140,11 +140,8 @@ class FznTestBase : public ::testing::Test {
   [[nodiscard]] const VarNode& varNodeConst(
       const std::string& identifier) const;
 
-  [[nodiscard]] VarNodeId varNodeId(const std::string& identifier) const;
-
   [[nodiscard]] propagation::VarViewId varId(
       const std::string& identifier) const;
-  propagation::VarViewId varId(VarNodeId vId) const;
 
   void setValue(const std::string& identifier, Int val) const;
 
@@ -304,7 +301,7 @@ class FznTestBase : public ::testing::Test {
 
   void changeValue(const std::string& identifier, bool committedValue);
 
-  void changeValue(VarNodeId vNodeId, bool committedValue);
+  void changeValue(VarNode& vNode, bool committedValue);
 
   void markOutputVar(const std::string&);
 

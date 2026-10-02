@@ -33,43 +33,46 @@ static std::vector<std::vector<Int>>&& moveInputFirst(
   return std::move(table);
 }
 
-TableNode::TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
-                     const VarNodeId input,
-                     std::vector<std::vector<Int>>&& table,
+TableNode::TableNode(InvariantGraph& graph,
+                     std::vector<std::shared_ptr<VarNode>>&& outputs,
+                     VarNode& input, std::vector<std::vector<Int>>&& table,
                      const size_t inputColumnIndex)
     : InvariantNode(graph, std::move(outputs), {input}),
       _table(std::move(moveInputFirst(std::move(table), inputColumnIndex))) {
   assert(!_table.empty());
-  assert(_table.front().size() == outputVarNodeIds().size() + 1);
+  assert(_table.front().size() == outputVarNodes().size() + 1);
 }
 
-TableNode::TableNode(InvariantGraph& graph, std::vector<VarNodeId>&& outputs,
-                     const VarNodeId input,
+TableNode::TableNode(InvariantGraph& graph,
+                     std::vector<std::shared_ptr<VarNode>>&& outputs,
+                     VarNode& input,
                      const std::vector<std::vector<bool>>& table,
                      const size_t inputColumnIndex)
     : TableNode(graph, std::move(outputs), input, boolToViol(table),
                 inputColumnIndex) {}
 
-void TableNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
-  assert(staticInputVarNodeIds().size() == 1);
-  assert(std::ranges::all_of(staticInputVarNodeIds(), [&](const VarNodeId vId) {
-    return varNodeConst(vId).isIntVar() ==
-           staticInputVarNodeConst(0).isIntVar();
-  }));
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return varNodeConst(vId).isIntVar() ==
-           staticInputVarNodeConst(0).isIntVar();
-  }));
+void TableNode::init() {
+  InvariantNode::init();
+  assert(staticInputVarNodes().size() == 1);
+  assert(std::ranges::all_of(staticInputVarNodes(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return varNodeConst(vId).isIntVar() ==
+                                      staticInputVarNodeConst(0).isIntVar();
+                             }));
+  assert(std::ranges::all_of(outputVarNodes(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return varNodeConst(vId).isIntVar() ==
+                                      staticInputVarNodeConst(0).isIntVar();
+                             }));
   assert(staticInputVarNodeConst(0).isIntVar() || _table.size() <= 2);
 }
 
 void TableNode::postConstraint() {
   InvariantNode::postConstraint();
-  std::vector<ConstraintVarId> inputs(outputVarNodeIds().size() + 1,
+  std::vector<ConstraintVarId> inputs(outputVarNodes().size() + 1,
                                       ConstraintVarId{NULL_NODE_ID});
   inputs.front() = staticInputVarNodeConst(0).constraintVarId();
-  for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
+  for (size_t i = 0; i < outputVarNodes().size(); ++i) {
     inputs[i + 1] = outputVarNodeConst(i).constraintVarId();
   }
 
@@ -81,30 +84,30 @@ void TableNode::postConstraint() {
       inputs, violToBool(_table), true);
 }
 
-void TableNode::removeOutputVarNode(const VarNodeId outputVarNodeId) {
-  for (Int i = static_cast<Int>(outputVarNodeIds().size()) - 1; i >= 0; --i) {
-    if (outputVarNodeIds().at(i) == outputVarNodeId) {
+void TableNode::removeOutputVarNode(VarNode& outputVarNodeId) {
+  for (Int i = static_cast<Int>(outputVarNodes().size()) - 1; i >= 0; --i) {
+    if (outputVarNodes().at(i) == outputVarNodeId) {
       removeColumn(i + 1);
     }
   }
   InvariantNode::removeOutputVarNode(outputVarNodeId);
-  assert(_table.empty() || outputVarNodeIds().size() + 1 == numCols());
+  assert(_table.empty() || outputVarNodes().size() + 1 == numCols());
 }
 
 void TableNode::removeOutputAtIndex(const size_t index) {
   assert(_table.empty() || index + 1 < numCols());
   removeColumn(index + 1);
   InvariantNode::removeOutputAtIndex(index);
-  assert(_table.empty() || outputVarNodeIds().size() + 1 == numCols());
+  assert(_table.empty() || outputVarNodes().size() + 1 == numCols());
 }
 
 size_t TableNode::numCols() const { return _table.front().size(); }
 
-VarNodeId TableNode::colVar(const size_t index) const {
+VarNode& TableNode::colVar(const size_t index) const {
   if (index == 0) {
-    return staticInputVarNodeIds().front();
+    return staticInputVarNodes().front();
   }
-  return outputVarNodeIds().at(index - 1);
+  return outputVarNodes().at(index - 1);
 }
 
 void TableNode::removeRows() {
@@ -137,7 +140,7 @@ void TableNode::removeDuplicateColumns() {
   std::vector<bool> invalidRow(_table.size(), false);
   for (Int c = static_cast<Int>(numCols()) - 1; c >= 1; --c) {
     const size_t index = c - 1;
-    if (outputVarNodeIds().at(index) != staticInputVarNodeIds().front()) {
+    if (outputVarNodes().at(index) != staticInputVarNodes().front()) {
       continue;
     }
     for (size_t r = 0; r < _table.size(); ++r) {
@@ -146,9 +149,9 @@ void TableNode::removeDuplicateColumns() {
     removeOutputAtIndex(index);
     removeColumn(c);
   }
-  for (Int i = 0; i < static_cast<Int>(outputVarNodeIds().size()); ++i) {
-    for (Int j = static_cast<Int>(outputVarNodeIds().size() - 1); j > i; --j) {
-      if (outputVarNodeIds().at(i) != outputVarNodeIds().at(j)) {
+  for (Int i = 0; i < static_cast<Int>(outputVarNodes().size()); ++i) {
+    for (Int j = static_cast<Int>(outputVarNodes().size() - 1); j > i; --j) {
+      if (outputVarNodes().at(i) != outputVarNodes().at(j)) {
         continue;
       }
       for (size_t r = 0; r < _table.size(); ++r) {
@@ -187,9 +190,10 @@ void TableNode::removeDuplicateColumns() {
 void TableNode::removeColumns() {
   if (staticInputVarNodeConst(0).isFixed()) {
     _table.clear();
-    assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-      return varNodeConst(vId).isFixed();
-    }));
+    assert(std::ranges::all_of(outputVarNodes(),
+                               [&](const std::shared_ptr<VarNode>& vId) {
+                                 return varNodeConst(vId).isFixed();
+                               }));
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
@@ -215,8 +219,8 @@ void TableNode::updateState() {
   if (state() == InvariantNodeState::SUBSUMED) {
     return;
   }
-  if (outputVarNodeIds().empty()) {
-    if (!staticInputVarNodeIds().empty()) {
+  if (outputVarNodes().empty()) {
+    if (!staticInputVarNodes().empty()) {
       staticInputVarNode(0).tightenDomainType();
     }
     setState(InvariantNodeState::SUBSUMED);
@@ -226,9 +230,9 @@ void TableNode::updateState() {
   }
 }
 
-bool TableNode::constrainsOutput(const VarNodeId outputVarNodeId) const {
-  for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
-    if (outputVarNodeIds().at(i) != outputVarNodeId) {
+bool TableNode::constrainsOutput(VarNode& outputVarNodeId) const {
+  for (size_t i = 0; i < outputVarNodes().size(); ++i) {
+    if (outputVarNodes().at(i) != outputVarNodeId) {
       continue;
     }
     std::vector<Int> vals(_table.size());
@@ -245,7 +249,7 @@ bool TableNode::constrainsOutput(const VarNodeId outputVarNodeId) const {
 
 std::pair<size_t, size_t> TableNode::implicitRank() const {
   return {rank::IMPLICIT_RANK_TABLE,
-          staticInputVarNodeIds().size() + outputVarNodeIds().size()};
+          staticInputVarNodes().size() + outputVarNodes().size()};
 }
 
 bool TableNode::canBeMadeImplicit() const {
@@ -257,10 +261,10 @@ bool TableNode::makeImplicit() {
   if (!canBeMadeImplicit()) {
     return false;
   }
-  std::vector<VarNodeId> vars;
+  std::vector<std::shared_ptr<VarNode>> vars;
   vars.reserve(_table.size());
-  vars.emplace_back(staticInputVarNodeIds().front());
-  for (const auto vId : outputVarNodeIds()) {
+  vars.emplace_back(staticInputVarNodes().front());
+  for (const auto vId : outputVarNodes()) {
     vars.emplace_back(vId);
   }
   invariantGraph().addImplicitConstraintNode(
@@ -271,28 +275,30 @@ bool TableNode::makeImplicit() {
 
 void TableNode::registerOutputVars(propagation::SolverBase& solver,
                                    SolverMapping& mapping) const {
-  for (size_t i = 0; i < outputVarNodeIds().size(); ++i) {
-    assert(std::ranges::none_of(
-        outputVarNodeIds().begin(),
-        outputVarNodeIds().begin() + static_cast<Int>(i),
-        [&](const VarNodeId vId) { return vId == outputVarNodeIds().at(i); }));
+  for (size_t i = 0; i < outputVarNodes().size(); ++i) {
+    assert(std::ranges::none_of(outputVarNodes().begin(),
+                                outputVarNodes().begin() + static_cast<Int>(i),
+                                [&](const std::shared_ptr<VarNode>& vId) {
+                                  return vId == outputVarNodes().at(i);
+                                }));
 
-    assert(mapping.solverId(outputVarNodeIds().at(i)) == propagation::NULL_ID);
-    makeSolverVar(outputVarNodeIds().at(i), solver, mapping);
+    assert(mapping.solverId(outputVarNodes().at(i)) == propagation::NULL_ID);
+    makeSolverVar(outputVarNodes().at(i), solver, mapping);
   }
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return mapping.solverId(vId) != propagation::NULL_ID;
-  }));
+  assert(std::ranges::all_of(
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return mapping.solverId(vId) != propagation::NULL_ID;
+      }));
 }
 
 void TableNode::registerNode(propagation::SolverBase& solver,
                              SolverMapping& mapping) const {
   const propagation::VarViewId inputVarId =
-      mapping.solverId(staticInputVarNodeIds().front());
+      mapping.solverId(staticInputVarNodes().front());
 
   std::vector<propagation::VarViewId> outputVarIds;
-  outputVarIds.reserve(outputVarNodeIds().size());
-  for (const VarNodeId outVarId : outputVarNodeIds()) {
+  outputVarIds.reserve(outputVarNodes().size());
+  for (VarNode& outVarId : outputVarNodes()) {
     assert(mapping.solverId(outVarId).isVar());
     outputVarIds.emplace_back(mapping.solverId(outVarId));
   }

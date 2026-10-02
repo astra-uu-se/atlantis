@@ -184,14 +184,13 @@ std::vector<Int> getFixedValues(
   return values;
 }
 
-std::vector<bool> getFixedBoolValues(const InvariantGraph& graph,
-                                     const std::vector<VarNodeId>& varNodeIds) {
+std::vector<bool> getFixedBoolValues(
+    const std::vector<std::shared_ptr<VarNode>>& varNodes) {
   std::vector<bool> values;
-  values.reserve(varNodeIds.size());
-  for (const VarNodeId varNodeId : varNodeIds) {
-    const VarNode& varNode = graph.varNodeConst(varNodeId);
-    if (varNode.isFixed()) {
-      values.emplace_back(varNode.lowerBound() == 0);
+  values.reserve(varNodes.size());
+  for (const auto& varNode : varNodes) {
+    if (varNode->isFixed()) {
+      values.emplace_back(varNode->lowerBound() == 0);
     }
   }
   return values;
@@ -216,10 +215,10 @@ std::vector<bool> getFixedValues(
   return values;
 }
 
-std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+std::vector<std::shared_ptr<VarNode>> retrieveUnfixedVarNodeIds(
     FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::IntVarArray>& intVarArray) {
-  std::vector<VarNodeId> vars;
+  std::vector<std::shared_ptr<VarNode>> vars;
   vars.reserve(intVarArray->size());
   for (size_t i = 0; i < intVarArray->size(); ++i) {
     if (std::holds_alternative<Int>(intVarArray->at(i))) {
@@ -229,16 +228,16 @@ std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
         std::get<std::shared_ptr<const fznparser::IntVar>>(intVarArray->at(i));
 
     if (!var->isFixed()) {
-      vars.emplace_back(graph.retrieveVarNode(var));
+      vars.emplace_back(graph.retrieveVarNode(var).ptr());
     }
   }
   return vars;
 }
 
-std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
+std::vector<std::shared_ptr<VarNode>> retrieveUnfixedVarNodeIds(
     FznInvariantGraph& graph,
     const std::shared_ptr<fznparser::BoolVarArray>& boolVarArray) {
-  std::vector<VarNodeId> vars;
+  std::vector<std::shared_ptr<VarNode>> vars;
   vars.reserve(boolVarArray->size());
   for (size_t i = 0; i < boolVarArray->size(); ++i) {
     if (std::holds_alternative<bool>(boolVarArray->at(i))) {
@@ -248,19 +247,19 @@ std::vector<VarNodeId> retrieveUnfixedVarNodeIds(
         boolVarArray->at(i));
 
     if (!var->isFixed()) {
-      vars.emplace_back(graph.retrieveVarNode(var));
+      vars.emplace_back(graph.retrieveVarNode(var).ptr());
     }
   }
   return vars;
 }
 
-std::vector<VarNodeId> getUnfixedVarNodeIds(
-    const InvariantGraph& graph, const std::vector<VarNodeId>& varNodeIds) {
-  std::vector<VarNodeId> unfixed;
-  unfixed.reserve(varNodeIds.size());
-  for (VarNodeId varNodeId : varNodeIds) {
-    if (!graph.varNodeConst(varNodeId).isFixed()) {
-      unfixed.emplace_back(varNodeId);
+std::vector<std::shared_ptr<VarNode>> getUnfixedVarNodeIds(
+    const std::vector<std::shared_ptr<VarNode>>& varNodes) {
+  std::vector<std::shared_ptr<VarNode>> unfixed;
+  unfixed.reserve(varNodes.size());
+  for (auto& varNode : varNodes) {
+    if (!varNode->isFixed()) {
+      unfixed.emplace_back(varNode);
     }
   }
   return unfixed;
@@ -346,21 +345,21 @@ std::pair<Int, Int> linBounds(
   return {lb, ub};
 }
 
-std::pair<Int, Int> linBounds(FznInvariantGraph& invariantgraph,
-                              const std::vector<Int>& coeffs,
-                              const std::vector<VarNodeId>& varNodeIds) {
+std::pair<Int, Int> linBounds(
+    const std::vector<Int>& coeffs,
+    const std::vector<std::shared_ptr<VarNode>>& varNodeIds) {
   Int lb = 0;
   Int ub = 0;
   for (size_t i = 0; i < coeffs.size(); ++i) {
-    const auto& varNode = invariantgraph.varNode(varNodeIds.at(i));
+    const auto& varNode = varNodeIds.at(i);
     const Int v1 =
-        coeffs.at(i) * (varNode.isIntVar()
-                            ? varNode.lowerBound()
-                            : static_cast<Int>(!varNode.inDomain(false)));
+        coeffs.at(i) * (varNode->isIntVar()
+                            ? varNode->lowerBound()
+                            : static_cast<Int>(!varNode->inDomain(false)));
     const Int v2 =
-        coeffs.at(i) * (varNode.isIntVar()
-                            ? varNode.upperBound()
-                            : static_cast<Int>(varNode.inDomain(true)));
+        coeffs.at(i) * (varNode->isIntVar()
+                            ? varNode->upperBound()
+                            : static_cast<Int>(varNode->inDomain(true)));
     lb += std::min(v1, v2);
     ub += std::max(v1, v2);
   }

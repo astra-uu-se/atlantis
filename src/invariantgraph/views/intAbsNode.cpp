@@ -13,18 +13,16 @@
 
 namespace atlantis::invariantgraph {
 
-IntAbsNode::IntAbsNode(InvariantGraph& graph, const VarNodeId staticInput,
-                       const VarNodeId output)
+IntAbsNode::IntAbsNode(InvariantGraph& graph, VarNode& staticInput,
+                       VarNode& output)
     : InvariantNode(graph, {output}, {staticInput}) {}
 
-void IntAbsNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
-  assert(invariantGraphConst()
-             .varNodeConst(outputVarNodeIds().front())
-             .isIntVar());
-  assert(invariantGraph()
-             .varNodeConst(staticInputVarNodeIds().front())
-             .isIntVar());
+void IntAbsNode::init() {
+  InvariantNode::init();
+  assert(
+      invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
+  assert(
+      invariantGraph().varNodeConst(staticInputVarNodes().front()).isIntVar());
 }
 
 void IntAbsNode::postConstraint() {
@@ -40,7 +38,7 @@ void IntAbsNode::updateState() {
   }
 }
 
-bool IntAbsNode::constrainsOutput(VarNodeId) const {
+bool IntAbsNode::constrainsOutput(VarNode&) const {
   const Int lb = staticInputVarNodeConst(0).lowerBound();
   const Int ub = staticInputVarNodeConst(0).upperBound();
   if (staticInputVarNodeConst(0).constDomain()->isInterval()) {
@@ -77,23 +75,23 @@ bool IntAbsNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  invariantGraph().replaceVarNode(outputVarNodeIds().front(),
-                                  staticInputVarNodeIds().front());
+  invariantGraph().replaceVarNode(outputVarNodes().front(),
+                                  staticInputVarNodes().front());
   return true;
 }
 
 void IntAbsNode::registerOutputVars(propagation::SolverBase& solver,
                                     SolverMapping& mapping) const {
-  if (mapping.solverId(outputVarNodeIds().front()) == propagation::NULL_ID) {
-    mapping.setSolverId(outputVarNodeIds().front(),
+  if (mapping.solverId(outputVarNodes().front()) == propagation::NULL_ID) {
+    mapping.setSolverId(outputVarNodes().front(),
                         solver.makeIntView<propagation::IntAbsView>(
                             solver, mapping.solverId(input())));
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void IntAbsNode::registerNode(propagation::SolverBase&, SolverMapping&) const {}

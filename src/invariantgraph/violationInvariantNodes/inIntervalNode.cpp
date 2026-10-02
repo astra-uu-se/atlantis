@@ -12,25 +12,23 @@
 
 namespace atlantis::invariantgraph {
 
-InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNodeId input,
-                               const Int lb, const Int ub, const VarNodeId r)
+InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNode& input,
+                               const Int lb, const Int ub, const VarNode& r)
     : ViolationInvariantNode(graph, {input}, r), _lb(lb), _ub(ub) {}
 
-InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNodeId input,
+InIntervalNode::InIntervalNode(InvariantGraph& graph, VarNode& input,
                                const Int lb, const Int ub,
                                const bool shouldHold)
     : ViolationInvariantNode(graph, {input}, shouldHold), _lb(lb), _ub(ub) {}
 
-void InIntervalNode::init(const InvariantNodeId id) {
-  ViolationInvariantNode::init(id);
+void InIntervalNode::init() {
+  ViolationInvariantNode::init();
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+      !invariantGraphConst().varNodeConst(reifiedViolationNode()).isIntVar());
   assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodes().begin(), staticInputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
 }
 
 void InIntervalNode::postConstraint() {
@@ -58,25 +56,25 @@ void InIntervalNode::registerOutputVars(propagation::SolverBase& solver,
     if (shouldHold()) {
       setViolationVarId(
           solver.makeIntView<propagation::InIntervalConst>(
-              solver, mapping.solverId(staticInputVarNodeIds().front()), _lb,
+              solver, mapping.solverId(staticInputVarNodes().front()), _lb,
               _ub),
           mapping);
     } else {
       assert(!isReified());
       mapping.setIntermediateId(
           id(), solver.makeIntView<propagation::InIntervalConst>(
-                    solver, mapping.solverId(staticInputVarNodeIds().front()),
+                    solver, mapping.solverId(staticInputVarNodes().front()),
                     _lb, _ub));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
                             solver, mapping.intermediateId(id()), 0),
                         mapping);
     }
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void InIntervalNode::registerNode(propagation::SolverBase&,

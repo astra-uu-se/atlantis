@@ -116,15 +116,15 @@ TEST_P(BoolAllEqualNodeTestFixture, construction) {
   expectOutputOf(invNode());
 
   const auto expectedInputs = varNodeIds(inputVars);
-  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodeIds()));
+  EXPECT_THAT(expectedInputs, ContainerEq(invNode().staticInputVarNodes()));
 
   if (!isReified()) {
     EXPECT_FALSE(invNode().isReified());
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
+    EXPECT_EQ(invNode().reifiedViolationNode(), NULL_NODE_ID);
   } else {
     EXPECT_TRUE(invNode().isReified());
-    EXPECT_NE(invNode().reifiedViolationNodeId(), NULL_NODE_ID);
-    EXPECT_EQ(invNode().reifiedViolationNodeId(), varNodeId(reifiedVar));
+    EXPECT_NE(invNode().reifiedViolationNode(), NULL_NODE_ID);
+    EXPECT_EQ(invNode().reifiedViolationNode(), varNodeId(reifiedVar));
   }
 }
 
@@ -134,7 +134,7 @@ TEST_P(BoolAllEqualNodeTestFixture, application) {
   addInputVarsToSolver();
   EXPECT_EQ(invNode().violationVarId(*_solverMapping), propagation::NULL_ID);
   invNode().registerOutputVars(*_solver, *_solverMapping);
-  for (const auto& outputVarNodeId : invNode().outputVarNodeIds()) {
+  for (const auto& outputVarNodeId : invNode().outputVarNodes()) {
     EXPECT_NE(varId(outputVarNodeId), propagation::NULL_ID);
   }
   EXPECT_NE(invNode().violationVarId(*_solverMapping), propagation::NULL_ID);

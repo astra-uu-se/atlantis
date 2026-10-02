@@ -13,10 +13,11 @@ class CountImplicitNode : public ImplicitConstraintNode {
   size_t _amount;
 
  public:
-  explicit CountImplicitNode(InvariantGraph&, std::vector<VarNodeId>&&,
+  explicit CountImplicitNode(InvariantGraph&,
+                             std::vector<std::shared_ptr<VarNode>>&&,
                              Int needle, size_t amount);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void updateDomainTypes() override;
 

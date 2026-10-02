@@ -9,25 +9,27 @@ class CountNode : public InvariantNode {
   std::optional<Int> _fixedNeedle;
   Int _countOffset;
 
-  [[nodiscard]] VarNodeId needle() const;
+  [[nodiscard]] std::shared_ptr<VarNode> needle() const;
   [[nodiscard]] size_t needleIndex() const;
   [[nodiscard]] size_t numInputVars() const;
 
  public:
-  CountNode(InvariantGraph& graph, VarNodeId count,
-            std::vector<VarNodeId>&& vars, Int needle, Int countOffset = 0);
-
-  CountNode(InvariantGraph& graph, VarNodeId count,
-            std::vector<VarNodeId>&& vars, VarNodeId needle,
+  CountNode(InvariantGraph& graph, VarNode& count,
+            std::vector<std::shared_ptr<VarNode>>&& vars, Int needle,
             Int countOffset = 0);
 
-  void init(InvariantNodeId) override;
+  CountNode(InvariantGraph& graph, VarNode& count,
+            std::vector<std::shared_ptr<VarNode>>&& vars, VarNode& needle,
+            Int countOffset = 0);
+
+  void init() override;
 
   void postConstraint() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(
+      const VarNode& outputVarNode) const override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

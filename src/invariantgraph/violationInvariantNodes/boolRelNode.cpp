@@ -11,28 +11,28 @@
 namespace atlantis::invariantgraph {
 class VarNode;
 
-BoolRelNode::BoolRelNode(InvariantGraph& graph, const VarNodeId a,
-                         const RelationType relType, const VarNodeId b,
-                         const VarNodeId r)
-    : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, r),
+BoolRelNode::BoolRelNode(InvariantGraph& graph, VarNode& a,
+                         const RelationType relType, VarNode& b,
+                         const VarNode& r)
+    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b},
+                             r),
       _relType(relType) {}
 
-BoolRelNode::BoolRelNode(InvariantGraph& graph, const VarNodeId a,
-                         const RelationType relType, const VarNodeId b,
+BoolRelNode::BoolRelNode(InvariantGraph& graph, VarNode& a,
+                         const RelationType relType, VarNode& b,
                          const bool shouldHold)
-    : ViolationInvariantNode(graph, std::vector<VarNodeId>{a, b}, shouldHold),
+    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b},
+                             shouldHold),
       _relType(relType) {}
 
-void BoolRelNode::init(const InvariantNodeId id) {
-  ViolationInvariantNode::init(id);
+void BoolRelNode::init() {
+  ViolationInvariantNode::init();
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+      !invariantGraphConst().varNodeConst(reifiedViolationNode()).isIntVar());
   assert(std::ranges::none_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodes().begin(), staticInputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
 }
 
 void BoolRelNode::postConstraint() {
@@ -55,13 +55,13 @@ void BoolRelNode::updateState() {
     _relType = relationTypeComplement(_relType);
     setShouldHold(true);
   }
-  if (staticInputVarNodeIds().empty() ||
-      (staticInputVarNodeIds().size() == 2 &&
-       staticInputVarNodeIds().front() == staticInputVarNodeIds().back())) {
+  if (staticInputVarNodes().empty() ||
+      (staticInputVarNodes().size() == 2 &&
+       staticInputVarNodes().front() == staticInputVarNodes().back())) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
+  for (Int i = static_cast<Int>(staticInputVarNodes().size()) - 1; i >= 0;
        --i) {
     if (staticInputVarNodeConst(i).isFixed()) {
       if (_fixedRhs.has_value()) {
@@ -76,7 +76,7 @@ void BoolRelNode::updateState() {
     }
   }
 
-  if (staticInputVarNodeIds().empty()) {
+  if (staticInputVarNodes().empty()) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
@@ -102,7 +102,7 @@ void BoolRelNode::updateState() {
 
 bool BoolRelNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE && !isReified() &&
-         staticInputVarNodeIds().size() > 1 &&
+         staticInputVarNodes().size() > 1 &&
          ((_relType == RelationType::REL_TYPE_EQ && shouldHold()) ||
           (_relType == RelationType::REL_TYPE_NE && !shouldHold()));
 }
@@ -111,10 +111,10 @@ bool BoolRelNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  const VarNodeId frontVarNodeId = staticInputVarNodeIds().front();
-  for (size_t i = 1; i < staticInputVarNodeIds().size(); i++) {
-    if (staticInputVarNodeIds().at(i) != frontVarNodeId) {
-      invariantGraph().replaceVarNode(staticInputVarNodeIds().at(i),
+  VarNode& frontVarNodeId = staticInputVarNodes().front();
+  for (size_t i = 1; i < staticInputVarNodes().size(); i++) {
+    if (staticInputVarNodes().at(i) != frontVarNodeId) {
+      invariantGraph().replaceVarNode(staticInputVarNodes().at(i),
                                       frontVarNodeId);
     }
   }
@@ -123,39 +123,40 @@ bool BoolRelNode::replace() {
 
 void BoolRelNode::registerOutputVars(propagation::SolverBase& solver,
                                      SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().empty()) {
+  if (staticInputVarNodes().empty()) {
     return;
   }
-  if (staticInputVarNodeIds().size() == 1) {
+  if (staticInputVarNodes().size() == 1) {
     assert(_fixedRhs.has_value());
     setViolationVarId(
         makeSolverConstBoolRelation(
-            solver, mapping.solverId(staticInputVarNodeIds().front()), _relType,
+            solver, mapping.solverId(staticInputVarNodes().front()), _relType,
             *_fixedRhs),
         mapping);
   } else {
-    assert(staticInputVarNodeIds().size() == 2);
+    assert(staticInputVarNodes().size() == 2);
     registerViolation(solver, mapping);
   }
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return mapping.solverId(vId) != propagation::NULL_ID;
-  }));
+  assert(std::ranges::all_of(
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return mapping.solverId(vId) != propagation::NULL_ID;
+      }));
 }
 
 void BoolRelNode::registerNode(propagation::SolverBase& solver,
                                SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().size() <= 1) {
-    assert(staticInputVarNodeIds().empty() ? true
-                                           : violationVarId(mapping).isView());
+  if (staticInputVarNodes().size() <= 1) {
+    assert(staticInputVarNodes().empty() ? true
+                                         : violationVarId(mapping).isView());
     return;
   }
-  assert(staticInputVarNodeIds().size() == 2);
+  assert(staticInputVarNodes().size() == 2);
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(violationVarId(mapping).isVar());
 
   makeSolverBoolRelation(
-      solver, mapping.solverId(staticInputVarNodeIds().front()), _relType,
-      mapping.solverId(staticInputVarNodeIds().back()), violationVarId(mapping),
+      solver, mapping.solverId(staticInputVarNodes().front()), _relType,
+      mapping.solverId(staticInputVarNodes().back()), violationVarId(mapping),
       shouldHold());
 }
 

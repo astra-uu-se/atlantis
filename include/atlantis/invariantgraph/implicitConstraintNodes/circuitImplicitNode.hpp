@@ -12,10 +12,11 @@ class CircuitImplicitNode : public ImplicitConstraintNode {
   Int _offset;
 
  public:
-  explicit CircuitImplicitNode(InvariantGraph&, std::vector<VarNodeId>&&,
+  explicit CircuitImplicitNode(InvariantGraph&,
+                               std::vector<std::shared_ptr<VarNode>>&&,
                                Int offset);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void updateDomainTypes() override;
 

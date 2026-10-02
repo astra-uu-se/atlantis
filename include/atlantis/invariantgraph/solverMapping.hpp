@@ -39,42 +39,41 @@ class SolverMapping {
  public:
   SolverMapping() = default;
 
-  [[nodiscard]] propagation::VarViewId solverId(VarNodeId varNodeId) const;
+  [[nodiscard]] propagation::VarViewId solverId(size_t varNodeId) const;
 
   [[nodiscard]] propagation::VarViewId domainViolationId(
-      VarNodeId varNodeId) const;
+      size_t varNodeId) const;
 
   [[nodiscard]] propagation::VarViewId totalViolationId() const;
 
   [[nodiscard]] propagation::VarViewId objectiveId() const;
 
-  void setSolverId(VarNodeId varNodeId, propagation::VarViewId solverId);
+  void setSolverId(size_t varNodeId, propagation::VarViewId solverId);
 
-  void setDomainViolationId(VarNodeId varNodeId,
-                            propagation::VarViewId solverId);
+  void setDomainViolationId(size_t varNodeId, propagation::VarViewId solverId);
 
   void setTotalViolationId(propagation::VarViewId solverId);
 
   void setObjectiveId(propagation::VarViewId solverId);
 
-  [[nodiscard]] bool hasNeighborhood(InvariantNodeId id) const;
+  [[nodiscard]] bool hasNeighborhood(size_t id) const;
 
   [[nodiscard]] std::shared_ptr<search::neighborhoods::Neighborhood>
-  neighborhood(InvariantNodeId id);
+  neighborhood(size_t id);
 
-  [[nodiscard]] propagation::VarViewId violationId(InvariantNodeId id) const;
+  [[nodiscard]] propagation::VarViewId violationId(size_t id) const;
 
-  void setViolationId(InvariantNodeId id, propagation::VarViewId solverId);
+  void setViolationId(size_t id, propagation::VarViewId solverId);
 
-  [[nodiscard]] propagation::VarViewId intermediateId(InvariantNodeId id,
+  [[nodiscard]] propagation::VarViewId intermediateId(size_t id,
                                                       size_t index) const;
 
-  [[nodiscard]] propagation::VarViewId intermediateId(InvariantNodeId id) const;
+  [[nodiscard]] propagation::VarViewId intermediateId(size_t id) const;
 
-  propagation::VarViewId setIntermediateId(InvariantNodeId id, size_t index,
+  propagation::VarViewId setIntermediateId(size_t id, size_t index,
                                            propagation::VarViewId solverId);
 
-  propagation::VarViewId setIntermediateId(InvariantNodeId id,
+  propagation::VarViewId setIntermediateId(size_t id,
                                            propagation::VarViewId solverId);
 
   [[nodiscard]] bool hasGlobalNeighborhood() const;
@@ -86,8 +85,7 @@ class SolverMapping {
       const std::shared_ptr<search::neighborhoods::Neighborhood>&);
 
   bool setNeighborhood(
-      InvariantNodeId id,
-      const std::shared_ptr<search::neighborhoods::Neighborhood>&);
+      size_t id, const std::shared_ptr<search::neighborhoods::Neighborhood>&);
 
   [[nodiscard]] Int objectiveOptimalValue() const;
 

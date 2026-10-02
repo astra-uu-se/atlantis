@@ -14,10 +14,10 @@ namespace atlantis::invariantgraph {
  */
 class InvariantGraphRoot : public ImplicitConstraintNode {
  public:
-  explicit InvariantGraphRoot(InvariantGraph& graph,
-                              std::vector<VarNodeId>&& vars = {});
+  explicit InvariantGraphRoot(
+      InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& vars = {});
 
-  void addSearchVarNode(VarNodeId);
+  void addSearchVarNode(VarNode&);
 
   [[nodiscard]] std::ostream& dotLangEntry(std::ostream&) const override;
 

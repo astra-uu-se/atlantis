@@ -16,7 +16,7 @@ class FznBackend;
 
 class SolverThread {
   std::shared_ptr<const invariantgraph::FznInvariantGraph> _invariantGraph;
-  std::vector<invariantgraph::VarNodeId> _outputVarNodeIds;
+  std::vector<std::shared_ptr<invariantgraph::VarNode>> _outputVarNodeIds;
   std::shared_ptr<const search::AnnealingScheduleFactory>
       _annealingScheduleFactory;
   fznparser::ProblemType _problemType;
@@ -34,7 +34,7 @@ class SolverThread {
   explicit SolverThread(
       const std::shared_ptr<const invariantgraph::FznInvariantGraph>&
           invariantGraph,
-      std::vector<invariantgraph::VarNodeId>&& outputVarNodeIds,
+      std::vector<std::shared_ptr<invariantgraph::VarNode>>&& outputVarNodes,
       fznparser::ProblemType problemType,
       const std::shared_ptr<const search::AnnealingScheduleFactory>&
           annealingFactorySchedule,
@@ -49,7 +49,8 @@ class SolverThread {
   [[nodiscard]] std::unique_ptr<search::MetaHeuristic> createMetaHeuristic(
       search::RandomProvider&, const search::Assignment&) const;
 
-  [[nodiscard]] std::vector<invariantgraph::VarNodeId> getOutputVarNodeIds();
+  [[nodiscard]] std::vector<std::shared_ptr<invariantgraph::VarNode>>
+  getOutputVarNodeIds();
 };
 
 }  // namespace atlantis

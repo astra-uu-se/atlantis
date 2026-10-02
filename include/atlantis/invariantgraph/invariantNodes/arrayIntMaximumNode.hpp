@@ -7,19 +7,19 @@ class ArrayIntMaximumNode : public InvariantNode {
   Int _lowerBound;
 
  public:
-  explicit ArrayIntMaximumNode(InvariantGraph& graph, VarNodeId a, VarNodeId b,
-                               VarNodeId output);
+  explicit ArrayIntMaximumNode(InvariantGraph& graph, VarNode& a, VarNode& b,
+                               VarNode& output);
 
   explicit ArrayIntMaximumNode(InvariantGraph& graph,
-                               std::vector<VarNodeId>&& vars, VarNodeId output);
+                               std::vector<std::shared_ptr<VarNode>>&& vars, VarNode& output);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(VarNode& outputVarNodeId) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 

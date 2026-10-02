@@ -23,7 +23,7 @@
 namespace atlantis {
 
 SolverThread::SolverThread(FznBackend& backend, const size_t threadId)
-    : SolverThread(backend.invariantGraph(), backend.outputVarNodeIds(),
+    : SolverThread(backend.invariantGraph(), backend.outputVarNodes(),
                    backend.problemType(), backend.annealingScheduleFactory(),
                    threadId, backend.threadController(), backend.searchType(),
                    backend.seed(), backend.timelimit(), backend.shouldStop()) {}
@@ -31,7 +31,7 @@ SolverThread::SolverThread(FznBackend& backend, const size_t threadId)
 SolverThread::SolverThread(
     const std::shared_ptr<const invariantgraph::FznInvariantGraph>&
         invariantGraph,
-    std::vector<invariantgraph::VarNodeId>&& outputVarNodeIds,
+    std::vector<std::shared_ptr<invariantgraph::VarNode>>&& outputVarNodes,
     const fznparser::ProblemType problemType,
     const std::shared_ptr<const search::AnnealingScheduleFactory>&
         annealingScheduleFactory,
@@ -41,7 +41,7 @@ SolverThread::SolverThread(
     const std::optional<std::chrono::milliseconds> timeLimit,
     const std::shared_ptr<const bool>& shouldStop)
     : _invariantGraph(invariantGraph),
-      _outputVarNodeIds(std::move(outputVarNodeIds)),
+      _outputVarNodeIds(std::move(outputVarNodes)),
       _annealingScheduleFactory(annealingScheduleFactory),
       _problemType(problemType),
       _threadId(threadId),
@@ -58,7 +58,8 @@ std::unique_ptr<search::MetaHeuristic> SolverThread::createMetaHeuristic(
       randomProvider, _annealingScheduleFactory->create(), assignment);
 }
 
-[[gnu::always_inline]] inline std::vector<invariantgraph::VarNodeId>
+[[gnu::always_inline]] inline std::vector<
+    std::shared_ptr<invariantgraph::VarNode>>
 SolverThread::getOutputVarNodeIds() {
   return _outputVarNodeIds;
 }

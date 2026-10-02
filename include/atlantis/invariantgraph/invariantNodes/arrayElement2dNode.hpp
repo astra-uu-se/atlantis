@@ -11,22 +11,22 @@ class ArrayElement2dNode : public InvariantNode {
   bool _isIntMatrix;
 
  public:
-  ArrayElement2dNode(InvariantGraph& graph, VarNodeId rowIdx, VarNodeId colIdx,
+  ArrayElement2dNode(InvariantGraph& graph, VarNode& rowIdx, VarNode& colIdx,
                      std::vector<std::vector<Int>>&& parMatrix,
-                     VarNodeId output, Int rowOffset, Int colOffset,
+                     VarNode& output, Int rowOffset, Int colOffset,
                      bool isIntMatrix = true);
 
-  ArrayElement2dNode(InvariantGraph& graph, VarNodeId rowIdx, VarNodeId colIdx,
+  ArrayElement2dNode(InvariantGraph& graph, VarNode& rowIdx, VarNode& colIdx,
                      const std::vector<std::vector<bool>>& parMatrix,
-                     VarNodeId output, Int rowOffset, Int colOffset);
+                     VarNode& output, Int rowOffset, Int colOffset);
 
   void postConstraint() override;
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(VarNode& outputVarNode) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 
@@ -37,12 +37,12 @@ class ArrayElement2dNode : public InvariantNode {
 
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
-  [[nodiscard]] VarNodeId rowIdx() const noexcept {
-    return staticInputVarNodeIds().front();
+  [[nodiscard]] const VarNode& rowIdx() const noexcept {
+    return *staticInputVarNodes().front();
   }
 
-  [[nodiscard]] VarNodeId colIdx() const noexcept {
-    return staticInputVarNodeIds().back();
+  [[nodiscard]] const VarNode& colIdx() const noexcept {
+    return *staticInputVarNodes().back();
   }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;

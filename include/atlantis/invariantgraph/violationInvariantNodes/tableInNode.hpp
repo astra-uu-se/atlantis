@@ -7,7 +7,7 @@ class TableInNode : public ViolationInvariantNode {
   std::vector<std::vector<Int>> _table;
   bool _isBoolTable;
 
-  [[nodiscard]] VarNodeId numCols() const;
+  [[nodiscard]] size_t numCols() const;
 
   void removeInvalidColumns();
   void removeInvalidRows();
@@ -18,23 +18,27 @@ class TableInNode : public ViolationInvariantNode {
   [[nodiscard]] Int firstInputColIndex() const;
 
  public:
-  explicit TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
-                       std::vector<std::vector<Int>>&& table, VarNodeId reified,
+  explicit TableInNode(InvariantGraph& graph,
+                       std::vector<std::shared_ptr<VarNode>>&& vars,
+                       std::vector<std::vector<Int>>&& table, VarNode& reified,
                        bool isBoolTable = false);
 
-  explicit TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+  explicit TableInNode(InvariantGraph& graph,
+                       std::vector<std::shared_ptr<VarNode>>&& vars,
                        std::vector<std::vector<Int>>&& table,
                        bool shouldHold = true, bool isBoolTable = false);
 
-  explicit TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+  explicit TableInNode(InvariantGraph& graph,
+                       std::vector<std::shared_ptr<VarNode>>&& vars,
                        const std::vector<std::vector<bool>>& table,
-                       VarNodeId reified);
+                       VarNode& reified);
 
-  explicit TableInNode(InvariantGraph& graph, std::vector<VarNodeId>&& vars,
+  explicit TableInNode(InvariantGraph& graph,
+                       std::vector<std::shared_ptr<VarNode>>&& vars,
                        const std::vector<std::vector<bool>>& table,
                        bool shouldHold = true);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

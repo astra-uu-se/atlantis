@@ -11,12 +11,12 @@
 
 namespace atlantis::invariantgraph {
 
-IntModNode::IntModNode(InvariantGraph& graph, const VarNodeId numerator,
-                       const VarNodeId denominator, const VarNodeId remainder)
+IntModNode::IntModNode(InvariantGraph& graph, VarNode& numerator,
+                       VarNode& denominator, VarNode& remainder)
     : InvariantNode(graph, {remainder}, {numerator, denominator}) {}
 
-void IntModNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
+void IntModNode::init() {
+  InvariantNode::init();
   assert(varNodeConst(remainder()).isIntVar());
   assert(varNodeConst(numerator()).isIntVar());
   assert(varNodeConst(denominator()).isIntVar());
@@ -65,31 +65,33 @@ bool IntModNode::replace() {
 
 void IntModNode::registerOutputVars(propagation::SolverBase& solver,
                                     SolverMapping& mapping) const {
-  makeSolverVar(outputVarNodeIds().front(), solver, mapping);
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  makeSolverVar(outputVarNodes().front(), solver, mapping);
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void IntModNode::registerNode(propagation::SolverBase& solver,
                               SolverMapping& mapping) const {
-  assert(mapping.solverId(outputVarNodeIds().front()) != propagation::NULL_ID);
-  assert(mapping.solverId(outputVarNodeIds().front()).isVar());
+  assert(mapping.solverId(outputVarNodes().front()) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNodes().front()).isVar());
 
   solver.makeInvariant<propagation::Mod>(
-      solver, mapping.solverId(outputVarNodeIds().front()),
+      solver, mapping.solverId(outputVarNodes().front()),
       mapping.solverId(numerator()), mapping.solverId(denominator()));
 }
 
-VarNodeId IntModNode::numerator() const {
-  return staticInputVarNodeIds().front();
+const std::shared_ptr<VarNode>& IntModNode::numerator() const {
+  return staticInputVarNodes().front();
 }
-VarNodeId IntModNode::denominator() const {
-  return staticInputVarNodeIds().back();
+const std::shared_ptr<VarNode>& IntModNode::denominator() const {
+  return staticInputVarNodes().back();
 }
-VarNodeId IntModNode::remainder() const { return outputVarNodeIds().front(); }
+const std::shared_ptr<VarNode>& IntModNode::remainder() const {
+  return outputVarNodes().front();
+}
 
 std::string IntModNode::dotLangIdentifier() const { return "int_mod"; }
 

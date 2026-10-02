@@ -9,13 +9,13 @@ class SetInNode : public ViolationInvariantNode {
   SortedUniqueVector _values;
 
  public:
-  explicit SetInNode(InvariantGraph& graph, VarNodeId input,
-                     std::vector<Int>&& values, VarNodeId r);
+  explicit SetInNode(InvariantGraph& graph, VarNode& input,
+                     std::vector<Int>&& values, VarNode& r);
 
-  explicit SetInNode(InvariantGraph& graph, VarNodeId input,
+  explicit SetInNode(InvariantGraph& graph, VarNode& input,
                      std::vector<Int>&& values, bool shouldHold = true);
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

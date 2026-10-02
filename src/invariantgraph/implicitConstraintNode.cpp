@@ -10,23 +10,25 @@
 namespace atlantis::invariantgraph {
 
 ImplicitConstraintNode::ImplicitConstraintNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& outputVarNodeIds)
-    : InvariantNode(graph, std::move(outputVarNodeIds)) {}
+    InvariantGraph& graph,
+    std::vector<std::shared_ptr<VarNode>>&& outputVarNodes)
+    : InvariantNode(graph, std::move(outputVarNodes)) {}
 
 void ImplicitConstraintNode::registerOutputVars(propagation::SolverBase& solver,
                                                 SolverMapping& mapping) const {
-  for (const auto& varNodeId : outputVarNodeIds()) {
-    const auto& varNode = invariantGraphConst().varNodeConst(varNodeId);
-    if (mapping.solverId(varNodeId) == propagation::NULL_ID) {
-      const auto& [lb, ub] = varNode.bounds();
-      mapping.setSolverId(varNodeId, solver.makeIntVar(lb, lb, ub));
+  for (const auto& varNodeId : outputVarNodes()) {
+    const auto& varNode = varNodeId;
+    if (mapping.solverId(varNodeId->mappingId()) == propagation::NULL_ID) {
+      const auto& [lb, ub] = varNode->bounds();
+      mapping.setSolverId(varNodeId->mappingId(), solver.makeIntVar(lb, lb, ub));
     }
   }
 }
 
-void ImplicitConstraintNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
+void ImplicitConstraintNode::init() { InvariantNode::init(); }
+
+bool ImplicitConstraintNode::constrainsOutput(VarNode&) const {
+  return true;
 }
-bool ImplicitConstraintNode::constrainsOutput(VarNodeId) const { return true; }
 
 }  // namespace atlantis::invariantgraph

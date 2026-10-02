@@ -118,11 +118,11 @@ TEST_P(IntTimesNodeTestFixture, propagation) {
 
   if (shouldBeReplaced()) {
     EXPECT_FALSE(varNode(outputVar).isFixed());
-    const VarNodeId factorVarNodeId =
+    const auto& factorVarNode =
         varNode(varNode(inputVars.front()).isFixed() ? inputVars.back()
                                                      : inputVars.front())
             .varNodeId();
-    EXPECT_EQ(varNode(outputVar).varNodeId(), factorVarNodeId);
+    EXPECT_EQ(varNode(outputVar), factorVarNode);
     return;
   }
 

@@ -9,37 +9,36 @@
 
 namespace atlantis::invariantgraph {
 
-InvariantGraphRoot::InvariantGraphRoot(InvariantGraph& graph,
-                                       std::vector<VarNodeId>&& vars)
+InvariantGraphRoot::InvariantGraphRoot(
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& vars)
     : ImplicitConstraintNode(graph, std::move(vars)) {}
 
 void InvariantGraphRoot::updateDomainTypes() {
-  for (const auto& nId : outputVarNodeIds()) {
-    invariantGraph().varNode(nId).setDomainType(DomainType::DOM_NONE);
+  for (const auto& nId : outputVarNodes()) {
+    nId->setDomainType(DomainType::DOM_NONE);
   }
 }
 
 void InvariantGraphRoot::registerNode(propagation::SolverBase&,
                                       SolverMapping& mapping) const {
-  assert(!mapping.hasNeighborhood(id()));
+  assert(!mapping.hasNeighborhood(mappingId()));
 
   std::vector<search::SearchVar> searchVars;
-  searchVars.reserve(outputVarNodeIds().size());
+  searchVars.reserve(outputVarNodes().size());
 
-  for (const auto& nId : outputVarNodeIds()) {
-    auto& node = invariantGraphConst().varNodeConst(nId);
-    assert(mapping.solverId(nId) != propagation::NULL_ID);
-    searchVars.emplace_back(mapping.solverId(nId), node.constDomain());
+  for (const auto& vNode : outputVarNodes()) {
+    assert(mapping.solverId(vNode->mappingId()) != propagation::NULL_ID);
+    searchVars.emplace_back(mapping.solverId(vNode->mappingId()), vNode->constDomain());
   }
 
   mapping.setNeighborhood(
-      id(), std::make_shared<search::neighborhoods::RandomNeighborhood>(
+      mappingId(), std::make_shared<search::neighborhoods::RandomNeighborhood>(
                 std::move(searchVars)));
 }
 
-void InvariantGraphRoot::addSearchVarNode(const VarNodeId vId) {
-  markOutputTo(vId, true);
-  assert(outputVarNodeIds().back() == vId);
+void InvariantGraphRoot::addSearchVarNode(VarNode& varNode) {
+  markOutputTo(varNode.ptr(), true);
+  assert(outputVarNodes().back().get() == &varNode);
 }
 
 std::ostream& InvariantGraphRoot::dotLangEdges(std::ostream& o) const {

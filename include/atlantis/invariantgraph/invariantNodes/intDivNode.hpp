@@ -6,11 +6,10 @@ namespace atlantis::invariantgraph {
 
 class IntDivNode : public InvariantNode {
  public:
-  IntDivNode(InvariantGraph& graph,
+  IntDivNode(InvariantGraph& graph, VarNode& numerator, VarNode& denominator,
+             VarNode& quotient);
 
-             VarNodeId numerator, VarNodeId denominator, VarNodeId quotient);
-
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 
@@ -21,15 +20,17 @@ class IntDivNode : public InvariantNode {
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNodeId) const override { return true; }
+  [[nodiscard]] bool constrainsOutput(const VarNode&) const override {
+    return true;
+  }
 
   [[nodiscard]] bool canBeReplaced() const override;
 
   [[nodiscard]] bool replace() override;
 
-  [[nodiscard]] VarNodeId numerator() const noexcept;
-  [[nodiscard]] VarNodeId denominator() const noexcept;
-  [[nodiscard]] VarNodeId quotient() const noexcept;
+  [[nodiscard]] VarNode& numerator() const noexcept;
+  [[nodiscard]] VarNode& denominator() const noexcept;
+  [[nodiscard]] VarNode& quotient() const noexcept;
 
   [[nodiscard]] std::string dotLangIdentifier() const override;
 };

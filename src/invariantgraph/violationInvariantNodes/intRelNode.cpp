@@ -10,26 +10,23 @@
 
 namespace atlantis::invariantgraph {
 
-IntRelNode::IntRelNode(InvariantGraph& graph, const VarNodeId a,
-                       const RelationType relType, const VarNodeId b,
-                       const VarNodeId r)
+IntRelNode::IntRelNode(InvariantGraph& graph, VarNode& a,
+                       const RelationType relType, VarNode& b, const VarNode& r)
     : ViolationInvariantNode(graph, {a, b}, r), _relType(relType) {}
 
-IntRelNode::IntRelNode(InvariantGraph& graph, const VarNodeId a,
-                       const RelationType relType, const VarNodeId b,
+IntRelNode::IntRelNode(InvariantGraph& graph, VarNode& a,
+                       const RelationType relType, VarNode& b,
                        const bool shouldHold)
     : ViolationInvariantNode(graph, {a, b}, shouldHold), _relType(relType) {}
 
-void IntRelNode::init(const InvariantNodeId id) {
-  ViolationInvariantNode::init(id);
+void IntRelNode::init() {
+  ViolationInvariantNode::init();
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+      !invariantGraphConst().varNodeConst(reifiedViolationNode()).isIntVar());
   assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodes().begin(), staticInputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
 }
 
 void IntRelNode::postConstraint() {
@@ -51,13 +48,13 @@ void IntRelNode::updateState() {
     _relType = relationTypeComplement(_relType);
     setShouldHold(true);
   }
-  if (staticInputVarNodeIds().empty() ||
-      (staticInputVarNodeIds().size() == 2 &&
-       staticInputVarNodeIds().front() == staticInputVarNodeIds().back())) {
+  if (staticInputVarNodes().empty() ||
+      (staticInputVarNodes().size() == 2 &&
+       staticInputVarNodes().front() == staticInputVarNodes().back())) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  for (Int i = static_cast<Int>(staticInputVarNodeIds().size()) - 1; i >= 0;
+  for (Int i = static_cast<Int>(staticInputVarNodes().size()) - 1; i >= 0;
        --i) {
     if (staticInputVarNodeConst(i).isFixed()) {
       if (_fixedRhs.has_value()) {
@@ -72,7 +69,7 @@ void IntRelNode::updateState() {
     }
   }
 
-  if (staticInputVarNodeIds().empty()) {
+  if (staticInputVarNodes().empty()) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
@@ -85,11 +82,11 @@ void IntRelNode::updateState() {
   const Int rhsLb =
       _fixedRhs.has_value()
           ? *_fixedRhs
-          : varNodeConst(staticInputVarNodeIds().back()).lowerBound();
+          : varNodeConst(staticInputVarNodes().back()).lowerBound();
   const Int rhsUb =
       _fixedRhs.has_value()
           ? *_fixedRhs
-          : varNodeConst(staticInputVarNodeIds().back()).upperBound();
+          : varNodeConst(staticInputVarNodes().back()).upperBound();
 
   if (_relType == RelationType::REL_TYPE_GT) {
     if (lhsLb > rhsUb) {
@@ -157,7 +154,7 @@ bool IntRelNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE) {
     return false;
   }
-  return !isReified() && staticInputVarNodeIds().size() > 1 &&
+  return !isReified() && staticInputVarNodes().size() > 1 &&
          ((_relType == RelationType::REL_TYPE_EQ && shouldHold()) ||
           (_relType == RelationType::REL_TYPE_NE && !shouldHold()));
 }
@@ -166,10 +163,10 @@ bool IntRelNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  const VarNodeId frontVarNodeId = staticInputVarNodeIds().front();
-  for (size_t i = 1; i < staticInputVarNodeIds().size(); i++) {
-    if (staticInputVarNodeIds().at(i) != frontVarNodeId) {
-      invariantGraph().replaceVarNode(staticInputVarNodeIds().at(i),
+  VarNode& frontVarNodeId = staticInputVarNodes().front();
+  for (size_t i = 1; i < staticInputVarNodes().size(); i++) {
+    if (staticInputVarNodes().at(i) != frontVarNodeId) {
+      invariantGraph().replaceVarNode(staticInputVarNodes().at(i),
                                       frontVarNodeId);
     }
   }
@@ -178,41 +175,42 @@ bool IntRelNode::replace() {
 
 void IntRelNode::registerOutputVars(propagation::SolverBase& solver,
                                     SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().empty()) {
+  if (staticInputVarNodes().empty()) {
     return;
   }
-  if (staticInputVarNodeIds().size() == 1) {
+  if (staticInputVarNodes().size() == 1) {
     assert(_fixedRhs.has_value());
     setViolationVarId(
         makeSolverConstIntRelation(
-            solver, mapping.solverId(staticInputVarNodeIds().front()), _relType,
+            solver, mapping.solverId(staticInputVarNodes().front()), _relType,
             *_fixedRhs, shouldHold()),
         mapping);
   } else {
-    assert(staticInputVarNodeIds().size() == 2);
+    assert(staticInputVarNodes().size() == 2);
     registerViolation(solver, mapping);
   }
-  assert(std::ranges::all_of(outputVarNodeIds(), [&](const VarNodeId vId) {
-    return mapping.solverId(vId) != propagation::NULL_ID;
-  }));
+  assert(std::ranges::all_of(
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
+        return mapping.solverId(vId) != propagation::NULL_ID;
+      }));
 }
 
 void IntRelNode::registerNode(propagation::SolverBase& solver,
                               SolverMapping& mapping) const {
-  if (staticInputVarNodeIds().size() <= 1) {
-    assert(staticInputVarNodeIds().empty() ? true
-                                           : violationVarId(mapping).isView());
+  if (staticInputVarNodes().size() <= 1) {
+    assert(staticInputVarNodes().empty() ? true
+                                         : violationVarId(mapping).isView());
     return;
   }
-  assert(staticInputVarNodeIds().size() == 2);
+  assert(staticInputVarNodes().size() == 2);
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(violationVarId(mapping).isVar());
   assert(shouldHold());
 
-  makeSolverIntRelation(
-      solver, mapping.solverId(staticInputVarNodeIds().front()), _relType,
-      mapping.solverId(staticInputVarNodeIds().back()), violationVarId(mapping),
-      shouldHold());
+  makeSolverIntRelation(solver, mapping.solverId(staticInputVarNodes().front()),
+                        _relType,
+                        mapping.solverId(staticInputVarNodes().back()),
+                        violationVarId(mapping), shouldHold());
 }
 
 std::string IntRelNode::dotLangIdentifier() const {

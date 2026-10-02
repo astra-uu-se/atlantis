@@ -30,8 +30,9 @@ void initCover(std::vector<Int>& cover, std::vector<Int>& low,
 }
 
 GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
-    std::vector<Int>&& low, std::vector<Int>&& up, const VarNodeId r)
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& x,
+    std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
+    const VarNode& r)
     : ViolationInvariantNode(graph, {}, std::move(x), r),
       _cover(std::move(cover)),
       _low(std::move(low)),
@@ -40,8 +41,9 @@ GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
 }
 
 GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
-    std::vector<Int>&& low, std::vector<Int>&& up, const bool shouldHold)
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& x,
+    std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
+    const bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(x), shouldHold),
       _cover(std::move(cover)),
       _low(std::move(low)),
@@ -49,33 +51,29 @@ GlobalCardinalityLowUpNode::GlobalCardinalityLowUpNode(
   initCover(_cover, _low, _up);
 }
 
-void GlobalCardinalityLowUpNode::init(const InvariantNodeId id) {
-  ViolationInvariantNode::init(id);
+void GlobalCardinalityLowUpNode::init() {
+  ViolationInvariantNode::init();
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
+      !invariantGraphConst().varNodeConst(reifiedViolationNode()).isIntVar());
   assert(std::ranges::all_of(
-      outputVarNodeIds().begin() + (isReified() ? 1 : 0),
-      outputVarNodeIds().end(), [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      outputVarNodes().begin() + (isReified() ? 1 : 0), outputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
   assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodes().begin(), staticInputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
 }
 
 void GlobalCardinalityLowUpNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
     return constraintSolver().fzn_global_cardinality_low_up_reif(
-        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
         _cover, _low, _up, reifiedVarNodeConst().constraintVarId());
   }
   constraintSolver().fzn_global_cardinality_low_up(
-      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
-      _cover, _low, _up, shouldHold());
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()), _cover,
+      _low, _up, shouldHold());
 }
 
 void GlobalCardinalityLowUpNode::updateState() {
@@ -86,7 +84,7 @@ void GlobalCardinalityLowUpNode::updateState() {
 
   for (size_t i = 0; i < _cover.size(); ++i) {
     if (_up[i] < 0 ||
-        static_cast<Int>(staticInputVarNodeIds().size()) < _low[i] ||
+        static_cast<Int>(staticInputVarNodes().size()) < _low[i] ||
         _low[i] > _up[i]) {
       setState(InvariantNodeState::SUBSUMED);
       return;
@@ -95,7 +93,7 @@ void GlobalCardinalityLowUpNode::updateState() {
 
   if (!shouldHold()) {
     const auto bounds =
-        gccBounds(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+        gccBounds(invariantGraphConst(), staticInputVarNodes(), _cover);
     assert(bounds.size() == _cover.size());
     for (size_t i = 0; i < bounds.size(); i++) {
       if (bounds[i].second < _low[i] || _up[i] < bounds[i].first) {
@@ -107,7 +105,7 @@ void GlobalCardinalityLowUpNode::updateState() {
 
   // Note that gccUpdateStates modifies the values in _low and _up
   const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(
-      invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
+      invariantGraphConst(), staticInputVarNodes(), _cover, _low, _up);
 
   for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
        --i) {
@@ -116,11 +114,11 @@ void GlobalCardinalityLowUpNode::updateState() {
     _up.erase(_up.begin() + i);
   }
 
-  for (const VarNodeId vId : varsToRemove) {
-    removeStaticInputVarNode(vId);
+  for (const std::shared_ptr<VarNode>& var : varsToRemove) {
+    removeStaticInputVarNode(var);
   }
 
-  if (_cover.empty() || staticInputVarNodeIds().empty()) {
+  if (_cover.empty() || staticInputVarNodes().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -131,7 +129,7 @@ void GlobalCardinalityLowUpNode::registerOutputVars(
     if (!shouldHold()) {
       mapping.setIntermediateId(
           id(), solver.makeIntVar(
-                    0, 0, static_cast<Int>(staticInputVarNodeIds().size())));
+                    0, 0, static_cast<Int>(staticInputVarNodes().size())));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
                             solver, mapping.intermediateId(id()), 0),
                         mapping);
@@ -139,11 +137,11 @@ void GlobalCardinalityLowUpNode::registerOutputVars(
       registerViolation(solver, mapping);
     }
   }
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void GlobalCardinalityLowUpNode::registerNode(propagation::SolverBase& solver,
@@ -154,8 +152,8 @@ void GlobalCardinalityLowUpNode::registerNode(propagation::SolverBase& solver,
   assert(shouldHold() ? violationVarId(mapping).isVar()
                       : mapping.intermediateId(id()).isVar());
 
-  std::ranges::transform(staticInputVarNodeIds().begin(),
-                         staticInputVarNodeIds().end(),
+  std::ranges::transform(staticInputVarNodes().begin(),
+                         staticInputVarNodes().end(),
                          std::back_inserter(inputVarIds),
                          [&](const auto& id) { return mapping.solverId(id); });
 

@@ -17,12 +17,12 @@
 
 namespace atlantis::invariantgraph {
 
-IntDivNode::IntDivNode(InvariantGraph& graph, const VarNodeId numerator,
-                       const VarNodeId denominator, const VarNodeId quotient)
+IntDivNode::IntDivNode(InvariantGraph& graph, VarNode& numerator,
+                       VarNode& denominator, VarNode& quotient)
     : InvariantNode(graph, {quotient}, {numerator, denominator}) {}
 
-void IntDivNode::init(const InvariantNodeId id) {
-  InvariantNode::init(id);
+void IntDivNode::init() {
+  InvariantNode::init();
   assert(varNodeConst(quotient()).isIntVar());
   assert(varNodeConst(numerator()).isIntVar());
   assert(varNodeConst(denominator()).isIntVar());
@@ -47,8 +47,8 @@ void IntDivNode::updateState() {
     }
   }
   size_t numFixed = 0;
-  const std::array<VarNodeId, 3> varNodeIds{numerator(), denominator(),
-                                            quotient()};
+  const std::array<std::shared_ptr<VarNode>, 3> varNodeIds{
+      numerator(), denominator(), quotient()};
   for (const auto vId : varNodeIds) {
     numFixed += varNodeConst(vId).isFixed() ? 1 : 0;
   }
@@ -160,11 +160,11 @@ bool IntDivNode::replace() {
 void IntDivNode::registerOutputVars(propagation::SolverBase& solver,
                                     SolverMapping& mapping) const {
   makeSolverVar(quotient(), solver, mapping);
-  assert(std::ranges::all_of(
-      outputVarNodeIds().begin(), outputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
-      }));
+  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
+                             [&](const std::shared_ptr<VarNode>& vId) {
+                               return mapping.solverId(vId) !=
+                                      propagation::NULL_ID;
+                             }));
 }
 
 void IntDivNode::registerNode(propagation::SolverBase& solver,
@@ -188,14 +188,14 @@ void IntDivNode::registerNode(propagation::SolverBase& solver,
       mapping.solverId(denominator()));
 }
 
-VarNodeId IntDivNode::numerator() const noexcept {
-  return staticInputVarNodeIds().front();
+const std::shared_ptr<VarNode>& IntDivNode::numerator() const noexcept {
+  return staticInputVarNodes().front();
 }
-VarNodeId IntDivNode::denominator() const noexcept {
-  return staticInputVarNodeIds().back();
+const std::shared_ptr<VarNode>& IntDivNode::denominator() const noexcept {
+  return staticInputVarNodes().back();
 }
-VarNodeId IntDivNode::quotient() const noexcept {
-  return outputVarNodeIds().front();
+const std::shared_ptr<VarNode>& IntDivNode::quotient() const noexcept {
+  return outputVarNodes().front();
 }
 
 std::string IntDivNode::dotLangIdentifier() const { return "int_div"; }

@@ -10,10 +10,10 @@ class FznInvariantGraph;
 
 namespace atlantis::invariantgraph::fzn {
 
-bool int_lt(FznInvariantGraph&, Int, VarNodeId);
-bool int_lt(FznInvariantGraph&, VarNodeId, Int);
-bool int_lt(FznInvariantGraph&, VarNodeId, VarNodeId);
-bool int_lt(FznInvariantGraph&, VarNodeId, VarNodeId,
+bool int_lt(FznInvariantGraph&, Int, VarNode&);
+bool int_lt(FznInvariantGraph&, VarNode&, Int);
+bool int_lt(FznInvariantGraph&, VarNode&, VarNode&);
+bool int_lt(FznInvariantGraph&, VarNode&, VarNode&,
             const fznparser::BoolArg& reified);
 
 bool int_lt(FznInvariantGraph&, const fznparser::Constraint&);

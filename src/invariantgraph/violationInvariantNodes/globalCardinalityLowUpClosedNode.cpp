@@ -16,44 +16,44 @@
 namespace atlantis::invariantgraph {
 
 GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
-    std::vector<Int>&& low, std::vector<Int>&& up, const VarNodeId r)
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& x,
+    std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
+    const VarNode& r)
     : ViolationInvariantNode(graph, {}, std::move(x), r),
       _cover(std::move(cover)),
       _low(std::move(low)),
       _up(std::move(up)) {}
 
 GlobalCardinalityLowUpClosedNode::GlobalCardinalityLowUpClosedNode(
-    InvariantGraph& graph, std::vector<VarNodeId>&& x, std::vector<Int>&& cover,
-    std::vector<Int>&& low, std::vector<Int>&& up, const bool shouldHold)
+    InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& x,
+    std::vector<Int>&& cover, std::vector<Int>&& low, std::vector<Int>&& up,
+    const bool shouldHold)
     : ViolationInvariantNode(graph, {}, std::move(x), shouldHold),
       _cover(std::move(cover)),
       _low(std::move(low)),
       _up(std::move(up)) {}
 
-void GlobalCardinalityLowUpClosedNode::init(const InvariantNodeId id) {
-  ViolationInvariantNode::init(id);
+void GlobalCardinalityLowUpClosedNode::init() {
+  ViolationInvariantNode::init();
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNodeId()).isIntVar());
-  assert(outputVarNodeIds().size() <= 1);
+      !invariantGraphConst().varNodeConst(reifiedViolationNode()).isIntVar());
+  assert(outputVarNodes().size() <= 1);
   assert(std::ranges::all_of(
-      staticInputVarNodeIds().begin(), staticInputVarNodeIds().end(),
-      [&](const VarNodeId vId) {
-        return invariantGraphConst().varNodeConst(vId).isIntVar();
-      }));
+      staticInputVarNodes().begin(), staticInputVarNodes().end(),
+      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
 }
 
 void GlobalCardinalityLowUpClosedNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
     return constraintSolver().fzn_global_cardinality_low_up_closed_reif(
-        toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
+        toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
         _cover, _low, _up, reifiedVarNodeConst().constraintVarId());
   }
   constraintSolver().fzn_global_cardinality_low_up_closed(
-      toConstraintVarIds(invariantGraphConst(), staticInputVarNodeIds()),
-      _cover, _low, _up, shouldHold());
+      toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()), _cover,
+      _low, _up, shouldHold());
 }
 
 void GlobalCardinalityLowUpClosedNode::updateState() {
@@ -65,7 +65,7 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
 
   for (size_t i = 0; i < _cover.size(); ++i) {
     if (_up[i] < 0 ||
-        static_cast<Int>(staticInputVarNodeIds().size()) < _low[i] ||
+        static_cast<Int>(staticInputVarNodes().size()) < _low[i] ||
         _low[i] > _up[i]) {
       setState(InvariantNodeState::SUBSUMED);
       return;
@@ -74,13 +74,13 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
 
   if (!shouldHold()) {
     const bool allOverlaps =
-        gccIsClosed(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+        gccIsClosed(invariantGraphConst(), staticInputVarNodes(), _cover);
     if (!allOverlaps) {
       setState(InvariantNodeState::SUBSUMED);
       return;
     }
     const auto bounds =
-        gccBounds(invariantGraphConst(), staticInputVarNodeIds(), _cover);
+        gccBounds(invariantGraphConst(), staticInputVarNodes(), _cover);
     assert(bounds.size() == _cover.size());
     for (size_t i = 0; i < bounds.size(); i++) {
       if (bounds[i].second < _low[i] || _up[i] < bounds[i].first) {
@@ -93,7 +93,7 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
 
   // Note that gccUpdateStates modifies the values in _low and _up
   const auto [varsToRemove, coverIndicesToRemove] = gccUpdateState(
-      invariantGraphConst(), staticInputVarNodeIds(), _cover, _low, _up);
+      invariantGraphConst(), staticInputVarNodes(), _cover, _low, _up);
 
   for (Int i = static_cast<Int>(coverIndicesToRemove->size()) - 1; i >= 0;
        --i) {
@@ -102,11 +102,11 @@ void GlobalCardinalityLowUpClosedNode::updateState() {
     _up.erase(_up.begin() + i);
   }
 
-  for (const VarNodeId vId : varsToRemove) {
-    removeStaticInputVarNode(vId);
+  for (const std::shared_ptr<VarNode>& var : varsToRemove) {
+    removeStaticInputVarNode(var);
   }
 
-  if (_cover.empty() || staticInputVarNodeIds().empty()) {
+  if (_cover.empty() || staticInputVarNodes().empty()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -122,20 +122,21 @@ bool GlobalCardinalityLowUpClosedNode::replace() {
   if (!isReified() && shouldHold()) {
     invariantGraph().addInvariantNode(
         std::make_shared<GlobalCardinalityLowUpNode>(
-            invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
+            invariantGraph(),
+            std::vector<std::shared_ptr<VarNode>>{staticInputVarNodes()},
             std::vector<Int>{_cover}, std::vector<Int>{_low},
             std::vector<Int>{_up}));
     return true;
   }
 
-  std::vector<VarNodeId> violationVarNodeIds;
-  violationVarNodeIds.reserve(staticInputVarNodeIds().size() + 1);
+  std::vector<std::shared_ptr<VarNode>> violationVarNodeIds;
+  violationVarNodeIds.reserve(staticInputVarNodes().size() + 1);
 
-  for (VarNodeId inputId : staticInputVarNodeIds()) {
+  for (const auto& input : staticInputVarNodes()) {
     violationVarNodeIds.emplace_back(invariantGraph().retrieveBoolVarNode());
 
     invariantGraph().addInvariantNode(std::make_shared<SetInNode>(
-        invariantGraph(), inputId, std::vector<Int>(_cover),
+        invariantGraph(), input, std::vector<Int>(_cover),
         violationVarNodeIds.back()));
   }
 
@@ -143,14 +144,15 @@ bool GlobalCardinalityLowUpClosedNode::replace() {
 
   invariantGraph().addInvariantNode(
       std::make_shared<GlobalCardinalityLowUpNode>(
-          invariantGraph(), std::vector<VarNodeId>{staticInputVarNodeIds()},
+          invariantGraph(),
+          std::vector<std::shared_ptr<VarNode>>{staticInputVarNodes()},
           std::vector<Int>{_cover}, std::vector<Int>{_low},
           std::vector<Int>{_up}, violationVarNodeIds.back()));
 
   if (isReified()) {
     invariantGraph().addInvariantNode(std::make_shared<ArrayBoolAndNode>(
         invariantGraph(), std::move(violationVarNodeIds),
-        reifiedViolationNodeId()));
+        reifiedViolationNode()));
   } else {
     invariantGraph().addInvariantNode(std::make_shared<ArrayBoolAndNode>(
         invariantGraph(), std::move(violationVarNodeIds), false));

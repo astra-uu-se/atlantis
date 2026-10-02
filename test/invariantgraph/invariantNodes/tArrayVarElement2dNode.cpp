@@ -165,7 +165,7 @@ TEST(ArrayVarElement2dNodeRegression, ReplaceHandlesReducedMatrixOffsets) {
   const auto output =
       graph->retrieveIntVarNode(std::make_shared<SearchDomain>(0, 9), "out");
 
-  std::vector<VarNodeId> flat;
+  std::vector<std::shared_ptr<VarNode>> flat;
   flat.reserve(10);
   for (Int r = 0; r < 2; ++r) {
     for (Int c = 0; c < 5; ++c) {
@@ -197,8 +197,8 @@ TEST(ArrayVarElement2dNodeRegression, ReplaceUniformInputMatrix) {
   const auto output =
       graph->retrieveIntVarNode(std::make_shared<SearchDomain>(-5, 5));
 
-  std::vector<std::vector<VarNodeId>> varMatrix(
-      10, std::vector<VarNodeId>(10, input));
+  std::vector<std::vector<std::shared_ptr<VarNode>>> varMatrix(
+      10, std::vector<std::shared_ptr<VarNode>>(10, input));
 
   const auto invId =
       graph->addInvariantNode(std::make_shared<ArrayVarElement2dNode>(

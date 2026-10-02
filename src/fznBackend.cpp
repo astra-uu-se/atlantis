@@ -172,7 +172,8 @@ std::shared_ptr<const invariantgraph::FznInvariantGraph>
 FznBackend::invariantGraph() const {
   return _invariantGraph;
 }
-std::vector<invariantgraph::VarNodeId> FznBackend::outputVarNodeIds() const {
+std::vector<std::shared_ptr<invariantgraph::VarNode>>
+FznBackend::outputVarNodes() const {
   return _fznOutput->varNodeIds();
 }
 fznparser::ProblemType FznBackend::problemType() const {

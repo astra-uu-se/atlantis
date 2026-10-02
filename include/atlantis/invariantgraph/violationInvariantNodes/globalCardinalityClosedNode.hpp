@@ -8,17 +8,15 @@ class GlobalCardinalityClosedNode : public ViolationInvariantNode {
   std::vector<Int> _countOffsets;
 
  public:
-  explicit GlobalCardinalityClosedNode(InvariantGraph& graph,
-                                       std::vector<VarNodeId>&& inputs,
-                                       std::vector<Int>&& cover,
-                                       std::vector<VarNodeId>&& counts,
-                                       VarNodeId r);
+  explicit GlobalCardinalityClosedNode(
+      InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& inputs,
+      std::vector<Int>&& cover, std::vector<std::shared_ptr<VarNode>>&& counts,
+      VarNode& r);
 
-  explicit GlobalCardinalityClosedNode(InvariantGraph& graph,
-                                       std::vector<VarNodeId>&& inputs,
-                                       std::vector<Int>&& cover,
-                                       std::vector<VarNodeId>&& counts,
-                                       bool shouldHold = true);
+  explicit GlobalCardinalityClosedNode(
+      InvariantGraph& graph, std::vector<std::shared_ptr<VarNode>>&& inputs,
+      std::vector<Int>&& cover, std::vector<std::shared_ptr<VarNode>>&& counts,
+      bool shouldHold = true);
 
   void updateState() override;
 
@@ -26,7 +24,7 @@ class GlobalCardinalityClosedNode : public ViolationInvariantNode {
 
   bool replace() override;
 
-  void init(InvariantNodeId) override;
+  void init() override;
 
   void postConstraint() override;
 

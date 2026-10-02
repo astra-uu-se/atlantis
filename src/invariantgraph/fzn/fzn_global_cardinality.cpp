@@ -52,13 +52,14 @@ bool fzn_global_cardinality_reif(
     return fzn_global_cardinality(graph, inputs, std::move(cover), counts);
   }
 
-  std::vector<VarNodeId> countVarNodeIds = graph.retrieveVarNodes(counts);
-  std::vector<VarNodeId> outputVarNodeIds;
-  std::vector<VarNodeId> binaryOutputVarNodeIds;
-  outputVarNodeIds.reserve(counts->size());
+  std::vector<std::shared_ptr<VarNode>> countVarNodeIds =
+      graph.retrieveVarNodes(counts);
+  std::vector<std::shared_ptr<VarNode>> outputVarNodes;
+  std::vector<std::shared_ptr<VarNode>> binaryOutputVarNodeIds;
+  outputVarNodes.reserve(counts->size());
   binaryOutputVarNodeIds.reserve(counts->size());
   for (size_t i = 0; i < counts->size(); ++i) {
-    outputVarNodeIds.emplace_back(graph.retrieveIntVarNode(
+    outputVarNodes.emplace_back(graph.retrieveIntVarNode(
         std::make_shared<SearchDomain>(0, static_cast<Int>(inputs->size())),
         DomainType::DOM_NONE));
     binaryOutputVarNodeIds.emplace_back(graph.retrieveBoolVarNode());
@@ -66,11 +67,11 @@ bool fzn_global_cardinality_reif(
 
   graph.addInvariantNode(std::make_shared<GlobalCardinalityNode>(
       graph, graph.retrieveVarNodes(inputs), std::move(cover),
-      std::vector(outputVarNodeIds)));
+      std::vector(outputVarNodes)));
 
   for (size_t i = 0; i < counts->size(); ++i) {
     graph.addInvariantNode(std::make_shared<IntRelNode>(
-        graph, outputVarNodeIds.at(i), RelationType::REL_TYPE_EQ,
+        graph, outputVarNodes.at(i), RelationType::REL_TYPE_EQ,
         countVarNodeIds.at(i), binaryOutputVarNodeIds.at(i)));
   }
 

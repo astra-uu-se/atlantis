@@ -79,10 +79,10 @@ TEST_P(IntPowNodeTestFixture, propagation) {
   }
 
   std::vector<propagation::VarViewId> inputVarIds;
-  for (const auto& var :
-       std::array<VarNodeId, 2>{varNodeId(baseVar), varNodeId(exponentVar)}) {
-    if (!varNode(var).isFixed()) {
-      EXPECT_NE(varId(var), propagation::NULL_ID);
+  for (const auto& vNode : std::array<std::shared_ptr<VarNode>, 2>{
+           varNode(baseVar), varNode(exponentVar)}) {
+    if (!vNode->isFixed()) {
+      EXPECT_NE(varId(vNode), propagation::NULL_ID);
       inputVarIds.emplace_back(varId(var));
     }
   }
