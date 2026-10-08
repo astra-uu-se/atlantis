@@ -18,16 +18,16 @@ void ImplicitConstraintNode::registerOutputVars(propagation::SolverBase& solver,
                                                 SolverMapping& mapping) const {
   for (const auto& varNodeId : outputVarNodes()) {
     const auto& varNode = varNodeId;
-    if (mapping.solverId(varNodeId->mappingId()) == propagation::NULL_ID) {
+    if (mapping.solverId(*varNodeId) == propagation::NULL_ID) {
       const auto& [lb, ub] = varNode->bounds();
-      mapping.setSolverId(varNodeId->mappingId(), solver.makeIntVar(lb, lb, ub));
+      mapping.setSolverId(*varNodeId, solver.makeIntVar(lb, lb, ub));
     }
   }
 }
 
 void ImplicitConstraintNode::init() { InvariantNode::init(); }
 
-bool ImplicitConstraintNode::constrainsOutput(VarNode&) const {
+bool ImplicitConstraintNode::constrainsOutput(const VarNode&) const {
   return true;
 }
 

@@ -61,13 +61,13 @@ void IntAllEqualNode::postConstraint() {
   if (staticInputVarNodes().size() == 2) {
     if (isReified()) {
       return constraintSolver().int_eq_reif(
-          staticInputVarNodeConst(0).constraintVarId(),
-          staticInputVarNodeConst(1).constraintVarId(),
+          staticInputVarNodes().front().constraintVarId(),
+          staticInputVarNodes().at(1).constraintVarId(),
           reifiedVarNodeConst().constraintVarId());
     }
     return constraintSolver().int_eq(
-        staticInputVarNodeConst(0).constraintVarId(),
-        staticInputVarNodeConst(1).constraintVarId(), shouldHold());
+        staticInputVarNodes().front().constraintVarId(),
+        staticInputVarNodes().at(1).constraintVarId(), shouldHold());
   }
   if (isReified()) {
     return constraintSolver().fzn_all_equal_int_reif(
@@ -96,7 +96,7 @@ void IntAllEqualNode::updateState() {
           staticInputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
             return varNodeConst(vId).isFixed() &&
                    varNodeConst(vId).lowerBound() ==
-                       staticInputVarNodeConst(0).lowerBound();
+                       staticInputVarNodes().front().lowerBound();
           }));
       setState(InvariantNodeState::SUBSUMED);
     }
@@ -129,7 +129,7 @@ void IntAllEqualNode::updateState() {
       }
     } else {
       assert(!shouldHold());
-      auto& vNode = staticInputVarNode(0);
+      auto& vNode = staticInputVarNodes().front();
       if (_boundVal.has_value() && vNode.lowerBound() <= *_boundVal &&
           *_boundVal <= vNode.upperBound()) {
         vNode.tightenDomainType(vNode.constDomain()->isInterval()
@@ -205,33 +205,33 @@ void IntAllEqualNode::registerOutputVars(propagation::SolverBase& solver,
                 solver, mapping.solverId(staticInputVarNodes().front()),
                 _boundVal.value()),
             mapping);
-      } else if (mapping.intermediateId(id()) == propagation::NULL_ID) {
-        mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+      } else if (mapping.intermediateId(TODO) == propagation::NULL_ID) {
+        mapping.setIntermediateId(TODO, solver.makeIntVar(0, 0, 0));
         if (shouldHold()) {
           setViolationVarId(solver.makeIntView<propagation::EqualConst>(
-                                solver, mapping.intermediateId(id()),
+                                solver, mapping.intermediateId(TODO),
                                 staticInputVarNodes().size()),
                             mapping);
         } else {
           setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-                                solver, mapping.intermediateId(id()),
+                                solver, mapping.intermediateId(TODO),
                                 staticInputVarNodes().size()),
                             mapping);
         }
       }
     } else if (staticInputVarNodes().size() == 2) {
       registerViolation(solver, mapping);
-    } else if (mapping.intermediateId(id()) == propagation::NULL_ID) {
-      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+    } else if (mapping.intermediateId(TODO) == propagation::NULL_ID) {
+      mapping.setIntermediateId(TODO, solver.makeIntVar(0, 0, 0));
       if (shouldHold()) {
         setViolationVarId(solver.makeIntView<propagation::EqualConst>(
-                              solver, mapping.intermediateId(id()),
+                              solver, mapping.intermediateId(TODO),
                               staticInputVarNodes().size() - 1),
                           mapping);
       } else {
         assert(!isReified());
         setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-                              solver, mapping.intermediateId(id()),
+                              solver, mapping.intermediateId(TODO),
                               staticInputVarNodes().size() - 1),
                           mapping);
       }
@@ -260,17 +260,17 @@ void IntAllEqualNode::registerNode(propagation::SolverBase& solver,
                          [&](const auto& id) { return mapping.solverId(id); });
 
   if (_boundVal.has_value()) {
-    assert(mapping.intermediateId(id()) != propagation::NULL_ID);
-    assert(mapping.intermediateId(id()).isVar());
+    assert(mapping.intermediateId(TODO) != propagation::NULL_ID);
+    assert(mapping.intermediateId(TODO).isVar());
     solver.makeInvariant<propagation::CountConst>(
-        solver, mapping.intermediateId(id()), _boundVal.value(),
+        solver, mapping.intermediateId(TODO), _boundVal.value(),
         std::move(inputVarIds));
     return;
   }
 
   if (inputVarIds.size() == 2) {
     assert(violationVarId(mapping).isVar());
-    assert(mapping.intermediateId(id()) == propagation::NULL_ID);
+    assert(mapping.intermediateId(TODO) == propagation::NULL_ID);
     if (shouldHold()) {
       solver.makeViolationInvariant<propagation::Equal>(
           solver, violationVarId(mapping), inputVarIds.front(),
@@ -283,11 +283,11 @@ void IntAllEqualNode::registerNode(propagation::SolverBase& solver,
     return;
   }
 
-  assert(mapping.intermediateId(id()) != propagation::NULL_ID);
-  assert(mapping.intermediateId(id()).isVar());
+  assert(mapping.intermediateId(TODO) != propagation::NULL_ID);
+  assert(mapping.intermediateId(TODO).isVar());
 
   solver.makeViolationInvariant<propagation::AllDifferent>(
-      solver, mapping.intermediateId(id()), std::move(inputVarIds));
+      solver, mapping.intermediateId(TODO), std::move(inputVarIds));
 }
 
 std::string IntAllEqualNode::dotLangIdentifier() const {

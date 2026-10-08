@@ -17,7 +17,7 @@ ArrayElement2dNode::ArrayElement2dNode(
     InvariantGraph& graph, VarNode& rowIdx, VarNode& colIdx,
     std::vector<std::vector<Int>>&& parMatrix, VarNode& output,
     const Int rowOffset, const Int colOffset, const bool isIntMatrix)
-    : InvariantNode(graph, {output}, {rowIdx, colIdx}),
+    : InvariantNode(graph, {output.ptr()}, {rowIdx.ptr(), colIdx.ptr()}),
       _parMatrix(std::move(parMatrix)),
       _rowOffset(rowOffset),
       _colOffset(colOffset),
@@ -37,35 +37,34 @@ void ArrayElement2dNode::init() {
 
 void ArrayElement2dNode::postConstraint() {
   InvariantNode::postConstraint();
-  const auto& outputNode = outputVarNodeConst(0);
-  if (outputNode.isIntVar()) {
+  if (outputVarNode(0).isIntVar()) {
     invariantGraph().constraintSolver().array_int_element2d(
-        varNodeConst(rowIdx()).constraintVarId(),
-        varNodeConst(colIdx()).constraintVarId(), _parMatrix,
-        outputNode.constraintVarId(), _rowOffset, _colOffset);
+        rowIdx().constraintVarId(),
+        colIdx().constraintVarId(), _parMatrix,
+        outputVarNode(0).constraintVarId(), _rowOffset, _colOffset);
   } else {
     invariantGraph().constraintSolver().array_bool_element2d(
-        varNodeConst(rowIdx()).constraintVarId(),
-        varNodeConst(colIdx()).constraintVarId(), violToBool(_parMatrix),
-        outputNode.constraintVarId(), _rowOffset, _colOffset);
+        rowIdx().constraintVarId(),
+        colIdx().constraintVarId(), violToBool(_parMatrix),
+        outputVarNode(0).constraintVarId(), _rowOffset, _colOffset);
   }
 }
 
 void ArrayElement2dNode::updateState() {
-  if (varNode(rowIdx()).isFixed() && varNode(colIdx()).isFixed()) {
-    assert(outputVarNodeConst(0).isFixed());
+  if (rowIdx().isFixed() && colIdx().isFixed()) {
+    assert(outputVarNode(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (varNode(rowIdx()).isFixed() || varNode(colIdx()).isFixed()) {
+  if (rowIdx().isFixed() || colIdx().isFixed()) {
     // this node should be replaced
     return;
   }
 
-  if (outputVarNodeConst(0).isFixed()) {
-    const Int outVal = outputVarNodeConst(0).lowerBound();
-    const auto& rowDom = varNodeConst(rowIdx()).constDomain();
-    const auto& colDom = varNodeConst(colIdx()).constDomain();
+  if (outputVarNode(0).isFixed()) {
+    const Int outVal = outputVarNode(0).lowerBound();
+    const auto& rowDom = rowIdx().constDomain();
+    const auto& colDom = colIdx().constDomain();
     bool allSatisfying = true;
     for (auto rowIter = rowDom->begin(); rowIter != rowDom->end(); ++rowIter) {
       const Int row = *rowIter - _rowOffset;
@@ -81,20 +80,20 @@ void ArrayElement2dNode::updateState() {
       }
     }
     if (allSatisfying) {
-      for (const auto vId : staticInputVarNodes()) {
-        varNode(vId).tightenDomainType();
+      for (const auto& vNode : staticInputVarNodes()) {
+        vNode->tightenDomainType();
       }
       setState(InvariantNodeState::SUBSUMED);
     }
   }
 }
 
-bool ArrayElement2dNode::constrainsOutput(VarNode&) const {
+bool ArrayElement2dNode::constrainsOutput(const VarNode&) const {
   std::vector<Int> values;
   values.reserve(_parMatrix.size() *
                  (_parMatrix.empty() ? 0 : _parMatrix.front().size()));
-  for (auto rowIter = varNodeConst(rowIdx()).constDomain()->begin();
-       rowIter != varNodeConst(rowIdx()).constDomain()->end(); ++rowIter) {
+  for (auto rowIter = rowIdx().constDomain()->begin();
+       rowIter != rowIdx().constDomain()->end(); ++rowIter) {
     const Int r = *rowIter - _rowOffset;
     if (r < 0) {
       continue;
@@ -103,8 +102,8 @@ bool ArrayElement2dNode::constrainsOutput(VarNode&) const {
     if (static_cast<Int>(_parMatrix.size()) < r) {
       break;
     }
-    for (auto colIter = varNodeConst(colIdx()).constDomain()->begin();
-         colIter != varNodeConst(colIdx()).constDomain()->end(); ++colIter) {
+    for (auto colIter = colIdx().constDomain()->begin();
+         colIter != colIdx().constDomain()->end(); ++colIter) {
       const Int c = *colIter - _colOffset;
       if (c < 0) {
         continue;
@@ -117,31 +116,31 @@ bool ArrayElement2dNode::constrainsOutput(VarNode&) const {
     }
   }
   const SortedUniqueVector sortedVals(std::move(values));
-  return !outputVarNodeConst(0).constDomain()->contains(sortedVals);
+  return !outputVarNode(0).constDomain()->contains(sortedVals);
 }
 
 bool ArrayElement2dNode::canBeReplaced() const {
   return state() == InvariantNodeState::ACTIVE &&
-         (varNodeConst(rowIdx()).isFixed() || varNodeConst(colIdx()).isFixed());
+         (rowIdx().isFixed() || colIdx().isFixed());
 }
 
 bool ArrayElement2dNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  if (varNode(rowIdx()).isFixed()) {
-    const Int rowIndex = varNode(rowIdx()).lowerBound() - _rowOffset;
+  if (rowIdx().isFixed()) {
+    const Int rowIndex = rowIdx().lowerBound() - _rowOffset;
     assert(rowIndex >= 0);
     assert(rowIndex < static_cast<Int>(_parMatrix.size()));
 
     invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
         invariantGraph(), std::move(_parMatrix.at(rowIndex)), colIdx(),
-        outputVarNodes().front(), _colOffset));
+        outputVarNode(0), _colOffset));
     _parMatrix.clear();
     return true;
   }
   std::vector<Int> parMatrixCol;
-  const Int colIndex = varNode(colIdx()).lowerBound() - _colOffset;
+  const Int colIndex = colIdx().lowerBound() - _colOffset;
   assert(colIndex >= 0);
   assert(colIndex < static_cast<Int>(_parMatrix.front().size()));
   parMatrixCol.reserve(_parMatrix.size());
@@ -151,18 +150,18 @@ bool ArrayElement2dNode::replace() {
   _parMatrix.clear();
   invariantGraph().addInvariantNode(std::make_shared<ArrayElementNode>(
       invariantGraph(), std::move(parMatrixCol), rowIdx(),
-      outputVarNodes().front(), _rowOffset));
+      outputVarNode(0), _rowOffset));
   return true;
 }
 
 void ArrayElement2dNode::registerOutputVars(propagation::SolverBase& solver,
                                             SolverMapping& mapping) const {
   if (!staticInputVarNodes().empty()) {
-    makeSolverVar(outputVarNodes().front(), solver, mapping);
+    makeSolverVar(outputVarNode(0), solver, mapping);
   }
   assert(std::ranges::all_of(
-      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vNode) {
+        return mapping.solverId(vNode) != propagation::NULL_ID;
       }));
 }
 
@@ -171,11 +170,11 @@ void ArrayElement2dNode::registerNode(propagation::SolverBase& solver,
   if (staticInputVarNodes().empty()) {
     return;
   }
-  assert(mapping.solverId(outputVarNodes().front()) != propagation::NULL_ID);
-  assert(mapping.solverId(outputVarNodes().front()).isVar());
+  assert(mapping.solverId(outputVarNode(0)) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNode(0)).isVar());
 
   solver.makeInvariant<propagation::Element2dConst>(
-      solver, mapping.solverId(outputVarNodes().front()),
+      solver, mapping.solverId(outputVarNode(0)),
       mapping.solverId(rowIdx()), mapping.solverId(colIdx()),
       std::vector<std::vector<Int>>{_parMatrix}, _rowOffset, _colOffset);
 }

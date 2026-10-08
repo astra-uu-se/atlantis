@@ -141,8 +141,7 @@ class InvariantGraph {
    * @brief replaces the given old VarNode with the new VarNode in
    * all Invariants.
    */
-  void replaceVarNode(std::shared_ptr<VarNode> oldNode,
-                      std::shared_ptr<VarNode> newNode);
+  void replaceVarNode(VarNode& oldNode, VarNode& newNode);
 
   std::shared_ptr<ImplicitConstraintNode> addImplicitConstraintNode(
       std::shared_ptr<ImplicitConstraintNode>&&);

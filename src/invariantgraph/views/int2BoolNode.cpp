@@ -14,36 +14,36 @@ namespace atlantis::invariantgraph {
 
 Int2BoolNode::Int2BoolNode(InvariantGraph& graph, VarNode& staticInput,
                            VarNode& output)
-    : InvariantNode(graph, {output}, {staticInput}) {}
+    : InvariantNode(graph, {output.ptr()}, {staticInput.ptr()}) {}
 
 void Int2BoolNode::init() {
   InvariantNode::init();
   assert(
-      !invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
+      !outputVarNode(0).isIntVar());
   assert(
-      invariantGraph().varNodeConst(staticInputVarNodes().front()).isIntVar());
+      staticInputVarNode(0).isIntVar());
 }
 
 void Int2BoolNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().bool2int(outputVarNodeConst(0).constraintVarId(),
-                              staticInputVarNodeConst(0).constraintVarId());
+  constraintSolver().bool2int(outputVarNode(0).constraintVarId(),
+                              staticInputVarNode(0).constraintVarId());
 }
 
 void Int2BoolNode::updateState() {
-  assert(outputVarNodeConst(0).isFixed() == varNodeConst(input()).isFixed());
-  if (varNodeConst(input()).isFixed()) {
+  assert(outputVarNode(0).isFixed() == input().isFixed());
+  if (input().isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-bool Int2BoolNode::constrainsOutput(VarNode&) const {
-  if (staticInputVarNodeConst(0).inDomain(Int{0}) &&
-      !outputVarNodeConst(0).inDomain(bool{false})) {
+bool Int2BoolNode::constrainsOutput(const VarNode&) const {
+  if (staticInputVarNode(0).inDomain(Int{0}) &&
+      !outputVarNode(0).inDomain(bool{false})) {
     return true;
   }
-  if (staticInputVarNodeConst(0).inDomain(Int{1}) &&
-      !outputVarNodeConst(0).inDomain(bool{true})) {
+  if (staticInputVarNode(0).inDomain(Int{1}) &&
+      !outputVarNode(0).inDomain(bool{true})) {
     return true;
   }
   return false;
@@ -53,10 +53,10 @@ bool Int2BoolNode::canBeReplaced() const {
   if (state() != InvariantNodeState::ACTIVE) {
     return false;
   }
-  return varNodeConst(staticInputVarNodes().front()).staticInputTo().size() ==
+  return staticInputVarNode(0).staticInputTo().size() ==
              1 &&
-         varNodeConst(staticInputVarNodes().front()).definingNodes().empty() &&
-         !varNodeConst(outputVarNodes().front()).staticInputTo().empty();
+         staticInputVarNode(0).definingNodes().empty() &&
+         !outputVarNode(0).staticInputTo().empty();
 }
 
 bool Int2BoolNode::replace() {
@@ -64,15 +64,15 @@ bool Int2BoolNode::replace() {
     return false;
   }
   invariantGraph().addInvariantNode(
-      std::make_shared<Bool2IntNode>(invariantGraph(), outputVarNodes().front(),
-                                     staticInputVarNodes().front()));
+      std::make_shared<Bool2IntNode>(invariantGraph(), outputVarNode(0),
+                                     staticInputVarNode(0)));
   return true;
 }
 
 void Int2BoolNode::registerOutputVars(propagation::SolverBase& solver,
                                       SolverMapping& mapping) const {
-  if (mapping.solverId(outputVarNodes().front()) == propagation::NULL_ID) {
-    mapping.setSolverId(outputVarNodes().front(),
+  if (mapping.solverId(outputVarNode(0)) == propagation::NULL_ID) {
+    mapping.setSolverId(outputVarNode(0),
                         solver.makeIntView<propagation::Int2BoolView>(
                             solver, mapping.solverId(input())));
   }

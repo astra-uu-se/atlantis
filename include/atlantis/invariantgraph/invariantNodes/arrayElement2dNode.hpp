@@ -26,7 +26,7 @@ class ArrayElement2dNode : public InvariantNode {
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNode& outputVarNode) const override;
+  [[nodiscard]] bool constrainsOutput(const VarNode& outputVarNode) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 

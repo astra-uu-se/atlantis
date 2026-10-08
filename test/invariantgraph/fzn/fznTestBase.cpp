@@ -941,7 +941,7 @@ void FznTestBase::rapidCheck(const bool reachesFixpoint,
         for (size_t i = 0;
              i < _invariantGraph->implicitConstraintNodes().size(); ++i) {
           RC_ASSERT(_solverMapping != nullptr);
-          const auto& neighborhood = _solverMapping->neighborhood(i);
+          const auto& neighborhood = _solverMapping->neighborhood(TODO);
           if (dynamic_cast<search::neighborhoods::NeighborhoodCombinator*>(
                   neighborhood.get()) != nullptr) {
             continue;

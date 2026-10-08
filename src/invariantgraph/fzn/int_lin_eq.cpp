@@ -53,7 +53,7 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   std::vector<std::shared_ptr<VarNode>> inputVarNodes =
       graph.retrieveVarNodes(inputs);
 
-  std::vector<VarNode>& definedVarNode =
+  std::shared_ptr<VarNode>& definedVarNode =
       inputVarNodes.at(definedVarIndices.front());
 
   for (const Int index : definedVarIndices) {
@@ -76,7 +76,7 @@ bool int_lin_eq(FznInvariantGraph& graph, std::vector<Int>&& coeffs,
   const Int rhsOffset = definedVarCoeff == 1 ? -bound : bound;
 
   graph.addInvariantNode(std::make_shared<IntLinearNode>(
-      graph, std::move(coeffs), std::move(inputVarNodes), definedVarNode,
+      graph, std::move(coeffs), std::move(inputVarNodes), *definedVarNode,
       rhsOffset));
   return true;
 }

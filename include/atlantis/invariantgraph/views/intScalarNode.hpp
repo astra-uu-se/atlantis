@@ -29,7 +29,7 @@ class IntScalarNode : public InvariantNode {
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   [[nodiscard]] VarNode& input() const noexcept {
-    return staticInputVarNodes().front();
+    return *staticInputVarNodes().front();
   }
 
   std::ostream& dotLangEntry(std::ostream&) const override;

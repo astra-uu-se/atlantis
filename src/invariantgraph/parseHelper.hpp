@@ -15,11 +15,11 @@ class SolverMapping;
 class InvariantGraph;
 
 std::vector<std::shared_ptr<VarNode>>&& append(
-    std::vector<std::shared_ptr<VarNode>>&&, std::shared_ptr<VarNode>&,
-    std::shared_ptr<VarNode>&);
+    std::vector<std::shared_ptr<VarNode>>&&, VarNode&,
+    VarNode&);
 
 std::vector<std::shared_ptr<VarNode>>&& append(
-    std::vector<std::shared_ptr<VarNode>>&&, std::shared_ptr<VarNode>&);
+    std::vector<std::shared_ptr<VarNode>>&&, VarNode&);
 
 std::vector<std::shared_ptr<VarNode>> concat(
     const std::vector<std::shared_ptr<VarNode>>&,

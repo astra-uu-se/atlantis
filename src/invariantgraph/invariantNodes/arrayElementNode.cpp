@@ -78,7 +78,7 @@ void ArrayElementNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
-bool ArrayElementNode::constrainsOutput(VarNode&) const {
+bool ArrayElementNode::constrainsOutput(const VarNode&) const {
   std::vector<Int> values;
   values.reserve(_parVector.size());
   for (auto iter = _staticInputVarNodes.front()->constDomain()->begin();
@@ -99,18 +99,18 @@ bool ArrayElementNode::constrainsOutput(VarNode&) const {
 
 void ArrayElementNode::registerOutputVars(propagation::SolverBase& solver,
                                           SolverMapping& mapping) const {
-  if (mapping.solverId(_outputVarNodes.front()->mappingId()) == propagation::NULL_ID) {
-    assert(mapping.solverId(staticInputVarNodes().front()->mappingId()) !=
+  if (mapping.solverId(_outputVarNodes.front()) == propagation::NULL_ID) {
+    assert(mapping.solverId(staticInputVarNodes().front()) !=
            propagation::NULL_ID);
     mapping.setSolverId(
-        _outputVarNodes.front()->mappingId(),
+        _outputVarNodes.front(),
         solver.makeIntView<propagation::ElementConst>(
-            solver, mapping.solverId(staticInputVarNodes().front()->mappingId()),
+            solver, mapping.solverId(staticInputVarNodes().front()),
             std::vector<Int>(_parVector), _offset));
   }
   assert(std::ranges::all_of(
       _outputVarNodes, [&](const std::shared_ptr<VarNode>& vNode) {
-        return mapping.solverId(vNode->mappingId()) != propagation::NULL_ID;
+        return mapping.solverId(vNode) != propagation::NULL_ID;
       }));
 }
 

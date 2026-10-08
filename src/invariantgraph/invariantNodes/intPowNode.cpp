@@ -13,34 +13,34 @@ namespace atlantis::invariantgraph {
 
 IntPowNode::IntPowNode(InvariantGraph& graph, VarNode& base, VarNode& exponent,
                        VarNode& power)
-    : InvariantNode(graph, {power}, {base, exponent}) {}
+    : InvariantNode(graph, {power.ptr()}, {base.ptr(), exponent.ptr()}) {}
 
 void IntPowNode::init() {
   InvariantNode::init();
   assert(
-      invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
+      outputVarNode(0).isIntVar());
   assert(std::ranges::all_of(
       staticInputVarNodes().begin(), staticInputVarNodes().end(),
-      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
+      [&](const std::shared_ptr<VarNode>& vNode) { return vNode->isIntVar(); }));
 }
 
 void IntPowNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().int_pow(varNodeConst(base()).constraintVarId(),
-                             varNodeConst(exponent()).constraintVarId(),
-                             varNodeConst(power()).constraintVarId());
+  constraintSolver().int_pow(base().constraintVarId(),
+                             exponent().constraintVarId(),
+                             power().constraintVarId());
 }
 
 void IntPowNode::updateState() {
-  if (varNodeConst(base()).isFixed() && varNodeConst(exponent()).isFixed()) {
-    assert(varNodeConst(power()).isFixed());
+  if (base().isFixed() && exponent().isFixed()) {
+    assert(power().isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
 void IntPowNode::registerOutputVars(propagation::SolverBase& solver,
                                     SolverMapping& mapping) const {
-  makeSolverVar(outputVarNodes().front(), solver, mapping);
+  makeSolverVar(outputVarNode(0), solver, mapping);
   assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
                              [&](const std::shared_ptr<VarNode>& vId) {
                                return mapping.solverId(vId) !=
@@ -50,24 +50,24 @@ void IntPowNode::registerOutputVars(propagation::SolverBase& solver,
 
 void IntPowNode::registerNode(propagation::SolverBase& solver,
                               SolverMapping& mapping) const {
-  assert(mapping.solverId(outputVarNodes().front()) != propagation::NULL_ID);
-  assert(mapping.solverId(outputVarNodes().front()).isVar());
+  assert(mapping.solverId(outputVarNode(0)) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNode(0)).isVar());
 
   solver.makeInvariant<propagation::Pow>(
-      solver, mapping.solverId(outputVarNodes().front()),
+      solver, mapping.solverId(outputVarNode(0)),
       mapping.solverId(base()), mapping.solverId(exponent()));
 }
 
-const std::shared_ptr<VarNode>& IntPowNode::base() const {
-  return staticInputVarNodes().front();
+VarNode& IntPowNode::base() const {
+  return *staticInputVarNodes().front();
 }
 
-const std::shared_ptr<VarNode>& IntPowNode::exponent() const {
-  return staticInputVarNodes().back();
+VarNode& IntPowNode::exponent() const {
+  return *staticInputVarNodes().back();
 }
 
-const std::shared_ptr<VarNode>& IntPowNode::power() const {
-  return outputVarNodes().front();
+VarNode& IntPowNode::power() const {
+  return outputVarNode(0);
 }
 
 std::string IntPowNode::dotLangIdentifier() const { return "int_pow"; }

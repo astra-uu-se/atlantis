@@ -32,6 +32,10 @@ class InvariantNode : public std::enable_shared_from_this<InvariantNode> {
   std::vector<std::shared_ptr<VarNode>> _staticInputVarNodes;
   std::vector<std::shared_ptr<VarNode>> _dynamicInputVarNodes;
 
+  VarNode& outputVarNode(size_t) const;
+  VarNode& staticInputVarNode(size_t) const;
+  VarNode& dynamicInputVarNode(size_t) const;
+
   explicit InvariantNode(
       InvariantGraph& invariantGraph,
       std::vector<std::shared_ptr<VarNode>>&& outputIds,
@@ -39,7 +43,9 @@ class InvariantNode : public std::enable_shared_from_this<InvariantNode> {
       std::vector<std::shared_ptr<VarNode>>&& dynamicInputIds = {});
 
  public:
-  std::shared_ptr<InvariantNode> getPtr();
+  std::shared_ptr<InvariantNode> ptr();
+
+  [[nodiscard]] std::shared_ptr<const InvariantNode> ptrConst() const;
 
   virtual ~InvariantNode() = default;
 
@@ -66,7 +72,7 @@ class InvariantNode : public std::enable_shared_from_this<InvariantNode> {
   virtual void updateState();
 
   [[nodiscard]] virtual bool constrainsOutput(
-      VarNode& outputVarNode) const = 0;
+      const VarNode& outputVarNode) const = 0;
 
   [[nodiscard]] virtual bool canBeReplaced() const;
 
@@ -104,8 +110,7 @@ class InvariantNode : public std::enable_shared_from_this<InvariantNode> {
 
   void deactivate();
 
-  void replaceDefinedVar(VarNode& oldOutputVarNode,
-                         const std::shared_ptr<VarNode>& newOutputVarNode);
+  void replaceDefinedVar(VarNode& oldOutputVarNode, VarNode& newOutputVarNode);
 
   void removeStaticInputVarNode(VarNode&);
 

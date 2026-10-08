@@ -34,12 +34,13 @@ void BoolOrNode::init() {
 void BoolOrNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
-    constraintSolver().bool_or_reif(staticInputVarNode(0).constraintVarId(),
-                                    staticInputVarNode(1).constraintVarId(),
-                                    reifiedVarNodeConst().constraintVarId());
+    constraintSolver().bool_or_reif(
+        staticInputVarNodes().front().constraintVarId(),
+        staticInputVarNodes().at(1).constraintVarId(),
+        reifiedVarNodeConst().constraintVarId());
   } else {
-    constraintSolver().bool_or(staticInputVarNode(0).constraintVarId(),
-                               staticInputVarNode(1).constraintVarId(),
+    constraintSolver().bool_or(staticInputVarNodes().front().constraintVarId(),
+                               staticInputVarNodes().at(1).constraintVarId(),
                                shouldHold());
   }
 }
@@ -90,9 +91,9 @@ void BoolOrNode::registerOutputVars(propagation::SolverBase& solver,
       registerViolation(solver, mapping);
     } else {
       assert(!isReified());
-      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+      mapping.setIntermediateId(TODO, solver.makeIntVar(0, 0, 0));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-                            solver, mapping.intermediateId(id()), 0),
+                            solver, mapping.intermediateId(TODO), 0),
                         mapping);
     }
   }

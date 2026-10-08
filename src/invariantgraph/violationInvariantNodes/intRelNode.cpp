@@ -33,13 +33,13 @@ void IntRelNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
     return constraintSolver().int_rel_reif(
-        staticInputVarNodeConst(0).constraintVarId(), _relType,
-        staticInputVarNodeConst(1).constraintVarId(),
+        staticInputVarNodes().front().constraintVarId(), _relType,
+        staticInputVarNodes().at(1).constraintVarId(),
         reifiedVarNode().constraintVarId());
   }
   constraintSolver().int_rel(
-      staticInputVarNodeConst(0).constraintVarId(), _relType,
-      staticInputVarNodeConst(1).constraintVarId(), shouldHold());
+      staticInputVarNodes().front().constraintVarId(), _relType,
+      staticInputVarNodes().at(1).constraintVarId(), shouldHold());
 }
 
 void IntRelNode::updateState() {
@@ -56,12 +56,12 @@ void IntRelNode::updateState() {
   }
   for (Int i = static_cast<Int>(staticInputVarNodes().size()) - 1; i >= 0;
        --i) {
-    if (staticInputVarNodeConst(i).isFixed()) {
+    if (staticInputVarNodes().at(i).isFixed()) {
       if (_fixedRhs.has_value()) {
         setState(InvariantNodeState::SUBSUMED);
         return;
       }
-      _fixedRhs = staticInputVarNodeConst(i).lowerBound();
+      _fixedRhs = staticInputVarNodes().at(i).lowerBound();
       if (i == 0) {
         _relType = relationTypeConverse(_relType);
       }
@@ -77,8 +77,8 @@ void IntRelNode::updateState() {
   if (isReified()) {
     return;
   }
-  const Int lhsLb = staticInputVarNodeConst(0).lowerBound();
-  const Int lhsUb = staticInputVarNodeConst(0).upperBound();
+  const Int lhsLb = staticInputVarNodes().front().lowerBound();
+  const Int lhsUb = staticInputVarNodes().front().upperBound();
   const Int rhsLb =
       _fixedRhs.has_value()
           ? *_fixedRhs
@@ -91,9 +91,11 @@ void IntRelNode::updateState() {
   if (_relType == RelationType::REL_TYPE_GT) {
     if (lhsLb > rhsUb) {
       setState(InvariantNodeState::SUBSUMED);
-      staticInputVarNode(0).tightenDomainType(DomainType::DOM_LOWER_BOUND);
+      staticInputVarNodes().front().tightenDomainType(
+          DomainType::DOM_LOWER_BOUND);
       if (!_fixedRhs.has_value()) {
-        staticInputVarNode(1).tightenDomainType(DomainType::DOM_UPPER_BOUND);
+        staticInputVarNodes().at(1).tightenDomainType(
+            DomainType::DOM_UPPER_BOUND);
       }
       return;
     }
@@ -101,9 +103,11 @@ void IntRelNode::updateState() {
   if (_relType == RelationType::REL_TYPE_GE) {
     if (lhsLb >= rhsUb) {
       setState(InvariantNodeState::SUBSUMED);
-      staticInputVarNode(0).tightenDomainType(DomainType::DOM_LOWER_BOUND);
+      staticInputVarNodes().front().tightenDomainType(
+          DomainType::DOM_LOWER_BOUND);
       if (!_fixedRhs.has_value()) {
-        staticInputVarNode(1).tightenDomainType(DomainType::DOM_UPPER_BOUND);
+        staticInputVarNodes().at(1).tightenDomainType(
+            DomainType::DOM_UPPER_BOUND);
       }
       return;
     }
@@ -112,9 +116,9 @@ void IntRelNode::updateState() {
     if (lhsLb == lhsUb || rhsLb == rhsUb) {
       assert(lhsLb == rhsUb);
       setState(InvariantNodeState::SUBSUMED);
-      staticInputVarNode(0).tightenDomainType(DomainType::DOM_FIXED);
+      staticInputVarNodes().front().tightenDomainType(DomainType::DOM_FIXED);
       if (!_fixedRhs.has_value()) {
-        staticInputVarNode(1).tightenDomainType(DomainType::DOM_FIXED);
+        staticInputVarNodes().at(1).tightenDomainType(DomainType::DOM_FIXED);
       }
       return;
     }
@@ -122,9 +126,9 @@ void IntRelNode::updateState() {
   if (_relType == RelationType::REL_TYPE_NE) {
     if (lhsUb < rhsLb || lhsLb > rhsUb) {
       setState(InvariantNodeState::SUBSUMED);
-      staticInputVarNode(0).tightenDomainType();
+      staticInputVarNodes().front().tightenDomainType();
       if (!_fixedRhs.has_value()) {
-        staticInputVarNode(1).tightenDomainType();
+        staticInputVarNodes().at(1).tightenDomainType();
       }
       return;
     }
@@ -132,9 +136,11 @@ void IntRelNode::updateState() {
   if (_relType == RelationType::REL_TYPE_LE) {
     if (lhsUb <= rhsLb) {
       setState(InvariantNodeState::SUBSUMED);
-      staticInputVarNode(0).tightenDomainType(DomainType::DOM_UPPER_BOUND);
+      staticInputVarNodes().front().tightenDomainType(
+          DomainType::DOM_UPPER_BOUND);
       if (!_fixedRhs.has_value()) {
-        staticInputVarNode(1).tightenDomainType(DomainType::DOM_LOWER_BOUND);
+        staticInputVarNodes().at(1).tightenDomainType(
+            DomainType::DOM_LOWER_BOUND);
       }
       return;
     }
@@ -142,9 +148,11 @@ void IntRelNode::updateState() {
   if (_relType == RelationType::REL_TYPE_LT) {
     if (lhsUb < rhsLb) {
       setState(InvariantNodeState::SUBSUMED);
-      staticInputVarNode(0).tightenDomainType(DomainType::DOM_UPPER_BOUND);
+      staticInputVarNodes().front().tightenDomainType(
+          DomainType::DOM_UPPER_BOUND);
       if (!_fixedRhs.has_value()) {
-        staticInputVarNode(1).tightenDomainType(DomainType::DOM_LOWER_BOUND);
+        staticInputVarNodes().at(1).tightenDomainType(
+            DomainType::DOM_LOWER_BOUND);
       }
     }
   }

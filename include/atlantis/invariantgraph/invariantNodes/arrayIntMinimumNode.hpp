@@ -24,7 +24,7 @@ class ArrayIntMinimumNode : public InvariantNode {
   void updateState() override;
 
   [[nodiscard]] bool constrainsOutput(
-      VarNode& outputVarNode) const override;
+      const VarNode& outputVarNode) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 

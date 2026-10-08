@@ -17,12 +17,12 @@ namespace atlantis::invariantgraph {
 
 ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, VarNode& a,
                                    VarNode& b, VarNode& output)
-    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b},
+    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a.ptr(), b.ptr()},
                              output) {}
 
 ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph, VarNode& a,
                                    VarNode& b, const bool shouldHold)
-    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b},
+    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a.ptr(), b.ptr()},
                              shouldHold) {}
 
 ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph,
@@ -37,10 +37,10 @@ ArrayBoolAndNode::ArrayBoolAndNode(InvariantGraph& graph,
 
 void ArrayBoolAndNode::init() {
   ViolationInvariantNode::init();
-  assert(!isReified() || !reifiedVarNodeConst().isIntVar());
+  assert(!isReified() || !reifiedViolationNode()->isIntVar());
   assert(std::ranges::none_of(staticInputVarNodes(),
-                              [&](const std::shared_ptr<VarNode>& vId) {
-                                return varNodeConst(vId).isIntVar();
+                              [&](const std::shared_ptr<VarNode>& vNode) {
+                                return vNode->isIntVar();
                               }));
 }
 
@@ -49,7 +49,7 @@ void ArrayBoolAndNode::postConstraint() {
   if (isReified()) {
     constraintSolver().array_bool_and(
         toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
-        reifiedVarNodeConst().constraintVarId());
+        reifiedViolationNode()->constraintVarId());
   } else {
     constraintSolver().array_bool_and(
         toConstraintVarIds(invariantGraphConst(), staticInputVarNodes()),
@@ -66,17 +66,17 @@ void ArrayBoolAndNode::updateState() {
       alwaysHolds =
           staticInputVarNodes().empty() ||
           std::ranges::all_of(staticInputVarNodes(),
-                              [&](const std::shared_ptr<VarNode>& vId) {
-                                return varNodeConst(vId).isFixed() &&
-                                       varNodeConst(vId).inDomain(true);
+                              [&](const std::shared_ptr<VarNode>& vNode) {
+                                return vNode->isFixed() &&
+                                       vNode->inDomain(true);
                               });
     } else {
       alwaysHolds =
           !staticInputVarNodes().empty() &&
           std::ranges::any_of(staticInputVarNodes(),
-                              [&](const std::shared_ptr<VarNode>& vId) {
-                                return varNodeConst(vId).isFixed() &&
-                                       varNodeConst(vId).inDomain(false);
+                              [&](const std::shared_ptr<VarNode>& vNode) {
+                                return vNode->isFixed() &&
+                                       vNode->inDomain(false);
                               });
     }
     if (alwaysHolds) {
@@ -87,13 +87,13 @@ void ArrayBoolAndNode::updateState() {
 
   std::vector<std::shared_ptr<VarNode>> varsToRemove;
   varsToRemove.reserve(staticInputVarNodes().size());
-  for (const auto& id : staticInputVarNodes()) {
-    if (varNodeConst(id).isFixed()) {
-      varsToRemove.emplace_back(id);
+  for (const auto& vNode : staticInputVarNodes()) {
+    if (vNode->isFixed()) {
+      varsToRemove.emplace_back(vNode);
     }
   }
-  for (const auto& id : varsToRemove) {
-    removeStaticInputVarNode(id);
+  for (const auto& vNode : varsToRemove) {
+    removeStaticInputVarNode(*vNode);
   }
   if (staticInputVarNodes().empty()) {
     setState(InvariantNodeState::SUBSUMED);
@@ -110,8 +110,8 @@ bool ArrayBoolAndNode::replace() {
     return false;
   }
   if (staticInputVarNodes().size() == 1 && isReified()) {
-    invariantGraph().replaceVarNode(reifiedViolationNode(),
-                                    staticInputVarNodes().front());
+    invariantGraph().replaceVarNode(*reifiedViolationNode(),
+                                    staticInputVarNode(0));
   }
   return true;
 }
@@ -124,9 +124,9 @@ void ArrayBoolAndNode::registerOutputVars(propagation::SolverBase& solver,
       registerViolation(solver, mapping);
     } else {
       assert(!isReified());
-      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+      mapping.setIntermediateId(ptrConst(), solver.makeIntVar(0, 0, 0));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-                            solver, mapping.intermediateId(id()), 0),
+                            solver, mapping.intermediateId(ptrConst()), 0),
                         mapping);
     }
   }
@@ -142,9 +142,9 @@ void ArrayBoolAndNode::registerNode(propagation::SolverBase& solver,
     return;
   }
   assert(violationVarId(mapping) != propagation::NULL_ID);
-  assert(shouldHold() || mapping.intermediateId(id()) != propagation::NULL_ID);
+  assert(shouldHold() || mapping.intermediateId(ptrConst()) != propagation::NULL_ID);
   assert(shouldHold() ? violationVarId(mapping).isVar()
-                      : mapping.intermediateId(id()).isVar());
+                      : mapping.intermediateId(ptrConst()).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodes().size());
@@ -154,12 +154,12 @@ void ArrayBoolAndNode::registerNode(propagation::SolverBase& solver,
   if (solverVars.size() == 2) {
     solver.makeInvariant<propagation::BoolAnd>(
         solver,
-        !shouldHold() ? mapping.intermediateId(id()) : violationVarId(mapping),
+        !shouldHold() ? mapping.intermediateId(ptrConst()) : violationVarId(mapping),
         solverVars.front(), solverVars.back());
   } else {
     solver.makeInvariant<propagation::Max>(
         solver,
-        !shouldHold() ? mapping.intermediateId(id()) : violationVarId(mapping),
+        !shouldHold() ? mapping.intermediateId(ptrConst()) : violationVarId(mapping),
         std::move(solverVars));
   }
 }

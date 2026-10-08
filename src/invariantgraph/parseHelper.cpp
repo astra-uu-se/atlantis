@@ -27,22 +27,16 @@ namespace atlantis::invariantgraph {
 
 std::vector<std::shared_ptr<VarNode>>&& append(
     std::vector<std::shared_ptr<VarNode>>&& vars,
-    const std::shared_ptr<VarNode>& fst, const std::shared_ptr<VarNode>& snd) {
-  if (fst != nullptr) {
-    vars.emplace_back(fst);
-  }
-  if (snd != nullptr) {
-    vars.emplace_back(snd);
-  }
+    VarNode& fst, VarNode& snd) {
+  vars.emplace_back(fst.ptr());
+  vars.emplace_back(snd.ptr());
   return std::move(vars);
 }
 
 std::vector<std::shared_ptr<VarNode>>&& append(
     std::vector<std::shared_ptr<VarNode>>&& vars,
-    const std::shared_ptr<VarNode>& var) {
-  if (var != nullptr) {
-    vars.emplace_back(var);
-  }
+    VarNode& var) {
+  vars.emplace_back(var.ptr());
   return std::move(vars);
 }
 

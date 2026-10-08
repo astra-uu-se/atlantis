@@ -122,8 +122,8 @@ void IntLinRelNode::updateState() {
   Int lb = 0;
   Int ub = 0;
   for (size_t i = 0; i < staticInputVarNodes().size(); ++i) {
-    const Int varLb = staticInputVarNodeConst(i).lowerBound();
-    const Int varUb = staticInputVarNodeConst(i).upperBound();
+    const Int varLb = staticInputVarNodes().at(i).lowerBound();
+    const Int varUb = staticInputVarNodes().at(i).upperBound();
     const Int prod1 = overflow::saturatingMul(_coeffs[i], varLb);
     const Int prod2 = overflow::saturatingMul(_coeffs[i], varUb);
     lb = overflow::saturatingAdd(lb, std::min(prod1, prod2));
@@ -207,9 +207,9 @@ bool IntLinRelNode::makeImplicit() {
 void IntLinRelNode::registerOutputVars(propagation::SolverBase& solver,
                                        SolverMapping& mapping) const {
   if (violationVarId(mapping) == propagation::NULL_ID) {
-    mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+    mapping.setIntermediateId(TODO, solver.makeIntVar(0, 0, 0));
     setViolationVarId(
-        makeSolverConstIntRelation(solver, mapping.intermediateId(id()),
+        makeSolverConstIntRelation(solver, mapping.intermediateId(TODO),
                                    _relType, _rhs, shouldHold()),
         mapping);
   }
@@ -225,8 +225,8 @@ void IntLinRelNode::registerNode(propagation::SolverBase& solver,
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(violationVarId(mapping).isView());
 
-  assert(mapping.intermediateId(id()) != propagation::NULL_ID);
-  assert(mapping.intermediateId(id()).isVar());
+  assert(mapping.intermediateId(TODO) != propagation::NULL_ID);
+  assert(mapping.intermediateId(TODO).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodes().size());
@@ -238,7 +238,7 @@ void IntLinRelNode::registerNode(propagation::SolverBase& solver,
         return mapping.solverId(varNodeId);
       });
   solver.makeInvariant<propagation::Linear>(
-      solver, mapping.intermediateId(id()), std::vector<Int>(_coeffs),
+      solver, mapping.intermediateId(TODO), std::vector<Int>(_coeffs),
       std::move(solverVars));
 }
 

@@ -19,7 +19,7 @@ class ArrayIntMaximumNode : public InvariantNode {
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNode& outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(const VarNode& outputVarNodeId) const override;
 
   [[nodiscard]] bool canBeReplaced() const override;
 

@@ -128,10 +128,10 @@ void GlobalCardinalityLowUpNode::registerOutputVars(
   if (violationVarId(mapping) == propagation::NULL_ID) {
     if (!shouldHold()) {
       mapping.setIntermediateId(
-          id(), solver.makeIntVar(
+          TODO, solver.makeIntVar(
                     0, 0, static_cast<Int>(staticInputVarNodes().size())));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-                            solver, mapping.intermediateId(id()), 0),
+                            solver, mapping.intermediateId(TODO), 0),
                         mapping);
     } else {
       registerViolation(solver, mapping);
@@ -148,9 +148,9 @@ void GlobalCardinalityLowUpNode::registerNode(propagation::SolverBase& solver,
                                               SolverMapping& mapping) const {
   std::vector<propagation::VarViewId> inputVarIds;
   assert(violationVarId(mapping) != propagation::NULL_ID);
-  assert(shouldHold() || mapping.intermediateId(id()) != propagation::NULL_ID);
+  assert(shouldHold() || mapping.intermediateId(TODO) != propagation::NULL_ID);
   assert(shouldHold() ? violationVarId(mapping).isVar()
-                      : mapping.intermediateId(id()).isVar());
+                      : mapping.intermediateId(TODO).isVar());
 
   std::ranges::transform(staticInputVarNodes().begin(),
                          staticInputVarNodes().end(),
@@ -172,7 +172,7 @@ void GlobalCardinalityLowUpNode::registerNode(propagation::SolverBase& solver,
         std::vector<Int>(_cover), std::move(low), std::move(up));
   } else {
     solver.makeInvariant<propagation::GlobalCardinalityLowUp>(
-        solver, mapping.intermediateId(id()), std::move(inputVarIds),
+        solver, mapping.intermediateId(TODO), std::move(inputVarIds),
         std::vector<Int>(_cover), std::move(low), std::move(up));
   }
 }

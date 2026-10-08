@@ -55,13 +55,13 @@ void AllDifferentNode::postConstraint() {
   if (staticInputVarNodes().size() == 2) {
     if (isReified()) {
       return constraintSolver().int_ne_reif(
-          staticInputVarNodeConst(0).constraintVarId(),
-          staticInputVarNodeConst(1).constraintVarId(),
+          staticInputVarNodes().front().constraintVarId(),
+          staticInputVarNodes().at(1).constraintVarId(),
           reifiedVarNodeConst().constraintVarId());
     }
     return constraintSolver().int_ne(
-        staticInputVarNodeConst(0).constraintVarId(),
-        staticInputVarNodeConst(1).constraintVarId(), shouldHold());
+        staticInputVarNodes().front().constraintVarId(),
+        staticInputVarNodes().at(1).constraintVarId(), shouldHold());
   }
   if (isReified()) {
     return constraintSolver().fzn_all_different_int_reif(
@@ -166,9 +166,9 @@ void AllDifferentNode::registerOutputVars(propagation::SolverBase& solver,
       registerViolation(solver, mapping);
     } else {
       assert(!isReified());
-      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+      mapping.setIntermediateId(TODO, solver.makeIntVar(0, 0, 0));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-                            solver, mapping.intermediateId(id()), 0),
+                            solver, mapping.intermediateId(TODO), 0),
                         mapping);
     }
   }
@@ -187,9 +187,9 @@ void AllDifferentNode::registerNode(propagation::SolverBase& solver,
     return;
   }
   assert(violationVarId(mapping) != propagation::NULL_ID);
-  assert(shouldHold() || mapping.intermediateId(id()) != propagation::NULL_ID);
+  assert(shouldHold() || mapping.intermediateId(TODO) != propagation::NULL_ID);
   assert(shouldHold() ? violationVarId(mapping).isVar()
-                      : mapping.intermediateId(id()).isVar());
+                      : mapping.intermediateId(TODO).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(staticInputVarNodes().size());
@@ -201,15 +201,15 @@ void AllDifferentNode::registerNode(propagation::SolverBase& solver,
   if (solverVars.size() == 2) {
     solver.makeViolationInvariant<propagation::NotEqual>(
         solver,
-        mapping.intermediateId(id()) != propagation::NULL_ID
-            ? mapping.intermediateId(id())
+        mapping.intermediateId(TODO) != propagation::NULL_ID
+            ? mapping.intermediateId(TODO)
             : violationVarId(mapping),
         solverVars.front(), solverVars.back());
   } else {
     solver.makeViolationInvariant<propagation::AllDifferent>(
         solver,
-        mapping.intermediateId(id()) != propagation::NULL_ID
-            ? mapping.intermediateId(id())
+        mapping.intermediateId(TODO) != propagation::NULL_ID
+            ? mapping.intermediateId(TODO)
             : violationVarId(mapping),
         std::move(solverVars));
   }

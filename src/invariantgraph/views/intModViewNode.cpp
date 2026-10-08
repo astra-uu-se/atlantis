@@ -12,39 +12,39 @@ namespace atlantis::invariantgraph {
 
 IntModViewNode::IntModViewNode(InvariantGraph& graph, VarNode& staticInput,
                                VarNode& output, const Int denominator)
-    : InvariantNode(graph, {output}, {staticInput}),
+    : InvariantNode(graph, {output.ptr()}, {staticInput.ptr()}),
       _denominator(std::abs(denominator)) {}
 
 void IntModViewNode::init() {
   InvariantNode::init();
   assert(
-      invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
+      outputVarNode(0).isIntVar());
   assert(
-      invariantGraph().varNodeConst(staticInputVarNodes().front()).isIntVar());
+      staticInputVarNode(0).isIntVar());
 }
 
 void IntModViewNode::postConstraint() {
   InvariantNode::postConstraint();
   const auto den = invariantGraph().retrieveIntVarNode(_denominator);
-  constraintSolver().int_mod(staticInputVarNodeConst(0).constraintVarId(),
-                             varNodeConst(den).constraintVarId(),
-                             outputVarNodeConst(0).constraintVarId());
+  constraintSolver().int_mod(staticInputVarNode(0).constraintVarId(),
+                             den.constraintVarId(),
+                             outputVarNode(0).constraintVarId());
 }
 
 void IntModViewNode::updateState() {
-  if (staticInputVarNodeConst(0).isFixed()) {
+  if (staticInputVarNode(0).isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-bool IntModViewNode::constrainsOutput(VarNode&) const {
-  return !outputVarNodeConst(0).constDomain()->contains(0, _denominator - 1);
+bool IntModViewNode::constrainsOutput(const VarNode&) const {
+  return !outputVarNode(0).constDomain()->contains(0, _denominator - 1);
 }
 
 void IntModViewNode::registerOutputVars(propagation::SolverBase& solver,
                                         SolverMapping& mapping) const {
-  if (mapping.solverId(outputVarNodes().front()) == propagation::NULL_ID) {
-    mapping.setSolverId(outputVarNodes().front(),
+  if (mapping.solverId(outputVarNode(0)) == propagation::NULL_ID) {
+    mapping.setSolverId(outputVarNode(0),
                         solver.makeIntView<propagation::ModView>(
                             solver, mapping.solverId(input()), _denominator));
   }

@@ -112,7 +112,7 @@ propagation::VarViewId ViolationInvariantNode::violationVarId(
   if (isReified()) {
     return mapping.solverId(outputVarNodes().front()->mappingId());
   }
-  return mapping.violationId(mappingId());
+  return mapping.violationId(TODO);
 }
 
 std::shared_ptr<VarNode> ViolationInvariantNode::reifiedViolationNode() {
@@ -135,10 +135,10 @@ propagation::VarViewId ViolationInvariantNode::setViolationVarId(
     }
     return mapping.solverId(outputVarNodes().front()->mappingId());
   }
-  if (mapping.violationId(mappingId()) == propagation::NULL_ID) {
-    mapping.setViolationId(mappingId(), varId);
+  if (mapping.violationId(TODO) == propagation::NULL_ID) {
+    mapping.setViolationId(TODO, varId);
   }
-  return mapping.violationId(mappingId());
+  return mapping.violationId(TODO);
 }
 
 propagation::VarViewId ViolationInvariantNode::registerViolation(
@@ -148,8 +148,8 @@ propagation::VarViewId ViolationInvariantNode::registerViolation(
     if (mapping.solverId(outputVarNodes().front()->mappingId()) != propagation::NULL_ID) {
       return mapping.solverId(outputVarNodes().front()->mappingId());
     }
-  } else if (mapping.violationId(mappingId()) != propagation::NULL_ID) {
-    return mapping.violationId(mappingId());
+  } else if (mapping.violationId(TODO) != propagation::NULL_ID) {
+    return mapping.violationId(TODO);
   }
   return setViolationVarId(
       solver.makeIntVar(initialValue, initialValue, initialValue), mapping);

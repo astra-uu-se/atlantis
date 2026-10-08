@@ -17,7 +17,7 @@ class IntPlusNode : public InvariantNode {
   void updateState() override;
 
   [[nodiscard]] bool constrainsOutput(
-      VarNode& outputVarNode) const override;
+      const VarNode& outputVarNode) const override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

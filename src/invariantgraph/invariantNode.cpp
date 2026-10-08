@@ -9,6 +9,18 @@
 #include "atlantis/propagation/solverBase.hpp"
 
 namespace atlantis::invariantgraph {
+VarNode& InvariantNode::outputVarNode(const size_t i) const {
+  assert(i < _outputVarNodes.size());
+  return *_outputVarNodes[i];
+}
+VarNode& InvariantNode::staticInputVarNode(const size_t i) const {
+  assert(i < _staticInputVarNodes.size());
+  return *_staticInputVarNodes[i];
+}
+VarNode& InvariantNode::dynamicInputVarNode(const size_t i) const {
+  assert(i < _dynamicInputVarNodes.size());
+  return *_dynamicInputVarNodes[i];
+}
 /**
  * A node in the invariant graph which defines a number of variables. This could
  * be an invariant, a soft constraint (which defines a violation), or a view.
@@ -18,12 +30,17 @@ InvariantNode::InvariantNode(
     std::vector<std::shared_ptr<VarNode>>&& outputIds,
     std::vector<std::shared_ptr<VarNode>>&& staticInputIds,
     std::vector<std::shared_ptr<VarNode>>&& dynamicInputIds)
-    : _invariantGraph(invariantGraph),
+    : enable_shared_from_this<InvariantNode>(),
+      _invariantGraph(invariantGraph),
       _outputVarNodes(std::move(outputIds)),
       _staticInputVarNodes(std::move(staticInputIds)),
       _dynamicInputVarNodes(std::move(dynamicInputIds)) {}
 
-std::shared_ptr<InvariantNode> InvariantNode::getPtr() {
+std::shared_ptr<const InvariantNode> InvariantNode::ptrConst() const {
+  return shared_from_this();
+}
+
+std::shared_ptr<InvariantNode> InvariantNode::ptr() {
   return shared_from_this();
 }
 
@@ -133,15 +150,15 @@ void InvariantNode::deactivate() {
 
 void InvariantNode::replaceDefinedVar(
     VarNode& oldOutputVarNode,
-    const std::shared_ptr<VarNode>& newOutputVarNode) {
+    VarNode& newOutputVarNode) {
   // Replace all occurrences:
   for (auto& _outputVarNodeId : _outputVarNodes) {
     if (_outputVarNodeId.get() == &oldOutputVarNode) {
-      _outputVarNodeId = newOutputVarNode;
+      _outputVarNodeId = newOutputVarNode.ptr();
     }
   }
-  oldOutputVarNode.unmarkOutputTo(getPtr());
-  newOutputVarNode->markOutputTo(getPtr());
+  oldOutputVarNode.unmarkOutputTo(ptr());
+  newOutputVarNode.markOutputTo(*this);
 }
 
 void InvariantNode::removeStaticInputVarNode(VarNode& staticInput) {
@@ -205,7 +222,7 @@ void InvariantNode::removeOutputVarNode(VarNode& output) {
   if (!didErase) {
     return;
   }
-  output.unmarkOutputTo(getPtr());
+  output.unmarkOutputTo(ptr());
   if (_outputVarNodes.empty() && !isViolationInvariant()) {
     setState(InvariantNodeState::SUBSUMED);
   }
@@ -221,7 +238,7 @@ void InvariantNode::removeOutputAtIndex(const size_t index) {
         return other.get() == varNode.get();
       });
   if (shouldUnmark) {
-    varNode->unmarkOutputTo(getPtr());
+    varNode->unmarkOutputTo(ptr());
   }
   if (_outputVarNodes.empty() && !isViolationInvariant()) {
     setState(InvariantNodeState::SUBSUMED);
@@ -245,7 +262,7 @@ void InvariantNode::replaceStaticInputVarNode(
                              }));
   if (wasInput) {
     oldStaticVar.unmarkAsInputFor(*this, true);
-    newStaticVar->markAsInputFor(getPtr(), true);
+    newStaticVar->markAsInputFor(*this, true);
   }
 }
 
@@ -266,7 +283,7 @@ void InvariantNode::replaceDynamicInputVarNode(
                              }));
   if (wasInput) {
     oldDynamicVar.unmarkAsInputFor(*this, false);
-    newDynamicVar->markAsInputFor(getPtr(), false);
+    newDynamicVar->markAsInputFor(*this, false);
   }
 }
 
@@ -306,16 +323,16 @@ InvariantNode::splitOutputVarNodes() {
       if (_outputVarNodes[i]->isFixed()) {
         if (_outputVarNodes[i]->isIntVar()) {
           _outputVarNodes[j] = _invariantGraph.retrieveIntVarNode(
-              _outputVarNodes[i]->lowerBound(), true);
+              _outputVarNodes[i]->lowerBound(), true).ptr();
         } else {
           _outputVarNodes[j] = _invariantGraph.retrieveBoolVarNode(
-              _outputVarNodes[i]->inDomain(bool{true}), true);
+              _outputVarNodes[i]->inDomain(bool{true}), true).ptr();
         }
       } else if (_outputVarNodes[i]->isIntVar()) {
         _outputVarNodes[j] = _invariantGraph.retrieveIntVarNode(
-            _outputVarNodes[i]->domain(), _outputVarNodes[i]->domainType());
+            _outputVarNodes[i]->domain(), _outputVarNodes[i]->domainType()).ptr();
       } else {
-        _outputVarNodes[j] = _invariantGraph.retrieveBoolVarNode();
+        _outputVarNodes[j] = _invariantGraph.retrieveBoolVarNode().ptr();
       }
       _outputVarNodes[j]->markOutputTo(*this);
       replaced.emplace_back(_outputVarNodes[i], _outputVarNodes[j]);
@@ -327,15 +344,15 @@ InvariantNode::splitOutputVarNodes() {
 propagation::VarViewId InvariantNode::makeSolverVar(
     const VarNode& varNode, const Int initialValue,
     propagation::SolverBase& solver, SolverMapping& mapping) const {
-  if (mapping.solverId(varNode.mappingId()) == propagation::NULL_ID) {
+  if (mapping.solverId(varNode) == propagation::NULL_ID) {
     mapping.setSolverId(
-        varNode.mappingId(),
+        varNode,
         solver.makeIntVar(
             std::max(varNode.lowerBound(),
                      std::min(varNode.upperBound(), initialValue)),
             varNode.lowerBound(), varNode.upperBound()));
   }
-  return mapping.solverId(varNode.mappingId());
+  return mapping.solverId(varNode);
 }
 
 propagation::VarViewId InvariantNode::makeSolverVar(

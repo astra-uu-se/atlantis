@@ -64,7 +64,7 @@ void CircuitImplicitNode::updateDomainTypes() {
 
 void CircuitImplicitNode::registerNode(propagation::SolverBase&,
                                        SolverMapping& mapping) const {
-  assert(!mapping.hasNeighborhood(mappingId()));
+  assert(!mapping.hasNeighborhood(*this));
 
   std::vector<search::SearchVar> searchVars;
   searchVars.reserve(outputVarNodes().size());
@@ -79,10 +79,10 @@ void CircuitImplicitNode::registerNode(propagation::SolverBase&,
 
   for (const auto& vNode : outputVarNodes()) {
     assert(vNode != nullptr);
-    searchVars.emplace_back(mapping.solverId(vNode->mappingId()), vNode->constDomain());
+    searchVars.emplace_back(mapping.solverId(vNode), vNode->constDomain());
   }
   mapping.setNeighborhood(
-      mappingId(), std::make_shared<search::neighborhoods::CircuitNeighborhood>(
+      ptrConst(), std::make_shared<search::neighborhoods::CircuitNeighborhood>(
                 std::move(searchVars), _offset));
 }
 

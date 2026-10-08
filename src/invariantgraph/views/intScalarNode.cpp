@@ -14,38 +14,40 @@ namespace atlantis::invariantgraph {
 IntScalarNode::IntScalarNode(InvariantGraph& graph, VarNode& staticInput,
                              VarNode& output, const Int factor,
                              const Int offset)
-    : InvariantNode(graph, {output}, {staticInput}),
+    : InvariantNode(graph, {output.ptr()}, {staticInput.ptr()}),
       _factor(factor),
       _offset(offset) {}
 
 void IntScalarNode::init() {
   InvariantNode::init();
   assert(
-      invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
+      outputVarNode(0).isIntVar());
   assert(
-      invariantGraph().varNodeConst(staticInputVarNodes().front()).isIntVar());
+      staticInputVarNode(0).isIntVar());
 }
 
 void IntScalarNode::updateState() {
-  if (varNodeConst(input()).isFixed() || outputVarNodeConst(0).isFixed()) {
+  if (input().isFixed() || outputVarNode(0).isFixed()) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
   if (_factor == 1 && _offset == 0) {
-    invariantGraph().replaceVarNode(outputVarNodes().front(),
-                                    staticInputVarNodes().front());
+    invariantGraph().replaceVarNode(outputVarNode(0),
+                                    staticInputVarNode(0));
     setState(InvariantNodeState::SUBSUMED);
   }
 }
-bool IntScalarNode::constrainsOutput(VarNode&) const {
+bool IntScalarNode::constrainsOutput(const VarNode&) const {
   const Int a = overflow::saturatingAdd(
-      overflow::saturatingMul(staticInputVarNodeConst(0).lowerBound(), _factor),
+      overflow::saturatingMul(staticInputVarNode(0).lowerBound(),
+                              _factor),
       _offset);
   const Int b = overflow::saturatingAdd(
-      overflow::saturatingMul(staticInputVarNodeConst(0).upperBound(), _factor),
+      overflow::saturatingMul(staticInputVarNode(0).upperBound(),
+                              _factor),
       _offset);
-  return !outputVarNodeConst(0).constDomain()->contains(std::min(a, b),
-                                                        std::max(a, b));
+  return !outputVarNode(0).constDomain()->contains(std::min(a, b),
+                                                           std::max(a, b));
 }
 
 bool IntScalarNode::canBeReplaced() const {
@@ -54,10 +56,10 @@ bool IntScalarNode::canBeReplaced() const {
     return false;
   }
 
-  return varNodeConst(staticInputVarNodes().front()).staticInputTo().size() ==
+  return staticInputVarNode(0).staticInputTo().size() ==
              1 &&
-         varNodeConst(staticInputVarNodes().front()).definingNodes().empty() &&
-         !varNodeConst(outputVarNodes().front()).staticInputTo().empty();
+         staticInputVarNode(0).definingNodes().empty() &&
+         !outputVarNode(0).staticInputTo().empty();
 }
 
 bool IntScalarNode::replace() {
@@ -65,16 +67,16 @@ bool IntScalarNode::replace() {
     return false;
   }
   invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(
-      invariantGraph(), outputVarNodes().front(), staticInputVarNodes().front(),
+      invariantGraph(), outputVarNode(0), staticInputVarNode(0),
       _factor, overflow::saturatingSub(0, _offset)));
   return true;
 }
 
 void IntScalarNode::registerOutputVars(propagation::SolverBase& solver,
                                        SolverMapping& mapping) const {
-  if (mapping.solverId(outputVarNodes().front()) == propagation::NULL_ID) {
+  if (mapping.solverId(outputVarNode(0)) == propagation::NULL_ID) {
     mapping.setSolverId(
-        outputVarNodes().front(),
+        outputVarNode(0),
         solver.makeIntView<propagation::ScalarView>(
             solver, mapping.solverId(input()), _factor, _offset));
   }
@@ -98,8 +100,8 @@ std::ostream& IntScalarNode::dotLangEdges(std::ostream& o) const {
            ? ""
            : ((_offset < 0 ? "- " : "+ ") + std::to_string(std::abs(_offset))));
 
-  return o << staticInputVarNodes().front() << " -> "
-           << outputVarNodes().front() << "[label=\"" << label << "\"];"
+  return o << reinterpret_cast<size_t>(&staticInputVarNode(0)) << " -> "
+           << reinterpret_cast<size_t>(&outputVarNode(0)) << "[label=\"" << label << "\"];"
            << std::endl;
 }
 

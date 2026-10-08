@@ -35,11 +35,10 @@ void AllDifferentImplicitNode::updateDomainTypes() {
   assert(std::ranges::all_of(outputVarNodes(),
                              [&](const std::shared_ptr<VarNode>& varNode) {
                                return varNode->definingNodes().size() == 1 &&
-                                      varNode->outputOf() == id();
+                                      varNode->outputOf().get() == this;
                              }));
 
-  const auto& domain = invariantGraphConst()
-                           .varNodeConst(outputVarNodes().front())
+  const auto& domain = outputVarNode(0)
                            .constDomain();
 
   const bool hasSameDomain =
@@ -55,16 +54,15 @@ void AllDifferentImplicitNode::updateDomainTypes() {
   }
 
   if (hasSameDomain) {
-    for (const auto& nId : outputVarNodes()) {
-      auto& varNode = nId;
-      varNode.setDomainType(DomainType::DOM_NONE);
+    for (const auto& varNode : outputVarNodes()) {
+      varNode->setDomainType(DomainType::DOM_NONE);
     }
   }
 }
 
 void AllDifferentImplicitNode::registerNode(propagation::SolverBase&,
                                             SolverMapping& mapping) const {
-  assert(!mapping.hasNeighborhood(id()));
+  assert(!mapping.hasNeighborhood(TODO));
 
   if (outputVarNodes().size() <= 1) {
     return;
@@ -73,11 +71,10 @@ void AllDifferentImplicitNode::registerNode(propagation::SolverBase&,
   assert(std::ranges::all_of(outputVarNodes(),
                              [&](const std::shared_ptr<VarNode>& varNode) {
                                return varNode->definingNodes().size() == 1 &&
-                                      varNode->outputOf() == id();
+                                      varNode->outputOf().get() == this;
                              }));
 
-  const auto& domain = invariantGraphConst()
-                           .varNodeConst(outputVarNodes().front())
+  const auto& domain = outputVarNode(0)
                            .constDomain();
 
   const bool hasSameDomain =
@@ -97,13 +94,12 @@ void AllDifferentImplicitNode::registerNode(propagation::SolverBase&,
   searchVars.reserve(outputVarNodes().size());
 
   if (hasSameDomain) {
-    for (const auto& nId : outputVarNodes()) {
-      const auto& varNode =
-          nId->assert(mapping.solverId(nId) != propagation::NULL_ID);
-      searchVars.emplace_back(mapping.solverId(nId), varNode.constDomain());
+    for (const auto& vNode : outputVarNodes()) {
+      assert(mapping.solverId(vNode->mappingId()) != propagation::NULL_ID);
+      searchVars.emplace_back(mapping.solverId(vNode->mappingId()), vNode->constDomain());
     }
     mapping.setNeighborhood(
-        id(), std::make_shared<
+        TODO, std::make_shared<
                   search::neighborhoods::AllDifferentUniformNeighborhood>(
                   std::move(searchVars)));
     return;
@@ -111,13 +107,13 @@ void AllDifferentImplicitNode::registerNode(propagation::SolverBase&,
   Int domainLb = std::numeric_limits<Int>::max();
   Int domainUb = std::numeric_limits<Int>::min();
   for (const auto& varNode : outputVarNodes()) {
-    const auto& varNode = varNode->searchVars.emplace_back(
-        mapping.solverId(varNode), varNode.constDomain());
-    domainLb = std::min<Int>(domainLb, varNode.lowerBound());
-    domainUb = std::max<Int>(domainUb, varNode.upperBound());
+    searchVars.emplace_back(
+        mapping.solverId(varNode->mappingId()), varNode->constDomain());
+    domainLb = std::min<Int>(domainLb, varNode->lowerBound());
+    domainUb = std::max<Int>(domainUb, varNode->upperBound());
   }
   mapping.setNeighborhood(
-      id(), std::make_shared<
+      TODO, std::make_shared<
                 search::neighborhoods::AllDifferentNonUniformNeighborhood>(
                 std::move(searchVars), domainLb, domainUb));
 }

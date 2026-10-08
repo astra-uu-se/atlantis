@@ -13,15 +13,15 @@ class VarNode;
 
 BoolRelNode::BoolRelNode(InvariantGraph& graph, VarNode& a,
                          const RelationType relType, VarNode& b,
-                         const VarNode& r)
-    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b},
+                         VarNode& r)
+    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a.ptr(), b.ptr()},
                              r),
       _relType(relType) {}
 
 BoolRelNode::BoolRelNode(InvariantGraph& graph, VarNode& a,
                          const RelationType relType, VarNode& b,
                          const bool shouldHold)
-    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b},
+    : ViolationInvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{a.ptr(), b.ptr()},
                              shouldHold),
       _relType(relType) {}
 
@@ -29,19 +29,19 @@ void BoolRelNode::init() {
   ViolationInvariantNode::init();
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNode()).isIntVar());
+      reifiedViolationNode()->isIntVar());
   assert(std::ranges::none_of(
       staticInputVarNodes().begin(), staticInputVarNodes().end(),
-      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
+      [&](const std::shared_ptr<VarNode>& vNode) { return vNode->isIntVar(); }));
 }
 
 void BoolRelNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
-    constraintSolver().bool_rel_reif(staticInputVarNode(0).constraintVarId(),
-                                     _relType,
-                                     staticInputVarNode(1).constraintVarId(),
-                                     reifiedVarNodeConst().constraintVarId());
+    constraintSolver().bool_rel_reif(
+        staticInputVarNode(0).constraintVarId(), _relType,
+        staticInputVarNode(1).constraintVarId(),
+        reifiedViolationNode()->constraintVarId());
   } else {
     constraintSolver().bool_rel(
         staticInputVarNode(0).constraintVarId(), _relType,
@@ -57,18 +57,18 @@ void BoolRelNode::updateState() {
   }
   if (staticInputVarNodes().empty() ||
       (staticInputVarNodes().size() == 2 &&
-       staticInputVarNodes().front() == staticInputVarNodes().back())) {
+       &staticInputVarNode(0) == staticInputVarNodes().back().get())) {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
   for (Int i = static_cast<Int>(staticInputVarNodes().size()) - 1; i >= 0;
        --i) {
-    if (staticInputVarNodeConst(i).isFixed()) {
+    if (staticInputVarNode(i).isFixed()) {
       if (_fixedRhs.has_value()) {
         setState(InvariantNodeState::SUBSUMED);
         return;
       }
-      _fixedRhs = staticInputVarNodeConst(i).inDomain(bool{true});
+      _fixedRhs = staticInputVarNode(i).inDomain(bool{true});
       if (i == 0) {
         _relType = relationTypeConverse(_relType);
       }
@@ -111,10 +111,10 @@ bool BoolRelNode::replace() {
   if (!canBeReplaced()) {
     return false;
   }
-  VarNode& frontVarNodeId = staticInputVarNodes().front();
+  VarNode& frontVarNodeId = staticInputVarNode(0);
   for (size_t i = 1; i < staticInputVarNodes().size(); i++) {
-    if (staticInputVarNodes().at(i) != frontVarNodeId) {
-      invariantGraph().replaceVarNode(staticInputVarNodes().at(i),
+    if (&staticInputVarNode(i) != &frontVarNodeId) {
+      invariantGraph().replaceVarNode(staticInputVarNode(i),
                                       frontVarNodeId);
     }
   }
@@ -130,7 +130,7 @@ void BoolRelNode::registerOutputVars(propagation::SolverBase& solver,
     assert(_fixedRhs.has_value());
     setViolationVarId(
         makeSolverConstBoolRelation(
-            solver, mapping.solverId(staticInputVarNodes().front()), _relType,
+            solver, mapping.solverId(staticInputVarNode(0)), _relType,
             *_fixedRhs),
         mapping);
   } else {
@@ -138,8 +138,8 @@ void BoolRelNode::registerOutputVars(propagation::SolverBase& solver,
     registerViolation(solver, mapping);
   }
   assert(std::ranges::all_of(
-      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vNode) {
+        return mapping.solverId(vNode) != propagation::NULL_ID;
       }));
 }
 
@@ -155,7 +155,7 @@ void BoolRelNode::registerNode(propagation::SolverBase& solver,
   assert(violationVarId(mapping).isVar());
 
   makeSolverBoolRelation(
-      solver, mapping.solverId(staticInputVarNodes().front()), _relType,
+      solver, mapping.solverId(staticInputVarNode(0)), _relType,
       mapping.solverId(staticInputVarNodes().back()), violationVarId(mapping),
       shouldHold());
 }

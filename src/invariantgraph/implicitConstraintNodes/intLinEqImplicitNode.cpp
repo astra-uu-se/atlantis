@@ -39,7 +39,7 @@ void IntLinEqImplicitNode::updateDomainTypes() {
 
 void IntLinEqImplicitNode::registerNode(propagation::SolverBase&,
                                         SolverMapping& mapping) const {
-  assert(!mapping.hasNeighborhood(mappingId()));
+  assert(!mapping.hasNeighborhood(ptrConst()));
   if (outputVarNodes().size() <= 1) {
     return;
   }
@@ -48,12 +48,12 @@ void IntLinEqImplicitNode::registerNode(propagation::SolverBase&,
   searchVars.reserve(outputVarNodes().size());
 
   for (const auto& varNode : outputVarNodes()) {
-    assert(mapping.solverId(varNode->mappingId()) != propagation::NULL_ID);
-    searchVars.emplace_back(mapping.solverId(varNode->mappingId()), varNode->constDomain());
+    assert(mapping.solverId(varNode) != propagation::NULL_ID);
+    searchVars.emplace_back(mapping.solverId(varNode), varNode->constDomain());
   }
 
   mapping.setNeighborhood(
-      mappingId(), std::make_shared<search::neighborhoods::IntLinEqNeighborhood>(
+      ptrConst(), std::make_shared<search::neighborhoods::IntLinEqNeighborhood>(
                 std::vector<Int>{_coeffs}, std::move(searchVars), _offset));
 }
 

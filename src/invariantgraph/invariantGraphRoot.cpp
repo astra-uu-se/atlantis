@@ -21,18 +21,18 @@ void InvariantGraphRoot::updateDomainTypes() {
 
 void InvariantGraphRoot::registerNode(propagation::SolverBase&,
                                       SolverMapping& mapping) const {
-  assert(!mapping.hasNeighborhood(mappingId()));
+  assert(!mapping.hasNeighborhood(ptrConst()));
 
   std::vector<search::SearchVar> searchVars;
   searchVars.reserve(outputVarNodes().size());
 
   for (const auto& vNode : outputVarNodes()) {
-    assert(mapping.solverId(vNode->mappingId()) != propagation::NULL_ID);
-    searchVars.emplace_back(mapping.solverId(vNode->mappingId()), vNode->constDomain());
+    assert(mapping.solverId(vNode) != propagation::NULL_ID);
+    searchVars.emplace_back(mapping.solverId(vNode), vNode->constDomain());
   }
 
   mapping.setNeighborhood(
-      mappingId(), std::make_shared<search::neighborhoods::RandomNeighborhood>(
+      ptrConst(), std::make_shared<search::neighborhoods::RandomNeighborhood>(
                 std::move(searchVars)));
 }
 

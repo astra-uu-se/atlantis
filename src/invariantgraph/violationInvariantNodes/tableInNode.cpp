@@ -94,7 +94,7 @@ void TableInNode::removeInvalidRows() {
   invalidRows.reserve(_table.size());
   for (size_t r = 0; r < _table.size(); ++r) {
     for (size_t c = 0; c < numCols(); ++c) {
-      if (!staticInputVarNodeConst(c).constDomain()->contains(_table[r][c])) {
+      if (!staticInputVarNodes().at(c).constDomain()->contains(_table[r][c])) {
         invalidRows.emplace_back(r);
         break;
       }
@@ -121,10 +121,10 @@ void TableInNode::removeColumn(const size_t colIndex) {
 void TableInNode::removeInvalidColumns() {
   for (Int i = static_cast<Int>(staticInputVarNodes().size()) - 1; i >= 0;
        --i) {
-    if (!staticInputVarNodeConst(i).isFixed()) {
+    if (!staticInputVarNodes().at(i).isFixed()) {
       continue;
     }
-    const Int val = staticInputVarNodeConst(i).lowerBound();
+    const Int val = staticInputVarNodes().at(i).lowerBound();
     for (Int r = static_cast<Int>(_table.size()) - 1; r >= 0; --r) {
       if (_table[r][i] != val) {
         std::swap(_table[r], _table.back());
@@ -201,10 +201,10 @@ Int TableInNode::firstInputColIndex() const {
   }
   std::vector<bool> inputIsDefined(staticInputVarNodes().size(), false);
   for (size_t i = 0; i < staticInputVarNodes().size(); ++i) {
-    inputIsDefined[i] = !staticInputVarNodeConst(i).definingNodes().empty();
+    inputIsDefined[i] = !staticInputVarNodes().at(i).definingNodes().empty();
   }
   for (size_t i = 0; i < staticInputVarNodes().size(); ++i) {
-    if (staticInputVarNodeConst(i).constDomain()->size() != _table.size()) {
+    if (staticInputVarNodes().at(i).constDomain()->size() != _table.size()) {
       continue;
     }
     bool replaceable = true;
@@ -279,9 +279,9 @@ void TableInNode::registerOutputVars(propagation::SolverBase& solver,
     registerViolation(solver, mapping);
   } else {
     assert(!isReified());
-    mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+    mapping.setIntermediateId(TODO, solver.makeIntVar(0, 0, 0));
     setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-                          solver, mapping.intermediateId(id()), 0),
+                          solver, mapping.intermediateId(TODO), 0),
                       mapping);
   }
   assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
@@ -297,9 +297,9 @@ void TableInNode::registerNode(propagation::SolverBase& solver,
     return;
   }
   assert(violationVarId(mapping) != propagation::NULL_ID);
-  assert(shouldHold() || mapping.intermediateId(id()) != propagation::NULL_ID);
+  assert(shouldHold() || mapping.intermediateId(TODO) != propagation::NULL_ID);
   assert(shouldHold() ? violationVarId(mapping).isVar()
-                      : mapping.intermediateId(id()).isVar());
+                      : mapping.intermediateId(TODO).isVar());
 
   std::vector<propagation::VarViewId> inputVarIds;
   inputVarIds.reserve(staticInputVarNodes().size());
@@ -318,15 +318,15 @@ void TableInNode::registerNode(propagation::SolverBase& solver,
     }
     solver.makeViolationInvariant<propagation::BoolTableIn>(
         solver,
-        mapping.intermediateId(id()) != propagation::NULL_ID
-            ? mapping.intermediateId(id())
+        mapping.intermediateId(TODO) != propagation::NULL_ID
+            ? mapping.intermediateId(TODO)
             : violationVarId(mapping),
         std::move(inputVarIds), boolTable);
   } else {
     solver.makeViolationInvariant<propagation::TableIn>(
         solver,
-        mapping.intermediateId(id()) != propagation::NULL_ID
-            ? mapping.intermediateId(id())
+        mapping.intermediateId(TODO) != propagation::NULL_ID
+            ? mapping.intermediateId(TODO)
             : violationVarId(mapping),
         std::move(inputVarIds), _table);
   }

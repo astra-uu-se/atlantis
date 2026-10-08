@@ -26,7 +26,7 @@ class IntModViewNode : public InvariantNode {
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   [[nodiscard]] VarNode& input() const noexcept {
-    return staticInputVarNodes().front();
+    return staticInputVarNode(0);
   }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;

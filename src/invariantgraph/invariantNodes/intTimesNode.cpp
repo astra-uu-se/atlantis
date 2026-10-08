@@ -14,69 +14,69 @@ namespace atlantis::invariantgraph {
 
 IntTimesNode::IntTimesNode(InvariantGraph& graph, VarNode& a, VarNode& b,
                            VarNode& output)
-    : InvariantNode(graph, {output}, {a, b}), _scalar(std::nullopt) {}
+    : InvariantNode(graph, {output.ptr()}, {a.ptr(), b.ptr()}), _scalar(std::nullopt) {}
 
 void IntTimesNode::init() {
   InvariantNode::init();
   assert(
-      invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
+      outputVarNode(0).isIntVar());
   assert(std::ranges::all_of(staticInputVarNodes().begin(),
                              staticInputVarNodes().end(),
-                             [&](const std::shared_ptr<VarNode>& vId) {
-                               return varNodeConst(vId).isIntVar();
+                             [&](const std::shared_ptr<VarNode>& vNode) {
+                               return vNode->isIntVar();
                              }));
 }
 
 void IntTimesNode::postConstraint() {
   InvariantNode::postConstraint();
-  constraintSolver().int_times(staticInputVarNodeConst(0).constraintVarId(),
-                               staticInputVarNodeConst(1).constraintVarId(),
-                               outputVarNodeConst(0).constraintVarId());
+  constraintSolver().int_times(staticInputVarNode(0).constraintVarId(),
+                               staticInputVarNode(1).constraintVarId(),
+                               outputVarNode(0).constraintVarId());
 }
 
 void IntTimesNode::updateState() {
   std::vector<std::shared_ptr<VarNode>> varNodeIdsToRemove;
   varNodeIdsToRemove.reserve(staticInputVarNodes().size());
 
-  for (const auto& varNodeId : staticInputVarNodes()) {
-    if (varNodeConst(varNodeId).isFixed()) {
-      varNodeIdsToRemove.emplace_back(varNodeId);
+  for (const auto& vNode : staticInputVarNodes()) {
+    if (vNode->isFixed()) {
+      varNodeIdsToRemove.emplace_back(vNode);
       if (_scalar.has_value()) {
         _scalar = std::nullopt;
       } else {
-        _scalar = varNodeConst(varNodeId).lowerBound();
+        _scalar = vNode->lowerBound();
       }
     }
   }
 
   if (_scalar == 0) {
-    const auto& oNode = outputVarNodeConst(0);
+    const auto& oNode = outputVarNode(0);
     assert(oNode.isFixed() && oNode.lowerBound() == 0);
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
 
-  for (const auto& varNodeId : varNodeIdsToRemove) {
-    removeStaticInputVarNode(varNodeId);
+  for (const auto& vNode : varNodeIdsToRemove) {
+    removeStaticInputVarNode(*vNode);
   }
 
   if (staticInputVarNodes().empty()) {
-    assert(outputVarNodeConst(0).isFixed());
+    assert(outputVarNode(0).isFixed());
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-bool IntTimesNode::constrainsOutput(VarNode&) const {
+bool IntTimesNode::constrainsOutput(const VarNode&) const {
   const auto extremums =
-      std::array<Int, 4>{staticInputVarNodeConst(0).lowerBound() *
-                             staticInputVarNodeConst(1).lowerBound(),
-                         staticInputVarNodeConst(0).lowerBound() *
-                             staticInputVarNodeConst(1).upperBound(),
-                         staticInputVarNodeConst(0).upperBound() *
-                             staticInputVarNodeConst(1).lowerBound(),
-                         staticInputVarNodeConst(0).upperBound() *
-                             staticInputVarNodeConst(1).upperBound()};
-  return !outputVarNodeConst(0).constDomain()->contains(
+      std::array<Int, 4>{staticInputVarNode(0).lowerBound() *
+                             staticInputVarNode(1).lowerBound(),
+                         staticInputVarNode(0).lowerBound() *
+                             staticInputVarNode(1).upperBound(),
+                         staticInputVarNode(0).upperBound() *
+                             staticInputVarNode(1).lowerBound(),
+                         staticInputVarNode(0).upperBound() *
+                             staticInputVarNode(1).upperBound()};
+  return !outputVarNode(0).constDomain()->contains(
       std::ranges::min(extremums), std::ranges::max(extremums));
 }
 
@@ -90,11 +90,11 @@ bool IntTimesNode::replace() {
     return false;
   }
   if (_scalar.value_or(1) == 1) {
-    invariantGraph().replaceVarNode(outputVarNodes().front(),
-                                    staticInputVarNodes().front());
+    invariantGraph().replaceVarNode(outputVarNode(0),
+                                    staticInputVarNode(0));
   }
   invariantGraph().addInvariantNode(std::make_shared<IntScalarNode>(
-      invariantGraph(), staticInputVarNodes().front(), outputVarNodes().front(),
+      invariantGraph(), staticInputVarNode(0), outputVarNode(0),
       *_scalar, 0));
   return true;
 }
@@ -102,10 +102,10 @@ bool IntTimesNode::replace() {
 void IntTimesNode::registerOutputVars(propagation::SolverBase& solver,
                                       SolverMapping& mapping) const {
   assert(staticInputVarNodes().size() == 2);
-  makeSolverVar(outputVarNodes().front(), solver, mapping);
-  assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
-                             [&](const std::shared_ptr<VarNode>& vId) {
-                               return mapping.solverId(vId) !=
+  makeSolverVar(outputVarNode(0), solver, mapping);
+  assert(std::ranges::all_of(outputVarNodes(),
+                             [&](const std::shared_ptr<VarNode>& vNode) {
+                               return mapping.solverId(vNode) !=
                                       propagation::NULL_ID;
                              }));
 }
@@ -115,13 +115,13 @@ void IntTimesNode::registerNode(propagation::SolverBase& solver,
   if (staticInputVarNodes().size() <= 1) {
     return;
   }
-  assert(mapping.solverId(outputVarNodes().front()) != propagation::NULL_ID);
+  assert(mapping.solverId(outputVarNode(0)) != propagation::NULL_ID);
 
-  assert(mapping.solverId(outputVarNodes().front()).isVar());
+  assert(mapping.solverId(outputVarNode(0)).isVar());
 
   solver.makeInvariant<propagation::Times>(
-      solver, mapping.solverId(outputVarNodes().front()),
-      mapping.solverId(staticInputVarNodes().front()),
+      solver, mapping.solverId(outputVarNode(0)),
+      mapping.solverId(staticInputVarNode(0)),
       mapping.solverId(staticInputVarNodes().back()));
 }
 

@@ -106,7 +106,7 @@ void BoolLinRelNode::updateState() {
   indicesToRemove.reserve(staticInputVarNodes().size());
 
   for (Int i = 0; i < static_cast<Int>(staticInputVarNodes().size()); ++i) {
-    const auto& inputNode = staticInputVarNodeConst(i);
+    const auto& inputNode = staticInputVarNodes().at(i);
     if (inputNode.isFixed() || _coeffs.at(i) == 0) {
       _rhs -= inputNode.inDomain(bool{true}) ? _coeffs.at(i) : 0;
       indicesToRemove.emplace_back(i);
@@ -226,9 +226,9 @@ void BoolLinRelNode::registerOutputVars(propagation::SolverBase& solver,
                                         SolverMapping& mapping) const {
   assert(shouldHold());
   if (violationVarId(mapping) == propagation::NULL_ID) {
-    mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+    mapping.setIntermediateId(TODO, solver.makeIntVar(0, 0, 0));
     setViolationVarId(
-        makeSolverConstIntRelation(solver, mapping.intermediateId(id()),
+        makeSolverConstIntRelation(solver, mapping.intermediateId(TODO),
                                    _relType, _rhs, shouldHold()),
         mapping);
   }
@@ -244,8 +244,8 @@ void BoolLinRelNode::registerNode(propagation::SolverBase& solver,
   assert(violationVarId(mapping) != propagation::NULL_ID);
   assert(violationVarId(mapping).isView());
 
-  assert(mapping.intermediateId(id()) != propagation::NULL_ID);
-  assert(mapping.intermediateId(id()).isVar());
+  assert(mapping.intermediateId(TODO) != propagation::NULL_ID);
+  assert(mapping.intermediateId(TODO).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   std::ranges::transform(
@@ -255,7 +255,7 @@ void BoolLinRelNode::registerNode(propagation::SolverBase& solver,
         return mapping.solverId(varNodeId);
       });
   solver.makeInvariant<propagation::BoolLinear>(
-      solver, mapping.intermediateId(id()), std::vector<Int>(_coeffs),
+      solver, mapping.intermediateId(TODO), std::vector<Int>(_coeffs),
       std::move(solverVars));
 }
 

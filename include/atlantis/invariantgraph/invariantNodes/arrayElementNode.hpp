@@ -22,7 +22,7 @@ class ArrayElementNode : public InvariantNode {
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNode& outputVarNodeId) const override;
+  [[nodiscard]] bool constrainsOutput(const VarNode& outputVarNodeId) const override;
 
   void registerOutputVars(propagation::SolverBase&,
                           SolverMapping&) const override;

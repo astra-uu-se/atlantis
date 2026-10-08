@@ -6,7 +6,7 @@ namespace atlantis::invariantgraph {
 class TableNode : public InvariantNode {
   std::vector<std::vector<Int>> _table;
 
-  [[nodiscard]] VarNode& numCols() const;
+  [[nodiscard]] size_t numCols() const;
   [[nodiscard]] VarNode& colVar(size_t index) const;
 
   void removeColumn(size_t colIndex);

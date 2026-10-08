@@ -24,13 +24,13 @@ namespace atlantis::invariantgraph {
 BoolAllEqualNode::BoolAllEqualNode(InvariantGraph& graph, VarNode& a,
                                    VarNode& b, VarNode& r,
                                    const bool breaksCycle)
-    : BoolAllEqualNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b}, r,
+    : BoolAllEqualNode(graph, std::vector<std::shared_ptr<VarNode>>{a.ptr(), b.ptr()}, r,
                        breaksCycle) {}
 
 BoolAllEqualNode::BoolAllEqualNode(InvariantGraph& graph, VarNode& a,
                                    VarNode& b, const bool shouldHold,
                                    const bool breaksCycle)
-    : BoolAllEqualNode(graph, std::vector<std::shared_ptr<VarNode>>{a, b},
+    : BoolAllEqualNode(graph, std::vector<std::shared_ptr<VarNode>>{a.ptr(), b.ptr()},
                        shouldHold, breaksCycle) {}
 
 BoolAllEqualNode::BoolAllEqualNode(InvariantGraph& graph,
@@ -50,10 +50,10 @@ void BoolAllEqualNode::init() {
   ViolationInvariantNode::init();
   assert(
       !isReified() ||
-      !invariantGraphConst().varNodeConst(reifiedViolationNode()).isIntVar());
+      !reifiedViolationNode()->isIntVar());
   assert(std::ranges::none_of(
       staticInputVarNodes().begin(), staticInputVarNodes().end(),
-      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
+      [&](const std::shared_ptr<VarNode>& vNode) { return vNode->isIntVar(); }));
 }
 
 void BoolAllEqualNode::postConstraint() {
@@ -63,13 +63,14 @@ void BoolAllEqualNode::postConstraint() {
   }
   if (staticInputVarNodes().size() == 2) {
     if (isReified()) {
-      constraintSolver().bool_eq_reif(staticInputVarNode(0).constraintVarId(),
-                                      staticInputVarNode(1).constraintVarId(),
-                                      reifiedVarNodeConst().constraintVarId());
+      constraintSolver().bool_eq_reif(
+          staticInputVarNode(0).constraintVarId(),
+          staticInputVarNode(1).constraintVarId(),
+          reifiedViolationNode()->constraintVarId());
     } else {
-      constraintSolver().bool_eq(staticInputVarNode(0).constraintVarId(),
-                                 staticInputVarNode(1).constraintVarId(),
-                                 shouldHold());
+      constraintSolver().bool_eq(
+          staticInputVarNode(0).constraintVarId(),
+          staticInputVarNode(1).constraintVarId(), shouldHold());
     }
     return;
   }
@@ -84,7 +85,7 @@ void BoolAllEqualNode::postConstraint() {
   if (isReified()) {
     constraintSolver().bool_lin_reif(coeffs, inputs, RelationType::REL_TYPE_EQ,
                                      0,
-                                     reifiedVarNodeConst().constraintVarId());
+                                     reifiedViolationNode()->constraintVarId());
   } else {
     constraintSolver().bool_lin(coeffs, inputs, RelationType::REL_TYPE_EQ, 0,
                                 shouldHold());
@@ -102,18 +103,18 @@ void BoolAllEqualNode::updateState() {
   std::vector<std::shared_ptr<VarNode>> varsToRemove;
   varsToRemove.reserve(staticInputVarNodes().size());
 
-  for (const auto vId : staticInputVarNodes()) {
-    if (varNodeConst(vId).isFixed()) {
+  for (const auto& vNode : staticInputVarNodes()) {
+    if (vNode->isFixed()) {
       assert(!_fixedVal.has_value() ||
-             *_fixedVal == varNodeConst(vId).lowerBound() ||
+             *_fixedVal == vNode->lowerBound() ||
              (!isReified() && !shouldHold()));
-      _fixedVal = varNodeConst(vId).lowerBound();
-      varsToRemove.emplace_back(vId);
+      _fixedVal = vNode->lowerBound();
+      varsToRemove.emplace_back(vNode);
     }
   }
 
-  for (const auto vId : varsToRemove) {
-    removeStaticInputVarNode(vId);
+  for (const auto& vNode : varsToRemove) {
+    removeStaticInputVarNode(*vNode);
   }
 
   if (staticInputVarNodes().empty()) {
@@ -142,29 +143,29 @@ bool BoolAllEqualNode::replace() {
     assert(isReified());
     assert(_fixedVal.has_value());
     if (_fixedVal.has_value() && *_fixedVal) {
-      invariantGraph().replaceVarNode(reifiedViolationNode(),
-                                      staticInputVarNodes().front());
+      invariantGraph().replaceVarNode(*reifiedViolationNode(),
+                                      staticInputVarNode(0));
     } else {
       invariantGraph().addInvariantNode(std::make_shared<BoolNotNode>(
-          invariantGraph(), staticInputVarNodes().front(),
-          reifiedViolationNode()));
+          invariantGraph(), staticInputVarNode(0),
+          *reifiedViolationNode()));
     }
     return true;
   }
   assert(!isReified());
   assert(!_breaksCycle);
   if (shouldHold()) {
-    VarNode& frontVarId = staticInputVarNodes().front();
+    VarNode& frontVarId = staticInputVarNode(0);
     for (size_t i = 1; i < staticInputVarNodes().size(); ++i) {
-      invariantGraph().replaceVarNode(staticInputVarNodes().at(i), frontVarId);
+      invariantGraph().replaceVarNode(staticInputVarNode(i), frontVarId);
     }
     return true;
   }
   assert(staticInputVarNodes().size() == 2);
   assert(!shouldHold());
   invariantGraph().addInvariantNode(std::make_shared<BoolRelNode>(
-      invariantGraph(), staticInputVarNodes().front(),
-      RelationType::REL_TYPE_NE, staticInputVarNodes().back(), true));
+      invariantGraph(), staticInputVarNode(0),
+      RelationType::REL_TYPE_NE, *staticInputVarNodes().back(), true));
   return true;
 }
 
@@ -173,18 +174,18 @@ void BoolAllEqualNode::registerOutputVars(propagation::SolverBase& solver,
   if (violationVarId(mapping) == propagation::NULL_ID) {
     if (shouldHold() || staticInputVarNodes().size() == 2) {
       registerViolation(solver, mapping);
-      assert(mapping.intermediateId(id()) == propagation::NULL_ID);
+      assert(mapping.intermediateId(ptrConst()) == propagation::NULL_ID);
     } else if (!shouldHold()) {
       assert(!isReified());
-      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+      mapping.setIntermediateId(ptrConst(), solver.makeIntVar(0, 0, 0));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-                            solver, mapping.intermediateId(id()), 0),
+                            solver, mapping.intermediateId(ptrConst()), 0),
                         mapping);
     }
   }
   assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
-                             [&](const std::shared_ptr<VarNode>& vId) {
-                               return mapping.solverId(vId) !=
+                             [&](const std::shared_ptr<VarNode>& vNode) {
+                               return mapping.solverId(vNode) !=
                                       propagation::NULL_ID;
                              }));
 }
@@ -202,7 +203,7 @@ void BoolAllEqualNode::registerNode(propagation::SolverBase& solver,
                          [&](const auto& id) { return mapping.solverId(id); });
 
   if (solverVars.size() == 2) {
-    assert(mapping.intermediateId(id()) == propagation::NULL_ID);
+    assert(mapping.intermediateId(ptrConst()) == propagation::NULL_ID);
     assert(violationVarId(mapping).isVar());
     if (shouldHold()) {
       solver.makeViolationInvariant<propagation::BoolEqual>(
@@ -218,15 +219,15 @@ void BoolAllEqualNode::registerNode(propagation::SolverBase& solver,
   }
 
   assert(shouldHold() !=
-         (mapping.intermediateId(id()) != propagation::NULL_ID));
+         (mapping.intermediateId(ptrConst()) != propagation::NULL_ID));
   assert(shouldHold() ? violationVarId(mapping).isVar()
                       : violationVarId(mapping).isView());
 
   solver.makeViolationInvariant<propagation::BoolAllEqual>(
       solver,
-      mapping.intermediateId(id()) == propagation::NULL_ID
+      mapping.intermediateId(ptrConst()) == propagation::NULL_ID
           ? violationVarId(mapping)
-          : mapping.intermediateId(id()),
+          : mapping.intermediateId(ptrConst()),
       std::move(solverVars));
 }
 

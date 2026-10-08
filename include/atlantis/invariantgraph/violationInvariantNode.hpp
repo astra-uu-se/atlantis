@@ -71,7 +71,7 @@ class ViolationInvariantNode : public InvariantNode {
 
   void updateState() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNode&) const override;
+  [[nodiscard]] bool constrainsOutput(const VarNode&) const override;
 };
 
 }  // namespace atlantis::invariantgraph

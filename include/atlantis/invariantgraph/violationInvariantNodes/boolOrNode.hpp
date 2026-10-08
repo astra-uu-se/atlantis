@@ -27,10 +27,10 @@ class BoolOrNode : public ViolationInvariantNode {
   void registerNode(propagation::SolverBase&, SolverMapping&) const override;
 
   [[nodiscard]] VarNode& a() const noexcept {
-    return staticInputVarNodes().front();
+    return staticInputVarNode(0);
   }
   [[nodiscard]] VarNode& b() const noexcept {
-    return staticInputVarNodes().back();
+    return *staticInputVarNodes().back();
   }
 
   [[nodiscard]] std::string dotLangIdentifier() const override;

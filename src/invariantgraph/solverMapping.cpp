@@ -1,71 +1,111 @@
 #include "atlantis/invariantgraph/solverMapping.hpp"
 
+#include "atlantis/invariantgraph/implicitConstraintNode.hpp"
+#include "atlantis/invariantgraph/invariantNode.hpp"
 #include "atlantis/invariantgraph/varNode.hpp"
+#include "atlantis/invariantgraph/violationInvariantNode.hpp"
 
 namespace atlantis::invariantgraph {
 
 propagation::VarViewId SolverMapping::invariantIntermediateId(
-    const size_t id, const size_t index) const {
-  if (id >= _invariantIntermediateIds.size() ||
-      index >= _invariantIntermediateIds[id].size()) {
+    const std::shared_ptr<const InvariantNode>& invNode, const size_t index) const {
+  const auto& iter = _invariantIntermediateIds.find(invNode);
+  if (iter == _invariantIntermediateIds.end()) {
     return propagation::VAR_VIEW_NULL_ID;
   }
-  return _invariantIntermediateIds[id][index];
+  if (index >= iter->second.size()) {
+    return propagation::VAR_VIEW_NULL_ID;
+  }
+  return iter->second[index];
+}
+propagation::VarViewId SolverMapping::invariantIntermediateId(
+    InvariantNode& invNode, const size_t index) const {
+  return invariantIntermediateId(invNode.ptrConst(), index);
 }
 
 propagation::VarViewId SolverMapping::setInvariantIntermediateId(
-    const size_t id, const size_t index,
+    const std::shared_ptr<const InvariantNode>& invNode, const size_t index,
     const propagation::VarViewId solverId) {
   assert(solverId != propagation::NULL_ID);
-  if (id >= _invariantIntermediateIds.size()) {
-    _invariantIntermediateIds.resize(id + 1,
-                                     std::vector<propagation::VarViewId>{});
+  const auto& iter = _invariantIntermediateIds.find(invNode);
+  if (iter == _invariantIntermediateIds.end()) {
+    const auto& [pair, success] = _invariantIntermediateIds.emplace(invNode,
+                                     std::vector<propagation::VarViewId>(index + 1, propagation::VAR_VIEW_NULL_ID));
+    assert(success);
+    return pair->second[index] = solverId;
   }
-  if (index >= _invariantIntermediateIds[id].size()) {
-    _invariantIntermediateIds[id].resize(index + 1,
-                                         propagation::VAR_VIEW_NULL_ID);
+  if (index >= iter->second.size()) {
+    iter->second.resize(index + 1, propagation::VAR_VIEW_NULL_ID);
   }
-  return _invariantIntermediateIds[id][index] = solverId;
+  return iter->second[index] = solverId;
+}
+
+propagation::VarViewId SolverMapping::setInvariantIntermediateId(
+    InvariantNode& invNode, size_t index, propagation::VarViewId solverId) {
+  return setIntermediateId(invNode.ptrConst(), index, solverId);
 }
 
 propagation::VarViewId SolverMapping::implicitIntermediateId(
-    const size_t id, const size_t index) const {
-  if (id >= _implicitIntermediateIds.size() ||
-      index >= _implicitIntermediateIds[id].size()) {
+    const std::shared_ptr<const ImplicitConstraintNode>& implNode, const size_t index) const {
+  const auto& iter = _implicitIntermediateIds.find(implNode);
+  if (iter == _implicitIntermediateIds.end()) {
     return propagation::VAR_VIEW_NULL_ID;
   }
-  return _implicitIntermediateIds[id][index];
+  if (index >= iter->second.size()) {
+    return propagation::VAR_VIEW_NULL_ID;
+  }
+  return iter->second[index];
+}
+
+propagation::VarViewId SolverMapping::implicitIntermediateId(
+    ImplicitConstraintNode& implNode, const size_t index) const {
+  return implicitIntermediateId(std::dynamic_pointer_cast<const ImplicitConstraintNode>(implNode.ptrConst()), index);
 }
 
 propagation::VarViewId SolverMapping::setImplicitIntermediateId(
-    const size_t id, const size_t index,
+    const std::shared_ptr<const ImplicitConstraintNode>& implNode, const size_t index,
     const propagation::VarViewId solverId) {
   assert(solverId != propagation::NULL_ID);
-  if (id >= _implicitIntermediateIds.size()) {
-    _implicitIntermediateIds.resize(id + 1,
-                                    std::vector<propagation::VarViewId>{});
+  const auto& iter = _implicitIntermediateIds.find(implNode);
+  if (iter == _implicitIntermediateIds.end()) {
+    const auto& [pair, success] = _implicitIntermediateIds.emplace(implNode,
+                                     std::vector<propagation::VarViewId>(index + 1, propagation::VAR_VIEW_NULL_ID));
+    assert(success);
+    return pair->second[index] = solverId;
   }
-  if (index >= _implicitIntermediateIds[id].size()) {
-    _implicitIntermediateIds[id].resize(index + 1,
-                                        propagation::VAR_VIEW_NULL_ID);
+  if (index >= iter->second.size()) {
+    iter->second.resize(index + 1, propagation::VAR_VIEW_NULL_ID);
   }
-  return _implicitIntermediateIds[id][index] = solverId;
+  return iter->second[index] = solverId;
+}
+propagation::VarViewId SolverMapping::setImplicitIntermediateId(
+    ImplicitConstraintNode& implNode, const size_t index, const propagation::VarViewId solverId) {
+  return setImplicitIntermediateId(std::dynamic_pointer_cast<const ImplicitConstraintNode>(implNode.ptrConst()), index, solverId);
 }
 
-propagation::VarViewId SolverMapping::solverId(const size_t varNodeId) const {
-  assert(varNodeId != NULL_NODE_ID);
-  if (varNodeId >= _solverIds.size()) {
+propagation::VarViewId SolverMapping::solverId(const std::shared_ptr<const VarNode>& varNode) const {
+  const auto& iter = _solverIds.find(varNode);
+  if (iter == _solverIds.end()) {
     return propagation::VAR_VIEW_NULL_ID;
   }
-  return _solverIds[varNodeId];
+  return iter->second;
 }
+
+propagation::VarViewId SolverMapping::solverId(const VarNode& varNode) const {
+  return solverId(varNode.ptrConst());
+}
+
 propagation::VarViewId SolverMapping::domainViolationId(
-    const size_t varNodeId) const {
-  assert(varNodeId != NULL_NODE_ID);
-  if (varNodeId >= _domainViolationIds.size()) {
+    const std::shared_ptr<const VarNode>& varNode) const {
+  const auto& iter = _domainViolationIds.find(varNode);
+  if (iter == _solverIds.end()) {
     return propagation::VAR_VIEW_NULL_ID;
   }
-  return _domainViolationIds[varNodeId];
+  return iter->second;
+}
+
+propagation::VarViewId SolverMapping::domainViolationId(const VarNode& varNode) const {
+  return domainViolationId(varNode.ptrConst());
 }
 
 propagation::VarViewId SolverMapping::totalViolationId() const {
@@ -76,23 +116,36 @@ propagation::VarViewId SolverMapping::objectiveId() const {
   return _objectiveId;
 }
 
-void SolverMapping::setSolverId(const size_t varNodeId,
+void SolverMapping::setSolverId(const std::shared_ptr<const VarNode>& varNode,
                                 const propagation::VarViewId solverId) {
-  assert(varNodeId != NULL_NODE_ID);
-  assert(solverId != propagation::NULL_ID);
-  if (_solverIds.size() <= varNodeId) {
-    _solverIds.resize(varNodeId + 1, propagation::VAR_VIEW_NULL_ID);
+  const auto iter = _solverIds.find(varNode);
+  if (iter == _solverIds.end()) {
+    _solverIds.emplace(varNode, solverId);
+  } else {
+    iter->second = solverId;
   }
-  _solverIds[varNodeId] = solverId;
+  assert(_solverIds.contains(varNode));
+  assert(_solverIds.find(varNode)->second == solverId);
 }
+
+void SolverMapping::setSolverId(const VarNode& varNode, propagation::VarViewId solverId) {
+  return setSolverId(varNode.ptrConst(), solverId);
+}
+
 void SolverMapping::setDomainViolationId(
-    const size_t varNodeId, const propagation::VarViewId solverId) {
-  assert(varNodeId != NULL_NODE_ID);
-  assert(solverId != propagation::NULL_ID);
-  if (_domainViolationIds.size() <= varNodeId) {
-    _domainViolationIds.resize(varNodeId + 1, propagation::VAR_VIEW_NULL_ID);
+    const std::shared_ptr<const VarNode>& varNode, const propagation::VarViewId solverId) {
+  const auto iter = _domainViolationIds.find(varNode);
+  if (iter == _domainViolationIds.end()) {
+    _domainViolationIds.emplace(varNode, solverId);
+  } else {
+    iter->second = solverId;
   }
-  _domainViolationIds[varNodeId] = solverId;
+  assert(_domainViolationIds.contains(varNode));
+  assert(_domainViolationIds.find(varNode)->second == solverId);
+}
+void SolverMapping::setDomainViolationId(const VarNode& varNode,
+                                         propagation::VarViewId solverId) {
+  return setDomainViolationId(varNode.ptrConst(), solverId);
 }
 
 void SolverMapping::setTotalViolationId(const propagation::VarViewId solverId) {
@@ -103,67 +156,129 @@ void SolverMapping::setObjectiveId(const propagation::VarViewId solverId) {
   _objectiveId = solverId;
 }
 
-bool SolverMapping::hasNeighborhood(const size_t id) const {
-  assert(id != NULL_NODE_ID);
-  if (!id.isImplicitConstraint() || _neighborhoods.size() <= size_t{id}) {
+bool SolverMapping::hasNeighborhood(
+    const std::shared_ptr<const ImplicitConstraintNode>&) const {}
+
+bool SolverMapping::hasNeighborhood(const std::shared_ptr<const InvariantNode>& invNode) const {
+  if (std::dynamic_pointer_cast<const ImplicitConstraintNode>(invNode) == nullptr) {
     return false;
   }
-  return _neighborhoods[size_t{id}] != nullptr;
+  const auto& iter = _neighborhoods.find(invNode);
+  return iter != _neighborhoods.end() && iter->second != nullptr;
+}
+
+bool SolverMapping::hasNeighborhood(const ImplicitConstraintNode& implNode) const {
+  return hasNeighborhood(std::dynamic_pointer_cast<const ImplicitConstraintNode>(implNode.ptrConst()));
+}
+
+bool SolverMapping::hasNeighborhood(InvariantNode& invNode) const {
+  return hasNeighborhood(invNode.ptrConst());
 }
 
 std::shared_ptr<search::neighborhoods::Neighborhood>
-SolverMapping::neighborhood(const size_t id) {
-  assert(id != NULL_NODE_ID);
-  if (!id.isImplicitConstraint() || _neighborhoods.size() <= size_t{id}) {
-    return {nullptr};
+SolverMapping::neighborhood(const std::shared_ptr<const InvariantNode>& invNode) {
+  if (std::dynamic_pointer_cast<const ImplicitConstraintNode>(invNode) == nullptr) {
+    return nullptr;
   }
-  return _neighborhoods[size_t{id}];
+  const auto& iter = _neighborhoods.find(invNode);
+  if (iter == _neighborhoods.end()) {
+    return nullptr;
+  }
+  return iter->second;
 }
-propagation::VarViewId SolverMapping::violationId(size_t id) const {
-  assert(id != NULL_NODE_ID);
-  if (id.isImplicitConstraint() || size_t{id} >= _violationIds.size()) {
+
+std::shared_ptr<search::neighborhoods::Neighborhood>
+SolverMapping::neighborhood(InvariantNode& invNode) {
+  return neighborhood(invNode.ptrConst());
+}
+
+propagation::VarViewId SolverMapping::violationId(const std::shared_ptr<const InvariantNode>& invNode) const {
+  if (std::dynamic_pointer_cast<const ImplicitConstraintNode>(invNode) == nullptr) {
     return propagation::VAR_VIEW_NULL_ID;
   }
-  return _violationIds[size_t{id}];
+  const auto& iter = _violationIds.find(invNode);
+  if (iter == _violationIds.end()) {
+    return propagation::VAR_VIEW_NULL_ID;
+  }
+  return iter->second;
 }
 
-void SolverMapping::setViolationId(size_t id,
+propagation::VarViewId SolverMapping::violationId(
+    const InvariantNode& invNode) const {
+  return violationId(invNode.ptrConst());
+}
+
+void SolverMapping::setViolationId(const std::shared_ptr<const InvariantNode>& invNode,
                                    const propagation::VarViewId solverId) {
-  assert(id != NULL_NODE_ID);
-  assert(solverId != propagation::NULL_ID);
-  if (id.isImplicitConstraint()) {
-    assert(false);
-    return;
+  assert(std::dynamic_pointer_cast<const ImplicitConstraintNode>(invNode) != nullptr);
+  const auto& iter = _violationIds.find(invNode);
+  if (iter == _violationIds.end()) {
+    auto [pair, success] = _violationIds.emplace(invNode, solverId);
+    assert(success);
+    pair->second = solverId;
+  } else {
+    iter->second = solverId;
   }
-  if (size_t{id} >= _violationIds.size()) {
-    _violationIds.resize(size_t{id} + 1, propagation::VAR_VIEW_NULL_ID);
-  }
-  _violationIds[size_t{id}] = solverId;
+  assert(_violationIds.contains(invNode));
+  assert(_violationIds.find(invNode)->second == solverId);
 }
-propagation::VarViewId SolverMapping::intermediateId(size_t id,
+void SolverMapping::setViolationId(const InvariantNode& invNode,
+                                   const propagation::VarViewId solverId) {
+  return setViolationId(invNode.ptrConst(), solverId);
+}
+
+propagation::VarViewId SolverMapping::intermediateId(const std::shared_ptr<const InvariantNode>& invNode,
                                                      const size_t index) const {
-  assert(id != NULL_NODE_ID);
-  return id.isInvariant() ? invariantIntermediateId(size_t{id}, index)
-                          : implicitIntermediateId(size_t{id}, index);
+  const auto& implNode = std::dynamic_pointer_cast<const ImplicitConstraintNode>(invNode);
+  if (implNode != nullptr) {
+    return implicitIntermediateId(implNode, index);
+  }
+  return invariantIntermediateId(invNode, index);
 }
-propagation::VarViewId SolverMapping::intermediateId(const size_t id) const {
-  return intermediateId(id, 0);
+
+propagation::VarViewId SolverMapping::intermediateId(const InvariantNode& invNode,
+                                                     const size_t index) const {
+  return intermediateId(invNode.ptrConst(), index);
 }
-propagation::VarViewId SolverMapping::setIntermediateId(
-    size_t id, const size_t index, const propagation::VarViewId solverId) {
-  assert(id != NULL_NODE_ID);
-  assert(solverId != propagation::NULL_ID);
-  return id.isInvariant()
-             ? setInvariantIntermediateId(size_t{id}, index, solverId)
-             : setImplicitIntermediateId(size_t{id}, index, solverId);
+
+propagation::VarViewId SolverMapping::intermediateId(const std::shared_ptr<const InvariantNode>& invNode) const {
+  return intermediateId(invNode, 0);
+}
+
+propagation::VarViewId SolverMapping::intermediateId(
+    const InvariantNode& invNode) const {
+  return intermediateId(invNode.ptrConst());
 }
 
 propagation::VarViewId SolverMapping::setIntermediateId(
-    size_t id, const propagation::VarViewId solverId) {
-  assert(id != NULL_NODE_ID);
+    const std::shared_ptr<const InvariantNode>& invNode, const size_t index, const propagation::VarViewId solverId) {
   assert(solverId != propagation::NULL_ID);
-  return id.isInvariant() ? setInvariantIntermediateId(size_t{id}, 0, solverId)
-                          : setImplicitIntermediateId(size_t{id}, 0, solverId);
+  const auto& implNode = std::dynamic_pointer_cast<const ImplicitConstraintNode>(invNode);
+  if (implNode != nullptr) {
+    return setImplicitIntermediateId(implNode, index, solverId);
+  }
+  return setInvariantIntermediateId(invNode, index, solverId);
+}
+
+propagation::VarViewId SolverMapping::setIntermediateId(
+    const InvariantNode& invNode, const size_t index,
+    const propagation::VarViewId solverId) {
+  return setIntermediateId(invNode.ptrConst(), index, solverId);
+}
+
+propagation::VarViewId SolverMapping::setIntermediateId(
+    const std::shared_ptr<const InvariantNode>& invNode, const propagation::VarViewId solverId) {
+  assert(solverId != propagation::NULL_ID);
+  const auto& implNode = std::dynamic_pointer_cast<const ImplicitConstraintNode>(invNode);
+  if (implNode != nullptr) {
+    return setImplicitIntermediateId(implNode, 0, solverId);
+  }
+  return setInvariantIntermediateId(invNode, 0, solverId);
+}
+
+propagation::VarViewId SolverMapping::setIntermediateId(
+    const InvariantNode& invNode, propagation::VarViewId solverId) {
+  return setIntermediateId(invNode.ptrConst(), solverId);
 }
 
 bool SolverMapping::hasGlobalNeighborhood() const {
@@ -183,19 +298,28 @@ void SolverMapping::setGlobalNeighborhood(
 }
 
 bool SolverMapping::setNeighborhood(
-    const size_t id,
+    const std::shared_ptr<const InvariantNode>& invNode,
     const std::shared_ptr<search::neighborhoods::Neighborhood>& neighborhood) {
-  assert(id != NULL_NODE_ID);
   assert(neighborhood != nullptr);
-  if (!id.isImplicitConstraint()) {
+  if (std::dynamic_pointer_cast<const ImplicitConstraintNode>(invNode) == nullptr) {
     return false;
   }
-  if (size_t{id} >= _neighborhoods.size()) {
-    _neighborhoods.resize(size_t{id} + 1, nullptr);
+  auto iter = _neighborhoods.find(invNode);
+  if (iter == _neighborhoods.end()) {
+    const auto [pair, success] = _neighborhoods.emplace(invNode, neighborhood);
+    assert(success);
+    return success;
   }
-  _neighborhoods[size_t{id}] = neighborhood;
+  iter->second = neighborhood;
   return true;
 }
+
+bool SolverMapping::setNeighborhood(
+    const InvariantNode& invNode,
+    const std::shared_ptr<search::neighborhoods::Neighborhood>& neighborhood) {
+  return setNeighborhood(invNode.ptrConst(), neighborhood);
+}
+
 Int SolverMapping::objectiveOptimalValue() const {
   return _objectiveOptimalValue;
 }

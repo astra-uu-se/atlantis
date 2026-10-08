@@ -39,7 +39,7 @@ void LinLeImplicitNode::updateDomainTypes() {
 
 void LinLeImplicitNode::registerNode(propagation::SolverBase&,
                                      SolverMapping& mapping) const {
-  assert(!mapping.hasNeighborhood(mappingId()));
+  assert(!mapping.hasNeighborhood(ptrConst()));
   Int total = 0;
   for (size_t i = 0; i < outputVarNodes().size(); ++i) {
     const Int lb =
@@ -58,26 +58,26 @@ void LinLeImplicitNode::registerNode(propagation::SolverBase&,
   searchVars.reserve(outputVarNodes().size());
 
   for (const auto& vNode : outputVarNodes()) {
-    assert(mapping.solverId(vNode->mappingId()) != propagation::NULL_ID);
-    searchVars.emplace_back(mapping.solverId(vNode->mappingId()), vNode->constDomain());
+    assert(mapping.solverId(vNode) != propagation::NULL_ID);
+    searchVars.emplace_back(mapping.solverId(vNode), vNode->constDomain());
   }
 
   if (_isBinary) {
     if (outputVarNodes().front()->isIntVar()) {
       mapping.setNeighborhood(
-          mappingId(), std::make_shared<
+          ptrConst(), std::make_shared<
                     search::neighborhoods::BinaryLinLeNeighborhood<false>>(
                     std::vector<Int>{_coeffs}, std::move(searchVars), _bound));
       return;
     }
     mapping.setNeighborhood(
-        mappingId(),
+        ptrConst(),
         std::make_shared<search::neighborhoods::BinaryLinLeNeighborhood<true>>(
             std::vector<Int>{_coeffs}, std::move(searchVars), _bound));
     return;
   }
   mapping.setNeighborhood(
-      mappingId(), std::make_shared<search::neighborhoods::IntLinLeNeighborhood>(
+      ptrConst(), std::make_shared<search::neighborhoods::IntLinLeNeighborhood>(
                 std::vector<Int>{_coeffs}, std::move(searchVars), _bound));
 }
 

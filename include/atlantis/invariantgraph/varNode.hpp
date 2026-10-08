@@ -29,7 +29,6 @@ class VarNode : public std::enable_shared_from_this<VarNode> {
   bool _isOutputVar{false};
   bool _isIntVar;
   ConstraintVarId _constraintSolverId{NULL_NODE_ID};
-  size_t _mappingId{NULL_NODE_ID};
 
   std::shared_ptr<SearchDomain> _domain{nullptr};
   std::vector<std::shared_ptr<InvariantNode>> _staticInputTo;
@@ -60,10 +59,7 @@ class VarNode : public std::enable_shared_from_this<VarNode> {
 
   std::shared_ptr<VarNode> ptr();
 
-  std::shared_ptr<const VarNode> constPtr() const;
-
-  void setMappingId(size_t) noexcept;
-  size_t mappingId() const noexcept;
+  [[nodiscard]] std::shared_ptr<const VarNode> ptrConst() const;
 
   ConstraintVarId constraintVarId() const noexcept;
 
@@ -137,10 +133,9 @@ class VarNode : public std::enable_shared_from_this<VarNode> {
 
   [[nodiscard]] std::shared_ptr<InvariantNode> outputOf() const;
 
-  void markAsInputFor(const std::shared_ptr<InvariantNode>& listeningInvariant,
-                      bool isStaticInput);
+  void markAsInputFor(InvariantNode& listeningInvariant, bool isStaticInput);
 
-  void markOutputTo(const std::shared_ptr<InvariantNode>& definingInvariant);
+  void markOutputTo(InvariantNode& definingInvariant);
 
   void unmarkAsInputFor(const InvariantNode& listeningInvariant,
                         bool isStaticInput);

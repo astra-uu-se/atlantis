@@ -35,17 +35,17 @@ void InIntervalNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
     return invariantGraph().constraintSolver().set_in_reif(
-        staticInputVarNodeConst(0).constraintVarId(), _lb, _ub,
+        staticInputVarNodes().front().constraintVarId(), _lb, _ub,
         reifiedVarNodeConst().constraintVarId());
   }
   invariantGraph().constraintSolver().set_in(
-      staticInputVarNodeConst(0).constraintVarId(), _lb, _ub, shouldHold());
+      staticInputVarNodes().front().constraintVarId(), _lb, _ub, shouldHold());
 }
 
 void InIntervalNode::updateState() {
   ViolationInvariantNode::updateState();
   if (!isReified()) {
-    staticInputVarNode(0).tightenDomainType();
+    staticInputVarNodes().front().tightenDomainType();
     setState(InvariantNodeState::SUBSUMED);
   }
 }
@@ -62,11 +62,11 @@ void InIntervalNode::registerOutputVars(propagation::SolverBase& solver,
     } else {
       assert(!isReified());
       mapping.setIntermediateId(
-          id(), solver.makeIntView<propagation::InIntervalConst>(
+          TODO, solver.makeIntView<propagation::InIntervalConst>(
                     solver, mapping.solverId(staticInputVarNodes().front()),
                     _lb, _ub));
       setViolationVarId(solver.makeIntView<propagation::NotEqualConst>(
-                            solver, mapping.intermediateId(id()), 0),
+                            solver, mapping.intermediateId(TODO), 0),
                         mapping);
     }
   }

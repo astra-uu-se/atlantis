@@ -39,10 +39,10 @@ void SetInNode::postConstraint() {
   ViolationInvariantNode::postConstraint();
   if (isReified()) {
     return constraintSolver().set_in_reif(
-        staticInputVarNodeConst(0).constraintVarId(), _values,
+        staticInputVarNodes().front().constraintVarId(), _values,
         reifiedVarNodeConst().constraintVarId());
   }
-  constraintSolver().set_in(staticInputVarNodeConst(0).constraintVarId(),
+  constraintSolver().set_in(staticInputVarNodes().front().constraintVarId(),
                             _values, shouldHold());
 }
 
@@ -50,7 +50,7 @@ void SetInNode::updateState() {
   ViolationInvariantNode::updateState();
   if (!isReified()) {
     setState(InvariantNodeState::SUBSUMED);
-    staticInputVarNode(0).tightenDomainType();
+    staticInputVarNodes().front().tightenDomainType();
   }
 }
 
@@ -68,10 +68,10 @@ void SetInNode::registerOutputVars(propagation::SolverBase& solver,
     } else if (_values.isInterval()) {
       if (!shouldHold()) {
         mapping.setIntermediateId(
-            id(), solver.makeIntView<propagation::InIntervalConst>(
+            TODO, solver.makeIntView<propagation::InIntervalConst>(
                       solver, input, _values->front(), _values->back()));
         setViolationVarId(
-            makeSolverConstBoolRelation(solver, mapping.intermediateId(id()),
+            makeSolverConstBoolRelation(solver, mapping.intermediateId(TODO),
                                         RelationType::REL_TYPE_EQ, false),
             mapping);
       } else {
@@ -87,11 +87,11 @@ void SetInNode::registerOutputVars(propagation::SolverBase& solver,
           [](const auto& value) { return DomainEntry(value, value); });
 
       if (!shouldHold()) {
-        mapping.setIntermediateId(id(),
+        mapping.setIntermediateId(TODO,
                                   solver.makeIntView<propagation::InDomain>(
                                       solver, input, std::move(domainEntries)));
         setViolationVarId(
-            makeSolverConstBoolRelation(solver, mapping.intermediateId(id()),
+            makeSolverConstBoolRelation(solver, mapping.intermediateId(TODO),
                                         RelationType::REL_TYPE_EQ, false),
             mapping);
       } else {

@@ -43,7 +43,7 @@ void BoolLinLeImplicitNode::updateDomainTypes() {
 
 void BoolLinLeImplicitNode::registerNode(propagation::SolverBase&,
                                          SolverMapping& mapping) const {
-  assert(!mapping.hasNeighborhood(mappingId()));
+  assert(!mapping.hasNeighborhood(ptrConst()));
   Int sum = 0;
   for (size_t i = 0; i < outputVarNodes().size(); ++i) {
     const Int v1 =
@@ -63,12 +63,12 @@ void BoolLinLeImplicitNode::registerNode(propagation::SolverBase&,
 
   for (const auto& vNode : outputVarNodes()) {
     auto& varNode = vNode;
-    assert(mapping.solverId(vNode->mappingId()) != propagation::NULL_ID);
-    searchVars.emplace_back(mapping.solverId(vNode->mappingId()), varNode->constDomain());
+    assert(mapping.solverId(vNode) != propagation::NULL_ID);
+    searchVars.emplace_back(mapping.solverId(vNode), varNode->constDomain());
   }
 
   mapping.setNeighborhood(
-      mappingId(),
+      ptrConst(),
       std::make_shared<search::neighborhoods::BinaryLinLeNeighborhood<true>>(
           std::vector<Int>{_coeffs}, std::move(searchVars), _bound));
 }

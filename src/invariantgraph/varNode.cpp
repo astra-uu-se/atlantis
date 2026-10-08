@@ -4,6 +4,7 @@
 #include <cassert>
 #include <fznparser/variables.hpp>
 
+#include "atlantis/invariantgraph/invariantNode.hpp"
 #include "atlantis/propagation/solverBase.hpp"
 #include "atlantis/propagation/views/equalConst.hpp"
 #include "atlantis/propagation/views/greaterEqualConst.hpp"
@@ -35,17 +36,8 @@ VarNode::VarNode(const std::string& identifier,
 std::shared_ptr<VarNode> VarNode::ptr() {
   return shared_from_this();
 }
-
-std::shared_ptr<const VarNode> VarNode::constPtr() const {
+std::shared_ptr<const VarNode> VarNode::ptrConst() const {
   return shared_from_this();
-}
-
-void VarNode::setMappingId(const size_t id) noexcept {
-  _mappingId = id;
-}
-
-size_t VarNode::mappingId() const noexcept {
-  return _mappingId;
 }
 
 VarNode::VarNode(const std::string& identifier,
@@ -127,8 +119,8 @@ void VarNode::setIsOutputVar(const bool isOutputVar) {
 
 propagation::VarViewId VarNode::postDomainConstraint(
     propagation::SolverBase& solver, SolverMapping& mapping) const {
-  if (mapping.domainViolationId(_mappingId) != propagation::NULL_ID) {
-    return mapping.domainViolationId(_mappingId);
+  if (mapping.domainViolationId(ptrConst()) != propagation::NULL_ID) {
+    return mapping.domainViolationId(ptrConst());
   }
   if (_domainType == DomainType::DOM_NONE ||
       ((staticInputTo().empty() || dynamicInputTo().empty()) &&
@@ -139,12 +131,12 @@ propagation::VarViewId VarNode::postDomainConstraint(
     throw std::runtime_error("Domain type is fixed but domain is not fixed");
   }
 
-  if (mapping.solverId(_mappingId) == propagation::NULL_ID) {
+  if (mapping.solverId(ptrConst()) == propagation::NULL_ID) {
     throw std::runtime_error("VarNode has no varId");
   }
 
-  const Int solverLb = solver.lowerBound(mapping.solverId(_mappingId));
-  const Int solverUb = solver.upperBound(mapping.solverId(_mappingId));
+  const Int solverLb = solver.lowerBound(mapping.solverId(ptrConst()));
+  const Int solverUb = solver.upperBound(mapping.solverId(ptrConst()));
 
   if (!isIntVar()) {
     const bool holdsTrue = solverLb <= 0 && 0 <= solverUb;
@@ -158,68 +150,68 @@ propagation::VarViewId VarNode::postDomainConstraint(
     }
     if (inDomain(bool{true})) {
       mapping.setDomainViolationId(
-          _mappingId, solver.makeIntView<propagation::EqualConst>(
-                           solver, mapping.solverId(_mappingId), 0));
+          ptrConst(), solver.makeIntView<propagation::EqualConst>(
+                           solver, mapping.solverId(ptrConst()), 0));
     } else {
       mapping.setDomainViolationId(
-          _mappingId, solver.makeIntView<propagation::NotEqualConst>(
-                           solver, mapping.solverId(_mappingId), 0));
+          ptrConst(), solver.makeIntView<propagation::NotEqualConst>(
+                           solver, mapping.solverId(ptrConst()), 0));
     }
-    return mapping.domainViolationId(_mappingId);
+    return mapping.domainViolationId(ptrConst());
   }
 
   if (_domainType == DomainType::DOM_FIXED || _domain->isFixed()) {
     if (solverLb == lowerBound() && solverUb == lowerBound()) {
-      return mapping.domainViolationId(_mappingId);
+      return mapping.domainViolationId(ptrConst());
     }
     mapping.setDomainViolationId(
-        _mappingId, solver.makeIntView<propagation::EqualConst>(
-                         solver, mapping.solverId(_mappingId), lowerBound()));
-    return mapping.domainViolationId(_mappingId);
+        ptrConst(), solver.makeIntView<propagation::EqualConst>(
+                         solver, mapping.solverId(ptrConst()), lowerBound()));
+    return mapping.domainViolationId(ptrConst());
   }
 
   if (_domainType == DomainType::DOM_LOWER_BOUND) {
     if (solverLb >= lowerBound()) {
-      return mapping.domainViolationId(_mappingId);
+      return mapping.domainViolationId(ptrConst());
     }
     mapping.setDomainViolationId(
-        _mappingId, solver.makeIntView<propagation::GreaterEqualConst>(
-                         solver, mapping.solverId(_mappingId), lowerBound()));
-    return mapping.domainViolationId(_mappingId);
+        ptrConst(), solver.makeIntView<propagation::GreaterEqualConst>(
+                         solver, mapping.solverId(ptrConst()), lowerBound()));
+    return mapping.domainViolationId(ptrConst());
   }
 
   if (_domainType == DomainType::DOM_UPPER_BOUND) {
     if (solverUb <= upperBound()) {
-      return mapping.domainViolationId(_mappingId);
+      return mapping.domainViolationId(ptrConst());
     }
     mapping.setDomainViolationId(
-        _mappingId, solver.makeIntView<propagation::LessEqualConst>(
-                         solver, mapping.solverId(_mappingId), upperBound()));
-    return mapping.domainViolationId(_mappingId);
+        ptrConst(), solver.makeIntView<propagation::LessEqualConst>(
+                         solver, mapping.solverId(ptrConst()), upperBound()));
+    return mapping.domainViolationId(ptrConst());
   }
 
   if (_domainType == DomainType::DOM_RANGE) {
     if (lowerBound() <= solverLb && solverUb <= upperBound()) {
-      return mapping.domainViolationId(_mappingId);
+      return mapping.domainViolationId(ptrConst());
     }
     mapping.setDomainViolationId(
-        _mappingId,
+        ptrConst(),
         solver.makeIntView<propagation::InIntervalConst>(
-            solver, mapping.solverId(_mappingId), lowerBound(), upperBound()));
-    return mapping.domainViolationId(_mappingId);
+            solver, mapping.solverId(ptrConst()), lowerBound(), upperBound()));
+    return mapping.domainViolationId(ptrConst());
   }
   assert(_domainType == DomainType::DOM_DOMAIN);
 
   if (_domain->contains(solverLb, solverUb)) {
-    return mapping.domainViolationId(_mappingId);
+    return mapping.domainViolationId(ptrConst());
   }
 
   if (_domain->isInterval()) {
     mapping.setDomainViolationId(
-        _mappingId,
+        ptrConst(),
         solver.makeIntView<propagation::InIntervalConst>(
-            solver, mapping.solverId(_mappingId), lowerBound(), upperBound()));
-    return mapping.domainViolationId(_mappingId);
+            solver, mapping.solverId(ptrConst()), lowerBound(), upperBound()));
+    return mapping.domainViolationId(ptrConst());
   }
 
   std::vector<DomainEntry> domain =
@@ -232,16 +224,16 @@ propagation::VarViewId VarNode::postDomainConstraint(
   // domain.size() - 1 = number of "holes" in the domain:
   if (domain.size() > 2 && interval < 1000) {
     mapping.setDomainViolationId(
-        _mappingId,
+        ptrConst(),
         solver.makeIntView<propagation::InSparseDomain>(
-            solver, mapping.solverId(_mappingId), std::move(domain)));
+            solver, mapping.solverId(ptrConst()), std::move(domain)));
   } else {
     mapping.setDomainViolationId(
-        _mappingId,
+        ptrConst(),
         solver.makeIntView<propagation::InDomain>(
-            solver, mapping.solverId(_mappingId), std::move(domain)));
+            solver, mapping.solverId(ptrConst()), std::move(domain)));
   }
-  return mapping.domainViolationId(_mappingId);
+  return mapping.domainViolationId(ptrConst());
 }
 
 Int VarNode::lowerBound() const { return _domain->lowerBound(); }
@@ -414,12 +406,12 @@ std::shared_ptr<InvariantNode> VarNode::outputOf() const {
   return *_outputOf.begin();
 }
 
-void VarNode::markAsInputFor(const std::shared_ptr<InvariantNode>& listeningInvariant,
+void VarNode::markAsInputFor(InvariantNode& listeningInvariant,
                              const bool isStaticInput) {
   if (isStaticInput) {
-    _staticInputTo.emplace_back(listeningInvariant);
+    _staticInputTo.emplace_back(listeningInvariant.ptr());
   } else {
-    _dynamicInputTo.emplace_back(listeningInvariant);
+    _dynamicInputTo.emplace_back(listeningInvariant.ptr());
   }
 }
 
@@ -444,8 +436,8 @@ void VarNode::unmarkAsInputFor(const InvariantNode& listeningInvariant,
   }
 }
 
-void VarNode::markOutputTo(const std::shared_ptr<InvariantNode>& definingInvariant) {
-  _outputOf.emplace(definingInvariant);
+void VarNode::markOutputTo(InvariantNode& definingInvariant) {
+  _outputOf.emplace(definingInvariant.ptr());
 }
 
 std::optional<Int> VarNode::constantValue() const noexcept {

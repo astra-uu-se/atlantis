@@ -133,7 +133,7 @@ void CountRelNode::postConstraint() {
   std::vector<ConstraintVarId> inputs(numInputVars(),
                                       ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < numInputVars(); ++i) {
-    inputs[i] = staticInputVarNodeConst(i).constraintVarId();
+    inputs[i] = staticInputVarNodes().at(i).constraintVarId();
   }
   assert(_boundOffset == 0);
   if (isReified()) {
@@ -202,14 +202,14 @@ void CountRelNode::updateState() {
   std::vector<Int> indicesToRemove;
   indicesToRemove.reserve(numInputVars());
   for (Int i = static_cast<Int>(numInputVars()) - 1; i >= 0; --i) {
-    if (_fixedNeedle.has_value() && staticInputVarNodeConst(i).isFixed()) {
+    if (_fixedNeedle.has_value() && staticInputVarNodes().at(i).isFixed()) {
       _boundOffset +=
-          (*_fixedNeedle == staticInputVarNodeConst(i).lowerBound() ? 1 : 0);
+          (*_fixedNeedle == staticInputVarNodes().at(i).lowerBound() ? 1 : 0);
       indicesToRemove.emplace_back(i);
       continue;
     }
     if (!_fixedNeedle.has_value() &&
-        staticInputVarNodeConst(i).constDomain()->isDisjoint(
+        staticInputVarNodes().at(i).constDomain()->isDisjoint(
             *varNodeConst(needle()).constDomain())) {
       indicesToRemove.emplace_back(i);
     }
@@ -236,9 +236,9 @@ void CountRelNode::updateState() {
   for (size_t i = 0; i < numInputVars(); ++i) {
     domIntervals[i] = std::pair<Int, Int>{
         std::max(needleLb,
-                 std::min(needleUb, staticInputVarNodeConst(i).lowerBound())),
+                 std::min(needleUb, staticInputVarNodes().at(i).lowerBound())),
         std::max(needleLb,
-                 std::min(needleUb, staticInputVarNodeConst(i).upperBound()))};
+                 std::min(needleUb, staticInputVarNodes().at(i).upperBound()))};
   }
 
   const Int actualLb = _boundOffset;
@@ -327,10 +327,10 @@ void CountRelNode::registerOutputVars(propagation::SolverBase& solver,
              (shouldHold() ? _relType : relationTypeComplement(_relType)) !=
                  RelationType::REL_TYPE_EQ ||
              _fixedBound.has_value());
-      mapping.setIntermediateId(id(), solver.makeIntVar(0, 0, 0));
+      mapping.setIntermediateId(TODO, solver.makeIntVar(0, 0, 0));
       if (_fixedBound.has_value()) {
         setViolationVarId(makeSolverConstIntRelation(
-                              solver, mapping.intermediateId(id()), _relType,
+                              solver, mapping.intermediateId(TODO), _relType,
                               *_fixedBound, shouldHold(), true),
                           mapping);
       } else {
@@ -358,17 +358,17 @@ void CountRelNode::registerNode(propagation::SolverBase& solver,
   }
   if (_fixedNeedle.has_value()) {
     solver.makeInvariant<propagation::CountConst>(
-        solver, mapping.intermediateId(id()), *_fixedNeedle,
+        solver, mapping.intermediateId(TODO), *_fixedNeedle,
         std::move(solverVars), _boundOffset);
   } else {
     assert(_boundOffset == 0);
     solver.makeInvariant<propagation::Count>(
-        solver, mapping.intermediateId(id()), mapping.solverId(needle()),
+        solver, mapping.intermediateId(TODO), mapping.solverId(needle()),
         std::move(solverVars));
   }
   if (!_fixedBound.has_value()) {
     makeSolverIntRelation(solver, mapping.solverId(bound()), _relType,
-                          mapping.intermediateId(id()), violationVarId(mapping),
+                          mapping.intermediateId(TODO), violationVarId(mapping),
                           shouldHold());
   }
 }

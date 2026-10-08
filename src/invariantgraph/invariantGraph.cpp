@@ -470,33 +470,33 @@ std::shared_ptr<InvariantNode> InvariantGraph::addInvariantNode(
   return _invariantNodes.back();
 }
 
-void InvariantGraph::replaceVarNode(std::shared_ptr<VarNode> oldNode,
-                                    std::shared_ptr<VarNode> newNode) {
-  if (oldNode == newNode) {
+void InvariantGraph::replaceVarNode(VarNode& oldNode,
+                                    VarNode& newNode) {
+  if (&oldNode == &newNode) {
     return;
   }
-  newNode->domain()->removeAllValuesExcept(*oldNode->constDomain());
-  while (!oldNode->definingNodes().empty()) {
-    const auto& invNode = *(oldNode->definingNodes().begin());
-    invNode->replaceDefinedVar(*oldNode, newNode);
-    assert(!oldNode->definingNodes().contains(invNode));
-    assert(newNode->definingNodes().contains(invNode));
+  newNode.domain()->removeAllValuesExcept(*oldNode.constDomain());
+  while (!oldNode.definingNodes().empty()) {
+    const auto& invNode = *(oldNode.definingNodes().begin());
+    invNode->replaceDefinedVar(oldNode, newNode);
+    assert(!oldNode.definingNodes().contains(invNode));
+    assert(newNode.definingNodes().contains(invNode));
     assert(std::ranges::none_of(invNode->outputVarNodes(),
                                 [&](const std::shared_ptr<VarNode>& other) {
-                                  return other == oldNode;
+                                  return other.get() == &oldNode;
                                 }));
     assert(std::ranges::any_of(invNode->outputVarNodes(),
                                [&](const std::shared_ptr<VarNode>& other) {
-                                 return other == newNode;
+                                 return other.get() == &newNode;
                                }));
   }
-  assert(oldNode->definingNodes().empty());
+  assert(oldNode.definingNodes().empty());
 
-  while (!oldNode->staticInputTo().empty()) {
-    [[maybe_unused]] const auto& invNode = oldNode->staticInputTo().front();
-    invNode->replaceStaticInputVarNode(*oldNode, newNode);
+  while (!oldNode.staticInputTo().empty()) {
+    [[maybe_unused]] const auto& invNode = oldNode.staticInputTo().front();
+    invNode->replaceStaticInputVarNode(oldNode, newNode);
     assert(
-        std::ranges::none_of(oldNode->staticInputTo(),
+        std::ranges::none_of(oldNode.staticInputTo(),
                              [&](const std::shared_ptr<InvariantNode>& other) {
                                return other == invNode;
                              }));
@@ -507,20 +507,20 @@ void InvariantGraph::replaceVarNode(std::shared_ptr<VarNode> oldNode,
                             }));
     assert(std::ranges::none_of(invNode->staticInputVarNodes(),
                                 [&](const std::shared_ptr<VarNode>& other) {
-                                  return other == oldNode;
+                                  return other.get() == &oldNode;
                                 }));
     assert(std::ranges::any_of(invNode->staticInputVarNodes(),
                                [&](const std::shared_ptr<VarNode>& other) {
-                                 return other == newNode;
+                                 return other.get() == &newNode;
                                }));
   }
-  assert(oldNode->staticInputTo().empty());
+  assert(oldNode.staticInputTo().empty());
 
-  while (!oldNode->dynamicInputTo().empty()) {
-    [[maybe_unused]] const auto& invNode = oldNode->dynamicInputTo().front();
+  while (!oldNode.dynamicInputTo().empty()) {
+    [[maybe_unused]] const auto& invNode = oldNode.dynamicInputTo().front();
     invNode->replaceStaticInputVarNode(*oldNode, newNode);
     assert(
-        std::ranges::none_of(oldNode->dynamicInputTo(),
+        std::ranges::none_of(oldNode.dynamicInputTo(),
                              [&](const std::shared_ptr<InvariantNode>& other) {
                                return other == invNode;
                              }));
@@ -531,25 +531,25 @@ void InvariantGraph::replaceVarNode(std::shared_ptr<VarNode> oldNode,
                             }));
     assert(std::ranges::none_of(invNode->dynamicInputVarNodes(),
                                 [&](const std::shared_ptr<VarNode>& other) {
-                                  return other == oldNode;
+                                  return other.get() == &oldNode;
                                 }));
     assert(std::ranges::any_of(invNode->dynamicInputVarNodes(),
                                [&](const std::shared_ptr<VarNode>& other) {
-                                 return other == newNode;
+                                 return other.get() == &newNode;
                                }));
   }
-  assert(oldNode->staticInputTo().empty());
-  assert(oldNode->dynamicInputTo().empty());
+  assert(oldNode.staticInputTo().empty());
+  assert(oldNode.dynamicInputTo().empty());
 
-  if (oldNode->isFixed()) {
-    if (oldNode->isIntVar()) {
-      if (_intVarNodeIndices.contains(oldNode->lowerBound()) &&
-          _intVarNodeIndices.at(oldNode->lowerBound()) == oldNode) {
-        _intVarNodeIndices.erase(oldNode->lowerBound());
-        _intVarNodeIndices.emplace(oldNode->lowerBound(), newNode);
+  if (oldNode.isFixed()) {
+    if (oldNode.isIntVar()) {
+      if (_intVarNodeIndices.contains(oldNode.lowerBound()) &&
+          _intVarNodeIndices.at(oldNode.lowerBound()) == oldNode) {
+        _intVarNodeIndices.erase(oldNode.lowerBound());
+        _intVarNodeIndices.emplace(oldNode.lowerBound(), newNode);
       }
     } else {
-      const bool val = oldNode->inDomain(bool{true});
+      const bool val = oldNode.inDomain(bool{true});
       const size_t index = val ? 1 : 0;
       assert(_boolVarNodes.at(index)->inDomain(val));
       if (_boolVarNodes.at(index) == oldNode) {
@@ -562,7 +562,7 @@ void InvariantGraph::replaceVarNode(std::shared_ptr<VarNode> oldNode,
       id = newNode;
     }
   }
-  newNode->setIsOutputVar(newNode->isOutputVar() || oldNode->isOutputVar());
+  newNode->setIsOutputVar(newNode->isOutputVar() || oldNode.isOutputVar());
 }
 
 std::shared_ptr<ImplicitConstraintNode>
@@ -584,12 +584,12 @@ void InvariantGraph::createNeighborhood(SolverBase& solver,
   neighborhoods.reserve(_implicitConstraintNodes.size());
 
   for (auto const& implicitConstraint : _implicitConstraintNodes) {
-    if (!mapping.hasNeighborhood(implicitConstraint->mappingId())) {
+    if (!mapping.hasNeighborhood(TODO)) {
       implicitConstraint->registerNode(solver, mapping);
     }
-    if (mapping.hasNeighborhood(implicitConstraint->mappingId())) {
+    if (mapping.hasNeighborhood(TODO)) {
       neighborhoods.emplace_back(
-          mapping.neighborhood(implicitConstraint->mappingId()));
+          mapping.neighborhood(TODO));
     }
   }
   if (neighborhoods.size() == 1) {

@@ -19,7 +19,7 @@ class ImplicitConstraintNode : public InvariantNode {
 
   void init() override;
 
-  [[nodiscard]] bool constrainsOutput(VarNode&) const override;
+  [[nodiscard]] bool constrainsOutput(const VarNode&) const override;
 
   virtual void updateDomainTypes() {};
 

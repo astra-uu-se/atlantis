@@ -39,7 +39,7 @@ void TableImplicitNode::updateDomainTypes() {
 
 void TableImplicitNode::registerNode(propagation::SolverBase&,
                                      SolverMapping& mapping) const {
-  assert(!mapping.hasNeighborhood(mappingId()));
+  assert(!mapping.hasNeighborhood(ptrConst()));
 
   if (outputVarNodes().size() <= 1) {
     return;
@@ -53,11 +53,11 @@ void TableImplicitNode::registerNode(propagation::SolverBase&,
   searchVars.reserve(outputVarNodes().size());
 
   for (const auto& varNode : outputVarNodes()) {
-    assert(mapping.solverId(varNode->mappingId()) != propagation::NULL_ID);
-    searchVars.emplace_back(mapping.solverId(varNode->mappingId()), varNode->constDomain());
+    assert(mapping.solverId(varNode) != propagation::NULL_ID);
+    searchVars.emplace_back(mapping.solverId(varNode), varNode->constDomain());
   }
   mapping.setNeighborhood(
-      mappingId(), std::make_shared<search::neighborhoods::TableNeighborhood>(
+      ptrConst(), std::make_shared<search::neighborhoods::TableNeighborhood>(
                 std::move(searchVars), std::vector<std::vector<Int>>{_table}));
 }
 

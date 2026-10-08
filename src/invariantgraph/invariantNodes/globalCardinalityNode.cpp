@@ -40,7 +40,7 @@ void GlobalCardinalityNode::postConstraint() {
 
 void GlobalCardinalityNode::removeOutputVarNode(VarNode& outputVarNodeId) {
   for (Int i = static_cast<Int>(_cover.size()) - 1; i >= 0; --i) {
-    if (outputVarNodes().at(i) == outputVarNodeId) {
+    if (&outputVarNode(i) == &outputVarNodeId) {
       _cover.erase(_cover.begin() + i);
       _countOffsets.erase(_countOffsets.begin() + i);
     }
@@ -62,10 +62,10 @@ void GlobalCardinalityNode::init() {
 
   assert(std::ranges::all_of(
       outputVarNodes().begin(), outputVarNodes().end(),
-      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
+      [&](const std::shared_ptr<VarNode>& vNode) { return vNode->isIntVar(); }));
   assert(std::ranges::all_of(
       staticInputVarNodes().begin(), staticInputVarNodes().end(),
-      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
+      [&](const std::shared_ptr<VarNode>& vNode) { return vNode->isIntVar(); }));
 }
 
 void GlobalCardinalityNode::updateState() {
@@ -79,8 +79,8 @@ void GlobalCardinalityNode::updateState() {
         const std::shared_ptr<VarNode>& duplicateNode =
             outputVarNodes().at(dupIndex);
         removeOutputAtIndex(dupIndex);
-        invariantGraph().replaceVarNode(duplicateNode,
-                                        outputVarNodes().at(index));
+        invariantGraph().replaceVarNode(*duplicateNode,
+                                        outputVarNode(index));
       }
     }
   }
@@ -103,8 +103,8 @@ void GlobalCardinalityNode::updateState() {
     return;
   }
 
-  for (const auto& var varsToRemove) {
-    removeStaticInputVarNode(var);
+  for (const auto& var : varsToRemove) {
+    removeStaticInputVarNode(*var);
   }
 
   if (staticInputVarNodes().empty()) {
@@ -116,18 +116,18 @@ void GlobalCardinalityNode::updateState() {
 }
 
 bool GlobalCardinalityNode::constrainsOutput(
-    const VarNode& outputVarNodeId) const {
+    const VarNode& output) const {
   for (size_t i = 0; i < _cover.size(); ++i) {
-    if (outputVarNodes().at(i) != outputVarNodeId) {
+    if (&outputVarNode(i) != &output) {
       continue;
     }
     const Int ub =
         _countOffsets[i] +
         std::ranges::count_if(staticInputVarNodes(),
-                              [&](const std::shared_ptr<VarNode>& vId) {
-                                return varNodeConst(vId).inDomain(_cover[i]);
+                              [&](const std::shared_ptr<VarNode>& vNode) {
+                                return vNode->inDomain(_cover[i]);
                               });
-    if (!outputVarNodeConst(i).constDomain()->contains(_countOffsets[i], ub)) {
+    if (!outputVarNode(i).constDomain()->contains(_countOffsets[i], ub)) {
       return true;
     }
   }
@@ -144,7 +144,7 @@ bool GlobalCardinalityNode::replace() {
   }
   assert(_cover.size() == 1);
   invariantGraph().addInvariantNode(std::make_shared<CountNode>(
-      invariantGraph(), outputVarNodes().front(),
+      invariantGraph(), outputVarNode(0),
       std::vector<std::shared_ptr<VarNode>>(staticInputVarNodes()),
       _cover.front(), _countOffsets.front()));
   return true;
@@ -155,25 +155,25 @@ void GlobalCardinalityNode::registerOutputVars(propagation::SolverBase& solver,
   for (size_t i = 0; i < _cover.size(); ++i) {
     assert(std::ranges::none_of(outputVarNodes().begin(),
                                 outputVarNodes().begin() + static_cast<Int>(i),
-                                [&](const std::shared_ptr<VarNode>& vId) {
-                                  return vId == outputVarNodes().at(i);
+                                [&](const std::shared_ptr<VarNode>& vNode) {
+                                  return vNode.get() == &outputVarNode(i);
                                 }));
 
     if (_countOffsets[i] == 0) {
-      assert(mapping.solverId(outputVarNodes().at(i)) == propagation::NULL_ID);
-      makeSolverVar(outputVarNodes().at(i), solver, mapping);
+      assert(mapping.solverId(outputVarNode(i)) == propagation::NULL_ID);
+      makeSolverVar(outputVarNode(i), solver, mapping);
     } else {
-      assert(mapping.solverId(outputVarNodes().at(i)) == propagation::NULL_ID);
+      assert(mapping.solverId(outputVarNode(i)) == propagation::NULL_ID);
       mapping.setIntermediateId(
-          id(), i,
+          ptrConst(), i,
           solver.makeIntVar(
               0, 0,
               std::max<Int>(0, static_cast<Int>(staticInputVarNodes().size()) -
                                    _countOffsets[i])));
       mapping.setSolverId(
-          outputVarNodes().at(i),
+          outputVarNode(i),
           solver.makeIntView<propagation::IntOffsetView>(
-              solver, mapping.intermediateId(id(), i), _countOffsets[i]));
+              solver, mapping.intermediateId(ptrConst(), i), _countOffsets[i]));
     }
   }
   assert(std::ranges::all_of(outputVarNodes().begin(), outputVarNodes().end(),
@@ -192,13 +192,13 @@ void GlobalCardinalityNode::registerNode(propagation::SolverBase& solver,
   std::vector<propagation::VarViewId> outputVarIds;
   outputVarIds.reserve(outputVarNodes().size());
   for (size_t i = 0; i < _cover.size(); ++i) {
-    assert(mapping.intermediateId(id(), i) == propagation::NULL_ID ||
-           mapping.intermediateId(id(), i).isVar());
+    assert(mapping.intermediateId(ptrConst(), i) == propagation::NULL_ID ||
+           mapping.intermediateId(ptrConst(), i).isVar());
 
-    outputVarIds.emplace_back(mapping.intermediateId(id(), i) ==
+    outputVarIds.emplace_back(mapping.intermediateId(ptrConst(), i) ==
                                       propagation::NULL_ID
-                                  ? mapping.solverId(outputVarNodes().at(i))
-                                  : mapping.intermediateId(id(), i));
+                                  ? mapping.solverId(outputVarNode(i))
+                                  : mapping.intermediateId(ptrConst(), i));
   }
 
   solver.makeInvariant<propagation::GlobalCardinalityOpen>(

@@ -15,7 +15,7 @@
 
 namespace atlantis::invariantgraph {
 
-const std::shared_ptr<VarNode>& CountNode::needle() const {
+std::shared_ptr<VarNode> CountNode::needle() const {
   return _fixedNeedle.has_value() ? std::shared_ptr<VarNode>{nullptr}
                                   : staticInputVarNodes()[needleIndex()];
 }
@@ -29,7 +29,7 @@ size_t CountNode::numInputVars() const {
 CountNode::CountNode(InvariantGraph& graph, VarNode& count,
                      std::vector<std::shared_ptr<VarNode>>&& vars,
                      const Int needle, const Int countOffset)
-    : InvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{count},
+    : InvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{count.ptr()},
                     std::move(vars)),
       _fixedNeedle(needle),
       _countOffset(countOffset) {}
@@ -37,18 +37,17 @@ CountNode::CountNode(InvariantGraph& graph, VarNode& count,
 CountNode::CountNode(InvariantGraph& graph, VarNode& count,
                      std::vector<std::shared_ptr<VarNode>>&& vars,
                      VarNode& needle, const Int countOffset)
-    : InvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{count},
+    : InvariantNode(graph, std::vector<std::shared_ptr<VarNode>>{count.ptr()},
                     append(std::move(vars), needle)),
       _fixedNeedle(std::nullopt),
       _countOffset(countOffset) {}
 
 void CountNode::init() {
   InvariantNode::init();
-  assert(
-      invariantGraphConst().varNodeConst(outputVarNodes().front()).isIntVar());
+  assert(outputVarNode(0).isIntVar());
   assert(std::ranges::all_of(
-      staticInputVarNodes().begin(), staticInputVarNodes().end(),
-      [&](const std::shared_ptr<VarNode>& vId) { return vId.isIntVar(); }));
+      staticInputVarNodes(),
+      [&](const std::shared_ptr<VarNode>& vNode) { return vNode->isIntVar(); }));
 }
 
 void CountNode::postConstraint() {
@@ -56,23 +55,23 @@ void CountNode::postConstraint() {
   std::vector<ConstraintVarId> inputs(numInputVars(),
                                       ConstraintVarId{NULL_NODE_ID});
   for (size_t i = 0; i < inputs.size(); ++i) {
-    inputs[i] = staticInputVarNodeConst(i).constraintVarId();
+    inputs[i] = staticInputVarNode(i).constraintVarId();
   }
   if (_fixedNeedle.has_value()) {
-    return constraintSolver().fzn_count(outputVarNodeConst(0).constraintVarId(),
-                                        RelationType::REL_TYPE_EQ, inputs,
-                                        *_fixedNeedle, true);
+    return constraintSolver().fzn_count(
+        outputVarNode(0).constraintVarId(), RelationType::REL_TYPE_EQ,
+        inputs, *_fixedNeedle, true);
   }
   return constraintSolver().fzn_count(
-      outputVarNodeConst(0).constraintVarId(), RelationType::REL_TYPE_EQ,
-      inputs, varNodeConst(needle()).constraintVarId(), true);
+      outputVarNode(0).constraintVarId(), RelationType::REL_TYPE_EQ,
+      inputs, needle()->constraintVarId(), true);
 }
 
 void CountNode::updateState() {
   InvariantNode::updateState();
-  if (!_fixedNeedle.has_value() && varNodeConst(needle()).isFixed()) {
+  if (!_fixedNeedle.has_value() && needle()->isFixed()) {
     // updating _fixedNeedle modified indices
-    const Int n = varNodeConst(needle()).lowerBound();
+    const Int n = needle()->lowerBound();
     removeStaticInputAtIndex(needleIndex());
     _fixedNeedle = n;
   }
@@ -80,15 +79,15 @@ void CountNode::updateState() {
   indicesToRemove.reserve(numInputVars());
   for (Int i = static_cast<Int>(numInputVars()) - 1; i >= 0; --i) {
     if (_fixedNeedle.has_value()) {
-      if (staticInputVarNodeConst(i).isFixed()) {
+      if (staticInputVarNode(i).isFixed()) {
         _countOffset +=
-            (*_fixedNeedle == staticInputVarNodeConst(i).lowerBound() ? 1 : 0);
+            (*_fixedNeedle == staticInputVarNode(i).lowerBound() ? 1 : 0);
         indicesToRemove.emplace_back(i);
-      } else if (!staticInputVarNodeConst(i).inDomain(*_fixedNeedle)) {
+      } else if (!staticInputVarNode(i).inDomain(*_fixedNeedle)) {
         indicesToRemove.emplace_back(i);
       }
-    } else if (staticInputVarNodeConst(i).constDomain()->isDisjoint(
-                   *varNodeConst(needle()).constDomain())) {
+    } else if (staticInputVarNode(i).constDomain()->isDisjoint(
+                   *needle()->constDomain())) {
       indicesToRemove.emplace_back(i);
     }
   }
@@ -100,14 +99,14 @@ void CountNode::updateState() {
     setState(InvariantNodeState::SUBSUMED);
     return;
   }
-  if (outputVarNodeConst(0).isFixed() && _fixedNeedle.has_value() &&
-      _countOffset + outputVarNodeConst(0).lowerBound() <= 0) {
+  if (outputVarNode(0).isFixed() && _fixedNeedle.has_value() &&
+      _countOffset + outputVarNode(0).lowerBound() <= 0) {
     setState(InvariantNodeState::SUBSUMED);
   }
 }
 
-bool CountNode::constrainsOutput(VarNode&) const {
-  return !outputVarNodeConst(0).constDomain()->contains(
+bool CountNode::constrainsOutput(const VarNode&) const {
+  return !outputVarNode(0).constDomain()->contains(
       _countOffset, static_cast<Int>(staticInputVarNodes().size()));
 }
 
@@ -123,15 +122,15 @@ bool CountNode::canBeMadeImplicit() const {
   if (!_fixedNeedle.has_value()) {
     return false;
   }
-  if (!outputVarNodeConst(0).isFixed()) {
+  if (!outputVarNode(0).isFixed()) {
     return false;
   }
-  if (outputVarNodeConst(0).lowerBound() + _countOffset <= 0) {
+  if (outputVarNode(0).lowerBound() + _countOffset <= 0) {
     return false;
   }
   const bool allSourceVars = std::ranges::all_of(
       staticInputVarNodes(),
-      [&](const auto& id) { return id.definingNodes().empty(); });
+      [&](const std::shared_ptr<VarNode>& vNode) { return vNode->definingNodes().empty(); });
   if (!allSourceVars) {
     return false;
   }
@@ -145,9 +144,7 @@ bool CountNode::makeImplicit() {
 
   assert(_fixedNeedle.has_value());
 
-  const size_t amount = invariantGraphConst()
-                            .varNodeConst(outputVarNodes().front())
-                            .lowerBound() -
+  const size_t amount = outputVarNode(0).lowerBound() -
                         _countOffset;
 
   invariantGraph().addImplicitConstraintNode(
@@ -162,16 +159,16 @@ void CountNode::registerOutputVars(propagation::SolverBase& solver,
                                    SolverMapping& mapping) const {
   if (staticInputVarNodes().size() == 1 && _fixedNeedle.has_value()) {
     mapping.setSolverId(
-        outputVarNodes().front(),
+        outputVarNode(0),
         solver.makeIntView<propagation::IfThenElseConst>(
-            solver, mapping.solverId(staticInputVarNodes().front()),
+            solver, mapping.solverId(staticInputVarNode(0)),
             _countOffset + 1, _countOffset, *_fixedNeedle));
   } else {
-    makeSolverVar(outputVarNodes().front(), solver, mapping);
+    makeSolverVar(outputVarNode(0), solver, mapping);
   }
   assert(std::ranges::all_of(
-      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vId) {
-        return mapping.solverId(vId) != propagation::NULL_ID;
+      outputVarNodes(), [&](const std::shared_ptr<VarNode>& vNode) {
+        return mapping.solverId(vNode) != propagation::NULL_ID;
       }));
 }
 
@@ -180,29 +177,29 @@ void CountNode::registerNode(propagation::SolverBase& solver,
   if (staticInputVarNodes().size() <= 1 && _fixedNeedle.has_value()) {
     return;
   }
-  assert(mapping.solverId(outputVarNodes().front()) != propagation::NULL_ID);
-  assert(mapping.intermediateId(id()) == propagation::NULL_ID
-             ? mapping.solverId(outputVarNodes().front()).isVar()
-             : mapping.solverId(outputVarNodes().front()).isView());
-  assert(mapping.intermediateId(id()) == propagation::NULL_ID ||
-         mapping.intermediateId(id()).isVar());
+  assert(mapping.solverId(outputVarNode(0)) != propagation::NULL_ID);
+  assert(mapping.intermediateId(ptrConst()) == propagation::NULL_ID
+             ? mapping.solverId(outputVarNode(0)).isVar()
+             : mapping.solverId(outputVarNode(0)).isView());
+  assert(mapping.intermediateId(ptrConst()) == propagation::NULL_ID ||
+         mapping.intermediateId(ptrConst()).isVar());
 
   std::vector<propagation::VarViewId> solverVars;
   solverVars.reserve(numInputVars());
 
   for (size_t i = 0; i < numInputVars(); ++i) {
-    solverVars.emplace_back(mapping.solverId(staticInputVarNodes()[i]));
+    solverVars.emplace_back(mapping.solverId(staticInputVarNode(i)));
   }
 
   if (_fixedNeedle.has_value()) {
     solver.makeInvariant<propagation::CountConst>(
-        solver, mapping.solverId(outputVarNodes().front()), *_fixedNeedle,
+        solver, mapping.solverId(outputVarNode(0)), *_fixedNeedle,
         std::move(solverVars), _countOffset);
     return;
   }
   assert(_countOffset == 0);
   solver.makeInvariant<propagation::Count>(
-      solver, mapping.solverId(outputVarNodes().front()),
+      solver, mapping.solverId(outputVarNode(0)),
       mapping.solverId(needle()), std::move(solverVars));
 }
 
