@@ -34,11 +34,17 @@ class GlobalCardinalityOpenTest : public InvariantTest {
   }
 
   GlobalCardinalityOpen& generate() {
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
     inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
     inputVars.clear();
     inputVars.reserve(numInputVars);
 
-    _solver->open();
     for (Int i = 0; i < numInputVars; ++i) {
       inputVars.emplace_back(makeIntVar(inputVarLb, inputVarUb, inputVarDist));
     }

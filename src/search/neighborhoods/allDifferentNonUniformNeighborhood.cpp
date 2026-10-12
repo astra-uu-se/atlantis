@@ -37,12 +37,12 @@ AllDifferentNonUniformNeighborhood::AllDifferentNonUniformNeighborhood(
 }
 
 static bool bipartiteMatching(
-    const size_t varIndex, const std::vector<std::vector<size_t>>& forwardArcs,
+    const size_t varIndex, const std::vector<std::vector<size_t>>& forwardEdges,
     std::vector<size_t>& matching, std::vector<bool>& visited) {
-  assert(varIndex < forwardArcs.size());
+  assert(varIndex < forwardEdges.size());
   assert(matching.size() == visited.size());
   // Try each committedValue
-  for (const size_t valueIndex : forwardArcs[varIndex]) {
+  for (const size_t valueIndex : forwardEdges[varIndex]) {
     assert(valueIndex < visited.size());
     // Has the committedValue been visited?
     if (!visited[valueIndex]) {
@@ -50,9 +50,9 @@ static bool bipartiteMatching(
       // If the committedValue is not in the current matching, or if
       // there exists a matching where _vars[varIndex] = valueIndex +
       // _domainOffset:
-      assert(matching[valueIndex] <= forwardArcs.size());
-      if (matching[valueIndex] == forwardArcs.size() ||
-          bipartiteMatching(matching[valueIndex], forwardArcs, matching,
+      assert(matching[valueIndex] <= forwardEdges.size());
+      if (matching[valueIndex] == forwardEdges.size() ||
+          bipartiteMatching(matching[valueIndex], forwardEdges, matching,
                             visited)) {
         matching[valueIndex] = varIndex;
         return true;

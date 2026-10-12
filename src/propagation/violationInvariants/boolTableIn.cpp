@@ -37,8 +37,8 @@ BoolTableIn::BoolTableIn(SolverBase& solver, const VarViewId violationId,
 
 void BoolTableIn::registerVars() {
   assert(_id != NULL_ID);
-  for (size_t i = 0; i < _varArray.size(); ++i) {
-    _solver.registerInvariantInput(_id, _varArray[i], i, false);
+  for (const auto vId : _varArray) {
+    _solver.registerInvariantInput(_id, vId, false);
   }
   registerDefinedVar(_violationId);
 }

@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "atlantis/propagation/arcs.hpp"
+#include "atlantis/propagation/edges.hpp"
 #include "atlantis/propagation/propagation/propagationQueue.hpp"
 #include "atlantis/propagation/store/store.hpp"
 
@@ -51,10 +51,10 @@ class PropagationGraph {
   // Given input variable with VarId x and invariant with InvariantId i, then
   // _staticInputVars[i] = <x, b>, where b = true iff x is a dynamic input
   // to i.
-  std::vector<invariant::IncomingArcContainer> _incomingArcs;
+  std::vector<invariant::IncomingEdgeContainer> _incomingEdges;
 
   // Map from VarID -> vector of InvariantID
-  std::vector<var::OutgoingArcContainer> _outgoingArcs;
+  std::vector<var::OutgoingEdgeContainer> _outgoingEdges;
 
   std::vector<std::vector<VarId>> _varsInLayer;
   std::vector<LayerIndex> _varLayerIndex;
@@ -97,23 +97,20 @@ class PropagationGraph {
   void registerVar(VarId);
 
   /**
-   * Register that inputId is a input of invariantId
+   * Register that inputId is an input of invariantId
    * @param invariantId the invariant
-   * @param inputVarId the variable input
-   * @param localId
-   * @param isDynamicInput true if the variable is a dynamic input to the
+   * @param inputId the variable input
+   * @param isDynamic true if the variable is a dynamic input to the
    * invariant.
    */
   LocalId registerInvariantInput(InvariantId invariantId, VarId inputId,
                                  bool isDynamic);
-  void registerInvariantInput(InvariantId invariantId, VarId inputVarId,
-                              LocalId localId, bool isDynamicInput);
 
   /**
    * Register that source functionally defines varId
    * @param varId the variable that is defined by the invariant
    * @param invariantId the invariant defining the variable
-   * @throw if the variable is already defined by an invariant.
+   * @throw VarAlreadyDefinedException if the variable is already defined by an invariant.
    */
   void registerDefinedVar(VarId varId, InvariantId invariantId);
 
@@ -121,7 +118,7 @@ class PropagationGraph {
   void makeAllDynamicInputsInactive(Timestamp, InvariantId);
   void makeDynamicInputInactive(Timestamp, InvariantId, LocalId);
   void makeAllDynamicInactive(Timestamp, VarId);
-  void commitOutgoingArcs(Timestamp, VarId);
+  void commitOutgoingEdges(Timestamp, VarId);
 
   /**
    * @brief topologically orders the layer
@@ -139,47 +136,27 @@ class PropagationGraph {
 
   [[nodiscard]] bool isSearchVar(VarId id) const;
 
-  [[nodiscard]] inline bool isDynamicInvariant(InvariantId invariantId) const {
-    assert(invariantId < _incomingArcs.size());
-    return !_incomingArcs[invariantId].incomingDynamic().empty();
-  }
+  [[nodiscard]] bool isDynamicInvariant(InvariantId invariantId) const;
 
   [[nodiscard]] inline size_t numInputVars(InvariantId invariantId) const {
-    assert(invariantId < _incomingArcs.size());
-    return _incomingArcs[invariantId].numArcs();
+    assert(invariantId < _incomingEdges.size());
+    return _incomingEdges[invariantId].numEdges();
   }
 
-  [[nodiscard]] inline InvariantId definingInvariant(VarId varId) const {
-    // Returns NULL_ID if varId is a search variable (not defined by an
-    // invariant)
-    assert(varId < _definingInvariant.size());
-    return _definingInvariant[varId];
-  }
+  [[nodiscard]] InvariantId definingInvariant(VarId varId) const;
 
   [[nodiscard]] const std::vector<VarId>& varsDefinedBy(
       InvariantId invariantId) const;
 
-  [[nodiscard]] inline const var::OutgoingArcContainer& outgoingArcs(
-      VarId varId) const {
-    assert(varId < _outgoingArcs.size());
-    return _outgoingArcs[varId];
-  }
+  [[nodiscard]] const var::OutgoingEdgeContainer& outgoingEdges(
+      VarId varId) const;
 
-  [[nodiscard]] inline const std::vector<VarId>& staticInputVars(
-      InvariantId invariantId) const {
-    assert(invariantId < _incomingArcs.size());
-    return _incomingArcs[invariantId].incomingStatic();
-  }
+  [[nodiscard]] const std::vector<VarId>& staticInputVars(
+      InvariantId invariantId) const;
+  [[nodiscard]] VarId dynamicInputVar(Timestamp ts, InvariantId invariantId) const noexcept;
 
-  [[nodiscard]] inline const std::vector<invariant::IncomingDynamicArc>&
-  dynamicInputVars(InvariantId invariantId) const {
-    assert(invariantId < _incomingArcs.size());
-    return _incomingArcs[invariantId].incomingDynamic();
-  }
-
-  [[nodiscard]] inline const std::vector<VarId>& searchVars() const {
-    return _searchVars;
-  }
+  [[nodiscard]] const std::vector<invariant::IncomingDynamicEdge>&
+  dynamicInputVars(InvariantId invariantId) const;
 
   [[nodiscard]] const std::vector<VarId>& searchVars() const;
 
@@ -211,6 +188,8 @@ class PropagationGraph {
   [[nodiscard]] size_t invariantPosition(InvariantId invariantId) const;
 
   void enqueuePropagationQueue(VarId id);
+
+  [[nodiscard]] const invariant::IncomingEdgeContainer& incomingEdges(InvariantId invId) const;
 };
 
 }  // namespace atlantis::propagation

@@ -35,14 +35,18 @@ class ModTest : public InvariantTest {
   }
 
   Mod& generate(bool denominatorZero = false) {
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
     numeratorDist =
         std::uniform_int_distribution<Int>(numeratorLb, numeratorUb);
     denominatorDist =
         std::uniform_int_distribution<Int>(denominatorLb, denominatorUb);
 
-    if (!_solver->isOpen()) {
-      _solver->open();
-    }
     numerator = makeIntVar(numeratorLb, numeratorUb, numeratorDist);
     denominator =
         _solver->makeIntVar(denominatorZero ? 0 : denominatorDist(gen),

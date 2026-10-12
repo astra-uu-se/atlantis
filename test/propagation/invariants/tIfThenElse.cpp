@@ -42,14 +42,18 @@ class IfThenElseTest : public InvariantTest {
   }
 
   IfThenElse& generate() {
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
     conditionDist =
         std::uniform_int_distribution<Int>(conditionLb, conditionUb);
     thenDist = std::uniform_int_distribution<Int>(thenLb, thenUb);
     elseDist = std::uniform_int_distribution<Int>(elseLb, elseUb);
 
-    if (!_solver->isOpen()) {
-      _solver->open();
-    }
     conditionVar = makeIntVar(conditionLb, conditionUb, conditionDist);
     thenVar = makeIntVar(thenLb, thenUb, thenDist);
     elseVar = makeIntVar(elseLb, elseUb, elseDist);
@@ -260,15 +264,29 @@ RC_GTEST_FIXTURE_PROP(IfThenElseTest, rapidcheck, ()) {
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
+      if (p == numProbes) {
+        std::cerr << "STARTING PROBE #" << p << " (ROUND #" << c << ')' << std::endl;
+      } else {
+        std::cerr << "STARTING COMMIT #" << c << std::endl;
+      }
       _solver->beginMove();
       if (randBool()) {
         _solver->setValue(conditionVar, conditionDist(gen));
+        std::cerr << "    CHANGING condition " << _solver->committedValue(conditionVar) << " -> " << _solver->currentValue(conditionVar) << std::endl;
+      } else {
+        std::cerr << "    KEEPING  condition " << _solver->committedValue(conditionVar) << " (" << _solver->currentValue(conditionVar) << ')' << std::endl;
       }
       if (randBool()) {
         _solver->setValue(thenVar, thenDist(gen));
+        std::cerr << "    CHANGING then " << _solver->committedValue(thenVar) << " -> " << _solver->currentValue(thenVar) << std::endl;
+      } else {
+        std::cerr << "    KEEPING  then " << _solver->committedValue(thenVar) << " (" << _solver->currentValue(thenVar) << ')' << std::endl;
       }
       if (randBool()) {
         _solver->setValue(elseVar, elseDist(gen));
+        std::cerr << "    CHANGING else " << _solver->committedValue(elseVar) << " -> " << _solver->currentValue(elseVar) << std::endl;
+      } else {
+        std::cerr << "    KEEPING  else " << _solver->committedValue(elseVar) << " (" << _solver->currentValue(elseVar) << ')' << std::endl;
       }
       _solver->endMove();
 
@@ -287,6 +305,48 @@ RC_GTEST_FIXTURE_PROP(IfThenElseTest, rapidcheck, ()) {
     }
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
   }
+}
+
+TEST_F(IfThenElseTest, regression) {
+  _solver->open();
+  conditionVar = _solver->makeIntVar(-1, -1, 0);
+  thenVar = _solver->makeIntVar(0, -1, 0);
+  elseVar = _solver->makeIntVar(-1, -1, 0);
+  outputVar = _solver->makeIntVar(0, -1, 0);
+  _solver->makeInvariant<IfThenElse>(
+      *_solver, outputVar, conditionVar, thenVar, elseVar);
+  _solver->close();
+
+  _solver->beginMove();
+  EXPECT_EQ(_solver->committedValue(conditionVar), -1);
+  _solver->setValue(conditionVar, 0);
+  EXPECT_EQ(_solver->currentValue(thenVar), 0);
+  EXPECT_EQ(_solver->committedValue(thenVar), 0);
+  EXPECT_EQ(_solver->currentValue(elseVar), -1);
+  EXPECT_EQ(_solver->committedValue(elseVar), -1);
+  _solver->endMove();
+  _solver->beginCommit();
+  _solver->query(outputVar);
+  _solver->endCommit();
+  EXPECT_EQ(_solver->committedValue(conditionVar), 0);
+  EXPECT_EQ(_solver->currentValue(thenVar), 0);
+  EXPECT_EQ(_solver->committedValue(thenVar), 0);
+  EXPECT_EQ(_solver->currentValue(elseVar), -1);
+  EXPECT_EQ(_solver->committedValue(elseVar), -1);
+
+
+
+  _solver->beginMove();
+  EXPECT_EQ(_solver->committedValue(conditionVar), 0);
+  _solver->setValue(conditionVar, -1);
+  EXPECT_EQ(_solver->committedValue(thenVar),  0);
+  _solver->setValue(thenVar,-1);
+  EXPECT_EQ(_solver->currentValue(elseVar), -1);
+  EXPECT_EQ(_solver->committedValue(elseVar), -1);
+  _solver->endMove();
+  _solver->beginCommit();
+  _solver->query(outputVar);
+  _solver->endCommit();
 }
 
 class MockIfThenElse : public IfThenElse {

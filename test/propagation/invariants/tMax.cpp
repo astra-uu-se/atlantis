@@ -38,14 +38,18 @@ class MaxTest : public InvariantTest {
   }
 
   Max& generate() {
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
     inputVars.clear();
     inputVars.reserve(numInputVars);
 
     inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
 
-    if (!_solver->isOpen()) {
-      _solver->open();
-    }
     for (Int i = 0; i < numInputVars; ++i) {
       inputVars.emplace_back(makeIntVar(inputVarLb, inputVarUb, inputVarDist));
     }
@@ -60,10 +64,8 @@ class MaxTest : public InvariantTest {
 TEST_F(MaxTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-100, -100}, {-100, 0}, {0, 0}, {0, 100}, {100, 100}};
-  _solver->open();
 
   auto& invariant = generate();
-  _solver->open();
 
   for (const auto& [aLb, aUb] : boundVec) {
     EXPECT_LE(aLb, aUb);

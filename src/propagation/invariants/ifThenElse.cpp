@@ -4,10 +4,10 @@
 
 namespace atlantis::propagation {
 
-static inline LocalId toIndex(Int violation) { return violation == 0 ? 0 : 1; }
+static LocalId toIndex(const Int violation) { return violation == 0 ? 0 : 1; }
 
-IfThenElse::IfThenElse(SolverBase& solver, VarId output, VarViewId condition,
-                       VarViewId thenBranch, VarViewId elseBranch)
+IfThenElse::IfThenElse(SolverBase& solver, const VarId output, const VarViewId condition,
+                       const VarViewId thenVar, const VarViewId elseVar)
     : Invariant(solver),
       _output(output),
       _condition(condition),
@@ -50,7 +50,7 @@ void IfThenElse::updateBounds(const bool widenOnly) {
   }
 }
 
-void IfThenElse::recompute(Timestamp ts) {
+void IfThenElse::recompute(const Timestamp ts) {
   const LocalId index = toIndex(_solver.value(ts, _condition));
 
   makeAllDynamicInputsInactive(ts);
@@ -59,9 +59,9 @@ void IfThenElse::recompute(Timestamp ts) {
   updateValue(ts, _output, _solver.value(ts, _branches[index]));
 }
 
-void IfThenElse::notifyInputChanged(Timestamp ts, LocalId localId) {
+void IfThenElse::notifyInputChanged(const Timestamp ts, const LocalId localId) {
   const LocalId index = toIndex(_solver.value(ts, _condition));
-  if (localId == LocalId{2}) {
+  if (localId == 2) {
     const LocalId committedIndex = toIndex(_solver.committedValue(_condition));
     if (committedIndex != index) {
       assert(committedIndex < 2);

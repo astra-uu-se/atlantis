@@ -19,14 +19,18 @@ class CountTest : public InvariantTest {
   std::uniform_int_distribution<Int> needleVarDist;
 
   Count& generate(const bool generateInputVars = true) {
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
     haystackVarDist =
         std::uniform_int_distribution<Int>(haystackVarLb, haystackVarUb);
     needleVarDist =
         std::uniform_int_distribution<Int>(needleVarLb, needleVarUb);
 
-    if (!_solver->isOpen()) {
-      _solver->open();
-    }
     if (generateInputVars) {
       haystackVars.clear();
       haystackVars.reserve(haystackSize);
@@ -118,11 +122,11 @@ TEST_F(CountTest, Recompute) {
 
   haystackSize = 3;
 
+  _solver->open();
+
   constexpr std::pair<Int, Int> inputBound{-1, 1};
   const std::vector<std::pair<Int, Int>> haystackBounds(haystackSize,
                                                         inputBound);
-
-  _solver->open();
 
   needleVar = _solver->makeIntVar(inputBound.first, inputBound.first,
                                   inputBound.second);

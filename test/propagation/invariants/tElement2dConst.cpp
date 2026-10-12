@@ -38,6 +38,13 @@ class Element2dConstTest : public InvariantTest {
   }
 
   Element2dConst& generate() {
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
     parMatrix.resize(numRows, std::vector<Int>(numCols));
     for (size_t i = 0; i < static_cast<size_t>(numRows); ++i) {
       for (size_t j = 0; j < static_cast<size_t>(numCols); ++j) {
@@ -50,9 +57,6 @@ class Element2dConstTest : public InvariantTest {
     colIndexVarDist =
         std::uniform_int_distribution<Int>(colIndexLb(), colIndexUb());
 
-    if (!_solver->isOpen()) {
-      _solver->open();
-    }
 
     rowIndexVar = makeIntVar(rowIndexLb(), rowIndexUb(), rowIndexVarDist);
     colIndexVar = makeIntVar(colIndexLb(), colIndexUb(), colIndexVarDist);
@@ -108,7 +112,6 @@ TEST_F(Element2dConstTest, UpdateBounds) {
     colOffset = co;
 
     auto& invariant = generate();
-    _solver->open();
 
     for (Int minRowIndex = rowIndexLb(); minRowIndex <= rowIndexUb();
          ++minRowIndex) {
@@ -364,36 +367,36 @@ RC_GTEST_FIXTURE_PROP(Element2dConstTest, rapidcheck, ()) {
   }
 }
 
-class MockElement2dVar : public Element2dConst {
+class MockElement2dConst : public Element2dConst {
  public:
   bool registered = false;
   void registerVars() override {
     registered = true;
     Element2dConst::registerVars();
   }
-  explicit MockElement2dVar(SolverBase& solver, VarViewId output,
-                            VarViewId index1, VarViewId index2,
+  explicit MockElement2dConst(SolverBase& solver, const VarViewId output,
+                              const VarViewId index1, const VarViewId index2,
                             std::vector<std::vector<Int>>&& parMatrix,
-                            Int offset1, Int offset2)
+                              const Int offset1, const Int offset2)
       : Element2dConst(solver, output, index1, index2, std::move(parMatrix),
                        offset1, offset2) {
     EXPECT_TRUE(output.isVar());
 
-    ON_CALL(*this, recompute).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, recompute).WillByDefault([this](const Timestamp timestamp) {
       return Element2dConst::recompute(timestamp);
     });
-    ON_CALL(*this, nextInput).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, nextInput).WillByDefault([this](const Timestamp timestamp) {
       return Element2dConst::nextInput(timestamp);
     });
     ON_CALL(*this, notifyCurrentInputChanged)
-        .WillByDefault([this](Timestamp timestamp) {
+        .WillByDefault([this](const Timestamp timestamp) {
           Element2dConst::notifyCurrentInputChanged(timestamp);
         });
     ON_CALL(*this, notifyInputChanged)
-        .WillByDefault([this](Timestamp timestamp, LocalId id) {
+        .WillByDefault([this](const Timestamp timestamp, const LocalId id) {
           Element2dConst::notifyInputChanged(timestamp, id);
         });
-    ON_CALL(*this, commit).WillByDefault([this](Timestamp timestamp) {
+    ON_CALL(*this, commit).WillByDefault([this](const Timestamp timestamp) {
       Element2dConst::commit(timestamp);
     });
   }

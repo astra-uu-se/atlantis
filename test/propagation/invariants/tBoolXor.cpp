@@ -33,12 +33,16 @@ class BoolXorTest : public InvariantTest {
   }
 
   BoolXor& generate() {
-    xDist = std::uniform_int_distribution<Int>(xLb, xUb);
-    yDist = std::uniform_int_distribution<Int>(yLb, yUb);
-
     if (!_solver->isOpen()) {
       _solver->open();
     }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
+    xDist = std::uniform_int_distribution<Int>(xLb, xUb);
+    yDist = std::uniform_int_distribution<Int>(yLb, yUb);
+
     x = makeIntVar(xLb, xUb, xDist);
     y = makeIntVar(yLb, yUb, yDist);
     outputVar = _solver->makeIntVar(0, 0, 0);
@@ -53,7 +57,6 @@ TEST_F(BoolXorTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{{0, 0}, {0, 1}, {1, 10}, {95, 100}};
 
   auto& invariant = generate();
-  _solver->open();
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_LE(xLb, xUb);

@@ -57,6 +57,20 @@ Element2dVar::Element2dVar(SolverBase& solver, const VarViewId output,
   assert(output.isVar());
 }
 
+inline size_t Element2dVar::safeIndex(const Int index,
+                                      const size_t pos) const noexcept {
+  return std::max<Int>(0,
+                       std::min(_dimensions[pos] - 1, index - _offsets[pos]));
+}
+
+inline size_t Element2dVar::safeIndex1(const Int index) const noexcept {
+  return safeIndex(index, 0);
+}
+
+inline size_t Element2dVar::safeIndex2(const Int index) const noexcept {
+  return safeIndex(index, 1);
+}
+
 void Element2dVar::registerVars() {
   assert(_id != NULL_ID);
   for (const auto& varRow : _varMatrix) {
@@ -128,7 +142,7 @@ void Element2dVar::recompute(Timestamp ts) {
   makeAllDynamicInputsInactive(ts);
   const LocalId active = toLocalId(_dimensions, index1, index2);
   makeDynamicInputActive(ts, active);
-  _activeLocalId.setValue(ts, active);
+  _activeLocalId.setValue(ts, static_cast<Int>(active));
 
   updateValue(ts, _output, _solver.value(ts, _varMatrix[index1][index2]));
 }
@@ -143,7 +157,7 @@ void Element2dVar::notifyInputChanged(Timestamp ts, LocalId localId) {
              _activeLocalId.value(ts) < _dimensions[0] * _dimensions[1]);
       makeDynamicInputInactive(ts, _activeLocalId.value(ts));
       makeDynamicInputActive(ts, active);
-      _activeLocalId.setValue(ts, active);
+      _activeLocalId.setValue(ts, static_cast<Int>(active));
     }
   }
   updateValue(ts, _output, _solver.value(ts, _varMatrix[index1][index2]));

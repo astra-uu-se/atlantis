@@ -31,12 +31,16 @@ class TimesTest : public InvariantTest {
   static Int computeOutput(Int xVal, Int yVal) { return xVal * yVal; }
 
   Times& generate() {
-    xDist = std::uniform_int_distribution<Int>(xLb, xUb);
-    yDist = std::uniform_int_distribution<Int>(yLb, yUb);
-
     if (!_solver->isOpen()) {
       _solver->open();
     }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
+    xDist = std::uniform_int_distribution<Int>(xLb, xUb);
+    yDist = std::uniform_int_distribution<Int>(yLb, yUb);
+
     x = makeIntVar(xLb, xUb, xDist);
     y = makeIntVar(yLb, yUb, yDist);
     outputVar = _solver->makeIntVar(0, 0, 0);

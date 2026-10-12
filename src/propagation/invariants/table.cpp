@@ -59,7 +59,7 @@ Table::Table(SolverBase& solver, std::vector<VarViewId>&& outputVars,
 
 void Table::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _inputVar, 0, false);
+  _solver.registerInvariantInput(_id, _inputVar, false);
   for (const VarId outputVar : _outputVars) {
     registerDefinedVar(outputVar);
   }

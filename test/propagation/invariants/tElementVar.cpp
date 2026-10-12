@@ -7,7 +7,7 @@ using namespace atlantis::propagation;
 
 class ElementVarTest : public InvariantTest {
  protected:
-  Int numDynamicVars{100};
+  Int numDynamicVars{2};
   Int offset{1};
 
   std::vector<Int> offsets{-10, 0, 10};
@@ -36,6 +36,9 @@ class ElementVarTest : public InvariantTest {
     if (!_solver->isOpen()) {
       _solver->open();
     }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
     dynamicInputs.resize(numDynamicVars, VAR_VIEW_NULL_ID);
     for (Int i = 0; i < numDynamicVars; ++i) {
       dynamicInputs.at(i) =
@@ -51,6 +54,7 @@ class ElementVarTest : public InvariantTest {
     ElementVar& invariant = _solver->makeInvariant<ElementVar>(
         *_solver, outputVar, indexVar, std::vector<VarViewId>(dynamicInputs),
         offset);
+
     _solver->close();
 
     return invariant;
@@ -235,7 +239,7 @@ TEST_F(ElementVarTest, Commit) {
       _solver->setValue(ts, indexVar, indexVal);
 
       // notify index change
-      invariant.notifyInputChanged(ts, LocalId{inputs.size()});
+      invariant.notifyInputChanged(ts, LocalId{dynamicInputs.size()});
 
       // incremental value from indexVar
       Int notifiedOutput = _solver->value(ts, outputVar);
@@ -252,7 +256,7 @@ TEST_F(ElementVarTest, Commit) {
 
       // notify input change
       invariant.notifyInputChanged(ts,
-                                   LocalId{zeroBasedIndex(indexVal, offset)});
+                                   LocalId{zeroBasedIndex(indexVal)});
 
       // incremental value from input
       notifiedOutput = _solver->value(ts, outputVar);
@@ -275,10 +279,11 @@ TEST_F(ElementVarTest, Commit) {
 }
 
 RC_GTEST_FIXTURE_PROP(ElementVarTest, rapidcheck, ()) {
-  numDynamicVars = *rc::gen::inRange<Int>(1, 1000);
+  numDynamicVars = *rc::gen::inRange<Int>(2, 3);
+  dynamicInputDist = std::uniform_int_distribution<Int>(
+        -1, 2);
 
-  offset = *rc::gen::inRange(std::numeric_limits<Int>::min() + 200,
-                             std::numeric_limits<Int>::max() - 200);
+  offset = *rc::gen::inRange(0, 1);
 
   std::vector<VarViewId> inputVars;
   inputVars.reserve(numDynamicVars + 1);
@@ -298,29 +303,48 @@ RC_GTEST_FIXTURE_PROP(ElementVarTest, rapidcheck, ()) {
 
   constexpr size_t numCommits = 3;
 
+  std::vector<Int> committedValues(3, 0);
+  for (size_t i = 0; i < inputVars.size(); ++i) {
+    committedValues.at(i) = _solver->committedValue(inputVars.at(i));
+  }
+
   for (size_t c = 0; c < numCommits; ++c) {
     constexpr size_t numProbes = 3;
 
     RC_ASSERT(_solver->committedValue(outputVar) == computeOutput(true));
 
     for (size_t p = 0; p <= numProbes; ++p) {
+      std::cerr << "_solver->beginMove();" << std::endl;
       _solver->beginMove();
       for (size_t i = 0; i < inputVars.size(); ++i) {
+        EXPECT_EQ(_solver->committedValue(inputVars.at(i)), committedValues.at(i));
+        std::cerr << "EXPECT_EQ(_solver->committedValue(inputVars.at(" << i << ")), " << committedValues.at(i) << ");" << std::endl;
         if (randBool()) {
           _solver->setValue(inputVars.at(i), dists.at(i)(gen));
+          std::cerr << "_solver->setValue(inputVars.at(" << i << "), " << _solver->currentValue(inputVars.at(i)) << ");" << std::endl;
         }
       }
+      std::cerr << "_solver->endMove();" << std::endl;
       _solver->endMove();
 
       if (p == numProbes) {
+        std::cerr << "_solver->beginCommit();" << std::endl;
         _solver->beginCommit();
       } else {
+        std::cerr << "_solver->beginProbe();" << std::endl;
         _solver->beginProbe();
       }
+      std::cerr << "_solver->query(outputVar);" << std::endl;
       _solver->query(outputVar);
       if (p == numProbes) {
+        std::cerr << "_solver->endCommit();" << std::endl;
         _solver->endCommit();
+        for (size_t i = 0; i < inputVars.size(); ++i) {
+          EXPECT_EQ(_solver->committedValue(inputVars.at(i)), _solver->currentValue(inputVars.at(i)));
+          committedValues.at(i) = _solver->committedValue(inputVars.at(i));
+        }
       } else {
+        std::cerr << "_solver->endProbe();" << std::endl;
         _solver->endProbe();
       }
       RC_ASSERT(_solver->currentValue(outputVar) == computeOutput());

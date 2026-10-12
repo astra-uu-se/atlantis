@@ -80,7 +80,6 @@ private:
 
 namespace var {
 class OutgoingEdge {
- private:
   LocalId _localId;
   InvariantId _invariantId;
 
@@ -109,8 +108,6 @@ class OutgoingDynamicEdgeContainer {
   inline void swap(Timestamp ts, size_t index);
 
  public:
-  [[nodiscard]] const CommittableInt& sparseIndex(size_t) const;
-
   [[nodiscard]] const std::vector<OutgoingEdge>& edges() const;
 
   [[nodiscard]] size_t size() const;
@@ -121,8 +118,13 @@ class OutgoingDynamicEdgeContainer {
 
   [[nodiscard]] OutgoingEdge& at(size_t index);
 
+  [[nodiscard]] const OutgoingEdge& at(size_t index) const;
+
+  [[nodiscard]] OutgoingEdge& at(size_t index, Timestamp ts);
+
+  [[nodiscard]] const OutgoingEdge& at(size_t index, Timestamp ts) const;
+
   [[nodiscard]] OutgoingEdge& operator[](size_t index);
-  const OutgoingEdge& at(size_t index, Timestamp ts) const;
 
   [[nodiscard]] const OutgoingEdge& operator[](size_t index) const;
 
@@ -197,7 +199,8 @@ public:
   [[nodiscard]] const OutgoingDynamicEdgeContainer& dynamicEdges() const;
 
   [[nodiscard]] const OutgoingEdge& dynamicEdge(size_t) const;
-  const OutgoingEdge& dynamicEdge(size_t index, Timestamp ts) const;
+
+  [[nodiscard]] const OutgoingEdge& dynamicEdge(size_t index, Timestamp ts) const;
 
   [[nodiscard]] size_t numEdges() const;
 

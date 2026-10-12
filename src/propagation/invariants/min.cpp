@@ -43,7 +43,7 @@ Min::Min(SolverBase& solver, const VarViewId output,
 void Min::registerVars() {
   assert(_id != NULL_ID);
   for (size_t i = 0; i < _varArray.size(); ++i) {
-    _solver.registerInvariantInput(_id, _varArray[i], i, false);
+    _solver.registerInvariantInput(_id, _varArray[i], false);
   }
   registerDefinedVar(_output);
 }

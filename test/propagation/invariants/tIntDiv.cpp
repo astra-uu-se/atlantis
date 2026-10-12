@@ -42,15 +42,19 @@ class IntDivTest : public InvariantTest {
     return num / (den == 0 ? zeroReplacement() : den);
   }
 
-  IntDiv& generate(bool denominatorZero = false) {
+  IntDiv& generate(const bool denominatorZero = false) {
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
     numeratorDist =
         std::uniform_int_distribution<Int>(numeratorLb, numeratorUb);
     denominatorDist =
         std::uniform_int_distribution<Int>(denominatorLb, denominatorUb);
 
-    if (!_solver->isOpen()) {
-      _solver->open();
-    }
     numerator = makeIntVar(numeratorLb, numeratorUb, numeratorDist);
     denominator =
         denominatorZero
@@ -75,8 +79,8 @@ TEST_F(IntDivTest, UpdateBounds) {
     _solver->updateBounds(VarId{numerator}, nomLb, nomUb, false);
     for (const auto& [denLb, denUb] : boundVec) {
       EXPECT_LE(denLb, denUb);
-      _solver->updateBounds(VarId{denominator}, denLb, denUb, false);
       _solver->open();
+      _solver->updateBounds(VarId{denominator}, denLb, denUb, false);
       invariant.updateBounds(false);
       _solver->close();
       std::vector<Int> outputs;
@@ -248,8 +252,6 @@ TEST_F(IntDivTest, ZeroDenominator) {
 }
 
 RC_GTEST_FIXTURE_PROP(IntDivTest, rapidcheck, ()) {
-  _solver->open();
-
   const Int n1 = *rc::gen::arbitrary<Int>();
   const Int n2 = *rc::gen::arbitrary<Int>();
   numeratorLb = std::min(n1, n2);

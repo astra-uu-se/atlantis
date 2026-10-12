@@ -18,6 +18,7 @@ class Solver : public SolverBase {
   OutputToInputExplorer _outputToInputExplorer;
 
   std::vector<bool> _isEnqueued;
+  std::vector<bool> _commitOutgoingEdges;
   std::vector<std::vector<VarId>> _layerQueue{};
   std::vector<size_t> _layerQueueIndex{};
 
@@ -32,7 +33,7 @@ class Solver : public SolverBase {
   void propagateOnClose();
 
   template <bool SingleLayer>
-  void enforceInvariant(VarId, const var::OutgoingArc&, size_t curLayer);
+  void enforceInvariant(VarId, const var::OutgoingEdge&, size_t curLayer);
 
   template <CommitMode Mode, bool SingleLayer>
   void propagate();
@@ -105,14 +106,11 @@ class Solver : public SolverBase {
 
   [[nodiscard]] size_t numInputVars(InvariantId) const;
 
-  // This function is used by propagation, which is unaware of views.
-  [[nodiscard]] inline bool hasChanged(Timestamp, VarId) const;
-
   [[nodiscard]] const std::vector<VarId>& varsDefinedBy(InvariantId) const;
 
-  [[nodiscard]] const var::OutgoingArcContainer& outgoingArcs(VarId) const;
+  [[nodiscard]] const var::OutgoingEdgeContainer& outgoingEdges(VarId) const;
 
-  void commitOutgoingArcs(Timestamp, VarId) const;
+  void commitOutgoingEdges(Timestamp, VarId) const;
 
   void makeDynamicInputActive(Timestamp ts, InvariantId invId,
                               LocalId localId) override;
@@ -131,8 +129,7 @@ class Solver : public SolverBase {
    * Register that a variable is an input to an invariant
    * @param invariantId the invariant
    * @param inputId the id of the variable
-   * @param localId the id of the variable in the invariant
-   * @param isDynamicInput true if the input is a dynamic input to the invariant
+   * @param isDynamic true if the input is a dynamic input to the invariant
    */
   LocalId registerInvariantInput(InvariantId invariantId, VarViewId inputId,
                                  bool isDynamic) final;
@@ -140,21 +137,6 @@ class Solver : public SolverBase {
   void registerVar(VarId) final;
   void registerInvariant(InvariantId) final;
 };
-
-inline void Solver::incCurrentTimestamp() {
-  ++_currentTimestamp;
-  if (_propagationMode == PropagationMode::INPUT_TO_OUTPUT) {
-    clearPropagationQueue();
-  } else {
-    _modifiedSearchVars.clear();
-  }
-  assert(std::all_of(
-      searchVars().begin(), searchVars().end(), [&](const VarId varId) {
-        return !_store.intVar(varId).hasChanged(_currentTimestamp);
-      }));
-}
-
-inline size_t Solver::numVars() const { return _propGraph.numVars(); }
 
 inline size_t Solver::numInvariants() const {
   return _propGraph.numInvariants();
@@ -169,8 +151,8 @@ inline const std::vector<VarId>& Solver::varsDefinedBy(
   return _propGraph.varsDefinedBy(invariantId);
 }
 
-inline const var::OutgoingArcContainer& Solver::outgoingArcs(VarId id) const {
-  return _propGraph.outgoingArcs(id);
+inline const var::OutgoingEdgeContainer& Solver::outgoingEdges(VarId id) const {
+  return _propGraph.outgoingEdges(id);
 }
 
 inline size_t Solver::numInputVars(InvariantId invId) const {
@@ -182,10 +164,6 @@ inline VarId Solver::nextInput(InvariantId invariantId) {
 }
 inline void Solver::notifyCurrentInputChanged(InvariantId invariantId) {
   _store.invariant(invariantId).notifyCurrentInputChanged(_currentTimestamp);
-}
-
-inline bool Solver::hasChanged(Timestamp ts, VarId id) const {
-  return _store.constIntVar(id).hasChanged(ts);
 }
 
 inline void Solver::setValue(Timestamp ts, VarViewId id, Int val) {

@@ -34,6 +34,10 @@ class LinearTest : public InvariantTest {
     if (!_solver->isOpen()) {
       _solver->open();
     }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
 
     Int cLb =
         (!coeffs.empty() && coeffs.size() < static_cast<size_t>(numInputVars))
@@ -150,7 +154,6 @@ TEST_F(LinearTest, UpdateBounds) {
       for (const Int cCoef : coefVec) {
         coeffs.at(2) = cCoef;
         auto invariant = generate();
-        _solver->open();
 
         for (const auto& [aLb, aUb] : boundVec) {
           EXPECT_LE(aLb, aUb);
@@ -310,7 +313,6 @@ TEST_F(LinearTest, Commit) {
 }
 
 RC_GTEST_FIXTURE_PROP(LinearTest, rapidcheck, ()) {
-  _solver->open();
   numInputVars = *rc::gen::inRange(1, 100);
 
   generate();

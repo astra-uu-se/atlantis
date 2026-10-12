@@ -23,7 +23,7 @@ IntDiv::IntDiv(SolverBase& solver, const VarViewId output,
 
 void IntDiv::registerVars() {
   assert(_id != NULL_ID);
-  _solver.registerInvariantInput(_id, _nominator, false);
+  _solver.registerInvariantInput(_id, _numerator, false);
   _solver.registerInvariantInput(_id, _denominator, false);
   registerDefinedVar(_output);
 }

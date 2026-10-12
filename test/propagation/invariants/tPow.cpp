@@ -20,12 +20,16 @@ class PowTest : public InvariantTest {
   std::uniform_int_distribution<Int> exponentDist;
 
   Pow& generate() {
-    baseDist = std::uniform_int_distribution<Int>(baseLb, baseUb);
-    exponentDist = std::uniform_int_distribution<Int>(exponentLb, exponentUb);
-
     if (!_solver->isOpen()) {
       _solver->open();
     }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
+    baseDist = std::uniform_int_distribution<Int>(baseLb, baseUb);
+    exponentDist = std::uniform_int_distribution<Int>(exponentLb, exponentUb);
+
     base = makeIntVar(baseLb, baseUb, baseDist);
     exponent = makeIntVar(exponentLb, exponentUb, exponentDist);
     outputVar = _solver->makeIntVar(0, 0, 0);

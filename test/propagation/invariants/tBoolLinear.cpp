@@ -35,6 +35,10 @@ class BoolLinearTest : public InvariantTest {
     if (!_solver->isOpen()) {
       _solver->open();
     }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
     inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
 
     const Int cs = static_cast<Int>(coeffs.size());
@@ -110,7 +114,6 @@ TEST_F(BoolLinearTest, UpdateBounds) {
       for (const Int cCoef : coefVec) {
         coeffs.at(2) = cCoef;
         auto& invariant = generate();
-        _solver->open();
 
         for (const auto& [aLb, aUb] : boundVec) {
           EXPECT_LE(aLb, aUb);

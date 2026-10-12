@@ -585,11 +585,11 @@ TEST_F(SolverTest, TestSimpleDynamicCycleQuery) {
   solver->close();
 
   EXPECT_EQ(solver->sourceId(inv1.dynamicInputVar(solver->currentTimestamp())),
-            base);
+            VarId{base});
   EXPECT_EQ(solver->sourceId(inv2.dynamicInputVar(solver->currentTimestamp())),
-            x1);
+            VarId{x1});
   EXPECT_EQ(solver->sourceId(inv3.dynamicInputVar(solver->currentTimestamp())),
-            x2);
+            VarId{x2});
 
   EXPECT_EQ(solver->committedValue(output), 7);
 
@@ -604,12 +604,12 @@ TEST_F(SolverTest, TestSimpleDynamicCycleQuery) {
     solver->endProbe();
 
     EXPECT_EQ(
-        solver->sourceId(inv1.dynamicInputVar(solver->currentTimestamp())), x3);
+        solver->sourceId(inv1.dynamicInputVar(solver->currentTimestamp())), VarId{x3});
     EXPECT_EQ(
         solver->sourceId(inv2.dynamicInputVar(solver->currentTimestamp())),
-        base);
+        VarId{base});
     EXPECT_EQ(
-        solver->sourceId(inv3.dynamicInputVar(solver->currentTimestamp())), x2);
+        solver->sourceId(inv3.dynamicInputVar(solver->currentTimestamp())), VarId{x2});
 
     EXPECT_EQ(solver->currentValue(base), 1);
     EXPECT_EQ(solver->currentValue(i1), 4);

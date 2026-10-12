@@ -21,13 +21,17 @@ class CountConstTest : public InvariantTest {
   std::uniform_int_distribution<Int> inputVarDist;
 
   CountConst& generate(bool generateInputVars = true) {
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
     inputVars.clear();
     inputVars.reserve(numInputVars);
     inputVarDist = std::uniform_int_distribution<Int>(inputVarLb, inputVarUb);
 
-    if (!_solver->isOpen()) {
-      _solver->open();
-    }
     if (generateInputVars) {
       for (Int i = 0; i < numInputVars; ++i) {
         inputVars.emplace_back(
@@ -101,7 +105,6 @@ TEST_F(CountConstTest, Recompute) {
   constexpr Int ub = 5;
 
   for (Int needleVal = lb; needleVal <= ub; ++needleVal) {
-    _solver->open();
 
     auto& invariant = generate();
 

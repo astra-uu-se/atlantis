@@ -56,11 +56,11 @@ void ElementVar::updateBounds(const bool widenOnly) {
   _solver.updateBounds(_output, lb, ub, widenOnly);
 }
 
-void ElementVar::recompute(Timestamp ts) {
+void ElementVar::recompute(const Timestamp ts) {
   const size_t index = safeIndex(_solver.value(ts, _index));
   assert(index < _varArray.size());
   makeAllDynamicInputsInactive(ts);
-  makeDynamicInputActive(ts, LocalId{index});
+  makeDynamicInputActive(ts, index);
   updateValue(ts, _output, _solver.value(ts, _varArray[index]));
 }
 
@@ -68,7 +68,7 @@ VarViewId ElementVar::dynamicInputVar(const Timestamp ts) const noexcept {
   return _varArray[safeIndex(_solver.value(ts, _index))];
 }
 
-void ElementVar::notifyInputChanged(Timestamp ts, LocalId localId) {
+void ElementVar::notifyInputChanged(const Timestamp ts, const LocalId localId) {
   const LocalId index = safeIndex(_solver.value(ts, _index));
   assert(index < _varArray.size());
   const LocalId committedIndex = safeIndex(_solver.committedValue(_index));

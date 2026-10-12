@@ -1,4 +1,4 @@
-#include "atlantis/propagation/arcs.hpp"
+#include "atlantis/propagation/edges.hpp"
 
 #include <algorithm>
 #include <boost/multi_index_container.hpp>
@@ -131,7 +131,7 @@ InvariantId OutgoingEdge::invariantId() const { return _invariantId; }
 
 void OutgoingEdge::setInvariantNullId() { _invariantId = NULL_ID; }
 
-void OutgoingDynamicEdgeContainer::swap(Timestamp ts, size_t index1) {
+void OutgoingDynamicEdgeContainer::swap(const Timestamp ts, size_t index1) {
   // move val1 at index1 to the end of the active indices
   // sanity:
   assert(index1 < _sparseValues.size());
@@ -159,12 +159,6 @@ void OutgoingDynamicEdgeContainer::swap(Timestamp ts, size_t index1) {
   _sparseValues[index2].setValue(ts, val1);
 }
 
-const CommittableInt& OutgoingDynamicEdgeContainer::sparseIndex(const size_t index)
-    const {
-  assert(index < _sparseIndices.size());
-  return _sparseIndices.at(index);
-}
-
 const std::vector<OutgoingEdge>& OutgoingDynamicEdgeContainer::edges() const {
   return _edges;
 }
@@ -181,6 +175,17 @@ OutgoingEdge& OutgoingDynamicEdgeContainer::at(const size_t index) {
   return _edges.at(index);
 }
 
+const OutgoingEdge& OutgoingDynamicEdgeContainer::at(const size_t index) const {
+  return _edges.at(index);
+}
+
+OutgoingEdge& OutgoingDynamicEdgeContainer::at(const size_t index, const Timestamp ts) {
+  assert(index < _edges.size());
+  const auto sparseIndex = static_cast<size_t>(_sparseIndices[index].value(ts));
+  assert(sparseIndex < _edges.size());
+  return _edges[sparseIndex];
+}
+
 OutgoingEdge& OutgoingDynamicEdgeContainer::operator[](const size_t index) {
   assert(index < _edges.size());
   return _edges[index];
@@ -193,7 +198,8 @@ const OutgoingEdge& OutgoingDynamicEdgeContainer::at(const size_t index, const T
   return _edges[sparseIndex];
 }
 
-const OutgoingEdge& OutgoingDynamicEdgeContainer::operator[](size_t index) const {
+const OutgoingEdge& OutgoingDynamicEdgeContainer::operator[](
+    const size_t index) const {
   assert(index < _edges.size());
   return _edges[index];
 }
@@ -227,7 +233,8 @@ void OutgoingDynamicEdgeContainer::makeActive(const Timestamp ts,
   _numActiveEdges.incValue(ts, 1);
 }
 
-void OutgoingDynamicEdgeContainer::makeInactive(Timestamp ts, size_t index) {
+void OutgoingDynamicEdgeContainer::makeInactive(const Timestamp ts,
+                                                const size_t index) {
   assert(index < _sparseValues.size());
   const Int metaIndex = _sparseValues[index].value(ts);
   assert(static_cast<size_t>(metaIndex) < _sparseIndices.size());
@@ -240,11 +247,11 @@ void OutgoingDynamicEdgeContainer::makeInactive(Timestamp ts, size_t index) {
   swap(ts, index);
 }
 
-void OutgoingDynamicEdgeContainer::makeAllInactive(Timestamp ts) {
+void OutgoingDynamicEdgeContainer::makeAllInactive(const Timestamp ts) {
   _numActiveEdges.setValue(ts, 0);
 }
 
-bool OutgoingDynamicEdgeContainer::sanity(Timestamp ts) const {
+bool OutgoingDynamicEdgeContainer::sanity(const Timestamp ts) const {
   if (_edges.size() != _sparseIndices.size() ||
       _edges.size() != _sparseValues.size()) {
     return false;
@@ -261,15 +268,15 @@ bool OutgoingDynamicEdgeContainer::sanity(Timestamp ts) const {
   return true;
 }
 
-void OutgoingDynamicEdgeContainer::setNullId(size_t index) {
+void OutgoingDynamicEdgeContainer::setNullId(const size_t index) {
   _edges[index].setInvariantNullId();
 }
 
-bool OutgoingDynamicEdgeContainer::isNullId(size_t index) const {
+bool OutgoingDynamicEdgeContainer::isNullId(const size_t index) const {
   return _edges[index].invariantId() == NULL_ID;
 }
 
-void OutgoingDynamicEdgeContainer::commitIf(Timestamp ts) {
+void OutgoingDynamicEdgeContainer::commitIf(const Timestamp ts) {
   assert(static_cast<int>(_numActiveEdges.tmpTimestamp() == ts) >=
          std::max<int>(static_cast<int>(std::ranges::any_of(
                            _sparseIndices,

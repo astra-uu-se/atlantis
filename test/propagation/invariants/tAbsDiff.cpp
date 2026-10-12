@@ -34,12 +34,16 @@ class AbsDiffTest : public InvariantTest {
   }
 
   AbsDiff& generate() {
-    xDist = std::uniform_int_distribution<Int>(xLb, xUb);
-    yDist = std::uniform_int_distribution<Int>(yLb, yUb);
-
     if (!_solver->isOpen()) {
       _solver->open();
     }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
+
+    xDist = std::uniform_int_distribution<Int>(xLb, xUb);
+    yDist = std::uniform_int_distribution<Int>(yLb, yUb);
+
     x = makeIntVar(xLb, xUb, xDist);
     y = makeIntVar(yLb, yUb, yDist);
     outputVar = _solver->makeIntVar(0, 0, 0);
@@ -55,10 +59,8 @@ class AbsDiffTest : public InvariantTest {
 TEST_F(AbsDiffTest, UpdateBounds) {
   std::vector<std::pair<Int, Int>> boundVec{
       {-20, -15}, {-5, 0}, {-2, 2}, {0, 5}, {15, 20}};
-  _solver->open();
 
   auto& invariant = generate();
-  _solver->open();
 
   for (const auto& [xLb, xUb] : boundVec) {
     EXPECT_LE(xLb, xUb);

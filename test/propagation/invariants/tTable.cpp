@@ -29,9 +29,14 @@ class TableTest : public InvariantTest {
   }
 
   Table& generate() {
-    varDist = std::uniform_int_distribution<Int>(varLb, varUb);
+    if (!_solver->isOpen()) {
+      _solver->open();
+    }
+    for (const auto varId : _solver->searchVars()) {
+      _solver->setValue(_solver->currentTimestamp(), varId, _solver->committedValue(varId));
+    }
 
-    _solver->open();
+    varDist = std::uniform_int_distribution<Int>(varLb, varUb);
     inputVar = makeIntVar(varLb, varUb, varDist);
 
     EXPECT_GE(varUb - varLb + 1, numRows);
