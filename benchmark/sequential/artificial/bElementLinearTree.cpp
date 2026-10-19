@@ -71,8 +71,8 @@ class ElementLinearTree : public ::benchmark::Fixture {
   std::vector<propagation::VarViewId>
       decisionVars;  // Shared input vars to trees.
 
-  propagation::VarViewId elementIndexVar = propagation::NULL_ID;
-  propagation::VarViewId elementOutputVar = propagation::NULL_ID;
+  propagation::VarViewId elementIndexVar = propagation::VAR_VIEW_NULL_ID;
+  propagation::VarViewId elementOutputVar = propagation::VAR_VIEW_NULL_ID;
 
   std::random_device rd;
   std::mt19937 gen;

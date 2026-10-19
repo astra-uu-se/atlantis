@@ -21,7 +21,7 @@ class AllInterval : public ::benchmark::Fixture {
   std::uniform_int_distribution<Int> distribution;
   size_t n{0};
 
-  propagation::VarViewId totalViolation = propagation::NULL_ID;
+  propagation::VarViewId totalViolation = propagation::VAR_VIEW_NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
     _solver = std::make_shared<propagation::Solver>();
@@ -29,9 +29,8 @@ class AllInterval : public ::benchmark::Fixture {
       throw std::runtime_error("n must be non-negative.");
     }
     n = state.range(0);
-    inputVarIds.resize(n, propagation::NULL_ID);
-    std::vector<propagation::VarViewId> violationVars;
-    violationVars.reserve(n - 1);
+    inputVarIds.resize(n, propagation::VAR_VIEW_NULL_ID);
+    std::vector<propagation::VarViewId> violationVars(n - 1, propagation::VAR_VIEW_NULL_ID);
     // number of constraints: n
     // total number of static input variables: 3 * n
     _solver->open();

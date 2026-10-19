@@ -51,10 +51,10 @@ class TSP : public ::benchmark::Fixture {
     }
 
     pred.clear();
-    pred.reserve(n);
+    pred.resize(n, propagation::VAR_VIEW_NULL_ID);
 
     timeToPred.clear();
-    timeToPred.reserve(n);
+    timeToPred.resize(n, propagation::VAR_VIEW_NULL_ID);
 
     for (Int i = 0; i < n; ++i) {
       const Int initVal = (i - 1 + n) % n;

@@ -24,8 +24,8 @@ GIT=$(shell which git)
 
 BENCHMARK_JSON_DIR=${MKFILE_PATH}benchmark-json
 NUM_BENCHMARK_REPETITIONS=3
-BENCHMARK_FILTER="^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|NQueens|TSPTW|VesselLoading)\/[A-Za-z]"
-BENCHMARK_FILTER_SYNTH="^(ElementVarTree|LinearTree|TSP|TSPTWAllDiff)\/[A-Za-z]"
+BENCHMARK_FILTER="^(ExtremeDynamic|ExtremeStatic|GolombRuler|MagicSquare|TSPTW|VesselLoading)/"
+BENCHMARK_FILTER_SYNTH="^(ElementVarTree|LinearTree|TSP|TSPTWAllDiff)/"
 BENCHMARK_FILTER_PAR="^Par(TSP|TSPTW|NQueens|Knapsack)"
 BENCHMARK_PLOT_DIR=${MKFILE_PATH}plots
 
@@ -191,7 +191,7 @@ run-benchmarks: build-benchmarks
 	exec ${BUILD_DIR}/runBenchmarks
 
 .PHONY: benchmark
-benchmark: build-benchmarks
+benchmark: # build-benchmarks
 	mkdir -p ${BENCHMARK_JSON_DIR}
 	mkdir -p ${BENCHMARK_PLOT_DIR}
 	$(eval $@_TIMESTAMP := $(shell date +"%Y-%m-%d-%H-%M-%S-%3N"))
@@ -202,8 +202,9 @@ benchmark: build-benchmarks
 									--benchmark_filter=${BENCHMARK_FILTER}
 	python3 ${MKFILE_PATH}plot-formatter.py -v --input=${$@_JSON_FILE} --file-suffix=${$@_TIMESTAMP} --output-dir=${BENCHMARK_PLOT_DIR}
 
+
 .PHONY: benchmark-synth
-benchmark-synth: build-benchmarks
+benchmark-synth: # build-benchmarks
 	mkdir -p ${BENCHMARK_JSON_DIR}
 	mkdir -p ${BENCHMARK_PLOT_DIR}
 	$(eval $@_TIMESTAMP := $(shell date +"%Y-%m-%d-%H-%M-%S-%3N"))

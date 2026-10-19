@@ -24,10 +24,10 @@ class Queens : public ::benchmark::Fixture {
   std::uniform_int_distribution<Int> distribution;
   Int n;
 
-  propagation::VarViewId violation1 = propagation::NULL_ID;
-  propagation::VarViewId violation2 = propagation::NULL_ID;
-  propagation::VarViewId violation3 = propagation::NULL_ID;
-  propagation::VarViewId totalViolation = propagation::NULL_ID;
+  propagation::VarViewId violation1 = propagation::VAR_VIEW_NULL_ID;
+  propagation::VarViewId violation2 = propagation::VAR_VIEW_NULL_ID;
+  propagation::VarViewId violation3 = propagation::VAR_VIEW_NULL_ID;
+  propagation::VarViewId totalViolation = propagation::VAR_VIEW_NULL_ID;
 
   void SetUp(const ::benchmark::State& state) override {
     solver = std::make_shared<propagation::Solver>();
@@ -43,9 +43,9 @@ class Queens : public ::benchmark::Fixture {
     q_offset_minus.clear();
     q_offset_plus.clear();
 
-    queens.reserve(n);
-    q_offset_minus.reserve(n);
-    q_offset_plus.reserve(n);
+    queens.resize(n, propagation::VAR_VIEW_NULL_ID);
+    q_offset_minus.resize(n, propagation::VAR_VIEW_NULL_ID);
+    q_offset_plus.resize(n, propagation::VAR_VIEW_NULL_ID);
 
     for (Int i = 0; i < n; ++i) {
       queens.emplace_back(solver->makeIntVar(i, 0, n - 1));
