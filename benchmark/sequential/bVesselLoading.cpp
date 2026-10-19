@@ -40,7 +40,7 @@ class VesselLoading : public ::benchmark::Fixture {
   std::vector<propagation::VarViewId> left;
   std::vector<propagation::VarViewId> bottom;
 
-  VarViewId totalViolation{propagation::NULL_ID};
+  propagation::VarViewId totalViolation{propagation::NULL_ID};
 
   std::uniform_int_distribution<size_t> indexDistr;
   std::uniform_int_distribution<Int> orientationDistr;

@@ -70,7 +70,7 @@ class MagicSquare : public ::benchmark::Fixture {
     // Column
     for (Int i = 0; i < n; ++i) {
       const propagation::VarViewId colSum = solver->makeIntVar(0, 0, n2 * n);
-      std::vector<propagation::VarViewId> col(n);
+      std::vector<propagation::VarViewId> col(n, propagation::VAR_VIEW_NULL_ID);
       for (Int j = 0; j < n; ++j) {
         assert(square[j].size() == static_cast<size_t>(n));
         col.at(j) = square[j][i];
@@ -83,7 +83,7 @@ class MagicSquare : public ::benchmark::Fixture {
 
     // downDiag
     const propagation::VarViewId downDiagSum = solver->makeIntVar(0, 0, n2 * n);
-    std::vector<propagation::VarViewId> downDiag(n);
+    std::vector<propagation::VarViewId> downDiag(n, propagation::VAR_VIEW_NULL_ID);
     for (Int j = 0; j < n; ++j) {
       assert(square[j].size() == static_cast<size_t>(n));
       downDiag.at(j) = square[j][j];
@@ -95,7 +95,7 @@ class MagicSquare : public ::benchmark::Fixture {
 
     // upDiag
     const propagation::VarViewId upDiagSum = solver->makeIntVar(0, 0, n2 * n);
-    std::vector<propagation::VarViewId> upDiag(n);
+    std::vector<propagation::VarViewId> upDiag(n, propagation::VAR_VIEW_NULL_ID);
     for (Int j = 0; j < n; ++j) {
       assert(square[n - j - 1].size() == static_cast<size_t>(n));
       upDiag.at(j) = square[n - j - 1][j];

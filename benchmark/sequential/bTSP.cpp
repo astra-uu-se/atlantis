@@ -22,7 +22,7 @@ class TSP : public ::benchmark::Fixture {
   std::vector<propagation::VarViewId> pred;
   std::vector<propagation::VarViewId> timeToPred;
   std::vector<std::vector<Int>> durations;
-  VarViewId totalDist{propagation::NULL_ID};
+  propagation::VarViewId totalDist{propagation::NULL_ID};
 
   std::random_device rd;
   std::mt19937 gen;
@@ -51,10 +51,10 @@ class TSP : public ::benchmark::Fixture {
     }
 
     pred.clear();
-    pred.reserve(n);
+    pred.resize(n, propagation::VAR_VIEW_NULL_ID);
 
     timeToPred.clear();
-    timeToPred.reserve(n);
+    timeToPred.resize(n, propagation::VAR_VIEW_NULL_ID);
 
     for (Int i = 0; i < n; ++i) {
       const Int initVal = (i - 1 + n) % n;

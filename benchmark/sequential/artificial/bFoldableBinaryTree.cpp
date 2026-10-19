@@ -50,7 +50,7 @@ class FoldableBinaryTree : public ::benchmark::Fixture {
   std::shared_ptr<propagation::Solver> solver;
   std::vector<propagation::VarViewId> vars;
   std::vector<propagation::VarViewId> decisionVars;
-  VarViewId queryVar{propagation::NULL_ID};
+  propagation::VarViewId queryVar{propagation::NULL_ID};
   std::random_device rd;
 
   std::mt19937 genValue;
@@ -123,9 +123,6 @@ void FoldableBinaryTree::probeRnd(::benchmark::State& st, size_t moveCount) {
 
     solver->beginMove();
     for (size_t i = 0; i < moveCount; ++i) {
-      if (i >= decisionVars.size()) {
-        logWarning("i: " << i);
-      }
       solver->setValue(decisionVars.at(i), decisionVarValueDist(genValue));
     }
     solver->endMove();

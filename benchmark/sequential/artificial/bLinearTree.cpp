@@ -18,7 +18,7 @@ class LinearTree : public ::benchmark::Fixture {
  private:
   struct TreeNode {
     size_t level;
-    VarViewId id{propagation::NULL_ID};
+    propagation::VarViewId id{propagation::NULL_ID};
   };
 
   void createTree() {
@@ -65,7 +65,7 @@ class LinearTree : public ::benchmark::Fixture {
 
  public:
   std::shared_ptr<propagation::Solver> solver;
-  VarViewId output{propagation::NULL_ID};
+  propagation::VarViewId output{propagation::NULL_ID};
 
   std::vector<propagation::VarViewId> vars;
   std::vector<propagation::VarViewId>
