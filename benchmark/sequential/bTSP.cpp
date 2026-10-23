@@ -58,9 +58,9 @@ class TSP : public ::benchmark::Fixture {
 
     for (Int i = 0; i < n; ++i) {
       const Int initVal = (i - 1 + n) % n;
-      pred.emplace_back(
+      pred.at(i) =
           solver->makeIntVar(initVal, 0 + static_cast<Int>(i == 0),
-                             n - 1 - static_cast<Int>(i == n - 1)));
+                             n - 1 - static_cast<Int>(i == n - 1));
       assert(solver->committedValue(pred.at(i)) == (i - 1 + n) % n);
       assert(solver->currentValue(pred.at(i)) == (i - 1 + n) % n);
     }
@@ -70,8 +70,8 @@ class TSP : public ::benchmark::Fixture {
 
     for (int i = 0; i < n; ++i) {
       // timeToPred[i] = durations[i][pred[i]]
-      timeToPred.emplace_back(solver->makeIntView<propagation::ElementConst>(
-          *solver, pred[i], std::vector<Int>(durations[i]), 0));
+      timeToPred.at(i) = solver->makeIntView<propagation::ElementConst>(
+          *solver, pred[i], std::vector<Int>(durations[i]), 0);
     }
 
     // totalDist = sum(timeToPred)

@@ -11,7 +11,7 @@ matplotlib.use('tkagg')
 
 
 def int_to_propagation_mode(value: int, verbose: bool = True) -> str:
-    assert 0 <= value and value <= 3
+    assert 0 <= value and value <= 4
     if value == 0:
         return 'input-to-output' if verbose else 'i2o'
     prop_mode = ('output-to-input' if verbose else 'o2i') + ' –⁠ '  # en dash
@@ -21,6 +21,8 @@ def int_to_propagation_mode(value: int, verbose: bool = True) -> str:
         return prop_mode + 'prepared'
     elif value == 3:
         return prop_mode + 'ad-hoc'
+    elif value == 4:
+        return ('input-to-output' if verbose else 'i2o') + ' – edge-swapping'
     return ''
 
 
@@ -44,6 +46,8 @@ def int_to_marker(value: int) -> str:
         return '*'
     elif value == 3:
         return '+'
+    elif value == 4:
+        return 's'
     return ''
 
 
@@ -295,7 +299,7 @@ class PropagationModeCollection:
         al = self.argument_labels
         if len(al) > 0 and al[-1][0] is not None:
             return self.argument_labels[-1][0]
-        return 'n'
+        return '$n$'
 
     def add_instance_collection(self, ic: InstanceCollection):
         if ic.propagation_mode not in self.instance_collections:
@@ -930,11 +934,13 @@ class PlotFormatter:
         labels = [l for _, l in sorted(handles_labels, key=lambda hl: hl[1])]
         handles = [h for h, _ in sorted(handles_labels, key=lambda hl: hl[1])]
 
+        ncol = len(labels) if len(labels) < 4 else 2
+
         if len(subplots) > 1:
-            fig.legend(labels=labels, handles=handles, ncol=len(labels),
+            fig.legend(labels=labels, handles=handles, ncol=ncol,
                        loc='upper center', fontsize=11.4)
         else:
-            flat[0].legend(labels=labels, handles=handles, ncol=len(labels),
+            flat[0].legend(labels=labels, handles=handles, ncol=ncol,
                            loc='best', fontsize=11.4)
 
         plt.show()

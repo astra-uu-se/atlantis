@@ -5,32 +5,34 @@
         "i2o",
         "o2i –⁠ total",
         "o2i –⁠ prepared",
-        "o2i –⁠ ad-hoc"
+        "o2i –⁠ ad-hoc",
+        "i2o – edge-swapping"
       ],
       "verbose": [
         "Input-to-output",
         "Output-to-input – total",
         "Output-to-input – prepared",
-        "Output-to-input – ad-hoc"
+        "Output-to-input – ad-hoc",
+        "Input-to-output – edge-swapping"
       ]
     },
     "figsize": [
-      10,
-      16
+      4.72,
+      5
     ],
     "fontsize": 10.5,
     "subplots_adjust": {
-      "left": 0.060,
-      "right": 0.999,
-      "bottom": 0.05,
-      "top": 0.92,
-      "wspace": 0.20,
-      "hspace": 0.5
+      "left": 0.078,
+      "right": 0.994,
+      "bottom": 0.054,
+      "top": 0.86,
+      "wspace": 0.27,
+      "hspace": 0.65
     },
     "subplot": {
       "figsize": [
-        10,
-        9
+        7,
+        7.5
       ]
     }
   },
@@ -233,7 +235,7 @@
       ]
     },
     "TSPTW": {
-      "model_name": "Travelling Salesperson Problem with Time Windows",
+      "model_name": "Travelling Salesperson Problem\nwith Time Windows",
       "abbreviation": "TSPTW",
       "label": "Tour",
       "yscale": "log",
@@ -251,7 +253,7 @@
       ]
     },
     "TSPTWAllDiff": {
-      "model_name": "Travelling Salesperson Problem with Time Windows",
+      "model_name": "Travelling Salesperson Problem\nwith Time Windows",
       "abbreviation": "TSPTW",
       "ignore": false,
       "label": "Sequence",

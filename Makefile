@@ -191,7 +191,7 @@ run-benchmarks: build-benchmarks
 	exec ${BUILD_DIR}/runBenchmarks
 
 .PHONY: benchmark
-benchmark: # build-benchmarks
+benchmark: build-benchmarks
 	mkdir -p ${BENCHMARK_JSON_DIR}
 	mkdir -p ${BENCHMARK_PLOT_DIR}
 	$(eval $@_TIMESTAMP := $(shell date +"%Y-%m-%d-%H-%M-%S-%3N"))
@@ -204,7 +204,7 @@ benchmark: # build-benchmarks
 
 
 .PHONY: benchmark-synth
-benchmark-synth: # build-benchmarks
+benchmark-synth: build-benchmarks
 	mkdir -p ${BENCHMARK_JSON_DIR}
 	mkdir -p ${BENCHMARK_PLOT_DIR}
 	$(eval $@_TIMESTAMP := $(shell date +"%Y-%m-%d-%H-%M-%S-%3N"))
